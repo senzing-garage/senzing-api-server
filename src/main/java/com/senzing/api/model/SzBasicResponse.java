@@ -20,12 +20,15 @@ public class SzBasicResponse {
    *
    * @param httpMethod The {@link SzHttpMethod} from the request.
    *
+   * @param httpStatusCode The HTTP response code.
+   *
    * @param selfLink The self link from the request.
    */
   public SzBasicResponse(SzHttpMethod httpMethod,
+                         int          httpStatusCode,
                          String       selfLink)
   {
-    this.meta = new SzMeta(httpMethod);
+    this.meta = new SzMeta(httpMethod, httpStatusCode);
     this.links = new SzLinks(selfLink);
   }
 

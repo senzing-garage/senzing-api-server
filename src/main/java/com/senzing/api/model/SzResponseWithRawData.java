@@ -27,12 +27,15 @@ public class SzResponseWithRawData extends SzBasicResponse {
    *
    * @param httpMethod The {@link SzHttpMethod} from the request.
    *
+   * @param httpStatusCode The HTTP response status code.
+   *
    * @param selfLink The self link from the request.
    */
   public SzResponseWithRawData(SzHttpMethod httpMethod,
+                               int          httpStatusCode,
                                String       selfLink)
   {
-    this(httpMethod, selfLink, null);
+    this(httpMethod, httpStatusCode, selfLink, null);
   }
 
   /**
@@ -41,15 +44,18 @@ public class SzResponseWithRawData extends SzBasicResponse {
    *
    * @param httpMethod The {@link SzHttpMethod} from the request.
    *
+   * @param httpStatusCode The HTTP response status code.
+   *
    * @param selfLink The self link from the request.
    *
    * @param rawData The raw data to associate with the response.
    */
   public SzResponseWithRawData(SzHttpMethod httpMethod,
+                               int          httpStatusCode,
                                String       selfLink,
                                String       rawData)
   {
-    super(httpMethod, selfLink);
+    super(httpMethod, httpStatusCode, selfLink);
 
     this.rawData = JsonUtils.normalizeJsonText(rawData);
   }

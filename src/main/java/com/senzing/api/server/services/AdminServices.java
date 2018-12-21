@@ -4,7 +4,6 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.ws.rs.*;
-import javax.ws.rs.core.Response;
 
 import com.senzing.api.model.*;
 import com.senzing.api.server.SzApiServer;
@@ -13,53 +12,64 @@ import com.senzing.g2.engine.G2Product;
 import java.io.StringReader;
 
 import static com.senzing.api.model.SzHttpMethod.*;
+import static com.senzing.api.server.services.ServicesUtil.*;
 
 /**
  * Administration REST services.
  */
+@Path("/")
 @Produces("application/json; charset=UTF-8")
 public class AdminServices {
   /**
    * Generates a heartbeat response to affirnm the server is running.
    */
   @GET
-  @Path("/heartbeat")
+  @Path("heartbeat")
   public SzBasicResponse heartbeat() {
-    return new SzBasicResponse(GET, SzApiServer.makeLink("/heartbeat"));
+    SzApiServer server = SzApiServer.getInstance();
+    String selfLink = server.makeLink("/heartbeat");
+    return new SzBasicResponse(GET, 200, selfLink);
   }
 
   /**
    * Provides license information, optionally with raw data.
    */
   @GET
-  @Path("/license")
+  @Path("license")
   public SzLicenseResponse license(
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw)
+    throws WebApplicationException
   {
-    String selfLink = SzApiServer.makeLink("/license");
-    if (withRaw) {
-      selfLink += "?withRaw=true";
-    }
+    SzApiServer server = SzApiServer.getInstance();
 
-    try {
-      G2Product productApi = SzApiServer.getProductApi();
+    return server.executeInThread(() -> {
+      String selfLink = server.makeLink("/license");
+      if (withRaw) {
+        selfLink += "?withRaw=true";
+      }
 
-      String rawData = productApi.license();
+      try {
+        G2Product productApi = server.getProductApi();
 
-      StringReader sr = new StringReader(rawData);
-      JsonReader jsonReader = Json.createReader(sr);
-      JsonObject jsonObject = jsonReader.readObject();
-      SzLicenseInfo info = SzLicenseInfo.parseLicenseInfo(null, jsonObject);
+        String rawData = productApi.license();
 
-      SzLicenseResponse response = new SzLicenseResponse(GET, selfLink);
-      response.setData(info);
-      if (withRaw) response.setRawData(rawData);
-      return response;
+        StringReader sr = new StringReader(rawData);
+        JsonReader jsonReader = Json.createReader(sr);
+        JsonObject jsonObject = jsonReader.readObject();
+        SzLicenseInfo info = SzLicenseInfo.parseLicenseInfo(null, jsonObject);
 
-    } catch (Exception e) {
-      Response.ResponseBuilder builder = Response.status(500);
-      builder.entity(new SzErrorResponse(GET, selfLink, e));
-      throw new InternalServerErrorException(builder.build());
-    }
+        SzLicenseResponse response
+            = new SzLicenseResponse(GET, 200, selfLink);
+        response.setData(info);
+        if (withRaw) response.setRawData(rawData);
+        return response;
+
+      } catch (WebApplicationException e) {
+        throw e;
+
+      } catch (Exception e) {
+        throw newInternalServerErrorException(GET, selfLink, e);
+      }
+    });
   }
 }

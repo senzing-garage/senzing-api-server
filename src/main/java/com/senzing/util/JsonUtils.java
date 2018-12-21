@@ -539,17 +539,48 @@ public class JsonUtils {
   }
 
   /**
+   * Converts the specified {@link JsonValue} to a JSON string.
+   *
+   * @param writer The {@link Writer} to write to.
+   *
+   * @param jsonValue The {@link JsonValue} describing the JSON.
+   *
+   * @return The specified {@link Writer}.
+   *
+   */
+  public static <T extends Writer> T toJsonText(T writer, JsonValue jsonValue)
+  {
+    Objects.requireNonNull(writer, "Writer cannot be null");
+    JsonWriter jsonWriter = Json.createWriter(writer);
+
+    jsonWriter.write(jsonValue);
+
+    return writer;
+  }
+
+  /**
+   * Converts the specified {@link JsonValue} to a JSON string.
+   *
+   * @param jsonValue The {@link JsonValue} describing the JSON.
+   *
+   * @return The specified {@link JsonValue} converted to a JSON string.
+   */
+  public static String toJsonText(JsonValue jsonValue) {
+    return JsonUtils.toJsonText(new StringWriter(), jsonValue).toString();
+  }
+
+  /**
    * Converts the specified {@link JsonObjectBuilder} to a JSON string.
    *
    * @param writer The {@link Writer} to write to.
    *
    * @param builder The {@link JsonObjectBuilder} describing the object.
    *
-   * @return The specified {@link JsonObjectBuilder} to a JSON string.
+   * @return The specified {@link Writer}.
    *
    */
-  public static <T extends Writer> T toJsonString(T                 writer,
-                                                  JsonObjectBuilder builder)
+  public static <T extends Writer> T toJsonText(T                 writer,
+                                                JsonObjectBuilder builder)
   {
     Objects.requireNonNull(writer, "Writer cannot be null");
     JsonWriter jsonWriter = Json.createWriter(writer);
@@ -566,10 +597,10 @@ public class JsonUtils {
    *
    * @param builder The {@link JsonObjectBuilder} describing the object.
    *
-   * @return The specified {@link JsonObjectBuilder} to a JSON string.
+   * @return The specified {@link JsonObjectBuilder} converted to a JSON string.
    */
-  public static String toJsonString(JsonObjectBuilder builder) {
-    return JsonUtils.toJsonString(new StringWriter(), builder).toString();
+  public static String toJsonText(JsonObjectBuilder builder) {
+    return JsonUtils.toJsonText(new StringWriter(), builder).toString();
   }
 
   /**
@@ -579,11 +610,10 @@ public class JsonUtils {
    *
    * @param builder The {@link JsonArrayBuilder} describing the object.
    *
-   * @return The specified {@link JsonArrayBuilder} to a JSON string.
-   *
+   * @return The specified {@link Writer}
    */
-  public static <T extends Writer> T toJsonString(T                 writer,
-                                                  JsonArrayBuilder  builder)
+  public static <T extends Writer> T toJsonText(T                 writer,
+                                                JsonArrayBuilder  builder)
   {
     Objects.requireNonNull(writer, "Writer cannot be null");
     JsonWriter jsonWriter = Json.createWriter(writer);
@@ -600,10 +630,10 @@ public class JsonUtils {
    *
    * @param builder The {@link JsonArrayBuilder} describing the object.
    *
-   * @return The specified {@link JsonArrayBuilder} to a JSON string.
+   * @return The specified {@link JsonArrayBuilder} converted to a JSON string.
    */
-  public static String toJsonString(JsonArrayBuilder builder) {
-    return JsonUtils.toJsonString(new StringWriter(), builder).toString();
+  public static String toJsonText(JsonArrayBuilder builder) {
+    return JsonUtils.toJsonText(new StringWriter(), builder).toString();
   }
 
 

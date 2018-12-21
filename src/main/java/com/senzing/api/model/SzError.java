@@ -2,6 +2,7 @@ package com.senzing.api.model;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import com.senzing.g2.engine.G2Fallible;
 
 /**
  * Describes an error that occurred.
@@ -21,8 +22,16 @@ public class SzError {
    * Default constructor.
    */
   public SzError() {
-    this.code = null;
-    this.message = null;
+    this(null, null);
+  }
+
+  /**
+   * Constructs with the specified error message.
+   *
+   * @param message The message to associate.
+   */
+  public SzError(String message) {
+    this(null, message);
   }
 
   /**
@@ -36,7 +45,6 @@ public class SzError {
     this.code     = code;
     this.message  = message;
   }
-
   /**
    * Constructs with the specified error code and error message.
    *
@@ -45,6 +53,20 @@ public class SzError {
   public SzError(Throwable t) {
     this.code     = null;
     this.message  = formatThrowable(t);
+    t.printStackTrace();
+  }
+
+  /**
+   * Constructs with the last exception information from the specified
+   * {@link G2Fallible}.
+   *
+   * @param f The {@link G2Fallible} to get the error information from.
+   */
+  public SzError(G2Fallible f) {
+    int errorCode = f.getLastExceptionCode();
+    this.code     = "" + errorCode;
+    this.message  = f.getLastException();
+    f.clearLastException();
   }
 
   /**
@@ -54,8 +76,9 @@ public class SzError {
    */
   private static String formatThrowable(Throwable t)
   {
-    StringWriter  sw = new StringWriter();
-    PrintWriter   pw = new PrintWriter(sw);
+    if (t == null) return null;
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
     pw.println(t.getMessage());
     pw.println();
     t.printStackTrace(pw);
@@ -69,7 +92,7 @@ public class SzError {
    * @return The associated error code, or <tt>null</tt> if none associated.
    */
   public String getCode() {
-    return code;
+    return this.code;
   }
 
   /**
@@ -87,7 +110,7 @@ public class SzError {
    * @return The associated error message.
    */
   public String getMessage() {
-    return message;
+    return this.message;
   }
 
   /**
@@ -107,8 +130,8 @@ public class SzError {
   @Override
   public String toString() {
     return "SzError{" +
-        "code='" + code + '\'' +
-        ", message='" + message + '\'' +
+        "code='" + this.getCode() + '\'' +
+        ", message='" + this.getMessage() + '\'' +
         '}';
   }
 }

@@ -1,9 +1,6 @@
 package com.senzing.api.model;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The response containing a set of data source codes.  Typically this is the
@@ -26,12 +23,16 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
    * Constructs with only the HTTP method and the self link, leaving the
    * license info data to be initialized later.
    *
-   * @param method The {@link SzHttpMethod}.
+   * @param httpMethod The {@link SzHttpMethod}.
+   *
+   * @param httpStatusCode The HTTP response status code.
+   *
    * @param selfLink The string URL link to generate this response.
    */
-  public SzDataSourcesResponse(SzHttpMethod method,
+  public SzDataSourcesResponse(SzHttpMethod httpMethod,
+                               int          httpStatusCode,
                                String       selfLink) {
-    super(method, selfLink);
+    super(httpMethod, httpStatusCode, selfLink);
     this.dataSources = new LinkedHashSet<>();
   }
 
@@ -57,6 +58,20 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
   }
 
   /**
+   * Sets the specified {@link Set} of data sources using the
+   * specified {@link Collection} of data sources (removing duplicates).
+   *
+   * @param dataSources The {@link Collection} of data sources to set.
+   */
+  public void setDataSources(Collection<String> dataSources)
+  {
+    this.dataSources.clear();
+    if (dataSources != null) {
+      this.dataSources.addAll(dataSources);
+    }
+  }
+
+  /**
    * Inner class to represent the data section for this response.
    */
   public class Data {
@@ -68,13 +83,13 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
     }
 
     /**
-     * Gets the {@link Set} of
-     * @return
+     * Gets the unmodifiable {@link Set} of data sources.
+     *
+     * @return The unmodifiable {@link Set} of data sources.
      */
     public Set<String> getDataSources() {
       Set<String> set = SzDataSourcesResponse.this.dataSources;
       return Collections.unmodifiableSet(set);
     }
   }
-
 }

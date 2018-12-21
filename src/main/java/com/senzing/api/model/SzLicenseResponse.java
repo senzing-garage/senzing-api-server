@@ -14,27 +14,31 @@ public class SzLicenseResponse extends SzResponseWithRawData {
    * Constructs with only the HTTP method and the self link, leaving the
    * license info data to be initialized later.
    *
-   * @param method The {@link SzHttpMethod}.
+   * @param httpMethod The {@link SzHttpMethod}.
+   * @param httpStatusCode The HTTP response code.
    * @param selfLink The string URL link to generate this response.
    */
-  public SzLicenseResponse(SzHttpMethod method,
+  public SzLicenseResponse(SzHttpMethod httpMethod,
+                           int          httpStatusCode,
                            String       selfLink) {
-    this(method, selfLink, null);
+    this(httpMethod, httpStatusCode, selfLink, null);
   }
 
   /**
    * Constructs with the HTTP method, self link and the {@link SzLicenseInfo}
    * describing the license.
    *
-   * @param method The {@link SzHttpMethod}.
+   * @param httpMethod The {@link SzHttpMethod}.
+   * @param httpStatusCode The HTTP response status code.
    * @param selfLink The string URL link to generate this response.
    * @param data The {@link SzLicenseInfo} describing the license.
    */
-  public SzLicenseResponse(SzHttpMethod   method,
+  public SzLicenseResponse(SzHttpMethod   httpMethod,
+                           int            httpStatusCode,
                            String         selfLink,
                            SzLicenseInfo  data)
   {
-    super(method, selfLink);
+    super(httpMethod, httpStatusCode, selfLink);
     this.licenseInfo = data;
   }
 

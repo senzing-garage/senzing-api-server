@@ -11,6 +11,11 @@ public class SzMeta {
   private SzHttpMethod httpMethod;
 
   /**
+   * The HTTP response code.
+   */
+  private int httpStatusCode;
+
+  /**
    * The timestamp associated with the response.
    */
   @JsonFormat(shape = JsonFormat.Shape.STRING,
@@ -22,9 +27,12 @@ public class SzMeta {
    * Constructs with the specified HTTP method.
    *
    * @param httpMethod The HTTP method with which to construct.
+   *
+   * @param httpStatusCode The HTTP response code.
    */
-  public SzMeta(SzHttpMethod httpMethod) {
+  public SzMeta(SzHttpMethod httpMethod, int httpStatusCode) {
     this.httpMethod = httpMethod;
+    this.httpStatusCode = httpStatusCode;
     this.timestamp  = new Date();
   }
 
@@ -34,8 +42,15 @@ public class SzMeta {
    * @return HTTP method for the REST request.
    */
   public SzHttpMethod getHttpMethod() {
-    return httpMethod;
+    return this.httpMethod;
   }
+
+  /**
+   * The HTTP response status code for the REST request.
+   *
+   * @return The HTTP response status code for the REST request.
+   */
+  public int getHttpStatusCode() { return this.httpStatusCode; }
 
   /**
    * Returns the timestamp that the request was completed.
@@ -43,6 +58,6 @@ public class SzMeta {
    * @return The timestamp that the request was completed.
    */
   public Date getTimestamp() {
-    return timestamp;
+    return this.timestamp;
   }
 }

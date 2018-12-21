@@ -16,6 +16,7 @@ class FileMonitor extends Thread {
   private int port = -1;
   private JsonWriterFactory writerFactory;
   private boolean ready = false;
+  private boolean shutdown = false;
 
   public FileMonitor(File file)
   {
@@ -79,11 +80,15 @@ class FileMonitor extends Thread {
     this.notifyAll();
   }
 
+  public synchronized void signalShutdown() {
+    this.shutdown = true;
+    this.notifyAll();
+  }
+
   public void run() {
-    boolean shutdown = false;
     int readExceptionCount = 0;
     boolean deleteFile = false;
-    while (!shutdown) {
+    while (!this.shutdown) {
       // go to sleep for 5 seconds
       try {
         Thread.sleep(5000L);
@@ -111,13 +116,13 @@ class FileMonitor extends Thread {
 
           // check if another process has taken over
           if (jsonObj.getInt("pid") != this.pid) {
-            shutdown = true;
+            this.shutdown = true;
             continue;
           }
 
           // check if the shutdown flag has been triggered
           if (jsonObj.getBoolean("shutdown")) {
-            shutdown = true;
+            this.shutdown = true;
             deleteFile = true;
             continue;
           }
@@ -127,14 +132,14 @@ class FileMonitor extends Thread {
           // exceptions then give up
           readExceptionCount++;
           if (readExceptionCount > 1) {
-            shutdown = true;
+            this.shutdown = true;
           }
           e.printStackTrace();
           continue;
         }
 
         // check if we have shutdown and if so continue loop here
-        if (shutdown) continue;
+        if (this.shutdown) continue;
 
         // update the heartbeat
         JsonObjectBuilder builder = Json.createObjectBuilder(jsonObj);
