@@ -235,8 +235,10 @@ public class ServicesUtil {
    *
    * @return The JSON array string for the identifiers.
    */
-  static String nativeJsonEncodeEntityIds(List<SzEntityIdentifier> list)
-  {
+  static String nativeJsonEncodeEntityIds(List<SzEntityIdentifier> list) {
+    if (list == null) {
+      return null;
+    }
     String propName = "ENTITIES";
     JsonArrayBuilder jab = Json.createArrayBuilder();
     for (SzEntityIdentifier id : list) {
@@ -356,9 +358,6 @@ public class ServicesUtil {
       SzHttpMethod  httpMethod,
       String        selfLink)
   {
-    StringBuilder sb      = new StringBuilder();
-    String        prefix  = "";
-
     List<SzEntityIdentifier> result = new ArrayList<>(params.size());
 
     for (String param : params) {

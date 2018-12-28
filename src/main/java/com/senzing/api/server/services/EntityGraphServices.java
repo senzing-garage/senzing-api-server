@@ -7,6 +7,7 @@ import com.senzing.util.JsonUtils;
 
 import javax.json.*;
 import javax.ws.rs.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -39,11 +40,11 @@ public class EntityGraphServices {
       selfLink += "?maxDegrees=" + maxDegrees;
 
       if (fromParam != null) {
-        selfLink += "&from=" + urlEncode(fromParam.toString());
+        selfLink += "&from=" + urlEncode(fromParam);
       }
 
       if (toParam != null) {
-        selfLink += "&to=" + urlEncode(toParam.toString());
+        selfLink += "&to=" + urlEncode(toParam);
       }
 
       if (forbidAvoided) {
@@ -62,8 +63,8 @@ public class EntityGraphServices {
         selfLink += "?withRaw=true";
       }
 
-      SzEntityIdentifier        from          = null;
-      SzEntityIdentifier        to            = null;
+      SzEntityIdentifier        from;
+      SzEntityIdentifier        to;
       List<SzEntityIdentifier>  avoidEntities = null;
       List<String>              withSources   = null;
       try {
@@ -118,9 +119,12 @@ public class EntityGraphServices {
 
         if (sourcesParam != null && sourcesParam.size() > 0) {
           Set<String> dataSources = server.getDataSources();
+          withSources = new ArrayList<>(dataSources.size());
 
-          for (String source : withSources) {
-            if (!dataSources.contains(source)) {
+          for (String source : sourcesParam) {
+            if (dataSources.contains(source)) {
+              withSources.add(source);
+            } else {
               throw newBadRequestException(
                   GET, selfLink,
                   "Unrecognized data source: " + source);
@@ -142,9 +146,9 @@ public class EntityGraphServices {
         // get the engine API and the config API
         G2Engine engineApi = server.getEngineApi();
 
-        StringBuffer sb = new StringBuffer();
+        StringBuffer responseDataBuffer = new StringBuffer();
 
-        int result = 0;
+        int result;
         if (from.getClass() == SzRecordId.class) {
           String source1 = ((SzRecordId) from).getDataSourceCode();
           String source2 = ((SzRecordId) to).getDataSourceCode();
@@ -157,7 +161,7 @@ public class EntityGraphServices {
                                                   source2,
                                                   id2,
                                                   maxDegrees,
-                                                  sb);
+                                                  responseDataBuffer);
           } else if (withSources == null) {
             result = engineApi.findPathExcludingByRecordID(
                 source1,
@@ -167,7 +171,7 @@ public class EntityGraphServices {
                 maxDegrees,
                 nativeJsonEncodeEntityIds(avoidEntities),
                 (forbidAvoided ? 0 : G2_FIND_PATH_PREFER_EXCLUDE),
-                sb);
+                responseDataBuffer);
 
           } else {
             result = engineApi.findPathIncludingSourceByRecordID(
@@ -179,7 +183,7 @@ public class EntityGraphServices {
                 nativeJsonEncodeEntityIds(avoidEntities),
                 nativeJsonEncodeDataSources(withSources),
                 (forbidAvoided ? 0 : G2_FIND_PATH_PREFER_EXCLUDE),
-                sb);
+                responseDataBuffer);
           }
         } else {
           SzEntityId id1 = (SzEntityId) from;
@@ -189,7 +193,7 @@ public class EntityGraphServices {
             result = engineApi.findPathByEntityID(id1.getValue(),
                                                   id2.getValue(),
                                                   maxDegrees,
-                                                  sb);
+                                                  responseDataBuffer);
           } else if (withSources == null) {
             result = engineApi.findPathExcludingByEntityID(
                 id1.getValue(),
@@ -197,7 +201,7 @@ public class EntityGraphServices {
                 maxDegrees,
                 nativeJsonEncodeEntityIds(avoidEntities),
                 (forbidAvoided ? 0 : G2_FIND_PATH_PREFER_EXCLUDE),
-                sb);
+                responseDataBuffer);
 
           } else {
             result = engineApi.findPathIncludingSourceByEntityID(
@@ -207,7 +211,7 @@ public class EntityGraphServices {
                 nativeJsonEncodeEntityIds(avoidEntities),
                 nativeJsonEncodeDataSources(withSources),
                 (forbidAvoided ? 0 : G2_FIND_PATH_PREFER_EXCLUDE),
-                sb);
+                responseDataBuffer);
           }
         }
 
@@ -216,12 +220,12 @@ public class EntityGraphServices {
         }
 
         // parse the raw data
-        String rawData = sb.toString();
+        String rawData = responseDataBuffer.toString();
         JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
         SzEntityPathData entityPathData
             = SzEntityPathData.parseEntityPathData(
                 jsonObject,
-                (f) -> server.getAttributeClassForFeature(f));
+                server::getAttributeClassForFeature);
 
         // construct the response
         SzEntityPathResponse response
@@ -249,30 +253,31 @@ public class EntityGraphServices {
   @Path("entity-networks")
   public SzEntityNetworkResponse getEntityNetwork(
       @QueryParam("e") List<String> entitiesParam,
-      @DefaultValue("5")      @QueryParam("maxDegrees") int     maxDegrees,
-      @DefaultValue("1")      @QueryParam("buildOut")   int     buildOut,
-      @DefaultValue("1000")   @QueryParam("buildOut")   int     maxEntities,
-      @DefaultValue("false")  @QueryParam("withRaw")    boolean withRaw)
+      @DefaultValue("5")      @QueryParam("maxDegrees")  int     maxDegrees,
+      @DefaultValue("1")      @QueryParam("buildOut")    int     buildOut,
+      @DefaultValue("1000")   @QueryParam("maxEntities") int     maxEntities,
+      @DefaultValue("false")  @QueryParam("withRaw")     boolean withRaw)
   {
     SzApiServer server = SzApiServer.getInstance();
 
     return server.executeInThread(() -> {
-      String selfLink = server.makeLink("/entity-networks");
-      selfLink += "?maxDegrees=" + maxDegrees;
-      selfLink += "&buildOut=" + buildOut;
-      selfLink += "&maxEntities=" + maxEntities;
+      StringBuilder selfLinkBuilder = new StringBuilder(server.makeLink("/entity-networks"));
+      selfLinkBuilder.append("?maxDegrees=").append(maxDegrees)
+          .append("&buildOut=").append(buildOut)
+          .append("&maxEntities=").append(maxEntities);
 
       if (entitiesParam != null && entitiesParam.size() > 0) {
-        selfLink += formatMultiValuedParam("&", "e", entitiesParam);
+        selfLinkBuilder.append(formatMultiValuedParam("&", "e", entitiesParam));
       }
       if (withRaw) {
-        selfLink += "?withRaw=true";
+        selfLinkBuilder.append("?withRaw=true");
       }
+      String selfLink = selfLinkBuilder.toString();
 
-      List<SzEntityIdentifier> entities = null;
+      List<SzEntityIdentifier> entities;
       // check for consistent entity IDs
       try {
-        if (entitiesParam == null && entitiesParam.size() > 0) {
+        if (entitiesParam == null || entitiesParam.isEmpty()) {
           throw newBadRequestException(
               GET, selfLink,
               "Parameter missing or empty: \"entities\".  "
@@ -295,10 +300,10 @@ public class EntityGraphServices {
               "Max degrees must be greater than zero: " + maxDegrees);
         }
 
-        if (buildOut < 1) {
+        if (buildOut < 0) {
           throw newBadRequestException(
               GET, selfLink,
-              "Build out must be greater than zero: " + buildOut);
+              "Build out must be zero or greater: " + buildOut);
         }
 
         if (maxEntities < 1) {
@@ -319,7 +324,7 @@ public class EntityGraphServices {
 
         StringBuffer sb = new StringBuffer();
 
-        int result = 0;
+        int result;
 
         if (entities.iterator().next().getClass() == SzRecordId.class) {
           result = engineApi.findNetworkByRecordID(
@@ -349,7 +354,7 @@ public class EntityGraphServices {
         SzEntityNetworkData entityNetworkData
             = SzEntityNetworkData.parseEntityNetworkData(
             jsonObject,
-            (f) -> server.getAttributeClassForFeature(f));
+            server::getAttributeClassForFeature);
 
         // construct the response
         SzEntityNetworkResponse response
@@ -378,11 +383,8 @@ public class EntityGraphServices {
    *
    * @param entities The list of {@link SzEntityIdentifier} instances.
    */
-  private static boolean checkConsistent(List<SzEntityIdentifier> entities)
-  {
-    int entityCount = 0;
-    if (entities != null && entities.size() > 0) {
-      entityCount = entities.size();
+  private static boolean checkConsistent(List<SzEntityIdentifier> entities) {
+    if (entities != null && !entities.isEmpty()) {
       Class idClass = null;
       for (SzEntityIdentifier id : entities) {
         if (idClass == null) {
