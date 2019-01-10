@@ -11,16 +11,19 @@ import com.senzing.util.WorkerThreadPool;
 import org.eclipse.jetty.server.ServerConnector;
 
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.rewrite.handler.RewriteHandler;
 import org.eclipse.jetty.rewrite.handler.TerminatingRegexRule;
 import org.eclipse.jetty.rewrite.handler.RewriteRegexRule;
+import org.eclipse.jetty.servlets.CrossOriginFilter;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
+import javax.servlet.DispatcherType;
 
 import static com.senzing.util.WorkerThreadPool.Task;
 
@@ -903,6 +906,8 @@ public class SzApiServer {
     // setup a servlet context handler
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath("/");
+    FilterHolder filterHolder = context.addFilter(CrossOriginFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
+    filterHolder.setInitParameter("allowedOrigins", "http://localhost:*");
 
     // find how this class was loaded so we can find the path to the static content
     ClassLoader loader = SzApiServer.class.getClassLoader();
