@@ -28,8 +28,7 @@ import static com.senzing.util.WorkerThreadPool.Task;
  *
  *
  */
-public class SzApiServer
-{
+public class SzApiServer {
   private static final String JAR_FILE_NAME;
 
   private static final String JAR_BASE_URL;
@@ -41,15 +40,20 @@ public class SzApiServer
   private static SzApiServer INSTANCE = null;
 
   private static enum Option {
-      HELP,
-      VERSION,
-      HTTP_PORT,
-      BIND_ADDRESS,
-      MODULE_NAME,
-      INI_FILE,
-      VERBOSE,
-      MONITOR_FILE;
-    };
+    HELP,
+    VERSION,
+    HTTP_PORT,
+    BIND_ADDRESS,
+    MODULE_NAME,
+    INI_FILE,
+    VERBOSE,
+    MONITOR_FILE;
+  }
+
+  ;
+
+  public static final class AccessToken {
+  }
 
   static {
     System.out.println();
@@ -64,7 +68,7 @@ public class SzApiServer
     index = JAR_BASE_URL.lastIndexOf("!");
     url = url.substring(0, index);
     index = url.lastIndexOf("/");
-    JAR_FILE_NAME = url.substring(index+1);
+    JAR_FILE_NAME = url.substring(index + 1);
     url = url.substring(0, index);
     index = url.indexOf("/");
     PATH_TO_JAR = url.substring(index);
@@ -76,6 +80,12 @@ public class SzApiServer
     }
     return INSTANCE;
   }
+
+  /**
+   * The access token to use call privileged functions on the server.
+   * This may be <tt>null</tt> if no privileged functions may be performed.
+   */
+  private AccessToken accessToken = null;
 
   /**
    * The base URL for the server.
@@ -115,12 +125,12 @@ public class SzApiServer
   /**
    * The {@link Map} of FTYPE_CODE values to ATTR_CLASS values from the config.
    */
-  private Map<String,String> featureToAttrClassMap;
+  private Map<String, String> featureToAttrClassMap;
 
   /**
    * The {@link Map} of ATTR_CODE values to ATTR_CLASS values from the config.
    */
-  private Map<String,String> attrCodeToAttrClassMap;
+  private Map<String, String> attrCodeToAttrClassMap;
 
   /**
    * The Jetty Server.
@@ -149,7 +159,6 @@ public class SzApiServer
 
   /**
    * The {@link WorkerThreadPool} for executing Senzing API calls.
-   *
    */
   private WorkerThreadPool workerThreadPool;
 
@@ -169,6 +178,7 @@ public class SzApiServer
    * @return The base URL for this instance.
    */
   public String getBaseUrl() {
+    this.assertNotShutdown();
     return this.baseUrl;
   }
 
@@ -178,6 +188,7 @@ public class SzApiServer
    * @return The HTTP port for this instance.
    */
   public int getHttpPort() {
+    this.assertNotShutdown();
     return this.httpPort;
   }
 
@@ -186,9 +197,10 @@ public class SzApiServer
    * the server is bound.
    *
    * @return The {@link InetAddress} for the IP address interface to which
-   *         the server is bound.
+   * the server is bound.
    */
   public InetAddress getIPAddress() {
+    this.assertNotShutdown();
     return this.ipAddr;
   }
 
@@ -198,6 +210,7 @@ public class SzApiServer
    * @return The configured API module name.
    */
   public String getApiModuleName() {
+    this.assertNotShutdown();
     return this.moduleName;
   }
 
@@ -207,6 +220,7 @@ public class SzApiServer
    * @return The configured verbose flag for the API initialization.
    */
   public boolean isApiVerbose() {
+    this.assertNotShutdown();
     return this.verbose;
   }
 
@@ -216,6 +230,7 @@ public class SzApiServer
    * @return The API INI file used to initialize.
    */
   public File getApiIniFile() {
+    this.assertNotShutdown();
     return this.iniFile;
   }
 
@@ -225,6 +240,7 @@ public class SzApiServer
    * @return The initialized {@link G2Product} API interface.
    */
   public G2Product getProductApi() {
+    this.assertNotShutdown();
     return this.g2Product;
   }
 
@@ -234,6 +250,7 @@ public class SzApiServer
    * @return The initialized {@link G2Config} API interface.
    */
   public G2Config getConfigApi() {
+    this.assertNotShutdown();
     return this.g2Config;
   }
 
@@ -243,6 +260,7 @@ public class SzApiServer
    * @return The initialized {@link G2Engine} API interface.
    */
   public G2Engine getEngineApi() {
+    this.assertNotShutdown();
     return this.g2Engine;
   }
 
@@ -251,18 +269,17 @@ public class SzApiServer
    * data sources and maps mapping f-type code to attribute class and
    * attribute code to attribute class.
    *
-   * @param config The {@link JsonObject} describing the config.
-   * @param dataSources The {@link Set} of data sources to populate.
+   * @param config       The {@link JsonObject} describing the config.
+   * @param dataSources  The {@link Set} of data sources to populate.
    * @param ftypeCodeMap The {@link Map} of f-type codes to attribute classes
    *                     to populate.
-   * @param attrCodeMap The {@link Map} of attribute code to attribute classes
-   *                    to populate.
+   * @param attrCodeMap  The {@link Map} of attribute code to attribute classes
+   *                     to populate.
    */
-  private static void evaluateConfig(JsonObject         config,
-                                     Set<String>        dataSources,
-                                     Map<String,String> ftypeCodeMap,
-                                     Map<String,String> attrCodeMap)
-  {
+  private static void evaluateConfig(JsonObject config,
+                                     Set<String> dataSources,
+                                     Map<String, String> ftypeCodeMap,
+                                     Map<String, String> attrCodeMap) {
     JsonValue jsonValue = config.getValue("/G2_CONFIG/CFG_DSRC");
     JsonArray jsonArray = jsonValue.asJsonArray();
 
@@ -276,10 +293,10 @@ public class SzApiServer
     jsonArray = jsonValue.asJsonArray();
 
     for (JsonValue val : jsonArray) {
-      JsonObject  cfgAttr   = val.asJsonObject();
-      String      attrCode  = cfgAttr.getString("ATTR_CODE").toUpperCase();
-      String      ftypeCode = cfgAttr.getString("FTYPE_CODE").toUpperCase();
-      String      attrClass = cfgAttr.getString("ATTR_CLASS").toUpperCase();
+      JsonObject cfgAttr = val.asJsonObject();
+      String attrCode = cfgAttr.getString("ATTR_CODE").toUpperCase();
+      String ftypeCode = cfgAttr.getString("FTYPE_CODE").toUpperCase();
+      String attrClass = cfgAttr.getString("ATTR_CLASS").toUpperCase();
 
       String ac = attrCodeMap.get(attrCode);
       if (ac != null && !ac.equals(attrClass)) {
@@ -307,6 +324,7 @@ public class SzApiServer
    * @return The unmodifiable {@link Set} of configured data source codes.
    */
   public Set<String> getDataSources() {
+    this.assertNotShutdown();
     return this.dataSources;
   }
 
@@ -316,10 +334,10 @@ public class SzApiServer
    *
    * @param featureName The feature name from the configuration to lookup the
    *                    attribute class.
-   *
    * @return The attribute class associated with the specified f-type code.
    */
   public String getAttributeClassForFeature(String featureName) {
+    this.assertNotShutdown();
     return this.featureToAttrClassMap.get(featureName);
   }
 
@@ -329,10 +347,10 @@ public class SzApiServer
    *
    * @param attrCode The attribute code from the configuration to lookup the
    *                 attribute class.
-   *
    * @return The attribute class associated with the specified attribute code.
    */
   public String getAttributeClassForAttributeCode(String attrCode) {
+    this.assertNotShutdown();
     return this.attrCodeToAttrClassMap.get(attrCode);
   }
 
@@ -341,10 +359,10 @@ public class SzApiServer
    * specified path.
    *
    * @param path The path to use for building the path.
-   *
    * @return The URL link for the path with the base URL.
    */
   public String makeLink(String path) {
+    this.assertNotShutdown();
     String sep = "";
     if (path.startsWith("/")) path = path.substring(1);
     if (!this.baseUrl.endsWith("/")) sep = "/";
@@ -355,10 +373,8 @@ public class SzApiServer
    * Utility method to ensure a command line argument with the specified index
    * exists and if not then throws an exception.
    *
-   * @param args The array of command line arguments.
-   *
+   * @param args  The array of command line arguments.
    * @param index The index to check.
-   *
    * @throws IllegalArgumentException If the argument does not exist.
    */
   private static void ensureArgument(String[] args, int index) {
@@ -366,10 +382,10 @@ public class SzApiServer
       System.err.println();
 
       System.err.println(
-        "Missing expected argument following " + args[index-1]);
+          "Missing expected argument following " + args[index - 1]);
 
       throw new IllegalArgumentException(
-          "Missing expected argument following: " + args[index-1]);
+          "Missing expected argument following: " + args[index - 1]);
     }
     return;
   }
@@ -377,10 +393,9 @@ public class SzApiServer
   /**
    *
    */
-  private static String buildErrorMessage(String  heading,
+  private static String buildErrorMessage(String heading,
                                           Integer errorCode,
-                                          String  errorMessage)
-  {
+                                          String errorMessage) {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     if (heading != null) pw.println(heading);
@@ -405,12 +420,11 @@ public class SzApiServer
   }
 
   /**
-   *
    * @param args
    * @return
    */
-  private static Map<Option,?> parseCommandLine(String[] args) {
-    Map<Option,Object> result = new LinkedHashMap<Option,Object>();
+  private static Map<Option, ?> parseCommandLine(String[] args) {
+    Map<Option, Object> result = new LinkedHashMap<>();
     for (int index = 0; index < args.length; index++) {
       switch (args[index]) {
         case "-help":
@@ -511,7 +525,6 @@ public class SzApiServer
   }
 
   /**
-   *
    * @return
    */
   private static String getVersionString() {
@@ -521,7 +534,6 @@ public class SzApiServer
   }
 
   /**
-   *
    * @return
    */
   private static String getUsageString() {
@@ -544,6 +556,7 @@ public class SzApiServer
     pw.println();
     pw.println("   -httpPort [port-number]");
     pw.println("        Sets the port for HTTP communication.  Defaults to 2080.");
+    pw.println("        Specify 0 for a randomly selected port number.");
     pw.println();
     pw.println("   -bindAddr [ip-address|loopback|all]");
     pw.println("        Sets the port for HTTP bind address communication.");
@@ -569,16 +582,15 @@ public class SzApiServer
   }
 
   /**
-   *
    * @param context
    * @param packageName
    * @param path
    * @param initOrder
    */
-  private static void addJerseyServlet(ServletContextHandler  context,
-                                       String                 packageName,
-                                       String                 path,
-                                       int                    initOrder) {
+  private static void addJerseyServlet(ServletContextHandler context,
+                                       String packageName,
+                                       String path,
+                                       int initOrder) {
     ServletHolder jerseyServlet = context.addServlet(
         org.glassfish.jersey.servlet.ServletContainer.class, path);
 
@@ -601,7 +613,6 @@ public class SzApiServer
   }
 
   /**
-   *
    * @param context
    * @param path
    * @param viaHost
@@ -610,12 +621,11 @@ public class SzApiServer
    * @param initOrder
    */
   private static void addProxyServlet(ServletContextHandler context,
-                                      String                path,
-                                      String                viaHost,
-                                      boolean               preserveHost,
-                                      String                hostHeader,
-                                      int                   initOrder)
-  {
+                                      String path,
+                                      String viaHost,
+                                      boolean preserveHost,
+                                      String hostHeader,
+                                      int initOrder) {
     ServletHolder proxyServlet = context.addServlet(
         org.eclipse.jetty.proxy.ProxyServlet.class, path);
 
@@ -631,11 +641,10 @@ public class SzApiServer
   }
 
   /**
-   *
    * @param args
    * @throws Exception
    */
-  public static void main( String[] args )
+  public static void main(String[] args)
       throws Exception {
 
     Map<Option, ?> options = null;
@@ -681,12 +690,10 @@ public class SzApiServer
   }
 
   /**
-   *
    * @param options
    * @return
    */
-  public static boolean initialize(Map<Option, ?> options)
-  {
+  private static boolean initialize(Map<Option, ?> options) {
     if (options.containsKey(Option.HELP)) {
       System.out.println(SzApiServer.getUsageString());
       return false;
@@ -700,28 +707,133 @@ public class SzApiServer
     }
 
     synchronized (SzApiServer.class) {
+      if (SzApiServer.INSTANCE != null) {
+        throw new IllegalStateException("Server already initialized!");
+      }
 
-    }
-    try {
-      SzApiServer.INSTANCE = new SzApiServer(options);
+      try {
+        SzApiServer.INSTANCE = new SzApiServer(options);
 
-    } catch (RuntimeException e) {
-      e.printStackTrace();
-      throw e;
+      } catch (RuntimeException e) {
+        e.printStackTrace();
+        throw e;
 
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw new RuntimeException(e);
+      }
     }
     return true;
   }
 
   /**
+   * Constructs with the specified parameters.
    *
-   * @param options
-   * @throws Exception
+   * @param httpPort The HTTP port to bind to.  Use zero to bind to a random
+   *                 port and <tt>null</tt> to bind to the default port.
+   *
+   * @param bindAddress The {@link InetAddress} for the address to bind to.
+   *                    If <tt>null</tt> then the loopback address is used.
+   *
+   * @param moduleName The module name to bind to.  If <tt>null</tt> then
+   *                   the {@link #DEFAULT_MODULE_NAME} is used.
+   *
+   * @param iniFile The non-null {@link File} with which to initialize.
+   *
+   * @param verbose Whether or not to initialize as verbose or not.  If
+   *                <tt>null</tt> then the default setting is invoked.
+   *
+   * @throws Exception If a failure occurs.
    */
-  private SzApiServer(Map<Option, ?> options) throws Exception {
+  public SzApiServer(Integer      httpPort,
+                     InetAddress  bindAddress,
+                     String       moduleName,
+                     File         iniFile,
+                     Boolean      verbose)
+    throws Exception
+  {
+    this(null, httpPort, bindAddress, moduleName, iniFile, verbose);
+  }
+
+  /**
+   * Constructs with the specified parameters.
+   *
+   * @param accessToken The {@link AccessToken} for later accessing privileged
+   *                    functions.
+   *
+   * @param httpPort The HTTP port to bind to.  Use zero to bind to a random
+   *                 port and <tt>null</tt> to bind to the default port.
+   *
+   * @param bindAddress The {@link InetAddress} for the address to bind to.
+   *                    If <tt>null</tt> then the loopback address is used.
+   *
+   * @param moduleName The module name to bind to.  If <tt>null</tt> then
+   *                   the {@link #DEFAULT_MODULE_NAME} is used.
+   *
+   * @param iniFile The non-null {@link File} with which to initialize.
+   *
+   * @param verbose Whether or not to initialize as verbose or not.  If
+   *                <tt>null</tt> then the default setting is invoked.
+   *
+   * @throws Exception If a failure occurs.
+   */
+  public SzApiServer(AccessToken  accessToken,
+                     Integer      httpPort,
+                     InetAddress  bindAddress,
+                     String       moduleName,
+                     File         iniFile,
+                     Boolean      verbose)
+    throws Exception
+  {
+    this(accessToken,
+         buildOptionsMap(httpPort, bindAddress, moduleName, iniFile, verbose));
+  }
+
+  /**
+   * Internal method to build an options map.
+   */
+  private static Map<Option, ?> buildOptionsMap(Integer      httpPort,
+                                                InetAddress  bindAddress,
+                                                String       moduleName,
+                                                File         iniFile,
+                                                Boolean      verbose)
+  {
+    Map<Option, Object> map = new HashMap<>();
+    if (httpPort != null)     map.put(Option.HTTP_PORT, httpPort);
+    if (bindAddress != null)  map.put(Option.BIND_ADDRESS, bindAddress);
+    if (moduleName != null)   map.put(Option.MODULE_NAME, moduleName);
+    if (iniFile != null)      map.put(Option.INI_FILE, iniFile);
+    if (verbose != null)      map.put(Option.VERBOSE, verbose);
+    return map;
+  }
+
+  /**
+   * Constructs with the specified parameters.
+   *
+   * @param options The options with which to initialize.
+   * @throws Exception If a failure occurs.
+   */
+  private SzApiServer(Map<Option, ?> options)
+      throws Exception {
+
+    this(null, options);
+  }
+
+  /**
+   * Constructs with the specified parameters.
+   *
+   * @param token The {@link AccessToken} for later accessing privileged
+   *              functions.
+   *
+   * @param options The options with which to initialize.
+   *
+   * @throws Exception If a failure occurs.
+   */
+  private SzApiServer(AccessToken token, Map<Option, ?> options)
+      throws Exception
+    {
+    this.accessToken = token;
+
     this.httpPort = 2080;
     if (options.containsKey(Option.HTTP_PORT)) {
       this.httpPort = (Integer) options.get(Option.HTTP_PORT);
@@ -882,6 +994,52 @@ public class SzApiServer
     thread.start();
   }
 
+  /**
+   *
+   */
+  private void assertNotShutdown() {
+    if (this.isShutdown()) {
+      throw new IllegalStateException(
+          "This API server instance is already shutdown.");
+    }
+  }
+
+  /**
+   * Checks if this instance has been shutdown.
+   *
+   * @return <tt>true</tt> if this instance has been shutdown, otherwise
+   *         <tt>false</tt>.
+   */
+  public boolean isShutdown() {
+    synchronized (this.joinMonitor) {
+      return this.completed;
+    }
+  }
+
+  /**
+   * Shuts down this instance if the specified {@link AccessToken} matches
+   * the token with which this instance was constructed.
+   *
+   * @param token The {@link AccessToken} for privileged access.
+   *
+   * @throws UnsupportedOperationException If this instance was not constructed
+   *                                       with an {@link AccessToken}.
+   *
+   * @throws IllegalArgumentException If the specified {@link AccessToken} does
+   *                                  not match the one with which this instance
+   *                                  was constructed.
+   */
+  public void shutdown(AccessToken token) {
+    if (this.accessToken == null) {
+      throw new UnsupportedOperationException(
+          "This operation is not supported for this instance.");
+    }
+    if (this.accessToken != token) {
+      throw new IllegalArgumentException(
+          "The specified AccessToken does not provide access to shutdown.");
+    }
+    this.shutdown();
+  }
 
   /**
    * Internal method for handling cleanup on shutdown.

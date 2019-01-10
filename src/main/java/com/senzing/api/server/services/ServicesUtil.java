@@ -119,15 +119,40 @@ public class ServicesUtil {
   }
 
   /**
-   * Creates an {@link BadRequestException} and builds a response
+   * Creates an {@link NotFoundException} and builds a response
    * with an {@link SzErrorResponse} using the specified self link.
-   *
-   * @param errorMessage The error message.
    *
    * @param httpMethod The HTTP method for the request.
    *
    * @param selfLink The link to the service to use in building the
    *                 {@link SzErrorResponse}.
+   *
+   * @param errorMessage The error message.
+   *
+   * @return The {@link InternalServerErrorException}
+   */
+  static NotFoundException newNotFoundException(
+      SzHttpMethod  httpMethod,
+      String        selfLink,
+      String        errorMessage)
+  {
+    Response.ResponseBuilder builder = Response.status(404);
+    builder.entity(
+        new SzErrorResponse(
+            httpMethod, 404, selfLink, errorMessage));
+    return new NotFoundException(builder.build());
+  }
+
+  /**
+   * Creates an {@link BadRequestException} and builds a response
+   * with an {@link SzErrorResponse} using the specified self link.
+   *
+   * @param httpMethod The HTTP method for the request.
+   *
+   * @param selfLink The link to the service to use in building the
+   *                 {@link SzErrorResponse}.
+   *
+   * @param errorMessage The error message.
    *
    * @return The {@link BadRequestException} that was created with the
    *         specified http method and self link.

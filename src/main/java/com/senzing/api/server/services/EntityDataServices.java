@@ -8,11 +8,9 @@ import com.senzing.util.JsonUtils;
 import javax.json.*;
 import javax.ws.rs.*;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static com.senzing.api.model.SzHttpMethod.GET;
+import static com.senzing.api.model.SzHttpMethod.*;
 import static com.senzing.api.server.services.ServicesUtil.*;
 
 /**
@@ -24,6 +22,133 @@ public class EntityDataServices {
   private static final int DATA_SOURCE_NOT_FOUND_CODE = 27;
 
   private static final int RECORD_NOT_FOUND_CODE = 33;
+
+  @POST
+  @Path("data-sources/{dataSourceCode}/records")
+  public SzLoadRecordResponse loadRecord(
+      @PathParam("dataSourceCode") String dataSourceCode,
+      @QueryParam("loadId") String loadId,
+      String recordJsonData)
+  {
+    SzApiServer server = SzApiServer.getInstance();
+    dataSourceCode = dataSourceCode.toUpperCase();
+
+    final String dataSource = dataSourceCode;
+
+    final String normalizedLoadId = normalizeString(loadId);
+
+    return server.executeInThread(() -> {
+      String selfLink = server.makeLink(
+          "/data-sources/" + urlEncode(dataSource) + "/records");
+
+      String recordText = ensureJsonFields(
+        POST,
+        selfLink,
+        recordJsonData,
+        Collections.singletonMap("DSRC_CODE", dataSource));
+
+      try {
+        // get the engine API and the config API
+        G2Engine engineApi = server.getEngineApi();
+
+        checkDataSource(POST, selfLink, dataSource, server);
+
+        StringBuffer sb = new StringBuffer();
+
+        int result = engineApi.addRecordWithReturnedRecordID(dataSource,
+                                                             sb,
+                                                             recordText,
+                                                             normalizedLoadId);
+        if (result != 0) {
+          throw newWebApplicationException(POST, selfLink, engineApi);
+        }
+
+        String recordId = sb.toString().trim();
+
+        // construct the response
+        SzLoadRecordResponse response = new SzLoadRecordResponse(
+            POST, 200, selfLink, recordId);
+
+        // return the response
+        return response;
+
+      } catch (WebApplicationException e) {
+        throw e;
+
+      } catch (Exception e) {
+        throw ServicesUtil.newInternalServerErrorException(POST, selfLink, e);
+      }
+
+    });
+  }
+
+  @PUT
+  @Path("data-sources/{dataSourceCode}/records/{recordId}")
+  public SzLoadRecordResponse loadRecord(
+      @PathParam("dataSourceCode") String dataSourceCode,
+      @PathParam("recordId") String recordId,
+      @QueryParam("loadId") String loadId,
+      String recordJsonData)
+  {
+    SzApiServer server = SzApiServer.getInstance();
+    dataSourceCode = dataSourceCode.toUpperCase();
+
+    final String dataSource = dataSourceCode;
+
+    final String normalizedLoadId = normalizeString(loadId);
+
+    return server.executeInThread(() -> {
+      String selfLink = server.makeLink(
+          "/data-sources/" + urlEncode(dataSource) + "/records/"
+          + urlEncode(recordId));
+
+      Map<String,String> map = new HashMap<>();
+      map.put("DSRC_CODE", dataSource);
+      map.put("RECORD_ID", recordId);
+
+      String recordText = ensureJsonFields(PUT,
+                                           selfLink,
+                                           recordJsonData,
+                                           map);
+
+      try {
+        // get the engine API and the config API
+        G2Engine engineApi = server.getEngineApi();
+
+        Set<String> dataSources = server.getDataSources();
+
+        if (!dataSources.contains(dataSource)) {
+          throw newNotFoundException(
+              POST, selfLink,
+              "The specified data source is not recognized: " + dataSource);
+        }
+
+        StringBuffer sb = new StringBuffer();
+
+        int result = engineApi.addRecord(dataSource,
+                                         recordId,
+                                         recordText,
+                                         normalizedLoadId);
+        if (result != 0) {
+          throw newWebApplicationException(PUT, selfLink, engineApi);
+        }
+
+        // construct the response
+        SzLoadRecordResponse response = new SzLoadRecordResponse(
+            PUT, 200, selfLink, recordId);
+
+        // return the response
+        return response;
+
+      } catch (WebApplicationException e) {
+        throw e;
+
+      } catch (Exception e) {
+        throw ServicesUtil.newInternalServerErrorException(PUT, selfLink, e);
+      }
+
+    });
+  }
 
   @GET
   @Path("data-sources/{dataSourceCode}/records/{recordId}")
@@ -484,6 +609,83 @@ public class EntityDataServices {
     }
     if (nativeJson.trim().length() == 0) {
       throw newNotFoundException(GET, selfLink);
+    }
+  }
+
+  /**
+   *
+   */
+  private static String normalizeString(String text) {
+    if (text == null) return null;
+    if (text.trim().length() == 0) return null;
+    return text.trim();
+  }
+
+  /**
+   * Ensures the specified data source exists for the server and thows a
+   * NotFoundException if not.
+   *
+   * @throws NotFoundException If the data source is not found.
+   */
+  private static void checkDataSource(SzHttpMethod  httpMethod,
+                                      String        selfLink,
+                                      String        dataSource,
+                                      SzApiServer   apiServer)
+    throws NotFoundException
+  {
+    Set<String> dataSources = apiServer.getDataSources();
+
+    if (!dataSources.contains(dataSource)) {
+      throw newNotFoundException(
+          POST, selfLink,
+          "The specified data source is not recognized: " + dataSource);
+    }
+  }
+
+  /**
+   * Ensures the JSON fields in the map are in the specified JSON text.
+   * This is a utility method.
+   */
+  private static String ensureJsonFields(SzHttpMethod         httpMethod,
+                                         String               selfLink,
+                                         String               jsonText,
+                                         Map<String, String>  map)
+  {
+    try {
+      JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
+      JsonObjectBuilder jsonBuilder = Json.createObjectBuilder(jsonObject);
+
+      map.entrySet().forEach(entry -> {
+        String key = entry.getKey();
+        String val = entry.getValue();
+
+        String jsonVal = JsonUtils.getString(jsonObject, key.toUpperCase());
+        if (jsonVal == null) {
+          jsonVal = JsonUtils.getString(jsonObject, key.toLowerCase());
+        }
+        if (jsonVal != null && jsonVal.trim().length() > 0) {
+          if (!jsonVal.equalsIgnoreCase(val)) {
+            throw ServicesUtil.newBadRequestException(
+                httpMethod, selfLink,
+                key + " from path and from request body do not match.  "
+                    + "fromPath=[ " + val + " ], fromRequestBody=[ "
+                    + jsonVal + " ]");
+          }
+        } else {
+          // we need to add the value for the key
+          jsonBuilder.add(key, val);
+        }
+      });
+
+      return JsonUtils.toJsonText(jsonBuilder);
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      throw ServicesUtil.newBadRequestException(httpMethod,
+                                                selfLink,
+                                                e.getMessage());
     }
   }
 }

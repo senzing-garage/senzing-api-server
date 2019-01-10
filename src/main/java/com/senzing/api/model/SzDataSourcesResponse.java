@@ -21,7 +21,7 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
 
   /**
    * Constructs with only the HTTP method and the self link, leaving the
-   * license info data to be initialized later.
+   * data sources to be added later.
    *
    * @param httpMethod The {@link SzHttpMethod}.
    *
