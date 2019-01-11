@@ -1052,7 +1052,11 @@ public class SzApiServer {
   private void shutdown() {
     if (this.jettyServer != null) {
       synchronized (this.jettyServer) {
-        this.jettyServer.destroy();
+        try {
+          this.jettyServer.destroy();
+        } catch (Exception e) {
+          // ignore
+        }
       }
     }
     if (this.fileMonitor != null) {
