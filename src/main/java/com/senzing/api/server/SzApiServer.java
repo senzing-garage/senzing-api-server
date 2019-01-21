@@ -900,7 +900,7 @@ public class SzApiServer {
     this.evaluateConfig(config, dataSourceSet, ftypeCodeMap, attrCodeMap);
 
     this.dataSources              = Collections.unmodifiableSet(dataSourceSet);
-    this.featureToAttrClassMap = Collections.unmodifiableMap(ftypeCodeMap);
+    this.featureToAttrClassMap    = Collections.unmodifiableMap(ftypeCodeMap);
     this.attrCodeToAttrClassMap   = Collections.unmodifiableMap(attrCodeMap);
 
     // setup a servlet context handler
@@ -917,14 +917,14 @@ public class SzApiServer {
     RewriteHandler rewriteHandler = new RewriteHandler();
     rewriteHandler.setRewritePathInfo(true);
     rewriteHandler.setRewriteRequestURI(true);
-    RewriteRegexRule rewiteRule = null;
+    RewriteRegexRule rewriteRule = null;
     TerminatingRegexRule terminatingRule = null;
     terminatingRule = new TerminatingRegexRule("/sz/api/(.*)");
     rewriteHandler.addRule(terminatingRule);
-    rewiteRule = new RewriteRegexRule();
-    rewiteRule.setRegex("/sz/[^\\.]+$");
-    rewiteRule.setReplacement("/sz/");
-    rewriteHandler.addRule(rewiteRule);
+    rewriteRule = new RewriteRegexRule();
+    rewriteRule.setRegex("/sz/[^\\.]+$");
+    rewriteRule.setReplacement("/sz/");
+    rewriteHandler.addRule(rewriteRule);
 
     rewriteHandler.setHandler(context);
 
