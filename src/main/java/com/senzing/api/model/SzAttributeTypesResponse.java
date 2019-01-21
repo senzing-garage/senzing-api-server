@@ -3,16 +3,17 @@ package com.senzing.api.model;
 import java.util.*;
 
 /**
- * The response containing a set of data source codes.  Typically this is the
- * list of all configured data source codes.
+ * The response containing a list of attribute types.  Typically this is the
+ * list of all configured attribute types (excluding the "internal" ones).
  *
  */
-public class SzDataSourcesResponse extends SzResponseWithRawData
+public class SzAttributeTypesResponse extends SzResponseWithRawData
 {
   /**
-   * The set of data source codes.
+   * The list of {@link SzAttributeType} instances describing the attribute
+   * types.
    */
-  private Set<String> dataSources;
+  private List<SzAttributeType> attributeTypes;
 
   /**
    * The data for this instance.
@@ -29,11 +30,11 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
    *
    * @param selfLink The string URL link to generate this response.
    */
-  public SzDataSourcesResponse(SzHttpMethod httpMethod,
-                               int          httpStatusCode,
-                               String       selfLink) {
+  public SzAttributeTypesResponse(SzHttpMethod httpMethod,
+                                  int          httpStatusCode,
+                                  String       selfLink) {
     super(httpMethod, httpStatusCode, selfLink);
-    this.dataSources = new LinkedHashSet<>();
+    this.attributeTypes = new LinkedList<>();
   }
 
   /**
@@ -46,28 +47,31 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
   }
 
   /**
-   * Adds the specified data source providing the specified data source
-   * is not already containe
+   * Adds the specified {@link SzAttributeType}.
    *
-   * @param dataSource The data source code to add.
+   * @param attributeType The {@link SzAttributeType} to add.
    */
-  public void addDataSource(String dataSource) {
-    dataSource = dataSource.trim().toUpperCase();
-    if (this.dataSources.contains(dataSource)) return;
-    this.dataSources.add(dataSource);
+  public void addAttributeType(SzAttributeType attributeType) {
+    if (attributeType == null) {
+      throw new NullPointerException(
+          "Cannot add a null attribute type.");
+    }
+    this.attributeTypes.add(attributeType);
   }
 
   /**
-   * Sets the specified {@link Set} of data sources using the
-   * specified {@link Collection} of data sources (removing duplicates).
+   * Sets the specified {@link List} of {@linkplain SzAttributeType attribute
+   * types} using the specified {@link Collection} of {@link SzAttributeType}
+   * instances.
    *
-   * @param dataSources The {@link Collection} of data sources to set.
+   * @param attributeTypes The {@link Collection} of {@link SzAttributeType}
+   *                       instances.
    */
-  public void setDataSources(Collection<String> dataSources)
+  public void setAttributeTypes(Collection<SzAttributeType> attributeTypes)
   {
-    this.dataSources.clear();
-    if (dataSources != null) {
-      this.dataSources.addAll(dataSources);
+    this.attributeTypes.clear();
+    if (attributeTypes != null) {
+      this.attributeTypes.addAll(attributeTypes);
     }
   }
 
@@ -83,13 +87,14 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
     }
 
     /**
-     * Gets the unmodifiable {@link Set} of data sources.
+     * Gets the unmodifiable {@link List} of {@link SzAttributeType} instances.
      *
-     * @return The unmodifiable {@link Set} of data sources.
+     * @return The unmodifiable {@link List} of {@link SzAttributeType}
+     *         instances.
      */
-    public Set<String> getDataSources() {
-      Set<String> set = SzDataSourcesResponse.this.dataSources;
-      return Collections.unmodifiableSet(set);
+    public List<SzAttributeType> getAttributeTypes() {
+      List<SzAttributeType> list = SzAttributeTypesResponse.this.attributeTypes;
+      return Collections.unmodifiableList(list);
     }
   }
 }

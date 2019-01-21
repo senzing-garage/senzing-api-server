@@ -11,6 +11,11 @@ public class SzLicenseResponse extends SzResponseWithRawData {
   private SzLicenseInfo licenseInfo;
 
   /**
+   * The data for this instance.
+   */
+  private Data data = new Data();
+
+  /**
    * Constructs with only the HTTP method and the self link, leaving the
    * license info data to be initialized later.
    *
@@ -43,13 +48,13 @@ public class SzLicenseResponse extends SzResponseWithRawData {
   }
 
   /**
-   * Returns the data associated with this response which is an
+   * Returns the {@link Data} associated with this response which contains an
    * {@link SzLicenseInfo}.
    *
    * @return The data associated with this response.
    */
-  public SzLicenseInfo getData() {
-    return this.licenseInfo;
+  public Data getData() {
+    return this.data;
   }
 
   /**
@@ -57,7 +62,29 @@ public class SzLicenseResponse extends SzResponseWithRawData {
    *
    * @param data The {@link SzLicenseInfo} describing the license.
    */
-  public void setData(SzLicenseInfo data) {
+  public void setLicense(SzLicenseInfo data) {
     this.licenseInfo = data;
   }
+
+  /**
+   * Inner class to represent the data section for this response.
+   */
+  public class Data {
+    /**
+     * Private default constructor.
+     */
+    private Data() {
+      // do nothing
+    }
+
+    /**
+     * Gets the {@link SzLicenseInfo} describing the license.
+     *
+     * @return The {@link SzLicenseInfo} describing the license.
+     */
+    public SzLicenseInfo getLicense() {
+      return SzLicenseResponse.this.licenseInfo;
+    }
+  }
+
 }

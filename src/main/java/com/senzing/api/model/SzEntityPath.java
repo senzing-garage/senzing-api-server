@@ -118,16 +118,11 @@ public class SzEntityPath {
       List<SzEntityPath>      list,
       JsonArray               jsonArray)
   {
-    for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
-      if (list == null) {
-        list = new ArrayList<>(jsonArray.size());
-      }
-      list.add(parseEntityPath(jsonObject));
+    if (list == null) {
+      list = new ArrayList<>(jsonArray.size());
     }
-    if (list != null) {
-      list = Collections.unmodifiableList(list);
-    } else {
-      list = Collections.emptyList();
+    for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
+      list.add(parseEntityPath(jsonObject));
     }
     return list;
   }

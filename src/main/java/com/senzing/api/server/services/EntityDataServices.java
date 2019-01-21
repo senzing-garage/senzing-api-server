@@ -45,7 +45,7 @@ public class EntityDataServices {
         POST,
         selfLink,
         recordJsonData,
-        Collections.singletonMap("DSRC_CODE", dataSource));
+        Collections.singletonMap("DATA_SOURCE", dataSource));
 
       try {
         // get the engine API and the config API
@@ -103,7 +103,7 @@ public class EntityDataServices {
           + urlEncode(recordId));
 
       Map<String,String> map = new HashMap<>();
-      map.put("DSRC_CODE", dataSource);
+      map.put("DATA_SOURCE", dataSource);
       map.put("RECORD_ID", recordId);
 
       String recordText = ensureJsonFields(PUT,

@@ -119,16 +119,11 @@ public class SzEntityFeature {
       List<SzEntityFeature> list,
       JsonArray             jsonArray)
   {
-    for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
-      if (list == null) {
-        list = new ArrayList<SzEntityFeature>(jsonArray.size());
-      }
-      list.add(parseEntityFeature(null, jsonObject));
+    if (list == null) {
+      list = new ArrayList<SzEntityFeature>(jsonArray.size());
     }
-    if (list != null) {
-      list = Collections.unmodifiableList(list);
-    } else {
-      list = Collections.emptyList();
+    for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
+      list.add(parseEntityFeature(null, jsonObject));
     }
     return list;
   }

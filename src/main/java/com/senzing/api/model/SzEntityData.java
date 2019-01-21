@@ -104,16 +104,12 @@ public class SzEntityData {
   {
     Function<String,String> mapper = featureToAttrClassMapper;
 
-    for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
-      if (list == null) {
-        list = new ArrayList<>(jsonArray.size());
-      }
-      list.add(parseEntityData(null, jsonObject, mapper));
+    if (list == null) {
+      list = new ArrayList<>(jsonArray.size());
     }
-    if (list != null) {
-      list = Collections.unmodifiableList(list);
-    } else {
-      list = Collections.emptyList();
+
+    for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
+      list.add(parseEntityData(null, jsonObject, mapper));
     }
     return list;
   }
@@ -132,7 +128,7 @@ public class SzEntityData {
    * @param featureToAttrClassMapper Mapping function to map feature names to
    *                                 attribute classes.
    *
-   * @return The populated (or created) {@link SzResolvedEntity}.
+   * @return The populated (or created) {@link SzEntityData}.
    */
   public static SzEntityData parseEntityData(
       SzEntityData            entityData,

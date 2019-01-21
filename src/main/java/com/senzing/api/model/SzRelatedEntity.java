@@ -93,20 +93,13 @@ public class SzRelatedEntity extends SzBaseRelatedEntity {
       JsonArray               jsonArray,
       Function<String,String> featureToAttrClassMapper)
   {
+    if (list == null) {
+      list = new ArrayList<>(jsonArray.size());
+    }
     for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
-
-      if (list == null) {
-        list = new ArrayList<>(jsonArray.size());
-      }
-
       list.add(parseRelatedEntity(null,
                                   jsonObject,
                                   featureToAttrClassMapper));
-    }
-    if (list != null) {
-      list = Collections.unmodifiableList(list);
-    } else {
-      list = Collections.emptyList();
     }
     return list;
   }

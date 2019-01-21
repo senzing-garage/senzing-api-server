@@ -1,14 +1,14 @@
 package com.senzing.api.model;
 
 /**
- * A response object that contains license data.
+ * A response object that contains attribute type data.
  *
  */
-public class SzLicenseResponse extends SzResponseWithRawData {
+public class SzAttributeTypeResponse extends SzResponseWithRawData {
   /**
-   * The {@link SzLicenseInfo} describing the license.
+   * The {@link SzAttributeType} describing the attribute type.
    */
-  private SzLicenseInfo licenseInfo;
+  private SzAttributeType attributeType;
 
   /**
    * The data for this instance.
@@ -17,39 +17,39 @@ public class SzLicenseResponse extends SzResponseWithRawData {
 
   /**
    * Constructs with only the HTTP method and the self link, leaving the
-   * license info data to be initialized later.
+   * attribute type data to be initialized later.
    *
    * @param httpMethod The {@link SzHttpMethod}.
    * @param httpStatusCode The HTTP response code.
    * @param selfLink The string URL link to generate this response.
    */
-  public SzLicenseResponse(SzHttpMethod httpMethod,
-                           int          httpStatusCode,
-                           String       selfLink) {
+  public SzAttributeTypeResponse(SzHttpMethod httpMethod,
+                                 int          httpStatusCode,
+                                 String       selfLink) {
     this(httpMethod, httpStatusCode, selfLink, null);
   }
 
   /**
-   * Constructs with the HTTP method, self link and the {@link SzLicenseInfo}
-   * describing the license.
+   * Constructs with the HTTP method, self link and the {@link SzAttributeType}
+   * describing the attribute type.
    *
    * @param httpMethod The {@link SzHttpMethod}.
    * @param httpStatusCode The HTTP response status code.
    * @param selfLink The string URL link to generate this response.
-   * @param data The {@link SzLicenseInfo} describing the license.
+   * @param data The {@link SzAttributeType} describing the attribute type.
    */
-  public SzLicenseResponse(SzHttpMethod   httpMethod,
-                           int            httpStatusCode,
-                           String         selfLink,
-                           SzLicenseInfo  data)
+  public SzAttributeTypeResponse(SzHttpMethod     httpMethod,
+                                 int              httpStatusCode,
+                                 String           selfLink,
+                                 SzAttributeType  data)
   {
     super(httpMethod, httpStatusCode, selfLink);
-    this.licenseInfo = data;
+    this.attributeType = data;
   }
 
   /**
    * Returns the {@link Data} associated with this response which contains an
-   * {@link SzLicenseInfo}.
+   * {@link SzAttributeType}.
    *
    * @return The data associated with this response.
    */
@@ -58,12 +58,13 @@ public class SzLicenseResponse extends SzResponseWithRawData {
   }
 
   /**
-   * Sets the data associated with this response with an {@link SzLicenseInfo}.
+   * Sets the data associated with this response with an
+   * {@link SzAttributeType}.
    *
-   * @param data The {@link SzLicenseInfo} describing the license.
+   * @param data The {@link SzAttributeType} describing the attribute type.
    */
-  public void setLicense(SzLicenseInfo data) {
-    this.licenseInfo = data;
+  public void setAttributeType(SzAttributeType data) {
+    this.attributeType = data;
   }
 
   /**
@@ -78,12 +79,12 @@ public class SzLicenseResponse extends SzResponseWithRawData {
     }
 
     /**
-     * Gets the {@link SzLicenseInfo} describing the license.
+     * Gets the {@link SzAttributeType} describing the attribute type.
      *
-     * @return The {@link SzLicenseInfo} describing the license.
+     * @return The {@link SzAttributeType} describing the attributeType.
      */
-    public SzLicenseInfo getLicense() {
-      return SzLicenseResponse.this.licenseInfo;
+    public SzAttributeType getAttributeType() {
+      return SzAttributeTypeResponse.this.attributeType;
     }
   }
 

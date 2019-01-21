@@ -60,7 +60,7 @@ public class AdminServices {
 
         SzLicenseResponse response
             = new SzLicenseResponse(GET, 200, selfLink);
-        response.setData(info);
+        response.setLicense(info);
         if (withRaw) response.setRawData(rawData);
         return response;
 

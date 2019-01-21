@@ -1,14 +1,8 @@
 package com.senzing.api.model;
 
-import javax.json.JsonArray;
 import javax.json.JsonObject;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-
-import static com.senzing.api.model.SzRelationshipType.*;
 
 public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
   /**
