@@ -67,6 +67,7 @@ version 1.4.x.  In order to install g2.jar you must:
 
  4) Setup your environment.  The API's rely on native libraries and the
     environment must be properly setup to find those libraries:
+
         * Linux
             ```console
             export SENZING_DIR=/opt/senzing
