@@ -129,7 +129,7 @@ public class WorkerThreadPool {
       // wait for an available worker thread
       while (this.available.size() == 0) {
         try {
-          this.wait(2000L);
+          this.available.wait(2000L);
         } catch (InterruptedException ignore) {
           // do nothing
         }
