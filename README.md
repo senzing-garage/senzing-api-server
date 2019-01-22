@@ -39,48 +39,48 @@ version 1.4.x.  In order to install g2.jar you must:
  3) Install the g2.jar file in your local Maven repository, replacing the
     `${SENZING_DIR}` and `${SENZING_VERSION}` variables as determined above:
 
-        * Linux:
-            ```console
-                export SENZING_DIR=/opt/senzing
-                export SENZING_VERSION=1.5.19022
+     * Linux:
+       ```console
+             export SENZING_DIR=/opt/senzing
+             export SENZING_VERSION=1.5.19022
 
-                mvn install:install-file \
-                    -Dfile=${SENZING_DIR}/g2/lib/g2.jar \
-                    -DgroupId=com.senzing \
-                    -DartifactId=g2 \
-                    -Dversion=${SENZING_VERSION} \
-                    -Dpackaging=jar
-            ```
+             mvn install:install-file \
+                 -Dfile=${SENZING_DIR}/g2/lib/g2.jar \
+                 -DgroupId=com.senzing \
+                 -DartifactId=g2 \
+                 -Dversion=${SENZING_VERSION} \
+                 -Dpackaging=jar
+       ```
 
-        * Windows:
-            ```console
-                set SENZING_DIR="C:\Program Files\Senzing"
-                set SENZING_VERSION=1.5.19022
+     * Windows:
+       ```console
+             set SENZING_DIR="C:\Program Files\Senzing"
+             set SENZING_VERSION=1.5.19022
 
-                mvn install:install-file \
-                    -Dfile=%SENZING_DIR%\g2\lib\g2.jar \
-                    -DgroupId=com.senzing \
-                    -DartifactId=g2 \
-                    -Dversion=%SENZING_VERSION% \
-                    -Dpackaging=jar
-            ```
+             mvn install:install-file \
+                 -Dfile=%SENZING_DIR%\g2\lib\g2.jar \
+                 -DgroupId=com.senzing \
+                 -DartifactId=g2 \
+                 -Dversion=%SENZING_VERSION% \
+                 -Dpackaging=jar
+       ```
 
  4) Setup your environment.  The API's rely on native libraries and the
     environment must be properly setup to find those libraries:
 
-        * Linux
-            ```console
-            export SENZING_DIR=/opt/senzing
+    * Linux
+       ```console
+          export SENZING_DIR=/opt/senzing
 
-            export LD_LIBRARY_PATH=${SENZING_DIR}/g2/lib:${SENZING_DIR}/g2/lib/debian:$LD_LIBRARY_PATH
-            ```
+          export LD_LIBRARY_PATH=${SENZING_DIR}/g2/lib:${SENZING_DIR}/g2/lib/debian:$LD_LIBRARY_PATH
+       ```
 
-        * Windows
-            ```console
-            set SENZING_DIR="C:\Program Files\Senzing"
+    * Windows
+      ```console
+          set SENZING_DIR="C:\Program Files\Senzing"
 
-            set Path=%SENZING_DIR%\g2\lib;$Path
-            ```
+          set Path=%SENZING_DIR%\g2\lib;$Path
+      ```
 
 ## Building
 
