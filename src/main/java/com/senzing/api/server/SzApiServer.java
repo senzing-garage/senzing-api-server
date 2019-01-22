@@ -32,6 +32,10 @@ import static com.senzing.util.WorkerThreadPool.Task;
  *
  */
 public class SzApiServer {
+  private static final int DEFAULT_PORT = 2080;
+
+  private static final int DEFAULT_CONCURRENCY = 8;
+
   private static final String JAR_FILE_NAME;
 
   private static final String JAR_BASE_URL;
@@ -50,10 +54,9 @@ public class SzApiServer {
     MODULE_NAME,
     INI_FILE,
     VERBOSE,
-    MONITOR_FILE;
+    MONITOR_FILE,
+    CONCURRENCY;
   }
-
-  ;
 
   public static final class AccessToken {
   }
@@ -104,6 +107,12 @@ public class SzApiServer {
    * The {@link InetAddress} for the server.
    */
   private InetAddress ipAddr;
+
+  /**
+   * The concurrency for the engine (e.g.: the number of threads in the
+   * engine thread pool).
+   */
+  private int concurrency;
 
   /**
    * The {@link G2Config} config API.
@@ -464,9 +473,16 @@ public class SzApiServer {
           break;
 
         case "-httpPort":
-          index++;
-          ensureArgument(args, index);
-          result.put(Option.HTTP_PORT, Integer.parseInt(args[index]));
+          {
+            index++;
+            ensureArgument(args, index);
+            int port = Integer.parseInt(args[index]);
+            if (port < 0) {
+              throw new IllegalArgumentException(
+                  "Negative port numbers are not allowed: " + port);
+            }
+            result.put(Option.HTTP_PORT, port);
+          }
           break;
 
         case "-bindAddr":
@@ -488,6 +504,19 @@ public class SzApiServer {
             throw new IllegalArgumentException(e);
           }
           result.put(Option.BIND_ADDRESS, addr);
+          break;
+
+        case "-concurrency":
+          {
+            index++;
+            ensureArgument(args, index);
+            int threadCount = Integer.parseInt(args[index]);
+            if (threadCount <= 0) {
+              throw new IllegalArgumentException(
+                  "Negative thread counts are not allowed: " + threadCount);
+            }
+            result.put(Option.CONCURRENCY, threadCount);
+          }
           break;
 
         case "-iniFile":
@@ -554,16 +583,23 @@ public class SzApiServer {
     pw.println();
     pw.println("   -version");
     pw.println("        Should be the first and only option if provided.");
-    pw.println("        Causes the version of the G2 Web Server to be displayed.");
+    pw.println("        Causes the version of the G2 REST API Server to be displayed.");
     pw.println("        NOTE: If this option is provided, the server will not start.");
     pw.println();
     pw.println("   -httpPort [port-number]");
-    pw.println("        Sets the port for HTTP communication.  Defaults to 2080.");
+    pw.println("        Sets the port for HTTP communication.  Defaults to "
+                   + DEFAULT_PORT + ".");
     pw.println("        Specify 0 for a randomly selected port number.");
     pw.println();
     pw.println("   -bindAddr [ip-address|loopback|all]");
     pw.println("        Sets the port for HTTP bind address communication.");
-    pw.println("        Defaults to loopback.");
+    pw.println("        Defaults to the loopback address.");
+    pw.println();
+    pw.println("   -concurrency [thread-count]");
+    pw.println("        Sets the number of threads available for executing ");
+    pw.println("        Senzing API functions (i.e.: the number of engine threads).");
+    pw.println("        If not specified, then this defaults to "
+                   + DEFAULT_CONCURRENCY + ".");
     pw.println();
     pw.println("   -moduleName [module-name]");
     pw.println("        The module name to initialize with.  Defaults to '"
@@ -598,7 +634,6 @@ public class SzApiServer {
         org.glassfish.jersey.servlet.ServletContainer.class, path);
 
     jerseyServlet.setInitOrder(initOrder);
-    System.out.println("PACKAGE NAME: " + packageName);
 
     jerseyServlet.setInitParameter(
         "jersey.config.server.provider.packages",
@@ -738,6 +773,9 @@ public class SzApiServer {
    * @param bindAddress The {@link InetAddress} for the address to bind to.
    *                    If <tt>null</tt> then the loopback address is used.
    *
+   * @param concurrency The number of threads to create for the engine, or
+   *                    <tt>null</tt> for the default number of threads.
+   *
    * @param moduleName The module name to bind to.  If <tt>null</tt> then
    *                   the {@link #DEFAULT_MODULE_NAME} is used.
    *
@@ -750,12 +788,13 @@ public class SzApiServer {
    */
   public SzApiServer(Integer      httpPort,
                      InetAddress  bindAddress,
+                     Integer      concurrency,
                      String       moduleName,
                      File         iniFile,
                      Boolean      verbose)
     throws Exception
   {
-    this(null, httpPort, bindAddress, moduleName, iniFile, verbose);
+    this(null, httpPort, bindAddress, concurrency, moduleName, iniFile, verbose);
   }
 
   /**
@@ -770,6 +809,9 @@ public class SzApiServer {
    * @param bindAddress The {@link InetAddress} for the address to bind to.
    *                    If <tt>null</tt> then the loopback address is used.
    *
+   * @param concurrency The number of threads to create for the engine, or
+   *                    <tt>nul</tt> for the default number of threads.
+   *
    * @param moduleName The module name to bind to.  If <tt>null</tt> then
    *                   the {@link #DEFAULT_MODULE_NAME} is used.
    *
@@ -783,13 +825,19 @@ public class SzApiServer {
   public SzApiServer(AccessToken  accessToken,
                      Integer      httpPort,
                      InetAddress  bindAddress,
+                     Integer      concurrency,
                      String       moduleName,
                      File         iniFile,
                      Boolean      verbose)
     throws Exception
   {
     this(accessToken,
-         buildOptionsMap(httpPort, bindAddress, moduleName, iniFile, verbose));
+         buildOptionsMap(httpPort,
+                         bindAddress,
+                         concurrency,
+                         moduleName,
+                         iniFile,
+                         verbose));
   }
 
   /**
@@ -797,6 +845,7 @@ public class SzApiServer {
    */
   private static Map<Option, ?> buildOptionsMap(Integer      httpPort,
                                                 InetAddress  bindAddress,
+                                                Integer      concurrency,
                                                 String       moduleName,
                                                 File         iniFile,
                                                 Boolean      verbose)
@@ -804,6 +853,7 @@ public class SzApiServer {
     Map<Option, Object> map = new HashMap<>();
     if (httpPort != null)     map.put(Option.HTTP_PORT, httpPort);
     if (bindAddress != null)  map.put(Option.BIND_ADDRESS, bindAddress);
+    if (concurrency != null)  map.put(Option.CONCURRENCY, concurrency);
     if (moduleName != null)   map.put(Option.MODULE_NAME, moduleName);
     if (iniFile != null)      map.put(Option.INI_FILE, iniFile);
     if (verbose != null)      map.put(Option.VERBOSE, verbose);
@@ -837,13 +887,17 @@ public class SzApiServer {
     {
     this.accessToken = token;
 
-    this.httpPort = 2080;
+    this.httpPort = DEFAULT_PORT;
     if (options.containsKey(Option.HTTP_PORT)) {
       this.httpPort = (Integer) options.get(Option.HTTP_PORT);
     }
     this.ipAddr = InetAddress.getLoopbackAddress();
     if (options.containsKey(Option.BIND_ADDRESS)) {
       this.ipAddr = (InetAddress) options.get(Option.BIND_ADDRESS);
+    }
+    this.concurrency = DEFAULT_CONCURRENCY;
+    if (options.containsKey(Option.CONCURRENCY)) {
+      this.concurrency = (Integer) options.get(Option.CONCURRENCY);
     }
     this.moduleName = DEFAULT_MODULE_NAME;
     if (options.containsKey(Option.MODULE_NAME)) {
@@ -885,7 +939,11 @@ public class SzApiServer {
     }
 
     this.workerThreadPool
-        = new WorkerThreadPool(this.getClass().getName(), 8);
+        = new WorkerThreadPool(this.getClass().getName(), this.concurrency);
+
+    System.out.println(
+        "Created Senzing engine thread pool with " + this.concurrency
+        + " thread(s).");
 
     StringBuffer sb = new StringBuffer();
     this.g2Engine.exportConfig(sb);
