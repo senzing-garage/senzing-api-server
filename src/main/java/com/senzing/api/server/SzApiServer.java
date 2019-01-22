@@ -930,6 +930,7 @@ public class SzApiServer {
 
     // create our server (TODO: add connectors for HTTP + HTTPS)
     this.jettyServer = new Server(new InetSocketAddress(ipAddr, httpPort));
+
     this.fileMonitor = null;
     if (options.containsKey(Option.MONITOR_FILE)) {
       this.fileMonitor = (FileMonitor) options.get(Option.MONITOR_FILE);
@@ -1088,7 +1089,12 @@ public class SzApiServer {
   public <T, E extends Exception> T executeInThread(Task<T, E> task)
     throws E
   {
-    return this.workerThreadPool.execute(task);
+    try {
+      return this.workerThreadPool.execute(task);
+    } catch (RuntimeException e) {
+      e.printStackTrace();
+      throw e;
+    }
   }
 
   /**
