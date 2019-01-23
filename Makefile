@@ -19,7 +19,9 @@ GIT_VERSION_LONG := $(shell git describe --always --tags --long --dirty)
 
 # Docker.
 
-DOCKER_IMAGE := $(GIT_REPOSITORY_NAME):$(GIT_VERSION)
+DOCKER_IMAGE_PACKAGE := $(GIT_REPOSITORY_NAME)-package:$(GIT_VERSION)
+DOCKER_IMAGE_TAG ?= $(GIT_REPOSITORY_NAME):$(GIT_VERSION)
+DOCKER_IMAGE_NAME := senzing/rest-api-server-java
 
 # -----------------------------------------------------------------------------
 # The first "make" target runs as default.
@@ -57,19 +59,19 @@ package:
 docker-package:
 	# Make docker image.
 
-	docker rmi --force $(DOCKER_IMAGE)
+	docker rmi --force $(DOCKER_IMAGE_PACKAGE)
 	docker build \
 		--build-arg BUILD_VERSION=$(GIT_VERSION) \
 		--build-arg GIT_REPOSITORY_NAME=$(GIT_REPOSITORY_NAME) \
-		--tag $(DOCKER_IMAGE) \
-		--file Dockerfile-build \
+		--tag $(DOCKER_IMAGE_PACKAGE) \
+		--file Dockerfile-package \
 		.
 
 	# Run docker image which creates a docker container.
 	# Then, copy the maven output from the container to the local workstation.
 	# Finally, remove the docker container.
 
-	PID=$$(docker create $(DOCKER_IMAGE) /bin/bash); \
+	PID=$$(docker create $(DOCKER_IMAGE_PACKAGE) /bin/bash); \
 	docker cp $$PID:/$(GIT_REPOSITORY_NAME)/target .; \
 	docker rm -v $$PID
 
@@ -77,60 +79,26 @@ docker-package:
 # Docker-based builds
 # -----------------------------------------------------------------------------
 
-.PHONY: jar-build
-jar-build:
-	docker build \
-	    --tag $(DOCKER_IMAGE_NAME) \
-		--tag $(DOCKER_IMAGE_NAME):$(GIT_VERSION) \
-		.
-
-# -----------------------------------------------------------------------------
-# Docker-based builds
-# -----------------------------------------------------------------------------
-
-.PHONY: docker-build-jar
-docker-build-jar: docker-rmi-for-build-jar
-	docker build \
-	    --tag $(DOCKER_IMAGE_NAME)-jar \
-		--tag $(DOCKER_IMAGE_NAME)-jar:$(GIT_VERSION) \
-		--file Dockerfile-build \
-		.
-
-.PHONY: docker-build-base-jar
-docker-build-base-jar: docker-rmi-for-build-base-jar
-	docker build \
-		--tag $(DOCKER_IMAGE_TAG)-jar \
-		--file Dockerfile-build \
-		.
-
-
-
 .PHONY: docker-build
 docker-build: docker-rmi-for-build
 	docker build \
-	    --tag $(DOCKER_IMAGE_NAME) \
+		--build-arg SENZING_G2_JAR_PATHNAME=target/sz-api-server-1.5.0.jar \
+		--tag $(DOCKER_IMAGE_NAME) \
 		--tag $(DOCKER_IMAGE_NAME):$(GIT_VERSION) \
+		--file Dockerfile-build \
 		.
 
 .PHONY: docker-build-base
 docker-build-base: docker-rmi-for-build-base
 	docker build \
+		--build-arg SENZING_G2_JAR_PATHNAME=target/sz-api-server-1.5.0.jar \
 		--tag $(DOCKER_IMAGE_TAG) \
+		--file Dockerfile-build \
 		.
 
 # -----------------------------------------------------------------------------
 # Clean up targets
 # -----------------------------------------------------------------------------
-
-.PHONY: docker-rmi-for-build-jar
-docker-rmi-for-build-jar:
-	-docker rmi --force \
-		$(DOCKER_IMAGE_NAME)-jar:$(GIT_VERSION) \
-		$(DOCKER_IMAGE_NAME)-jar
-
-.PHONY: docker-rmi-for-build-base-jar
-docker-rmi-for-build-base-jar:
-	-docker rmi --force $(DOCKER_IMAGE_TAG)-jar
 
 .PHONY: docker-rmi-for-build
 docker-rmi-for-build:
@@ -143,7 +111,7 @@ docker-rmi-for-build-base:
 	-docker rmi --force $(DOCKER_IMAGE_TAG)
 
 .PHONY: clean
-clean: docker-rmi-for-build docker-rmi-for-build-base docker-rmi-for-build-base-jar docker-rmi-for-build-jar
+clean: docker-rmi-for-build docker-rmi-for-build-base
 
 # -----------------------------------------------------------------------------
 # Help

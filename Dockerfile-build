@@ -1,24 +1,38 @@
 ARG BASE_CONTAINER=java:latest
 FROM ${BASE_CONTAINER}
 
-ARG REFRESHED_AT=2018-09-17
-ARG GIT_REPOSITORY_NAME=unknown
+ENV REFRESHED_AT=2019-01-22
 
-RUN apt-get update
-RUN apt-get -y install \
-      make \
-      maven \
- && rm -rf /var/lib/apt/lists/*
- 
- # Copy the repository from the local host.
+# Service exposed on port 8080
 
-COPY . /${GIT_REPOSITORY_NAME}
+EXPOSE 8080
 
-# Run the "make" command to create the artifacts.
+# Copy files from host system.
 
-WORKDIR /${GIT_REPOSITORY_NAME}
-RUN make package
+ARG SENZING_G2_JAR_PATHNAME=target/sz-api-server.jar
+COPY ${SENZING_G2_JAR_PATHNAME} /app/
 
-# At runtime, run the following:
+# Set environment variables.
 
-CMD /bin/bash
+ENV SENZING_DIR=/opt/senzing
+ENV PYTHONPATH=${SENZING_DIR}/g2/python
+ENV LD_LIBRARY_PATH=${SENZING_DIR}/g2/lib:${SENZING_DIR}/g2/lib/debian;
+ENV SENZING_CONCURRENCY=8
+ENV SENZING_BIND_ADDR=all
+ENV SENZING_INI_FILE=${SENZING_DIR}/g2/python/G2Module.ini
+
+# Run the Senzing REST api server.
+
+WORKDIR /app
+
+#CMD ["java", "-jar", "sz-api-server-1.5.0.jar", \
+#     "-concurrency", "${SENZING_CONCURRENCY}", \
+#     "-httpPort", "8080", \
+#     "-bindAddr", "${SENZING_BIND_ADDR}" \
+#     "-iniFile", "${SENZING_INI_FILE}"]
+     
+CMD java -jar sz-api-server-1.5.0.jar \
+     -concurrency ${SENZING_CONCURRENCY} \
+     -httpPort 8080 \
+     -bindAddr ${SENZING_BIND_ADDR} \
+     -iniFile ${SENZING_INI_FILE}
