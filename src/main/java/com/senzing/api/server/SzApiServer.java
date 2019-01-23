@@ -930,7 +930,7 @@ public class SzApiServer {
     }
 
     this.g2Engine = new G2JNI();
-    this.g2Engine.init(moduleName, ini, verbose);
+    initResult = this.g2Engine.init(moduleName, ini, verbose);
     if (initResult < 0) {
       throw new RuntimeException(buildErrorMessage(
           "Failed to initialize G2Engine API",
