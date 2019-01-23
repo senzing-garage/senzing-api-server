@@ -1,0 +1,24 @@
+ARG BASE_CONTAINER=java:latest
+FROM ${BASE_CONTAINER}
+
+ARG REFRESHED_AT=2018-09-17
+ARG GIT_REPOSITORY_NAME=unknown
+
+RUN apt-get update
+RUN apt-get -y install \
+      make \
+      maven \
+ && rm -rf /var/lib/apt/lists/*
+ 
+ # Copy the repository from the local host.
+
+COPY . /${GIT_REPOSITORY_NAME}
+
+# Run the "make" command to create the artifacts.
+
+WORKDIR /${GIT_REPOSITORY_NAME}
+RUN make package
+
+# At runtime, run the following:
+
+CMD /bin/bash
