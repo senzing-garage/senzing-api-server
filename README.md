@@ -125,45 +125,46 @@ describing all available options.  For example:
   ```console
      cd target
 
-     java -jar sz-api-server-1.5.0.jar -help
+    $ java -jar sz-api-server-1.5.0.jar -help
 
 
-     java -jar sz-api-server-1.5.0.jar <options>
+    java -jar sz-api-server-1.5.0.jar <options>
 
-     <options> includes:
-        -help
-             Should be the first and only option if provided.
-             Causes this help messasge to be displayed.
-             NOTE: If this option is provided, the server will not start.
+    <options> includes:
+       -help
+            Should be the first and only option if provided.
+            Causes this help messasge to be displayed.
+            NOTE: If this option is provided, the server will not start.
 
-        -version
-             Should be the first and only option if provided.
-             Causes the version of the G2 REST API Server to be displayed.
-             NOTE: If this option is provided, the server will not start.
+       -version
+            Should be the first and only option if provided.
+            Causes the version of the G2 REST API Server to be displayed.
+            NOTE: If this option is provided, the server will not start.
 
-        -httpPort [port-number]
-             Sets the port for HTTP communication.  Defaults to 2080.
-             Specify 0 for a randomly selected port number.
+       -httpPort [port-number]
+            Sets the port for HTTP communication.  Defaults to 2080.
+            Specify 0 for a randomly selected port number.
 
-        -bindAddr [ip-address|loopback|all]
-             Sets the port for HTTP bind address communication.
-             Defaults to loopback.
+       -bindAddr [ip-address|loopback|all]
+            Sets the port for HTTP bind address communication.
+            Defaults to the loopback address.
 
-        -concurrency [thread-count]
-             Sets the number of threads available for executing Senzing
-             API functions (i.e.: the number of engine threads).
+       -concurrency [thread-count]
+            Sets the number of threads available for executing
+            Senzing API functions (i.e.: the number of engine threads).
+            If not specified, then this defaults to 8.
 
-        -moduleName [module-name]
-             The module name to initialize with.  Defaults to 'ApiServer'.
+       -moduleName [module-name]
+            The module name to initialize with.  Defaults to 'ApiServer'.
 
-        -iniFile [ini-file-path]
-             The path to the Senzing INI file to with which to initialize.
+       -iniFile [ini-file-path]
+            The path to the Senzing INI file to with which to initialize.
 
-        -verbose If specified then initialize in verbose mode.
+       -verbose If specified then initialize in verbose mode.
 
-        -monitorFile [filePath]
-             Specifies a file whose timestamp is monitored to determine
-             when to shutdown.
+       -monitorFile [filePath]
+            Specifies a file whose timestamp is monitored to determine
+            when to shutdown.
   ```
 
 For example, if you wanted to run the server on port 8080 and bind to all
