@@ -8,6 +8,20 @@ defined in by the [Senzing Rest API Proposal](https://github.com/Senzing/rest-ap
 The [Senzing API OAS specification](http://editor.swagger.io/?url=https://raw.githubusercontent.com/Senzing/rest-api-proposal/master/senzing-api.yaml)
 documents the available API methods, their parameters and the response formats.
 
+### Contents
+
+1. [Using Command Line](#using-command-line)
+    1. [Dependencies](#dependencies)
+    1. [Building](#building)
+    1. [Running](#running)
+1. [Using Docker](#using-docker)
+    1. [Build docker image](#build-docker-image)
+    1. [Configuration](#configuration)
+    1. [Run docker image](#run-docker-image)
+    1. [Run docker image in docker network](#run-docker-image-in-docker-network)
+    1. [Test docker image](#test-docker-image)
+1. [Errors](errors)
+
 ## Using Command Line
 
 ### Dependencies
@@ -248,7 +262,7 @@ network interfaces with a concurrency of 16 you would use:
     http://0.0.0.0/0.0.0.0:8080/
     ```
 
-1. Test Senzing REST API server.  Note: port 8889 on the localhost has been mapped to port 8080 in the docker container See `WEBAPP_PORT` definition.  Example:
+1. Test Senzing REST API server.  *Note:* port 8889 on the localhost has been mapped to port 8080 in the docker container See `WEBAPP_PORT` definition.  Example:
 
     ```console
     export SENZING_API_SERVICE=localhost:8889
@@ -258,3 +272,5 @@ network interfaces with a concurrency of 16 you would use:
     ```
 
 ## Errors
+
+1. See [doc/errors.md](doc/errors.md).
