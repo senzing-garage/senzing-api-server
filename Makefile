@@ -23,6 +23,10 @@ DOCKER_IMAGE_PACKAGE := $(GIT_REPOSITORY_NAME)-package:$(GIT_VERSION)
 DOCKER_IMAGE_TAG ?= $(GIT_REPOSITORY_NAME):$(GIT_VERSION)
 DOCKER_IMAGE_NAME := senzing/rest-api-server-java
 
+# Misc.
+
+TARGET ?= target
+
 # -----------------------------------------------------------------------------
 # The first "make" target runs as default.
 # -----------------------------------------------------------------------------
@@ -59,8 +63,8 @@ package:
 docker-package: docker-rmi-for-package
 	# Make docker image.
 
-	mkdir -p target
-	cp $(SENZING_G2_JAR_PATHNAME) target/
+	mkdir -p $(TARGET)
+	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
 	docker build \
 		--build-arg BUILD_VERSION=$(GIT_VERSION) \
 		--build-arg GIT_REPOSITORY_NAME=$(GIT_REPOSITORY_NAME) \
@@ -74,7 +78,7 @@ docker-package: docker-rmi-for-package
 	# Finally, remove the docker container.
 
 	PID=$$(docker create $(DOCKER_IMAGE_PACKAGE) /bin/bash); \
-	docker cp $$PID:/$(GIT_REPOSITORY_NAME)/target .; \
+	docker cp $$PID:/$(GIT_REPOSITORY_NAME)/$(TARGET) .; \
 	docker rm -v $$PID
 
 # -----------------------------------------------------------------------------
@@ -84,7 +88,7 @@ docker-package: docker-rmi-for-package
 .PHONY: docker-build
 docker-build: docker-rmi-for-build
 	docker build \
-		--build-arg SENZING_G2_JAR_PATHNAME=target/sz-api-server-1.5.0.jar \
+		--build-arg SENZING_G2_JAR_PATHNAME=$(TARGET)/sz-api-server-1.5.0.jar \
 		--tag $(DOCKER_IMAGE_NAME) \
 		--tag $(DOCKER_IMAGE_NAME):$(GIT_VERSION) \
 		--file Dockerfile-build \
@@ -93,7 +97,7 @@ docker-build: docker-rmi-for-build
 .PHONY: docker-build-base
 docker-build-base: docker-rmi-for-build-base
 	docker build \
-		--build-arg SENZING_G2_JAR_PATHNAME=target/sz-api-server-1.5.0.jar \
+		--build-arg SENZING_G2_JAR_PATHNAME=$(TARGET)/sz-api-server-1.5.0.jar \
 		--tag $(DOCKER_IMAGE_TAG) \
 		--file Dockerfile-build \
 		.
@@ -104,8 +108,8 @@ docker-build-base: docker-rmi-for-build-base
 
 .PHONY: docker-all
 docker-all:
-	mkdir -p target
-	cp $(SENZING_G2_JAR_PATHNAME) target/
+	mkdir -p $(TARGET)
+	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
 	docker build \
 		--build-arg BUILD_VERSION=$(GIT_VERSION) \
 		--build-arg GIT_REPOSITORY_NAME=$(GIT_REPOSITORY_NAME) \
@@ -131,8 +135,12 @@ docker-rmi-for-build-base:
 docker-rmi-for-packagae:
 	-docker rmi --force $(DOCKER_IMAGE_PACKAGE)
 
+.PHONY: rm-target
+rm-target:
+	-rm -rf $(TARGET)
+
 .PHONY: clean
-clean: docker-rmi-for-build docker-rmi-for-build-base docker-rmi-for-package
+clean: docker-rmi-for-build docker-rmi-for-build-base docker-rmi-for-package rm-target
 
 # -----------------------------------------------------------------------------
 # Help
