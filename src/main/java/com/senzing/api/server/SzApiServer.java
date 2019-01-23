@@ -608,6 +608,10 @@ public class SzApiServer {
     pw.println("        Sets the port for HTTP bind address communication.");
     pw.println("        Defaults to the loopback address.");
     pw.println();
+    pw.println("   -allowedOrigins [url-domain]");
+    pw.println("        Sets the CORS Access-Control-Allow-Origin header for all endpoints.");
+    pw.println("        No Default.");
+    pw.println();
     pw.println("   -concurrency [thread-count]");
     pw.println("        Sets the number of threads available for executing ");
     pw.println("        Senzing API functions (i.e.: the number of engine threads).");
