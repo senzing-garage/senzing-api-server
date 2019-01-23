@@ -55,7 +55,8 @@ public class SzApiServer {
     INI_FILE,
     VERBOSE,
     MONITOR_FILE,
-    CONCURRENCY;
+    CONCURRENCY,
+    ALLOWED_ORIGINS
   }
 
   public static final class AccessToken {
@@ -168,6 +169,11 @@ public class SzApiServer {
    * The INI {@link File} for initializing the API.
    */
   private File iniFile;
+
+  /**
+   * CORS Access-Control-Allow-Origin for all endpoints on the server.
+   */
+  private String allowedOrigins;
 
   /**
    * The {@link WorkerThreadPool} for executing Senzing API calls.
@@ -544,6 +550,13 @@ public class SzApiServer {
           result.put(Option.MODULE_NAME, moduleName);
           break;
 
+        case "-allowedOrigins":
+          index++;
+          ensureArgument(args, index);
+          String allowedOrigins = args[index];
+          result.put(Option.ALLOWED_ORIGINS, allowedOrigins);
+          break;
+
         default:
           System.err.println();
 
@@ -909,6 +922,9 @@ public class SzApiServer {
     }
     this.iniFile = (File) options.get(Option.INI_FILE);
     String ini = iniFile.getCanonicalPath();
+    if (options.containsKey(Option.ALLOWED_ORIGINS)) {
+      this.allowedOrigins = (String) options.get(Option.ALLOWED_ORIGINS);
+    }
 
     this.baseUrl = "http://" + ipAddr + ":" + httpPort + "/";
     this.g2Product = new G2ProductJNI();
@@ -964,8 +980,11 @@ public class SzApiServer {
     // setup a servlet context handler
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath("/");
-    FilterHolder filterHolder = context.addFilter(CrossOriginFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
-    filterHolder.setInitParameter("allowedOrigins", "http://localhost:*");
+
+    if (this.allowedOrigins != null) {
+      FilterHolder filterHolder = context.addFilter(CrossOriginFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
+      filterHolder.setInitParameter("allowedOrigins", this.allowedOrigins);
+    }
 
     // find how this class was loaded so we can find the path to the static content
     ClassLoader loader = SzApiServer.class.getClassLoader();
