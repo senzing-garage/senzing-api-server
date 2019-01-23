@@ -10,9 +10,16 @@ RUN apt-get -y install \
       maven \
  && rm -rf /var/lib/apt/lists/*
  
- # Copy the repository from the local host.
+# Copy the repository from the local host.
 
 COPY . /${GIT_REPOSITORY_NAME}
+
+# Copy ...
+
+ARG SENZING_G2_JAR_PATHNAME=/opt/senzing/g2/lib/g2.jar
+
+RUN mkdir --parents $(dirname ${SENZING_G2_JAR_PATHNAME}) \
+ && cp /${GIT_REPOSITORY_NAME}/target/g2.jar ${SENZING_G2_JAR_PATHNAME} 
 
 # Run the "make" command to create the artifacts.
 

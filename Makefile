@@ -56,13 +56,15 @@ package:
 # -----------------------------------------------------------------------------
 
 .PHONY: docker-package
-docker-package:
+docker-package: docker-rmi-for-package
 	# Make docker image.
 
-	docker rmi --force $(DOCKER_IMAGE_PACKAGE)
+	mkdir -p target
+	cp $(SENZING_G2_JAR_PATHNAME) target/
 	docker build \
 		--build-arg BUILD_VERSION=$(GIT_VERSION) \
 		--build-arg GIT_REPOSITORY_NAME=$(GIT_REPOSITORY_NAME) \
+		--build-arg SENZING_G2_JAR_PATHNAME=$(SENZING_G2_JAR_PATHNAME) \
 		--tag $(DOCKER_IMAGE_PACKAGE) \
 		--file Dockerfile-package \
 		.
@@ -97,6 +99,21 @@ docker-build-base: docker-rmi-for-build-base
 		.
 
 # -----------------------------------------------------------------------------
+# Test ground
+# -----------------------------------------------------------------------------
+
+.PHONY: docker-all
+docker-all:
+	mkdir -p target
+	cp $(SENZING_G2_JAR_PATHNAME) target/
+	docker build \
+		--build-arg BUILD_VERSION=$(GIT_VERSION) \
+		--build-arg GIT_REPOSITORY_NAME=$(GIT_REPOSITORY_NAME) \
+		--build-arg SENZING_G2_JAR_PATHNAME=$(SENZING_G2_JAR_PATHNAME) \
+		--tag $(DOCKER_IMAGE_PACKAGE) \
+		.
+		
+# -----------------------------------------------------------------------------
 # Clean up targets
 # -----------------------------------------------------------------------------
 
@@ -110,8 +127,12 @@ docker-rmi-for-build:
 docker-rmi-for-build-base:
 	-docker rmi --force $(DOCKER_IMAGE_TAG)
 
+.PHONY: docker-rmi-for-package
+docker-rmi-for-packagae:
+	-docker rmi --force $(DOCKER_IMAGE_PACKAGE)
+
 .PHONY: clean
-clean: docker-rmi-for-build docker-rmi-for-build-base
+clean: docker-rmi-for-build docker-rmi-for-build-base docker-rmi-for-package
 
 # -----------------------------------------------------------------------------
 # Help

@@ -25,12 +25,6 @@ ENV SENZING_INI_FILE=${SENZING_DIR}/g2/python/G2Module.ini
 
 WORKDIR /app
 
-#CMD ["java", "-jar", "sz-api-server-1.5.0.jar", \
-#     "-concurrency", "${SENZING_CONCURRENCY}", \
-#     "-httpPort", "8080", \
-#     "-bindAddr", "${SENZING_BIND_ADDR}" \
-#     "-iniFile", "${SENZING_INI_FILE}"]
-     
 CMD java -jar sz-api-server-1.5.0.jar \
      -concurrency ${SENZING_CONCURRENCY} \
      -httpPort 8080 \
