@@ -265,10 +265,10 @@ network interfaces with a concurrency of 16 you would use:
 1. Test Senzing REST API server.  *Note:* port 8889 on the localhost has been mapped to port 8080 in the docker container See `WEBAPP_PORT` definition.  Example:
 
     ```console
-    export SENZING_API_SERVICE=localhost:8889
+    export SENZING_API_SERVICE=http://localhost:8889
 
-    curl -X GET http://${SENZING_API_SERVICE}/heartbeat
-    curl -X GET http://${SENZING_API_SERVICE}/license
+    curl -X GET ${SENZING_API_SERVICE}/heartbeat
+    curl -X GET ${SENZING_API_SERVICE}/license
     ```
 
 ## Errors
