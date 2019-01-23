@@ -8,7 +8,9 @@ defined in by the [Senzing Rest API Proposal](https://github.com/Senzing/rest-ap
 The [Senzing API OAS specification](http://editor.swagger.io/?url=https://raw.githubusercontent.com/Senzing/rest-api-proposal/master/senzing-api.yaml)
 documents the available API methods, their parameters and the response formats.
 
-## Dependencies
+## Using Command Line
+
+### Dependencies
 
 To build the Senzing REST API Server you will need Apache Maven (recommend version 3.5.4 or later)
 as well as Java 1.8.x (recommend version 1.8.0_171 or later).
@@ -82,7 +84,7 @@ version 1.4.x.  In order to install g2.jar you must:
           set Path=%SENZING_DIR%\g2\lib;$Path
       ```
 
-## Building
+### Building
 
 To build simply execute:
 
@@ -94,7 +96,7 @@ The JAR file will be contained in the `target` directory under the name `sz-api-
 
 Where `[version]` is the version number from the `pom.xml` file.
 
-## Running
+### Running
 
 To execute the server you will use `java -jar`.  It assumed that your environment is properly
 configured as described in the "Dependencies" section above.
@@ -160,3 +162,99 @@ network interfaces with a concurrency of 16 you would use:
         -bindAddr all \
         -iniFile /opt/senzing/g2/python/G2Module.ini
   ```
+
+## Using Docker
+
+### Build docker image
+
+1. Build Jar file.
+
+   * **SENZING_G2_JAR_PATHNAME** is the path to the `g2.jar` file found in your `/opt/senzing` directory.
+   * **SENZING_G2_JAR_VERSION** is the version of the `g2.jar` file.
+
+    ```console
+    cd ${SENZING_DIR}
+
+    export SENZING_G2_JAR_PATHNAME=/opt/senzing/g2/lib/g2.jar
+    export SENZING_G2_JAR_VERSION=1.5.0-SNAPSHOT
+
+    make docker-package
+    ```
+
+    1. Jar file will be in the "target" directory. Example: `${SENZING_DIR}/target/sz-api-server-M.m.P.jar`
+
+1. Build docker image
+
+    ```console
+    cd ${SENZING_DIR}
+
+    make docker-build
+    ```
+
+### Configuration
+
+* **SENZING_DIR** -
+  Location of Senzing libraries. Default: "/opt/senzing".
+* **WEBAPP_PORT** -
+  Port used by service.  
+
+### Run docker image
+
+1. Run the docker container. Example:
+
+    ```console
+    export SENZING_DIR=/opt/senzing
+    export WEBAPP_PORT=8889
+
+    sudo docker run -it \
+      --volume ${SENZING_DIR}:/opt/senzing \
+      --publish ${WEBAPP_PORT}:8080 \
+      senzing/rest-api-server-java
+    ```
+
+### Run docker image in docker network
+
+1. Determine docker network:
+
+    ```console
+    docker network ls
+
+    # Choose value from NAME column of docker network ls
+    export SENZING_NETWORK=nameofthe_network
+    ```
+
+1. Run the docker container. Example:
+
+    ```console
+    export SENZING_DIR=/opt/senzing
+    export WEBAPP_PORT=8889
+
+    sudo docker run -it \
+      --volume ${SENZING_DIR}:/opt/senzing \
+      --net ${SENZING_NETWORK} \
+      --publish ${WEBAPP_PORT}:8080 \
+      senzing/rest-api-server-java
+    ```
+
+### Test Docker image
+
+1. Wait for the following message in the log.
+
+    ```console
+    Started Senzing REST API Server on port 8080.
+
+    Server running at:
+
+    http://0.0.0.0/0.0.0.0:8080/
+    ```
+
+1. Test Senzing REST API server.  Note: port 8889 on the localhost has been mapped to port 8080 in the docker container See `WEBAPP_PORT` definition.  Example:
+
+    ```console
+    export SENZING_API_SERVICE=localhost:8889
+
+    curl -X GET http://${SENZING_API_SERVICE}/heartbeat
+    curl -X GET http://${SENZING_API_SERVICE}/license
+    ```
+
+## Errors
