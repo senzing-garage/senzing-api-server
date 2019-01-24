@@ -15,6 +15,9 @@ documents the available API methods, their parameters and the response formats.
     1. [Building](#building)
     1. [Running](#running)
 1. [Using Docker](#using-docker)
+    1. [Set environment variables](#set-environment-variables)
+    1. [Clone repository](#clone-repository)
+    1. [Create SENZING_DIR](#create-senzing_dir)
     1. [Build docker image](#build-docker-image)
     1. [Configuration](#configuration)
     1. [Run docker image](#run-docker-image)
@@ -229,9 +232,10 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
     make docker-package
     ```
 
-    1. Jar file will be in the "target" directory. Example: `${SENZING_DIR}/target/sz-api-server-M.m.P.jar`
+    1. Jar file will be in the "target" directory. Example: `${GIT_REPOSITORY_DIR}/target/sz-api-server-M.m.P.jar`
 
-1. Build docker image
+1. Build docker image.
+   *Note:* The following command expects a JAR file at `${GIT_REPOSITORY_DIR}/target/sz-api-server-M.m.P.jar`.
 
     ```console
     cd ${GIT_REPOSITORY_DIR}
