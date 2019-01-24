@@ -180,6 +180,39 @@ network interfaces with a concurrency of 16 you would use:
 
 ## Using Docker
 
+### Set environment variables
+
+1. These variables may be modified, but do not need to be modified.
+   The variables are used throughout the installation procedure.
+
+    ```console
+    export GIT_ACCOUNT=senzing
+    export GIT_REPOSITORY=rest-api-server-java
+    ```
+
+1. Synthesize environment variables.
+
+    ```console
+    export GIT_ACCOUNT_DIR=~/${GIT_ACCOUNT}.git
+    export GIT_REPOSITORY_DIR="${GIT_ACCOUNT_DIR}/${GIT_REPOSITORY}"
+    export GIT_REPOSITORY_URL="https://github.com/${GIT_ACCOUNT}/${GIT_REPOSITORY}.git"
+    ```
+
+### Clone repository
+
+1. Get repository.
+
+    ```console
+    mkdir --parents ${GIT_ACCOUNT_DIR}
+    cd  ${GIT_ACCOUNT_DIR}
+    git clone ${GIT_REPOSITORY_URL}
+    ```
+
+### Create SENZING_DIR
+
+If you do not already have an `/opt/senzing` directory on your local system, visit
+[HOWTO - Create SENZING_DIR](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/create-senzing-dir.md).
+
 ### Build docker image
 
 1. Build Jar file.
@@ -188,7 +221,7 @@ network interfaces with a concurrency of 16 you would use:
    * **SENZING_G2_JAR_VERSION** is the version of the `g2.jar` file.
 
     ```console
-    cd ${SENZING_DIR}
+    cd ${GIT_REPOSITORY_DIR}
 
     export SENZING_G2_JAR_PATHNAME=/opt/senzing/g2/lib/g2.jar
     export SENZING_G2_JAR_VERSION=1.5.0-SNAPSHOT
@@ -201,7 +234,7 @@ network interfaces with a concurrency of 16 you would use:
 1. Build docker image
 
     ```console
-    cd ${SENZING_DIR}
+    cd ${GIT_REPOSITORY_DIR}
 
     make docker-build
     ```
