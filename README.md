@@ -186,6 +186,9 @@ network interfaces with a concurrency of 16 you would use:
 
 ## Using Docker
 
+### Dependencies
+
+
 ### Set environment variables
 
 1. These variables may be modified, but do not need to be modified.
@@ -221,16 +224,41 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
 ### Build docker image
 
+1. Find value for `SENZING_G2_JAR_VERSION`.
+
+    ```console
+    cat ${SENZING_DIR}/g2/data/g2BuildVersion.json
+    ```
+     
+    or  
+
+    ```console
+    cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION'
+    ``` 
+
 1. Build Jar file.
 
     * **SENZING_G2_JAR_PATHNAME** - Path to the `g2.jar`. Default: `/opt/senzing/g2/lib/g2.jar`
     * **SENZING_G2_JAR_VERSION** - Version of the `g2.jar` file.
 
+    Example:
+    
     ```console
     cd ${GIT_REPOSITORY_DIR}
 
     export SENZING_G2_JAR_PATHNAME=/opt/senzing/g2/lib/g2.jar
     export SENZING_G2_JAR_VERSION=1.4.18354
+
+    make docker-package
+    ```
+    
+    Another example: 
+
+    ```console
+    cd ${GIT_REPOSITORY_DIR}
+
+    export SENZING_G2_JAR_PATHNAME=${SENZING_DIR}/g2/lib/g2.jar
+    export SENZING_G2_JAR_VERSION=$(cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION')
 
     make docker-package
     ```
