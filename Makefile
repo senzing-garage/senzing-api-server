@@ -5,7 +5,8 @@ PROGRAM_NAME := $(shell basename `git rev-parse --show-toplevel`)
 # User variables.
 
 SENZING_G2_JAR_PATHNAME ?= /opt/senzing/g2/lib/g2.jar
-SENZING_G2_JAR_VERSION ?= 1.5.0-SNAPSHOT
+SENZING_G2_JAR_VERSION ?= 1.5.1
+SENZING_API_SERVER_JAR_VERSION ?= 1.5.1
 
 # Information from git.
 
@@ -47,7 +48,7 @@ package:
 		-DartifactId=g2 \
 		-Dversion=$(SENZING_G2_JAR_VERSION) \
 		-Dpackaging=jar
-        
+
 	mvn package \
 		-Dproject.version=$(GIT_VERSION) \
 		-Dgit.branch=$(GIT_BRANCH) \
@@ -66,9 +67,9 @@ docker-package: docker-rmi-for-package
 	mkdir -p $(TARGET)
 	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
 	docker build \
-		--build-arg BUILD_VERSION=$(GIT_VERSION) \
 		--build-arg GIT_REPOSITORY_NAME=$(GIT_REPOSITORY_NAME) \
 		--build-arg SENZING_G2_JAR_PATHNAME=$(SENZING_G2_JAR_PATHNAME) \
+		--build-arg SENZING_G2_JAR_VERSION=$(SENZING_G2_JAR_VERSION) \
 		--tag $(DOCKER_IMAGE_PACKAGE) \
 		--file Dockerfile-package \
 		.
@@ -88,7 +89,7 @@ docker-package: docker-rmi-for-package
 .PHONY: docker-build
 docker-build: docker-rmi-for-build
 	docker build \
-		--build-arg SENZING_G2_JAR_PATHNAME=$(TARGET)/sz-api-server-1.5.0.jar \
+		--build-arg SENZING_API_SERVER_JAR_PATHNAME=$(TARGET)/sz-api-server-$(SENZING_API_SERVER_JAR_VERSION).jar \
 		--tag $(DOCKER_IMAGE_NAME) \
 		--tag $(DOCKER_IMAGE_NAME):$(GIT_VERSION) \
 		--file Dockerfile-build \
@@ -97,7 +98,7 @@ docker-build: docker-rmi-for-build
 .PHONY: docker-build-base
 docker-build-base: docker-rmi-for-build-base
 	docker build \
-		--build-arg SENZING_G2_JAR_PATHNAME=$(TARGET)/sz-api-server-1.5.0.jar \
+		--build-arg SENZING_API_SERVER_JAR_PATHNAME=$(TARGET)/sz-api-server-$(SENZING_API_SERVER_JAR_VERSION).jar \
 		--tag $(DOCKER_IMAGE_TAG) \
 		--file Dockerfile-build \
 		.
@@ -111,12 +112,11 @@ docker-all:
 	mkdir -p $(TARGET)
 	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
 	docker build \
-		--build-arg BUILD_VERSION=$(GIT_VERSION) \
 		--build-arg GIT_REPOSITORY_NAME=$(GIT_REPOSITORY_NAME) \
 		--build-arg SENZING_G2_JAR_PATHNAME=$(SENZING_G2_JAR_PATHNAME) \
 		--tag $(DOCKER_IMAGE_PACKAGE) \
 		.
-		
+
 # -----------------------------------------------------------------------------
 # Clean up targets
 # -----------------------------------------------------------------------------

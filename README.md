@@ -33,7 +33,7 @@ To build the Senzing REST API Server you will need Apache Maven (recommend versi
 as well as Java 1.8.x (recommend version 1.8.0_171 or later).
 
 You will also need the Senzing "g2.jar" file installed in your Maven repository.
-The Senzing REST API Server is being developed in concert with version 1.5.0 of
+The Senzing REST API Server is being developed in concert with version 1.5.1 of
 the Senzing API and Senzing App, but will also work with the currently released
 version 1.4.x.  In order to install g2.jar you must:
 
@@ -122,16 +122,15 @@ The only command-line option that is required is the `-iniFile` file option whic
 specifies the path to the INI file used to initialize the API.  On Linux, you
 
 However, other options may be very useful.  Execute
-`java -jar target/sz-api-server-1.5.0.jar -help` to obtain a help message
+`java -jar target/sz-api-server-1.5.1.jar -help` to obtain a help message
 describing all available options.  For example:
 
   ```console
      cd target
 
-    $ java -jar sz-api-server-1.5.0.jar -help
+    $ java -jar sz-api-server-1.5.1.jar -help
 
-
-    java -jar sz-api-server-1.5.0.jar <options>
+    java -jar sz-api-server-1.5.1.jar <options>
 
     <options> includes:
        -help
@@ -152,7 +151,11 @@ describing all available options.  For example:
             Sets the port for HTTP bind address communication.
             Defaults to the loopback address.
 
-       -concurrency [thread-count]
+       -allowedOrigins [url-domain]
+            Sets the CORS Access-Control-Allow-Origin header for all endpoints.
+            No Default.
+
+        -concurrency [thread-count]
             Sets the number of threads available for executing
             Senzing API functions (i.e.: the number of engine threads).
             If not specified, then this defaults to 8.
@@ -220,14 +223,14 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
 1. Build Jar file.
 
-   * **SENZING_G2_JAR_PATHNAME** is the path to the `g2.jar` file found in your `/opt/senzing` directory.
-   * **SENZING_G2_JAR_VERSION** is the version of the `g2.jar` file.
+    * **SENZING_G2_JAR_PATHNAME** - Path to the `g2.jar`. Default: `/opt/senzing/g2/lib/g2.jar`
+    * **SENZING_G2_JAR_VERSION** - Version of the `g2.jar` file.
 
     ```console
     cd ${GIT_REPOSITORY_DIR}
 
     export SENZING_G2_JAR_PATHNAME=/opt/senzing/g2/lib/g2.jar
-    export SENZING_G2_JAR_VERSION=1.5.0-SNAPSHOT
+    export SENZING_G2_JAR_VERSION=1.4.18354
 
     make docker-package
     ```
@@ -245,8 +248,14 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
 ### Configuration
 
+* **SENZING_BIND_ADDR** -
+  Port for HTTP bind address communication. Values: ip-address, loopback, all. Default: loopback
+* **SENZING_CONCURRENCY** -
+  Number of threads available for executing Senzing API functions. Default: 8
 * **SENZING_DIR** -
   Location of Senzing libraries. Default: "/opt/senzing".
+* **SENZING_INI_FILE** -
+  The path to the Senzing INI file to with which to initialize. Default: ${SENZING_DIR}/g2/python/G2Module.ini
 * **WEBAPP_PORT** -
   Port used by service.  
 
@@ -256,11 +265,13 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
     ```console
     export SENZING_DIR=/opt/senzing
+    export SENZING_CONCURRENCY=10
     export WEBAPP_PORT=8889
 
     sudo docker run -it \
       --volume ${SENZING_DIR}:/opt/senzing \
       --publish ${WEBAPP_PORT}:8080 \
+      --env SENZING_CONCURRENCY="${SENZING_CONCURRENCY}" \
       senzing/rest-api-server-java
     ```
 

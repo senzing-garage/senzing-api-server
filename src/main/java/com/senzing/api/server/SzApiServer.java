@@ -968,14 +968,6 @@ public class SzApiServer {
     StringBuffer sb = new StringBuffer();
     this.g2Engine.exportConfig(sb);
     
-    try {
-        JsonObject config = JsonUtils.parseJsonObject(sb.toString());
-    } catch (Exception e) {
-        e.printStackTrace();
-        System.out.println("sb: " + sb.toString());
-        exitOnError(e);
-    }
-    
     JsonObject config = JsonUtils.parseJsonObject(sb.toString());
 
     Set<String>         dataSourceSet = new LinkedHashSet<>();

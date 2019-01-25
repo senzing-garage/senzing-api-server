@@ -1,7 +1,7 @@
 
 # ----- Stage #1 - builder ----------------------------------------------------
 
-ARG BASE_CONTAINER=java:latest
+ARG BASE_CONTAINER=java:8
 FROM ${BASE_CONTAINER} as builder
 
 ARG REFRESHED_AT=2018-09-17
