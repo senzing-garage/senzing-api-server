@@ -41,7 +41,7 @@ EXPOSE 8080
 # Copy files from host system.
 
 RUN mkdir /app
-COPY --from=builder /${GIT_REPOSITORY_NAME}/target/sz-api-server-1.5.0.jar /app/sz-api-server.jar
+COPY --from=builder /${GIT_REPOSITORY_NAME}/target/senzing-api-server-1.5.0.jar /app/senzing-api-server.jar
 
 # Set environment variables.
 
@@ -56,7 +56,7 @@ ENV SENZING_INI_FILE=${SENZING_DIR}/g2/python/G2Module.ini
 
 WORKDIR /app
 
-CMD java -jar sz-api-server.jar \
+CMD java -jar senzing-api-server.jar \
      -concurrency ${SENZING_CONCURRENCY} \
      -httpPort 8080 \
      -bindAddr ${SENZING_BIND_ADDR} \

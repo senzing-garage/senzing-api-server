@@ -2,10 +2,10 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.senzing</groupId>
-  <artifactId>sz-api-server</artifactId>
+  <artifactId>senzing-api-server</artifactId>
   <packaging>jar</packaging>
   <version>1.5.1</version>
-  <name>sz-api-server</name>
+  <name>senzing-api-server</name>
   <url>http://maven.apache.org</url>
   <dependencies>
     <dependency>

@@ -5,7 +5,7 @@ PROGRAM_NAME := $(shell basename `git rev-parse --show-toplevel`)
 # User variables.
 
 SENZING_G2_JAR_PATHNAME ?= /opt/senzing/g2/lib/g2.jar
-SENZING_G2_JAR_VERSION ?= 1.5.1
+SENZING_G2_JAR_VERSION ?= 1.4.18354
 SENZING_API_SERVER_JAR_VERSION ?= 1.5.1
 
 # Information from git.
@@ -89,7 +89,7 @@ docker-package: docker-rmi-for-package
 .PHONY: docker-build
 docker-build: docker-rmi-for-build
 	docker build \
-		--build-arg SENZING_API_SERVER_JAR_PATHNAME=$(TARGET)/sz-api-server-$(SENZING_API_SERVER_JAR_VERSION).jar \
+		--build-arg SENZING_API_SERVER_JAR_PATHNAME=$(TARGET)/senzing-api-server-$(SENZING_API_SERVER_JAR_VERSION).jar \
 		--tag $(DOCKER_IMAGE_NAME) \
 		--tag $(DOCKER_IMAGE_NAME):$(GIT_VERSION) \
 		--file Dockerfile-build \
@@ -98,7 +98,7 @@ docker-build: docker-rmi-for-build
 .PHONY: docker-build-base
 docker-build-base: docker-rmi-for-build-base
 	docker build \
-		--build-arg SENZING_API_SERVER_JAR_PATHNAME=$(TARGET)/sz-api-server-$(SENZING_API_SERVER_JAR_VERSION).jar \
+		--build-arg SENZING_API_SERVER_JAR_PATHNAME=$(TARGET)/senzing-api-server-$(SENZING_API_SERVER_JAR_VERSION).jar \
 		--tag $(DOCKER_IMAGE_TAG) \
 		--file Dockerfile-build \
 		.

@@ -33,7 +33,7 @@ To build the Senzing REST API Server you will need Apache Maven (recommend versi
 as well as Java 1.8.x (recommend version 1.8.0_171 or later).
 
 You will also need the Senzing "g2.jar" file installed in your Maven repository.
-The Senzing REST API Server is being developed in concert with version 1.5.1 of
+The Senzing REST API Server is being developed in concert with version 1.5.0 of
 the Senzing API and Senzing App, but will also work with the currently released
 version 1.4.x.  In order to install g2.jar you must:
 
@@ -109,7 +109,7 @@ To build simply execute:
       mvn install
    ```
 
-The JAR file will be contained in the `target` directory under the name `sz-api-server-[version].jar`.
+The JAR file will be contained in the `target` directory under the name `senzing-api-server-[version].jar`.
 
 Where `[version]` is the version number from the `pom.xml` file.
 
@@ -122,15 +122,15 @@ The only command-line option that is required is the `-iniFile` file option whic
 specifies the path to the INI file used to initialize the API.  On Linux, you
 
 However, other options may be very useful.  Execute
-`java -jar target/sz-api-server-1.5.1.jar -help` to obtain a help message
+`java -jar target/senzing-api-server-1.5.1.jar -help` to obtain a help message
 describing all available options.  For example:
 
   ```console
      cd target
 
-    $ java -jar sz-api-server-1.5.1.jar -help
+    $ java -jar senzing-api-server-1.5.1.jar -help
 
-    java -jar sz-api-server-1.5.1.jar <options>
+    java -jar senzing-api-server-1.5.1.jar <options>
 
     <options> includes:
        -help
@@ -177,7 +177,7 @@ For example, if you wanted to run the server on port 8080 and bind to all
 network interfaces with a concurrency of 16 you would use:
 
   ```console
-     java -jar target/sz-api-server-[version].jar \
+     java -jar target/senzing-api-server-[version].jar \
         -concurrency 16 \
         -httpPort 8080 \
         -bindAddr all \
@@ -262,10 +262,10 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
     make docker-package
     ```
 
-    1. Jar file will be in the "target" directory. Example: `${GIT_REPOSITORY_DIR}/target/sz-api-server-M.m.P.jar`
+    1. Jar file will be in the "target" directory. Example: `${GIT_REPOSITORY_DIR}/target/senzing-api-server-M.m.P.jar`
 
 1. Build docker image.
-   *Note:* The following command expects a JAR file at `${GIT_REPOSITORY_DIR}/target/sz-api-server-M.m.P.jar`.
+   *Note:* The following command expects a JAR file at `${GIT_REPOSITORY_DIR}/target/senzing-api-server-M.m.P.jar`.
 
     ```console
     cd ${GIT_REPOSITORY_DIR}
