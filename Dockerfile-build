@@ -1,0 +1,32 @@
+ARG BASE_CONTAINER=java:8
+FROM ${BASE_CONTAINER}
+
+ENV REFRESHED_AT=2019-01-22
+
+# Service exposed on port 8080
+
+EXPOSE 8080
+
+# Copy files from host system.
+
+ARG SENZING_API_SERVER_JAR_PATHNAME=target/senzing-api-server.jar
+COPY ${SENZING_API_SERVER_JAR_PATHNAME} /app/senzing-api-server.jar
+
+# Set environment variables.
+
+ENV SENZING_DIR=/opt/senzing
+ENV PYTHONPATH=${SENZING_DIR}/g2/python
+ENV LD_LIBRARY_PATH=${SENZING_DIR}/g2/lib:${SENZING_DIR}/g2/lib/debian;
+ENV SENZING_CONCURRENCY=8
+ENV SENZING_BIND_ADDR=all
+ENV SENZING_INI_FILE=${SENZING_DIR}/g2/python/G2Module.ini
+
+# Run the Senzing REST api server.
+
+WORKDIR /app
+
+CMD java -jar senzing-api-server.jar \
+     -concurrency ${SENZING_CONCURRENCY} \
+     -httpPort 8080 \
+     -bindAddr ${SENZING_BIND_ADDR} \
+     -iniFile ${SENZING_INI_FILE}
