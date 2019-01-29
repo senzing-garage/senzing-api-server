@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import javax.ws.rs.core.UriInfo;
+
 /**
  * A response object that contains license data.
  *
@@ -44,6 +46,38 @@ public class SzLicenseResponse extends SzResponseWithRawData {
                            SzLicenseInfo  data)
   {
     super(httpMethod, httpStatusCode, selfLink);
+    this.licenseInfo = data;
+  }
+
+  /**
+   * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
+   * license info data to be initialized later.
+   *
+   * @param httpMethod The {@link SzHttpMethod}.
+   * @param httpStatusCode The HTTP response code.
+   * @param uriInfo The {@link UriInfo} from the request.
+   */
+  public SzLicenseResponse(SzHttpMethod httpMethod,
+                           int          httpStatusCode,
+                           UriInfo      uriInfo) {
+    this(httpMethod, httpStatusCode, uriInfo, null);
+  }
+
+  /**
+   * Constructs with the HTTP method, {@link UriInfo} and the
+   * {@link SzLicenseInfo} describing the license.
+   *
+   * @param httpMethod The {@link SzHttpMethod}.
+   * @param httpStatusCode The HTTP response status code.
+   * @param uriInfo The {@link UriInfo} from the request.
+   * @param data The {@link SzLicenseInfo} describing the license.
+   */
+  public SzLicenseResponse(SzHttpMethod   httpMethod,
+                           int            httpStatusCode,
+                           UriInfo        uriInfo,
+                           SzLicenseInfo  data)
+  {
+    super(httpMethod, httpStatusCode, uriInfo);
     this.licenseInfo = data;
   }
 

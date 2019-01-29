@@ -10,6 +10,7 @@ import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -22,13 +23,12 @@ import java.util.List;
 public class ServicesUtil {
   /**
    * Creates an {@link InternalServerErrorException} and builds a response
-   * with an {@link SzErrorResponse} using the specified self link
+   * with an {@link SzErrorResponse} using the specified {@link UriInfo}
    * and the specified exception.
    *
    * @param httpMethod The HTTP method for the request.
    *
-   * @param selfLink The link to the service to use in building the
-   *                 {@link SzErrorResponse}.
+   * @param uriInfo The {@link UriInfo} from the request.
    *
    * @param exception The exception that caused the error.
    *
@@ -36,24 +36,23 @@ public class ServicesUtil {
    */
   static InternalServerErrorException newInternalServerErrorException(
       SzHttpMethod  httpMethod,
-      String        selfLink,
+      UriInfo       uriInfo,
       Exception     exception)
   {
     Response.ResponseBuilder builder = Response.status(500);
     builder.entity(
-        new SzErrorResponse(httpMethod, 500, selfLink, exception));
+        new SzErrorResponse(httpMethod, 500, uriInfo, exception));
     return new InternalServerErrorException(builder.build());
   }
 
   /**
    * Creates an {@link InternalServerErrorException} and builds a response
-   * with an {@link SzErrorResponse} using the specified self link
+   * with an {@link SzErrorResponse} using the specified  {@link UriInfo}
    * and the specified {@link G2Fallible} to get the last exception from.
    *
    * @param httpMethod The HTTP method for the request.
    *
-   * @param selfLink The link to the service to use in building the
-   *                 {@link SzErrorResponse}.
+   * @param uriInfo The {@link UriInfo} from the request.
    *
    * @param fallible The {@link G2Fallible} to get the last exception from.
    *
@@ -61,25 +60,24 @@ public class ServicesUtil {
    */
   static InternalServerErrorException newInternalServerErrorException(
       SzHttpMethod  httpMethod,
-      String        selfLink,
+      UriInfo       uriInfo,
       G2Fallible    fallible)
   {
     Response.ResponseBuilder builder = Response.status(500);
     builder.entity(
-        new SzErrorResponse(httpMethod, 500, selfLink, fallible));
+        new SzErrorResponse(httpMethod, 500, uriInfo, fallible));
     fallible.clearLastException();
     return new InternalServerErrorException(builder.build());
   }
 
   /**
    * Creates an {@link NotFoundException} and builds a response
-   * with an {@link SzErrorResponse} using the specified self link
+   * with an {@link SzErrorResponse} using the specified {@link UriInfo}
    * and the specified {@link G2Fallible} to get the last exception from.
    *
    * @param httpMethod The HTTP method for the request.
    *
-   * @param selfLink The link to the service to use in building the
-   *                 {@link SzErrorResponse}.
+   * @param uriInfo The {@link UriInfo} from the request.
    *
    * @param fallible The {@link G2Fallible} to get the last exception from.
    *
@@ -87,45 +85,43 @@ public class ServicesUtil {
    */
   static NotFoundException newNotFoundException(
       SzHttpMethod  httpMethod,
-      String        selfLink,
+      UriInfo       uriInfo,
       G2Fallible    fallible)
   {
     Response.ResponseBuilder builder = Response.status(404);
     builder.entity(
-        new SzErrorResponse(httpMethod, 404, selfLink, fallible));
+        new SzErrorResponse(httpMethod, 404, uriInfo, fallible));
     fallible.clearLastException();
     return new NotFoundException(builder.build());
   }
 
   /**
    * Creates an {@link NotFoundException} and builds a response
-   * with an {@link SzErrorResponse} using the specified self link.
+   * with an {@link SzErrorResponse} using the specified {@link UriInfo}.
    *
    * @param httpMethod The HTTP method for the request.
    *
-   * @param selfLink The link to the service to use in building the
-   *                 {@link SzErrorResponse}.
+   * @param uriInfo The {@link UriInfo} from the request.
    *
    * @return The {@link InternalServerErrorException}
    */
   static NotFoundException newNotFoundException(
       SzHttpMethod  httpMethod,
-      String        selfLink)
+      UriInfo       uriInfo)
   {
     Response.ResponseBuilder builder = Response.status(404);
     builder.entity(
-        new SzErrorResponse(httpMethod, 404, selfLink));
+        new SzErrorResponse(httpMethod, 404, uriInfo));
     return new NotFoundException(builder.build());
   }
 
   /**
    * Creates an {@link NotFoundException} and builds a response
-   * with an {@link SzErrorResponse} using the specified self link.
+   * with an {@link SzErrorResponse} using the specified {@link UriInfo}.
    *
    * @param httpMethod The HTTP method for the request.
    *
-   * @param selfLink The link to the service to use in building the
-   *                 {@link SzErrorResponse}.
+   * @param uriInfo The {@link UriInfo} from the request.
    *
    * @param errorMessage The error message.
    *
@@ -133,39 +129,38 @@ public class ServicesUtil {
    */
   static NotFoundException newNotFoundException(
       SzHttpMethod  httpMethod,
-      String        selfLink,
+      UriInfo       uriInfo,
       String        errorMessage)
   {
     Response.ResponseBuilder builder = Response.status(404);
     builder.entity(
         new SzErrorResponse(
-            httpMethod, 404, selfLink, errorMessage));
+            httpMethod, 404, uriInfo, errorMessage));
     return new NotFoundException(builder.build());
   }
 
   /**
    * Creates an {@link BadRequestException} and builds a response
-   * with an {@link SzErrorResponse} using the specified self link.
+   * with an {@link SzErrorResponse} using the specified {@link UriInfo}.
    *
    * @param httpMethod The HTTP method for the request.
    *
-   * @param selfLink The link to the service to use in building the
-   *                 {@link SzErrorResponse}.
+   * @param uriInfo The {@link UriInfo} from the request.
    *
    * @param errorMessage The error message.
    *
    * @return The {@link BadRequestException} that was created with the
-   *         specified http method and self link.
+   *         specified http method and {@link UriInfo}.
    */
   static BadRequestException newBadRequestException(
       SzHttpMethod  httpMethod,
-      String        selfLink,
+      UriInfo       uriInfo,
       String        errorMessage)
   {
     Response.ResponseBuilder builder = Response.status(400);
     builder.entity(
         new SzErrorResponse(
-            httpMethod, 400, selfLink, errorMessage));
+            httpMethod, 400, uriInfo, errorMessage));
     return new BadRequestException(builder.build());
   }
 
@@ -372,7 +367,7 @@ public class ServicesUtil {
    *
    * @param httpMethod The HTTP method.
    *
-   * @param selfLink The link to the API service endpoint.
+   * @param uriInfo The {@link UriInfo} from the request.
    *
    * @return The {@link List} of {@link SzEntityIdentifier} instances that was
    *         parsed from the specified parameters.
@@ -381,7 +376,7 @@ public class ServicesUtil {
       List<String>  params,
       String        paramName,
       SzHttpMethod  httpMethod,
-      String        selfLink)
+      UriInfo       uriInfo)
   {
     List<SzEntityIdentifier> result = new ArrayList<>(params.size());
 
@@ -392,7 +387,7 @@ public class ServicesUtil {
 
       } catch (Exception e) {
         throw newBadRequestException(
-            httpMethod, selfLink,
+            httpMethod, uriInfo,
             "Improperly formatted entity identifier parameter: "
             + paramName + "=" + param);
       }

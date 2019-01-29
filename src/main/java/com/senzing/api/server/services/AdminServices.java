@@ -4,6 +4,8 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
 
 import com.senzing.api.model.*;
 import com.senzing.api.server.SzApiServer;
@@ -25,10 +27,8 @@ public class AdminServices {
    */
   @GET
   @Path("heartbeat")
-  public SzBasicResponse heartbeat() {
-    SzApiServer server = SzApiServer.getInstance();
-    String selfLink = server.makeLink("/heartbeat");
-    return new SzBasicResponse(GET, 200, selfLink);
+  public SzBasicResponse heartbeat(@Context UriInfo uriInfo) {
+    return new SzBasicResponse(GET, 200, uriInfo);
   }
 
   /**
@@ -37,17 +37,13 @@ public class AdminServices {
   @GET
   @Path("license")
   public SzLicenseResponse license(
-      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw)
+      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
+      @Context                                      UriInfo uriInfo)
     throws WebApplicationException
   {
     SzApiServer server = SzApiServer.getInstance();
 
     return server.executeInThread(() -> {
-      String selfLink = server.makeLink("/license");
-      if (withRaw) {
-        selfLink += "?withRaw=true";
-      }
-
       try {
         G2Product productApi = server.getProductApi();
 
@@ -59,7 +55,7 @@ public class AdminServices {
         SzLicenseInfo info = SzLicenseInfo.parseLicenseInfo(null, jsonObject);
 
         SzLicenseResponse response
-            = new SzLicenseResponse(GET, 200, selfLink);
+            = new SzLicenseResponse(GET, 200, uriInfo);
         response.setLicense(info);
         if (withRaw) response.setRawData(rawData);
         return response;
@@ -68,7 +64,7 @@ public class AdminServices {
         throw e;
 
       } catch (Exception e) {
-        throw newInternalServerErrorException(GET, selfLink, e);
+        throw newInternalServerErrorException(GET, uriInfo, e);
       }
     });
   }

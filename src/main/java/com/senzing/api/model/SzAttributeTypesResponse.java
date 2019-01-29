@@ -1,5 +1,6 @@
 package com.senzing.api.model;
 
+import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
 /**
@@ -34,6 +35,23 @@ public class SzAttributeTypesResponse extends SzResponseWithRawData
                                   int          httpStatusCode,
                                   String       selfLink) {
     super(httpMethod, httpStatusCode, selfLink);
+    this.attributeTypes = new LinkedList<>();
+  }
+
+  /**
+   * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
+   * data sources to be added later.
+   *
+   * @param httpMethod The {@link SzHttpMethod}.
+   *
+   * @param httpStatusCode The HTTP response status code.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   */
+  public SzAttributeTypesResponse(SzHttpMethod httpMethod,
+                                  int          httpStatusCode,
+                                  UriInfo      uriInfo) {
+    super(httpMethod, httpStatusCode, uriInfo);
     this.attributeTypes = new LinkedList<>();
   }
 

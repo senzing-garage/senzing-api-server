@@ -1,5 +1,6 @@
 package com.senzing.api.model;
 
+import javax.ws.rs.core.UriInfo;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -53,6 +54,41 @@ public class SzLoadRecordResponse extends SzBasicResponse
                               String       selfLink,
                               String       recordId) {
     super(httpMethod, httpStatusCode, selfLink);
+    this.recordId = recordId;
+  }
+
+  /**
+   * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
+   * record ID to be initialized later.
+   *
+   * @param httpMethod The {@link SzHttpMethod}.
+   *
+   * @param httpStatusCode The HTTP response status code.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   */
+  public SzLoadRecordResponse(SzHttpMethod httpMethod,
+                              int          httpStatusCode,
+                              UriInfo      uriInfo) {
+    super(httpMethod, httpStatusCode, uriInfo);
+  }
+
+  /**
+   * Constructs with the HTTP method, the {@link UriInfo}, and the record ID.
+   *
+   * @param httpMethod The {@link SzHttpMethod}.
+   *
+   * @param httpStatusCode The HTTP response status code.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param recordId The record ID of the record that was loaded.
+   */
+  public SzLoadRecordResponse(SzHttpMethod httpMethod,
+                              int          httpStatusCode,
+                              UriInfo      uriInfo,
+                              String       recordId) {
+    super(httpMethod, httpStatusCode, uriInfo);
     this.recordId = recordId;
   }
 

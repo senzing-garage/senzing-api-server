@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import javax.ws.rs.core.UriInfo;
+
 /**
  * The most basic response from the Senzing REST API.  Also servers as a basis
  * for other responses.
@@ -30,6 +32,23 @@ public class SzBasicResponse {
   {
     this.meta = new SzMeta(httpMethod, httpStatusCode);
     this.links = new SzLinks(selfLink);
+  }
+
+  /**
+   * Constructs with the specified HTTP method and {@link UriInfo}.
+   *
+   * @param httpMethod The {@link SzHttpMethod} from the request.
+   *
+   * @param httpStatusCode The HTTP response code.
+   *
+   * @param uriInfo The {@link UriInfo} for the self link.
+   */
+  public SzBasicResponse(SzHttpMethod httpMethod,
+                         int          httpStatusCode,
+                         UriInfo      uriInfo)
+  {
+    this.meta = new SzMeta(httpMethod, httpStatusCode);
+    this.links = new SzLinks(uriInfo);
   }
 
   /**
