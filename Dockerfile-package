@@ -1,0 +1,31 @@
+ARG BASE_CONTAINER=java:8
+FROM ${BASE_CONTAINER}
+
+ARG REFRESHED_AT=2019-01-22
+ARG GIT_REPOSITORY_NAME=unknown
+ARG SENZING_G2_JAR_PATHNAME=/opt/senzing/g2/lib/g2.jar
+ARG SENZING_G2_JAR_VERSION=1.5.0
+
+RUN apt-get update
+RUN apt-get -y install \
+      make \
+      maven \
+ && rm -rf /var/lib/apt/lists/*
+
+# Copy the repository from the local host.
+
+COPY . /${GIT_REPOSITORY_NAME}
+
+# Copy g2.jar from repository directory to location expected by "make package".
+
+RUN mkdir --parents $(dirname ${SENZING_G2_JAR_PATHNAME}) \
+ && cp /${GIT_REPOSITORY_NAME}/target/g2.jar ${SENZING_G2_JAR_PATHNAME} 
+
+# Run the "make" command to create the artifacts.
+
+WORKDIR /${GIT_REPOSITORY_NAME}
+RUN make package
+
+# At runtime, run the following:
+
+CMD /bin/bash

@@ -952,6 +952,7 @@ public class SzApiServer {
 
     StringBuffer sb = new StringBuffer();
     this.g2Engine.exportConfig(sb);
+    
     JsonObject config = JsonUtils.parseJsonObject(sb.toString());
 
     Set<String>         dataSourceSet = new LinkedHashSet<>();

@@ -8,7 +8,26 @@ defined in by the [Senzing Rest API Proposal](https://github.com/Senzing/rest-ap
 The [Senzing API OAS specification](http://editor.swagger.io/?url=https://raw.githubusercontent.com/Senzing/rest-api-proposal/master/senzing-api.yaml)
 documents the available API methods, their parameters and the response formats.
 
-## Dependencies
+### Contents
+
+1. [Using Command Line](#using-command-line)
+    1. [Dependencies](#dependencies)
+    1. [Building](#building)
+    1. [Running](#running)
+1. [Using Docker](#using-docker)
+    1. [Set environment variables](#set-environment-variables)
+    1. [Clone repository](#clone-repository)
+    1. [Create SENZING_DIR](#create-senzing_dir)
+    1. [Build docker image](#build-docker-image)
+    1. [Configuration](#configuration)
+    1. [Run docker image](#run-docker-image)
+    1. [Run docker image in docker network](#run-docker-image-in-docker-network)
+    1. [Test docker image](#test-docker-image)
+1. [Errors](errors)
+
+## Using Command Line
+
+### Dependencies
 
 To build the Senzing REST API Server you will need Apache Maven (recommend version 3.5.4 or later)
 as well as Java 1.8.x (recommend version 1.8.0_171 or later).
@@ -82,7 +101,7 @@ version 1.4.x.  In order to install g2.jar you must:
           set Path=%SENZING_DIR%\g2\lib;$Path
       ```
 
-## Building
+### Building
 
 To build simply execute:
 
@@ -90,11 +109,11 @@ To build simply execute:
       mvn install
    ```
 
-The JAR file will be contained in the `target` directory under the name `sz-api-server-[version].jar`.
+The JAR file will be contained in the `target` directory under the name `senzing-api-server-[version].jar`.
 
 Where `[version]` is the version number from the `pom.xml` file.
 
-## Running
+### Running
 
 To execute the server you will use `java -jar`.  It assumed that your environment is properly
 configured as described in the "Dependencies" section above.
@@ -103,60 +122,231 @@ The only command-line option that is required is the `-iniFile` file option whic
 specifies the path to the INI file used to initialize the API.  On Linux, you
 
 However, other options may be very useful.  Execute
-`java -jar target/sz-api-server-1.5.0.jar -help` to obtain a help message
+`java -jar target/senzing-api-server-1.5.1.jar -help` to obtain a help message
 describing all available options.  For example:
 
   ```console
      cd target
 
-     java -jar sz-api-server-1.5.0.jar -help
+    $ java -jar senzing-api-server-1.5.1.jar -help
 
+    java -jar senzing-api-server-1.5.1.jar <options>
 
-     java -jar sz-api-server-1.5.0.jar <options>
+    <options> includes:
+       -help
+            Should be the first and only option if provided.
+            Causes this help messasge to be displayed.
+            NOTE: If this option is provided, the server will not start.
 
-     <options> includes:
-        -help
-             Should be the first and only option if provided.
-             Causes this help messasge to be displayed.
-             NOTE: If this option is provided, the server will not start.
+       -version
+            Should be the first and only option if provided.
+            Causes the version of the G2 REST API Server to be displayed.
+            NOTE: If this option is provided, the server will not start.
 
-        -version
-             Should be the first and only option if provided.
-             Causes the version of the G2 REST API Server to be displayed.
-             NOTE: If this option is provided, the server will not start.
+       -httpPort [port-number]
+            Sets the port for HTTP communication.  Defaults to 2080.
+            Specify 0 for a randomly selected port number.
 
-        -httpPort [port-number]
-             Sets the port for HTTP communication.  Defaults to 2080.
-             Specify 0 for a randomly selected port number.
+       -bindAddr [ip-address|loopback|all]
+            Sets the port for HTTP bind address communication.
+            Defaults to the loopback address.
 
-        -bindAddr [ip-address|loopback|all]
-             Sets the port for HTTP bind address communication.
-             Defaults to loopback.
+       -allowedOrigins [url-domain]
+            Sets the CORS Access-Control-Allow-Origin header for all endpoints.
+            No Default.
 
         -concurrency [thread-count]
-             Sets the number of threads available for executing Senzing
-             API functions (i.e.: the number of engine threads).
+            Sets the number of threads available for executing
+            Senzing API functions (i.e.: the number of engine threads).
+            If not specified, then this defaults to 8.
 
-        -moduleName [module-name]
-             The module name to initialize with.  Defaults to 'ApiServer'.
+       -moduleName [module-name]
+            The module name to initialize with.  Defaults to 'ApiServer'.
 
-        -iniFile [ini-file-path]
-             The path to the Senzing INI file to with which to initialize.
+       -iniFile [ini-file-path]
+            The path to the Senzing INI file to with which to initialize.
 
-        -verbose If specified then initialize in verbose mode.
+       -verbose If specified then initialize in verbose mode.
 
-        -monitorFile [filePath]
-             Specifies a file whose timestamp is monitored to determine
-             when to shutdown.
+       -monitorFile [filePath]
+            Specifies a file whose timestamp is monitored to determine
+            when to shutdown.
   ```
 
 For example, if you wanted to run the server on port 8080 and bind to all
 network interfaces with a concurrency of 16 you would use:
 
   ```console
-     java -jar target/sz-api-server-[version].jar \
+     java -jar target/senzing-api-server-[version].jar \
         -concurrency 16 \
         -httpPort 8080 \
         -bindAddr all \
         -iniFile /opt/senzing/g2/python/G2Module.ini
   ```
+
+## Using Docker
+
+### Docker Dependencies
+
+### Set environment variables
+
+1. These variables may be modified, but do not need to be modified.
+   The variables are used throughout the installation procedure.
+
+    ```console
+    export GIT_ACCOUNT=senzing
+    export GIT_REPOSITORY=rest-api-server-java
+    ```
+
+1. Synthesize environment variables.
+
+    ```console
+    export GIT_ACCOUNT_DIR=~/${GIT_ACCOUNT}.git
+    export GIT_REPOSITORY_DIR="${GIT_ACCOUNT_DIR}/${GIT_REPOSITORY}"
+    export GIT_REPOSITORY_URL="https://github.com/${GIT_ACCOUNT}/${GIT_REPOSITORY}.git"
+    ```
+
+### Clone repository
+
+1. Get repository.
+
+    ```console
+    mkdir --parents ${GIT_ACCOUNT_DIR}
+    cd  ${GIT_ACCOUNT_DIR}
+    git clone ${GIT_REPOSITORY_URL}
+    ```
+
+### Create SENZING_DIR
+
+If you do not already have an `/opt/senzing` directory on your local system, visit
+[HOWTO - Create SENZING_DIR](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/create-senzing-dir.md).
+
+### Build docker image
+
+1. Find value for `SENZING_G2_JAR_VERSION`.
+
+    ```console
+    cat ${SENZING_DIR}/g2/data/g2BuildVersion.json
+    ```
+
+    or  
+
+    ```console
+    cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION'
+    ```
+
+1. Build Jar file.
+
+    * **SENZING_G2_JAR_PATHNAME** - Path to the `g2.jar`. Default: `/opt/senzing/g2/lib/g2.jar`
+    * **SENZING_G2_JAR_VERSION** - Version of the `g2.jar` file.
+
+    Example:
+
+    ```console
+    cd ${GIT_REPOSITORY_DIR}
+
+    export SENZING_G2_JAR_PATHNAME=/opt/senzing/g2/lib/g2.jar
+    export SENZING_G2_JAR_VERSION=1.4.18354
+
+    make docker-package
+    ```
+
+    Another example:
+
+    ```console
+    cd ${GIT_REPOSITORY_DIR}
+
+    export SENZING_G2_JAR_PATHNAME=${SENZING_DIR}/g2/lib/g2.jar
+    export SENZING_G2_JAR_VERSION=$(cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION')
+
+    make docker-package
+    ```
+
+    1. Jar file will be in the "target" directory. Example: `${GIT_REPOSITORY_DIR}/target/senzing-api-server-M.m.P.jar`
+
+1. Build docker image.
+   *Note:* The following command expects a JAR file at `${GIT_REPOSITORY_DIR}/target/senzing-api-server-M.m.P.jar`.
+
+    ```console
+    cd ${GIT_REPOSITORY_DIR}
+
+    make docker-build
+    ```
+
+### Configuration
+
+* **SENZING_BIND_ADDR** -
+  Port for HTTP bind address communication. Values: ip-address, loopback, all. Default: loopback
+* **SENZING_CONCURRENCY** -
+  Number of threads available for executing Senzing API functions. Default: 8
+* **SENZING_DIR** -
+  Location of Senzing libraries. Default: "/opt/senzing".
+* **SENZING_INI_FILE** -
+  The path to the Senzing INI file to with which to initialize. Default: ${SENZING_DIR}/g2/python/G2Module.ini
+* **WEBAPP_PORT** -
+  Port used by service.  
+
+### Run docker image
+
+1. Run the docker container. Example:
+
+    ```console
+    export SENZING_DIR=/opt/senzing
+    export SENZING_CONCURRENCY=10
+    export WEBAPP_PORT=8889
+
+    sudo docker run -it \
+      --volume ${SENZING_DIR}:/opt/senzing \
+      --publish ${WEBAPP_PORT}:8080 \
+      --env SENZING_CONCURRENCY="${SENZING_CONCURRENCY}" \
+      senzing/rest-api-server-java
+    ```
+
+### Run docker image in docker network
+
+1. Determine docker network:
+
+    ```console
+    docker network ls
+
+    # Choose value from NAME column of docker network ls
+    export SENZING_NETWORK=nameofthe_network
+    ```
+
+1. Run the docker container. Example:
+
+    ```console
+    export SENZING_DIR=/opt/senzing
+    export WEBAPP_PORT=8889
+
+    sudo docker run -it \
+      --volume ${SENZING_DIR}:/opt/senzing \
+      --net ${SENZING_NETWORK} \
+      --publish ${WEBAPP_PORT}:8080 \
+      senzing/rest-api-server-java
+    ```
+
+### Test Docker image
+
+1. Wait for the following message in the log.
+
+    ```console
+    Started Senzing REST API Server on port 8080.
+
+    Server running at:
+
+    http://0.0.0.0/0.0.0.0:8080/
+    ```
+
+1. Test Senzing REST API server.  *Note:* port 8889 on the localhost has been mapped to port 8080 in the docker container See `WEBAPP_PORT` definition.  Example:
+
+    ```console
+    export SENZING_API_SERVICE=http://localhost:8889
+
+    curl -X GET ${SENZING_API_SERVICE}/heartbeat
+    curl -X GET ${SENZING_API_SERVICE}/license
+    ```
+
+## Errors
+
+1. See [doc/errors.md](doc/errors.md).
