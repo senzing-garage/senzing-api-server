@@ -1,4 +1,4 @@
-# rest-api-server-java
+# senzing-api-server
 
 ## Overview
 
@@ -195,7 +195,7 @@ network interfaces with a concurrency of 16 you would use:
 
     ```console
     export GIT_ACCOUNT=senzing
-    export GIT_REPOSITORY=rest-api-server-java
+    export GIT_REPOSITORY=senzing-api-server
     ```
 
 1. Synthesize environment variables.
@@ -299,7 +299,7 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
       --volume ${SENZING_DIR}:/opt/senzing \
       --publish ${WEBAPP_PORT}:8080 \
       --env SENZING_CONCURRENCY="${SENZING_CONCURRENCY}" \
-      senzing/rest-api-server-java
+      senzing/senzing-api-server
     ```
 
 ### Run docker image in docker network
@@ -323,7 +323,7 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
       --volume ${SENZING_DIR}:/opt/senzing \
       --net ${SENZING_NETWORK} \
       --publish ${WEBAPP_PORT}:8080 \
-      senzing/rest-api-server-java
+      senzing/senzing-api-server
     ```
 
 ### Test Docker image
