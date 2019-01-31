@@ -22,7 +22,7 @@ GIT_VERSION_LONG := $(shell git describe --always --tags --long --dirty)
 
 DOCKER_IMAGE_PACKAGE := $(GIT_REPOSITORY_NAME)-package:$(GIT_VERSION)
 DOCKER_IMAGE_TAG ?= $(GIT_REPOSITORY_NAME):$(GIT_VERSION)
-DOCKER_IMAGE_NAME := senzing/rest-api-server-java
+DOCKER_IMAGE_NAME := senzing/senzing-api-server
 
 # Misc.
 
