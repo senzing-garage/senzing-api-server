@@ -2,6 +2,7 @@ package com.senzing.api.model;
 
 import com.senzing.g2.engine.G2Fallible;
 
+import javax.ws.rs.core.UriInfo;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -120,6 +121,115 @@ public class SzErrorResponse extends SzBasicResponse {
     this(httpMethod,
          httpStatusCode,
          selfLink,
+         ((firstErrorFallible != null)
+             ? new SzError(firstErrorFallible) : null));
+  }
+
+  /**
+   * Constructs with the specified HTTP method and {@link UriInfo}.
+   *
+   * @param httpMethod The {@link SzHttpMethod} from the request.
+   *
+   * @param httpStatusCode The HTTP response code.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   */
+  public SzErrorResponse(SzHttpMethod httpMethod,
+                         int          httpStatusCode,
+                         UriInfo      uriInfo)
+  {
+    this(httpMethod, httpStatusCode, uriInfo, (SzError) null);
+  }
+
+  /**
+   * Constructs with the specified HTTP method and {@link UriInfo} and the
+   * first error.
+   *
+   * @param httpMethod The {@link SzHttpMethod} from the request.
+   *
+   * @param httpStatusCode The HTTP response code.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param firstError The {@link SzError} describing the first error.
+   */
+  public SzErrorResponse(SzHttpMethod httpMethod,
+                         int          httpStatusCode,
+                         UriInfo      uriInfo,
+                         SzError      firstError)
+  {
+    super(httpMethod, httpStatusCode, uriInfo);
+    this.errors = new LinkedList<>();
+    if (firstError != null) this.errors.add(firstError);
+  }
+
+  /**
+   * Constructs with the specified HTTP method and {@link UriInfo} and the
+   * first error message.
+   *
+   * @param httpMethod The {@link SzHttpMethod} from the request.
+   *
+   * @param httpStatusCode The HTTP response code.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param firstError The error message for the first error.
+   */
+  public SzErrorResponse(SzHttpMethod httpMethod,
+                         int          httpStatusCode,
+                         UriInfo      uriInfo,
+                         String       firstError)
+  {
+    this(httpMethod,
+         httpStatusCode,
+         uriInfo,
+         firstError != null ? new SzError(firstError) : null);
+  }
+
+  /**
+   * Constructs with the specified HTTP method and {@link UriInfo} and the first
+   * error.
+   *
+   * @param httpMethod The {@link SzHttpMethod} from the request.
+   *
+   * @param httpStatusCode The HTTP response code.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param firstError The {@link Throwable} describing the first error.
+   */
+  public SzErrorResponse(SzHttpMethod httpMethod,
+                         int          httpStatusCode,
+                         UriInfo      uriInfo,
+                         Throwable    firstError)
+  {
+    this(httpMethod,
+         httpStatusCode,
+         uriInfo,
+         firstError != null ? new SzError(firstError) : null);
+  }
+
+  /**
+   * Constructs with the specified HTTP method and {@link UriInfo} link and
+   * the first error.
+   *
+   * @param httpMethod The {@link SzHttpMethod} from the request.
+   *
+   * @param httpStatusCode The HTTP response code.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param firstErrorFallible The {@link G2Fallible} from which to extract the
+   *                           error code and exception message.
+   */
+  public SzErrorResponse(SzHttpMethod httpMethod,
+                         int          httpStatusCode,
+                         UriInfo      uriInfo,
+                         G2Fallible   firstErrorFallible)
+  {
+    this(httpMethod,
+         httpStatusCode,
+         uriInfo,
          ((firstErrorFallible != null)
              ? new SzError(firstErrorFallible) : null));
   }

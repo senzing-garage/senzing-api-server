@@ -373,21 +373,6 @@ public class SzApiServer {
   }
 
   /**
-   * Uses the {@linkplain #getBaseUrl() base URL} to build a link with the
-   * specified path.
-   *
-   * @param path The path to use for building the path.
-   * @return The URL link for the path with the base URL.
-   */
-  public String makeLink(String path) {
-    this.assertNotShutdown();
-    String sep = "";
-    if (path.startsWith("/")) path = path.substring(1);
-    if (!this.baseUrl.endsWith("/")) sep = "/";
-    return this.baseUrl + sep + path;
-  }
-
-  /**
    * Utility method to ensure a command line argument with the specified index
    * exists and if not then throws an exception.
    *
@@ -930,7 +915,7 @@ public class SzApiServer {
       this.allowedOrigins = (String) options.get(Option.ALLOWED_ORIGINS);
     }
 
-    this.baseUrl = "http://" + ipAddr + ":" + httpPort + "/";
+    this.baseUrl = "http://" + ipAddr.getHostAddress() + ":" + httpPort + "/";
     this.g2Product = new G2ProductJNI();
     int initResult = this.g2Product.init(moduleName, ini, verbose);
     if (initResult < 0) {

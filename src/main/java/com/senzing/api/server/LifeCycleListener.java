@@ -43,7 +43,7 @@ class LifeCycleListener implements LifeCycle.Listener {
     System.out.println("Started Senzing REST API Server on port " + port + ".");
     System.out.println();
     System.out.println("Server running at:");
-    System.out.println("http://" + this.ipAddr + ":" + port + "/");
+    System.out.println("http://" + this.ipAddr.getHostAddress() + ":" + port + "/");
     System.out.println();
     if (this.fileMonitor != null) {
       this.fileMonitor.signalReady();

@@ -7,6 +7,8 @@ import com.senzing.util.JsonUtils;
 
 import javax.json.*;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
 
 import java.util.*;
 
@@ -26,9 +28,10 @@ public class EntityDataServices {
   @POST
   @Path("data-sources/{dataSourceCode}/records")
   public SzLoadRecordResponse loadRecord(
-      @PathParam("dataSourceCode") String dataSourceCode,
-      @QueryParam("loadId") String loadId,
-      String recordJsonData)
+      @PathParam("dataSourceCode")  String  dataSourceCode,
+      @QueryParam("loadId")         String  loadId,
+      @Context                      UriInfo uriInfo,
+      String                                recordJsonData)
   {
     SzApiServer server = SzApiServer.getInstance();
     dataSourceCode = dataSourceCode.toUpperCase();
@@ -38,12 +41,9 @@ public class EntityDataServices {
     final String normalizedLoadId = normalizeString(loadId);
 
     return server.executeInThread(() -> {
-      String selfLink = server.makeLink(
-          "/data-sources/" + urlEncode(dataSource) + "/records");
-
       String recordText = ensureJsonFields(
         POST,
-        selfLink,
+        uriInfo,
         recordJsonData,
         Collections.singletonMap("DATA_SOURCE", dataSource));
 
@@ -51,7 +51,7 @@ public class EntityDataServices {
         // get the engine API and the config API
         G2Engine engineApi = server.getEngineApi();
 
-        checkDataSource(POST, selfLink, dataSource, server);
+        checkDataSource(POST, uriInfo, dataSource, server);
 
         StringBuffer sb = new StringBuffer();
 
@@ -60,14 +60,14 @@ public class EntityDataServices {
                                                              recordText,
                                                              normalizedLoadId);
         if (result != 0) {
-          throw newWebApplicationException(POST, selfLink, engineApi);
+          throw newWebApplicationException(POST, uriInfo, engineApi);
         }
 
         String recordId = sb.toString().trim();
 
         // construct the response
         SzLoadRecordResponse response = new SzLoadRecordResponse(
-            POST, 200, selfLink, recordId);
+            POST, 200, uriInfo, recordId);
 
         // return the response
         return response;
@@ -76,7 +76,7 @@ public class EntityDataServices {
         throw e;
 
       } catch (Exception e) {
-        throw ServicesUtil.newInternalServerErrorException(POST, selfLink, e);
+        throw ServicesUtil.newInternalServerErrorException(POST, uriInfo, e);
       }
 
     });
@@ -85,10 +85,11 @@ public class EntityDataServices {
   @PUT
   @Path("data-sources/{dataSourceCode}/records/{recordId}")
   public SzLoadRecordResponse loadRecord(
-      @PathParam("dataSourceCode") String dataSourceCode,
-      @PathParam("recordId") String recordId,
-      @QueryParam("loadId") String loadId,
-      String recordJsonData)
+      @PathParam("dataSourceCode")  String  dataSourceCode,
+      @PathParam("recordId")        String  recordId,
+      @QueryParam("loadId")         String  loadId,
+      @Context                      UriInfo uriInfo,
+      String                                recordJsonData)
   {
     SzApiServer server = SzApiServer.getInstance();
     dataSourceCode = dataSourceCode.toUpperCase();
@@ -98,16 +99,12 @@ public class EntityDataServices {
     final String normalizedLoadId = normalizeString(loadId);
 
     return server.executeInThread(() -> {
-      String selfLink = server.makeLink(
-          "/data-sources/" + urlEncode(dataSource) + "/records/"
-          + urlEncode(recordId));
-
       Map<String,String> map = new HashMap<>();
       map.put("DATA_SOURCE", dataSource);
       map.put("RECORD_ID", recordId);
 
       String recordText = ensureJsonFields(PUT,
-                                           selfLink,
+                                           uriInfo,
                                            recordJsonData,
                                            map);
 
@@ -119,7 +116,7 @@ public class EntityDataServices {
 
         if (!dataSources.contains(dataSource)) {
           throw newNotFoundException(
-              POST, selfLink,
+              POST, uriInfo,
               "The specified data source is not recognized: " + dataSource);
         }
 
@@ -130,12 +127,12 @@ public class EntityDataServices {
                                          recordText,
                                          normalizedLoadId);
         if (result != 0) {
-          throw newWebApplicationException(PUT, selfLink, engineApi);
+          throw newWebApplicationException(PUT, uriInfo, engineApi);
         }
 
         // construct the response
         SzLoadRecordResponse response = new SzLoadRecordResponse(
-            PUT, 200, selfLink, recordId);
+            PUT, 200, uriInfo, recordId);
 
         // return the response
         return response;
@@ -144,7 +141,7 @@ public class EntityDataServices {
         throw e;
 
       } catch (Exception e) {
-        throw ServicesUtil.newInternalServerErrorException(PUT, selfLink, e);
+        throw ServicesUtil.newInternalServerErrorException(PUT, uriInfo, e);
       }
 
     });
@@ -153,23 +150,16 @@ public class EntityDataServices {
   @GET
   @Path("data-sources/{dataSourceCode}/records/{recordId}")
   public SzRecordResponse getRecord(
-      @PathParam("dataSourceCode") String dataSourceCode,
-      @PathParam("recordId") String recordId,
-      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw) {
+      @PathParam("dataSourceCode")                  String  dataSourceCode,
+      @PathParam("recordId")                        String  recordId,
+      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
+      @Context                                      UriInfo uriInfo)
+  {
     SzApiServer server = SzApiServer.getInstance();
     dataSourceCode = dataSourceCode.toUpperCase();
 
     final String dataSource = dataSourceCode;
     return server.executeInThread(() -> {
-
-      String selfLink = server.makeLink(
-          "/data-sources/" + urlEncode(dataSource)
-              + "/records/" + urlEncode(recordId));
-
-      if (withRaw) {
-        selfLink += "?withRaw=true";
-      }
-
       try {
         // get the engine API and the config API
         G2Engine engineApi = server.getEngineApi();
@@ -178,7 +168,7 @@ public class EntityDataServices {
 
         int result = engineApi.getRecord(dataSource, recordId, sb);
         if (result != 0) {
-          throw newWebApplicationException(GET, selfLink, engineApi);
+          throw newWebApplicationException(GET, uriInfo, engineApi);
         }
         // parse the raw data
         String rawData = sb.toString();
@@ -190,7 +180,7 @@ public class EntityDataServices {
         // construct the response
         SzRecordResponse response = new SzRecordResponse(GET,
                                                          200,
-                                                         selfLink,
+                                                         uriInfo,
                                                          entityRecord);
 
         // if including raw data then add it
@@ -203,7 +193,7 @@ public class EntityDataServices {
         throw e;
 
       } catch (Exception e) {
-        throw ServicesUtil.newInternalServerErrorException(GET, selfLink, e);
+        throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, e);
       }
     });
   }
@@ -211,20 +201,16 @@ public class EntityDataServices {
   @GET
   @Path("data-sources/{dataSourceCode}/records/{recordId}/entity")
   public SzEntityResponse geEntityByRecordId(
-      @PathParam("dataSourceCode") String dataSourceCode,
-      @PathParam("recordId") String recordId,
-      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
-      @DefaultValue("false") @QueryParam("withRelated") boolean withRelated) {
+      @PathParam("dataSourceCode")                      String  dataSourceCode,
+      @PathParam("recordId")                            String  recordId,
+      @DefaultValue("false") @QueryParam("withRaw")     boolean withRaw,
+      @DefaultValue("false") @QueryParam("withRelated") boolean withRelated,
+      @Context                                          UriInfo uriInfo) {
     SzApiServer server = SzApiServer.getInstance();
     dataSourceCode = dataSourceCode.toUpperCase();
 
     final String dataSource = dataSourceCode;
     return server.executeInThread(() -> {
-
-      String basePath = ("/data-sources/" + urlEncode(dataSource)
-                         + "/records/" + urlEncode(recordId) + "/entity");
-      String selfLink = makeEntityLink(server, basePath, withRelated, withRaw);
-
       try {
         // get the engine API and the config API
         G2Engine engineApi = server.getEngineApi();
@@ -256,7 +242,7 @@ public class EntityDataServices {
               recordIds, maxDegrees, buildOutDegrees, maxEntityCount, sb);
 
           if (result != 0) {
-            throw newWebApplicationException(GET, selfLink, engineApi);
+            throw newWebApplicationException(GET, uriInfo, engineApi);
           }
 
           // organize all the entities into a map for lookup
@@ -284,7 +270,7 @@ public class EntityDataServices {
           // 1-degree relations are not required, so do a standard lookup
           int result = engineApi.getEntityByRecordID(dataSource, recordId, sb);
 
-          checkEntityResult(result, sb.toString(), selfLink, engineApi);
+          checkEntityResult(result, sb.toString(), uriInfo, engineApi);
 
           // parse the result
           entityData = SzEntityData.parseEntityData(
@@ -295,13 +281,13 @@ public class EntityDataServices {
 
         // construct the response
         return newEntityResponse(
-            selfLink, entityData, (withRaw ? sb.toString() : null));
+            uriInfo, entityData, (withRaw ? sb.toString() : null));
 
       } catch (WebApplicationException e) {
         throw e;
 
       } catch (Exception e) {
-        throw ServicesUtil.newInternalServerErrorException(GET, selfLink, e);
+        throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, e);
       }
     });
   }
@@ -309,15 +295,14 @@ public class EntityDataServices {
   @GET
   @Path("entities/{entityId}")
   public SzEntityResponse getEntityByEntityId(
-      @PathParam("entityId") long entityId,
-      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
-      @DefaultValue("false") @QueryParam("withRelated") boolean withRelated) {
+      @PathParam("entityId")                            long    entityId,
+      @DefaultValue("false") @QueryParam("withRaw")     boolean withRaw,
+      @DefaultValue("false") @QueryParam("withRelated") boolean withRelated,
+      @Context                                          UriInfo uriInfo)
+  {
     SzApiServer server = SzApiServer.getInstance();
 
     return server.executeInThread(() -> {
-
-      String basePath = "/entities/" + entityId;
-      String selfLink = makeEntityLink(server, basePath, withRelated, withRaw);
 
       try {
         // get the engine API
@@ -349,7 +334,7 @@ public class EntityDataServices {
               entityIds, maxDegrees, buildOutDegrees, maxEntityCount, sb);
 
           if (result != 0) {
-            throw newWebApplicationException(GET, selfLink, engineApi);
+            throw newWebApplicationException(GET, uriInfo, engineApi);
           }
 
           // organize all the entities into a map for lookup
@@ -363,7 +348,7 @@ public class EntityDataServices {
           // 1-degree relations are not required, so do a standard lookup
           int result = engineApi.getEntityByEntityID(entityId, sb);
 
-          checkEntityResult(result, sb.toString(), selfLink, engineApi);
+          checkEntityResult(result, sb.toString(), uriInfo, engineApi);
 
           // parse the result
           entityData = SzEntityData.parseEntityData(
@@ -374,13 +359,13 @@ public class EntityDataServices {
 
         // construct the response
         return newEntityResponse(
-            selfLink, entityData, (withRaw ? sb.toString() : null));
+            uriInfo, entityData, (withRaw ? sb.toString() : null));
 
       } catch (WebApplicationException e) {
         throw e;
 
       } catch (Exception e) {
-        throw ServicesUtil.newInternalServerErrorException(GET, selfLink, e);
+        throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, e);
       }
     });
   }
@@ -389,27 +374,17 @@ public class EntityDataServices {
   @Path("entities")
   public SzAttributeSearchResponse searchByAttributes(
       @QueryParam("attrs")                          String  attrs,
-      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw)
+      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
+      @Context                                      UriInfo uriInfo)
   {
     SzApiServer server = SzApiServer.getInstance();
 
     return server.executeInThread(() -> {
 
-      String selfLink = server.makeLink("/entities");
-      String prefix = "?";
-      if (attrs != null) {
-        selfLink += prefix + urlEncode(attrs);
-        prefix = "&";
-      }
-      if (withRaw) {
-        selfLink += prefix + "withRaw=true";
-        prefix = "&";
-      }
-
       // check if no attributes
       if (attrs == null || attrs.trim().length() == 0) {
         throw newBadRequestException(
-            GET, selfLink,
+            GET, uriInfo,
             "Parameter missing or empty: \"attrs\".  "
             + "Search criteria attributes are required.");
       }
@@ -424,7 +399,7 @@ public class EntityDataServices {
 
         int result = engineApi.searchByAttributes(attrs, sb);
         if (result != 0) {
-          throw newInternalServerErrorException(GET, selfLink, engineApi);
+          throw newInternalServerErrorException(GET, uriInfo, engineApi);
         }
 
         JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
@@ -440,7 +415,7 @@ public class EntityDataServices {
 
         // construct the response
         SzAttributeSearchResponse response
-            = new SzAttributeSearchResponse(GET, 200, selfLink);
+            = new SzAttributeSearchResponse(GET, 200, uriInfo);
 
         response.setSearchResults(list);
 
@@ -455,22 +430,23 @@ public class EntityDataServices {
         throw e;
 
       } catch (Exception e) {
-        throw ServicesUtil.newInternalServerErrorException(GET, selfLink, e);
+        throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, e);
       }
     });
   }
 
 
   private static WebApplicationException newWebApplicationException(
-      SzHttpMethod httpMethod,
-      String selfLink,
-      G2Engine engineApi) {
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      G2Engine      engineApi)
+  {
     int errorCode = engineApi.getLastExceptionCode();
     if (errorCode == DATA_SOURCE_NOT_FOUND_CODE
         || errorCode == RECORD_NOT_FOUND_CODE) {
-      return newNotFoundException(GET, selfLink, engineApi);
+      return newNotFoundException(GET, uriInfo, engineApi);
     }
-    return newInternalServerErrorException(GET, selfLink, engineApi);
+    return newInternalServerErrorException(GET, uriInfo, engineApi);
   }
 
   /**
@@ -531,29 +507,6 @@ public class EntityDataServices {
   /**
    *
    */
-  private static String makeEntityLink(SzApiServer  server,
-                                       String       basePath,
-                                       boolean      withRelated,
-                                       boolean      withRaw)
-  {
-    String selfLink = server.makeLink(basePath);
-
-    String prefix = "?";
-    if (withRelated) {
-      selfLink += prefix + "withRelated=true";
-      prefix = "&";
-    }
-    if (withRaw) {
-      selfLink += prefix + "withRaw=true";
-      prefix = "&";
-    }
-
-    return selfLink;
-  }
-
-  /**
-   *
-   */
   private static Map<Long, SzEntityData> parseEntityDataList(
       String rawData, SzApiServer server)
   {
@@ -577,14 +530,14 @@ public class EntityDataServices {
   /**
    *
    */
-  private static SzEntityResponse newEntityResponse(String        selfLink,
+  private static SzEntityResponse newEntityResponse(UriInfo       uriInfo,
                                                     SzEntityData  entityData,
                                                     String        rawData)
   {
     // construct the response
     SzEntityResponse response = new SzEntityResponse(GET,
                                                      200,
-                                                     selfLink,
+                                                     uriInfo,
                                                      entityData);
 
     // if including raw data then add it
@@ -600,15 +553,15 @@ public class EntityDataServices {
    */
   private static void checkEntityResult(int       result,
                                         String    nativeJson,
-                                        String    selfLink,
+                                        UriInfo   uriInfo,
                                         G2Engine  engineApi)
   {
     // check if failed to find result
     if (result != 0) {
-      throw newWebApplicationException(GET, selfLink, engineApi);
+      throw newWebApplicationException(GET, uriInfo, engineApi);
     }
     if (nativeJson.trim().length() == 0) {
-      throw newNotFoundException(GET, selfLink);
+      throw newNotFoundException(GET, uriInfo);
     }
   }
 
@@ -628,7 +581,7 @@ public class EntityDataServices {
    * @throws NotFoundException If the data source is not found.
    */
   private static void checkDataSource(SzHttpMethod  httpMethod,
-                                      String        selfLink,
+                                      UriInfo       uriInfo,
                                       String        dataSource,
                                       SzApiServer   apiServer)
     throws NotFoundException
@@ -637,7 +590,7 @@ public class EntityDataServices {
 
     if (!dataSources.contains(dataSource)) {
       throw newNotFoundException(
-          POST, selfLink,
+          POST, uriInfo,
           "The specified data source is not recognized: " + dataSource);
     }
   }
@@ -647,7 +600,7 @@ public class EntityDataServices {
    * This is a utility method.
    */
   private static String ensureJsonFields(SzHttpMethod         httpMethod,
-                                         String               selfLink,
+                                         UriInfo              uriInfo,
                                          String               jsonText,
                                          Map<String, String>  map)
   {
@@ -666,7 +619,7 @@ public class EntityDataServices {
         if (jsonVal != null && jsonVal.trim().length() > 0) {
           if (!jsonVal.equalsIgnoreCase(val)) {
             throw ServicesUtil.newBadRequestException(
-                httpMethod, selfLink,
+                httpMethod, uriInfo,
                 key + " from path and from request body do not match.  "
                     + "fromPath=[ " + val + " ], fromRequestBody=[ "
                     + jsonVal + " ]");
@@ -684,7 +637,7 @@ public class EntityDataServices {
 
     } catch (Exception e) {
       throw ServicesUtil.newBadRequestException(httpMethod,
-                                                selfLink,
+                                                uriInfo,
                                                 e.getMessage());
     }
   }

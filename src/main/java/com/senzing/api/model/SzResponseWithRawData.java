@@ -7,6 +7,7 @@ import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonReader;
 import javax.json.JsonValue;
+import javax.ws.rs.core.UriInfo;
 import java.io.StringReader;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -60,6 +61,43 @@ public class SzResponseWithRawData extends SzBasicResponse {
     this.rawData = JsonUtils.normalizeJsonText(rawData);
   }
 
+  /**
+   * Constructs with the specified HTTP method and {@link UriInfo}.
+   *
+   * @param httpMethod The {@link SzHttpMethod} from the request.
+   *
+   * @param httpStatusCode The HTTP response status code.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   */
+  public SzResponseWithRawData(SzHttpMethod httpMethod,
+                               int          httpStatusCode,
+                               UriInfo      uriInfo)
+  {
+    this(httpMethod, httpStatusCode, uriInfo, null);
+  }
+
+  /**
+   * Constructs with the specified HTTP method, {@link UriInfo} and
+   * object representing the raw data response from the engine.
+   *
+   * @param httpMethod The {@link SzHttpMethod} from the request.
+   *
+   * @param httpStatusCode The HTTP response status code.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param rawData The raw data to associate with the response.
+   */
+  public SzResponseWithRawData(SzHttpMethod httpMethod,
+                               int          httpStatusCode,
+                               UriInfo      uriInfo,
+                               String       rawData)
+  {
+    super(httpMethod, httpStatusCode, uriInfo);
+
+    this.rawData = JsonUtils.normalizeJsonText(rawData);
+  }
 
   /**
    * Returns the raw data associated with this response.

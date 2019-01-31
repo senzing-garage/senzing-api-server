@@ -1,5 +1,6 @@
 package com.senzing.api.model;
 
+import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
 /**
@@ -35,6 +36,24 @@ public class SzAttributeSearchResponse extends SzResponseWithRawData
                                    String       selfLink)
   {
     super(httpMethod, httpStatusCode, selfLink);
+    this.searchResults = new LinkedList<>();
+  }
+
+  /**
+   * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
+   * license info data to be initialized later.
+   *
+   * @param httpMethod The {@link SzHttpMethod}.
+   *
+   * @param httpStatusCode The HTTP response status code.
+   *
+   * @param uriInfo The {@link UriInfo} associated with the request.
+   */
+  public SzAttributeSearchResponse(SzHttpMethod httpMethod,
+                                   int          httpStatusCode,
+                                   UriInfo      uriInfo)
+  {
+    super(httpMethod, httpStatusCode, uriInfo);
     this.searchResults = new LinkedList<>();
   }
 

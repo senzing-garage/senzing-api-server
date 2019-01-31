@@ -8,6 +8,8 @@ import com.senzing.util.JsonUtils;
 
 import javax.json.*;
 import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
 
 import java.util.List;
 import java.util.Map;
@@ -24,29 +26,25 @@ public class ConfigServices {
   @GET
   @Path("/data-sources")
   public SzDataSourcesResponse getDataSources(
-      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw)
+      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
+      @Context                                      UriInfo uriInfo)
   {
     SzApiServer server = SzApiServer.getInstance();
 
     return server.executeInThread(() -> {
-      String selfLink = server.makeLink("/data-sources");
-      if (withRaw) {
-        selfLink += "?withRaw=true";
-      }
-
       Long configId = null;
       try {
         // get the engine API and the config API
         G2Engine engineApi = server.getEngineApi();
         G2Config configApi = server.getConfigApi();
 
-        String config = exportConfig(GET, selfLink, engineApi);
+        String config = exportConfig(GET, uriInfo, engineApi);
 
         // load into a config object by ID
         configId = configApi.load(config);
 
         if (configId < 0) {
-          throw newInternalServerErrorException(GET, selfLink, configApi);
+          throw newInternalServerErrorException(GET, uriInfo, configApi);
         }
 
         // clear the string buffer to reuse it
@@ -65,7 +63,7 @@ public class ConfigServices {
         // get the array and construct the response
         JsonArray jsonArray = jsonObject.getJsonArray("DSRC_CODE");
         SzDataSourcesResponse response
-            = new SzDataSourcesResponse(GET, 200, selfLink);
+            = new SzDataSourcesResponse(GET, 200, uriInfo);
 
         for (JsonString jsonString : jsonArray.getValuesAs(JsonString.class)) {
           response.addDataSource(jsonString.getString());
@@ -81,7 +79,7 @@ public class ConfigServices {
         throw e;
 
       } catch (Exception e) {
-        throw newInternalServerErrorException(GET, selfLink, e);
+        throw newInternalServerErrorException(GET, uriInfo, e);
 
       } finally {
         if (configId != null) {
@@ -97,30 +95,12 @@ public class ConfigServices {
       @DefaultValue("false") @QueryParam("withInternal") boolean withInternal,
       @QueryParam("attributeClass")                      String  attributeClass,
       @QueryParam("featureType")                         String  featureType,
-      @DefaultValue("false") @QueryParam("withRaw")      boolean withRaw)
+      @DefaultValue("false") @QueryParam("withRaw")      boolean withRaw,
+      @Context                                           UriInfo uriInfo)
   {
     SzApiServer server = SzApiServer.getInstance();
 
     return server.executeInThread(() -> {
-      String selfLink = server.makeLink("/attribute-types");
-      String prefix = "?";
-      if (withInternal) {
-        selfLink += (prefix + "withInternal=true");
-        prefix = "&";
-      }
-      if (attributeClass != null) {
-        selfLink += (prefix + "attributeClass=" + urlEncode(attributeClass));
-        prefix = "&";
-      }
-      if (featureType != null) {
-        selfLink += (prefix + "featureType=" + urlEncode(featureType));
-        prefix = "&";
-      }
-      if (withRaw) {
-        selfLink += (prefix + "withRaw=true");
-        prefix = "&";
-      }
-
       SzAttributeClass ac = null;
       if (attributeClass != null && attributeClass.trim().length() > 0) {
         try {
@@ -128,7 +108,7 @@ public class ConfigServices {
 
         } catch (IllegalArgumentException e) {
           throw newBadRequestException(
-              GET, selfLink, "Unrecognized attribute class: " + attributeClass);
+              GET, uriInfo, "Unrecognized attribute class: " + attributeClass);
         }
       }
       final SzAttributeClass attrClass = ac;
@@ -140,7 +120,7 @@ public class ConfigServices {
         // get the engine API and the config API
         G2Engine engineApi = server.getEngineApi();
 
-        JsonObject configRoot = getCurrentConfigRoot(GET, selfLink, engineApi);
+        JsonObject configRoot = getCurrentConfigRoot(GET, uriInfo, engineApi);
 
         // get the array and construct the response
         JsonArray jsonArray = configRoot.getJsonArray("CFG_ATTR");
@@ -167,7 +147,7 @@ public class ConfigServices {
 
         // build the response
         SzAttributeTypesResponse response
-            = new SzAttributeTypesResponse(GET, 200, selfLink);
+            = new SzAttributeTypesResponse(GET, 200, uriInfo);
 
         response.setAttributeTypes(attrTypes);
 
@@ -206,7 +186,7 @@ public class ConfigServices {
         throw e;
 
       } catch (Exception e) {
-        throw newInternalServerErrorException(GET, selfLink, e);
+        throw newInternalServerErrorException(GET, uriInfo, e);
       }
     });
   }
@@ -215,22 +195,17 @@ public class ConfigServices {
   @Path("/attribute-types/{attributeCode}")
   public SzAttributeTypeResponse geAttributeType(
       @PathParam("attributeCode")                   String  attributeCode,
-      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw)
+      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
+      @Context                                      UriInfo uriInfo)
   {
     SzApiServer server = SzApiServer.getInstance();
 
     return server.executeInThread(() -> {
-      String selfLink = server.makeLink(
-          "/attribute-types/" + urlEncode(attributeCode));
-      if (withRaw) {
-        selfLink += "?withRaw=true";
-      }
-
       try {
         // get the engine API and the config API
         G2Engine engineApi = server.getEngineApi();
 
-        JsonObject configRoot = getCurrentConfigRoot(GET, selfLink, engineApi);
+        JsonObject configRoot = getCurrentConfigRoot(GET, uriInfo, engineApi);
 
         // get the array and construct the response
         JsonArray jsonArray = configRoot.getJsonArray("CFG_ATTR");
@@ -249,14 +224,14 @@ public class ConfigServices {
 
         if (jsonAttrType == null) {
           throw newNotFoundException(
-              GET, selfLink, "Attribute code not recognized: " + attributeCode);
+              GET, uriInfo, "Attribute code not recognized: " + attributeCode);
         }
 
         SzAttributeType attrType
             = SzAttributeType.parseAttributeType(null, jsonAttrType);
 
         SzAttributeTypeResponse response = new SzAttributeTypeResponse(
-            GET, 200, selfLink, attrType);
+            GET, 200, uriInfo, attrType);
 
         // if including raw data then add it
         if (withRaw) {
@@ -272,7 +247,7 @@ public class ConfigServices {
         throw e;
 
       } catch (Exception e) {
-        throw newInternalServerErrorException(GET, selfLink, e);
+        throw newInternalServerErrorException(GET, uriInfo, e);
       }
     });
   }
@@ -281,13 +256,13 @@ public class ConfigServices {
    * Exports the config using the specified {@link G2Engine} instance.
    */
   private static String exportConfig(SzHttpMethod   httpMethod,
-                                     String         selfLink,
+                                     UriInfo        uriInfo,
                                      G2Engine       engineApi)
   {
     StringBuffer sb = new StringBuffer();
     int result = engineApi.exportConfig(sb);
     if (result != 0) {
-      throw newInternalServerErrorException(httpMethod, selfLink, engineApi);
+      throw newInternalServerErrorException(httpMethod, uriInfo, engineApi);
     }
     return sb.toString();
   }
@@ -297,11 +272,11 @@ public class ConfigServices {
    * {@link JsonObject} from it.
    */
   private JsonObject getCurrentConfigRoot(SzHttpMethod  httpMethod,
-                                          String        selfLink,
+                                          UriInfo       uriInfo,
                                           G2Engine      engineApi)
   {
     // export the config
-    String config = exportConfig(httpMethod, selfLink, engineApi);
+    String config = exportConfig(httpMethod, uriInfo, engineApi);
 
     // parse the raw data
     JsonObject configObj = JsonUtils.parseJsonObject(config);

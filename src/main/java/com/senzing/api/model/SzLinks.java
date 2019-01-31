@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import javax.ws.rs.core.UriInfo;
+
 public class SzLinks {
   private String self;
 
@@ -17,6 +19,15 @@ public class SzLinks {
    */
   public SzLinks(String self) {
     this.self = self;
+  }
+
+  /**
+   * Constructs with the specified {@link UriInfo}.
+   *
+   * @param uriInfo The {@link UriInfo} for extracting the self link.
+   */
+  public SzLinks(UriInfo uriInfo) {
+    this(uriInfo.getRequestUri().toString());
   }
 
   public String getSelf() {
