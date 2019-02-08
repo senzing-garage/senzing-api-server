@@ -33,8 +33,8 @@ To build the Senzing REST API Server you will need Apache Maven (recommend versi
 as well as Java 1.8.x (recommend version 1.8.0_171 or later).
 
 You will also need the Senzing "g2.jar" file installed in your Maven repository.
-The Senzing REST API Server is being developed in concert with version 1.5.0 of
-the Senzing API and Senzing App, but will also work with the currently released
+The Senzing REST API Server is being developed in concert with version 1.5.x of
+the Senzing API and Senzing App, but will also work with the previously released
 version 1.4.x.  In order to install g2.jar you must:
 
  1) Locate your [`${SENZING_DIR}` directory](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/create-senzing-dir.md).
@@ -115,13 +115,21 @@ Where `[version]` is the version number from the `pom.xml` file.
 
 ### Running
 
-To execute the server you will use `java -jar`.  It assumed that your environment is properly
-configured as described in the "Dependencies" section above.
+To execute the server you will use `java -jar`.  It assumed that your environment
+is properly configured as described in the "Dependencies" section above.
 
 The only command-line option that is required is the `-iniFile` file option which
-specifies the path to the INI file used to initialize the API.  On Linux, you
+specifies the path to the INI file used to initialize the API.
 
-However, other options may be very useful.  Execute
+***NOTE:*** *In lieu of using `java -jar` directly and the `-iniFile` option to
+specify your entity repository, you can use the
+[Senzing App Integration Scripts](./app-scripts/README.md) to start the
+Senzing REST API Server using an entity repository from the
+[Senzing app](https://senzing.com/#download).  The scripts are provided in the
+`app-scripts` sub-directory.  See the [associated README.md file](./app-scripts/README.md)
+for version compatibility and usage information.*
+
+Other command-line options may be useful to you as well.  Execute
 `java -jar target/senzing-api-server-1.5.1.jar -help` to obtain a help message
 describing all available options.  For example:
 
@@ -155,7 +163,7 @@ describing all available options.  For example:
             Sets the CORS Access-Control-Allow-Origin header for all endpoints.
             No Default.
 
-        -concurrency [thread-count]
+       -concurrency [thread-count]
             Sets the number of threads available for executing
             Senzing API functions (i.e.: the number of engine threads).
             If not specified, then this defaults to 8.
