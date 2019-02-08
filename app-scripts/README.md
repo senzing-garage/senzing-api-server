@@ -98,6 +98,8 @@ list them for you.
 ```console
 USAGE: run-rest-api-server.sh [--force] <project_name|project_id> <senzing-api-server-jar-path> [api-server-options*]
 
+EXAMPLE: run-rest-api-server.sh --force "My Project" ./senzing-api-server.jar -httpPort 8080
+
    --force  Specify this to force the API Server to start even if
             the Senzing app is currently running.
 
