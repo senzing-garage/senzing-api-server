@@ -141,6 +141,31 @@ public class ServicesUtil {
 
   /**
    * Creates an {@link BadRequestException} and builds a response
+   * with an {@link SzErrorResponse} using the specified {@link UriInfo}
+   * and the specified {@link G2Fallible} to get the last exception from.
+   *
+   * @param httpMethod The HTTP method for the request.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param fallible The {@link G2Fallible} to get the last exception from.
+   *
+   * @return The {@link BadRequestException}
+   */
+  static BadRequestException newBadRequestException(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      G2Fallible    fallible)
+  {
+    Response.ResponseBuilder builder = Response.status(400);
+    builder.entity(
+        new SzErrorResponse(httpMethod, 400, uriInfo, fallible));
+    fallible.clearLastException();
+    return new BadRequestException(builder.build());
+  }
+
+  /**
+   * Creates an {@link BadRequestException} and builds a response
    * with an {@link SzErrorResponse} using the specified {@link UriInfo}.
    *
    * @param httpMethod The HTTP method for the request.

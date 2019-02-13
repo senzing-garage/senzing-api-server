@@ -23,6 +23,10 @@ import static com.senzing.g2.engine.G2Engine.*;
 @Path("/")
 @Produces("application/json; charset=UTF-8")
 public class EntityGraphServices {
+  private static final int ENTITY_NOT_FOUND_CODE = 37;
+
+  private static final int RECORD_NOT_FOUND_CODE = 33;
+
   @GET
   @Path("entity-paths")
   public SzEntityPathResponse getEntityPath(
@@ -192,7 +196,7 @@ public class EntityGraphServices {
         }
 
         if (result != 0) {
-          throw newInternalServerErrorException(GET, uriInfo, engineApi);
+          throw newWebApplicationException(GET, uriInfo, engineApi);
         }
 
         // parse the raw data
@@ -244,8 +248,8 @@ public class EntityGraphServices {
         if (entitiesParam == null || entitiesParam.isEmpty()) {
           throw newBadRequestException(
               GET, uriInfo,
-              "Parameter missing or empty: \"entities\".  "
-                  + "One or more 'entities' entity identifiers are required.");
+              "Parameter missing or empty: 'e'.  "
+                  + "One or more 'e' entity identifiers are required.");
         }
 
         entities = parseEntityIdentifiers(
@@ -308,7 +312,7 @@ public class EntityGraphServices {
         }
 
         if (result != 0) {
-          throw newInternalServerErrorException(GET, uriInfo, engineApi);
+          throw newWebApplicationException(GET, uriInfo, engineApi);
         }
 
         // parse the raw data
@@ -360,4 +364,18 @@ public class EntityGraphServices {
     }
     return true;
   }
+
+  private static WebApplicationException newWebApplicationException(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      G2Engine      engineApi)
+  {
+    int errorCode = engineApi.getLastExceptionCode();
+    if (errorCode == ENTITY_NOT_FOUND_CODE
+        || errorCode == RECORD_NOT_FOUND_CODE) {
+      return newBadRequestException(GET, uriInfo, engineApi);
+    }
+    return newInternalServerErrorException(GET, uriInfo, engineApi);
+  }
+
 }
