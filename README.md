@@ -316,7 +316,7 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
 ### Run docker image
 
-1. Variation #1- Run the docker image. Example:
+1. Variation #1 - Run the docker image. Example:
 
     ```console
     export SENZING_DIR=/opt/senzing
@@ -356,7 +356,7 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
 ### Test Docker container
 
-1. Wait for the following message in the log.
+1. Wait for the following message in the terminal showing docker log.
 
     ```console
     Started Senzing REST API Server on port 8080.
@@ -377,6 +377,8 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
     curl -X GET ${SENZING_API_SERVICE}/heartbeat
     curl -X GET ${SENZING_API_SERVICE}/license
     ```
+
+1. To exit, press `control-c` in terminal showing docker log.
 
 ## Errors
 
