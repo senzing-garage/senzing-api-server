@@ -15,14 +15,14 @@ documents the available API methods, their parameters and the response formats.
     1. [Building](#building)
     1. [Running](#running)
 1. [Using Docker](#using-docker)
+    1. [Expectations for docker](#expectations-for-docker)
     1. [Set environment variables](#set-environment-variables)
     1. [Clone repository](#clone-repository)
     1. [Create SENZING_DIR](#create-senzing_dir)
     1. [Build docker image](#build-docker-image)
     1. [Configuration](#configuration)
     1. [Run docker image](#run-docker-image)
-    1. [Run docker image in docker network](#run-docker-image-in-docker-network)
-    1. [Test docker image](#test-docker-image)
+    1. [Test docker container](#test-docker-container)
 1. [Errors](errors)
 
 ## Using Command Line
@@ -48,6 +48,7 @@ version 1.4.x.  In order to install g2.jar you must:
         * Windows: `${SENZING_DIR}\g2\data\g2BuildVersion.json`
     * Find the value for the `"VERSION"` property in the JSON contents.
       For example:
+
         ```console
         {
             "PLATFORM": "Linux",
@@ -55,10 +56,12 @@ version 1.4.x.  In order to install g2.jar you must:
             "BUILD_NUMBER": "2019_01_22__02_00"
         }
         ```
+
  3) Install the g2.jar file in your local Maven repository, replacing the
     `${SENZING_DIR}` and `${SENZING_VERSION}` variables as determined above:
 
      * Linux:
+
        ```console
              export SENZING_DIR=/opt/senzing
              export SENZING_VERSION=1.5.19022
@@ -72,6 +75,7 @@ version 1.4.x.  In order to install g2.jar you must:
        ```
 
      * Windows:
+
        ```console
              set SENZING_DIR="C:\Program Files\Senzing"
              set SENZING_VERSION=1.5.19022
@@ -88,6 +92,7 @@ version 1.4.x.  In order to install g2.jar you must:
     environment must be properly setup to find those libraries:
 
     * Linux
+
        ```console
           export SENZING_DIR=/opt/senzing
 
@@ -95,6 +100,7 @@ version 1.4.x.  In order to install g2.jar you must:
        ```
 
     * Windows
+
       ```console
           set SENZING_DIR="C:\Program Files\Senzing"
 
@@ -194,7 +200,21 @@ network interfaces with a concurrency of 16 you would use:
 
 ## Using Docker
 
-### Docker Dependencies
+### Expectations for docker
+
+#### Space for docker
+
+1. 6 GB of free disk space are required for using docker to build and demonstrate.
+
+#### Time for docker
+
+1. Budget 40 minutes to create and use docker images, depending on CPU and network speeds.
+
+#### Background knowledge for docker
+
+This task assumes a working knowledge of:
+
+1. [Docker](https://github.com/Senzing/knowledge-base/blob/master/WHATIS/docker.md)
 
 ### Set environment variables
 
@@ -296,7 +316,7 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
 ### Run docker image
 
-1. Run the docker container. Example:
+1. Variation #1- Run the docker image. Example:
 
     ```console
     export SENZING_DIR=/opt/senzing
@@ -310,31 +330,31 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
       senzing/senzing-api-server
     ```
 
-### Run docker image in docker network
+1. Variation #2 - Run docker image in docker network.
 
-1. Determine docker network:
+    1. Determine docker network:
 
-    ```console
-    docker network ls
+        ```console
+        docker network ls
 
-    # Choose value from NAME column of docker network ls
-    export SENZING_NETWORK=nameofthe_network
-    ```
+        # Choose value from NAME column of docker network ls
+        export SENZING_NETWORK=nameofthe_network
+        ```
 
-1. Run the docker container. Example:
+    1. Run the docker image. Example:
 
-    ```console
-    export SENZING_DIR=/opt/senzing
-    export WEBAPP_PORT=8889
+        ```console
+        export SENZING_DIR=/opt/senzing
+        export WEBAPP_PORT=8889
 
-    sudo docker run -it \
-      --volume ${SENZING_DIR}:/opt/senzing \
-      --net ${SENZING_NETWORK} \
-      --publish ${WEBAPP_PORT}:8080 \
-      senzing/senzing-api-server
-    ```
+        sudo docker run -it \
+          --volume ${SENZING_DIR}:/opt/senzing \
+          --net ${SENZING_NETWORK} \
+          --publish ${WEBAPP_PORT}:8080 \
+          senzing/senzing-api-server
+        ```
 
-### Test Docker image
+### Test Docker container
 
 1. Wait for the following message in the log.
 
@@ -346,7 +366,10 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
     http://0.0.0.0/0.0.0.0:8080/
     ```
 
-1. Test Senzing REST API server.  *Note:* port 8889 on the localhost has been mapped to port 8080 in the docker container See `WEBAPP_PORT` definition.  Example:
+1. Test Senzing REST API server.
+   *Note:* port 8889 on the localhost has been mapped to port 8080 in the docker container.
+   See `WEBAPP_PORT` definition.
+   Example:
 
     ```console
     export SENZING_API_SERVICE=http://localhost:8889
