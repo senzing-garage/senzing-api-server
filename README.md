@@ -276,7 +276,7 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
     export SENZING_G2_JAR_PATHNAME=/opt/senzing/g2/lib/g2.jar
     export SENZING_G2_JAR_VERSION=1.4.18354
 
-    make docker-package
+    sudo make docker-package
     ```
 
     Another example:
@@ -287,7 +287,7 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
     export SENZING_G2_JAR_PATHNAME=${SENZING_DIR}/g2/lib/g2.jar
     export SENZING_G2_JAR_VERSION=$(cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION')
 
-    make docker-package
+    sudo make docker-package
     ```
 
     1. Jar file will be in the "target" directory. Example: `${GIT_REPOSITORY_DIR}/target/senzing-api-server-M.m.P.jar`
@@ -298,7 +298,7 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
     ```console
     cd ${GIT_REPOSITORY_DIR}
 
-    make docker-build
+    sudo make docker-build
     ```
 
 ### Configuration

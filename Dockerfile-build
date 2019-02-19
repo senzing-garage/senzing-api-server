@@ -48,9 +48,12 @@ COPY ${SENZING_API_SERVER_JAR_PATHNAME} /app/senzing-api-server.jar
 
 ENV SENZING_DIR=/opt/senzing
 ENV PYTHONPATH=${SENZING_DIR}/g2/python
-ENV LD_LIBRARY_PATH=${SENZING_DIR}/g2/lib:${SENZING_DIR}/g2/lib/debian;
-ENV SENZING_CONCURRENCY=8
+ENV LD_LIBRARY_PATH=${SENZING_DIR}/g2/lib:${SENZING_DIR}/g2/lib/centos;
+
+# App parameters.
+
 ENV SENZING_BIND_ADDR=all
+ENV SENZING_CONCURRENCY=8
 ENV SENZING_INI_FILE=${SENZING_DIR}/g2/python/G2Module.ini
 
 # Run the Senzing REST api server.
