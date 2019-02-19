@@ -1,7 +1,35 @@
-ARG BASE_CONTAINER=java:8
+ARG BASE_CONTAINER=centos:latest
 FROM ${BASE_CONTAINER}
 
-ENV REFRESHED_AT=2019-01-22
+ENV REFRESHED_AT=2019-02-18
+
+# -----------------------------------------------------------------------------
+# OS infrastructure
+# -----------------------------------------------------------------------------
+
+# Install prerequisites.
+
+RUN yum -y update \
+ && yum clean all \
+ && yum -y install epel-release \
+ && yum clean all
+
+RUN yum -y install \
+    mysql-connector-odbc \
+    java-1.8.0-openjdk \
+    unixODBC \
+    unixODBC-devel \
+    wget \
+ && yum clean all
+
+# Work-around https://senzing.zendesk.com/hc/en-us/articles/360009212393-MySQL-V8-0-ODBC-client-alongside-V5-x-Server
+
+RUN wget https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-community-libs-8.0.12-1.el7.x86_64.rpm \
+ && rpm2cpio mysql-community-libs-8.0.12-1.el7.x86_64.rpm | cpio -idmv
+
+# -----------------------------------------------------------------------------
+# Install application
+# -----------------------------------------------------------------------------
 
 # Service exposed on port 8080
 
@@ -12,13 +40,20 @@ EXPOSE 8080
 ARG SENZING_API_SERVER_JAR_PATHNAME=target/senzing-api-server.jar
 COPY ${SENZING_API_SERVER_JAR_PATHNAME} /app/senzing-api-server.jar
 
+# -----------------------------------------------------------------------------
+# User environment
+# -----------------------------------------------------------------------------
+
 # Set environment variables.
 
 ENV SENZING_DIR=/opt/senzing
 ENV PYTHONPATH=${SENZING_DIR}/g2/python
-ENV LD_LIBRARY_PATH=${SENZING_DIR}/g2/lib:${SENZING_DIR}/g2/lib/debian;
-ENV SENZING_CONCURRENCY=8
+ENV LD_LIBRARY_PATH=${SENZING_DIR}/g2/lib:${SENZING_DIR}/g2/lib/centos;
+
+# App parameters.
+
 ENV SENZING_BIND_ADDR=all
+ENV SENZING_CONCURRENCY=8
 ENV SENZING_INI_FILE=${SENZING_DIR}/g2/python/G2Module.ini
 
 # Run the Senzing REST api server.
