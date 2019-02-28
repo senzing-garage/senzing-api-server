@@ -55,6 +55,7 @@ ENV LD_LIBRARY_PATH=${SENZING_DIR}/g2/lib:${SENZING_DIR}/g2/lib/centos;
 ENV SENZING_BIND_ADDR=all
 ENV SENZING_CONCURRENCY=8
 ENV SENZING_INI_FILE=${SENZING_DIR}/g2/python/G2Module.ini
+ENV SENZING_OPTIONS=""
 
 # Run the Senzing REST api server.
 
@@ -64,4 +65,5 @@ CMD java -jar senzing-api-server.jar \
      -concurrency ${SENZING_CONCURRENCY} \
      -httpPort 8080 \
      -bindAddr ${SENZING_BIND_ADDR} \
-     -iniFile ${SENZING_INI_FILE}
+     -iniFile ${SENZING_INI_FILE} \
+     ${SENZING_OPTIONS}

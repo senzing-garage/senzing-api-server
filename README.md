@@ -311,6 +311,8 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
   Location of Senzing libraries. Default: "/opt/senzing".
 * **SENZING_INI_FILE** -
   The path to the Senzing INI file to with which to initialize. Default: ${SENZING_DIR}/g2/python/G2Module.ini
+* **SENZING_OPTIONS** -
+  Additional options for the program.
 * **WEBAPP_PORT** -
   Port used by service.  
 
