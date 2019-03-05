@@ -33,7 +33,6 @@ public class SzRecordId implements SzEntityIdentifier {
    * Constructs with the specified data source code and record ID.
    *
    * @param dataSourceCode The data source code.
-   *
    * @param recordId The record ID identifying the record.
    */
   public SzRecordId(String dataSourceCode, String recordId) {
@@ -112,7 +111,6 @@ public class SzRecordId implements SzEntityIdentifier {
    * </ul>
    *
    * @param text The JSON text to parse.
-   *
    * @return The {@link SzRecordId} that was created.
    */
   public static SzRecordId valueOf(String text) {
@@ -121,7 +119,7 @@ public class SzRecordId implements SzEntityIdentifier {
     int length = text.length();
 
     // first try to parse as JSON
-    if (length > 2 && text.charAt(0) == '{' && text.charAt(length-1) == '}') {
+    if (length > 2 && text.charAt(0) == '{' && text.charAt(length - 1) == '}') {
       try {
         JsonObject jsonObject = JsonUtils.parseJsonObject(text);
         String source = jsonObject.getString("src");
@@ -141,12 +139,39 @@ public class SzRecordId implements SzEntityIdentifier {
         throw new IllegalArgumentException("Invalid record ID: " + text);
       }
       String prefix = text.substring(1, index);
-      String suffix = text.substring(index+1);
+      String suffix = text.substring(index + 1);
       return new SzRecordId(prefix, suffix);
 
     } else {
       if (failure != null) throw failure;
       throw new IllegalArgumentException("Invalid record ID: " + text);
     }
+  }
+
+  /**
+   * Parses the specified {@link JsonObject} as a record ID.  This expects
+   * (and prefers) the <tt>"src"</tt> and <tt>"id"</tt> properties but will
+   * alternatively accept the <tt>"dataSourceCode"</tt> and <tt>"recordId"</tt>
+   * properties.
+   *
+   * @param jsonObject The {@link JsonObject} to parse.
+   *
+   * @return The {@link SzRecordId} that was created.
+   */
+  public static SzRecordId parse(JsonObject jsonObject) {
+    String src = JsonUtils.getString(jsonObject, "src");
+    if (src == null) {
+      src = JsonUtils.getString(jsonObject, "dataSourceCode");
+    }
+    String id = JsonUtils.getString(jsonObject, "id");
+    if (id == null) {
+      id = JsonUtils.getString(jsonObject, "recordId");
+    }
+    if (src == null || id == null) {
+      throw new IllegalArgumentException(
+          "The specified JsonObject does not have the required fields.  src=[ "
+          + src + " ], id=[ " + id + " ], jsonObject=[ " + jsonObject + " ]");
+    }
+    return new SzRecordId(src, id);
   }
 }

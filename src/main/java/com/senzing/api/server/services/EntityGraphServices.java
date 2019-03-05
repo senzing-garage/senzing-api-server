@@ -30,14 +30,15 @@ public class EntityGraphServices {
   @GET
   @Path("entity-paths")
   public SzEntityPathResponse getEntityPath(
-      @QueryParam("from") String fromParam,
-      @QueryParam("to") String toParam,
-      @DefaultValue("3") @QueryParam("maxDegrees") int maxDegrees,
-      @QueryParam("x") List<String> avoidParam,
+      @QueryParam("from")                           String        fromParam,
+      @QueryParam("to")                             String        toParam,
+      @DefaultValue("3") @QueryParam("maxDegrees")  int           maxDegrees,
+      @QueryParam("x")                              List<String>  avoidParam,
+      @QueryParam("avoidEntities")                  String        avoidList,
       @DefaultValue("false") @QueryParam("forbidAvoided") boolean forbidAvoided,
-      @QueryParam("s") List<String> sourcesParam,
-      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
-      @Context UriInfo uriInfo)
+      @QueryParam("s")                              List<String>  sourcesParam,
+      @DefaultValue("false") @QueryParam("withRaw") boolean       withRaw,
+      @Context                                      UriInfo       uriInfo)
   {
     SzApiServer server = SzApiServer.getInstance();
 
@@ -45,7 +46,7 @@ public class EntityGraphServices {
 
       SzEntityIdentifier        from;
       SzEntityIdentifier        to;
-      List<SzEntityIdentifier>  avoidEntities = null;
+      Set<SzEntityIdentifier>   avoidEntities = null;
       List<String>              withSources   = null;
       try {
         if (fromParam == null) {
@@ -85,9 +86,20 @@ public class EntityGraphServices {
                   + ", to=" + to);
         }
 
-        if (avoidParam != null && avoidParam.size() > 0) {
+        // check if we have entities to avoid (or forbid)
+        if ((avoidParam != null && avoidParam.size() > 0)
+            || (avoidList != null && avoidList.trim().length() > 0))
+        {
+          // parse the multi-valued parameters
           avoidEntities = parseEntityIdentifiers(
               avoidParam, "avoidEntities", GET, uriInfo);
+
+          // check if the avoid list is specified
+          if (avoidList != null && avoidList.trim().length() > 0) {
+            SzEntityIdentifiers ids = SzEntityIdentifiers.valueOf(avoidList);
+
+            avoidEntities.addAll(ids.getIdentifiers());
+          }
 
           if (!checkConsistent(avoidEntities)) {
             throw newBadRequestException(
@@ -130,10 +142,10 @@ public class EntityGraphServices {
 
         int result;
         if (from.getClass() == SzRecordId.class) {
-          String source1 = ((SzRecordId) from).getDataSourceCode();
-          String source2 = ((SzRecordId) to).getDataSourceCode();
-          String id1 = ((SzRecordId) from).getRecordId();
-          String id2 = ((SzRecordId) to).getRecordId();
+          String source1  = ((SzRecordId) from).getDataSourceCode();
+          String source2  = ((SzRecordId) to).getDataSourceCode();
+          String id1      = ((SzRecordId) from).getRecordId();
+          String id2      = ((SzRecordId) to).getRecordId();
 
           if (avoidEntities == null && withSources == null) {
             result = engineApi.findPathByRecordID(source1,
@@ -232,7 +244,8 @@ public class EntityGraphServices {
   @GET
   @Path("entity-networks")
   public SzEntityNetworkResponse getEntityNetwork(
-      @QueryParam("e") List<String> entitiesParam,
+      @QueryParam("e")        List<String>  entitiesParam,
+      @QueryParam("entities") String        entityList,
       @DefaultValue("5")      @QueryParam("maxDegrees")  int     maxDegrees,
       @DefaultValue("1")      @QueryParam("buildOut")    int     buildOut,
       @DefaultValue("1000")   @QueryParam("maxEntities") int     maxEntities,
@@ -242,18 +255,29 @@ public class EntityGraphServices {
     SzApiServer server = SzApiServer.getInstance();
 
     return server.executeInThread(() -> {
-      List<SzEntityIdentifier> entities;
+      Set<SzEntityIdentifier> entities;
       // check for consistent entity IDs
       try {
-        if (entitiesParam == null || entitiesParam.isEmpty()) {
+        if ((entitiesParam == null || entitiesParam.isEmpty())
+            && (entityList == null) || entityList.isEmpty())
+        {
           throw newBadRequestException(
               GET, uriInfo,
-              "Parameter missing or empty: 'e'.  "
-                  + "One or more 'e' entity identifiers are required.");
+              "One of the following parameters is required to specify at least "
+              + "one entity: 'e' or 'entities'.  "
+              + "At least one of 'e' or 'entities' parameter must specify at "
+              + "least one entity identifier.");
         }
 
         entities = parseEntityIdentifiers(
             entitiesParam, "e", GET, uriInfo);
+
+        if (entityList != null && entityList.trim().length() > 0) {
+          SzEntityIdentifiers ids = SzEntityIdentifiers.valueOf(entityList);
+
+          entities.addAll(ids.getIdentifiers());
+        }
+
 
         if (!checkConsistent(entities)) {
           throw newBadRequestException(
@@ -351,7 +375,7 @@ public class EntityGraphServices {
    *
    * @param entities The list of {@link SzEntityIdentifier} instances.
    */
-  private static boolean checkConsistent(List<SzEntityIdentifier> entities) {
+  private static boolean checkConsistent(Set<SzEntityIdentifier> entities) {
     if (entities != null && !entities.isEmpty()) {
       Class idClass = null;
       for (SzEntityIdentifier id : entities) {

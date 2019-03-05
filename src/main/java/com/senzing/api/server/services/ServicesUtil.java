@@ -14,8 +14,7 @@ import javax.ws.rs.core.UriInfo;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Utility functions for services.
@@ -272,21 +271,21 @@ public class ServicesUtil {
   }
 
   /**
-   * Encodes a {@link List} of {@link SzEntityIdentifier} instances as a
+   * Encodes a {@link Collection} of {@link SzEntityIdentifier} instances as a
    * JSON array string in the native Senzing format format for entity
    * identifiers.
    *
-   * @param list The list of entity identifiers.
+   * @param ids The {@link Collection} of entity identifiers.
    *
    * @return The JSON array string for the identifiers.
    */
-  static String nativeJsonEncodeEntityIds(List<SzEntityIdentifier> list) {
-    if (list == null) {
+  static String nativeJsonEncodeEntityIds(Collection<SzEntityIdentifier> ids) {
+    if (ids == null) {
       return null;
     }
     String propName = "ENTITIES";
     JsonArrayBuilder jab = Json.createArrayBuilder();
-    for (SzEntityIdentifier id : list) {
+    for (SzEntityIdentifier id : ids) {
       if (id instanceof SzEntityId) {
         JsonObjectBuilder job = Json.createObjectBuilder();
         job.add("ENTITY_ID", ((SzEntityId) id).getValue());
@@ -306,19 +305,19 @@ public class ServicesUtil {
   }
 
   /**
-   * Encodes a {@link List} of {@link SzEntityIdentifier} instances as a
+   * Encodes a {@link Collection} of {@link SzEntityIdentifier} instances as a
    * JSON array string (without the leading and terminating brackets)
    * with each of the individual items in the list being URL encoded.
    *
-   * @param list The list of entity identifiers.
+   * @param ids The {@link Collection} of entity identifiers.
    *
    * @return The URL-encoded JSON array string for the identifiers.
    */
-  static String urlEncodeEntityIds(List<SzEntityIdentifier> list)
+  static String urlEncodeEntityIds(Collection<SzEntityIdentifier> ids)
   {
     StringBuilder sb = new StringBuilder();
     String prefix = "";
-    for (SzEntityIdentifier id : list) {
+    for (SzEntityIdentifier id : ids) {
       sb.append(prefix);
       prefix = ",";
       if (id instanceof SzEntityId) {
@@ -383,7 +382,7 @@ public class ServicesUtil {
 
   /**
    * Combines multiple {@link String} entity identifier parameters into a
-   * JSON array and parses it as JSON to produce a {@link List} of {@link
+   * JSON array and parses it as JSON to produce a {@link Set} of {@link
    * SzEntityIdentifier} instances.
    *
    * @param params The paramter values to parse.
@@ -394,17 +393,23 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
-   * @return The {@link List} of {@link SzEntityIdentifier} instances that was
+   * @return The {@link Set} of {@link SzEntityIdentifier} instances that was
    *         parsed from the specified parameters.
    */
-  static List<SzEntityIdentifier> parseEntityIdentifiers(
+  static Set<SzEntityIdentifier> parseEntityIdentifiers(
       List<String>  params,
       String        paramName,
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo)
   {
-    List<SzEntityIdentifier> result = new ArrayList<>(params.size());
+    Set<SzEntityIdentifier> result = new LinkedHashSet<>();
 
+    // check if the params is null or missing
+    if (params == null || params.size() == 0) {
+      return result;
+    }
+
+    // iterate over the params
     for (String param : params) {
       try {
         SzEntityIdentifier id = SzEntityIdentifier.valueOf(param);
