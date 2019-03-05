@@ -1,14 +1,5 @@
 package com.senzing.api.model;
 
-import com.senzing.util.JsonUtils;
-import org.glassfish.json.JsonUtil;
-
-import javax.ws.rs.PathParam;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * A tagging interface for entity identifiers.
  */
