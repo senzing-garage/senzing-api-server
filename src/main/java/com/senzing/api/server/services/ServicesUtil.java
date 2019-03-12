@@ -189,6 +189,31 @@ public class ServicesUtil {
   }
 
   /**
+   * Creates an {@link InternalServerErrorException} and builds a response
+   * with an {@link SzErrorResponse} using the specified {@link UriInfo}
+   * and the specified exception.
+   *
+   * @param httpMethod The HTTP method for the request.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param exception The exception that caused the error.
+   *
+   * @return The {@link InternalServerErrorException}
+   */
+  static BadRequestException newBadRequestException(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      Exception     exception)
+  {
+    Response.ResponseBuilder builder = Response.status(400);
+    builder.entity(
+        new SzErrorResponse(httpMethod, 400, uriInfo, exception));
+    return new BadRequestException(builder.build());
+  }
+
+
+  /**
    * URL encodes the specified text using UTF-8 encoding.
    *
    * @param text The text to encode.
