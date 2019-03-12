@@ -259,7 +259,7 @@ public class EntityGraphServices {
       // check for consistent entity IDs
       try {
         if ((entitiesParam == null || entitiesParam.isEmpty())
-            && (entityList == null) || entityList.isEmpty())
+            && ((entityList == null) || entityList.isEmpty()))
         {
           throw newBadRequestException(
               GET, uriInfo,
@@ -307,6 +307,7 @@ public class EntityGraphServices {
       } catch (WebApplicationException e) {
         throw e;
       } catch (Exception e) {
+        e.printStackTrace();
         throw newBadRequestException(GET, uriInfo, e.getMessage());
       }
 
