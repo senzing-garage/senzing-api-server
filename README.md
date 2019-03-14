@@ -243,12 +243,16 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 1. Find value for `SENZING_G2_JAR_VERSION`.
 
     ```console
+    export SENZING_DIR=/opt/senzing
+        
     cat ${SENZING_DIR}/g2/data/g2BuildVersion.json
     ```
 
     or  
 
     ```console
+    export SENZING_DIR=/opt/senzing
+        
     cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION'
     ```
 
