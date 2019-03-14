@@ -6,19 +6,18 @@ ENV REFRESHED_AT=2019-03-14
 LABEL Name="senzing/senzing-api-server" \
       Version="1.0.0"
 
-# -----------------------------------------------------------------------------
-# OS infrastructure
-# -----------------------------------------------------------------------------
-
 # Install packages via apt.
 
 RUN apt-get update \
  && apt-get -y install \
       curl \
+      default-jdk \
       gnupg \
       jq \
       lsb-core \
       lsb-release \
+      odbc-postgresql \
+      postgresql-client \
       python-dev \
       python-pip \
       python-pyodbc \
@@ -51,10 +50,6 @@ RUN wget https://cdn.mysql.com//Downloads/Connector-ODBC/8.0/mysql-connector-odb
  && rm mysql-connector-odbc-8.0.13-linux-ubuntu18.04-x86-64bit.tar.gz \
  && rm -rf mysql-connector-odbc-8.0.13-linux-ubuntu18.04-x86-64bit
 
-# -----------------------------------------------------------------------------
-# Install application
-# -----------------------------------------------------------------------------
-
 # Service exposed on port 8080
 
 EXPOSE 8080
@@ -63,10 +58,6 @@ EXPOSE 8080
 
 ARG SENZING_API_SERVER_JAR_PATHNAME=target/senzing-api-server.jar
 COPY ${SENZING_API_SERVER_JAR_PATHNAME} /app/senzing-api-server.jar
-
-# -----------------------------------------------------------------------------
-# User environment
-# -----------------------------------------------------------------------------
 
 # Set environment variables.
 
