@@ -1,31 +1,55 @@
-ARG BASE_CONTAINER=centos:latest
-FROM ${BASE_CONTAINER}
+ARG BASE_IMAGE=debian:9
+FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2019-02-18
+ENV REFRESHED_AT=2019-03-14
+
+LABEL Name="senzing/senzing-api-server" \
+      Version="1.0.0"
 
 # -----------------------------------------------------------------------------
 # OS infrastructure
 # -----------------------------------------------------------------------------
 
-# Install prerequisites.
+# Install packages via apt.
 
-RUN yum -y update \
- && yum clean all \
- && yum -y install epel-release \
- && yum clean all
+RUN apt-get update \
+ && apt-get -y install \
+      curl \
+      gnupg \
+      jq \
+      lsb-core \
+      lsb-release \
+      python-dev \
+      python-pip \
+      python-pyodbc \
+      sqlite \
+      unixodbc \
+      unixodbc-dev \
+      wget \
+ && rm -rf /var/lib/apt/lists/*
 
-RUN yum -y install \
-    mysql-connector-odbc \
-    java-1.8.0-openjdk \
-    unixODBC \
-    unixODBC-devel \
-    wget \
- && yum clean all
+# Install libmysqlclient21.
 
-# Work-around https://senzing.zendesk.com/hc/en-us/articles/360009212393-MySQL-V8-0-ODBC-client-alongside-V5-x-Server
+ENV DEBIAN_FRONTEND=noninteractive
+RUN wget -qO - https://repo.mysql.com/RPM-GPG-KEY-mysql | apt-key add - \
+ && wget https://repo.mysql.com/mysql-apt-config_0.8.11-1_all.deb \
+ && dpkg --install mysql-apt-config_0.8.11-1_all.deb \
+ && apt-get update \
+ && apt-get -y install libmysqlclient21 \
+ && rm mysql-apt-config_0.8.11-1_all.deb \
+ && rm -rf /var/lib/apt/lists/*
 
-RUN wget https://dev.mysql.com/get/Downloads/MySQL-8.0/mysql-community-libs-8.0.12-1.el7.x86_64.rpm \
- && rpm2cpio mysql-community-libs-8.0.12-1.el7.x86_64.rpm | cpio -idmv
+# Create MySQL connector.
+# References:
+#  - https://dev.mysql.com/downloads/connector/odbc/
+#  - https://dev.mysql.com/doc/connector-odbc/en/connector-odbc-installation-binary-unix-tarball.html
+
+RUN wget https://cdn.mysql.com//Downloads/Connector-ODBC/8.0/mysql-connector-odbc-8.0.13-linux-ubuntu18.04-x86-64bit.tar.gz \
+ && tar -xvf mysql-connector-odbc-8.0.13-linux-ubuntu18.04-x86-64bit.tar.gz \
+ && cp mysql-connector-odbc-8.0.13-linux-ubuntu18.04-x86-64bit/lib/* /usr/lib/x86_64-linux-gnu/odbc/ \
+ && mysql-connector-odbc-8.0.13-linux-ubuntu18.04-x86-64bit/bin/myodbc-installer -d -a -n "MySQL" -t "DRIVER=/usr/lib/x86_64-linux-gnu/odbc/libmyodbc8w.so;" \
+ && rm mysql-connector-odbc-8.0.13-linux-ubuntu18.04-x86-64bit.tar.gz \
+ && rm -rf mysql-connector-odbc-8.0.13-linux-ubuntu18.04-x86-64bit
 
 # -----------------------------------------------------------------------------
 # Install application
@@ -46,15 +70,15 @@ COPY ${SENZING_API_SERVER_JAR_PATHNAME} /app/senzing-api-server.jar
 
 # Set environment variables.
 
-ENV SENZING_DIR=/opt/senzing
-ENV PYTHONPATH=${SENZING_DIR}/g2/python
-ENV LD_LIBRARY_PATH=${SENZING_DIR}/g2/lib:${SENZING_DIR}/g2/lib/centos;
+ENV SENZING_ROOT=/opt/senzing
+ENV PYTHONPATH=${SENZING_ROOT}/g2/python
+ENV LD_LIBRARY_PATH=${SENZING_ROOT}/g2/lib:${SENZING_ROOT}/g2/lib/debian;
 
 # App parameters.
 
 ENV SENZING_BIND_ADDR=all
 ENV SENZING_CONCURRENCY=8
-ENV SENZING_INI_FILE=${SENZING_DIR}/g2/python/G2Module.ini
+ENV SENZING_INI_FILE=${SENZING_ROOT}/g2/python/G2Module.ini
 ENV SENZING_OPTIONS=""
 
 # Run the Senzing REST api server.
