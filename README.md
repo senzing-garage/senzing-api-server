@@ -244,7 +244,7 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
     ```console
     export SENZING_DIR=/opt/senzing
-        
+
     cat ${SENZING_DIR}/g2/data/g2BuildVersion.json
     ```
 
@@ -252,7 +252,7 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
     ```console
     export SENZING_DIR=/opt/senzing
-        
+
     cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION'
     ```
 
@@ -277,6 +277,7 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
     ```console
     cd ${GIT_REPOSITORY_DIR}
 
+    export SENZING_DIR=/opt/senzing
     export SENZING_G2_JAR_PATHNAME=${SENZING_DIR}/g2/lib/g2.jar
     export SENZING_G2_JAR_VERSION=$(cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION')
 
