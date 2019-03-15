@@ -16,7 +16,6 @@ documents the available API methods, their parameters and the response formats.
     1. [Running](#running)
 1. [Using Docker](#using-docker)
     1. [Expectations for docker](#expectations-for-docker)
-    1. [Set environment variables](#set-environment-variables)
     1. [Clone repository](#clone-repository)
     1. [Create SENZING_DIR](#create-senzing_dir)
     1. [Build docker image](#build-docker-image)
@@ -216,32 +215,22 @@ This task assumes a working knowledge of:
 
 1. [Docker](https://github.com/Senzing/knowledge-base/blob/master/WHATIS/docker.md)
 
-### Set environment variables
+### Clone repository
 
-1. These variables may be modified, but do not need to be modified.
-   The variables are used throughout the installation procedure.
+1. Set these environment variable values:
 
     ```console
     export GIT_ACCOUNT=senzing
     export GIT_REPOSITORY=senzing-api-server
     ```
 
-1. Synthesize environment variables.
+   Then follow steps in [clone-repository](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/clone-repository.md).
+
+1. After the repository has been cloned, be sure the following are set:
 
     ```console
     export GIT_ACCOUNT_DIR=~/${GIT_ACCOUNT}.git
     export GIT_REPOSITORY_DIR="${GIT_ACCOUNT_DIR}/${GIT_REPOSITORY}"
-    export GIT_REPOSITORY_URL="https://github.com/${GIT_ACCOUNT}/${GIT_REPOSITORY}.git"
-    ```
-
-### Clone repository
-
-1. Get repository.
-
-    ```console
-    mkdir --parents ${GIT_ACCOUNT_DIR}
-    cd  ${GIT_ACCOUNT_DIR}
-    git clone ${GIT_REPOSITORY_URL}
     ```
 
 ### Create SENZING_DIR
@@ -254,12 +243,16 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 1. Find value for `SENZING_G2_JAR_VERSION`.
 
     ```console
+    export SENZING_DIR=/opt/senzing
+
     cat ${SENZING_DIR}/g2/data/g2BuildVersion.json
     ```
 
     or  
 
     ```console
+    export SENZING_DIR=/opt/senzing
+
     cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION'
     ```
 
@@ -284,6 +277,7 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
     ```console
     cd ${GIT_REPOSITORY_DIR}
 
+    export SENZING_DIR=/opt/senzing
     export SENZING_G2_JAR_PATHNAME=${SENZING_DIR}/g2/lib/g2.jar
     export SENZING_G2_JAR_VERSION=$(cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION')
 
@@ -318,7 +312,9 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
 ### Run docker image
 
-1. Variation #1 - Run the docker image. Example:
+#### Variation 1
+
+1. Run the docker image. Example:
 
     ```console
     export SENZING_DIR=/opt/senzing
@@ -332,7 +328,9 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
       senzing/senzing-api-server
     ```
 
-1. Variation #2 - Run docker image in docker network.
+#### Variation 2
+
+1. Run docker image in docker network.
 
     1. Determine docker network:
 
@@ -384,4 +382,4 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
 ## Errors
 
-1. See [doc/errors.md](doc/errors.md).
+1. See [docs/errors.md](docs/errors.md).
