@@ -202,7 +202,7 @@ network interfaces with a concurrency of 16 you would use:
 It is important to note that the Senzing configuration is currently read by the
 Senzing API Server on startup.  If the configuration changes, the changes will
 not be detected until the Server is restarted.  This may cause stale values to
-be returned from the following API functions:=
+be returned from the following API functions:
    
    * `/data-sources`
    * `/attribute-types`
