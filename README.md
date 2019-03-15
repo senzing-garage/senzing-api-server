@@ -36,12 +36,12 @@ The Senzing REST API Server is being developed in concert with version 1.5.x of
 the Senzing API and Senzing App, but will also work with the previously released
 version 1.4.x.  In order to install g2.jar you must:
 
- 1) Locate your [`${SENZING_DIR}` directory](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/create-senzing-dir.md).
+ 1. Locate your [`${SENZING_DIR}` directory](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/create-senzing-dir.md).
     The default locations are:
     * Linux Archive Extraction: `/opt/senzing/` (see [Install Instructions](https://github.com/Senzing/hello-senzing-springboot-java/blob/master/doc/debian-based-installation.md#install))
     * Windows MSI Installer: `C:\Program Files\Senzing\`
 
- 2) Determine your `${SENZING_VERSION}` version number:
+ 1. Determine your `${SENZING_VERSION}` version number:
     * Locate your `g2BuildVersion.json` file:
         * Linux: `${SENZING_DIR}/g2/data/g2BuildVersion.json`
         * Windows: `${SENZING_DIR}\g2\data\g2BuildVersion.json`
@@ -56,7 +56,7 @@ version 1.4.x.  In order to install g2.jar you must:
         }
         ```
 
- 3) Install the g2.jar file in your local Maven repository, replacing the
+ 1. Install the g2.jar file in your local Maven repository, replacing the
     `${SENZING_DIR}` and `${SENZING_VERSION}` variables as determined above:
 
      * Linux:
@@ -87,7 +87,7 @@ version 1.4.x.  In order to install g2.jar you must:
                  -Dpackaging=jar
        ```
 
- 4) Setup your environment.  The API's rely on native libraries and the
+ 1. Setup your environment.  The API's rely on native libraries and the
     environment must be properly setup to find those libraries:
 
     * Linux
@@ -196,6 +196,20 @@ network interfaces with a concurrency of 16 you would use:
         -bindAddr all \
         -iniFile /opt/senzing/g2/python/G2Module.ini
   ```
+
+#### Restart for Configuration Changes
+
+It is important to note that the Senzing configuration is currently read by the
+Senzing API Server on startup.  If the configuration changes, the changes will
+not be detected until the Server is restarted.  This may cause stale values to
+be returned from the following API functions:
+   
+   * `/data-sources`
+   * `/attribute-types`
+   * `/attribute-types/{attributeTypeCode}`
+    
+Be sure to restart the API server when the configuration changes to keep the
+results from being stale.
 
 ## Using Docker
 
