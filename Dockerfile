@@ -1,12 +1,23 @@
-# ----- Stage #1 - builder ----------------------------------------------------
+ARG BASE_IMAGE=senzing/python-db2-base
 
-ARG BASE_STAGE_1_CONTAINER=java:8
-FROM ${BASE_STAGE_1_CONTAINER} as builder
+# -----------------------------------------------------------------------------
+# Stage: builder
+# -----------------------------------------------------------------------------
 
-ARG REFRESHED_AT=2018-09-17
-ARG GIT_REPOSITORY_NAME=unknown
-ARG SENZING_G2_JAR_PATHNAME=/opt/senzing/g2/lib/g2.jar
+FROM java:8 as builder
+
+ENV REFRESHED_AT=2019-03-21
+
+LABEL Name="senzing/senzing-api-server-builder" \
+      Version="1.0.0"
+
+# Build arguments.
+
+ARG SENZING_G2_JAR_RELATIVE_PATHNAME=target/g2.jar
 ARG SENZING_G2_JAR_VERSION=1.5.0
+ARG SENZING_API_SERVER_JAR_VERSION=1.5.1
+
+# Install packages via apt.
 
 RUN apt-get update
 RUN apt-get -y install \
@@ -16,27 +27,32 @@ RUN apt-get -y install \
 
 # Copy the repository from the local host.
 
-COPY . /${GIT_REPOSITORY_NAME}
-
-# Copy g2.jar from repository directory to location expected by "make package".
-
-RUN mkdir --parents $(dirname ${SENZING_G2_JAR_PATHNAME}) \
- && cp /${GIT_REPOSITORY_NAME}/target/g2.jar ${SENZING_G2_JAR_PATHNAME} 
+COPY . /git-repository
 
 # Run the "make" command to create the artifacts.
 
-WORKDIR /${GIT_REPOSITORY_NAME}
+WORKDIR /git-repository
+
+ENV SENZING_G2_JAR_PATHNAME=/git-repository/${SENZING_G2_JAR_RELATIVE_PATHNAME}
+ENV SENZING_G2_JAR_VERSION=${SENZING_G2_JAR_VERSION}
+ENV SENZING_API_SERVER_JAR_VERSION=${SENZING_API_SERVER_JAR_VERSION}
+
 RUN make package
 
-# ----- Stage #2 --------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# Final stage
+# -----------------------------------------------------------------------------
 
-ARG BASE_IMAGE=debian:9
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2019-03-14
+ENV REFRESHED_AT=2019-03-19
 
 LABEL Name="senzing/senzing-api-server" \
       Version="1.0.0"
+
+# Build arguments.
+
+ARG SENZING_API_SERVER_JAR_VERSION=1.5.1
 
 # Install packages via apt.
 
@@ -86,10 +102,9 @@ RUN wget https://cdn.mysql.com//Downloads/Connector-ODBC/8.0/mysql-connector-odb
 
 EXPOSE 8080
 
-# Copy files from host system.
+# Copy files from builder step.
 
-RUN mkdir /app
-COPY --from=builder /${GIT_REPOSITORY_NAME}/target/senzing-api-server-1.5.0.jar /app/senzing-api-server.jar
+COPY --from=builder "/git-repository/target/senzing-api-server-${SENZING_API_SERVER_JAR_VERSION}.jar" "/app/senzing-api-server.jar" 
 
 # Set environment variables.
 
@@ -97,20 +112,9 @@ ENV SENZING_ROOT=/opt/senzing
 ENV PYTHONPATH=${SENZING_ROOT}/g2/python
 ENV LD_LIBRARY_PATH=${SENZING_ROOT}/g2/lib:${SENZING_ROOT}/g2/lib/debian;
 
-# App parameters.
-
-ENV SENZING_BIND_ADDR=all
-ENV SENZING_CONCURRENCY=8
-ENV SENZING_INI_FILE=${SENZING_ROOT}/g2/python/G2Module.ini
-ENV SENZING_OPTIONS=""
-
-# Run the Senzing REST api server.
+# Runtime execution.
 
 WORKDIR /app
 
-CMD java -jar senzing-api-server.jar \
-     -concurrency ${SENZING_CONCURRENCY} \
-     -httpPort 8080 \
-     -bindAddr ${SENZING_BIND_ADDR} \
-     -iniFile ${SENZING_INI_FILE} \
-     ${SENZING_OPTIONS}
+ENTRYPOINT ["/app/docker-entrypoint.sh", "java -jar senzing-api-server.jar" ]
+CMD [""]
