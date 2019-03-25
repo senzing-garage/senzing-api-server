@@ -204,7 +204,7 @@ Senzing API Server on startup.  If the configuration changes, the changes will
 not be detected until the Server is restarted.  This may cause stale values to
 be returned from some operations and may cause other operations to completely
 fail.
-    
+
 Be sure to restart the API server when the configuration changes to guarantee
 stability and accurate results from the API server.
 
@@ -251,11 +251,12 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
 ### Build docker image
 
+1. Build [senzing/senzing-base](https://github.com/Senzing/docker-senzing-base) docker image.
+
 1. Find value for `SENZING_G2_JAR_VERSION`.
 
     ```console
     export SENZING_DIR=/opt/senzing
-
     cat ${SENZING_DIR}/g2/data/g2BuildVersion.json
     ```
 
@@ -263,7 +264,6 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
     ```console
     export SENZING_DIR=/opt/senzing
-
     cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION'
     ```
 
@@ -278,9 +278,9 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
     cd ${GIT_REPOSITORY_DIR}
 
     export SENZING_G2_JAR_PATHNAME=/opt/senzing/g2/lib/g2.jar
-    export SENZING_G2_JAR_VERSION=1.4.18354
+    export SENZING_G2_JAR_VERSION=1.6.19058
 
-    sudo make docker-package
+    make docker-build
     ```
 
     Another example:
@@ -292,34 +292,16 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
     export SENZING_G2_JAR_PATHNAME=${SENZING_DIR}/g2/lib/g2.jar
     export SENZING_G2_JAR_VERSION=$(cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION')
 
-    sudo make docker-package
-    ```
-
-    1. Jar file will be in the "target" directory. Example: `${GIT_REPOSITORY_DIR}/target/senzing-api-server-M.m.P.jar`
-
-1. Build docker image.
-   *Note:* The following command expects a JAR file at `${GIT_REPOSITORY_DIR}/target/senzing-api-server-M.m.P.jar`.
-
-    ```console
-    cd ${GIT_REPOSITORY_DIR}
-
-    sudo make docker-build
+    make docker-build
     ```
 
 ### Configuration
 
-* **SENZING_BIND_ADDR** -
-  Port for HTTP bind address communication. Values: ip-address, loopback, all. Default: loopback
-* **SENZING_CONCURRENCY** -
-  Number of threads available for executing Senzing API functions. Default: 8
 * **SENZING_DIR** -
   Location of Senzing libraries. Default: "/opt/senzing".
-* **SENZING_INI_FILE** -
-  The path to the Senzing INI file to with which to initialize. Default: ${SENZING_DIR}/g2/python/G2Module.ini
-* **SENZING_OPTIONS** -
-  Additional options for the program.
 * **WEBAPP_PORT** -
-  Port used by service.  
+  Port on localhost.
+* `senzing-api-server` command line options are documented in "[Running](#running)".
 
 ### Run docker image
 
@@ -329,14 +311,16 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
     ```console
     export SENZING_DIR=/opt/senzing
-    export SENZING_CONCURRENCY=10
     export WEBAPP_PORT=8889
 
     sudo docker run -it \
-      --volume ${SENZING_DIR}:/opt/senzing \
       --publish ${WEBAPP_PORT}:8080 \
-      --env SENZING_CONCURRENCY="${SENZING_CONCURRENCY}" \
-      senzing/senzing-api-server
+      --volume ${SENZING_DIR}:/opt/senzing \
+      senzing/senzing-api-server \
+        -concurrency 10 \
+        -httpPort 8080 \
+        -bindAddr all \
+        -iniFile /opt/senzing/g2/python/G2Module.ini
     ```
 
 #### Variation 2
@@ -359,10 +343,14 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
         export WEBAPP_PORT=8889
 
         sudo docker run -it \
-          --volume ${SENZING_DIR}:/opt/senzing \
           --net ${SENZING_NETWORK} \
           --publish ${WEBAPP_PORT}:8080 \
-          senzing/senzing-api-server
+          --volume ${SENZING_DIR}:/opt/senzing \
+        senzing/senzing-api-server \
+          -concurrency 10 \
+          -httpPort 8080 \
+          -bindAddr all \
+          -iniFile /opt/senzing/g2/python/G2Module.ini
         ```
 
 ### Test Docker container
