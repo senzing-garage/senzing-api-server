@@ -307,14 +307,17 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
 #### Variation 1
 
-1. Run the docker image. Example:
+1. Run the docker container with internal SQLite database and external volume.  Example:
 
     ```console
     export SENZING_DIR=/opt/senzing
     export WEBAPP_PORT=8889
 
-    sudo docker run -it \
+    sudo docker run \
+      --interactive \
       --publish ${WEBAPP_PORT}:8080 \
+      --rm \
+      --tty \
       --volume ${SENZING_DIR}:/opt/senzing \
       senzing/senzing-api-server \
         -concurrency 10 \
@@ -325,9 +328,39 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
 #### Variation 2
 
-1. Run docker image in docker network.
+1. Run the docker container accessing an external PostgreSQL database and volumes.  Example:
 
-    1. Determine docker network:
+    ```console
+    export DATABASE_PROTOCOL=postgresql
+    export DATABASE_USERNAME=postgres
+    export DATABASE_PASSWORD=postgres
+    export DATABASE_HOST=senzing-postgresql
+    export DATABASE_PORT=5432
+    export DATABASE_DATABASE=G2
+
+    export SENZING_DATABASE_URL="${DATABASE_PROTOCOL}://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DATABASE}"
+    export SENZING_DIR=/opt/senzing
+    export WEBAPP_PORT=8889
+
+    sudo docker run \
+      --env SENZING_DATABASE_URL="${SENZING_DATABASE_URL}" \
+      --interactive \
+      --publish ${WEBAPP_PORT}:8080 \
+      --rm \
+      --tty \
+      --volume ${SENZING_DIR}:/opt/senzing \
+      senzing/senzing-api-server \
+        -concurrency 10 \
+        -httpPort 8080 \
+        -bindAddr all \
+        -iniFile /opt/senzing/g2/python/G2Module.ini
+    ```
+
+#### Variation 3
+
+1. Run the docker container accessing an external MySQL database in a docker network. Example:
+
+    1. Determine docker network. Example:
 
         ```console
         docker network ls
@@ -336,21 +369,33 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
         export SENZING_NETWORK=nameofthe_network
         ```
 
-    1. Run the docker image. Example:
+    1. Run docker container. Example:
 
         ```console
+        export DATABASE_PROTOCOL=mysql
+        export DATABASE_USERNAME=root
+        export DATABASE_PASSWORD=root
+        export DATABASE_HOST=senzing-mysql
+        export DATABASE_PORT=3306
+        export DATABASE_DATABASE=G2
+
+        export SENZING_DATABASE_URL="${DATABASE_PROTOCOL}://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DATABASE}"
         export SENZING_DIR=/opt/senzing
         export WEBAPP_PORT=8889
 
-        sudo docker run -it \
+        sudo docker run \
+          --env SENZING_DATABASE_URL="${SENZING_DATABASE_URL}" \
+          --interactive \
           --net ${SENZING_NETWORK} \
           --publish ${WEBAPP_PORT}:8080 \
+          --rm \
+          --tty \
           --volume ${SENZING_DIR}:/opt/senzing \
-        senzing/senzing-api-server \
-          -concurrency 10 \
-          -httpPort 8080 \
-          -bindAddr all \
-          -iniFile /opt/senzing/g2/python/G2Module.ini
+          senzing/senzing-api-server \
+            -concurrency 10 \
+            -httpPort 8080 \
+            -bindAddr all \
+            -iniFile /opt/senzing/g2/python/G2Module.ini
         ```
 
 ### Test Docker container
