@@ -5,7 +5,7 @@ PROGRAM_NAME := $(shell basename `git rev-parse --show-toplevel`)
 # User variables.
 
 SENZING_G2_JAR_PATHNAME ?= /opt/senzing/g2/lib/g2.jar
-SENZING_G2_JAR_VERSION ?= 1.4.18354
+SENZING_G2_JAR_VERSION ?= 1.6.19058
 SENZING_API_SERVER_JAR_VERSION ?= 1.5.1
 
 # Information from git.
@@ -57,7 +57,7 @@ package:
 		-Dgit.version.long=$(GIT_VERSION_LONG)
 
 # -----------------------------------------------------------------------------
-# Docker-based builds
+# Docker-based package
 # -----------------------------------------------------------------------------
 
 .PHONY: docker-package
@@ -67,9 +67,9 @@ docker-package: docker-rmi-for-package
 	mkdir -p $(TARGET)
 	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
 	docker build \
-		--build-arg GIT_REPOSITORY_NAME=$(GIT_REPOSITORY_NAME) \
-		--build-arg SENZING_G2_JAR_PATHNAME=$(SENZING_G2_JAR_PATHNAME) \
+		--build-arg SENZING_G2_JAR_RELATIVE_PATHNAME=$(TARGET)/g2.jar \
 		--build-arg SENZING_G2_JAR_VERSION=$(SENZING_G2_JAR_VERSION) \
+		--build-arg SENZING_API_SERVER_JAR_VERSION=$(SENZING_API_SERVER_JAR_VERSION) \
 		--tag $(DOCKER_IMAGE_PACKAGE) \
 		--file Dockerfile-package \
 		.
@@ -79,7 +79,7 @@ docker-package: docker-rmi-for-package
 	# Finally, remove the docker container.
 
 	PID=$$(docker create $(DOCKER_IMAGE_PACKAGE) /bin/bash); \
-	docker cp $$PID:/$(GIT_REPOSITORY_NAME)/$(TARGET) .; \
+	docker cp $$PID:/git-repository/$(TARGET) .; \
 	docker rm -v $$PID
 
 # -----------------------------------------------------------------------------
@@ -88,33 +88,19 @@ docker-package: docker-rmi-for-package
 
 .PHONY: docker-build
 docker-build: docker-rmi-for-build
+	mkdir -p $(TARGET)
+	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
 	docker build \
-		--build-arg SENZING_API_SERVER_JAR_PATHNAME=$(TARGET)/senzing-api-server-$(SENZING_API_SERVER_JAR_VERSION).jar \
 		--tag $(DOCKER_IMAGE_NAME) \
 		--tag $(DOCKER_IMAGE_NAME):$(GIT_VERSION) \
-		--file Dockerfile-build \
 		.
 
 .PHONY: docker-build-base
 docker-build-base: docker-rmi-for-build-base
-	docker build \
-		--build-arg SENZING_API_SERVER_JAR_PATHNAME=$(TARGET)/senzing-api-server-$(SENZING_API_SERVER_JAR_VERSION).jar \
-		--tag $(DOCKER_IMAGE_TAG) \
-		--file Dockerfile-build \
-		.
-
-# -----------------------------------------------------------------------------
-# Test ground
-# -----------------------------------------------------------------------------
-
-.PHONY: docker-all
-docker-all:
 	mkdir -p $(TARGET)
 	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
 	docker build \
-		--build-arg GIT_REPOSITORY_NAME=$(GIT_REPOSITORY_NAME) \
-		--build-arg SENZING_G2_JAR_PATHNAME=$(SENZING_G2_JAR_PATHNAME) \
-		--tag $(DOCKER_IMAGE_PACKAGE) \
+		--tag $(DOCKER_IMAGE_TAG) \
 		.
 
 # -----------------------------------------------------------------------------
