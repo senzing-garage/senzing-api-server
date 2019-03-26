@@ -420,6 +420,7 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
     curl -X GET ${SENZING_API_SERVICE}/heartbeat
     curl -X GET ${SENZING_API_SERVICE}/license
+    curl -X GET ${SENZING_API_SERVICE}/entities/1
     ```
 
 1. To exit, press `control-c` in terminal showing docker log.
