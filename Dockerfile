@@ -4,7 +4,7 @@ ARG BASE_IMAGE=senzing/senzing-base
 # Stage: builder
 # -----------------------------------------------------------------------------
 
-FROM java:8 as builder
+FROM openjdk:8 as builder
 
 ENV REFRESHED_AT=2019-03-22
 
