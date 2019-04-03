@@ -297,8 +297,19 @@ If you do not already have an `/opt/senzing` directory on your local system, vis
 
 ### Configuration
 
+- **SENZING_DATABASE_URL** -
+  Database URI in the form: `${DATABASE_PROTOCOL}://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DATABASE}`
+- **SENZING_DEBUG** -
+  Enable debug information. Values: 0=no debug; 1=debug. Default: 0.  
 * **SENZING_DIR** -
   Location of Senzing libraries. Default: "/opt/senzing".
+- **SENZING_ENTRYPOINT_SLEEP** -
+  Sleep, in seconds, before executing.
+  0 for sleeping infinitely.
+  [not-set] if no sleep.
+  Useful for debugging docker containers.
+  To stop sleeping, run "`unset SENZING_ENTRYPOINT_SLEEP`".
+  Default: [not-set].  
 * **WEBAPP_PORT** -
   Port on localhost.
 * `senzing-api-server` command line options are documented in "[Running](#running)".
