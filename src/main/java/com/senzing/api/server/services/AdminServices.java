@@ -43,29 +43,29 @@ public class AdminServices {
   {
     SzApiServer server = SzApiServer.getInstance();
 
-    return server.executeInThread(() -> {
-      try {
+    try {
+      String rawData = server.executeInThread(() -> {
         G2Product productApi = server.getProductApi();
 
-        String rawData = productApi.license();
+        return productApi.license();
+      });
 
-        StringReader sr = new StringReader(rawData);
-        JsonReader jsonReader = Json.createReader(sr);
-        JsonObject jsonObject = jsonReader.readObject();
-        SzLicenseInfo info = SzLicenseInfo.parseLicenseInfo(null, jsonObject);
+      StringReader sr = new StringReader(rawData);
+      JsonReader jsonReader = Json.createReader(sr);
+      JsonObject jsonObject = jsonReader.readObject();
+      SzLicenseInfo info = SzLicenseInfo.parseLicenseInfo(null, jsonObject);
 
-        SzLicenseResponse response
-            = new SzLicenseResponse(GET, 200, uriInfo);
-        response.setLicense(info);
-        if (withRaw) response.setRawData(rawData);
-        return response;
+      SzLicenseResponse response
+          = new SzLicenseResponse(GET, 200, uriInfo);
+      response.setLicense(info);
+      if (withRaw) response.setRawData(rawData);
+      return response;
 
-      } catch (WebApplicationException e) {
-        throw e;
+    } catch (WebApplicationException e) {
+      throw e;
 
-      } catch (Exception e) {
-        throw newInternalServerErrorException(GET, uriInfo, e);
-      }
-    });
+    } catch (Exception e) {
+      throw newInternalServerErrorException(GET, uriInfo, e);
+    }
   }
 }

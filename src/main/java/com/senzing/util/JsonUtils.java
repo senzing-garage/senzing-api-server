@@ -54,6 +54,7 @@ public class JsonUtils {
                                  String     key,
                                  String     defaultValue)
   {
+    if (obj == null) return defaultValue;
     if (!obj.containsKey(key)) return defaultValue;
     return obj.isNull(key) ? defaultValue : obj.getString(key);
   }
@@ -70,7 +71,8 @@ public class JsonUtils {
    * @return The {@link JsonArray} for the specified key, or <tt>null</tt>
    *         if not found or if the value is null.
    */
-  public static JsonArray getArray(JsonObject obj, String key) {
+  public static JsonArray getJsonArray(JsonObject obj, String key) {
+    if (obj == null) return null;
     if (!obj.containsKey(key) || obj.isNull(key)) return null;
     return obj.getJsonArray(key);
   }
@@ -119,6 +121,7 @@ public class JsonUtils {
                                         String        key,
                                         List<String>  defaultValue)
   {
+    if (obj == null) return defaultValue;
     if (!obj.containsKey(key) || obj.isNull(key)) return defaultValue;
     return Collections.unmodifiableList(
         obj.getJsonArray(key).getValuesAs(JsonString::getString));
@@ -162,6 +165,7 @@ public class JsonUtils {
                                    String     key,
                                    Integer    defaultValue)
   {
+    if (obj == null) return defaultValue;
     if (!obj.containsKey(key)) return defaultValue;
     return obj.isNull(key) ? defaultValue : obj.getJsonNumber(key).intValue();
   }
@@ -204,6 +208,7 @@ public class JsonUtils {
                              String     key,
                              Long       defaultValue)
   {
+    if (obj == null) return defaultValue;
     if (!obj.containsKey(key)) return defaultValue;
     return obj.isNull(key) ? defaultValue : obj.getJsonNumber(key).longValue();
   }
@@ -246,8 +251,43 @@ public class JsonUtils {
                                    String     key,
                                    Boolean    defaultValue)
   {
+    if (obj == null) return defaultValue;
     if (!obj.containsKey(key)) return defaultValue;
     return obj.isNull(key) ? defaultValue : obj.getBoolean(key);
+  }
+
+  /**
+   * Gets the {@link JsonValue} for the specified key in the specified object.
+   * If the key is not found in the object then <tt>null</tt> is returned.
+   *
+   * @param obj The {@link JsonObject} from which to obtain the value.
+   *
+   * @param key The {@link String} key for the property to retrieve.
+   *
+   * @return The {@link JsonValue} for the key or <tt>null</tt> if the key is
+   *         not found.
+   */
+  public static JsonValue getJsonValue(JsonObject obj, String key) {
+    if (obj == null) return null;
+    if (!obj.containsKey(key)) return null;
+    return obj.getValue("/" + key);
+  }
+
+  /**
+   * Gets the {@link JsonObject} for the specified key in the specified object.
+   * If the key is not found in the object then <tt>null</tt> is returned.
+   *
+   * @param obj The {@link JsonObject} from which to obtain the value.
+   *
+   * @param key The {@link String} key for the property to retrieve.
+   *
+   * @return The {@link JsonObject} for the key or <tt>null</tt> if the key is
+   *         not found.
+   */
+  public static JsonObject getJsonObject(JsonObject obj, String key) {
+    if (obj == null) return null;
+    if (!obj.containsKey(key)) return null;
+    return obj.getJsonObject(key);
   }
 
   /**
@@ -452,7 +492,7 @@ public class JsonUtils {
 
   /**
    * Same as {@link #normalizeJsonValue(JsonValue)}, but first parses the
-   * specified text as a {@link JsonStructure}.
+   * specified text as a {@link JsonValue}.
    *
    * @param jsonText The JSON-formatted text to parse.
    *
@@ -462,10 +502,26 @@ public class JsonUtils {
    */
   public static Object normalizeJsonText(String jsonText) {
     if (jsonText == null) return null;
-    StringReader  sr            = new StringReader(jsonText);
-    JsonReader    jsonReader    = Json.createReader(sr);
-    JsonStructure jsonStructure = jsonReader.read();
-    return normalizeJsonValue(jsonStructure);
+    jsonText = jsonText.trim();
+    JsonValue jsonValue = null;
+    if ((jsonText.indexOf("{") == 0) || (jsonText.indexOf("[") == 0)) {
+      StringReader  sr          = new StringReader(jsonText);
+      JsonReader    jsonReader  = Json.createReader(sr);
+      jsonValue = jsonReader.read();
+    } else if (jsonText.equals("true")) {
+      jsonValue = JsonValue.TRUE;
+    } else if (jsonText.equals("false")) {
+      jsonValue = JsonValue.FALSE;
+    } else if (jsonText.equals("null")) {
+      jsonValue = JsonValue.NULL;
+    } else {
+      String harnessText = "{\"value\": " + jsonText + "}";
+      StringReader sr         = new StringReader(harnessText);
+      JsonReader   jsonReader = Json.createReader(sr);
+      JsonObject   jsonObject = jsonReader.readObject();
+      jsonValue = jsonObject.getValue("/value");
+    }
+    return normalizeJsonValue(jsonValue);
   }
 
   /**
@@ -553,7 +609,11 @@ public class JsonUtils {
     Objects.requireNonNull(writer, "Writer cannot be null");
     JsonWriter jsonWriter = Json.createWriter(writer);
 
-    jsonWriter.write(jsonValue);
+    if (jsonValue != null) {
+      jsonWriter.write(jsonValue);
+    } else {
+      jsonWriter.write(JsonValue.NULL);
+    }
 
     return writer;
   }

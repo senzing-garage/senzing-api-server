@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.senzing.util.JsonUtils;
+
 import javax.json.JsonObject;
 import java.util.Optional;
 import java.util.function.Function;
@@ -8,7 +10,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
   /**
    * The match level.
    */
-  private int matchLevel;
+  private Integer matchLevel;
 
   /**
    * The full name score.
@@ -38,25 +40,19 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
   /**
    * The ref score.
    */
-  private int refScore;
-
-  /**
-   * Whether or not this related entity is partially populated.
-   */
-  private boolean partial;
+  private Integer refScore;
 
   /**
    * Default constructor.
    */
   public SzBaseRelatedEntity() {
-    this.matchLevel         = 0;
-    this.fullNameScore      = 0;
-    this.matchScore         = 0;
+    this.matchLevel         = null;
+    this.fullNameScore      = null;
+    this.matchScore         = null;
     this.ambiguous          = false;
     this.matchKey           = null;
     this.resolutionRuleCode = null;
-    this.refScore           = 0;
-    this.partial            = true;
+    this.refScore           = null;
   }
 
   /**
@@ -66,7 +62,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @return The underlying match level from the entity resolution between the
    *         entities.
    */
-  public int getMatchLevel() {
+  public Integer getMatchLevel() {
     return this.matchLevel;
   }
 
@@ -77,7 +73,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @param matchLevel The underlying match level from the entity resolution
    *                   between the entities.
    */
-  public void setMatchLevel(int matchLevel) {
+  public void setMatchLevel(Integer matchLevel) {
     this.matchLevel = matchLevel;
   }
 
@@ -198,7 +194,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @return The underlying ref score from the entity resolution between
    * the entities.
    */
-  public int getRefScore() {
+  public Integer getRefScore() {
     return this.refScore;
   }
 
@@ -209,32 +205,8 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @param refScore The underlying ref score from the entity resolution between
    *                 the entities.
    */
-  public void setRefScore(int refScore) {
+  public void setRefScore(Integer refScore) {
     this.refScore = refScore;
-  }
-
-  /**
-   * Checks whether or not the related entity data is only partially populated.
-   * If partially populated then it will not have complete features or records
-   * and the record summaries will be missing the top record IDs.
-   *
-   * @return <tt>true</tt> if the related entity data is only partially
-   *         populated, otherwise <tt>false</tt>.
-   */
-  public boolean isPartial() {
-    return this.partial;
-  }
-
-  /**
-   * Sets whether or not the related entity data is only partially populated.
-   * If partially populated then it will not have complete features or records
-   * and the record summaries will be missing the top record IDs.
-   *
-   * @param partial <tt>true</tt> if the related entity data is only partially
-   *                populated, otherwise <tt>false</tt>.
-   */
-  public void setPartial(boolean partial) {
-    this.partial = partial;
   }
 
   /**
@@ -259,34 +231,55 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
       Function<String,String> featureToAttrClassMapper)
   {
     Function<String,String> mapper = featureToAttrClassMapper;
+
+    // check if we have a MATCH_INFO object and if so use it for match information
+    JsonObject matchInfo = JsonUtils.getJsonObject(jsonObject,"MATCH_INFO");
+
+    // check if we have a RESOLVED_ENTITY object and if so use it for other fields
+    JsonObject entityObject = JsonUtils.getJsonObject(jsonObject, "ENTITY");
+    JsonObject resolvedObject
+        = JsonUtils.getJsonObject(entityObject, "RESOLVED_ENTITY");
+    if (resolvedObject != null) {
+      jsonObject = resolvedObject;
+    }
+
     SzResolvedEntity.parseResolvedEntity(entity, jsonObject, mapper);
 
-    int     matchLevel  = jsonObject.getJsonNumber("MATCH_LEVEL").intValue();
-    int     refScore    = jsonObject.getJsonNumber("REF_SCORE").intValue();
-    String  matchKey    = jsonObject.getString("MATCH_KEY");
-    String  ruleCode    = jsonObject.getString("ERRULE_CODE");
+    // if no match info, then assume the data is in the base object
+    if (matchInfo == null) matchInfo = jsonObject;
+
+    Integer matchLevel  = JsonUtils.getInteger(matchInfo, "MATCH_LEVEL");
+    Integer refScore    = JsonUtils.getInteger(matchInfo, "REF_SCORE");
+    String  matchKey    = JsonUtils.getString(matchInfo, "MATCH_KEY");
+    String  ruleCode    = JsonUtils.getString(matchInfo,"ERRULE_CODE");
     boolean partial     = (!jsonObject.containsKey("FEATURES")
-                           || !jsonObject.containsKey("RECORDS"));
+                           || !jsonObject.containsKey("RECORDS")
+                           || (matchLevel == null)
+                           || (refScore == null)
+                           || (matchKey == null)
+                           || (ruleCode == null));
 
     Optional<Integer> nameScore = Optional.ofNullable(
-        jsonObject.getJsonObject("MATCH_SCORES"))
+        jsonObject.getJsonObject("FEATURE_SCORES"))
           .map(o -> o.getJsonArray("NAME"))
           .map(a -> a.stream().map(v -> v.asJsonObject().getInt("GNR_FN")))
           .flatMap(s -> s.max(Integer::compareTo));
 
+    final JsonObject matchObject = matchInfo;
     Optional<Integer> matchScore
-        = Optional.ofNullable(jsonObject.getValue("/MATCH_SCORE"))
+        = Optional.ofNullable(JsonUtils.getJsonValue(matchObject, "MATCH_SCORE"))
           .map(o -> {
             switch(o.getValueType()) {
               case NUMBER:
-                return jsonObject.getJsonNumber("MATCH_SCORE").intValue();
+                return matchObject.getJsonNumber("MATCH_SCORE").intValue();
               case STRING:
-                return Integer.parseInt(jsonObject.getString("MATCH_SCORE"));
+                return Integer.parseInt(matchObject.getString("MATCH_SCORE"));
               default:
                 return null;
             }
           });
 
+    if (!matchScore.isPresent()) partial = true;
     entity.setMatchScore(matchScore.orElse(null));
     entity.setMatchLevel(matchLevel);
     entity.setMatchKey(matchKey);
@@ -316,7 +309,6 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
         ", matchKey='" + matchKey + '\'' +
         ", resolutionRuleCode='" + resolutionRuleCode + '\'' +
         ", refScore=" + refScore +
-        ", partial=" + partial +
         '}';
   }
 }

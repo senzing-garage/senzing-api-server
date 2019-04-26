@@ -86,6 +86,11 @@ public class SzResolvedEntity {
   private List<SzEntityRecord> records;
 
   /**
+   * Whether or not this entity is partially populated.
+   */
+  private boolean partial;
+
+  /**
    * Default constructor.
    */
   public SzResolvedEntity() {
@@ -103,6 +108,7 @@ public class SzResolvedEntity {
     this.features             = new LinkedHashMap<>();
     this.unmodifiableFeatures = new LinkedHashMap<>();
     this.records              = new LinkedList<>();
+    this.partial              = true;
   }
 
   /**
@@ -586,6 +592,30 @@ public class SzResolvedEntity {
   }
 
   /**
+   * Checks whether or not the entity data is only partially populated.
+   * If partially populated then it will not have complete features or records
+   * and the record summaries may be missing the top record IDs.
+   *
+   * @return <tt>true</tt> if the entity data is only partially
+   *         populated, otherwise <tt>false</tt>.
+   */
+  public boolean isPartial() {
+    return this.partial;
+  }
+
+  /**
+   * Sets whether or not the entity data is only partially populated.
+   * If partially populated then it will not have complete features or records
+   * and the record summaries may be missing the top record IDs.
+   *
+   * @param partial <tt>true</tt> if the entity data is only partially
+   *                populated, otherwise <tt>false</tt>.
+   */
+  public void setPartial(boolean partial) {
+    this.partial = partial;
+  }
+
+  /**
    * Parses a list of resolved entities from a {@link JsonArray} describing a
    * JSON array in the Senzing native API format for entity features and
    * populates the specified {@link List} or creates a new {@link List}.
@@ -654,6 +684,9 @@ public class SzResolvedEntity {
 
     Map<String,List<SzEntityFeature>> featureMap = null;
 
+    boolean partial = (!jsonObject.containsKey("FEATURES")
+                      || !jsonObject.containsKey("RECORDS"));
+
     if (jsonObject.containsKey("FEATURES")) {
       JsonObject features = jsonObject.getJsonObject("FEATURES");
       for (String key : features.keySet()) {
@@ -691,6 +724,7 @@ public class SzResolvedEntity {
     entity.setFeatures(featureMap, featureToAttrClassMapper);
     entity.setRecords(recordList);
     entity.setRecordSummaries(summaries);
+    entity.setPartial(partial);
 
     // iterate over the feature map
     return entity;
@@ -834,6 +868,7 @@ public class SzResolvedEntity {
   public String toString() {
     return "SzResolvedEntity{" +
         "entityId=" + entityId +
+        ", partial=" + partial +
         ", entityName='" + entityName + '\'' +
         ", bestName='" + bestName + '\'' +
         ", recordSummaries=" + recordSummaries +

@@ -12,7 +12,6 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
 import java.util.List;
-import java.util.Map;
 
 import static com.senzing.api.model.SzHttpMethod.GET;
 import static com.senzing.api.server.services.ServicesUtil.*;
@@ -31,62 +30,63 @@ public class ConfigServices {
   {
     SzApiServer server = SzApiServer.getInstance();
 
-    return server.executeInThread(() -> {
-      Long configId = null;
-      try {
-        // get the engine API and the config API
-        G2Engine engineApi = server.getEngineApi();
-        G2Config configApi = server.getConfigApi();
+    try {
+      // get the engine API and the config API
+      G2Engine engineApi = server.getEngineApi();
+      G2Config configApi = server.getConfigApi();
 
+      String rawData = server.executeInThread(() -> {
         String config = exportConfig(GET, uriInfo, engineApi);
 
-        // load into a config object by ID
-        configId = configApi.load(config);
+        Long configId = null;
+        try {
+          // load into a config object by ID
+          configId = configApi.load(config);
 
-        if (configId < 0) {
-          throw newInternalServerErrorException(GET, uriInfo, configApi);
+          if (configId < 0) {
+            throw newInternalServerErrorException(GET, uriInfo, configApi);
+          }
+
+          // clear the string buffer to reuse it
+          StringBuffer sb = new StringBuffer();
+          sb.delete(0, sb.length());
+
+          // list the data sources on the config
+          configApi.listDataSources(configId, sb);
+
+          return sb.toString();
+
+        } finally {
+          if (configId != null) {
+            server.getConfigApi().close(configId);
+          }
         }
+      });
 
-        // clear the string buffer to reuse it
-        StringBuffer sb = new StringBuffer();
-        sb.delete(0, sb.length());
+      // parse the raw data
+      JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
 
-        // list the data sources on the config
-        configApi.listDataSources(configId, sb);
+      // get the array and construct the response
+      JsonArray jsonArray = jsonObject.getJsonArray("DSRC_CODE");
+      SzDataSourcesResponse response
+          = new SzDataSourcesResponse(GET, 200, uriInfo);
 
-        // the response is the raw data
-        String rawData = sb.toString();
-
-        // parse the raw data
-        JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
-
-        // get the array and construct the response
-        JsonArray jsonArray = jsonObject.getJsonArray("DSRC_CODE");
-        SzDataSourcesResponse response
-            = new SzDataSourcesResponse(GET, 200, uriInfo);
-
-        for (JsonString jsonString : jsonArray.getValuesAs(JsonString.class)) {
+      for (JsonString jsonString : jsonArray.getValuesAs(JsonString.class)) {
           response.addDataSource(jsonString.getString());
-        }
-
-        // if including raw data then add it
-        if (withRaw) response.setRawData(rawData);
-
-        // return the response
-        return response;
-
-      } catch (WebApplicationException e) {
-        throw e;
-
-      } catch (Exception e) {
-        throw newInternalServerErrorException(GET, uriInfo, e);
-
-      } finally {
-        if (configId != null) {
-          server.getConfigApi().close(configId);
-        }
       }
-    });
+
+      // if including raw data then add it
+      if (withRaw) response.setRawData(rawData);
+
+      // return the response
+      return response;
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      throw newInternalServerErrorException(GET, uriInfo, e);
+    }
   }
 
   @GET
@@ -130,7 +130,7 @@ public class ConfigServices {
 
         // check if filtering out internal attribute types
         if (!withInternal) {
-          attrTypes.removeIf(attrType -> attrType.isInternal());
+          attrTypes.removeIf(SzAttributeType::isInternal);
         }
 
         // filter by attribute class if filter is specified
