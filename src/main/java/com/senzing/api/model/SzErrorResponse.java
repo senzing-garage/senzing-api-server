@@ -1,6 +1,7 @@
 package com.senzing.api.model;
 
 import com.senzing.g2.engine.G2Fallible;
+import com.senzing.util.Timers;
 
 import javax.ws.rs.core.UriInfo;
 import java.util.Collections;
@@ -24,12 +25,16 @@ public class SzErrorResponse extends SzBasicResponse {
    * @param httpStatusCode The HTTP response code.
    *
    * @param selfLink The self link from the request.
+   *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    */
   public SzErrorResponse(SzHttpMethod httpMethod,
                          int          httpStatusCode,
-                         String       selfLink)
+                         String       selfLink,
+                         Timers       timers)
   {
-    this(httpMethod, httpStatusCode, selfLink, (SzError) null);
+    this(httpMethod, httpStatusCode, selfLink, timers, (SzError) null);
   }
 
   /**
@@ -42,14 +47,17 @@ public class SzErrorResponse extends SzBasicResponse {
    *
    * @param selfLink The self link from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param firstError The {@link SzError} describing the first error.
    */
   public SzErrorResponse(SzHttpMethod httpMethod,
                          int          httpStatusCode,
                          String       selfLink,
+                         Timers       timers,
                          SzError      firstError)
   {
-    super(httpMethod, httpStatusCode, selfLink);
+    super(httpMethod, httpStatusCode, selfLink, timers);
     this.errors = new LinkedList<>();
     if (firstError != null) this.errors.add(firstError);
   }
@@ -64,16 +72,20 @@ public class SzErrorResponse extends SzBasicResponse {
    *
    * @param selfLink The self link from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param firstError The error message for the first error.
    */
   public SzErrorResponse(SzHttpMethod httpMethod,
                          int          httpStatusCode,
                          String       selfLink,
+                         Timers       timers,
                          String       firstError)
   {
     this(httpMethod,
          httpStatusCode,
          selfLink,
+         timers,
          firstError != null ? new SzError(firstError) : null);
   }
 
@@ -86,17 +98,21 @@ public class SzErrorResponse extends SzBasicResponse {
    * @param httpStatusCode The HTTP response code.
    *
    * @param selfLink The self link from the request.
+   *
+   * @param timers The {@link Timers} object for the timings that were taken.
    *
    * @param firstError The {@link Throwable} describing the first error.
    */
   public SzErrorResponse(SzHttpMethod httpMethod,
                          int          httpStatusCode,
                          String       selfLink,
+                         Timers       timers,
                          Throwable    firstError)
   {
     this(httpMethod,
          httpStatusCode,
          selfLink,
+         timers,
          firstError != null ? new SzError(firstError) : null);
   }
 
@@ -109,6 +125,8 @@ public class SzErrorResponse extends SzBasicResponse {
    * @param httpStatusCode The HTTP response code.
    *
    * @param selfLink The self link from the request.
+   *
+   * @param timers The {@link Timers} object for the timings that were taken.
    *
    * @param firstErrorFallible The {@link G2Fallible} from which to extract the
    *                           error code and exception message.
@@ -116,11 +134,13 @@ public class SzErrorResponse extends SzBasicResponse {
   public SzErrorResponse(SzHttpMethod httpMethod,
                          int          httpStatusCode,
                          String       selfLink,
+                         Timers       timers,
                          G2Fallible   firstErrorFallible)
   {
     this(httpMethod,
          httpStatusCode,
          selfLink,
+         timers,
          ((firstErrorFallible != null)
              ? new SzError(firstErrorFallible) : null));
   }
@@ -133,12 +153,16 @@ public class SzErrorResponse extends SzBasicResponse {
    * @param httpStatusCode The HTTP response code.
    *
    * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    */
   public SzErrorResponse(SzHttpMethod httpMethod,
                          int          httpStatusCode,
-                         UriInfo      uriInfo)
+                         UriInfo      uriInfo,
+                         Timers       timers)
   {
-    this(httpMethod, httpStatusCode, uriInfo, (SzError) null);
+    this(httpMethod, httpStatusCode, uriInfo, timers, (SzError) null);
   }
 
   /**
@@ -151,14 +175,17 @@ public class SzErrorResponse extends SzBasicResponse {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param firstError The {@link SzError} describing the first error.
    */
   public SzErrorResponse(SzHttpMethod httpMethod,
                          int          httpStatusCode,
                          UriInfo      uriInfo,
+                         Timers       timers,
                          SzError      firstError)
   {
-    super(httpMethod, httpStatusCode, uriInfo);
+    super(httpMethod, httpStatusCode, uriInfo, timers);
     this.errors = new LinkedList<>();
     if (firstError != null) this.errors.add(firstError);
   }
@@ -173,16 +200,20 @@ public class SzErrorResponse extends SzBasicResponse {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param firstError The error message for the first error.
    */
   public SzErrorResponse(SzHttpMethod httpMethod,
                          int          httpStatusCode,
                          UriInfo      uriInfo,
+                         Timers       timers,
                          String       firstError)
   {
     this(httpMethod,
          httpStatusCode,
          uriInfo,
+         timers,
          firstError != null ? new SzError(firstError) : null);
   }
 
@@ -196,16 +227,20 @@ public class SzErrorResponse extends SzBasicResponse {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param firstError The {@link Throwable} describing the first error.
    */
   public SzErrorResponse(SzHttpMethod httpMethod,
                          int          httpStatusCode,
                          UriInfo      uriInfo,
+                         Timers       timers,
                          Throwable    firstError)
   {
     this(httpMethod,
          httpStatusCode,
          uriInfo,
+         timers,
          firstError != null ? new SzError(firstError) : null);
   }
 
@@ -219,17 +254,21 @@ public class SzErrorResponse extends SzBasicResponse {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param firstErrorFallible The {@link G2Fallible} from which to extract the
    *                           error code and exception message.
    */
   public SzErrorResponse(SzHttpMethod httpMethod,
                          int          httpStatusCode,
                          UriInfo      uriInfo,
+                         Timers       timers,
                          G2Fallible   firstErrorFallible)
   {
     this(httpMethod,
          httpStatusCode,
          uriInfo,
+         timers,
          ((firstErrorFallible != null)
              ? new SzError(firstErrorFallible) : null));
   }

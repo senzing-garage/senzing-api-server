@@ -10,6 +10,7 @@ import javax.ws.rs.core.UriInfo;
 import com.senzing.api.model.*;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.g2.engine.G2Product;
+import com.senzing.util.Timers;
 
 import java.io.StringReader;
 
@@ -28,7 +29,8 @@ public class AdminServices {
   @GET
   @Path("heartbeat")
   public SzBasicResponse heartbeat(@Context UriInfo uriInfo) {
-    return new SzBasicResponse(GET, 200, uriInfo);
+    Timers timers = newTimers();
+    return new SzBasicResponse(GET, 200, uriInfo, timers);
   }
 
   /**
@@ -41,22 +43,28 @@ public class AdminServices {
       @Context                                      UriInfo uriInfo)
     throws WebApplicationException
   {
+    Timers timers = newTimers();
     SzApiServer server = SzApiServer.getInstance();
 
     try {
+      enteringQueue(timers);
       String rawData = server.executeInThread(() -> {
+        exitingQueue(timers);
         G2Product productApi = server.getProductApi();
-
+        callingNativeAPI(timers, "product", "license");
         return productApi.license();
       });
+      calledNativeAPI(timers, "product", "license");
+      processingRawData(timers);
 
       StringReader sr = new StringReader(rawData);
       JsonReader jsonReader = Json.createReader(sr);
       JsonObject jsonObject = jsonReader.readObject();
       SzLicenseInfo info = SzLicenseInfo.parseLicenseInfo(null, jsonObject);
+      processedRawData(timers);
 
       SzLicenseResponse response
-          = new SzLicenseResponse(GET, 200, uriInfo);
+          = new SzLicenseResponse(GET, 200, uriInfo, timers);
       response.setLicense(info);
       if (withRaw) response.setRawData(rawData);
       return response;
@@ -65,7 +73,7 @@ public class AdminServices {
       throw e;
 
     } catch (Exception e) {
-      throw newInternalServerErrorException(GET, uriInfo, e);
+      throw newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 }

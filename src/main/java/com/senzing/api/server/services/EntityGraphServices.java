@@ -4,6 +4,7 @@ import com.senzing.api.model.*;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.util.JsonUtils;
+import com.senzing.util.Timers;
 
 import javax.json.*;
 import javax.ws.rs.*;
@@ -13,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static com.senzing.api.model.SzFeatureInclusion.NONE;
 import static com.senzing.api.model.SzHttpMethod.GET;
 import static com.senzing.api.server.services.ServicesUtil.*;
 import static com.senzing.g2.engine.G2Engine.*;
@@ -43,6 +43,7 @@ public class EntityGraphServices {
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
       @Context                                                    UriInfo             uriInfo)
   {
+    Timers timers = newTimers();
     SzApiServer server = SzApiServer.getInstance();
 
     SzEntityIdentifier        from;
@@ -52,13 +53,13 @@ public class EntityGraphServices {
     try {
       if (fromParam == null) {
         throw newBadRequestException(
-            GET, uriInfo,
+            GET, uriInfo, timers,
             "Parameter missing or empty: \"from\".  "
                 + "The 'from' entity identifier is required.");
       }
       if (toParam == null) {
         throw newBadRequestException(
-            GET, uriInfo,
+            GET, uriInfo, timers,
             "Parameter missing or empty: \"to\".  "
                 + "The 'to' entity identifier is required.");
       }
@@ -67,7 +68,7 @@ public class EntityGraphServices {
         from = SzEntityIdentifier.valueOf(fromParam.trim());
       } catch (Exception e) {
         throw newBadRequestException(
-            GET, uriInfo,
+            GET, uriInfo, timers,
             "Parameter is not formatted correctly: \"from\".");
       }
 
@@ -75,14 +76,14 @@ public class EntityGraphServices {
         to = SzEntityIdentifier.valueOf(toParam.trim());
       } catch (Exception e) {
         throw newBadRequestException(
-            GET, uriInfo,
+            GET, uriInfo, timers,
             "Parameter is not formatted correctly: \"to\".");
       }
 
       // check for consistent from/to
       if (from.getClass() != to.getClass()) {
         throw newBadRequestException(
-            GET, uriInfo,
+            GET, uriInfo, timers,
             "Entity identifiers must be consistent types.  from=" + from
                 + ", to=" + to);
       }
@@ -93,7 +94,7 @@ public class EntityGraphServices {
       {
         // parse the multi-valued parameters
         avoidEntities = parseEntityIdentifiers(
-            avoidParam, "avoidEntities", GET, uriInfo);
+            avoidParam, "avoidEntities", GET, uriInfo, timers);
 
         // check if the avoid list is specified
         if (avoidList != null && avoidList.trim().length() > 0) {
@@ -104,7 +105,7 @@ public class EntityGraphServices {
 
         if (!checkConsistent(avoidEntities)) {
           throw newBadRequestException(
-              GET, uriInfo,
+              GET, uriInfo, timers,
               "Entity identifiers for avoided entities must be of "
                   + "consistent types: " + avoidEntities);
         }
@@ -119,20 +120,20 @@ public class EntityGraphServices {
             withSources.add(source);
           } else {
             throw newBadRequestException(
-                GET, uriInfo,
+                GET, uriInfo, timers,
                 "Unrecognized data source: " + source);
           }
         }
       }
       if (maxDegrees < 1) {
         throw newBadRequestException(
-            GET, uriInfo,
+            GET, uriInfo, timers,
             "Max degrees must be greater than zero: " + maxDegrees);
       }
     } catch (WebApplicationException e) {
       throw e;
     } catch (Exception e) {
-      throw newBadRequestException(GET, uriInfo, e.getMessage());
+      throw newBadRequestException(GET, uriInfo, timers, e.getMessage());
     }
 
     final String encodedAvoid = (avoidEntities == null)
@@ -145,7 +146,10 @@ public class EntityGraphServices {
                     | (forbidAvoided ? 0 : G2_FIND_PATH_PREFER_EXCLUDE);
 
     try {
+      enteringQueue(timers);
       String rawData = server.executeInThread(() -> {
+        exitingQueue(timers);
+
         // get the engine API and the config API
         G2Engine engineApi = server.getEngineApi();
 
@@ -159,6 +163,7 @@ public class EntityGraphServices {
           String id2 = ((SzRecordId) to).getRecordId();
 
           if (encodedAvoid == null && encodedSources == null) {
+            callingNativeAPI(timers, "engine", "findPathByRecordIDV2");
             result = engineApi.findPathByRecordIDV2(source1,
                                                     id1,
                                                     source2,
@@ -166,7 +171,10 @@ public class EntityGraphServices {
                                                     maxDegrees,
                                                     flags,
                                                     responseDataBuffer);
+            calledNativeAPI(timers, "engine", "findPathByRecordIDV2");
+
           } else if (encodedSources == null) {
+            callingNativeAPI(timers, "engine", "findPathExcludingByRecordID");
             result = engineApi.findPathExcludingByRecordID(
                 source1,
                 id1,
@@ -176,8 +184,10 @@ public class EntityGraphServices {
                 encodedAvoid,
                 flags,
                 responseDataBuffer);
+            calledNativeAPI(timers, "engine", "findPathExcludingByRecordID");
 
           } else {
+            callingNativeAPI(timers, "engine", "findPathIncludingSourceByRecordID");
             result = engineApi.findPathIncludingSourceByRecordID(
                 source1,
                 id1,
@@ -188,19 +198,23 @@ public class EntityGraphServices {
                 encodedSources,
                 flags,
                 responseDataBuffer);
+            calledNativeAPI(timers, "engine", "findPathIncludingSourceByRecordID");
           }
         } else {
           SzEntityId id1 = (SzEntityId) from;
           SzEntityId id2 = (SzEntityId) to;
 
           if (encodedAvoid == null && encodedSources == null) {
+            callingNativeAPI(timers, "engine", "findPathByEntityIDV2");
             result = engineApi.findPathByEntityIDV2(id1.getValue(),
                                                   id2.getValue(),
                                                   maxDegrees,
                                                   flags,
                                                   responseDataBuffer);
+            calledNativeAPI(timers, "engine", "findPathByEntityIDV2");
 
           } else if (encodedSources == null) {
+            callingNativeAPI(timers, "engine", "findPathExcludingByEntityID");
             result = engineApi.findPathExcludingByEntityID(
                 id1.getValue(),
                 id2.getValue(),
@@ -208,8 +222,10 @@ public class EntityGraphServices {
                 encodedAvoid,
                 flags,
                 responseDataBuffer);
+            calledNativeAPI(timers, "engine", "findPathExcludingByEntityID");
 
           } else {
+            callingNativeAPI(timers, "engine", "findPathIncludingSourceByEntityID");
             result = engineApi.findPathIncludingSourceByEntityID(
                 id1.getValue(),
                 id2.getValue(),
@@ -218,17 +234,20 @@ public class EntityGraphServices {
                 encodedSources,
                 flags,
                 responseDataBuffer);
+            calledNativeAPI(timers, "engine", "findPathIncludingSourceByEntityID");
+
           }
         }
 
         if (result != 0) {
-          throw newWebApplicationException(GET, uriInfo, engineApi);
+          throw newWebApplicationException(GET, uriInfo, timers, engineApi);
         }
 
         // parse the raw data
         return responseDataBuffer.toString();
       });
 
+      processingRawData(timers);
       JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
       SzEntityPathData entityPathData
           = SzEntityPathData.parseEntityPathData(
@@ -239,11 +258,14 @@ public class EntityGraphServices {
         postProcessEntityData(e, forceMinimal, featureMode);
       });
 
+      processedRawData(timers);
+
       // construct the response
       SzEntityPathResponse response
           = new SzEntityPathResponse(GET,
                                      200,
                                      uriInfo,
+                                     timers,
                                      entityPathData);
 
       // if including raw data then add it
@@ -256,7 +278,7 @@ public class EntityGraphServices {
       throw e;
 
     } catch (Exception e) {
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, e);
+      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
@@ -273,6 +295,7 @@ public class EntityGraphServices {
       @DefaultValue("false")  @QueryParam("withRaw")              boolean             withRaw,
       @Context                                                    UriInfo             uriInfo)
   {
+    Timers timers = newTimers();
     SzApiServer server = SzApiServer.getInstance();
 
     Set<SzEntityIdentifier> entities;
@@ -282,7 +305,7 @@ public class EntityGraphServices {
           && ((entityList == null) || entityList.isEmpty()))
       {
         throw newBadRequestException(
-            GET, uriInfo,
+            GET, uriInfo, timers,
             "One of the following parameters is required to specify at least "
                 + "one entity: 'e' or 'entities'.  "
                 + "At least one of 'e' or 'entities' parameter must specify at "
@@ -290,7 +313,7 @@ public class EntityGraphServices {
       }
 
       entities = parseEntityIdentifiers(
-          entitiesParam, "e", GET, uriInfo);
+          entitiesParam, "e", GET, uriInfo, timers);
 
       if (entityList != null && entityList.trim().length() > 0) {
         SzEntityIdentifiers ids = SzEntityIdentifiers.valueOf(entityList);
@@ -301,26 +324,26 @@ public class EntityGraphServices {
 
       if (!checkConsistent(entities)) {
         throw newBadRequestException(
-            GET, uriInfo,
+            GET, uriInfo, timers,
             "Entity identifiers for entities must be of consistent "
                 + "types: " + entities);
       }
 
       if (maxDegrees < 1) {
         throw newBadRequestException(
-            GET, uriInfo,
+            GET, uriInfo, timers,
             "Max degrees must be greater than zero: " + maxDegrees);
       }
 
       if (buildOut < 0) {
         throw newBadRequestException(
-            GET, uriInfo,
+            GET, uriInfo, timers,
             "Build out must be zero or greater: " + buildOut);
       }
 
       if (maxEntities < 1) {
         throw newBadRequestException(
-            GET, uriInfo,
+            GET, uriInfo, timers,
             "Max entities must be greater than zero: " + maxEntities);
       }
 
@@ -328,7 +351,7 @@ public class EntityGraphServices {
       throw e;
     } catch (Exception e) {
       e.printStackTrace();
-      throw newBadRequestException(GET, uriInfo, e.getMessage());
+      throw newBadRequestException(GET, uriInfo, timers, e.getMessage());
     }
 
     final String encodedEntityIds = (entities == null)
@@ -337,7 +360,9 @@ public class EntityGraphServices {
     final int flags = getFlags(forceMinimal, featureMode);
 
     try {
+      enteringQueue(timers);
       String rawData = server.executeInThread(() -> {
+        exitingQueue(timers);
 
         // get the engine API and the config API
         G2Engine engineApi = server.getEngineApi();
@@ -347,6 +372,7 @@ public class EntityGraphServices {
         int result;
 
         if (entities.iterator().next().getClass() == SzRecordId.class) {
+          callingNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
           result = engineApi.findNetworkByRecordIDV2(
               encodedEntityIds,
               maxDegrees,
@@ -354,8 +380,10 @@ public class EntityGraphServices {
               maxEntities,
               flags,
               sb);
+          calledNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
 
         } else {
+          callingNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
           result = engineApi.findNetworkByEntityIDV2(
               encodedEntityIds,
               maxDegrees,
@@ -363,15 +391,18 @@ public class EntityGraphServices {
               maxEntities,
               flags,
               sb);
+          calledNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
         }
 
         if (result != 0) {
-          throw newWebApplicationException(GET, uriInfo, engineApi);
+          throw newWebApplicationException(GET, uriInfo, timers, engineApi);
         }
 
         // parse the raw data
         return sb.toString();
       });
+
+      processingRawData(timers);
 
       JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
 
@@ -384,11 +415,14 @@ public class EntityGraphServices {
         postProcessEntityData(e, forceMinimal, featureMode);
       });
 
+      processedRawData(timers);
+
       // construct the response
       SzEntityNetworkResponse response
           = new SzEntityNetworkResponse(GET,
                                         200,
                                         uriInfo,
+                                        timers,
                                         entityNetworkData);
 
       // if including raw data then add it
@@ -401,7 +435,7 @@ public class EntityGraphServices {
       throw e;
 
     } catch (Exception e) {
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, e);
+      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
@@ -427,13 +461,14 @@ public class EntityGraphServices {
   private static WebApplicationException newWebApplicationException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       G2Engine      engineApi)
   {
     int errorCode = engineApi.getLastExceptionCode();
     if (errorCode == ENTITY_NOT_FOUND_CODE
         || errorCode == RECORD_NOT_FOUND_CODE) {
-      return newBadRequestException(GET, uriInfo, engineApi);
+      return newBadRequestException(GET, uriInfo, timers, engineApi);
     }
-    return newInternalServerErrorException(GET, uriInfo, engineApi);
+    return newInternalServerErrorException(GET, uriInfo, timers, engineApi);
   }
 }

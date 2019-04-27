@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.senzing.util.Timers;
+
 import javax.ws.rs.core.UriInfo;
 
 /**
@@ -19,11 +21,13 @@ public class SzEntityResponse extends SzResponseWithRawData {
    * @param httpMethod The {@link SzHttpMethod}.
    * @param httpStatusCode The HTTP response status code.
    * @param selfLink The string URL link to generate this response.
+   * @param timers The {@link Timers} object for the timings that were taken.
    */
   public SzEntityResponse(SzHttpMethod httpMethod,
                           int          httpStatusCode,
-                          String       selfLink) {
-    this(httpMethod, httpStatusCode, selfLink, null);
+                          String       selfLink,
+                          Timers       timers) {
+    this(httpMethod, httpStatusCode, selfLink, timers, null);
   }
 
   /**
@@ -33,14 +37,16 @@ public class SzEntityResponse extends SzResponseWithRawData {
    * @param httpMethod The {@link SzHttpMethod}.
    * @param httpStatusCode The HTTP response status code.
    * @param selfLink The string URL link to generate this response.
+   * @param timers The {@link Timers} object for the timings that were taken.
    * @param data The {@link SzEntityRecord} describing the record.
    */
   public SzEntityResponse(SzHttpMethod   httpMethod,
                           int            httpStatusCode,
                           String         selfLink,
+                          Timers         timers,
                           SzEntityData   data)
   {
-    super(httpMethod, httpStatusCode, selfLink);
+    super(httpMethod, httpStatusCode, selfLink, timers);
     this.entityData = data;
   }
 
@@ -51,11 +57,14 @@ public class SzEntityResponse extends SzResponseWithRawData {
    * @param httpMethod The {@link SzHttpMethod}.
    * @param httpStatusCode The HTTP response status code.
    * @param uriInfo The {@link UriInfo} from the request.
+   * @param timers The {@link Timers} object for the timings that were taken.
    */
   public SzEntityResponse(SzHttpMethod httpMethod,
                           int          httpStatusCode,
-                          UriInfo      uriInfo) {
-    this(httpMethod, httpStatusCode, uriInfo, null);
+                          UriInfo      uriInfo,
+                          Timers       timers)
+  {
+    this(httpMethod, httpStatusCode, uriInfo, timers, null);
   }
 
   /**
@@ -65,14 +74,16 @@ public class SzEntityResponse extends SzResponseWithRawData {
    * @param httpMethod The {@link SzHttpMethod}.
    * @param httpStatusCode The HTTP response status code.
    * @param uriInfo The {@link UriInfo} from the request.
+   * @param timers The {@link Timers} object for the timings that were taken.
    * @param data The {@link SzEntityRecord} describing the record.
    */
   public SzEntityResponse(SzHttpMethod   httpMethod,
                           int            httpStatusCode,
                           UriInfo        uriInfo,
+                          Timers         timers,
                           SzEntityData   data)
   {
-    super(httpMethod, httpStatusCode, uriInfo);
+    super(httpMethod, httpStatusCode, uriInfo, timers);
     this.entityData = data;
   }
 

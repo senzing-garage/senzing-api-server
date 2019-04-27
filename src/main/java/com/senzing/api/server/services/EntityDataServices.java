@@ -4,6 +4,7 @@ import com.senzing.api.model.*;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.util.JsonUtils;
+import com.senzing.util.Timers;
 
 import javax.json.*;
 import javax.ws.rs.*;
@@ -35,6 +36,8 @@ public class EntityDataServices {
       @Context                      UriInfo uriInfo,
       String                                recordJsonData)
   {
+    Timers timers = newTimers();
+
     try {
       SzApiServer server = SzApiServer.getInstance();
       dataSourceCode = dataSourceCode.toUpperCase();
@@ -46,23 +49,30 @@ public class EntityDataServices {
       String recordText = ensureJsonFields(
           POST,
           uriInfo,
+          timers,
           recordJsonData,
           Collections.singletonMap("DATA_SOURCE", dataSource));
 
-      checkDataSource(POST, uriInfo, dataSource, server);
+      checkDataSource(POST, uriInfo, timers, dataSource, server);
 
       StringBuffer sb = new StringBuffer();
 
+      enteringQueue(timers);
       String recordId = server.executeInThread(() -> {
+        exitingQueue(timers);
+
         // get the engine API and the config API
         G2Engine engineApi = server.getEngineApi();
 
+        callingNativeAPI(timers, "engine", "addRecordWithReturnedRecordID");
         int result = engineApi.addRecordWithReturnedRecordID(dataSource,
                                                              sb,
                                                              recordText,
                                                              normalizedLoadId);
+        calledNativeAPI(timers, "engine", "addRecordWithReturnedRecordID");
+
         if (result != 0) {
-          throw newWebApplicationException(POST, uriInfo, engineApi);
+          throw newWebApplicationException(POST, uriInfo, timers, engineApi);
         }
 
         return sb.toString().trim();
@@ -70,7 +80,7 @@ public class EntityDataServices {
 
       // construct the response
       SzLoadRecordResponse response = new SzLoadRecordResponse(
-          POST, 200, uriInfo, recordId);
+          POST, 200, uriInfo, timers, recordId);
 
       // return the response
       return response;
@@ -79,7 +89,7 @@ public class EntityDataServices {
       throw e;
 
     } catch (Exception e) {
-      throw ServicesUtil.newInternalServerErrorException(POST, uriInfo, e);
+      throw ServicesUtil.newInternalServerErrorException(POST, uriInfo, timers, e);
     }
   }
 
@@ -92,6 +102,7 @@ public class EntityDataServices {
       @Context                      UriInfo uriInfo,
       String                                recordJsonData)
   {
+    Timers timers = newTimers();
     try {
       SzApiServer server = SzApiServer.getInstance();
       dataSourceCode = dataSourceCode.toUpperCase();
@@ -106,6 +117,7 @@ public class EntityDataServices {
 
       String recordText = ensureJsonFields(PUT,
                                            uriInfo,
+                                           timers,
                                            recordJsonData,
                                            map);
 
@@ -113,20 +125,25 @@ public class EntityDataServices {
 
       if (!dataSources.contains(dataSource)) {
         throw newNotFoundException(
-            POST, uriInfo,
+            POST, uriInfo, timers,
             "The specified data source is not recognized: " + dataSource);
       }
 
+      enteringQueue(timers);
       server.executeInThread(() -> {
+        exitingQueue(timers);
+
         // get the engine API
         G2Engine engineApi = server.getEngineApi();
 
+        callingNativeAPI(timers, "engine", "addRecord");
         int result = engineApi.addRecord(dataSource,
                                          recordId,
                                          recordText,
                                          normalizedLoadId);
+        calledNativeAPI(timers, "engine", "addRecord");
         if (result != 0) {
-          throw newWebApplicationException(PUT, uriInfo, engineApi);
+          throw newWebApplicationException(PUT, uriInfo, timers, engineApi);
         }
 
         return recordId;
@@ -134,7 +151,7 @@ public class EntityDataServices {
 
       // construct the response
       SzLoadRecordResponse response = new SzLoadRecordResponse(
-          PUT, 200, uriInfo, recordId);
+          PUT, 200, uriInfo, timers, recordId);
 
       // return the response
       return response;
@@ -143,7 +160,7 @@ public class EntityDataServices {
       throw e;
 
     } catch (Exception e) {
-      throw ServicesUtil.newInternalServerErrorException(PUT, uriInfo, e);
+      throw ServicesUtil.newInternalServerErrorException(PUT, uriInfo, timers, e);
     }
   }
 
@@ -155,6 +172,8 @@ public class EntityDataServices {
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
       @Context                                      UriInfo uriInfo)
   {
+    Timers timers = newTimers();
+
     try {
       SzApiServer server = SzApiServer.getInstance();
       dataSourceCode = dataSourceCode.toUpperCase();
@@ -163,17 +182,25 @@ public class EntityDataServices {
 
       final String dataSource = dataSourceCode;
 
+      enteringQueue(timers);
       String rawData = server.executeInThread(() -> {
+        exitingQueue(timers);
+
         // get the engine API
         G2Engine engineApi = server.getEngineApi();
 
+        callingNativeAPI(timers, "engine", "getRecord");
         int result = engineApi.getRecord(dataSource, recordId, sb);
+        calledNativeAPI(timers, "engine", "getRecord");
+
         if (result != 0) {
-          throw newWebApplicationException(GET, uriInfo, engineApi);
+          throw newWebApplicationException(GET, uriInfo, timers, engineApi);
         }
 
         return sb.toString();
       });
+
+      processingRawData(timers);
 
       // parse the raw data
       JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
@@ -181,10 +208,13 @@ public class EntityDataServices {
       SzEntityRecord entityRecord
           = SzEntityRecord.parseEntityRecord(null, jsonObject);
 
+      processedRawData(timers);
+
       // construct the response
       SzRecordResponse response = new SzRecordResponse(GET,
                                                        200,
                                                        uriInfo,
+                                                       timers,
                                                        entityRecord);
 
       // if including raw data then add it
@@ -197,7 +227,7 @@ public class EntityDataServices {
       throw e;
 
     } catch (Exception e) {
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, e);
+      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
@@ -212,6 +242,8 @@ public class EntityDataServices {
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
       @Context                                                    UriInfo             uriInfo)
   {
+    Timers timers = newTimers();
+
     try {
       SzApiServer server = SzApiServer.getInstance();
       dataSourceCode = dataSourceCode.toUpperCase();
@@ -244,20 +276,28 @@ public class EntityDataServices {
         final int buildOutDegrees = 1;
         final int maxEntityCount = 1000;
 
+        enteringQueue(timers);
         rawData = server.executeInThread(() -> {
+          exitingQueue(timers);
+
           // get the engine API and the config API
           G2Engine engineApi = server.getEngineApi();
 
+          callingNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
           // find the network and check the result
           int result = engineApi.findNetworkByRecordIDV2(
               recordIds, maxDegrees, buildOutDegrees, maxEntityCount, flags, sb);
 
+          calledNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
+
           if (result != 0) {
-            throw newWebApplicationException(GET, uriInfo, engineApi);
+            throw newWebApplicationException(GET, uriInfo, timers, engineApi);
           }
 
           return sb.toString();
         });
+
+        processingRawData(timers);
 
         // organize all the entities into a map for lookup
         Map<Long, SzEntityData> dataMap
@@ -281,19 +321,25 @@ public class EntityDataServices {
         entityData = getAugmentedEntityData(entityId, dataMap, server);
 
       } else {
+        enteringQueue(timers);
         rawData = server.executeInThread(() -> {
+          exitingQueue(timers);
+
           // get the engine API and the config API
           G2Engine engineApi = server.getEngineApi();
 
+          callingNativeAPI(timers, "engine", "getEntityByRecordIDV2");
           // 1-degree relations are not required, so do a standard lookup
           int result = engineApi.getEntityByRecordIDV2(dataSource, recordId, flags, sb);
+          calledNativeAPI(timers, "engine", "getEntityByRecordIDV2");
 
           String engineJSON = sb.toString();
-          checkEntityResult(result, engineJSON, uriInfo, engineApi);
+          checkEntityResult(result, engineJSON, uriInfo, timers, engineApi);
 
           return engineJSON;
         });
 
+        processingRawData(timers);
         // parse the result
         entityData = SzEntityData.parseEntityData(
             null,
@@ -303,15 +349,16 @@ public class EntityDataServices {
 
       postProcessEntityData(entityData, forceMinimal, featureMode);
 
+      processedRawData(timers);
       // construct the response
       return newEntityResponse(
-          uriInfo, entityData, (withRaw ? rawData : null));
+          uriInfo, timers, entityData, (withRaw ? rawData : null));
 
     } catch (WebApplicationException e) {
       throw e;
 
     } catch (Exception e) {
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, e);
+      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
@@ -325,6 +372,8 @@ public class EntityDataServices {
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
       @Context                                                    UriInfo             uriInfo)
   {
+    Timers timers = newTimers();
+
     try {
       SzApiServer server = SzApiServer.getInstance();
 
@@ -350,22 +399,29 @@ public class EntityDataServices {
 
         // set the other arguments
         final int maxDegrees = 1;
-        final int buildOutDegrees = 1;
         final int maxEntityCount = 1000;
+        final int buildOutDegrees = 1;
 
+        enteringQueue(timers);
         rawData = server.executeInThread(() -> {
+          exitingQueue(timers);
           // get the engine API
           G2Engine engineApi = server.getEngineApi();
 
+          callingNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
           // find the network and check the result
           int result = engineApi.findNetworkByEntityIDV2(
               entityIds, maxDegrees, buildOutDegrees, maxEntityCount, flags, sb);
 
+          calledNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
+
           if (result != 0) {
-            throw newWebApplicationException(GET, uriInfo, engineApi);
+            throw newWebApplicationException(GET, uriInfo, timers, engineApi);
           }
           return sb.toString();
         });
+
+        processingRawData(timers);
 
         // organize all the entities into a map for lookup
         Map<Long, SzEntityData> dataMap
@@ -375,19 +431,26 @@ public class EntityDataServices {
         entityData = getAugmentedEntityData(entityId, dataMap, server);
 
       } else {
+        enteringQueue(timers);
         rawData = server.executeInThread(() -> {
+          exitingQueue(timers);
+
           // get the engine API
           G2Engine engineApi = server.getEngineApi();
 
+          callingNativeAPI(timers, "engine", "getEntityByEntityIDV2");
           // 1-degree relations are not required, so do a standard lookup
           int result = engineApi.getEntityByEntityIDV2(entityId, flags, sb);
+          calledNativeAPI(timers, "engine", "getEntityByEntityIDV2");
 
           String engineJSON = sb.toString();
 
-          checkEntityResult(result, engineJSON, uriInfo, engineApi);
+          checkEntityResult(result, engineJSON, uriInfo, timers, engineApi);
 
           return engineJSON;
         });
+
+        processingRawData(timers);
 
         // parse the result
         entityData = SzEntityData.parseEntityData(
@@ -398,15 +461,17 @@ public class EntityDataServices {
 
       postProcessEntityData(entityData, forceMinimal, featureMode);
 
+      processedRawData(timers);
+
       // construct the response
       return newEntityResponse(
-          uriInfo, entityData, (withRaw ? sb.toString() : null));
+          uriInfo, timers, entityData, (withRaw ? sb.toString() : null));
 
     } catch (WebApplicationException e) {
       throw e;
 
     } catch (Exception e) {
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, e);
+      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
@@ -420,6 +485,7 @@ public class EntityDataServices {
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
       @Context                                                    UriInfo             uriInfo)
   {
+    Timers timers = newTimers();
     try {
       SzApiServer server = SzApiServer.getInstance();
 
@@ -449,7 +515,7 @@ public class EntityDataServices {
         }
         if (jsonObject == null || jsonObject.size() == 0) {
           throw newBadRequestException(
-              GET, uriInfo,
+              GET, uriInfo, timers,
               "Parameter missing or empty: \"attrs\".  "
               + "Search criteria attributes are required.");
         }
@@ -461,16 +527,23 @@ public class EntityDataServices {
       int flags = getFlags(forceMinimal, featureMode, withRelationships);
 
       final String json = attrs;
+      enteringQueue(timers);
       server.executeInThread(() -> {
+        exitingQueue(timers);
+
         // get the engine API
         G2Engine engineApi = server.getEngineApi();
 
+        callingNativeAPI(timers, "engine", "searchByAttribtuesV2");
         int result = engineApi.searchByAttributesV2(json, flags, sb);
+        calledNativeAPI(timers, "engine", "searchByAttribtuesV2");
         if (result != 0) {
-          throw newInternalServerErrorException(GET, uriInfo, engineApi);
+          throw newInternalServerErrorException(GET, uriInfo, timers, engineApi);
         }
         return sb.toString();
       });
+
+      processingRawData(timers);
 
       JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
       JsonArray jsonResults = jsonObject.getValue(
@@ -489,13 +562,15 @@ public class EntityDataServices {
 
       // construct the response
       SzAttributeSearchResponse response
-          = new SzAttributeSearchResponse(GET, 200, uriInfo);
+          = new SzAttributeSearchResponse(GET, 200, uriInfo, timers);
 
       response.setSearchResults(list);
 
       if (withRaw) {
         response.setRawData(sb.toString());
       }
+
+      processedRawData(timers);
 
       // return the response
       return response;
@@ -504,21 +579,22 @@ public class EntityDataServices {
       throw e;
 
     } catch (Exception e) {
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, e);
+      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
   private static WebApplicationException newWebApplicationException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       G2Engine      engineApi)
   {
     int errorCode = engineApi.getLastExceptionCode();
     if (errorCode == DATA_SOURCE_NOT_FOUND_CODE
         || errorCode == RECORD_NOT_FOUND_CODE) {
-      return newNotFoundException(GET, uriInfo, engineApi);
+      return newNotFoundException(GET, uriInfo, timers, engineApi);
     }
-    return newInternalServerErrorException(GET, uriInfo, engineApi);
+    return newInternalServerErrorException(GET, uriInfo, timers, engineApi);
   }
 
   /**
@@ -603,6 +679,7 @@ public class EntityDataServices {
    *
    */
   private static SzEntityResponse newEntityResponse(UriInfo       uriInfo,
+                                                    Timers        timers,
                                                     SzEntityData  entityData,
                                                     String        rawData)
   {
@@ -610,6 +687,7 @@ public class EntityDataServices {
     SzEntityResponse response = new SzEntityResponse(GET,
                                                      200,
                                                      uriInfo,
+                                                     timers,
                                                      entityData);
 
     // if including raw data then add it
@@ -626,14 +704,15 @@ public class EntityDataServices {
   private static void checkEntityResult(int       result,
                                         String    nativeJson,
                                         UriInfo   uriInfo,
+                                        Timers    timers,
                                         G2Engine  engineApi)
   {
     // check if failed to find result
     if (result != 0) {
-      throw newWebApplicationException(GET, uriInfo, engineApi);
+      throw newWebApplicationException(GET, uriInfo, timers, engineApi);
     }
     if (nativeJson.trim().length() == 0) {
-      throw newNotFoundException(GET, uriInfo);
+      throw newNotFoundException(GET, uriInfo, timers);
     }
   }
 
@@ -654,6 +733,7 @@ public class EntityDataServices {
    */
   private static void checkDataSource(SzHttpMethod  httpMethod,
                                       UriInfo       uriInfo,
+                                      Timers        timers,
                                       String        dataSource,
                                       SzApiServer   apiServer)
     throws NotFoundException
@@ -662,7 +742,7 @@ public class EntityDataServices {
 
     if (!dataSources.contains(dataSource)) {
       throw newNotFoundException(
-          POST, uriInfo,
+          POST, uriInfo, timers,
           "The specified data source is not recognized: " + dataSource);
     }
   }
@@ -673,6 +753,7 @@ public class EntityDataServices {
    */
   private static String ensureJsonFields(SzHttpMethod         httpMethod,
                                          UriInfo              uriInfo,
+                                         Timers               timers,
                                          String               jsonText,
                                          Map<String, String>  map)
   {
@@ -691,7 +772,7 @@ public class EntityDataServices {
         if (jsonVal != null && jsonVal.trim().length() > 0) {
           if (!jsonVal.equalsIgnoreCase(val)) {
             throw ServicesUtil.newBadRequestException(
-                httpMethod, uriInfo,
+                httpMethod, uriInfo, timers,
                 key + " from path and from request body do not match.  "
                     + "fromPath=[ " + val + " ], fromRequestBody=[ "
                     + jsonVal + " ]");
@@ -710,6 +791,7 @@ public class EntityDataServices {
     } catch (Exception e) {
       throw ServicesUtil.newBadRequestException(httpMethod,
                                                 uriInfo,
+                                                timers,
                                                 e.getMessage());
     }
   }

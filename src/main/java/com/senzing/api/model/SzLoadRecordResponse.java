@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.senzing.util.Timers;
+
 import javax.ws.rs.core.UriInfo;
 import java.util.Collection;
 import java.util.Collections;
@@ -31,11 +33,15 @@ public class SzLoadRecordResponse extends SzBasicResponse
    * @param httpStatusCode The HTTP response status code.
    *
    * @param selfLink The string URL link to generate this response.
+   *
+   * @param timers The {@link Timers} object for the timings that were taken.
    */
   public SzLoadRecordResponse(SzHttpMethod httpMethod,
                               int          httpStatusCode,
-                              String       selfLink) {
-    super(httpMethod, httpStatusCode, selfLink);
+                              String       selfLink,
+                              Timers       timers)
+  {
+    super(httpMethod, httpStatusCode, selfLink, timers);
   }
 
   /**
@@ -47,13 +53,16 @@ public class SzLoadRecordResponse extends SzBasicResponse
    *
    * @param selfLink The string URL link to generate this response.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param recordId The record ID of the record that was loaded.
    */
   public SzLoadRecordResponse(SzHttpMethod httpMethod,
                               int          httpStatusCode,
                               String       selfLink,
+                              Timers       timers,
                               String       recordId) {
-    super(httpMethod, httpStatusCode, selfLink);
+    super(httpMethod, httpStatusCode, selfLink, timers);
     this.recordId = recordId;
   }
 
@@ -66,11 +75,15 @@ public class SzLoadRecordResponse extends SzBasicResponse
    * @param httpStatusCode The HTTP response status code.
    *
    * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param timers The {@link Timers} object for the timings that were taken.
    */
   public SzLoadRecordResponse(SzHttpMethod httpMethod,
                               int          httpStatusCode,
-                              UriInfo      uriInfo) {
-    super(httpMethod, httpStatusCode, uriInfo);
+                              UriInfo      uriInfo,
+                              Timers       timers)
+  {
+    super(httpMethod, httpStatusCode, uriInfo, timers);
   }
 
   /**
@@ -87,8 +100,9 @@ public class SzLoadRecordResponse extends SzBasicResponse
   public SzLoadRecordResponse(SzHttpMethod httpMethod,
                               int          httpStatusCode,
                               UriInfo      uriInfo,
+                              Timers       timers,
                               String       recordId) {
-    super(httpMethod, httpStatusCode, uriInfo);
+    super(httpMethod, httpStatusCode, uriInfo, timers);
     this.recordId = recordId;
   }
 

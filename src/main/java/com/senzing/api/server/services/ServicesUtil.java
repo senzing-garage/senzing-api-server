@@ -3,6 +3,7 @@ package com.senzing.api.server.services;
 import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2Fallible;
 import com.senzing.util.JsonUtils;
+import com.senzing.util.Timers;
 
 import javax.json.*;
 import javax.ws.rs.BadRequestException;
@@ -31,6 +32,8 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param exception The exception that caused the error.
    *
    * @return The {@link InternalServerErrorException}
@@ -38,11 +41,12 @@ public class ServicesUtil {
   static InternalServerErrorException newInternalServerErrorException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       Exception     exception)
   {
     Response.ResponseBuilder builder = Response.status(500);
     builder.entity(
-        new SzErrorResponse(httpMethod, 500, uriInfo, exception));
+        new SzErrorResponse(httpMethod, 500, uriInfo, timers, exception));
     return new InternalServerErrorException(builder.build());
   }
 
@@ -55,6 +59,8 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param fallible The {@link G2Fallible} to get the last exception from.
    *
    * @return The {@link InternalServerErrorException}
@@ -62,11 +68,12 @@ public class ServicesUtil {
   static InternalServerErrorException newInternalServerErrorException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       G2Fallible    fallible)
   {
     Response.ResponseBuilder builder = Response.status(500);
     builder.entity(
-        new SzErrorResponse(httpMethod, 500, uriInfo, fallible));
+        new SzErrorResponse(httpMethod, 500, uriInfo, timers, fallible));
     fallible.clearLastException();
     return new InternalServerErrorException(builder.build());
   }
@@ -80,6 +87,8 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param fallible The {@link G2Fallible} to get the last exception from.
    *
    * @return The {@link InternalServerErrorException}
@@ -87,11 +96,12 @@ public class ServicesUtil {
   static NotFoundException newNotFoundException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       G2Fallible    fallible)
   {
     Response.ResponseBuilder builder = Response.status(404);
     builder.entity(
-        new SzErrorResponse(httpMethod, 404, uriInfo, fallible));
+        new SzErrorResponse(httpMethod, 404, uriInfo, timers, fallible));
     fallible.clearLastException();
     return new NotFoundException(builder.build());
   }
@@ -104,15 +114,18 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @return The {@link InternalServerErrorException}
    */
   static NotFoundException newNotFoundException(
       SzHttpMethod  httpMethod,
-      UriInfo       uriInfo)
+      UriInfo       uriInfo,
+      Timers        timers)
   {
     Response.ResponseBuilder builder = Response.status(404);
     builder.entity(
-        new SzErrorResponse(httpMethod, 404, uriInfo));
+        new SzErrorResponse(httpMethod, 404, uriInfo, timers));
     return new NotFoundException(builder.build());
   }
 
@@ -124,6 +137,8 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param errorMessage The error message.
    *
    * @return The {@link InternalServerErrorException}
@@ -131,12 +146,13 @@ public class ServicesUtil {
   static NotFoundException newNotFoundException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       String        errorMessage)
   {
     Response.ResponseBuilder builder = Response.status(404);
     builder.entity(
         new SzErrorResponse(
-            httpMethod, 404, uriInfo, errorMessage));
+            httpMethod, 404, uriInfo, timers, errorMessage));
     return new NotFoundException(builder.build());
   }
 
@@ -149,6 +165,8 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param fallible The {@link G2Fallible} to get the last exception from.
    *
    * @return The {@link BadRequestException}
@@ -156,11 +174,12 @@ public class ServicesUtil {
   static BadRequestException newBadRequestException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       G2Fallible    fallible)
   {
     Response.ResponseBuilder builder = Response.status(400);
     builder.entity(
-        new SzErrorResponse(httpMethod, 400, uriInfo, fallible));
+        new SzErrorResponse(httpMethod, 400, uriInfo, timers, fallible));
     fallible.clearLastException();
     return new BadRequestException(builder.build());
   }
@@ -173,6 +192,8 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param errorMessage The error message.
    *
    * @return The {@link BadRequestException} that was created with the
@@ -181,12 +202,13 @@ public class ServicesUtil {
   static BadRequestException newBadRequestException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       String        errorMessage)
   {
     Response.ResponseBuilder builder = Response.status(400);
     builder.entity(
         new SzErrorResponse(
-            httpMethod, 400, uriInfo, errorMessage));
+            httpMethod, 400, uriInfo, timers, errorMessage));
     return new BadRequestException(builder.build());
   }
 
@@ -199,6 +221,8 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param exception The exception that caused the error.
    *
    * @return The {@link InternalServerErrorException}
@@ -206,11 +230,12 @@ public class ServicesUtil {
   static BadRequestException newBadRequestException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       Exception     exception)
   {
     Response.ResponseBuilder builder = Response.status(400);
     builder.entity(
-        new SzErrorResponse(httpMethod, 400, uriInfo, exception));
+        new SzErrorResponse(httpMethod, 400, uriInfo, timers, exception));
     return new BadRequestException(builder.build());
   }
 
@@ -427,7 +452,8 @@ public class ServicesUtil {
       List<String>  params,
       String        paramName,
       SzHttpMethod  httpMethod,
-      UriInfo       uriInfo)
+      UriInfo       uriInfo,
+      Timers        timers)
   {
     Set<SzEntityIdentifier> result = new LinkedHashSet<>();
 
@@ -444,7 +470,7 @@ public class ServicesUtil {
 
       } catch (Exception e) {
         throw newBadRequestException(
-            httpMethod, uriInfo,
+            httpMethod, uriInfo, timers,
             "Improperly formatted entity identifier parameter: "
             + paramName + "=" + param);
       }
@@ -555,4 +581,35 @@ public class ServicesUtil {
   }
 
 
+  static Timers newTimers() {
+    return new Timers("overall");
+  }
+
+  static void processingRawData(Timers timers) {
+    if (timers != null) timers.start("processRawData");
+  }
+
+  static void processedRawData(Timers timers) {
+    if (timers != null) timers.pause("processRawData");
+  }
+
+  static void callingNativeAPI(Timers timers, String api, String function) {
+    if (timers == null) return;
+    timers.start("nativeAPI",
+                 "nativeAPI:" + api + "." + function);
+  }
+
+  static void calledNativeAPI(Timers timers, String api, String function) {
+    if (timers == null) return;
+    timers.pause("nativeAPI",
+                 "nativeAPI:" + api + "." + function);
+  }
+
+  static void enteringQueue(Timers timers) {
+    if (timers != null) timers.start("enqueued");
+  }
+
+  static void exitingQueue(Timers timers) {
+    if (timers != null) timers.pause("enqueued");
+  }
 }

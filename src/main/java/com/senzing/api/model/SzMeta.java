@@ -1,10 +1,33 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.senzing.util.Timers;
 
-import java.util.Date;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
 
 public class SzMeta {
+  private static final String MAVEN_VERSION;
+
+  static {
+    String resource = "/com/senzing/api/build-info.properties";
+    String version = "UNKNOWN";
+    try (InputStream is = SzMeta.class.getResourceAsStream(resource))
+    {
+      Properties buildProps = new Properties();
+      buildProps.load(is);
+      version = buildProps.getProperty("Maven-Version");
+
+    } catch (IOException e) {
+      System.err.println("FAILED TO READ META-INF/MANIFEST.MF FILE");
+      e.printStackTrace();
+
+    } finally {
+      MAVEN_VERSION = version;
+    }
+  }
+
   /**
    * The HTTP method that was executed.
    */
@@ -14,6 +37,16 @@ public class SzMeta {
    * The HTTP response code.
    */
   private int httpStatusCode;
+
+  /**
+   * The timings for the operation.
+   */
+  private Timers timers;
+
+  /**
+   * The cached {@link Map} of timings which once initialized is not modified.
+   */
+  private Map<String,Long> timings;
 
   /**
    * The timestamp associated with the response.
@@ -30,10 +63,12 @@ public class SzMeta {
    *
    * @param httpStatusCode The HTTP response code.
    */
-  public SzMeta(SzHttpMethod httpMethod, int httpStatusCode) {
+  public SzMeta(SzHttpMethod httpMethod, int httpStatusCode, Timers timers) {
     this.httpMethod = httpMethod;
     this.httpStatusCode = httpStatusCode;
     this.timestamp  = new Date();
+    this.timers = timers;
+    this.timings = null;
   }
 
   /**
@@ -59,5 +94,37 @@ public class SzMeta {
    */
   public Date getTimestamp() {
     return this.timestamp;
+  }
+
+  /**
+   * Returns the build version of the server implementation.
+   *
+   * @return The build version of the server implementation.
+   */
+  public String getVersion() { return MAVEN_VERSION; }
+
+  /**
+   * Returns the timings that were recorded for the operation as an
+   * unmodifiable {@link Map} of {@link String} keys to {@link Long}
+   * millisecond values.
+   *
+   * @return The timings that were recorded for the operation.
+   */
+  public Map<String, Long> getTimings() {
+    try {
+      if (this.timings != null) {
+        return this.timings.size() == 0 ? null : this.timings;
+      }
+      if (this.timers == null) {
+        this.timings = Collections.emptyMap();
+      } else {
+        this.timings = Collections.unmodifiableMap(this.timers.getTimings());
+      }
+      return this.timings.size() == 0 ? null : this.timings;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw e;
+    }
   }
 }

@@ -2,6 +2,7 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.senzing.util.JsonUtils;
+import com.senzing.util.Timers;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -31,12 +32,16 @@ public class SzResponseWithRawData extends SzBasicResponse {
    * @param httpStatusCode The HTTP response status code.
    *
    * @param selfLink The self link from the request.
+   *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    */
   public SzResponseWithRawData(SzHttpMethod httpMethod,
                                int          httpStatusCode,
-                               String       selfLink)
+                               String       selfLink,
+                               Timers       timers)
   {
-    this(httpMethod, httpStatusCode, selfLink, null);
+    this(httpMethod, httpStatusCode, selfLink, timers, null);
   }
 
   /**
@@ -49,14 +54,17 @@ public class SzResponseWithRawData extends SzBasicResponse {
    *
    * @param selfLink The self link from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param rawData The raw data to associate with the response.
    */
   public SzResponseWithRawData(SzHttpMethod httpMethod,
                                int          httpStatusCode,
                                String       selfLink,
+                               Timers       timers,
                                String       rawData)
   {
-    super(httpMethod, httpStatusCode, selfLink);
+    super(httpMethod, httpStatusCode, selfLink, timers);
 
     this.rawData = JsonUtils.normalizeJsonText(rawData);
   }
@@ -69,12 +77,16 @@ public class SzResponseWithRawData extends SzBasicResponse {
    * @param httpStatusCode The HTTP response status code.
    *
    * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    */
   public SzResponseWithRawData(SzHttpMethod httpMethod,
                                int          httpStatusCode,
-                               UriInfo      uriInfo)
+                               UriInfo      uriInfo,
+                               Timers       timers)
   {
-    this(httpMethod, httpStatusCode, uriInfo, null);
+    this(httpMethod, httpStatusCode, uriInfo, timers, null);
   }
 
   /**
@@ -87,14 +99,17 @@ public class SzResponseWithRawData extends SzBasicResponse {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param rawData The raw data to associate with the response.
    */
   public SzResponseWithRawData(SzHttpMethod httpMethod,
                                int          httpStatusCode,
                                UriInfo      uriInfo,
+                               Timers       timers,
                                String       rawData)
   {
-    super(httpMethod, httpStatusCode, uriInfo);
+    super(httpMethod, httpStatusCode, uriInfo, timers);
 
     this.rawData = JsonUtils.normalizeJsonText(rawData);
   }
