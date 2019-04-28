@@ -13,11 +13,10 @@ accessing this data through the Senzing REST API Server easier.  The scripts are
 
 ### Availability
 
-The first patch release to Senzing app version 1.5 will be coming in mid February 2019 and will
-include an new `"Developer"` menu.  Within that menu is the option to `"Get REST API Server Script"`.
-This will generate a Bourne/Bash shell (.sh) script on macOS and a Batch (.bat) script on
-Windows and prompt you to save that script.  This release will also include the logic required
-to support the generated script.
+Senzing app version 1.6 and later includes a `"Developer"` menu.  Within that menu is the 
+option to `"Get REST API Server Script"`.  This will generate a Bourne/Bash shell (.sh) 
+script on macOS and a Batch (.bat) script on Windows and prompt you to save that script.  
+This release will also include the logic required to support the generated script.
 
 Attempting to use the script with an older version of the Senzing app will lead to an error
 indicating that the REST API Server did not start.
