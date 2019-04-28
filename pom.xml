@@ -4,14 +4,14 @@
   <groupId>com.senzing</groupId>
   <artifactId>senzing-api-server</artifactId>
   <packaging>jar</packaging>
-  <version>1.5.1</version>
+  <version>1.6.0</version>
   <name>senzing-api-server</name>
   <url>http://maven.apache.org</url>
   <dependencies>
     <dependency>
      <groupId>com.senzing</groupId>
      <artifactId>g2</artifactId>
-       <version>[1.4.0,2)</version>
+       <version>[1.7.0,2)</version>
     </dependency>
     <dependency>
      <groupId>org.xerial</groupId>
@@ -140,6 +140,28 @@
   <build>
     <plugins>
       <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>3.0.2</version>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${basedir}/target/classes</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${basedir}/src/main/resources</directory>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
         <version>1.6</version>
@@ -171,6 +193,7 @@
                   <manifestEntries>
                     <!-- Main-Class>com.foo.Test</Main-Class -->
                     <Main-Class>com.senzing.api.server.SzApiServer</Main-Class>
+                    <version>${project.version}</version>
                   </manifestEntries>
                 </transformer>
               </transformers>

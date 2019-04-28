@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.senzing.util.Timers;
+
 import javax.ws.rs.core.UriInfo;
 
 /**
@@ -28,9 +30,10 @@ public class SzBasicResponse {
    */
   public SzBasicResponse(SzHttpMethod httpMethod,
                          int          httpStatusCode,
-                         String       selfLink)
+                         String       selfLink,
+                         Timers       timers)
   {
-    this.meta = new SzMeta(httpMethod, httpStatusCode);
+    this.meta = new SzMeta(httpMethod, httpStatusCode, timers);
     this.links = new SzLinks(selfLink);
   }
 
@@ -45,9 +48,10 @@ public class SzBasicResponse {
    */
   public SzBasicResponse(SzHttpMethod httpMethod,
                          int          httpStatusCode,
-                         UriInfo      uriInfo)
+                         UriInfo      uriInfo,
+                         Timers       timers)
   {
-    this.meta = new SzMeta(httpMethod, httpStatusCode);
+    this.meta = new SzMeta(httpMethod, httpStatusCode, timers);
     this.links = new SzLinks(uriInfo);
   }
 

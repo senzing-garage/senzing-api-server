@@ -1,9 +1,12 @@
 package com.senzing.api.model;
 
+import com.senzing.util.JsonUtils;
+
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -16,10 +19,16 @@ public class SzAttributeSearchResult extends SzBaseRelatedEntity {
   private SzAttributeSearchResultType resultType;
 
   /**
+   * The entities related to the resolved entity.
+   */
+  private List<SzRelatedEntity> relatedEntities;
+
+  /**
    * Default constructor.
    */
   public SzAttributeSearchResult() {
     this.resultType = null;
+    this.relatedEntities = new LinkedList<>();
   }
 
   /**
@@ -40,6 +49,37 @@ public class SzAttributeSearchResult extends SzBaseRelatedEntity {
    */
   public void setResultType(SzAttributeSearchResultType resultType) {
     this.resultType = resultType;
+  }
+
+  /**
+   * Gets the {@link List} of {@linkplain SzRelatedEntity related entities}.
+   *
+   * @return The {@link List} of {@linkplain SzRelatedEntity related entities}.
+   */
+  public List<SzRelatedEntity> getRelatedEntities() {
+    return relatedEntities;
+  }
+
+  /**
+   * Sets the {@link List} of {@linkplain SzRelatedEntity related entities}.
+   *
+   * @param relatedEntities The {@link List} of {@linkplain SzRelatedEntity
+   *                        related entities}.
+   */
+  public void setRelatedEntities(List<SzRelatedEntity> relatedEntities) {
+    this.relatedEntities.clear();
+    if (relatedEntities != null) {
+      this.relatedEntities.addAll(relatedEntities);
+    }
+  }
+
+  /**
+   * Adds the specified {@link SzRelatedEntity}
+   */
+  public void addRelatedEntity(SzRelatedEntity relatedEntity) {
+    if (relatedEntity != null) {
+      this.relatedEntities.add(relatedEntity);
+    }
   }
 
   /**
@@ -100,7 +140,22 @@ public class SzAttributeSearchResult extends SzBaseRelatedEntity {
     if (entity == null) entity = new SzAttributeSearchResult();
 
     Function<String,String> mapper = featureToAttrClassMapper;
+
     SzBaseRelatedEntity.parseBaseRelatedEntity(entity, jsonObject, mapper);
+
+    JsonObject entityObject = JsonUtils.getJsonObject(jsonObject, "ENTITY");
+    if (entityObject == null) {
+      entityObject = jsonObject;
+    }
+    JsonArray relatedArray = JsonUtils.getJsonArray(entityObject,
+                                                    "RELATED_ENTITIES");
+
+    List<SzRelatedEntity> relatedEntities = null;
+    if (relatedArray != null) {
+      relatedEntities = SzRelatedEntity.parseRelatedEntityList(null,
+                                                               relatedArray,
+                                                               mapper);
+    }
 
     SzAttributeSearchResultType resultType = null;
     switch (entity.getMatchLevel()) {
@@ -118,6 +173,9 @@ public class SzAttributeSearchResult extends SzBaseRelatedEntity {
         break;
     }
     entity.setResultType(resultType);
+    if (relatedEntities != null) {
+      entity.setRelatedEntities(relatedEntities);
+    }
 
     // iterate over the feature map
     return entity;
@@ -128,6 +186,7 @@ public class SzAttributeSearchResult extends SzBaseRelatedEntity {
     return "SzAttributeSearchResult{" +
         super.toString() +
         ", resultType=" + resultType +
+        ", relatedEntities=" + relatedEntities +
         '}';
   }
 }

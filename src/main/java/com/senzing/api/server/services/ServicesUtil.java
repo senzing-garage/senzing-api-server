@@ -3,18 +3,21 @@ package com.senzing.api.server.services;
 import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2Fallible;
 import com.senzing.util.JsonUtils;
+import com.senzing.util.Timers;
 
 import javax.json.*;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.*;
+
+import static com.senzing.api.model.SzFeatureInclusion.*;
+import static com.senzing.g2.engine.G2Engine.*;
 
 /**
  * Utility functions for services.
@@ -29,6 +32,8 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param exception The exception that caused the error.
    *
    * @return The {@link InternalServerErrorException}
@@ -36,11 +41,12 @@ public class ServicesUtil {
   static InternalServerErrorException newInternalServerErrorException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       Exception     exception)
   {
     Response.ResponseBuilder builder = Response.status(500);
     builder.entity(
-        new SzErrorResponse(httpMethod, 500, uriInfo, exception));
+        new SzErrorResponse(httpMethod, 500, uriInfo, timers, exception));
     return new InternalServerErrorException(builder.build());
   }
 
@@ -53,6 +59,8 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param fallible The {@link G2Fallible} to get the last exception from.
    *
    * @return The {@link InternalServerErrorException}
@@ -60,11 +68,12 @@ public class ServicesUtil {
   static InternalServerErrorException newInternalServerErrorException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       G2Fallible    fallible)
   {
     Response.ResponseBuilder builder = Response.status(500);
     builder.entity(
-        new SzErrorResponse(httpMethod, 500, uriInfo, fallible));
+        new SzErrorResponse(httpMethod, 500, uriInfo, timers, fallible));
     fallible.clearLastException();
     return new InternalServerErrorException(builder.build());
   }
@@ -78,6 +87,8 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param fallible The {@link G2Fallible} to get the last exception from.
    *
    * @return The {@link InternalServerErrorException}
@@ -85,11 +96,12 @@ public class ServicesUtil {
   static NotFoundException newNotFoundException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       G2Fallible    fallible)
   {
     Response.ResponseBuilder builder = Response.status(404);
     builder.entity(
-        new SzErrorResponse(httpMethod, 404, uriInfo, fallible));
+        new SzErrorResponse(httpMethod, 404, uriInfo, timers, fallible));
     fallible.clearLastException();
     return new NotFoundException(builder.build());
   }
@@ -102,15 +114,18 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @return The {@link InternalServerErrorException}
    */
   static NotFoundException newNotFoundException(
       SzHttpMethod  httpMethod,
-      UriInfo       uriInfo)
+      UriInfo       uriInfo,
+      Timers        timers)
   {
     Response.ResponseBuilder builder = Response.status(404);
     builder.entity(
-        new SzErrorResponse(httpMethod, 404, uriInfo));
+        new SzErrorResponse(httpMethod, 404, uriInfo, timers));
     return new NotFoundException(builder.build());
   }
 
@@ -122,6 +137,8 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param errorMessage The error message.
    *
    * @return The {@link InternalServerErrorException}
@@ -129,12 +146,13 @@ public class ServicesUtil {
   static NotFoundException newNotFoundException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       String        errorMessage)
   {
     Response.ResponseBuilder builder = Response.status(404);
     builder.entity(
         new SzErrorResponse(
-            httpMethod, 404, uriInfo, errorMessage));
+            httpMethod, 404, uriInfo, timers, errorMessage));
     return new NotFoundException(builder.build());
   }
 
@@ -147,6 +165,8 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param fallible The {@link G2Fallible} to get the last exception from.
    *
    * @return The {@link BadRequestException}
@@ -154,11 +174,12 @@ public class ServicesUtil {
   static BadRequestException newBadRequestException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       G2Fallible    fallible)
   {
     Response.ResponseBuilder builder = Response.status(400);
     builder.entity(
-        new SzErrorResponse(httpMethod, 400, uriInfo, fallible));
+        new SzErrorResponse(httpMethod, 400, uriInfo, timers, fallible));
     fallible.clearLastException();
     return new BadRequestException(builder.build());
   }
@@ -171,6 +192,8 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param errorMessage The error message.
    *
    * @return The {@link BadRequestException} that was created with the
@@ -179,12 +202,13 @@ public class ServicesUtil {
   static BadRequestException newBadRequestException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       String        errorMessage)
   {
     Response.ResponseBuilder builder = Response.status(400);
     builder.entity(
         new SzErrorResponse(
-            httpMethod, 400, uriInfo, errorMessage));
+            httpMethod, 400, uriInfo, timers, errorMessage));
     return new BadRequestException(builder.build());
   }
 
@@ -197,6 +221,8 @@ public class ServicesUtil {
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
    * @param exception The exception that caused the error.
    *
    * @return The {@link InternalServerErrorException}
@@ -204,11 +230,12 @@ public class ServicesUtil {
   static BadRequestException newBadRequestException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
+      Timers        timers,
       Exception     exception)
   {
     Response.ResponseBuilder builder = Response.status(400);
     builder.entity(
-        new SzErrorResponse(httpMethod, 400, uriInfo, exception));
+        new SzErrorResponse(httpMethod, 400, uriInfo, timers, exception));
     return new BadRequestException(builder.build());
   }
 
@@ -425,7 +452,8 @@ public class ServicesUtil {
       List<String>  params,
       String        paramName,
       SzHttpMethod  httpMethod,
-      UriInfo       uriInfo)
+      UriInfo       uriInfo,
+      Timers        timers)
   {
     Set<SzEntityIdentifier> result = new LinkedHashSet<>();
 
@@ -442,12 +470,146 @@ public class ServicesUtil {
 
       } catch (Exception e) {
         throw newBadRequestException(
-            httpMethod, uriInfo,
+            httpMethod, uriInfo, timers,
             "Improperly formatted entity identifier parameter: "
             + paramName + "=" + param);
       }
     }
 
     return result;
+  }
+
+  /**
+   * Gets the flags to use given the specified parameters.
+   *
+   * @param forceMinimal Whether or not minimal format is forced.
+   *
+   * @param featureMode The {@link SzFeatureInclusion} describing how features
+   *                    are retrieved.
+   *
+   * @return The flags to use given the parameters.
+   */
+  static int getFlags(boolean             forceMinimal,
+                      SzFeatureInclusion  featureMode)
+  {
+    return getFlags(forceMinimal, featureMode, true);
+  }
+
+  /**
+   * Gets the flags to use given the specified parameters.
+   *
+   * @param forceMinimal Whether or not minimal format is forced.
+   *
+   * @param featureMode The {@link SzFeatureInclusion} describing how features
+   *                    are retrieved.
+   *
+   * @param withRelationships Whether or not to include relationships.
+   *
+   * @return The flags to use given the parameters.
+   */
+  static int getFlags(boolean             forceMinimal,
+                      SzFeatureInclusion  featureMode,
+                      boolean             withRelationships)
+  {
+    int flags = withRelationships
+        ? G2_ENTITY_INCLUDE_ALL_RELATIONS
+        : G2_ENTITY_INCLUDE_NO_RELATIONS;
+    if (forceMinimal) {
+      flags |= G2_ENTITY_MINIMAL_FORMAT;
+    } else if (featureMode == NONE) {
+      flags |= G2_ENTITY_INCLUDE_NO_FEATURES;
+    } else {
+      flags |= G2_ENTITY_INCLUDE_REPRESENTATIVE_FEATURES;
+    }
+    return flags;
+  }
+
+  /**
+   * Post-processes the entity data according to the specified parameters.
+   *
+   * @param entityData The {@link SzEntityData} to modify.
+   *
+   * @param forceMinimal Whether or not minimal format is forced.
+   *
+   * @param featureMode The {@link SzFeatureInclusion} describing how features
+   *                    are retrieved.
+   */
+  static void postProcessEntityData(SzEntityData        entityData,
+                                    boolean             forceMinimal,
+                                    SzFeatureInclusion  featureMode)
+  {
+    // check if we need to strip out duplicate features
+    if (featureMode == REPRESENTATIVE) {
+      stripDuplicateFeatureValues(entityData);
+    }
+
+    // check if fields are going to be null if they would otherwise be set
+    if (featureMode == NONE || forceMinimal) {
+      setEntitiesPartial(entityData);
+    }
+  }
+
+  /**
+   * Sets the partial flags for the resolved entity and related
+   * entities in the {@link SzEntityData}.
+   */
+  static void setEntitiesPartial(SzEntityData entityData) {
+    entityData.getResolvedEntity().setPartial(true);
+    entityData.getRelatedEntities().forEach(e -> {
+      e.setPartial(true);
+    });
+  }
+
+  /**
+   * Strips out duplicate feature values for each feature in the resolved
+   * and related entities of the specified {@link SzEntityData}.
+   */
+  static void stripDuplicateFeatureValues(SzEntityData entityData) {
+    stripDuplicateFeatureValues(entityData.getResolvedEntity());
+    entityData.getRelatedEntities().forEach(e->stripDuplicateFeatureValues(e));
+  }
+
+  /**
+   * Strips out duplicate feature values in the specified {@link
+   * SzResolvedEntity}.
+   */
+  static void stripDuplicateFeatureValues(SzResolvedEntity entity) {
+    Map<String, List<SzEntityFeature>> featureMap = entity.getFeatures();
+    featureMap.values().forEach(list -> {
+      list.forEach(f -> f.setDuplicateValues(null));
+    });
+  }
+
+
+  static Timers newTimers() {
+    return new Timers("overall");
+  }
+
+  static void processingRawData(Timers timers) {
+    if (timers != null) timers.start("processRawData");
+  }
+
+  static void processedRawData(Timers timers) {
+    if (timers != null) timers.pause("processRawData");
+  }
+
+  static void callingNativeAPI(Timers timers, String api, String function) {
+    if (timers == null) return;
+    timers.start("nativeAPI",
+                 "nativeAPI:" + api + "." + function);
+  }
+
+  static void calledNativeAPI(Timers timers, String api, String function) {
+    if (timers == null) return;
+    timers.pause("nativeAPI",
+                 "nativeAPI:" + api + "." + function);
+  }
+
+  static void enteringQueue(Timers timers) {
+    if (timers != null) timers.start("enqueued");
+  }
+
+  static void exitingQueue(Timers timers) {
+    if (timers != null) timers.pause("enqueued");
   }
 }

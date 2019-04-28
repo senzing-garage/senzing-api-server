@@ -135,12 +135,14 @@ public class SzRelatedEntity extends SzBaseRelatedEntity {
       entity.setDisclosed(disclosed);
     }
 
-    if (entity.isDisclosed()) {
-      entity.setRelationType(DISCLOSED_RELATION);
-    } else if (entity.getMatchLevel() == 2) {
-      entity.setRelationType(POSSIBLE_MATCH);
-    } else {
-      entity.setRelationType(POSSIBLE_RELATION);
+    if (entity.getMatchLevel() != null) {
+      if (entity.isDisclosed()) {
+        entity.setRelationType(DISCLOSED_RELATION);
+      } else if (entity.getMatchLevel() == 2) {
+        entity.setRelationType(POSSIBLE_MATCH);
+      } else {
+        entity.setRelationType(POSSIBLE_RELATION);
+      }
     }
 
     // iterate over the feature map

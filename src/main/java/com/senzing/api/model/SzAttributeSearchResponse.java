@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.senzing.util.Timers;
+
 import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
@@ -30,12 +32,15 @@ public class SzAttributeSearchResponse extends SzResponseWithRawData
    * @param httpStatusCode The HTTP response status code.
    *
    * @param selfLink The string URL link to generate this response.
+   *
+   * @param timers The {@link Timers} object for the timings that were taken.
    */
   public SzAttributeSearchResponse(SzHttpMethod httpMethod,
                                    int          httpStatusCode,
-                                   String       selfLink)
+                                   String       selfLink,
+                                   Timers       timers)
   {
-    super(httpMethod, httpStatusCode, selfLink);
+    super(httpMethod, httpStatusCode, selfLink, timers);
     this.searchResults = new LinkedList<>();
   }
 
@@ -48,12 +53,15 @@ public class SzAttributeSearchResponse extends SzResponseWithRawData
    * @param httpStatusCode The HTTP response status code.
    *
    * @param uriInfo The {@link UriInfo} associated with the request.
+   *
+   * @param timers The {@link Timers} object for the timings that were taken.
    */
   public SzAttributeSearchResponse(SzHttpMethod httpMethod,
                                    int          httpStatusCode,
-                                   UriInfo      uriInfo)
+                                   UriInfo      uriInfo,
+                                   Timers       timers)
   {
-    super(httpMethod, httpStatusCode, uriInfo);
+    super(httpMethod, httpStatusCode, uriInfo, timers);
     this.searchResults = new LinkedList<>();
   }
 

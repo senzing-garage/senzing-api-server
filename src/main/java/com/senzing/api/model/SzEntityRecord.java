@@ -391,6 +391,7 @@ public class SzEntityRecord {
                                    Consumer<String> consumer)
   {
     JsonArray jsonArray = jsonObject.getJsonArray(key);
+    if (jsonArray == null) return;
     for (JsonString value : jsonArray.getValuesAs(JsonString.class)) {
       consumer.accept(value.getString());
     }
