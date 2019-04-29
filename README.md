@@ -32,9 +32,8 @@ To build the Senzing REST API Server you will need Apache Maven (recommend versi
 as well as Java 1.8.x (recommend version 1.8.0_171 or later).
 
 You will also need the Senzing "g2.jar" file installed in your Maven repository.
-The Senzing REST API Server is being developed in concert with version 1.5.x of
-the Senzing API and Senzing App, but will also work with the previously released
-version 1.4.x.  In order to install g2.jar you must:
+The Senzing REST API Server requires version 1.7.x or later of the Senzing API 
+and Senzing App.  In order to install g2.jar you must:
 
  1. Locate your [`${SENZING_DIR}` directory](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/create-senzing-dir.md).
     The default locations are:
@@ -51,8 +50,8 @@ version 1.4.x.  In order to install g2.jar you must:
         ```console
         {
             "PLATFORM": "Linux",
-            "VERSION": "1.5.19022",
-            "BUILD_NUMBER": "2019_01_22__02_00"
+            "VERSION": "1.7.19095",
+            "BUILD_NUMBER": "2019_04_05__02_00"
         }
         ```
 
@@ -63,7 +62,7 @@ version 1.4.x.  In order to install g2.jar you must:
 
        ```console
              export SENZING_DIR=/opt/senzing
-             export SENZING_VERSION=1.5.19022
+             export SENZING_VERSION=1.7.19095
 
              mvn install:install-file \
                  -Dfile=${SENZING_DIR}/g2/lib/g2.jar \
@@ -77,7 +76,7 @@ version 1.4.x.  In order to install g2.jar you must:
 
        ```console
              set SENZING_DIR="C:\Program Files\Senzing"
-             set SENZING_VERSION=1.5.19022
+             set SENZING_VERSION=1.7.19095
 
              mvn install:install-file \
                  -Dfile=%SENZING_DIR%\g2\lib\g2.jar \
@@ -135,15 +134,15 @@ Senzing REST API Server using an entity repository from the
 for version compatibility and usage information.*
 
 Other command-line options may be useful to you as well.  Execute
-`java -jar target/senzing-api-server-1.5.1.jar -help` to obtain a help message
+`java -jar target/senzing-api-server-1.6.0.jar -help` to obtain a help message
 describing all available options.  For example:
 
   ```console
      cd target
 
-    $ java -jar senzing-api-server-1.5.1.jar -help
+    $ java -jar senzing-api-server-1.6.0.jar -help
 
-    java -jar senzing-api-server-1.5.1.jar <options>
+    java -jar senzing-api-server-1.6.0.jar <options>
 
     <options> includes:
        -help
