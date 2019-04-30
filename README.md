@@ -226,7 +226,7 @@ stability and accurate results from the API server.
 
 #### Background knowledge for docker
 
-This task assumes a working knowledge of:
+This repository assumes a working knowledge of:
 
 1. [Docker](https://github.com/Senzing/knowledge-base/blob/master/WHATIS/docker.md)
 
@@ -236,8 +236,8 @@ See [Develop](#develop).
 
 ### Create SENZING_DIR
 
-If you do not already have an `/opt/senzing` directory on your local system, visit
-[HOWTO - Create SENZING_DIR](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/create-senzing-dir.md).
+1. If `/opt/senzing` directory is not on local system, visit
+   [HOWTO - Create SENZING_DIR](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/create-senzing-dir.md).
 
 ### Configuration
 
