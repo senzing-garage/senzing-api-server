@@ -6,7 +6,7 @@ ARG BASE_IMAGE=senzing/senzing-base
 
 FROM openjdk:8 as builder
 
-ENV REFRESHED_AT=2019-03-22
+ENV REFRESHED_AT=2019-04-22
 
 LABEL Name="senzing/senzing-api-server-builder" \
       Version="1.0.0"
@@ -45,7 +45,7 @@ RUN make package
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2019-03-22
+ENV REFRESHED_AT=2019-04-22
 
 LABEL Name="senzing/senzing-api-server" \
       Version="1.0.0"
