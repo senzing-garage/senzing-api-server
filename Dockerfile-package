@@ -1,9 +1,10 @@
 ARG BASE_CONTAINER=openjdk:8
 FROM ${BASE_CONTAINER}
 
-ENV REFRESHED_AT=2019-03-21
+ENV REFRESHED_AT=2019-05-01
 
 LABEL Name="senzing/senzing-api-server-builder" \
+      Maintainer="support@senzing.com" \
       Version="1.0.0"
 
 # Build arguments.

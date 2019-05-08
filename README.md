@@ -259,7 +259,7 @@ See [Develop](#develop).
   [not-set] if no sleep.
   Useful for debugging docker containers.
   To stop sleeping, run "`unset SENZING_ENTRYPOINT_SLEEP`".
-  Default: [not-set].  
+  Default: [not-set].
 * **WEBAPP_PORT** -
   Port on localhost.
 * `senzing-api-server` command line options are documented in "[Running](#running)".
@@ -439,7 +439,7 @@ The following software programs need to be installed:
     cat ${SENZING_DIR}/g2/data/g2BuildVersion.json
     ```
 
-    or  
+    or
 
     ```console
     export SENZING_DIR=/opt/senzing
@@ -467,11 +467,11 @@ The following software programs need to be installed:
     ```console
     cd ${GIT_REPOSITORY_DIR}
 
-    export SENZING_DIR=/opt/senzing
-    export SENZING_G2_JAR_PATHNAME=${SENZING_DIR}/g2/lib/g2.jar
-    export SENZING_G2_JAR_VERSION=$(cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION')
-
-    sudo make docker-build
+    sudo make \
+        SENZING_DIR=/opt/senzing \
+        SENZING_G2_JAR_PATHNAME=${SENZING_DIR}/g2/lib/g2.jar \
+        SENZING_G2_JAR_VERSION=$(cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION') \
+        docker-build
     ```
 
 ## Examples
