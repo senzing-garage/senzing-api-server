@@ -1,16 +1,16 @@
 ARG BASE_CONTAINER=openjdk:8
 FROM ${BASE_CONTAINER}
 
-ENV REFRESHED_AT=2019-03-21
+ENV REFRESHED_AT=2019-05-01
 
 LABEL Name="senzing/senzing-api-server-builder" \
+      Maintainer="support@senzing.com" \
       Version="1.0.0"
 
 # Build arguments.
 
-ARG SENZING_G2_JAR_RELATIVE_PATHNAME=target/g2.jar
-ARG SENZING_G2_JAR_VERSION=1.5.0
-ARG SENZING_API_SERVER_JAR_VERSION=1.5.1
+ARG SENZING_G2_JAR_RELATIVE_PATHNAME=unknown
+ARG SENZING_G2_JAR_VERSION=unknown
 
 # Install packages via apt.
 
@@ -27,13 +27,11 @@ COPY . /git-repository
 # Run the "make" command to create the artifacts.
 
 WORKDIR /git-repository
+RUN make \
+	SENZING_G2_JAR_PATHNAME=/git-repository/${SENZING_G2_JAR_RELATIVE_PATHNAME} \
+    SENZING_G2_JAR_VERSION=${SENZING_G2_JAR_VERSION} \
+    package
 
-ENV SENZING_G2_JAR_PATHNAME=/git-repository/${SENZING_G2_JAR_RELATIVE_PATHNAME}
-ENV SENZING_G2_JAR_VERSION=${SENZING_G2_JAR_VERSION}
-ENV SENZING_API_SERVER_JAR_VERSION=${SENZING_API_SERVER_JAR_VERSION}
-
-RUN make package
-
-# At runtime, run the following:
+# Runtime execution.
 
 CMD /bin/bash

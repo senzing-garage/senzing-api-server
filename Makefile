@@ -5,8 +5,7 @@ PROGRAM_NAME := $(shell basename `git rev-parse --show-toplevel`)
 # User variables.
 
 SENZING_G2_JAR_PATHNAME ?= /opt/senzing/g2/lib/g2.jar
-SENZING_G2_JAR_VERSION ?= 1.6.19058
-SENZING_API_SERVER_JAR_VERSION ?= 1.5.1
+SENZING_G2_JAR_VERSION ?= unknown
 
 # Information from git.
 
@@ -69,7 +68,6 @@ docker-package: docker-rmi-for-package
 	docker build \
 		--build-arg SENZING_G2_JAR_RELATIVE_PATHNAME=$(TARGET)/g2.jar \
 		--build-arg SENZING_G2_JAR_VERSION=$(SENZING_G2_JAR_VERSION) \
-		--build-arg SENZING_API_SERVER_JAR_VERSION=$(SENZING_API_SERVER_JAR_VERSION) \
 		--tag $(DOCKER_IMAGE_PACKAGE) \
 		--file Dockerfile-package \
 		.
@@ -91,6 +89,8 @@ docker-build: docker-rmi-for-build
 	mkdir -p $(TARGET)
 	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
 	docker build \
+		--build-arg SENZING_G2_JAR_RELATIVE_PATHNAME=$(TARGET)/g2.jar \
+		--build-arg SENZING_G2_JAR_VERSION=$(SENZING_G2_JAR_VERSION) \
 		--tag $(DOCKER_IMAGE_NAME) \
 		--tag $(DOCKER_IMAGE_NAME):$(GIT_VERSION) \
 		.
@@ -100,6 +100,8 @@ docker-build-base: docker-rmi-for-build-base
 	mkdir -p $(TARGET)
 	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
 	docker build \
+		--build-arg SENZING_G2_JAR_RELATIVE_PATHNAME=$(TARGET)/g2.jar \
+		--build-arg SENZING_G2_JAR_VERSION=$(SENZING_G2_JAR_VERSION) \
 		--tag $(DOCKER_IMAGE_TAG) \
 		.
 
