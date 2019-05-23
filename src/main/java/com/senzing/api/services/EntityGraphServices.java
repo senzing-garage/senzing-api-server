@@ -1,7 +1,6 @@
-package com.senzing.api.server.services;
+package com.senzing.api.services;
 
 import com.senzing.api.model.*;
-import com.senzing.api.server.SzApiServer;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
@@ -15,7 +14,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.senzing.api.model.SzHttpMethod.GET;
-import static com.senzing.api.server.services.ServicesUtil.*;
+import static com.senzing.api.services.ServicesUtil.*;
 import static com.senzing.g2.engine.G2Engine.*;
 
 /**
@@ -44,7 +43,7 @@ public class EntityGraphServices {
       @Context                                                    UriInfo             uriInfo)
   {
     Timers timers = newTimers();
-    SzApiServer server = SzApiServer.getInstance();
+    SzApiProvider provider = SzApiProvider.Factory.getProvider();
 
     SzEntityIdentifier        from;
     SzEntityIdentifier        to;
@@ -112,7 +111,7 @@ public class EntityGraphServices {
       }
 
       if (sourcesParam != null && sourcesParam.size() > 0) {
-        Set<String> dataSources = server.getDataSources();
+        Set<String> dataSources = provider.getDataSources();
         withSources = new ArrayList<>(dataSources.size());
 
         for (String source : sourcesParam) {
@@ -147,11 +146,11 @@ public class EntityGraphServices {
 
     try {
       enteringQueue(timers);
-      String rawData = server.executeInThread(() -> {
+      String rawData = provider.executeInThread(() -> {
         exitingQueue(timers);
 
         // get the engine API and the config API
-        G2Engine engineApi = server.getEngineApi();
+        G2Engine engineApi = provider.getEngineApi();
 
         StringBuffer responseDataBuffer = new StringBuffer();
 
@@ -252,7 +251,7 @@ public class EntityGraphServices {
       SzEntityPathData entityPathData
           = SzEntityPathData.parseEntityPathData(
               jsonObject,
-              server::getAttributeClassForFeature);
+              provider::getAttributeClassForFeature);
 
       entityPathData.getEntities().forEach(e -> {
         postProcessEntityData(e, forceMinimal, featureMode);
@@ -296,7 +295,7 @@ public class EntityGraphServices {
       @Context                                                    UriInfo             uriInfo)
   {
     Timers timers = newTimers();
-    SzApiServer server = SzApiServer.getInstance();
+    SzApiProvider provider = SzApiProvider.Factory.getProvider();
 
     Set<SzEntityIdentifier> entities;
     // check for consistent entity IDs
@@ -361,11 +360,11 @@ public class EntityGraphServices {
 
     try {
       enteringQueue(timers);
-      String rawData = server.executeInThread(() -> {
+      String rawData = provider.executeInThread(() -> {
         exitingQueue(timers);
 
         // get the engine API and the config API
-        G2Engine engineApi = server.getEngineApi();
+        G2Engine engineApi = provider.getEngineApi();
 
         StringBuffer sb = new StringBuffer();
 
@@ -409,7 +408,7 @@ public class EntityGraphServices {
       SzEntityNetworkData entityNetworkData
           = SzEntityNetworkData.parseEntityNetworkData(
               jsonObject,
-              server::getAttributeClassForFeature);
+              provider::getAttributeClassForFeature);
 
       entityNetworkData.getEntities().forEach(e -> {
         postProcessEntityData(e, forceMinimal, featureMode);

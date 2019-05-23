@@ -5,9 +5,11 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.*;
 
+import com.senzing.api.services.SzApiProvider;
 import com.senzing.g2.engine.*;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.WorkerThreadPool;
+import com.senzing.util.AccessToken;
 import org.eclipse.jetty.server.ServerConnector;
 
 import org.eclipse.jetty.server.Server;
@@ -31,7 +33,7 @@ import static com.senzing.util.WorkerThreadPool.Task;
  *
  *
  */
-public class SzApiServer {
+public class SzApiServer implements SzApiProvider {
   private static final int DEFAULT_PORT = 2080;
 
   private static final int DEFAULT_CONCURRENCY = 8;
@@ -46,6 +48,8 @@ public class SzApiServer {
 
   private static SzApiServer INSTANCE = null;
 
+  private static AccessToken PROVIDER_TOKEN = null;
+
   private static enum Option {
     HELP,
     VERSION,
@@ -57,9 +61,6 @@ public class SzApiServer {
     MONITOR_FILE,
     CONCURRENCY,
     ALLOWED_ORIGINS
-  }
-
-  public static final class AccessToken {
   }
 
   static {
@@ -753,6 +754,8 @@ public class SzApiServer {
 
       try {
         SzApiServer.INSTANCE = new SzApiServer(options);
+        SzApiServer.PROVIDER_TOKEN
+            = SzApiProvider.Factory.installProvider(SzApiServer.INSTANCE);
 
       } catch (RuntimeException e) {
         e.printStackTrace();
@@ -1133,8 +1136,13 @@ public class SzApiServer {
 
     // uninitialize
     synchronized (SzApiServer.class) {
-      if (INSTANCE == this) {
-        INSTANCE = null;
+      if (SzApiServer.INSTANCE == this) {
+        SzApiServer.INSTANCE = null;
+        try {
+          SzApiProvider.Factory.uninstallProvider(SzApiServer.PROVIDER_TOKEN);
+        } finally {
+          SzApiServer.PROVIDER_TOKEN = null;
+        }
       }
     }
     synchronized (this.joinMonitor) {

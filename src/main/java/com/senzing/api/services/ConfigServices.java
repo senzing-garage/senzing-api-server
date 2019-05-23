@@ -1,7 +1,6 @@
-package com.senzing.api.server.services;
+package com.senzing.api.services;
 
 import com.senzing.api.model.*;
-import com.senzing.api.server.SzApiServer;
 import com.senzing.g2.engine.G2Config;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.util.JsonUtils;
@@ -15,7 +14,7 @@ import javax.ws.rs.core.UriInfo;
 import java.util.List;
 
 import static com.senzing.api.model.SzHttpMethod.GET;
-import static com.senzing.api.server.services.ServicesUtil.*;
+import static com.senzing.api.services.ServicesUtil.*;
 
 /**
  * Provides config related API services.
@@ -30,15 +29,15 @@ public class ConfigServices {
       @Context                                      UriInfo uriInfo)
   {
     Timers timers = newTimers();
-    SzApiServer server = SzApiServer.getInstance();
+    SzApiProvider provider = SzApiProvider.Factory.getProvider();
 
     try {
       // get the engine API and the config API
-      G2Engine engineApi = server.getEngineApi();
-      G2Config configApi = server.getConfigApi();
+      G2Engine engineApi = provider.getEngineApi();
+      G2Config configApi = provider.getConfigApi();
 
       enteringQueue(timers);
-      String rawData = server.executeInThread(() -> {
+      String rawData = provider.executeInThread(() -> {
         exitingQueue(timers);
         String config = exportConfig(GET, uriInfo, timers, engineApi);
 
@@ -62,7 +61,7 @@ public class ConfigServices {
 
         } finally {
           if (configId != null) {
-            server.getConfigApi().close(configId);
+            provider.getConfigApi().close(configId);
           }
         }
       });
@@ -105,7 +104,7 @@ public class ConfigServices {
       @Context                                           UriInfo uriInfo)
   {
     Timers timers = newTimers();
-    SzApiServer server = SzApiServer.getInstance();
+    SzApiProvider provider = SzApiProvider.Factory.getProvider();
 
     SzAttributeClass ac = null;
     if (attributeClass != null && attributeClass.trim().length() > 0) {
@@ -124,11 +123,11 @@ public class ConfigServices {
 
     try {
       enteringQueue(timers);
-      JsonObject configRoot = server.executeInThread(() -> {
+      JsonObject configRoot = provider.executeInThread(() -> {
         exitingQueue(timers);
 
         // get the engine API and the config API
-        G2Engine engineApi = server.getEngineApi();
+        G2Engine engineApi = provider.getEngineApi();
 
         return getCurrentConfigRoot(GET, uriInfo, timers, engineApi);
       });
@@ -212,14 +211,14 @@ public class ConfigServices {
       @Context                                      UriInfo uriInfo)
   {
     Timers timers = newTimers();
-    SzApiServer server = SzApiServer.getInstance();
+    SzApiProvider provider = SzApiProvider.Factory.getProvider();
 
     try {
       enteringQueue(timers);
-      JsonObject configRoot = server.executeInThread(() -> {
+      JsonObject configRoot = provider.executeInThread(() -> {
         exitingQueue(timers);
         // get the engine API and the config API
-        G2Engine engineApi = server.getEngineApi();
+        G2Engine engineApi = provider.getEngineApi();
 
         JsonObject obj = getCurrentConfigRoot(GET, uriInfo, timers, engineApi);
 

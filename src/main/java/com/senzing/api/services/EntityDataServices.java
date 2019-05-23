@@ -1,7 +1,6 @@
-package com.senzing.api.server.services;
+package com.senzing.api.services;
 
 import com.senzing.api.model.*;
-import com.senzing.api.server.SzApiServer;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
@@ -16,7 +15,7 @@ import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.*;
 import static com.senzing.api.model.SzFeatureInclusion.*;
-import static com.senzing.api.server.services.ServicesUtil.*;
+import static com.senzing.api.services.ServicesUtil.*;
 
 /**
  * Provides entity data related API services.
@@ -39,7 +38,7 @@ public class EntityDataServices {
     Timers timers = newTimers();
 
     try {
-      SzApiServer server = SzApiServer.getInstance();
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
       dataSourceCode = dataSourceCode.toUpperCase();
 
       final String dataSource = dataSourceCode;
@@ -53,16 +52,16 @@ public class EntityDataServices {
           recordJsonData,
           Collections.singletonMap("DATA_SOURCE", dataSource));
 
-      checkDataSource(POST, uriInfo, timers, dataSource, server);
+      checkDataSource(POST, uriInfo, timers, dataSource, provider);
 
       StringBuffer sb = new StringBuffer();
 
       enteringQueue(timers);
-      String recordId = server.executeInThread(() -> {
+      String recordId = provider.executeInThread(() -> {
         exitingQueue(timers);
 
         // get the engine API and the config API
-        G2Engine engineApi = server.getEngineApi();
+        G2Engine engineApi = provider.getEngineApi();
 
         callingNativeAPI(timers, "engine", "addRecordWithReturnedRecordID");
         int result = engineApi.addRecordWithReturnedRecordID(dataSource,
@@ -104,7 +103,7 @@ public class EntityDataServices {
   {
     Timers timers = newTimers();
     try {
-      SzApiServer server = SzApiServer.getInstance();
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
       dataSourceCode = dataSourceCode.toUpperCase();
 
       final String dataSource = dataSourceCode;
@@ -121,7 +120,7 @@ public class EntityDataServices {
                                            recordJsonData,
                                            map);
 
-      Set<String> dataSources = server.getDataSources();
+      Set<String> dataSources = provider.getDataSources();
 
       if (!dataSources.contains(dataSource)) {
         throw newNotFoundException(
@@ -130,11 +129,11 @@ public class EntityDataServices {
       }
 
       enteringQueue(timers);
-      server.executeInThread(() -> {
+      provider.executeInThread(() -> {
         exitingQueue(timers);
 
         // get the engine API
-        G2Engine engineApi = server.getEngineApi();
+        G2Engine engineApi = provider.getEngineApi();
 
         callingNativeAPI(timers, "engine", "addRecord");
         int result = engineApi.addRecord(dataSource,
@@ -175,7 +174,7 @@ public class EntityDataServices {
     Timers timers = newTimers();
 
     try {
-      SzApiServer server = SzApiServer.getInstance();
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
       dataSourceCode = dataSourceCode.toUpperCase();
 
       StringBuffer sb = new StringBuffer();
@@ -183,11 +182,11 @@ public class EntityDataServices {
       final String dataSource = dataSourceCode;
 
       enteringQueue(timers);
-      String rawData = server.executeInThread(() -> {
+      String rawData = provider.executeInThread(() -> {
         exitingQueue(timers);
 
         // get the engine API
-        G2Engine engineApi = server.getEngineApi();
+        G2Engine engineApi = provider.getEngineApi();
 
         callingNativeAPI(timers, "engine", "getRecord");
         int result = engineApi.getRecord(dataSource, recordId, sb);
@@ -245,7 +244,7 @@ public class EntityDataServices {
     Timers timers = newTimers();
 
     try {
-      SzApiServer server = SzApiServer.getInstance();
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
       dataSourceCode = dataSourceCode.toUpperCase();
 
       final String dataSource = dataSourceCode;
@@ -277,11 +276,11 @@ public class EntityDataServices {
         final int maxEntityCount = 1000;
 
         enteringQueue(timers);
-        rawData = server.executeInThread(() -> {
+        rawData = provider.executeInThread(() -> {
           exitingQueue(timers);
 
           // get the engine API and the config API
-          G2Engine engineApi = server.getEngineApi();
+          G2Engine engineApi = provider.getEngineApi();
 
           callingNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
           // find the network and check the result
@@ -301,7 +300,7 @@ public class EntityDataServices {
 
         // organize all the entities into a map for lookup
         Map<Long, SzEntityData> dataMap
-            = parseEntityDataList(sb.toString(), server);
+            = parseEntityDataList(sb.toString(), provider);
 
         // find the entity ID matching the data source and record ID
         Long entityId = null;
@@ -318,15 +317,15 @@ public class EntityDataServices {
         }
 
         // get the result entity data
-        entityData = getAugmentedEntityData(entityId, dataMap, server);
+        entityData = getAugmentedEntityData(entityId, dataMap, provider);
 
       } else {
         enteringQueue(timers);
-        rawData = server.executeInThread(() -> {
+        rawData = provider.executeInThread(() -> {
           exitingQueue(timers);
 
           // get the engine API and the config API
-          G2Engine engineApi = server.getEngineApi();
+          G2Engine engineApi = provider.getEngineApi();
 
           callingNativeAPI(timers, "engine", "getEntityByRecordIDV2");
           // 1-degree relations are not required, so do a standard lookup
@@ -344,7 +343,7 @@ public class EntityDataServices {
         entityData = SzEntityData.parseEntityData(
             null,
             JsonUtils.parseJsonObject(rawData),
-            (f) -> server.getAttributeClassForFeature(f));
+            (f) -> provider.getAttributeClassForFeature(f));
       }
 
       postProcessEntityData(entityData, forceMinimal, featureMode);
@@ -375,7 +374,7 @@ public class EntityDataServices {
     Timers timers = newTimers();
 
     try {
-      SzApiServer server = SzApiServer.getInstance();
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
 
       StringBuffer sb = new StringBuffer();
 
@@ -403,10 +402,10 @@ public class EntityDataServices {
         final int buildOutDegrees = 1;
 
         enteringQueue(timers);
-        rawData = server.executeInThread(() -> {
+        rawData = provider.executeInThread(() -> {
           exitingQueue(timers);
           // get the engine API
-          G2Engine engineApi = server.getEngineApi();
+          G2Engine engineApi = provider.getEngineApi();
 
           callingNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
           // find the network and check the result
@@ -425,18 +424,18 @@ public class EntityDataServices {
 
         // organize all the entities into a map for lookup
         Map<Long, SzEntityData> dataMap
-            = parseEntityDataList(rawData, server);
+            = parseEntityDataList(rawData, provider);
 
         // get the result entity data
-        entityData = getAugmentedEntityData(entityId, dataMap, server);
+        entityData = getAugmentedEntityData(entityId, dataMap, provider);
 
       } else {
         enteringQueue(timers);
-        rawData = server.executeInThread(() -> {
+        rawData = provider.executeInThread(() -> {
           exitingQueue(timers);
 
           // get the engine API
-          G2Engine engineApi = server.getEngineApi();
+          G2Engine engineApi = provider.getEngineApi();
 
           callingNativeAPI(timers, "engine", "getEntityByEntityIDV2");
           // 1-degree relations are not required, so do a standard lookup
@@ -456,7 +455,7 @@ public class EntityDataServices {
         entityData = SzEntityData.parseEntityData(
             null,
             JsonUtils.parseJsonObject(rawData),
-            (f) -> server.getAttributeClassForFeature(f));
+            (f) -> provider.getAttributeClassForFeature(f));
       }
 
       postProcessEntityData(entityData, forceMinimal, featureMode);
@@ -487,7 +486,7 @@ public class EntityDataServices {
   {
     Timers timers = newTimers();
     try {
-      SzApiServer server = SzApiServer.getInstance();
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
 
       // check if no attributes
       if (attrs == null || attrs.trim().length() == 0) {
@@ -528,11 +527,11 @@ public class EntityDataServices {
 
       final String json = attrs;
       enteringQueue(timers);
-      server.executeInThread(() -> {
+      provider.executeInThread(() -> {
         exitingQueue(timers);
 
         // get the engine API
-        G2Engine engineApi = server.getEngineApi();
+        G2Engine engineApi = provider.getEngineApi();
 
         callingNativeAPI(timers, "engine", "searchByAttribtuesV2");
         int result = engineApi.searchByAttributesV2(json, flags, sb);
@@ -554,7 +553,7 @@ public class EntityDataServices {
           = SzAttributeSearchResult.parseSearchResultList(
             null,
               jsonResults,
-              (f) -> server.getAttributeClassForFeature(f));
+              (f) -> provider.getAttributeClassForFeature(f));
 
 
       postProcessSearchResults(
@@ -601,13 +600,13 @@ public class EntityDataServices {
    *
    * @param entityId
    * @param dataMap
-   * @param server
+   * @param provider
    * @return
    */
   private static SzEntityData getAugmentedEntityData(
       long                    entityId,
       Map<Long, SzEntityData> dataMap,
-      SzApiServer             server)
+      SzApiProvider             provider)
   {
     // get the result entity data
     SzEntityData entityData = dataMap.get(entityId);
@@ -641,7 +640,7 @@ public class EntityDataServices {
 
       // set the features and "data" fields
       relatedEntity.setFeatures(
-          features, (f) -> server.getAttributeClassForFeature(f));
+          features, (f) -> provider.getAttributeClassForFeature(f));
 
       // set the records and record summaries
       relatedEntity.setRecords(records);
@@ -656,14 +655,14 @@ public class EntityDataServices {
    *
    */
   private static Map<Long, SzEntityData> parseEntityDataList(
-      String rawData, SzApiServer server)
+      String rawData, SzApiProvider provider)
   {
     // parse the raw response and extract the entities that were found
     JsonObject jsonObj = JsonUtils.parseJsonObject(rawData);
     JsonArray jsonArr = jsonObj.getJsonArray("ENTITIES");
 
     List<SzEntityData> list = SzEntityData.parseEntityDataList(
-        null, jsonArr, (f) -> server.getAttributeClassForFeature(f));
+        null, jsonArr, (f) -> provider.getAttributeClassForFeature(f));
 
     // organize all the entities into a map for lookup
     Map<Long, SzEntityData> dataMap = new LinkedHashMap<>();
@@ -726,7 +725,7 @@ public class EntityDataServices {
   }
 
   /**
-   * Ensures the specified data source exists for the server and thows a
+   * Ensures the specified data source exists for the provider and thows a
    * NotFoundException if not.
    *
    * @throws NotFoundException If the data source is not found.
@@ -735,10 +734,10 @@ public class EntityDataServices {
                                       UriInfo       uriInfo,
                                       Timers        timers,
                                       String        dataSource,
-                                      SzApiServer   apiServer)
+                                      SzApiProvider   apiProvider)
     throws NotFoundException
   {
-    Set<String> dataSources = apiServer.getDataSources();
+    Set<String> dataSources = apiProvider.getDataSources();
 
     if (!dataSources.contains(dataSource)) {
       throw newNotFoundException(
