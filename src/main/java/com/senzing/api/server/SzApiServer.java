@@ -640,8 +640,7 @@ public class SzApiServer implements SzApiProvider {
 
     jerseyServlet.setInitParameter(
         "jersey.config.server.provider.packages",
-        packageName + ".services;"
-            + packageName + ".providers;"
+        packageName + ";"
             + "org.codehaus.jackson.jaxrs;"
             + "org.glassfish.jersey.media.multipart");
 
@@ -1010,7 +1009,7 @@ public class SzApiServer implements SzApiProvider {
         = new LifeCycleListener(this.jettyServer, httpPort, ipAddr, this.fileMonitor);
     this.jettyServer.addLifeCycleListener(lifeCycleListener);
     int initOrder = 0;
-    String packageName = SzApiServer.class.getPackage().getName();
+    String packageName = SzApiProvider.class.getPackage().getName();
     String apiPath = "/*";
 
     //addProxyServlet(context, "/www/*", "https://www.senzing.com", false,
