@@ -3,9 +3,9 @@
 ## Overview
 
 The Senzing Rest API Server implemented in Java.  The API specification is
-defined in by the [Senzing Rest API Proposal](https://github.com/Senzing/rest-api-proposal).
+defined in by the [Senzing Rest API Proposal](https://github.com/Senzing/senzing-rest-api).
 
-The [Senzing API OAS specification](http://editor.swagger.io/?url=https://raw.githubusercontent.com/Senzing/rest-api-proposal/master/senzing-api.yaml)
+The [Senzing API OAS specification](http://editor.swagger.io/?url=http://editor.swagger.io/?url=https://raw.githubusercontent.com/Senzing/senzing-rest-api/master/senzing-rest-api.yaml)
 documents the available API methods, their parameters and the response formats.
 
 ### Contents
