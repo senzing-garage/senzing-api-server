@@ -266,18 +266,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
           .flatMap(s -> s.max(Integer::compareTo));
 
     final JsonObject matchObject = matchInfo;
-    Optional<Integer> matchScore
-        = Optional.ofNullable(JsonUtils.getJsonValue(matchObject, "MATCH_SCORE"))
-          .map(o -> {
-            switch(o.getValueType()) {
-              case NUMBER:
-                return matchObject.getJsonNumber("MATCH_SCORE").intValue();
-              case STRING:
-                return Integer.parseInt(matchObject.getString("MATCH_SCORE"));
-              default:
-                return null;
-            }
-          });
+    Optional<Integer> matchScore = readMatchScore(matchObject);
 
     if (!matchScore.isPresent()) partial = true;
     entity.setMatchScore(matchScore.orElse(null));
@@ -296,6 +285,34 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
 
     // iterate over the feature map
     return entity;
+  }
+
+  /**
+   * Reads a MATCH_SCORE field from native Senzing JSON response.
+   *
+   * @param jsonObject The {@link JsonObject} to read the value from.
+   *
+   * @return The {@link Optional<Integer>} representing the match score.
+   */
+  public static Optional<Integer> readMatchScore(JsonObject jsonObject) {
+    return Optional.ofNullable(JsonUtils.getJsonValue(jsonObject, "MATCH_SCORE"))
+        .map(o -> {
+          switch (o.getValueType()) {
+            case NUMBER:
+              return jsonObject.getJsonNumber("MATCH_SCORE").intValue();
+            case STRING:
+              // check for empty string
+              if (jsonObject.getString("MATCH_SCORE").trim().length() == 0) {
+                // empty string is the same as zero (0)
+                return null;
+              } else {
+                // if not an empty string then parse as an integer
+                return Integer.parseInt(jsonObject.getString("MATCH_SCORE"));
+              }
+            default:
+              return null;
+          }
+        });
   }
 
   @Override

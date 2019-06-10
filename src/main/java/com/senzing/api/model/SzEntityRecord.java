@@ -461,8 +461,11 @@ public class SzEntityRecord {
 
   @Override
   public String toString() {
-    return "SzEntityRecord{" +
-        "dataSource='" + dataSource + '\'' +
+    return "SzEntityRecord{" + this.fieldsToString() + "}";
+  }
+
+  protected String fieldsToString() {
+    return "dataSource='" + dataSource + '\'' +
         ", recordId='" + recordId + '\'' +
         ", addressData=" + addressData +
         ", attributeData=" + attributeData +
@@ -471,7 +474,6 @@ public class SzEntityRecord {
         ", phoneData=" + phoneData +
         ", relationshipData=" + relationshipData +
         ", otherData=" + otherData +
-        ", originalSourceData=" + originalSourceData +
-        '}';
+        ", originalSourceData=" + originalSourceData;
   }
 }
