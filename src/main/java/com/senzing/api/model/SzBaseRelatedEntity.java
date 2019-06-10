@@ -303,7 +303,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
             case STRING:
               // check for empty string
               if (jsonObject.getString("MATCH_SCORE").trim().length() == 0) {
-                // empty string is the same as zero (0)
+                // empty string is the same as null
                 return null;
               } else {
                 // if not an empty string then parse as an integer
