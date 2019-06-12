@@ -3,8 +3,15 @@ package com.senzing.api.server;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.*;
 
+import com.senzing.api.model.SzLicenseInfo;
 import com.senzing.g2.engine.*;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.WorkerThreadPool;
@@ -32,6 +39,9 @@ import static com.senzing.util.WorkerThreadPool.Task;
  *
  */
 public class SzApiServer {
+  private static final long EXPIRATION_WARNING_PERIOD
+      = 1000L * 60L * 60L * 24L * 30L;
+
   private static final int DEFAULT_PORT = 2080;
 
   private static final int DEFAULT_CONCURRENCY = 8;
@@ -725,7 +735,55 @@ public class SzApiServer {
       exitOnError(e);
     }
 
-    SzApiServer server = SzApiServer.getInstance();
+    final SzApiServer server = SzApiServer.getInstance();
+
+    final DateTimeFormatter formatter
+        = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
+                           .withZone(ZoneId.systemDefault());
+
+    Thread thread = new Thread(() -> {
+      G2Product product = server.getProductApi();
+      while (!server.isShutdown()) {
+        try {
+          String license = product.license();
+          JsonObject jsonObject = JsonUtils.parseJsonObject(license);
+          SzLicenseInfo licenseInfo
+              = SzLicenseInfo.parseLicenseInfo(null, jsonObject);
+
+          Date expirationDate = licenseInfo.getExpirationDate();
+
+          if (expirationDate != null) {
+            long now = System.currentTimeMillis();
+
+            Instant expiration = expirationDate.toInstant();
+
+            long diff = expirationDate.getTime() - now;
+
+            // check if within the expiration warning period
+            if (diff < 0L) {
+              System.err.println(
+                  "WARNING: License expired -- was valid through "
+                      + formatter.format(expiration) + ".");
+
+            } else if (diff < EXPIRATION_WARNING_PERIOD) {
+              System.err.println(
+                  "WARNING: License expiring soon -- valid through "
+                  + formatter.format(expiration) + ".");
+            }
+          }
+          try {
+            // sleep for six hours
+            Thread.sleep(1000 * 60 * 60 * 6);
+          } catch (InterruptedException ignore) {
+            // do nothing
+          }
+
+        } catch (Exception failure) {
+          break;
+        }
+      }
+    });
+    thread.start();
     server.join();
   }
 
