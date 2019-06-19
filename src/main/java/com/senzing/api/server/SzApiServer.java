@@ -4,17 +4,17 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.*;
 
+import com.senzing.api.services.SzApiProvider;
 import com.senzing.api.model.SzLicenseInfo;
 import com.senzing.g2.engine.*;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.WorkerThreadPool;
+import com.senzing.util.AccessToken;
 import org.eclipse.jetty.server.ServerConnector;
 
 import org.eclipse.jetty.server.Server;
@@ -38,7 +38,7 @@ import static com.senzing.util.WorkerThreadPool.Task;
  *
  *
  */
-public class SzApiServer {
+public class SzApiServer implements SzApiProvider {
   private static final long EXPIRATION_WARNING_PERIOD
       = 1000L * 60L * 60L * 24L * 30L;
 
@@ -56,6 +56,8 @@ public class SzApiServer {
 
   private static SzApiServer INSTANCE = null;
 
+  private static AccessToken PROVIDER_TOKEN = null;
+
   private static enum Option {
     HELP,
     VERSION,
@@ -67,9 +69,6 @@ public class SzApiServer {
     MONITOR_FILE,
     CONCURRENCY,
     ALLOWED_ORIGINS
-  }
-
-  public static final class AccessToken {
   }
 
   static {
@@ -649,8 +648,7 @@ public class SzApiServer {
 
     jerseyServlet.setInitParameter(
         "jersey.config.server.provider.packages",
-        packageName + ".services;"
-            + packageName + ".providers;"
+        packageName + ";"
             + "org.codehaus.jackson.jaxrs;"
             + "org.glassfish.jersey.media.multipart");
 
@@ -811,6 +809,8 @@ public class SzApiServer {
 
       try {
         SzApiServer.INSTANCE = new SzApiServer(options);
+        SzApiServer.PROVIDER_TOKEN
+            = SzApiProvider.Factory.installProvider(SzApiServer.INSTANCE);
 
       } catch (RuntimeException e) {
         e.printStackTrace();
@@ -1065,7 +1065,7 @@ public class SzApiServer {
         = new LifeCycleListener(this.jettyServer, httpPort, ipAddr, this.fileMonitor);
     this.jettyServer.addLifeCycleListener(lifeCycleListener);
     int initOrder = 0;
-    String packageName = SzApiServer.class.getPackage().getName();
+    String packageName = SzApiProvider.class.getPackage().getName();
     String apiPath = "/*";
 
     //addProxyServlet(context, "/www/*", "https://www.senzing.com", false,
@@ -1191,8 +1191,13 @@ public class SzApiServer {
 
     // uninitialize
     synchronized (SzApiServer.class) {
-      if (INSTANCE == this) {
-        INSTANCE = null;
+      if (SzApiServer.INSTANCE == this) {
+        SzApiServer.INSTANCE = null;
+        try {
+          SzApiProvider.Factory.uninstallProvider(SzApiServer.PROVIDER_TOKEN);
+        } finally {
+          SzApiServer.PROVIDER_TOKEN = null;
+        }
       }
     }
     synchronized (this.joinMonitor) {

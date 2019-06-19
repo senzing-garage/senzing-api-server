@@ -653,6 +653,136 @@ public class JsonUtils {
   }
 
   /**
+   * Creates a {@link JsonObject} with the specified property and value.
+   * The value is interpretted according to {@link
+   * #addProperty(JsonObjectBuilder, String, Object)}.
+   *
+   * @param property The property name.
+   *
+   * @param value The property value.
+   *
+   * @return The created {@link JsonObject}.
+   */
+  public static JsonObject toJsonObject(String property, Object value)
+  {
+    return toJsonObject(property, value, null, null);
+  }
+
+  /**
+   * Creates a {@link JsonObject} with the specified properties and values.
+   * The values are interpretted according to {@link
+   * #addProperty(JsonObjectBuilder, String, Object)}.
+   *
+   * @param property1 The first property name.
+   *
+   * @param value1 The first property value.
+   *
+   * @param property2 The second property name.
+   *
+   * @param value2 The second property value.
+   *
+   * @return The created {@link JsonObject}.
+   *
+   */
+  public static JsonObject toJsonObject(String property1,
+                                        Object value1,
+                                        String property2,
+                                        Object value2)
+  {
+    return toJsonObject(property1,
+                        value1,
+                        property2,
+                        value2,
+                        null,
+                        null);
+  }
+
+  /**
+   * Creates a {@link JsonObject} with the specified properties and values.
+   * The values are interpretted according to {@link
+   * #addProperty(JsonObjectBuilder, String, Object)}.
+   *
+   * @param property1 The first property name.
+   *
+   * @param value1 The first property value.
+   *
+   * @param property2 The second property name.
+   *
+   * @param value2 The second property value.
+   *
+   * @param property3 The third property name.
+   *
+   * @param value3 The third property value.
+   *
+   * @return The created {@link JsonObject}.
+   */
+  public static JsonObject toJsonObject(String property1,
+                                        Object value1,
+                                        String property2,
+                                        Object value2,
+                                        String property3,
+                                        Object value3)
+  {
+    JsonObjectBuilder builder = Json.createObjectBuilder();
+    if (property1 != null) {
+      addProperty(builder, property1, value1);
+    }
+    if (property2 != null) {
+      addProperty(builder, property2, value2);
+    }
+    if (property3 != null) {
+      addProperty(builder, property3, value3);
+    }
+    return builder.build();
+  }
+
+  /**
+   * Adds a property to the specified {@link JsonObjectBuilder} with the
+   * specified property name and value.  The specified value can be null, a
+   * {@link String}, {@link Boolean}, {@link Integer}, {@link Long},
+   * {@link Short}, {@link Float}, {@link Double}, {@link BigInteger} or
+   * {@link BigDecimal}.  Anything else is converted to a {@link String} via
+   * its {@link #toString()} method.
+   *
+   * @param builder The {@link JsonObjectBuilder} to add the property to.
+   *
+   * @param property The property name.
+   *
+   * @param value The value for the property.
+   *
+   * @return The specified {@link JsonObjectBuilder}.
+   */
+  public static JsonObjectBuilder addProperty(JsonObjectBuilder builder,
+                                              String            property,
+                                              Object            value)
+  {
+    if (value == null) {
+      builder.addNull(property);
+    } else if (value instanceof String) {
+      builder.add(property, (String) value);
+    } else if (value instanceof Boolean) {
+      builder.add(property, (Boolean) value);
+    } else if (value instanceof Integer) {
+      builder.add(property, (Integer) value);
+    } else if (value instanceof Long) {
+      builder.add(property, (Long) value);
+    } else if (value instanceof Short) {
+      builder.add(property, (Short) value);
+    } else if (value instanceof Float) {
+      builder.add(property, (Float) value);
+    } else if (value instanceof Double) {
+      builder.add(property, (Double) value);
+    } else if (value instanceof BigInteger) {
+      builder.add(property, (BigInteger) value);
+    } else if (value instanceof BigDecimal) {
+      builder.add(property, (BigDecimal) value);
+    } else {
+      builder.add(property, value.toString());
+    }
+    return builder;
+  }
+
+  /**
    * Converts the specified {@link JsonObjectBuilder} to a JSON string.
    *
    * @param builder The {@link JsonObjectBuilder} describing the object.

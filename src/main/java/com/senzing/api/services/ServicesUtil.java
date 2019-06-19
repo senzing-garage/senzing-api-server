@@ -1,4 +1,4 @@
-package com.senzing.api.server.services;
+package com.senzing.api.services;
 
 import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2Fallible;
@@ -331,7 +331,9 @@ public class ServicesUtil {
    *
    * @return The JSON array string for the identifiers.
    */
-  static String nativeJsonEncodeEntityIds(Collection<SzEntityIdentifier> ids) {
+  public static String nativeJsonEncodeEntityIds(
+      Collection<SzEntityIdentifier> ids)
+  {
     if (ids == null) {
       return null;
     }
@@ -365,7 +367,7 @@ public class ServicesUtil {
    *
    * @return The URL-encoded JSON array string for the identifiers.
    */
-  static String urlEncodeEntityIds(Collection<SzEntityIdentifier> ids)
+  public static String urlEncodeEntityIds(Collection<SzEntityIdentifier> ids)
   {
     StringBuilder sb = new StringBuilder();
     String prefix = "";
@@ -393,7 +395,7 @@ public class ServicesUtil {
    *
    * @return The JSON array string for the identifiers.
    */
-  static String nativeJsonEncodeDataSources(List<String> list)
+  public static String nativeJsonEncodeDataSources(List<String> list)
   {
     JsonArrayBuilder jab = Json.createArrayBuilder();
     for (String code: list) {
