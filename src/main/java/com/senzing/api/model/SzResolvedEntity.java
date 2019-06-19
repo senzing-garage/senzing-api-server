@@ -80,10 +80,10 @@ public class SzResolvedEntity {
   private Map<String, List<SzEntityFeature>> unmodifiableFeatures;
 
   /**
-   * The {@link List} of {@link SzEntityRecord} instances for the
+   * The {@link List} of {@link SzMatchedRecord} instances for the
    * records in the entity.
    */
-  private List<SzEntityRecord> records;
+  private List<SzMatchedRecord> records;
 
   /**
    * Whether or not this entity is partially populated.
@@ -174,22 +174,22 @@ public class SzResolvedEntity {
   }
 
   /**
-   * Returns the list of {@link SzEntityRecord} instances describing the records
+   * Returns the list of {@link SzMatchedRecord} instances describing the records
    * for the entity.
    *
-   * @return The list of {@link SzEntityRecord} instances describing the records
+   * @return The list of {@link SzMatchedRecord} instances describing the records
    *         for the entity.
    */
-  public List<SzEntityRecord> getRecords() {
+  public List<SzMatchedRecord> getRecords() {
     return Collections.unmodifiableList(this.records);
   }
 
   /**
-   * Sets the list {@linkplain SzEntityRecord records} for the entity.
+   * Sets the list {@linkplain SzMatchedRecord records} for the entity.
    *
-   * @param records The list {@linkplain SzEntityRecord records} for the entity.
+   * @param records The list {@linkplain SzMatchedRecord records} for the entity.
    */
-  public void setRecords(List<SzEntityRecord> records) {
+  public void setRecords(List<SzMatchedRecord> records) {
     this.records.clear();
     if (records != null) {
       this.records.addAll(records);
@@ -197,12 +197,12 @@ public class SzResolvedEntity {
   }
 
   /**
-   * Adds the specified {@link SzEntityRecord} to the list of {@linkplain
-   * SzEntityRecord records}.
+   * Adds the specified {@link SzMatchedRecord} to the list of {@linkplain
+   * SzMatchedRecord records}.
    *
-   * @param record The {@link SzEntityRecord} to add to the record list.
+   * @param record The {@link SzMatchedRecord} to add to the record list.
    */
-  public void addRecord(SzEntityRecord record)
+  public void addRecord(SzMatchedRecord record)
   {
     this.records.add(record);
   }
@@ -705,12 +705,12 @@ public class SzResolvedEntity {
     }
 
     // get the records
-    List<SzEntityRecord> recordList = null;
+    List<SzMatchedRecord> recordList = null;
     List<SzRecordSummary> summaries = null;
 
     if (jsonObject.containsKey("RECORDS")) {
       JsonArray records = jsonObject.getJsonArray("RECORDS");
-      recordList = SzEntityRecord.parseEntityRecordList(null, records);
+      recordList = SzMatchedRecord.parseMatchedRecordList(null, records);
       summaries = summarizeRecords(recordList);
 
     } else if (jsonObject.containsKey("RECORD_SUMMARY")) {
@@ -731,7 +731,7 @@ public class SzResolvedEntity {
   }
 
   /**
-   * Summarizes the specified {@link List} of {@linkplain SzEntityRecord
+   * Summarizes the specified {@link List} of {@linkplain SzMatchedRecord
    * records} and produces a {@link List} of {@link SzRecordSummary} instances.
    *
    * @param records The records to be summarized.
@@ -739,7 +739,7 @@ public class SzResolvedEntity {
    *         the summaries.
    */
   public static List<SzRecordSummary> summarizeRecords(
-      List<SzEntityRecord>  records)
+      List<SzMatchedRecord>  records)
   {
     // check if we have no records
     if (records.size() == 0) return Collections.emptyList();

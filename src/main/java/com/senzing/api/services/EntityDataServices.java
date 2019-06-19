@@ -307,7 +307,7 @@ public class EntityDataServices {
         for (SzEntityData edata : dataMap.values()) {
           SzResolvedEntity resolvedEntity = edata.getResolvedEntity();
           // check if this entity is the one that was requested by record ID
-          for (SzEntityRecord record : resolvedEntity.getRecords()) {
+          for (SzMatchedRecord record : resolvedEntity.getRecords()) {
             if (record.getDataSource().equalsIgnoreCase(dataSource)
                 && record.getRecordId().equals(recordId)) {
               // found the entity ID for the record ID
@@ -632,7 +632,7 @@ public class EntityDataServices {
       Map<String, List<SzEntityFeature>> features
           = related.getFeatures();
 
-      List<SzEntityRecord> records = related.getRecords();
+      List<SzMatchedRecord> records = related.getRecords();
 
       // summarize the records
       List<SzRecordSummary> summaries
