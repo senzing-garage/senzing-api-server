@@ -756,13 +756,13 @@ public class RepositoryManager {
       File iniFile = new File(repository, "g2.ini");
       int returnCode = CONFIG_API.init("G2", iniFile.toString(), verbose);
       if (returnCode != 0) {
-        logError("G2Config.init", CONFIG_API);
+        logError("G2Config.init()", CONFIG_API);
         return;
       }
       returnCode = ENGINE_API.init("G2", iniFile.toString(), verbose);
       if (returnCode != 0) {
         CONFIG_API.destroy();
-        logError("G2Engine.init", ENGINE_API);
+        logError("G2Engine.init()", ENGINE_API);
         return;
       }
       initialized = true;
@@ -811,7 +811,7 @@ public class RepositoryManager {
     StringBuffer sb = new StringBuffer();
     int returnCode = ENGINE_API.exportConfig(sb);
     if (returnCode != 0) {
-      logError("G2Engine.exportConfig", ENGINE_API);
+      logError("G2Engine.exportConfig()", ENGINE_API);
       return null;
     }
     long handle = CONFIG_API.load(sb.toString());
@@ -823,7 +823,7 @@ public class RepositoryManager {
     StringBuffer sb = new StringBuffer();
     int returnCode = CONFIG_API.listDataSources(configId, sb);
     if (returnCode != 0) {
-      logError("G2Config.listDataSources", CONFIG_API);
+      logError("G2Config.listDataSources()", CONFIG_API);
       return null;
     }
 
@@ -861,7 +861,7 @@ public class RepositoryManager {
     initApis(repository, verbose);
     int result = ENGINE_API.purgeRepository();
     if (result != 0) {
-      logError("G2Engine.purgeRepository", ENGINE_API);
+      logError("G2Engine.purgeRepository()", ENGINE_API);
     } else {
       System.out.println();
       System.out.println("Repository purged: " + repository);
@@ -1026,15 +1026,19 @@ public class RepositoryManager {
         if (returnCode == 0) {
           loaded++;
           loadedInterval
-              = doLoadFeedback(loaded, loadedInterval, loaded, failed);
+              = doLoadFeedback(
+                  "Loaded so far", loaded, loadedInterval, loaded, failed);
 
         } else {
           failed++;
           failedInterval
-              = doLoadFeedback(failed, failedInterval, loaded, failed);
+              = doLoadFeedback(
+                  "Loaded so far", failed, failedInterval, loaded, failed);
         }
       }
-      if (ENGINE_API.q)
+      doLoadFeedback(
+          "Loaded all records", loaded, 0, loaded, failed);
+      processRedos();
       printStream = System.out;
 
       return true;
@@ -1058,14 +1062,68 @@ public class RepositoryManager {
     }
   }
 
-  private static int doLoadFeedback(int count, int interval,
-                                    int loaded, int failed)
+  private static int processRedos() {
+    int loaded = 0;
+    int failed = 0;
+    try {
+      // process redos
+      int loadedInterval = 100;
+      int failedInterval = 100;
+      long originalCount = ENGINE_API.countRedoRecords();
+      if (originalCount == 0) return 0;
+      if (originalCount > 0) {
+        System.out.println();
+        System.out.println("Found redos to process: " + originalCount);
+        System.out.println();
+      }
+      for (int count = 0; ENGINE_API.countRedoRecords() > 0; count++) {
+        StringBuffer sb = new StringBuffer();
+        int returnCode = ENGINE_API.processRedoRecord(sb);
+        if (returnCode != 0) {
+          logError("G2Engine.processRedoRecord()", ENGINE_API);
+          failed++;
+          failedInterval = doLoadFeedback(
+              "Redo's so far", failed, failedInterval, loaded, failed);
+        } else {
+          loaded++;
+          loadedInterval = doLoadFeedback(
+              "Redo's so far", loaded, loadedInterval, loaded, failed);
+        }
+        if (count > (originalCount*5)) {
+          System.err.println();
+          System.err.println("Processing redo's not converging -- giving up.");
+          System.err.println();
+          return count;
+        }
+      }
+      System.out.println();
+      System.out.println("Processed all redos (succeeded / failed): "
+                         + loaded + " / " + failed);
+      System.out.println();
+
+      return loaded;
+
+    } catch (Exception ignore) {
+      System.err.println();
+      System.err.println("IGNORING EXCEPTION DURING REDOS:");
+      ignore.printStackTrace();
+      System.err.println();
+      return loaded;
+    }
+
+  }
+
+  private static int doLoadFeedback(String prefix,
+                                    int count,
+                                    int interval,
+                                    int loaded,
+                                    int failed)
   {
     if (count > (interval * 10)) {
       interval *= 10;
     }
-    if ((count > 0) && (count % interval) == 0) {
-      System.out.println("Loaded so far (succeeded / failed): "
+    if ((count > 0) && ((interval == 0) || (count % interval) == 0)) {
+      System.out.println(prefix + " (succeeded / failed): "
                          + loaded + " / " + failed);
     }
     return interval;
@@ -1369,11 +1427,13 @@ public class RepositoryManager {
                                                    jsonRecord,
                                                    loadId);
     if (returnCode != 0) {
-      logError("G2Engine.addRecord"
+      logError("G2Engine.addRecord()"
                    + ((recordId == null) ? "WithReturnedRecordId" : ""),
                ENGINE_API);
       return false;
     }
+
+    processRedos();
 
     System.out.println();
     System.out.println("Added record to " + dataSource + " data source: ");
@@ -1428,7 +1488,7 @@ public class RepositoryManager {
         returnCode = CONFIG_API.addDataSource(configId.getValue(),
                                                   dataSource);
         if (returnCode != 0) {
-          logError("G2Config.addDataSource", CONFIG_API);
+          logError("G2Config.addDataSource()", CONFIG_API);
           return false;
         }
         dataSourceActions.put(dataSource, true);
@@ -1436,7 +1496,7 @@ public class RepositoryManager {
       StringBuffer sb = new StringBuffer();
       returnCode = CONFIG_API.save(configId.getValue(), sb);
       if (returnCode != 0) {
-        logError("G2Config.save", CONFIG_API);
+        logError("G2Config.save()", CONFIG_API);
         return false;
       }
 
