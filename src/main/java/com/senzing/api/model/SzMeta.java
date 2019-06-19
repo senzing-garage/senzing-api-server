@@ -1,33 +1,12 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.senzing.api.BuildInfo;
 import com.senzing.util.Timers;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
 
 public class SzMeta {
-  private static final String MAVEN_VERSION;
-
-  static {
-    String resource = "/com/senzing/api/build-info.properties";
-    String version = "UNKNOWN";
-    try (InputStream is = SzMeta.class.getResourceAsStream(resource))
-    {
-      Properties buildProps = new Properties();
-      buildProps.load(is);
-      version = buildProps.getProperty("Maven-Version");
-
-    } catch (IOException e) {
-      System.err.println("FAILED TO READ META-INF/MANIFEST.MF FILE");
-      e.printStackTrace();
-
-    } finally {
-      MAVEN_VERSION = version;
-    }
-  }
-
   /**
    * The HTTP method that was executed.
    */
@@ -101,7 +80,7 @@ public class SzMeta {
    *
    * @return The build version of the server implementation.
    */
-  public String getVersion() { return MAVEN_VERSION; }
+  public String getVersion() { return BuildInfo.MAVEN_VERSION; }
 
   /**
    * Returns the timings that were recorded for the operation as an
