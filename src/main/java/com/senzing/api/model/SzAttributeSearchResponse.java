@@ -24,6 +24,13 @@ public class SzAttributeSearchResponse extends SzResponseWithRawData
   private Data data = new Data();
 
   /**
+   * Package-private default constructor.
+   */
+  SzAttributeSearchResponse() {
+    this.searchResults = null;
+  }
+
+  /**
    * Constructs with only the HTTP method and the self link, leaving the
    * license info data to be initialized later.
    *

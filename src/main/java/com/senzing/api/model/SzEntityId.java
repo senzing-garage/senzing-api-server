@@ -1,8 +1,5 @@
 package com.senzing.api.model;
 
-import com.senzing.util.JsonUtils;
-
-import javax.json.JsonObject;
 import java.util.Objects;
 
 /**
@@ -12,13 +9,13 @@ public class SzEntityId implements SzEntityIdentifier {
   /**
    * The entity ID that identifies the entity.
    */
-  private long entityId;
+  private long value;
 
   /**
    * Default constructor.
    */
   public SzEntityId(long id) {
-    this.entityId = id;
+    this.value = id;
   }
 
   /**
@@ -27,7 +24,7 @@ public class SzEntityId implements SzEntityIdentifier {
    * @return The entity ID identifying the entity.
    */
   public long getValue() {
-    return this.entityId;
+    return this.value;
   }
 
   @Override
@@ -35,12 +32,12 @@ public class SzEntityId implements SzEntityIdentifier {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     SzEntityId that = (SzEntityId) o;
-    return entityId == that.entityId;
+    return value == that.value;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entityId);
+    return Objects.hash(value);
   }
 
   @Override

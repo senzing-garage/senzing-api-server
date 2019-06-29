@@ -1,5 +1,6 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.senzing.util.Timers;
 
 import javax.ws.rs.core.UriInfo;
@@ -8,16 +9,19 @@ import javax.ws.rs.core.UriInfo;
  * A response object that contains license data.
  *
  */
+@JsonIgnoreProperties({"license"})
 public class SzLicenseResponse extends SzResponseWithRawData {
-  /**
-   * The {@link SzLicenseInfo} describing the license.
-   */
-  private SzLicenseInfo licenseInfo;
-
   /**
    * The data for this instance.
    */
   private Data data = new Data();
+
+  /**
+   * Default constructor.
+   */
+  SzLicenseResponse() {
+    // do nothing
+  }
 
   /**
    * Constructs with only the HTTP method and the self link, leaving the
@@ -53,7 +57,7 @@ public class SzLicenseResponse extends SzResponseWithRawData {
                            SzLicenseInfo  data)
   {
     super(httpMethod, httpStatusCode, selfLink, timers);
-    this.licenseInfo = data;
+    this.data.license = data;
   }
 
   /**
@@ -91,7 +95,7 @@ public class SzLicenseResponse extends SzResponseWithRawData {
                            SzLicenseInfo  data)
   {
     super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.licenseInfo = data;
+    this.data.license = data;
   }
 
   /**
@@ -110,13 +114,18 @@ public class SzLicenseResponse extends SzResponseWithRawData {
    * @param data The {@link SzLicenseInfo} describing the license.
    */
   public void setLicense(SzLicenseInfo data) {
-    this.licenseInfo = data;
+    this.data.license = data;
   }
 
   /**
    * Inner class to represent the data section for this response.
    */
-  public class Data {
+  public static class Data {
+    /**
+     * The {@link SzLicenseInfo} describing the license.
+     */
+    private SzLicenseInfo license;
+
     /**
      * Private default constructor.
      */
@@ -130,7 +139,7 @@ public class SzLicenseResponse extends SzResponseWithRawData {
      * @return The {@link SzLicenseInfo} describing the license.
      */
     public SzLicenseInfo getLicense() {
-      return SzLicenseResponse.this.licenseInfo;
+      return this.license;
     }
   }
 

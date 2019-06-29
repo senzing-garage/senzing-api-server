@@ -20,6 +20,13 @@ public class SzAttributeTypeResponse extends SzResponseWithRawData {
   private Data data = new Data();
 
   /**
+   * Package-private default constructor.
+   */
+  SzAttributeTypeResponse() {
+    this.attributeType = null;
+  }
+
+  /**
    * Constructs with only the HTTP method and the self link, leaving the
    * attribute type data to be initialized later.
    *

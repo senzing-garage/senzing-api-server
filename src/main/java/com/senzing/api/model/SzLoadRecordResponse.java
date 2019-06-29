@@ -25,6 +25,13 @@ public class SzLoadRecordResponse extends SzBasicResponse
   private Data data = new Data();
 
   /**
+   * Default constructor.
+   */
+  public SzLoadRecordResponse() {
+    this.recordId = null;
+  }
+
+  /**
    * Constructs with only the HTTP method and the self link, leaving the
    * record ID to be initialized later.
    *

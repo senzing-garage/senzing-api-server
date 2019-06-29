@@ -21,7 +21,27 @@ import static com.senzing.util.OperatingSystemFamily.*;
 import static java.nio.file.StandardCopyOption.*;
 
 public class RepositoryManager {
-  public static final File SENZING_DIR;
+  static {
+    System.err.println();
+    System.err.println("-----------------------------------");
+    System.err.println();
+    String[] sysProps = {"java.home", "java.library.path" };
+    for (String sysProp : sysProps) {
+      System.err.println(sysProp + " = " + System.getProperty(sysProp));
+    }
+    System.err.println();
+    System.err.println("-----------------------------------");
+    System.err.println();
+    String[] envVars = {"LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH"};
+    for (String var : envVars) {
+      System.err.println(var + " = " + System.getenv(var));
+    }
+    System.err.println();
+    System.err.println("-----------------------------------");
+    System.err.println();
+  }
+
+  private static final File SENZING_DIR;
 
   private static final G2Engine ENGINE_API;
 
@@ -30,67 +50,71 @@ public class RepositoryManager {
   private static boolean initialized = false;
 
   static {
-    String defaultDir = null;
-    switch (RUNTIME_OS_FAMILY) {
-      case WINDOWS:
-        defaultDir = "C:\\Program Files\\Senzing\\g2";
-        break;
-      case MAC_OS:
-        defaultDir = "/Applications/Senzing.app/Contents/Resources/app/g2";
-        break;
-      case UNIX:
-        defaultDir = "/opt/senzing/g2";
-        break;
-      default:
+    File senzingDir = null;
+    try {
+      String defaultDir;
+      switch (RUNTIME_OS_FAMILY) {
+        case WINDOWS:
+          defaultDir = "C:\\Program Files\\Senzing\\g2";
+          break;
+        case MAC_OS:
+          defaultDir = "/Applications/Senzing.app/Contents/Resources/app/g2";
+          break;
+        case UNIX:
+          defaultDir = "/opt/senzing/g2";
+          break;
+        default:
+          throw new ExceptionInInitializerError(
+              "Unrecognized Operating System: " + RUNTIME_OS_FAMILY);
+      }
+
+      // check environment for SENZING_DIR
+      String envVariable = "SENZING_DIR";
+      String senzingPath = System.getenv(envVariable);
+      if (senzingPath == null) {
+        // check environment for SENZING_ROOT
+        envVariable = "SENZING_ROOT";
+        senzingPath = System.getenv(envVariable);
+      }
+      if (senzingPath == null) {
+        envVariable = null;
+        senzingPath = defaultDir;
+      }
+
+      // check the senzing path
+      senzingDir = new File(senzingPath);
+      if (!senzingDir.exists()) {
+        System.err.println("Could not find Senzing installation directory:");
+        System.err.println("     " + senzingPath);
+        System.err.println();
+        if (envVariable != null) {
+          System.err.println(
+              "Check the " + envVariable + " environment variable");
+        }
+
         throw new ExceptionInInitializerError(
-            "Unrecognized Operating System: " + RUNTIME_OS_FAMILY);
-    }
-
-    // check environment for SENZING_DIR
-    String envVariable = "SENZING_DIR";
-    String senzingPath = System.getenv(envVariable);
-    if (senzingPath == null) {
-      // check environment for SENZING_ROOT
-      envVariable = "SENZING_ROOT";
-      senzingPath = System.getenv(envVariable);
-    }
-    if (senzingPath == null) {
-      envVariable = null;
-      senzingPath = defaultDir;
-    }
-
-    // check the senzing path
-    File senzingDir = new File(senzingPath);
-    if (!senzingDir.exists()) {
-      System.err.println("Could not find Senzing installation directory:");
-      System.err.println("     " + senzingPath);
-      System.err.println();
-      if (envVariable != null) {
-        System.err.println(
-            "Check the " + envVariable + " environment variable");
+            "Could not find Senzing installation directory: " + senzingPath);
       }
 
-      throw new ExceptionInInitializerError(
-          "Could not find Senzing installation directory: " + senzingPath);
-    }
+      if (!senzingDir.isDirectory()
+          || (!(new File(senzingDir, "data")).exists())
+          || (!(new File(senzingDir, "data")).isDirectory())) {
+        System.err.println("Senzing installation directory appears invalid:");
+        System.err.println("     " + senzingPath);
+        System.err.println();
+        if (envVariable != null) {
+          System.err.println(
+              "Check the " + envVariable + " environment variable");
+        }
 
-    if (!senzingDir.isDirectory()
-        || (!(new File(senzingDir, "data")).exists())
-        || (!(new File(senzingDir, "data")).isDirectory()))
-    {
-      System.err.println("Senzing installation directory appears invalid:");
-      System.err.println("     " + senzingPath);
-      System.err.println();
-      if (envVariable != null) {
-        System.err.println(
-            "Check the " + envVariable + " environment variable");
+        throw new ExceptionInInitializerError(
+            "Could not find Senzing installation directory: " + senzingPath);
       }
-
-      throw new ExceptionInInitializerError(
-          "Could not find Senzing installation directory: " + senzingPath);
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      SENZING_DIR = senzingDir;
     }
-
-    SENZING_DIR = senzingDir;
 
     G2Engine engineApi = null;
     G2Config configApi = null;
@@ -140,26 +164,42 @@ public class RepositoryManager {
 
   private static final String JAR_BASE_URL;
 
-  private static final String PATH_TO_JAR;
+  // private static final String PATH_TO_JAR;
 
   static {
-    System.out.println();
-    Class<RepositoryManager> cls = RepositoryManager.class;
+    String jarBaseUrl   = null;
+    String jarFileName  = null;
 
-    String url = cls.getResource(
-        cls.getSimpleName() + ".class").toString();
+    try {
+      Class<RepositoryManager> cls = RepositoryManager.class;
 
-    int index = url.lastIndexOf(
-        cls.getName().replace(".", "/") + ".class");
-    JAR_BASE_URL = url.substring(0, index);
+      String url = cls.getResource(
+          cls.getSimpleName() + ".class").toString();
 
-    index = JAR_BASE_URL.lastIndexOf("!");
-    url = url.substring(0, index);
-    index = url.lastIndexOf("/");
-    JAR_FILE_NAME = url.substring(index + 1);
-    url = url.substring(0, index);
-    index = url.indexOf("/");
-    PATH_TO_JAR = url.substring(index);
+      if (url.indexOf(".jar") >= 0) {
+        int index = url.lastIndexOf(
+            cls.getName().replace(".", "/") + ".class");
+        jarBaseUrl = url.substring(0, index);
+
+        index = jarBaseUrl.lastIndexOf("!");
+        if (index >= 0) {
+          url = url.substring(0, index);
+          index = url.lastIndexOf("/");
+
+          if (index >= 0) {
+            jarFileName = url.substring(index + 1);
+          }
+
+          // url = url.substring(0, index);
+          // index = url.indexOf("/");
+          // PATH_TO_JAR = url.substring(index);
+        }
+      }
+
+    } finally {
+      JAR_BASE_URL  = jarBaseUrl;
+      JAR_FILE_NAME = jarFileName;
+    }
   }
 
   private enum Option {
@@ -239,7 +279,6 @@ public class RepositoryManager {
 
       throw new IllegalArgumentException(msg);
     }
-    return;
   }
 
   /**
@@ -328,7 +367,7 @@ public class RepositoryManager {
    * Validates the specified JSON for loading.
    */
   private static void validateJsonRecord(String jsonRecord) {
-    JsonObject jsonObject = null;
+    JsonObject jsonObject;
     try {
       jsonObject = JsonUtils.parseJsonObject(jsonRecord);
 
@@ -567,7 +606,7 @@ public class RepositoryManager {
     pw.println("   -purgeRepo");
     pw.println("        Purges the Senzing repository at the specified path.");
     pw.println();
-    pw.println("   -configSources [data-source, ...]");
+    pw.println("   -configSources [data-source-1 data-source-2 ... data-source-n]");
     pw.println("        Configures the specified data sources for the repository");
     pw.println("        specified by the -repo option.");
     pw.println();
@@ -676,8 +715,15 @@ public class RepositoryManager {
    */
   public static void createRepo(File directory) {
     if (directory.exists()) {
-      throw new IllegalArgumentException(
-          "Senzing repository directory already exists: " + directory);
+      if (!directory.isDirectory()) {
+        throw new IllegalArgumentException(
+            "Repository directory exists and is not a directory: " + directory);
+      }
+      if (directory.listFiles().length > 0) {
+        throw new IllegalArgumentException(
+            "Repository directory exists and is not empty: "
+                + directory + " / " + directory.listFiles()[0]);
+      }
     }
     try {
       directory.mkdirs();
@@ -690,6 +736,8 @@ public class RepositoryManager {
 
       File templateConfig = new File(dataDir, "g2config.json");
       File configFile = new File(directory, "g2config.json");
+      File licensePath = new File(directory, "g2.lic");
+
       copyFile(templateConfig, configFile);
 
       String fileSep = System.getProperty("file.separator");
@@ -697,9 +745,11 @@ public class RepositoryManager {
 
       File iniFile = new File(directory, "g2.ini");
       try (FileOutputStream fos = new FileOutputStream(iniFile);
-           PrintWriter pw = new PrintWriter(new OutputStreamWriter(fos))) {
+           PrintWriter pw = new PrintWriter(new OutputStreamWriter(fos)))
+      {
         pw.println("[PIPELINE]");
         pw.println(" SUPPORTPATH=" + dataDir.getCanonicalPath());
+        pw.println(" LICENSEFILE=" + licensePath.getCanonicalPath());
         pw.println();
         pw.println("[SQL]");
         pw.println(" BACKEND=HYBRID");
@@ -796,7 +846,7 @@ public class RepositoryManager {
   }
 
   private static Set<String> getDataSources() {
-    Result<Long> configId = new Result<Long>();
+    Result<Long> configId = new Result<>();
     try {
       return getDataSources(configId);
 
@@ -963,7 +1013,7 @@ public class RepositoryManager {
 
     initApis(repository, verbose);
 
-    final Integer ZERO = new Integer(0);
+    final Integer ZERO = 0;
     if (loadedCount != null) loadedCount.setValue(ZERO);
     if (failedCount != null) failedCount.setValue(ZERO);
 
@@ -1031,6 +1081,9 @@ public class RepositoryManager {
 
         } else {
           failed++;
+          if (failed == 1 || ((failed % failedInterval) == 0)) {
+            logError("G2Engine.addRecord()", ENGINE_API);
+          }
           failedInterval
               = doLoadFeedback(
                   "Loaded so far", failed, failedInterval, loaded, failed);
@@ -1151,6 +1204,7 @@ public class RepositoryManager {
                                           String       dataSource,
                                           File         sourceFile)
   {
+    if (record == null) return null;
     JsonObjectBuilder job = Json.createObjectBuilder(record);
     if (dataSource != null) {
       if (record.containsKey("DATA_SOURCE")) {
@@ -1203,6 +1257,7 @@ public class RepositoryManager {
     private File sourceFile;
 
     public JsonRecordProvider(File sourceFile, String dataSource) {
+      this.sourceFile = sourceFile;
       JsonParserFactory jpf = Json.createParserFactory(Collections.emptyMap());
       try {
         FileInputStream    fis = new FileInputStream(sourceFile);

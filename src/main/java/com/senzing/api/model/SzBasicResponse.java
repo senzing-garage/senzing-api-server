@@ -20,6 +20,14 @@ public class SzBasicResponse {
   private SzLinks links;
 
   /**
+   * Default constructor.
+   */
+  SzBasicResponse() {
+    this.meta = null;
+    this.links = null;
+  }
+
+  /**
    * Constructs with the specified HTTP method and self link.
    *
    * @param httpMethod The {@link SzHttpMethod} from the request.
@@ -71,5 +79,17 @@ public class SzBasicResponse {
    */
   public SzLinks getLinks() {
     return links;
+  }
+
+  /**
+   * If any of the response's timers are still accumulating time, this
+   * causes them to cease.  Generally, this is only used in testing since
+   * converting the object to JSON to serialize the response will have the
+   * effect of concluding all timers.
+   *
+   * If timers are already concluded then this method does nothing.
+   */
+  public void concludeTimers() {
+    this.getMeta().concludeTimers();
   }
 }

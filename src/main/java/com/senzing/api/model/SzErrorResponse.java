@@ -18,6 +18,13 @@ public class SzErrorResponse extends SzBasicResponse {
   private List<SzError> errors;
 
   /**
+   * Package-private default constructor.
+   */
+  SzErrorResponse() {
+    this.errors = null;
+  }
+
+  /**
    * Constructs with the specified HTTP method and self link.
    *
    * @param httpMethod The {@link SzHttpMethod} from the request.

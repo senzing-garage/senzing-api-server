@@ -74,22 +74,37 @@ public class SzApiServer implements SzApiProvider {
   }
 
   static {
-    System.out.println();
+    String jarBaseUrl   = null;
+    String jarFileName  = null;
+    String pathToJar    = null;
+    try {
+      String url = SzApiServer.class.getResource(
+          SzApiServer.class.getSimpleName() + ".class").toString();
 
-    String url = SzApiServer.class.getResource(
-        SzApiServer.class.getSimpleName() + ".class").toString();
+      int index = url.lastIndexOf(
+          SzApiServer.class.getName().replace(".", "/") + ".class");
+      jarBaseUrl = url.substring(0, index);
 
-    int index = url.lastIndexOf(
-        SzApiServer.class.getName().replace(".", "/") + ".class");
-    JAR_BASE_URL = url.substring(0, index);
-
-    index = JAR_BASE_URL.lastIndexOf("!");
-    url = url.substring(0, index);
-    index = url.lastIndexOf("/");
-    JAR_FILE_NAME = url.substring(index + 1);
-    url = url.substring(0, index);
-    index = url.indexOf("/");
-    PATH_TO_JAR = url.substring(index);
+      if (jarBaseUrl.indexOf(".jar") >= 0) {
+        index = jarBaseUrl.lastIndexOf("!");
+        if (index >= 0) {
+          url = url.substring(0, index);
+          index = url.lastIndexOf("/");
+          if (index >= 0) {
+            jarFileName = url.substring(index + 1);
+            url = url.substring(0, index);
+            index = url.indexOf("/");
+            if (index >= 0) {
+              pathToJar = url.substring(index);
+            }
+          }
+        }
+      }
+    } finally {
+      JAR_BASE_URL  = jarBaseUrl;
+      JAR_FILE_NAME = jarFileName;
+      PATH_TO_JAR   = pathToJar;
+    }
   }
 
   public static synchronized SzApiServer getInstance() {
@@ -1237,6 +1252,9 @@ public class SzApiServer implements SzApiProvider {
       }
     }
     synchronized (this.joinMonitor) {
+      this.g2Engine.destroy();
+      this.g2Config.destroy();
+      this.g2Product.destroy();
       this.completed = true;
       this.joinMonitor.notifyAll();
     }

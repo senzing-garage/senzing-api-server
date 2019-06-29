@@ -22,6 +22,14 @@ public class SzEntityNetworkData {
   private List<SzEntityData> entities;
 
   /**
+   * Package-private default constructor.
+   */
+  SzEntityNetworkData() {
+    this.entityPaths  = null;
+    this.entities     = null;
+  }
+
+  /**
    * Constructs with the specified {@link List} of {@link SzEntityPath}
    * instances and {@link List} of {@link SzEntityData} instances describing
    * the entities in the path.

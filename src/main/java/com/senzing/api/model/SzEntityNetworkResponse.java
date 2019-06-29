@@ -14,6 +14,13 @@ public class SzEntityNetworkResponse extends SzResponseWithRawData {
   private SzEntityNetworkData entityNetworkData;
 
   /**
+   * Package-private default constructor.
+   */
+  SzEntityNetworkResponse() {
+    this.entityNetworkData = null;
+  }
+
+  /**
    * Constructs with only the HTTP method and the self link, leaving the
    * entity data to be initialized later.
    *

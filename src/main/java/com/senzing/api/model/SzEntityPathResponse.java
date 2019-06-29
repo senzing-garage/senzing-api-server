@@ -14,6 +14,13 @@ public class SzEntityPathResponse extends SzResponseWithRawData {
   private SzEntityPathData entityPathData;
 
   /**
+   * Package-private default constructor.
+   */
+  SzEntityPathResponse() {
+    this.entityPathData = null;
+  }
+
+  /**
    * Constructs with only the HTTP method and the self link, leaving the
    * entity data to be initialized later.
    *

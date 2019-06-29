@@ -23,6 +23,13 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
   private Data data = new Data();
 
   /**
+   * Package-private default constructor.
+   */
+  SzDataSourcesResponse() {
+    this.dataSources = null;
+  }
+
+  /**
    * Constructs with only the HTTP method and the self link, leaving the
    * data sources to be added later.
    *
