@@ -81,7 +81,7 @@ public class RepositoryManager {
         senzingPath = defaultDir;
       }
 
-      // check the senzing path
+      // check the senzing directory
       senzingDir = new File(senzingPath);
       if (!senzingDir.exists()) {
         System.err.println("Could not find Senzing installation directory:");
@@ -94,6 +94,27 @@ public class RepositoryManager {
 
         throw new ExceptionInInitializerError(
             "Could not find Senzing installation directory: " + senzingPath);
+      }
+
+      // normalize the senzing directory
+      String dirName = senzingDir.getName();
+      if (senzingDir.isDirectory()
+          && !dirName.equalsIgnoreCase("g2")) {
+        if (RUNTIME_OS_FAMILY == MAC_OS) {
+          // for macOS be tolerant of Senzing.app or the electron app dir
+          if (dirName.equalsIgnoreCase("Senzing.app")) {
+            File contents = new File(senzingDir, "Contents");
+            File resources = new File(contents, "Resources");
+            senzingDir = new File(resources, "app");
+            dirName = senzingDir.getName();
+          }
+          if (dirName.equalsIgnoreCase("app")) {
+            senzingDir = new File(senzingDir, "g2");
+          }
+        } else if (dirName.equalsIgnoreCase("senzing")) {
+          // for windows or linux allow the "Senzing" dir as well
+          senzingDir = new File(senzingDir, "g2");
+        }
       }
 
       if (!senzingDir.isDirectory()
