@@ -32,7 +32,7 @@ public class RepositoryManager {
     System.err.println();
     System.err.println("-----------------------------------");
     System.err.println();
-    String[] envVars = {"LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH"};
+    String[] envVars = {"PATH", "LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH"};
     for (String var : envVars) {
       System.err.println(var + " = " + System.getenv(var));
     }

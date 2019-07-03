@@ -23,7 +23,7 @@ public class GenerateTestJVMScript {
     File    javaBinDir      = new File(javaHomeDir, "bin");
     String  javaExeName     = (RUNTIME_OS_FAMILY == WINDOWS) ? "javaw.exe" : "java";
     File    javaExecutable  = new File(javaBinDir, javaExeName);
-    File    senzingDir      = (senzingDirPath != null)
+    File    senzingDir      = (senzingDirPath != null && senzingDirPath.trim().length() > 0)
                               ? new File(senzingDirPath) : null;
 
     // normalize the senzing directory path
@@ -62,6 +62,7 @@ public class GenerateTestJVMScript {
     File libDir = null;
     File platformLibDir = null;
     String pathSep = ":";
+    String quote = "\"";
     if (senzingDirPath != null && senzingDirPath.trim().length() > 0) {
       senzingDir = new File(senzingDirPath);
     }
@@ -72,6 +73,7 @@ public class GenerateTestJVMScript {
         }
         libDir = new File(senzingDir, "lib");
         pathSep = ";";
+        quote = "";
         break;
       case MAC_OS:
         if (senzingDir == null) {
@@ -89,9 +91,9 @@ public class GenerateTestJVMScript {
         break;
     }
 
-    String libraryPath = "\"" + libDir.toString() + "\""
+    String libraryPath = quote + libDir.toString() + quote
         + ((platformLibDir != null)
-           ? pathSep + "\"" + platformLibDir + "\"" : "");
+           ? pathSep + quote + platformLibDir + quote : "");
 
     try {
       try (FileOutputStream fos = new FileOutputStream(targetFile);
@@ -101,7 +103,7 @@ public class GenerateTestJVMScript {
         if (RUNTIME_OS_FAMILY == WINDOWS) {
           pw.println("@echo off");
           pw.println("set Path=" + libraryPath + ";%Path%");
-          pw.println(javaExecutable.toString() + " %*");
+          pw.println("\"" + javaExecutable.toString() + "\" %*");
 
         } else {
           pw.println("#!/bin/sh");
@@ -111,7 +113,7 @@ public class GenerateTestJVMScript {
           }
           pw.println("export LD_LIBRARY_PATH=" + libraryPath
                      + ":$LD_LIBRARY_PATH");
-          pw.println(javaExecutable.toString() + " \"$@\"");
+          pw.println("\"" + javaExecutable.toString() + "\" \"$@\"");
         }
       }
       targetFile.setExecutable(true);
