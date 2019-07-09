@@ -96,7 +96,7 @@ public class ConfigServices {
 
   @GET
   @Path("/attribute-types")
-  public SzAttributeTypesResponse geAttributeTypes(
+  public SzAttributeTypesResponse getAttributeTypes(
       @DefaultValue("false") @QueryParam("withInternal") boolean withInternal,
       @QueryParam("attributeClass")                      String  attributeClass,
       @QueryParam("featureType")                         String  featureType,
@@ -205,7 +205,7 @@ public class ConfigServices {
 
   @GET
   @Path("/attribute-types/{attributeCode}")
-  public SzAttributeTypeResponse geAttributeType(
+  public SzAttributeTypeResponse getAttributeType(
       @PathParam("attributeCode")                   String  attributeCode,
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
       @Context                                      UriInfo uriInfo)

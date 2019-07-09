@@ -21,26 +21,6 @@ import static com.senzing.util.OperatingSystemFamily.*;
 import static java.nio.file.StandardCopyOption.*;
 
 public class RepositoryManager {
-  static {
-    System.err.println();
-    System.err.println("-----------------------------------");
-    System.err.println();
-    String[] sysProps = {"java.home", "java.library.path" };
-    for (String sysProp : sysProps) {
-      System.err.println(sysProp + " = " + System.getProperty(sysProp));
-    }
-    System.err.println();
-    System.err.println("-----------------------------------");
-    System.err.println();
-    String[] envVars = {"PATH", "LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH"};
-    for (String var : envVars) {
-      System.err.println(var + " = " + System.getenv(var));
-    }
-    System.err.println();
-    System.err.println("-----------------------------------");
-    System.err.println();
-  }
-
   private static final File SENZING_DIR;
 
   private static final G2Engine ENGINE_API;

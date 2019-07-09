@@ -37,7 +37,7 @@ public class AdminServicesTest extends AbstractServiceTest {
     this.validateBasics(response, uriText, before, after);
   }
 
-  @Test public void heartbeatTestViaHttp() {
+  @Test public void heartbeatViaHttpTest() {
     this.assumeNativeApiAvailable();
     String  uriText = this.formatServerUri("heartbeat");
     long    before  = System.currentTimeMillis();
@@ -66,7 +66,7 @@ public class AdminServicesTest extends AbstractServiceTest {
                                  10000);
   }
 
-  @Test public void licenseTestViaHttp() {
+  @Test public void licenseViaHttpTest() {
     this.assumeNativeApiAvailable();
     String  uriText = this.formatServerUri("license");
     UriInfo uriInfo = this.newProxyUriInfo(uriText);
@@ -102,7 +102,7 @@ public class AdminServicesTest extends AbstractServiceTest {
                                  10000);
   }
 
-  @Test public void licenseWithoutRawTestViaHttp() {
+  @Test public void licenseWithoutRawViaHttpTest() {
     this.assumeNativeApiAvailable();
     String  uriText = this.formatServerUri("license?withRaw=false");
 
@@ -137,7 +137,7 @@ public class AdminServicesTest extends AbstractServiceTest {
                                  10000);
   }
 
-  @Test public void licenseWithRawTestViaHttp() {
+  @Test public void licenseWithRawViaHttpTest() {
     this.assumeNativeApiAvailable();
     String uriText = this.formatServerUri("license?withRaw=true");
 
@@ -189,28 +189,11 @@ public class AdminServicesTest extends AbstractServiceTest {
                  "Unexpected license type");
 
     if (expectRawData) {
-      Object rawData = response.getRawData();
-      if (!(rawData instanceof Map)) {
-        fail("Raw data is not a JSON object: " + rawData);
-      }
-      Map<String, Object> map = (Map<String, Object>) rawData;
-      String[] expectedKeys = {
+      this.validateRawDataMap(
+          response.getRawData(),
           "customer", "contract", "issueDate", "licenseType",
-          "licenseLevel", "billing", "expireDate", "recordLimit"
-      };
-      Set<String> expectedKeySet = new HashSet<>();
-      Set<String> actualKeySet = map.keySet();
-      for (String key : expectedKeys) {
-        expectedKeySet.add(key);
-        if (!actualKeySet.contains(key)) {
-          fail("JSON property missing from raw data: " + key + " / " + map);
-        }
-      }
-      if (expectedKeySet.size() != actualKeySet.size()) {
-        Set<String> extraKeySet = new HashSet<>(actualKeySet);
-        extraKeySet.removeAll(expectedKeySet);
-        fail("Unexpected JSON properties in raw data: " + extraKeySet);
-      }
+          "licenseLevel", "billing", "expireDate", "recordLimit");
+
     }
   }
 }

@@ -13,11 +13,6 @@ import java.util.*;
 public class SzDataSourcesResponse extends SzResponseWithRawData
 {
   /**
-   * The set of data source codes.
-   */
-  private Set<String> dataSources;
-
-  /**
    * The data for this instance.
    */
   private Data data = new Data();
@@ -26,7 +21,7 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
    * Package-private default constructor.
    */
   SzDataSourcesResponse() {
-    this.dataSources = null;
+    // do nothing
   }
 
   /**
@@ -47,7 +42,7 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
                                String       selfLink,
                                Timers       timers) {
     super(httpMethod, httpStatusCode, selfLink, timers);
-    this.dataSources = new LinkedHashSet<>();
+    this.data.dataSources = new LinkedHashSet<>();
   }
 
   /**
@@ -66,9 +61,10 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
   public SzDataSourcesResponse(SzHttpMethod httpMethod,
                                int          httpStatusCode,
                                UriInfo      uriInfo,
-                               Timers       timers) {
+                               Timers       timers)
+  {
     super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.dataSources = new LinkedHashSet<>();
+    this.data.dataSources = new LinkedHashSet<>();
   }
 
   /**
@@ -88,8 +84,8 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
    */
   public void addDataSource(String dataSource) {
     dataSource = dataSource.trim().toUpperCase();
-    if (this.dataSources.contains(dataSource)) return;
-    this.dataSources.add(dataSource);
+    if (this.data.dataSources.contains(dataSource)) return;
+    this.data.dataSources.add(dataSource);
   }
 
   /**
@@ -100,21 +96,26 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
    */
   public void setDataSources(Collection<String> dataSources)
   {
-    this.dataSources.clear();
+    this.data.dataSources.clear();
     if (dataSources != null) {
-      this.dataSources.addAll(dataSources);
+      this.data.dataSources.addAll(dataSources);
     }
   }
 
   /**
    * Inner class to represent the data section for this response.
    */
-  public class Data {
+  public static class Data {
+    /**
+     * The set of data source codes.
+     */
+    private Set<String> dataSources;
+
     /**
      * Private default constructor.
      */
     private Data() {
-      // do nothing
+      this.dataSources = null;
     }
 
     /**
@@ -123,7 +124,7 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
      * @return The unmodifiable {@link Set} of data sources.
      */
     public Set<String> getDataSources() {
-      Set<String> set = SzDataSourcesResponse.this.dataSources;
+      Set<String> set = this.dataSources;
       return Collections.unmodifiableSet(set);
     }
   }

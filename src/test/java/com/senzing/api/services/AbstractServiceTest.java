@@ -143,6 +143,7 @@ public abstract class AbstractServiceTest {
     } else {
       sb.append("2080");
     }
+    if (relativeUri.startsWith(sb.toString())) return relativeUri;
     sb.append("/" + relativeUri);
     return sb.toString();
   }
@@ -591,5 +592,124 @@ public abstract class AbstractServiceTest {
     }
   }
 
+  /**
+   * Validates the raw data and ensures the expected JSON property keys are
+   * present and that no unexpected keys are present.
+   *
+   * @param rawData The raw data to validate.
+   *
+   * @param expectedKeys The zero or more expected property keys.
+   */
+  protected void validateRawDataMap(Object rawData, String... expectedKeys) {
+    this.validateRawDataMap(rawData, true, expectedKeys);
+  }
 
+  /**
+   * Validates the raw data and ensures the expected JSON property keys are
+   * present and that, optionally, no unexpected keys are present.
+   *
+   * @param rawData The raw data to validate.
+   *
+   * @param strict Whether or not property keys other than those specified are
+   *               allowed to be present.
+   *
+   * @param expectedKeys The zero or more expected property keys -- these are
+   *                     either a minimum or exact set depending on the
+   *                     <tt>strict</tt> parameter.
+   */
+  protected void validateRawDataMap(Object    rawData,
+                                    boolean   strict,
+                                    String... expectedKeys)
+  {
+    if (rawData == null) {
+      fail("Expected raw data but got null value");
+    }
+
+    if (!(rawData instanceof Map)) {
+      fail("Raw data is not a JSON object: " + rawData);
+    }
+
+    Map<String, Object> map = (Map<String, Object>) rawData;
+    Set<String> expectedKeySet = new HashSet<>();
+    Set<String> actualKeySet = map.keySet();
+    for (String key : expectedKeys) {
+      expectedKeySet.add(key);
+      if (!actualKeySet.contains(key)) {
+        fail("JSON property missing from raw data: " + key + " / " + map);
+      }
+    }
+    if (strict && expectedKeySet.size() != actualKeySet.size()) {
+      Set<String> extraKeySet = new HashSet<>(actualKeySet);
+      extraKeySet.removeAll(expectedKeySet);
+      fail("Unexpected JSON properties in raw data: " + extraKeySet);
+    }
+  }
+
+  /**
+   * Validates the raw data and ensures it is a collection of objects and the
+   * expected JSON property keys are present in the array objects and that no
+   * unexpected keys are present.
+   *
+   * @param rawData The raw data to validate.
+   *
+   * @param expectedKeys The zero or more expected property keys.
+   */
+  protected void validateRawDataMapArray(Object rawData, String... expectedKeys)
+  {
+    this.validateRawDataMapArray(rawData, true, expectedKeys);
+  }
+
+  /**
+   * Validates the raw data and ensures it is a collection of objects and the
+   * expected JSON property keys are present in the array objects and that,
+   * optionally, no unexpected keys are present.
+   *
+   * @param rawData The raw data to validate.
+   *
+   * @param strict Whether or not property keys other than those specified are
+   *               allowed to be present.
+   *
+   * @param expectedKeys The zero or more expected property keys for the array
+   *                     objects -- these are either a minimum or exact set
+   *                     depending on the <tt>strict</tt> parameter.
+   */
+  protected void validateRawDataMapArray(Object     rawData,
+                                         boolean    strict,
+                                         String...  expectedKeys)
+  {
+    if (rawData == null) {
+      fail("Expected raw data but got null value");
+    }
+
+    if (!(rawData instanceof Collection)) {
+      fail("Raw data is not a JSON array: " + rawData);
+    }
+
+    Collection<Object> collection = (Collection<Object>) rawData;
+    Set<String> expectedKeySet = new HashSet<>();
+    for (String key: expectedKeys) {
+      expectedKeySet.add(key);
+    }
+
+    for (Object obj : collection) {
+      if (!(obj instanceof Map)) {
+        fail("Raw data is not a JSON array of JSON objects: " + rawData);
+      }
+
+      Map<String, Object> map = (Map<String, Object>) obj;
+
+      Set<String> actualKeySet = map.keySet();
+      for (String key : expectedKeySet) {
+        if (!actualKeySet.contains(key)) {
+          fail("JSON property missing from raw data array element: "
+                   + key + " / " + map);
+        }
+      }
+      if (strict && expectedKeySet.size() != actualKeySet.size()) {
+        Set<String> extraKeySet = new HashSet<>(actualKeySet);
+        extraKeySet.removeAll(expectedKeySet);
+        fail("Unexpected JSON properties in raw data: " + extraKeySet);
+      }
+    }
+  }
 }
