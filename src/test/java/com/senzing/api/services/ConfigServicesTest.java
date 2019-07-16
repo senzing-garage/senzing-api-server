@@ -200,7 +200,8 @@ public class ConfigServicesTest extends AbstractServiceTest
    */
   protected void prepareRepository() {
     RepositoryManager.configSources(this.getRepositoryDirectory(),
-                                    CUSTOM_DATA_SOURCES);
+                                    CUSTOM_DATA_SOURCES,
+                                    true);
   }
 
   @AfterAll public void teardownEnvironment() {

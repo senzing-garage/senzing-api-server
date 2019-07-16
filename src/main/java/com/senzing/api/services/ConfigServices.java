@@ -86,10 +86,15 @@ public class ConfigServices {
       // return the response
       return response;
 
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
     } catch (WebApplicationException e) {
       throw e;
 
     } catch (Exception e) {
+      e.printStackTrace();
       throw newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
@@ -195,10 +200,15 @@ public class ConfigServices {
       // return the response
       return response;
 
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
     } catch (WebApplicationException e) {
       throw e;
 
     } catch (Exception e) {
+      e.printStackTrace();
       throw newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
@@ -264,10 +274,15 @@ public class ConfigServices {
       // return the response
       return response;
 
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
     } catch (WebApplicationException e) {
       throw e;
 
     } catch (Exception e) {
+      e.printStackTrace();
       throw newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }

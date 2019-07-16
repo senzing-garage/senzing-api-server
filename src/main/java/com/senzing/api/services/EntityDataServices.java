@@ -84,10 +84,15 @@ public class EntityDataServices {
       // return the response
       return response;
 
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
     } catch (WebApplicationException e) {
       throw e;
 
     } catch (Exception e) {
+      e.printStackTrace();
       throw ServicesUtil.newInternalServerErrorException(POST, uriInfo, timers, e);
     }
   }
@@ -155,10 +160,15 @@ public class EntityDataServices {
       // return the response
       return response;
 
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
     } catch (WebApplicationException e) {
       throw e;
 
     } catch (Exception e) {
+      e.printStackTrace();
       throw ServicesUtil.newInternalServerErrorException(PUT, uriInfo, timers, e);
     }
   }
@@ -222,17 +232,22 @@ public class EntityDataServices {
       // return the response
       return response;
 
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
     } catch (WebApplicationException e) {
       throw e;
 
     } catch (Exception e) {
+      e.printStackTrace();
       throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
   @GET
   @Path("data-sources/{dataSourceCode}/records/{recordId}/entity")
-  public SzEntityResponse geEntityByRecordId(
+  public SzEntityResponse getEntityByRecordId(
       @PathParam("dataSourceCode")                                String              dataSourceCode,
       @PathParam("recordId")                                      String              recordId,
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
@@ -353,10 +368,15 @@ public class EntityDataServices {
       return newEntityResponse(
           uriInfo, timers, entityData, (withRaw ? rawData : null));
 
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
     } catch (WebApplicationException e) {
       throw e;
 
     } catch (Exception e) {
+      e.printStackTrace();
       throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
@@ -387,7 +407,7 @@ public class EntityDataServices {
       // check if we want 1-degree relations as well -- if so we need to
       // find the network instead of a simple lookup
       if (withRelated && !forceMinimal) {
-        // build the record IDs JSON to find the network
+        // build the entity IDs JSON to find the network
         JsonObjectBuilder builder1 = Json.createObjectBuilder();
         JsonArrayBuilder builder2 = Json.createArrayBuilder();
         JsonObjectBuilder builder3 = Json.createObjectBuilder();
@@ -466,10 +486,15 @@ public class EntityDataServices {
       return newEntityResponse(
           uriInfo, timers, entityData, (withRaw ? sb.toString() : null));
 
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
     } catch (WebApplicationException e) {
       throw e;
 
     } catch (Exception e) {
+      e.printStackTrace();
       throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
@@ -488,6 +513,7 @@ public class EntityDataServices {
     try {
       SzApiProvider provider = SzApiProvider.Factory.getProvider();
 
+      boolean[] logAttrs = { false };
       // check if no attributes
       if (attrs == null || attrs.trim().length() == 0) {
         // look for the "attr_" parameters
@@ -504,7 +530,18 @@ public class EntityDataServices {
           String        jsonProp    = key.substring("attr_".length());
           List<String>  values      = e.getValue();
           String        firstValue  = values.get(0);
-          JsonUtils.add(objBuilder, jsonProp, firstValue);
+          if (values.size() == 1) {
+            JsonUtils.add(objBuilder, jsonProp, firstValue);
+          } else if (values.size() > 1) {
+            logAttrs[0] = true;
+            JsonArrayBuilder jab = Json.createArrayBuilder();
+            for (String value : values) {
+              JsonObjectBuilder job = Json.createObjectBuilder();
+              JsonUtils.add(job, jsonProp, value);
+              jab.add(job);
+            }
+            objBuilder.add(jsonProp, jab);
+          }
         });
         JsonObject jsonObject = null;
         try {
@@ -574,10 +611,16 @@ public class EntityDataServices {
       // return the response
       return response;
 
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
     } catch (WebApplicationException e) {
+      e.printStackTrace();
       throw e;
 
     } catch (Exception e) {
+      e.printStackTrace();
       throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
@@ -783,6 +826,10 @@ public class EntityDataServices {
       });
 
       return JsonUtils.toJsonText(jsonBuilder);
+
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
 
     } catch (WebApplicationException e) {
       throw e;

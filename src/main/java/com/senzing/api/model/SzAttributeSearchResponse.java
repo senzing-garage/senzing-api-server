@@ -13,12 +13,6 @@ import java.util.*;
 public class SzAttributeSearchResponse extends SzResponseWithRawData
 {
   /**
-   * The list of {@link SzAttributeSearchResult} instances describing the
-   * results.
-   */
-  private List<SzAttributeSearchResult> searchResults;
-
-  /**
    * The data for this instance.
    */
   private Data data = new Data();
@@ -27,7 +21,7 @@ public class SzAttributeSearchResponse extends SzResponseWithRawData
    * Package-private default constructor.
    */
   SzAttributeSearchResponse() {
-    this.searchResults = null;
+    this.data.searchResults = null;
   }
 
   /**
@@ -48,7 +42,7 @@ public class SzAttributeSearchResponse extends SzResponseWithRawData
                                    Timers       timers)
   {
     super(httpMethod, httpStatusCode, selfLink, timers);
-    this.searchResults = new LinkedList<>();
+    this.data.searchResults = new LinkedList<>();
   }
 
   /**
@@ -69,7 +63,7 @@ public class SzAttributeSearchResponse extends SzResponseWithRawData
                                    Timers       timers)
   {
     super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.searchResults = new LinkedList<>();
+    this.data.searchResults = new LinkedList<>();
   }
 
   /**
@@ -89,9 +83,9 @@ public class SzAttributeSearchResponse extends SzResponseWithRawData
    */
   public void setSearchResults(List<SzAttributeSearchResult> results)
   {
-    this.searchResults.clear();
+    this.data.searchResults.clear();
     if (results != null) {
-      this.searchResults.addAll(results);
+      this.data.searchResults.addAll(results);
     }
   }
 
@@ -101,13 +95,19 @@ public class SzAttributeSearchResponse extends SzResponseWithRawData
    * @param result The {@link SzAttributeSearchResult} result to add.
    */
   public void addSearchResult(SzAttributeSearchResult result) {
-    this.searchResults.add(result);
+    this.data.searchResults.add(result);
   }
 
   /**
    * Inner class to represent the data section for this response.
    */
-  public class Data {
+  public static class Data {
+    /**
+     * The list of {@link SzAttributeSearchResult} instances describing the
+     * results.
+     */
+    private List<SzAttributeSearchResult> searchResults;
+
     /**
      * Private default constructor.
      */
@@ -123,8 +123,7 @@ public class SzAttributeSearchResponse extends SzResponseWithRawData
      *          results}
      */
     public List<SzAttributeSearchResult> getSearchResults() {
-      List<SzAttributeSearchResult> list
-          = SzAttributeSearchResponse.this.searchResults;
+      List<SzAttributeSearchResult> list = this.searchResults;
       return Collections.unmodifiableList(list);
     }
   }

@@ -10,6 +10,7 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
 import javax.json.*;
+import javax.json.stream.JsonParser;
 import javax.json.stream.JsonParserFactory;
 import java.io.*;
 import java.nio.file.Files;
@@ -27,7 +28,7 @@ public class RepositoryManager {
 
   private static final G2Config CONFIG_API;
 
-  private static boolean initialized = false;
+  private static String initializedWith = null;
 
   static {
     File senzingDir = null;
@@ -682,7 +683,7 @@ public class RepositoryManager {
       } else if (options.containsKey(Option.LOAD_FILE)) {
         File sourceFile = (File) options.get(Option.LOAD_FILE);
         try {
-          loadFile(repository, sourceFile, dataSource, verbose);
+          loadFile(repository, verbose, sourceFile, dataSource);
         } finally {
           destroyApis();
         }
@@ -690,7 +691,7 @@ public class RepositoryManager {
       } else if (options.containsKey(Option.ADD_RECORD)) {
         String jsonRecord = (String) options.get(Option.ADD_RECORD);
         try {
-          addRecord(repository, jsonRecord, dataSource, verbose);
+          addRecord(repository, verbose, jsonRecord, dataSource);
         } finally {
           destroyApis();
         }
@@ -698,7 +699,7 @@ public class RepositoryManager {
       } else if (options.containsKey(Option.CONFIG_SOURCES)) {
         Set<String> dataSources = (Set<String>) options.get(Option.CONFIG_SOURCES);
         try {
-          configSources(repository, dataSources, verbose);
+          configSources(repository, verbose, dataSources);
         } finally {
           destroyApis();
         }
@@ -715,6 +716,15 @@ public class RepositoryManager {
    * @param directory The directory at which to create the repository.
    */
   public static void createRepo(File directory) {
+    createRepo(directory, false);
+  }
+
+  /**
+   * Creates a new Senzing SQLite repository from the default repository data.
+   *
+   * @param directory The directory at which to create the repository.
+   */
+  public static void createRepo(File directory, boolean silent) {
     if (directory.exists()) {
       if (!directory.isDirectory()) {
         throw new IllegalArgumentException(
@@ -776,6 +786,10 @@ public class RepositoryManager {
         pw.flush();
       }
 
+      if (!silent) {
+        System.out.println("Entity repository created at: " + directory);
+      }
+
     } catch (IOException e) {
       e.printStackTrace();
       deleteRecursively(directory);
@@ -803,28 +817,38 @@ public class RepositoryManager {
   }
 
   private static synchronized void initApis(File repository, boolean verbose) {
-    if (!initialized) {
-      File iniFile = new File(repository, "g2.ini");
-      int returnCode = CONFIG_API.init("G2", iniFile.toString(), verbose);
-      if (returnCode != 0) {
-        logError("G2Config.init()", CONFIG_API);
-        return;
+    try {
+      String initializer = verbose + ":" + repository.getCanonicalPath();
+      if (initializedWith == null || !initializedWith.equals(initializer))
+      {
+        if (initializedWith != null) {
+          destroyApis();
+        }
+        File iniFile = new File(repository, "g2.ini");
+        int returnCode = CONFIG_API.init("G2", iniFile.toString(), verbose);
+        if (returnCode != 0) {
+          logError("G2Config.init()", CONFIG_API);
+          return;
+        }
+        returnCode = ENGINE_API.init("G2", iniFile.toString(), verbose);
+        if (returnCode != 0) {
+          CONFIG_API.destroy();
+          logError("G2Engine.init()", ENGINE_API);
+          return;
+        }
+        initializedWith = initializer;
       }
-      returnCode = ENGINE_API.init("G2", iniFile.toString(), verbose);
-      if (returnCode != 0) {
-        CONFIG_API.destroy();
-        logError("G2Engine.init()", ENGINE_API);
-        return;
-      }
-      initialized = true;
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
   private static synchronized void destroyApis() {
-    if (initialized) {
+    if (initializedWith != null) {
       ENGINE_API.destroy();
       CONFIG_API.destroy();
-      initialized = false;
+      initializedWith = null;
     }
   }
 
@@ -899,7 +923,6 @@ public class RepositoryManager {
     purgeRepo(repository, false);
   }
 
-
   /**
    * Purges the repository that resides at the specified repository directory.
    *
@@ -909,11 +932,27 @@ public class RepositoryManager {
    *                <tt>false</tt>
    */
   public static void purgeRepo(File repository, boolean verbose) {
+    purgeRepo(repository, verbose, false);
+  }
+
+  /**
+   * Purges the repository that resides at the specified repository directory.
+   *
+   * @param repository The directory for the repository.
+   *
+   * @param verbose <tt>true</tt> for verbose API logging, otherwise
+   *                <tt>false</tt>
+   *
+   * @param silent <tt>true</tt> if no feedback should be given to the user
+   *               upon completion, otherwise <tt>false</tt>
+   */
+  public static void purgeRepo(File repository, boolean verbose, boolean silent)
+  {
     initApis(repository, verbose);
     int result = ENGINE_API.purgeRepository();
     if (result != 0) {
       logError("G2Engine.purgeRepository()", ENGINE_API);
-    } else {
+    } else if (!silent) {
       System.out.println();
       System.out.println("Repository purged: " + repository);
       System.out.println();
@@ -934,7 +973,39 @@ public class RepositoryManager {
                                  File             sourceFile,
                                  String           dataSource)
   {
-    return loadFile(repository, sourceFile, dataSource, null, null);
+    return loadFile(repository,
+                    false,
+                    sourceFile,
+                    dataSource,
+                    null,
+                    null,
+                    false);
+  }
+
+  /**
+   * Loads a single CSV or JSON file to the repository -- optionally setting
+   * the data source for all the records.  NOTE: if the records in the file do
+   * not have a defined DATA_SOURCE then the specified data source is required.
+   *
+   * @param repository The directory for the repository.
+   * @param sourceFile The source file to load (JSON or CSV).
+   * @param dataSource The data source to use for loading the records.
+   * @param silent <tt>true</tt> if no feedback should be given to the user
+   *               upon completion, otherwise <tt>false</tt>
+   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   */
+  public static boolean loadFile(File             repository,
+                                 File             sourceFile,
+                                 String           dataSource,
+                                 boolean          silent)
+  {
+    return loadFile(repository,
+                    false,
+                    sourceFile,
+                    dataSource,
+                    null,
+                    null,
+                    silent);
   }
 
   /**
@@ -956,31 +1027,12 @@ public class RepositoryManager {
                                  Result<Integer>  failedCount)
   {
     return loadFile(repository,
+                    false,
                     sourceFile,
                     dataSource,
-                    false,
                     loadedCount,
-                    failedCount);
-  }
-  /**
-   * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source for all the records.  NOTE: if the records in the file do
-   * not have a defined DATA_SOURCE then the specified data source is required.
-   *
-   * @param repository The directory for the repository.
-   * @param sourceFile The source file to load (JSON or CSV).
-   * @param dataSource The data source to use for loading the records.
-   * @param verbose <tt>true</tt> for verbose API logging, otherwise
-   *                <tt>false</tt>
-   *
-   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
-   */
-  public static boolean loadFile(File             repository,
-                                 File             sourceFile,
-                                 String           dataSource,
-                                 boolean          verbose)
-  {
-    return loadFile(repository, sourceFile, dataSource, verbose, null, null);
+                    failedCount,
+                    false);
   }
 
   /**
@@ -991,19 +1043,138 @@ public class RepositoryManager {
    * @param repository The directory for the repository.
    * @param sourceFile The source file to load (JSON or CSV).
    * @param dataSource The data source to use for loading the records.
+   * @param loadedCount The output parameter for the number successfully loaded.
+   * @param failedCount The output parameter for the number that failed to load.
+   * @param silent <tt>true</tt> if no feedback should be given to the user
+   *               upon completion, otherwise <tt>false</tt>
+   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   */
+  public static boolean loadFile(File             repository,
+                                 File             sourceFile,
+                                 String           dataSource,
+                                 Result<Integer>  loadedCount,
+                                 Result<Integer>  failedCount,
+                                 boolean          silent)
+  {
+    return loadFile(repository,
+                    false,
+                    sourceFile,
+                    dataSource,
+                    loadedCount,
+                    failedCount,
+                    silent);
+  }
+
+  /**
+   * Loads a single CSV or JSON file to the repository -- optionally setting
+   * the data source for all the records.  NOTE: if the records in the file do
+   * not have a defined DATA_SOURCE then the specified data source is required.
+   *
+   * @param repository The directory for the repository.
    * @param verbose <tt>true</tt> for verbose API logging, otherwise
    *                <tt>false</tt>
+   * @param sourceFile The source file to load (JSON or CSV).
+   * @param dataSource The data source to use for loading the records.
+   *
+   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   */
+  public static boolean loadFile(File             repository,
+                                 boolean          verbose,
+                                 File             sourceFile,
+                                 String           dataSource)
+  {
+    return loadFile(repository,
+                    verbose,
+                    sourceFile,
+                    dataSource,
+                    null,
+                    null,
+                    false);
+  }
+
+  /**
+   * Loads a single CSV or JSON file to the repository -- optionally setting
+   * the data source for all the records.  NOTE: if the records in the file do
+   * not have a defined DATA_SOURCE then the specified data source is required.
+   *
+   * @param repository The directory for the repository.
+   * @param verbose <tt>true</tt> for verbose API logging, otherwise
+   *                <tt>false</tt>
+   * @param sourceFile The source file to load (JSON or CSV).
+   * @param dataSource The data source to use for loading the records.
+   * @param silent <tt>true</tt> if no feedback should be given to the user
+   *               upon completion, otherwise <tt>false</tt>
+   *
+   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   */
+  public static boolean loadFile(File             repository,
+                                 boolean          verbose,
+                                 File             sourceFile,
+                                 String           dataSource,
+                                 boolean          silent)
+  {
+    return loadFile(repository,
+                    verbose,
+                    sourceFile,
+                    dataSource,
+                    null,
+                    null,
+                    silent);
+  }
+
+  /**
+   * Loads a single CSV or JSON file to the repository -- optionally setting
+   * the data source for all the records.  NOTE: if the records in the file do
+   * not have a defined DATA_SOURCE then the specified data source is required.
+   *
+   * @param repository The directory for the repository.
+   * @param verbose <tt>true</tt> for verbose API logging, otherwise
+   *                <tt>false</tt>
+   * @param sourceFile The source file to load (JSON or CSV).
+   * @param dataSource The data source to use for loading the records.
    * @param loadedCount The output parameter for the number successfully loaded.
    * @param failedCount The output parameter for the number that failed to load.
    *
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
    */
   public static boolean loadFile(File             repository,
+                                 boolean          verbose,
                                  File             sourceFile,
                                  String           dataSource,
-                                 boolean          verbose,
                                  Result<Integer>  loadedCount,
                                  Result<Integer>  failedCount)
+  {
+    return loadFile(repository,
+                    verbose,
+                    sourceFile,
+                    dataSource,
+                    loadedCount,
+                    failedCount,
+                    false);
+  }
+
+  /**
+   * Loads a single CSV or JSON file to the repository -- optionally setting
+   * the data source for all the records.  NOTE: if the records in the file do
+   * not have a defined DATA_SOURCE then the specified data source is required.
+   *
+   * @param repository The directory for the repository.
+   * @param verbose <tt>true</tt> for verbose API logging, otherwise
+   *                <tt>false</tt>
+   * @param sourceFile The source file to load (JSON or CSV).
+   * @param dataSource The data source to use for loading the records.
+   * @param loadedCount The output parameter for the number successfully loaded.
+   * @param failedCount The output parameter for the number that failed to load.
+   *
+   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   */
+  public static boolean loadFile(File             repository,
+                                 boolean          verbose,
+                                 File             sourceFile,
+                                 String           dataSource,
+                                 Result<Integer>  loadedCount,
+                                 Result<Integer>  failedCount,
+                                 boolean          silent)
   {
     String normalizedFileName = sourceFile.toString().toUpperCase();
     if ((!normalizedFileName.endsWith(".JSON"))
@@ -1076,39 +1247,39 @@ public class RepositoryManager {
                                                        loadId);
         if (returnCode == 0) {
           loaded++;
-          loadedInterval
-              = doLoadFeedback(
-                  "Loaded so far", loaded, loadedInterval, loaded, failed);
+          loadedInterval = doLoadFeedback(
+              "Loaded so far", loaded, loadedInterval, loaded, failed, silent);
 
         } else {
           failed++;
           if (failed == 1 || ((failed % failedInterval) == 0)) {
             logError("G2Engine.addRecord()", ENGINE_API);
           }
-          failedInterval
-              = doLoadFeedback(
-                  "Loaded so far", failed, failedInterval, loaded, failed);
+          failedInterval = doLoadFeedback(
+              "Loaded so far", failed, failedInterval, loaded, failed, silent);
         }
       }
       doLoadFeedback(
-          "Loaded all records", loaded, 0, loaded, failed);
-      processRedos();
-      printStream = System.out;
+          "Loaded all records", loaded, 0, loaded, failed, silent);
+      processRedos(silent);
+      printStream = (silent) ? null : System.out;
 
       return true;
 
     } finally {
       if (loaded > 0 || failed > 0) {
-        printStream.println();
-        printStream.println("Loaded records from file:");
-        printStream.println("     Repository  : " + repository);
-        printStream.println("     File        : " + sourceFile);
-        if (dataSource != null) {
-          printStream.println("     Data Source : " + dataSource);
+        if (printStream != null) {
+          printStream.println();
+          printStream.println("Loaded records from file:");
+          printStream.println("     Repository  : " + repository);
+          printStream.println("     File        : " + sourceFile);
+          if (dataSource != null) {
+            printStream.println("     Data Source : " + dataSource);
+          }
+          printStream.println("     Load Count  : " + loaded);
+          printStream.println("     Fail Count  : " + failed);
+          printStream.println();
         }
-        printStream.println("     Load Count  : " + loaded);
-        printStream.println("     Fail Count  : " + failed);
-        printStream.println();
       }
       // set the counts
       if (failedCount != null) failedCount.setValue(failed);
@@ -1116,7 +1287,7 @@ public class RepositoryManager {
     }
   }
 
-  private static int processRedos() {
+  private static int processRedos(boolean silent) {
     int loaded = 0;
     int failed = 0;
     try {
@@ -1137,11 +1308,11 @@ public class RepositoryManager {
           logError("G2Engine.processRedoRecord()", ENGINE_API);
           failed++;
           failedInterval = doLoadFeedback(
-              "Redo's so far", failed, failedInterval, loaded, failed);
+              "Redo's so far", failed, failedInterval, loaded, failed, silent);
         } else {
           loaded++;
           loadedInterval = doLoadFeedback(
-              "Redo's so far", loaded, loadedInterval, loaded, failed);
+              "Redo's so far", loaded, loadedInterval, loaded, failed, silent);
         }
         if (count > (originalCount*5)) {
           System.err.println();
@@ -1167,18 +1338,21 @@ public class RepositoryManager {
 
   }
 
-  private static int doLoadFeedback(String prefix,
-                                    int count,
-                                    int interval,
-                                    int loaded,
-                                    int failed)
+  private static int doLoadFeedback(String  prefix,
+                                    int     count,
+                                    int     interval,
+                                    int     loaded,
+                                    int     failed,
+                                    boolean silent)
   {
     if (count > (interval * 10)) {
       interval *= 10;
     }
     if ((count > 0) && ((interval == 0) || (count % interval) == 0)) {
-      System.out.println(prefix + " (succeeded / failed): "
-                         + loaded + " / " + failed);
+      if (!silent) {
+        System.out.println(prefix + " (succeeded / failed): "
+                           + loaded + " / " + failed);
+      }
     }
     return interval;
   }
@@ -1234,10 +1408,12 @@ public class RepositoryManager {
         InputStreamReader  isr = new InputStreamReader(fis, "UTF-8");
         BufferedReader     br  = new BufferedReader(isr);
 
-       this.recordIter = jpf.createParser(br).getArrayStream()
-                            .map(jv -> (JsonObject) jv).iterator();
+        JsonParser jp = jpf.createParser(br);
+        jp.next();
+        this.recordIter = jp.getArrayStream()
+            .map(jv -> (JsonObject) jv).iterator();
 
-       this.dataSource = dataSource;
+        this.dataSource = dataSource;
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
@@ -1431,8 +1607,47 @@ public class RepositoryManager {
                                   String jsonRecord,
                                   String dataSource)
   {
-    return addRecord(repository, jsonRecord, dataSource, false);
+    return addRecord(repository, false, jsonRecord, dataSource, false);
   }
+
+  /**
+   * Loads a single JSON record to the repository -- optionally setting
+   * the data source for the record.  NOTE: if the specified record does not
+   * have a DATA_SOURCE property then the specified data source is required.
+   *
+   * @param repository The directory for the repository.
+   * @param jsonRecord The JSON record to load.
+   * @param dataSource The data source to use for loading the records.
+   *
+   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   */
+  public static boolean addRecord(File    repository,
+                                  boolean verbose,
+                                  String  jsonRecord,
+                                  String  dataSource)
+  {
+    return addRecord(repository, verbose, jsonRecord, dataSource, false);
+  }
+
+  /**
+   * Loads a single JSON record to the repository -- optionally setting
+   * the data source for the record.  NOTE: if the specified record does not
+   * have a DATA_SOURCE property then the specified data source is required.
+   *
+   * @param repository The directory for the repository.
+   * @param jsonRecord The JSON record to load.
+   * @param dataSource The data source to use for loading the records.
+   *
+   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   */
+  public static boolean addRecord(File    repository,
+                                  String  jsonRecord,
+                                  String  dataSource,
+                                  boolean silent)
+  {
+    return addRecord(repository, false, jsonRecord, dataSource, silent);
+  }
+
 
   /**
    * Loads a single JSON record to the repository -- optionally setting
@@ -1448,9 +1663,10 @@ public class RepositoryManager {
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
    */
   public static boolean addRecord(File     repository,
+                                  boolean  verbose,
                                   String   jsonRecord,
                                   String   dataSource,
-                                  boolean  verbose)
+                                  boolean  silent)
   {
     initApis(repository, verbose);
 
@@ -1489,12 +1705,14 @@ public class RepositoryManager {
       return false;
     }
 
-    processRedos();
+    processRedos(silent);
 
-    System.out.println();
-    System.out.println("Added record to " + dataSource + " data source: ");
-    System.out.println(jsonRecord);
-    System.out.println();
+    if (!silent) {
+      System.out.println();
+      System.out.println("Added record to " + dataSource + " data source: ");
+      System.out.println(jsonRecord);
+      System.out.println();
+    }
 
     return true;
   }
@@ -1526,16 +1744,56 @@ public class RepositoryManager {
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
    */
   public static boolean configSources(File         repository,
+                                      boolean      verbose,
+                                      Set<String>  dataSources)
+  {
+    return configSources(repository, verbose, dataSources, false);
+  }
+
+  /**
+   * Configures the specified data sources for the specified repository
+   * if not already configured.
+   *
+   * @param repository The directory for the repository.
+   * @param dataSources The {@link List} of data source names.
+   * @param silent <tt>true</tt> if no feedback should be given to the user
+   *               upon completion, otherwise <tt>false</tt>
+   *
+   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   */
+  public static boolean configSources(File         repository,
                                       Set<String>  dataSources,
-                                      boolean      verbose)
+                                      boolean      silent)
+  {
+    return configSources(repository, false, dataSources, silent);
+  }
+
+  /**
+   * Configures the specified data sources for the specified repository
+   * if not already configured.
+   *
+   * @param repository The directory for the repository.
+   * @param verbose <tt>true</tt> for verbose API logging, otherwise
+   *                <tt>false</tt>
+   * @param dataSources The {@link List} of data source names.
+   * @param silent <tt>true</tt> if no feedback should be given to the user
+   *               upon completion, otherwise <tt>false</tt>
+   *
+   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   */
+  public static boolean configSources(File         repository,
+                                      boolean      verbose,
+                                      Set<String>  dataSources,
+                                      boolean      silent)
   {
     initApis(repository, verbose);
-    Result<Long> configId = new Result<Long>();
+    Result<Long> configId = new Result<>();
     int returnCode = 0;
     try {
       Set<String> existingSet = getDataSources(configId);
 
       Map<String, Boolean> dataSourceActions = new LinkedHashMap<>();
+      int addedCount = 0;
       for (String dataSource : dataSources) {
         if (existingSet.contains(dataSource)) {
           dataSourceActions.put(dataSource, false);
@@ -1548,6 +1806,7 @@ public class RepositoryManager {
           return false;
         }
         dataSourceActions.put(dataSource, true);
+        addedCount++;
       }
       StringBuffer sb = new StringBuffer();
       returnCode = CONFIG_API.save(configId.getValue(), sb);
@@ -1571,16 +1830,23 @@ public class RepositoryManager {
         return false;
       }
 
-      System.out.println();
-      System.out.println("Ensured specified data sources are configured.");
-      System.out.println("     Repository   : " + repository);
-      System.out.println("     Data Sources : ");
-      dataSourceActions.entrySet().forEach(entry -> {
-        System.out.println(
-            "          - " + entry.getKey()
-            + " (" + ((entry.getValue()) ? "added" : "preconfigured") + ")");
-      });
-      System.out.println();
+      if (!silent) {
+        System.out.println();
+        System.out.println("Ensured specified data sources are configured.");
+        System.out.println("     Repository   : " + repository);
+        System.out.println("     Data Sources : ");
+        dataSourceActions.entrySet().forEach(entry -> {
+          System.out.println(
+              "          - " + entry.getKey()
+              + " (" + ((entry.getValue()) ? "added" : "preconfigured") + ")");
+        });
+        System.out.println();
+      }
+
+      if (addedCount > 0) {
+        destroyApis();
+        initApis(repository, verbose);
+      }
 
     } finally {
       if (configId.getValue() != null) {

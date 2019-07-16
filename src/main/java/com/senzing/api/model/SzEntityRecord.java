@@ -139,7 +139,6 @@ public class SzEntityRecord {
     this.addressData.addAll(addressData);
   }
 
-
   /**
    * Adds to the address data list for the record.
    *
@@ -286,12 +285,12 @@ public class SzEntityRecord {
    *
    * @param relationshipData The list of relationship data strings.
    */
-  public void setRelationshipData(List<String> relationshipData) {
-    this.relationshipData.clear();
-    this.relationshipData.addAll(relationshipData);
-  }
+   public void setRelationshipData(List<String> relationshipData) {
+   this.relationshipData.clear();
+   this.relationshipData.addAll(relationshipData);
+   }
 
-  /**
+   /**
    * Adds to the relationship data list for the record.
    *
    * @param relationshipData The relationship data string to add to the
@@ -341,14 +340,30 @@ public class SzEntityRecord {
   }
 
   /**
+   * Sets the original source data using the specified object.
+   *
+   * @param jsonObject The object representation of the JSON for the
+   *                   original source data.
+   */
+  public void setOriginalSourceData(Object jsonObject)
+  {
+    if (jsonObject != null && jsonObject instanceof String) {
+      this.setOriginalSourceDataFromText((String) jsonObject);
+    } else {
+      this.originalSourceData = jsonObject;
+    }
+  }
+
+  /**
    * Sets the original source data using the specified JSON text.
    *
    * @param jsonText The JSON text for the original source data.
    */
-  public void setOriginalSourceData(String jsonText)
+  public void setOriginalSourceDataFromText(String jsonText)
   {
     this.originalSourceData = JsonUtils.normalizeJsonText(jsonText);
   }
+
 
   /**
    * Parses the native JSON to construct/populate a {@link List}
@@ -426,7 +441,7 @@ public class SzEntityRecord {
     JsonObject  jsonData    = jsonObject.getJsonObject("JSON_DATA");
     String      sourceData  = JsonUtils.toJsonText(jsonData);
 
-    record.setOriginalSourceData(sourceData);
+    record.setOriginalSourceDataFromText(sourceData);
 
     getValueList(jsonObject, "ADDRESS_DATA", (addr) -> {
       rec.addAddressData(addr);

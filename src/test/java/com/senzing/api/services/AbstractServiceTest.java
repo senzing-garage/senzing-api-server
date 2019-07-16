@@ -15,7 +15,12 @@ import com.senzing.g2.engine.G2Engine;
 import com.senzing.g2.engine.G2JNI;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.AccessToken;
+import com.senzing.util.JsonUtils;
 
+import javax.json.Json;
+import javax.json.JsonArrayBuilder;
+import javax.json.JsonObjectBuilder;
+import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.UriInfo;
 
 import static com.senzing.api.BuildInfo.MAVEN_VERSION;
@@ -42,8 +47,8 @@ public abstract class AbstractServiceTest {
   protected static final String NATIVE_API_UNAVAILABLE_MESSAGE;
 
   static {
-    G2Engine      engineApi = null;
-    StringWriter  sw        = new StringWriter();
+    G2Engine engineApi = null;
+    StringWriter sw = new StringWriter();
     try {
       PrintWriter pw = new PrintWriter(sw);
       pw.println();
@@ -98,7 +103,7 @@ public abstract class AbstractServiceTest {
       return Files.createTempDirectory("sz-repo-").toFile();
     } catch (RuntimeException e) {
       throw e;
-    } catch(Exception e) {
+    } catch (Exception e) {
       throw new RuntimeException(e);
     }
   }
@@ -118,10 +123,10 @@ public abstract class AbstractServiceTest {
    *                      repository.
    */
   protected AbstractServiceTest(File repoDirectory) {
-    this.server         = null;
-    this.repoDirectory  = repoDirectory;
-    this.accessToken    = new AccessToken();
-    this.providerToken  = null;
+    this.server = null;
+    this.repoDirectory = repoDirectory;
+    this.accessToken = new AccessToken();
+    this.providerToken = null;
   }
 
   /**
@@ -132,7 +137,6 @@ public abstract class AbstractServiceTest {
    * running, and is <tt>"2080"</tt> (the default port) if not running.
    *
    * @param relativeUri The relative URI to build the absolute URI from.
-   *
    * @return The absolute URI for localhost on the current port.
    */
   protected String formatServerUri(String relativeUri) {
@@ -153,7 +157,7 @@ public abstract class AbstractServiceTest {
    * test or tests to be skipped.
    *
    * @return <tt>true</tt> if the native API's are available, otherwise
-   *         <tt>false</tt>
+   * <tt>false</tt>
    */
   protected boolean assumeNativeApiAvailable() {
     assumeTrue(NATIVE_API_AVAILABLE, NATIVE_API_UNAVAILABLE_MESSAGE);
@@ -167,7 +171,7 @@ public abstract class AbstractServiceTest {
    */
   protected void initializeTestEnvironment() {
     if (!NATIVE_API_AVAILABLE) return;
-    RepositoryManager.createRepo(this.getRepositoryDirectory());
+    RepositoryManager.createRepo(this.getRepositoryDirectory(), true);
     this.repoCreated = true;
     this.prepareRepository();
     RepositoryManager.conclude();
@@ -188,18 +192,17 @@ public abstract class AbstractServiceTest {
 
     // cleanup the repo directory
     if (this.repoCreated && deleteRepository
-        && this.repoDirectory.exists() && this.repoDirectory.isDirectory())
-    {
-       try {
-         // delete the repository
-         Files.walk(this.repoDirectory.toPath())
-             .sorted(Comparator.reverseOrder())
-             .map(Path::toFile)
-             .forEach(File::delete);
+        && this.repoDirectory.exists() && this.repoDirectory.isDirectory()) {
+      try {
+        // delete the repository
+        Files.walk(this.repoDirectory.toPath())
+            .sorted(Comparator.reverseOrder())
+            .map(Path::toFile)
+            .forEach(File::delete);
 
-       } catch (IOException e) {
-         throw new RuntimeException(e);
-       }
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
     // for good measure
     if (NATIVE_API_AVAILABLE) {
@@ -229,7 +232,6 @@ public abstract class AbstractServiceTest {
   /**
    * Stops the server if it is running and purges the repository.  After
    * purging the server is restarted.
-   *
    */
   protected void purgeRepository() {
     this.purgeRepository(true);
@@ -243,7 +245,6 @@ public abstract class AbstractServiceTest {
    *
    * @param restartServer <tt>true</tt> to restart the server and <tt>false</tt>
    *                      if you intend to restart it manually.
-   *
    * @see #restartServer()
    */
   protected void purgeRepository(boolean restartServer) {
@@ -257,7 +258,6 @@ public abstract class AbstractServiceTest {
    * Restarts the server.  If the server is already running it is shutdown
    * first and then started.  If not running it is started up.  This cannot
    * be called prior to the repository being created.
-   *
    */
   protected void restartServer() {
     if (!this.repoCreated) {
@@ -290,7 +290,7 @@ public abstract class AbstractServiceTest {
    * server.  Override to use a specific port.
    *
    * @return The port that should be used in initializing the server, or
-   *         <tt>null</tt> if any available port is fine.
+   * <tt>null</tt> if any available port is fine.
    */
   protected Integer getServerPort() {
     return null;
@@ -303,8 +303,8 @@ public abstract class AbstractServiceTest {
    * should be bound to.
    *
    * @return The {@link InetAddress} for initializing the server, or
-   *         <tt>null</tt> if the server should bind to all available network
-   *         interfaces.
+   * <tt>null</tt> if the server should bind to all available network
+   * interfaces.
    */
   protected InetAddress getServerAddress() {
     try {
@@ -340,8 +340,7 @@ public abstract class AbstractServiceTest {
    * By default this <tt>true</tt>.  Override to set to <tt>false</tt>.
    *
    * @return <tt>true</tt> if the server should be initialized in verbose mode,
-   *         otherwise <tt>false</tt>.
-   *
+   * otherwise <tt>false</tt>.
    */
   protected boolean isVerbose() {
     return false;
@@ -385,7 +384,7 @@ public abstract class AbstractServiceTest {
     try {
       final URI uri = new URI(selfLink);
 
-      InvocationHandler handler = (p,m,a) -> {
+      InvocationHandler handler = (p, m, a) -> {
         if (m.getName().equals("getRequestUri")) {
           return uri;
         }
@@ -393,8 +392,8 @@ public abstract class AbstractServiceTest {
             "Operation not implemented on proxy UriInfo");
       };
 
-      ClassLoader loader  = this.getClass().getClassLoader();
-      Class[]     classes = {UriInfo.class};
+      ClassLoader loader = this.getClass().getClassLoader();
+      Class[] classes = {UriInfo.class};
 
       return (UriInfo) Proxy.newProxyInstance(loader, classes, handler);
 
@@ -411,30 +410,103 @@ public abstract class AbstractServiceTest {
    * calling the service function and timestamp from after calling the
    * service function.
    *
-   * @param response The {@link SzBasicResponse} to validate.
-   * @param selfLink The self link to be expected.
+   * @param response        The {@link SzBasicResponse} to validate.
+   * @param selfLink        The self link to be expected.
    * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp The timestamp from just after calling the service.
+   * @param afterTimestamp  The timestamp from just after calling the service.
    */
-  protected void validateBasics(SzBasicResponse  response,
-                                String           selfLink,
-                                long             beforeTimestamp,
-                                long             afterTimestamp)
+  protected void validateBasics(SzBasicResponse response,
+                                String selfLink,
+                                long beforeTimestamp,
+                                long afterTimestamp) {
+    this.validateBasics(
+        null, response, GET, selfLink, beforeTimestamp, afterTimestamp);
+  }
+
+  /**
+   * Validates the basic response fields for the specified {@link
+   * SzBasicResponse} using the specified self link, timestamp from before
+   * calling the service function and timestamp from after calling the
+   * service function.
+   *
+   * @param testInfo        Additional test information to be logged with failures.
+   * @param response        The {@link SzBasicResponse} to validate.
+   * @param selfLink        The self link to be expected.
+   * @param beforeTimestamp The timestamp from just before calling the service.
+   * @param afterTimestamp  The timestamp from just after calling the service.
+   */
+  protected void validateBasics(String testInfo,
+                                SzBasicResponse response,
+                                String selfLink,
+                                long beforeTimestamp,
+                                long afterTimestamp) {
+    this.validateBasics(
+        testInfo, response, GET, selfLink, beforeTimestamp, afterTimestamp);
+  }
+
+  /**
+   * Validates the basic response fields for the specified {@link
+   * SzBasicResponse} using the specified self link, timestamp from before
+   * calling the service function and timestamp from after calling the
+   * service function.
+   *
+   * @param response           The {@link SzBasicResponse} to validate.
+   * @param expectedHttpMethod The {@link SzHttpMethod} that was used.
+   * @param selfLink           The self link to be expected.
+   * @param beforeTimestamp    The timestamp from just before calling the service.
+   * @param afterTimestamp     The timestamp from just after calling the service.
+   */
+  protected void validateBasics(SzBasicResponse response,
+                                SzHttpMethod expectedHttpMethod,
+                                String selfLink,
+                                long beforeTimestamp,
+                                long afterTimestamp)
   {
+    this.validateBasics(null,
+                        response,
+                        expectedHttpMethod,
+                        selfLink,
+                        beforeTimestamp,
+                        afterTimestamp);
+  }
+
+  /**
+   * Validates the basic response fields for the specified {@link
+   * SzBasicResponse} using the specified self link, timestamp from before
+   * calling the service function and timestamp from after calling the
+   * service function.
+   *
+   * @param testInfo           Additional test information to be logged with failures.
+   * @param response           The {@link SzBasicResponse} to validate.
+   * @param expectedHttpMethod The {@link SzHttpMethod} that was used.
+   * @param selfLink           The self link to be expected.
+   * @param beforeTimestamp    The timestamp from just before calling the service.
+   * @param afterTimestamp     The timestamp from just after calling the service.
+   */
+  protected void validateBasics(String          testInfo,
+                                SzBasicResponse response,
+                                SzHttpMethod    expectedHttpMethod,
+                                String          selfLink,
+                                long            beforeTimestamp,
+                                long            afterTimestamp)
+  {
+    String suffix = (testInfo != null && testInfo.trim().length() > 0)
+                  ? " ( " + testInfo + " )" : "";
 
     SzLinks links = response.getLinks();
-    SzMeta meta  = response.getMeta();
-    assertEquals(selfLink, links.getSelf(), "Unexpected self link");
-    assertEquals(GET, meta.getHttpMethod(), "Unexpected HTTP method");
-    assertEquals(200, meta.getHttpStatusCode(), "Unexpected HTTP status code");
-    assertEquals(MAVEN_VERSION, meta.getVersion(), "Unexpected server version");
-    assertNotNull(meta.getTimestamp(), "Timestamp unexpectedly null");
+    SzMeta meta = response.getMeta();
+    assertEquals(selfLink, links.getSelf(), "Unexpected self link" + suffix);
+    assertEquals(expectedHttpMethod, meta.getHttpMethod(),
+                 "Unexpected HTTP method" + suffix);
+    assertEquals(200, meta.getHttpStatusCode(), "Unexpected HTTP status code" + suffix);
+    assertEquals(MAVEN_VERSION, meta.getVersion(), "Unexpected server version" + suffix);
+    assertNotNull(meta.getTimestamp(), "Timestamp unexpectedly null" + suffix);
     long now = meta.getTimestamp().getTime();
 
     // check the timestamp
     if (now < beforeTimestamp || now > afterTimestamp) {
       fail("Timestamp should be between " + new Date(beforeTimestamp) + " and "
-               + new Date(afterTimestamp));
+               + new Date(afterTimestamp) + suffix);
     }
     Map<String, Long> timings = meta.getTimings();
 
@@ -445,7 +517,7 @@ public abstract class AbstractServiceTest {
       long duration = entry.getValue();
       if (duration > maxDuration) {
         fail("Timing value too large: " + entry.getKey() + " = "
-             + duration + "ms VS " + maxDuration + "ms");
+                 + duration + "ms VS " + maxDuration + "ms" + suffix);
       }
     });
   }
@@ -456,12 +528,12 @@ public abstract class AbstractServiceTest {
    * calling the service function, timestamp from after calling the
    * service function, and flag indicating if raw data should be expected.
    *
-   * @param response The {@link SzBasicResponse} to validate.
-   * @param selfLink The self link to be expected.
+   * @param response        The {@link SzBasicResponse} to validate.
+   * @param selfLink        The self link to be expected.
    * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp The timestamp from just after calling the service.
-   * @param expectRawData <tt>true</tt> if raw data should be expected,
-   *                      otherwise <tt>false</tt>
+   * @param afterTimestamp  The timestamp from just after calling the service.
+   * @param expectRawData   <tt>true</tt> if raw data should be expected,
+   *                        otherwise <tt>false</tt>
    */
   protected void validateBasics(SzResponseWithRawData response,
                                 String                selfLink,
@@ -469,30 +541,61 @@ public abstract class AbstractServiceTest {
                                 long                  afterTimestamp,
                                 boolean               expectRawData)
   {
-    this.validateBasics(response, selfLink, beforeTimestamp, afterTimestamp);
+    this.validateBasics(null,
+                        response,
+                        selfLink,
+                        beforeTimestamp,
+                        afterTimestamp,
+                        expectRawData);
+  }
+
+  /**
+   * Validates the basic response fields for the specified {@link
+   * SzResponseWithRawData} using the specified self link, timestamp from before
+   * calling the service function, timestamp from after calling the
+   * service function, and flag indicating if raw data should be expected.
+   *
+   * @param testInfo        Additional test information to be logged with failures.
+   * @param response        The {@link SzBasicResponse} to validate.
+   * @param selfLink        The self link to be expected.
+   * @param beforeTimestamp The timestamp from just before calling the service.
+   * @param afterTimestamp  The timestamp from just after calling the service.
+   * @param expectRawData   <tt>true</tt> if raw data should be expected,
+   *                        otherwise <tt>false</tt>
+   */
+  protected void validateBasics(String                testInfo,
+                                SzResponseWithRawData response,
+                                String                selfLink,
+                                long                  beforeTimestamp,
+                                long                  afterTimestamp,
+                                boolean               expectRawData)
+  {
+    String suffix = (testInfo != null && testInfo.trim().length() > 0)
+        ? " ( " + testInfo + " )" : "";
+
+    this.validateBasics(testInfo, response, selfLink, beforeTimestamp, afterTimestamp);
 
     Object rawData = response.getRawData();
     if (expectRawData) {
-      assertNotNull(rawData, "Raw data unexpectedly non-null");
+      assertNotNull(rawData, "Raw data unexpectedly non-null" + suffix);
     } else {
-      assertNull(rawData, "Raw data unexpectedly null");
+      assertNull(rawData, "Raw data unexpectedly null" + suffix);
     }
   }
 
   /**
    * Invoke an operation on the currently running API server over HTTP.
    *
-   * @param httpMethod The HTTP method to use.
-   * @param uri The relative or absolute URI (optionally including query params)
+   * @param httpMethod    The HTTP method to use.
+   * @param uri           The relative or absolute URI (optionally including query params)
    * @param responseClass The class of the response.
-   * @param <T> The response type which must extend {@link SzBasicResponse}
+   * @param <T>           The response type which must extend {@link SzBasicResponse}
    * @return
    */
   protected <T extends SzBasicResponse> T invokeServerViaHttp(
-      SzHttpMethod    httpMethod,
-      String          uri,
-      Class<T>        responseClass)
-  {
+      SzHttpMethod httpMethod,
+      String uri,
+      Class<T> responseClass) {
     return this.invokeServerViaHttp(
         httpMethod, uri, null, null, responseClass);
   }
@@ -500,21 +603,20 @@ public abstract class AbstractServiceTest {
   /**
    * Invoke an operation on the currently running API server over HTTP.
    *
-   * @param httpMethod The HTTP method to use.
-   * @param uri The relative or absolute URI (optionally including query params)
-   * @param queryParams The optional map of query parameters.
-   * @param bodyContent The object to be converted to JSON for body content.
+   * @param httpMethod    The HTTP method to use.
+   * @param uri           The relative or absolute URI (optionally including query params)
+   * @param queryParams   The optional map of query parameters.
+   * @param bodyContent   The object to be converted to JSON for body content.
    * @param responseClass The class of the response.
-   * @param <T> The response type which must extend {@link SzBasicResponse}
+   * @param <T>           The response type which must extend {@link SzBasicResponse}
    * @return
    */
   protected <T extends SzBasicResponse> T invokeServerViaHttp(
-      SzHttpMethod    httpMethod,
-      String          uri,
-      Map<String, ?>  queryParams,
-      Object          bodyContent,
-      Class<T>        responseClass)
-  {
+      SzHttpMethod httpMethod,
+      String uri,
+      Map<String, ?> queryParams,
+      Object bodyContent,
+      Class<T> responseClass) {
     ObjectMapper objectMapper = new ObjectMapper();
     try {
       if (!uri.toLowerCase().startsWith("http://")) {
@@ -525,9 +627,9 @@ public abstract class AbstractServiceTest {
 
         StringBuilder sb = new StringBuilder();
         queryParams.entrySet().forEach(entry -> {
-          String      key    = entry.getKey();
-          Object      value  = entry.getValue();
-          Collection  values = null;
+          String key = entry.getKey();
+          Object value = entry.getValue();
+          Collection values = null;
           if (value instanceof Collection) {
             values = (Collection) value;
           } else {
@@ -563,11 +665,13 @@ public abstract class AbstractServiceTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         OutputStreamWriter osw = new OutputStreamWriter(baos, "UTF-8");
         osw.write(jsonContent);
+        osw.flush();
         byte[] bytes = baos.toByteArray();
         int length = bytes.length;
         conn.addRequestProperty("Content-Length", "" + length);
         conn.addRequestProperty("Content-Type",
                                 "application/json; charset=utf-8");
+        conn.setDoOutput(true);
         OutputStream os = conn.getOutputStream();
         os.write(bytes);
         os.flush();
@@ -586,8 +690,10 @@ public abstract class AbstractServiceTest {
       return objectMapper.readValue(responseJson, responseClass);
 
     } catch (RuntimeException e) {
+      e.printStackTrace();
       throw e;
     } catch (Exception e) {
+      e.printStackTrace();
       throw new RuntimeException(e);
     }
   }
@@ -596,23 +702,38 @@ public abstract class AbstractServiceTest {
    * Validates the raw data and ensures the expected JSON property keys are
    * present and that no unexpected keys are present.
    *
-   * @param rawData The raw data to validate.
-   *
+   * @param rawData      The raw data to validate.
    * @param expectedKeys The zero or more expected property keys.
    */
   protected void validateRawDataMap(Object rawData, String... expectedKeys) {
-    this.validateRawDataMap(rawData, true, expectedKeys);
+    this.validateRawDataMap(null,
+                            rawData,
+                            true,
+                            expectedKeys);
+  }
+
+  /**
+   * Validates the raw data and ensures the expected JSON property keys are
+   * present and that no unexpected keys are present.
+   *
+   * @param testInfo     Additional test information to be logged with failures.
+   * @param rawData      The raw data to validate.
+   * @param expectedKeys The zero or more expected property keys.
+   */
+  protected void validateRawDataMap(String    testInfo,
+                                    Object    rawData,
+                                    String... expectedKeys)
+  {
+    this.validateRawDataMap(testInfo, rawData, true, expectedKeys);
   }
 
   /**
    * Validates the raw data and ensures the expected JSON property keys are
    * present and that, optionally, no unexpected keys are present.
    *
-   * @param rawData The raw data to validate.
-   *
-   * @param strict Whether or not property keys other than those specified are
-   *               allowed to be present.
-   *
+   * @param rawData      The raw data to validate.
+   * @param strict       Whether or not property keys other than those specified are
+   *                     allowed to be present.
    * @param expectedKeys The zero or more expected property keys -- these are
    *                     either a minimum or exact set depending on the
    *                     <tt>strict</tt> parameter.
@@ -621,12 +742,36 @@ public abstract class AbstractServiceTest {
                                     boolean   strict,
                                     String... expectedKeys)
   {
+    this.validateRawDataMap(null, rawData, strict, expectedKeys);
+  }
+
+  /**
+   * Validates the raw data and ensures the expected JSON property keys are
+   * present and that, optionally, no unexpected keys are present.
+   *
+   *
+   * @param testInfo     Additional test information to be logged with failures.
+   * @param rawData      The raw data to validate.
+   * @param strict       Whether or not property keys other than those specified are
+   *                     allowed to be present.
+   * @param expectedKeys The zero or more expected property keys -- these are
+   *                     either a minimum or exact set depending on the
+   *                     <tt>strict</tt> parameter.
+   */
+  protected void validateRawDataMap(String    testInfo,
+                                    Object    rawData,
+                                    boolean   strict,
+                                    String... expectedKeys)
+  {
+    String suffix = (testInfo != null && testInfo.trim().length() > 0)
+        ? " ( " + testInfo + " )" : "";
+
     if (rawData == null) {
-      fail("Expected raw data but got null value");
+      fail("Expected raw data but got null value" + suffix);
     }
 
     if (!(rawData instanceof Map)) {
-      fail("Raw data is not a JSON object: " + rawData);
+      fail("Raw data is not a JSON object: " + rawData + suffix);
     }
 
     Map<String, Object> map = (Map<String, Object>) rawData;
@@ -635,14 +780,30 @@ public abstract class AbstractServiceTest {
     for (String key : expectedKeys) {
       expectedKeySet.add(key);
       if (!actualKeySet.contains(key)) {
-        fail("JSON property missing from raw data: " + key + " / " + map);
+        fail("JSON property missing from raw data: " + key + " / " + map
+             + suffix);
       }
     }
     if (strict && expectedKeySet.size() != actualKeySet.size()) {
       Set<String> extraKeySet = new HashSet<>(actualKeySet);
       extraKeySet.removeAll(expectedKeySet);
-      fail("Unexpected JSON properties in raw data: " + extraKeySet);
+      fail("Unexpected JSON properties in raw data: " + extraKeySet + suffix);
     }
+
+  }
+
+
+  /**
+   * Validates the raw data and ensures it is a collection of objects and the
+   * expected JSON property keys are present in the array objects and that no
+   * unexpected keys are present.
+   *
+   * @param rawData      The raw data to validate.
+   * @param expectedKeys The zero or more expected property keys.
+   */
+  protected void validateRawDataMapArray(Object rawData, String... expectedKeys)
+  {
+    this.validateRawDataMapArray(null, rawData, true, expectedKeys);
   }
 
   /**
@@ -650,13 +811,15 @@ public abstract class AbstractServiceTest {
    * expected JSON property keys are present in the array objects and that no
    * unexpected keys are present.
    *
-   * @param rawData The raw data to validate.
-   *
+   * @param testInfo     Additional test information to be logged with failures.
+   * @param rawData      The raw data to validate.
    * @param expectedKeys The zero or more expected property keys.
    */
-  protected void validateRawDataMapArray(Object rawData, String... expectedKeys)
+  protected void validateRawDataMapArray(String     testInfo,
+                                         Object     rawData,
+                                         String...  expectedKeys)
   {
-    this.validateRawDataMapArray(rawData, true, expectedKeys);
+    this.validateRawDataMapArray(testInfo, rawData, true, expectedKeys);
   }
 
   /**
@@ -664,11 +827,9 @@ public abstract class AbstractServiceTest {
    * expected JSON property keys are present in the array objects and that,
    * optionally, no unexpected keys are present.
    *
-   * @param rawData The raw data to validate.
-   *
-   * @param strict Whether or not property keys other than those specified are
-   *               allowed to be present.
-   *
+   * @param rawData      The raw data to validate.
+   * @param strict       Whether or not property keys other than those specified are
+   *                     allowed to be present.
    * @param expectedKeys The zero or more expected property keys for the array
    *                     objects -- these are either a minimum or exact set
    *                     depending on the <tt>strict</tt> parameter.
@@ -677,23 +838,47 @@ public abstract class AbstractServiceTest {
                                          boolean    strict,
                                          String...  expectedKeys)
   {
+    this.validateRawDataMapArray(null, rawData, strict, expectedKeys);
+  }
+
+  /**
+   * Validates the raw data and ensures it is a collection of objects and the
+   * expected JSON property keys are present in the array objects and that,
+   * optionally, no unexpected keys are present.
+   *
+   * @param testInfo     Additional test information to be logged with failures.
+   * @param rawData      The raw data to validate.
+   * @param strict       Whether or not property keys other than those specified are
+   *                     allowed to be present.
+   * @param expectedKeys The zero or more expected property keys for the array
+   *                     objects -- these are either a minimum or exact set
+   *                     depending on the <tt>strict</tt> parameter.
+   */
+  protected void validateRawDataMapArray(String     testInfo,
+                                         Object     rawData,
+                                         boolean    strict,
+                                         String...  expectedKeys)
+  {
+    String suffix = (testInfo != null && testInfo.trim().length() > 0)
+        ? " ( " + testInfo + " )" : "";
+
     if (rawData == null) {
-      fail("Expected raw data but got null value");
+      fail("Expected raw data but got null value" + suffix);
     }
 
     if (!(rawData instanceof Collection)) {
-      fail("Raw data is not a JSON array: " + rawData);
+      fail("Raw data is not a JSON array: " + rawData + suffix);
     }
 
     Collection<Object> collection = (Collection<Object>) rawData;
     Set<String> expectedKeySet = new HashSet<>();
-    for (String key: expectedKeys) {
+    for (String key : expectedKeys) {
       expectedKeySet.add(key);
     }
 
     for (Object obj : collection) {
       if (!(obj instanceof Map)) {
-        fail("Raw data is not a JSON array of JSON objects: " + rawData);
+        fail("Raw data is not a JSON array of JSON objects: " + rawData + suffix);
       }
 
       Map<String, Object> map = (Map<String, Object>) obj;
@@ -702,14 +887,277 @@ public abstract class AbstractServiceTest {
       for (String key : expectedKeySet) {
         if (!actualKeySet.contains(key)) {
           fail("JSON property missing from raw data array element: "
-                   + key + " / " + map);
+                   + key + " / " + map + suffix);
         }
       }
       if (strict && expectedKeySet.size() != actualKeySet.size()) {
         Set<String> extraKeySet = new HashSet<>(actualKeySet);
         extraKeySet.removeAll(expectedKeySet);
-        fail("Unexpected JSON properties in raw data: " + extraKeySet);
+        fail("Unexpected JSON properties in raw data: " + extraKeySet + suffix);
       }
     }
   }
+
+  /**
+   * Quotes the specified text as a quoted string for a CSV value or header.
+   *
+   * @param text The text to be quoted.
+   * @return The quoted text.
+   */
+  protected String csvQuote(String text) {
+    if (text.indexOf("\"") < 0 && text.indexOf("\\") < 0) {
+      return "\"" + text + "\"";
+    }
+    char[] textChars = text.toCharArray();
+    StringBuilder sb = new StringBuilder(text.length() * 2);
+    for (char c : textChars) {
+      if (c == '"' || c == '\\') {
+        sb.append('\\');
+      }
+      sb.append(c);
+    }
+    return sb.toString();
+  }
+
+  /**
+   * Creates a CSV temp file with the specified headers and records.
+   *
+   * @param filePrefix The prefix for the temp file name.
+   * @param headers    The CSV headers.
+   * @param records    The one or more records.
+   * @return The {@link File} that was created.
+   */
+  protected File prepareCSVFile(String filePrefix,
+                                String[] headers,
+                                String[]... records) {
+    // check the arguments
+    int count = headers.length;
+    for (int index = 0; index < records.length; index++) {
+      String[] record = records[index];
+      if (record.length != count) {
+        throw new IllegalArgumentException(
+            "The header and records do not all have the same number of "
+                + "elements.  expected=[ " + count + " ], received=[ "
+                + record.length + " ], index=[ " + index + " ]");
+      }
+    }
+
+    try {
+      File csvFile = File.createTempFile(filePrefix, ".csv");
+
+      // populate the file as a CSV
+      try (FileOutputStream fos = new FileOutputStream(csvFile);
+           OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+           PrintWriter pw = new PrintWriter(osw)) {
+        String prefix = "";
+        for (String header : headers) {
+          pw.print(prefix);
+          pw.print(csvQuote(header));
+          prefix = ",";
+        }
+        pw.println();
+        pw.flush();
+
+        for (String[] record : records) {
+          prefix = "";
+          for (String value : record) {
+            pw.print(prefix);
+            pw.print(csvQuote(value));
+            prefix = ",";
+          }
+          pw.println();
+          pw.flush();
+        }
+        pw.flush();
+
+      }
+
+      return csvFile;
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+
+  /**
+   * Creates a JSON array temp file with the specified headers and records.
+   *
+   * @param filePrefix The prefix for the temp file name.
+   * @param headers    The CSV headers.
+   * @param records    The one or more records.
+   * @return The {@link File} that was created.
+   */
+  protected File prepareJsonArrayFile(String filePrefix,
+                                      String[] headers,
+                                      String[]... records) {
+    // check the arguments
+    int count = headers.length;
+    for (int index = 0; index < records.length; index++) {
+      String[] record = records[index];
+      if (record.length != count) {
+        throw new IllegalArgumentException(
+            "The header and records do not all have the same number of "
+                + "elements.  expected=[ " + count + " ], received=[ "
+                + record.length + " ], index=[ " + index + " ]");
+      }
+    }
+
+    try {
+      File jsonFile = File.createTempFile(filePrefix, ".json");
+
+      // populate the file with a JSON array
+      try (FileOutputStream fos = new FileOutputStream(jsonFile);
+           OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8")) {
+        JsonArrayBuilder jab = Json.createArrayBuilder();
+        JsonObjectBuilder job = Json.createObjectBuilder();
+        for (String[] record : records) {
+          for (int index = 0; index < record.length; index++) {
+            String key = headers[index];
+            String value = record[index];
+            job.add(key, value);
+          }
+          jab.add(job);
+        }
+
+        String jsonText = JsonUtils.toJsonText(jab);
+        osw.write(jsonText);
+        osw.flush();
+      }
+
+      return jsonFile;
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Creates a JSON temp file with the specified headers and records.
+   *
+   * @param filePrefix The prefix for the temp file name.
+   * @param headers    The CSV headers.
+   * @param records    The one or more records.
+   * @return The {@link File} that was created.
+   */
+  protected File prepareJsonFile(String filePrefix,
+                                 String[] headers,
+                                 String[]... records) {
+    // check the arguments
+    int count = headers.length;
+    for (int index = 0; index < records.length; index++) {
+      String[] record = records[index];
+      if (record.length != count) {
+        throw new IllegalArgumentException(
+            "The header and records do not all have the same number of "
+                + "elements.  expected=[ " + count + " ], received=[ "
+                + record.length + " ], index=[ " + index + " ]");
+      }
+    }
+
+    try {
+      File jsonFile = File.createTempFile(filePrefix, ".json");
+
+      // populate the file as one JSON record per line
+      try (FileOutputStream fos = new FileOutputStream(jsonFile);
+           OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+           PrintWriter pw = new PrintWriter(osw)) {
+        for (String[] record : records) {
+          JsonObjectBuilder job = Json.createObjectBuilder();
+          for (int index = 0; index < record.length; index++) {
+            String key = headers[index];
+            String value = record[index];
+            job.add(key, value);
+          }
+          String jsonText = JsonUtils.toJsonText(job);
+          pw.println(jsonText);
+          pw.flush();
+        }
+        pw.flush();
+      }
+
+      return jsonFile;
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Compares two collections to ensure they have the same elements.
+   *
+   */
+  protected void assertSameElements(Collection expected,
+                                    Collection actual,
+                                    String     description)
+  {
+    if (expected != null) {
+      expected = upperCase(expected);
+      actual   = upperCase(actual);
+      assertNotNull(actual, "Unexpected null " + description);
+      if (!actual.containsAll(expected)) {
+        Set missing = new HashSet(expected);
+        missing.removeAll(actual);
+        fail("Missing one or more expected " + description + ".  missing=[ "
+             + missing + " ], actual=[ " + actual + " ]");
+      }
+      if (!expected.containsAll(actual)) {
+        Set extras = new HashSet(actual);
+        extras.removeAll(expected);
+        fail("One or more extra " + description + ".  extras=[ "
+             + extras + " ], actual=[ " + actual + " ]");
+      }
+    }
+  }
+
+  /**
+   * Converts the {@link String} elements in the specified {@link Collection}
+   * to upper case and returns a {@link Set} contianing all values.
+   *
+   * @param c The {@link Collection} to process.
+   *
+   * @return The {@link Set} containing the same elements with the {@link
+   *         String} elements converted to upper case.
+   */
+  protected static Set upperCase(Collection c) {
+    Set set = new LinkedHashSet();
+    for (Object obj : c) {
+      if (obj instanceof String) {
+        obj = ((String) obj).toUpperCase();
+      }
+      set.add(obj);
+    }
+    return set;
+  }
+
+  /**
+   * Utility method for creating a {@link Set} to use in validation.
+   *
+   * @param elements The zero or more elements in the set.
+   *
+   * @return The {@link Set} of elements.
+   */
+  protected static <T> Set<T> set(T... elements) {
+    Set<T> set = new LinkedHashSet<>();
+    for (T element : elements) {
+      set.add(element);
+    }
+    return set;
+  }
+
+  /**
+   * Utility method for creating a {@link List} to use in validation.
+   *
+   * @param elements The zero or more elements in the list.
+   *
+   * @return The {@link Set} of elements.
+   */
+  protected static <T> List<T> list(T... elements) {
+    List<T> list = new ArrayList<>(elements.length);
+    for (T element : elements) {
+      list.add(element);
+    }
+    return list;
+  }
+
 }
