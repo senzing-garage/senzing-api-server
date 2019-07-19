@@ -3,10 +3,6 @@ package com.senzing.api.model;
 import com.senzing.util.Timers;
 
 import javax.ws.rs.core.UriInfo;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * The response containing the record ID of the record that was loaded.
@@ -15,14 +11,16 @@ import java.util.Set;
 public class SzLoadRecordResponse extends SzBasicResponse
 {
   /**
-   * The record ID of the record that was loaded.
-   */
-  private String recordId;
-
-  /**
    * The data for this instance.
    */
   private Data data = new Data();
+
+  /**
+   * Default constructor.
+   */
+  public SzLoadRecordResponse() {
+    this.data.recordId = null;
+  }
 
   /**
    * Constructs with only the HTTP method and the self link, leaving the
@@ -63,7 +61,7 @@ public class SzLoadRecordResponse extends SzBasicResponse
                               Timers       timers,
                               String       recordId) {
     super(httpMethod, httpStatusCode, selfLink, timers);
-    this.recordId = recordId;
+    this.data.recordId = recordId;
   }
 
   /**
@@ -103,7 +101,7 @@ public class SzLoadRecordResponse extends SzBasicResponse
                               Timers       timers,
                               String       recordId) {
     super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.recordId = recordId;
+    this.data.recordId = recordId;
   }
 
   /**
@@ -122,13 +120,18 @@ public class SzLoadRecordResponse extends SzBasicResponse
    */
   public void setRecordId(String recordId)
   {
-    this.recordId = recordId;
+    this.data.recordId = recordId;
   }
 
   /**
    * Inner class to represent the data section for this response.
    */
-  public class Data {
+  public static class Data {
+    /**
+     * The record ID of the record that was loaded.
+     */
+    private String recordId;
+
     /**
      * Private default constructor.
      */
@@ -142,7 +145,7 @@ public class SzLoadRecordResponse extends SzBasicResponse
      * @return The record ID of the record that was loaded.
      */
     public String getRecordId() {
-      return SzLoadRecordResponse.this.recordId;
+      return this.recordId;
     }
   }
 }

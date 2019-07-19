@@ -68,10 +68,15 @@ public class AdminServices {
       if (withRaw) response.setRawData(rawData);
       return response;
 
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
     } catch (WebApplicationException e) {
       throw e;
 
     } catch (Exception e) {
+      e.printStackTrace();
       throw newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }

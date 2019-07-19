@@ -1,33 +1,13 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.senzing.api.BuildInfo;
 import com.senzing.util.Timers;
 
-import java.io.IOException;
-import java.io.InputStream;
+import javax.validation.constraints.NotNull;
 import java.util.*;
 
 public class SzMeta {
-  private static final String MAVEN_VERSION;
-
-  static {
-    String resource = "/com/senzing/api/build-info.properties";
-    String version = "UNKNOWN";
-    try (InputStream is = SzMeta.class.getResourceAsStream(resource))
-    {
-      Properties buildProps = new Properties();
-      buildProps.load(is);
-      version = buildProps.getProperty("Maven-Version");
-
-    } catch (IOException e) {
-      System.err.println("FAILED TO READ META-INF/MANIFEST.MF FILE");
-      e.printStackTrace();
-
-    } finally {
-      MAVEN_VERSION = version;
-    }
-  }
-
   /**
    * The HTTP method that was executed.
    */
@@ -57,6 +37,23 @@ public class SzMeta {
   private Date timestamp;
 
   /**
+   * The server version number for the response.
+   */
+  private String version;
+
+  /**
+   * Default constructor for reconstructing from JSON.
+   */
+  SzMeta() {
+    this.httpMethod     = null;
+    this.httpStatusCode = 0;
+    this.timestamp      = null;
+    this.timers         = null;
+    this.timings        = null;
+    this.version        = null;
+  }
+
+  /**
    * Constructs with the specified HTTP method.
    *
    * @param httpMethod The HTTP method with which to construct.
@@ -64,11 +61,12 @@ public class SzMeta {
    * @param httpStatusCode The HTTP response code.
    */
   public SzMeta(SzHttpMethod httpMethod, int httpStatusCode, Timers timers) {
-    this.httpMethod = httpMethod;
+    this.httpMethod     = httpMethod;
     this.httpStatusCode = httpStatusCode;
-    this.timestamp  = new Date();
-    this.timers = timers;
-    this.timings = null;
+    this.timestamp      = new Date();
+    this.timers         = timers;
+    this.timings        = null;
+    this.version        = BuildInfo.MAVEN_VERSION;
   }
 
   /**
@@ -101,7 +99,7 @@ public class SzMeta {
    *
    * @return The build version of the server implementation.
    */
-  public String getVersion() { return MAVEN_VERSION; }
+  public String getVersion() { return this.version; }
 
   /**
    * Returns the timings that were recorded for the operation as an
@@ -127,4 +125,19 @@ public class SzMeta {
       throw e;
     }
   }
+
+  /**
+   * If any of the response's timers are still accumulating time, this
+   * causes them to cease.  Generally, this is only used in testing since
+   * converting the object to JSON to serialize the response will trigger
+   * a call to {@link #getTimings()} which will have the effect of concluding
+   * all timers.
+   *
+   * If the timers are already concluded then this method does nothing.
+   */
+  public void concludeTimers() {
+    if (this.timings != null) return;
+    this.getTimings();
+  }
+
 }

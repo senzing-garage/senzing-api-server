@@ -9,9 +9,11 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.*;
 
+import com.senzing.api.BuildInfo;
 import com.senzing.api.services.SzApiProvider;
 import com.senzing.api.model.SzLicenseInfo;
 import com.senzing.g2.engine.*;
+import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.WorkerThreadPool;
 import com.senzing.util.AccessToken;
@@ -72,22 +74,37 @@ public class SzApiServer implements SzApiProvider {
   }
 
   static {
-    System.out.println();
+    String jarBaseUrl   = null;
+    String jarFileName  = null;
+    String pathToJar    = null;
+    try {
+      String url = SzApiServer.class.getResource(
+          SzApiServer.class.getSimpleName() + ".class").toString();
 
-    String url = SzApiServer.class.getResource(
-        SzApiServer.class.getSimpleName() + ".class").toString();
+      int index = url.lastIndexOf(
+          SzApiServer.class.getName().replace(".", "/") + ".class");
+      jarBaseUrl = url.substring(0, index);
 
-    int index = url.lastIndexOf(
-        SzApiServer.class.getName().replace(".", "/") + ".class");
-    JAR_BASE_URL = url.substring(0, index);
-
-    index = JAR_BASE_URL.lastIndexOf("!");
-    url = url.substring(0, index);
-    index = url.lastIndexOf("/");
-    JAR_FILE_NAME = url.substring(index + 1);
-    url = url.substring(0, index);
-    index = url.indexOf("/");
-    PATH_TO_JAR = url.substring(index);
+      if (jarBaseUrl.indexOf(".jar") >= 0) {
+        index = jarBaseUrl.lastIndexOf("!");
+        if (index >= 0) {
+          url = url.substring(0, index);
+          index = url.lastIndexOf("/");
+          if (index >= 0) {
+            jarFileName = url.substring(index + 1);
+            url = url.substring(0, index);
+            index = url.indexOf("/");
+            if (index >= 0) {
+              pathToJar = url.substring(index);
+            }
+          }
+        }
+      }
+    } finally {
+      JAR_BASE_URL  = jarBaseUrl;
+      JAR_FILE_NAME = jarFileName;
+      PATH_TO_JAR   = pathToJar;
+    }
   }
 
   public static synchronized SzApiServer getInstance() {
@@ -403,6 +420,30 @@ public class SzApiServer implements SzApiProvider {
   }
 
   /**
+   * Stores the option and its value in the specified option map, first
+   * checking to ensure that the option is NOT already specified.
+   *
+   */
+  private static void putOption(Map<Option, Object> optionMap,
+                                String              key,
+                                Option              option,
+                                Object              value)
+  {
+    if (optionMap.containsKey(option)) {
+
+      String msg = "Cannot specify command-line option more than once: " + key;
+
+      System.err.println();
+      System.err.println(msg);
+
+      throw new IllegalArgumentException(msg);
+    }
+
+    // put it in the option map
+    optionMap.put(option, value);
+  }
+
+  /**
    *
    */
   private static String buildErrorMessage(String heading,
@@ -448,7 +489,7 @@ public class SzApiServer implements SzApiProvider {
 
             throw new IllegalArgumentException("Extra options with help");
           }
-          result.put(Option.HELP, Boolean.TRUE);
+          putOption(result, "-help", Option.HELP, Boolean.TRUE);
           return result;
 
         case "-version":
@@ -461,7 +502,7 @@ public class SzApiServer implements SzApiProvider {
             throw new IllegalArgumentException("Extra options with version");
           }
 
-          result.put(Option.VERSION, Boolean.TRUE);
+          putOption(result, "-version", Option.VERSION, Boolean.TRUE);
           return result;
 
         case "-monitorFile":
@@ -469,7 +510,7 @@ public class SzApiServer implements SzApiProvider {
           ensureArgument(args, index);
           File f = new File(args[index]);
           FileMonitor fileMonitor = new FileMonitor(f);
-          result.put(Option.MONITOR_FILE, fileMonitor);
+          putOption(result, "-monitorFile", Option.MONITOR_FILE, fileMonitor);
           break;
 
         case "-httpPort":
@@ -481,7 +522,7 @@ public class SzApiServer implements SzApiProvider {
               throw new IllegalArgumentException(
                   "Negative port numbers are not allowed: " + port);
             }
-            result.put(Option.HTTP_PORT, port);
+            putOption(result, "-httpPort", Option.HTTP_PORT, port);
           }
           break;
 
@@ -503,7 +544,7 @@ public class SzApiServer implements SzApiProvider {
           } catch (Exception e) {
             throw new IllegalArgumentException(e);
           }
-          result.put(Option.BIND_ADDRESS, addr);
+          putOption(result, "-bindAddr", Option.BIND_ADDRESS, addr);
           break;
 
         case "-concurrency":
@@ -515,7 +556,7 @@ public class SzApiServer implements SzApiProvider {
               throw new IllegalArgumentException(
                   "Negative thread counts are not allowed: " + threadCount);
             }
-            result.put(Option.CONCURRENCY, threadCount);
+            putOption(result, "-concurrency", Option.CONCURRENCY, threadCount);
           }
           break;
 
@@ -530,25 +571,26 @@ public class SzApiServer implements SzApiProvider {
 
             throw new IllegalArgumentException(msg);
           }
-          result.put(Option.INI_FILE, iniFile);
+          putOption(result, "-iniFile", Option.INI_FILE, iniFile);
           break;
 
         case "-verbose":
-          result.put(Option.VERBOSE, Boolean.TRUE);
+          putOption(result, "-verbose", Option.VERBOSE, Boolean.TRUE);
           break;
 
         case "-moduleName":
           index++;
           ensureArgument(args, index);
           String moduleName = args[index];
-          result.put(Option.MODULE_NAME, moduleName);
+          putOption(result, "-moduleName", Option.MODULE_NAME, moduleName);
           break;
 
         case "-allowedOrigins":
           index++;
           ensureArgument(args, index);
           String allowedOrigins = args[index];
-          result.put(Option.ALLOWED_ORIGINS, allowedOrigins);
+          putOption(result, "-allowedOrigins",
+                    Option.ALLOWED_ORIGINS, allowedOrigins);
           break;
 
         default:
@@ -569,13 +611,14 @@ public class SzApiServer implements SzApiProvider {
   private static String getVersionString() {
     // use G2Product API without "init()" for now
     G2Product productApi = new G2ProductJNI();
-    return JAR_FILE_NAME + " version " + productApi.version();
+    return JAR_FILE_NAME + " version " + BuildInfo.MAVEN_VERSION
+           + "(Senzing API version " + productApi.version() + ")";
   }
 
   /**
    * @return
    */
-  private static String getUsageString() {
+  public static String getUsageString() {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
 
@@ -585,7 +628,7 @@ public class SzApiServer implements SzApiProvider {
     pw.println("<options> includes: ");
     pw.println("   -help");
     pw.println("        Should be the first and only option if provided.");
-    pw.println("        Causes this help messasge to be displayed.");
+    pw.println("        Causes this help message to be displayed.");
     pw.println("        NOTE: If this option is provided, the server will not start.");
     pw.println();
     pw.println("   -version");
@@ -694,6 +737,14 @@ public class SzApiServer implements SzApiProvider {
    */
   public static void main(String[] args)
       throws Exception {
+    if (args.length > 0 && args[0].equals("--repomgr")) {
+      String[] args2 = new String[args.length-1];
+      for (int index = 0; index < args2.length; index++) {
+        args2[index] = args[index+1];
+      }
+      RepositoryManager.main(args2);
+      return;
+    }
 
     Map<Option, ?> options = null;
     try {
@@ -1201,6 +1252,9 @@ public class SzApiServer implements SzApiProvider {
       }
     }
     synchronized (this.joinMonitor) {
+      this.g2Engine.destroy();
+      this.g2Config.destroy();
+      this.g2Product.destroy();
       this.completed = true;
       this.joinMonitor.notifyAll();
     }

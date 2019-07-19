@@ -13,15 +13,16 @@ import java.util.*;
 public class SzAttributeTypesResponse extends SzResponseWithRawData
 {
   /**
-   * The list of {@link SzAttributeType} instances describing the attribute
-   * types.
-   */
-  private List<SzAttributeType> attributeTypes;
-
-  /**
    * The data for this instance.
    */
   private Data data = new Data();
+
+  /**
+   * Package-private default constructor.
+   */
+  SzAttributeTypesResponse() {
+    // do nothing
+  }
 
   /**
    * Constructs with only the HTTP method and the self link, leaving the
@@ -40,7 +41,7 @@ public class SzAttributeTypesResponse extends SzResponseWithRawData
                                   String       selfLink,
                                   Timers       timers) {
     super(httpMethod, httpStatusCode, selfLink, timers);
-    this.attributeTypes = new LinkedList<>();
+    this.data.attributeTypes = new LinkedList<>();
   }
 
   /**
@@ -60,7 +61,7 @@ public class SzAttributeTypesResponse extends SzResponseWithRawData
                                   UriInfo      uriInfo,
                                   Timers       timers) {
     super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.attributeTypes = new LinkedList<>();
+    this.data.attributeTypes = new LinkedList<>();
   }
 
   /**
@@ -82,7 +83,7 @@ public class SzAttributeTypesResponse extends SzResponseWithRawData
       throw new NullPointerException(
           "Cannot add a null attribute type.");
     }
-    this.attributeTypes.add(attributeType);
+    this.data.attributeTypes.add(attributeType);
   }
 
   /**
@@ -95,21 +96,27 @@ public class SzAttributeTypesResponse extends SzResponseWithRawData
    */
   public void setAttributeTypes(Collection<SzAttributeType> attributeTypes)
   {
-    this.attributeTypes.clear();
+    this.data.attributeTypes.clear();
     if (attributeTypes != null) {
-      this.attributeTypes.addAll(attributeTypes);
+      this.data.attributeTypes.addAll(attributeTypes);
     }
   }
 
   /**
    * Inner class to represent the data section for this response.
    */
-  public class Data {
+  public static class Data {
+    /**
+     * The list of {@link SzAttributeType} instances describing the attribute
+     * types.
+     */
+    private List<SzAttributeType> attributeTypes;
+
     /**
      * Private default constructor.
      */
     private Data() {
-      // do nothing
+      this.attributeTypes = null;
     }
 
     /**
@@ -119,7 +126,7 @@ public class SzAttributeTypesResponse extends SzResponseWithRawData
      *         instances.
      */
     public List<SzAttributeType> getAttributeTypes() {
-      List<SzAttributeType> list = SzAttributeTypesResponse.this.attributeTypes;
+      List<SzAttributeType> list = this.attributeTypes;
       return Collections.unmodifiableList(list);
     }
   }

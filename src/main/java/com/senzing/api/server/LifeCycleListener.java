@@ -59,7 +59,7 @@ class LifeCycleListener implements LifeCycle.Listener {
           "Failed to start Senzing REST API Server with rotating port.");
     }
     System.err.println();
-    //System.err.println(cause);
+    System.err.println(cause);
   }
 
   public void lifeCycleStopping(LifeCycle event) {

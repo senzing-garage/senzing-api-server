@@ -477,16 +477,14 @@ public class SzResolvedEntity {
   }
 
   /**
-   * Sets the features using the specified {@link Map}.
+   * Private setter to help with JSON serialization and deserialization.
    *
    * @param featureMap The {@link Map} of features.
    */
-  public void setFeatures(
-      Map<String, List<SzEntityFeature>>  featureMap,
-      Function<String,String>             featureToAttrClassMapper)
-  {
+  private void setFeatures(Map<String, List<SzEntityFeature>> featureMap) {
     this.features.clear();
     this.unmodifiableFeatures.clear();
+
     if (featureMap != null) {
       featureMap.entrySet().forEach(entry -> {
         String                featureName = entry.getKey();
@@ -500,6 +498,18 @@ public class SzResolvedEntity {
         this.unmodifiableFeatures.put(featureName, unmodifiableList);
       });
     }
+  }
+
+  /**
+   * Sets the features using the specified {@link Map}.
+   *
+   * @param featureMap The {@link Map} of features.
+   */
+  public void setFeatures(
+      Map<String, List<SzEntityFeature>>  featureMap,
+      Function<String,String>             featureToAttrClassMapper)
+  {
+    this.setFeatures(featureMap);
 
     // clear out the data lists
     this.addressData.clear();

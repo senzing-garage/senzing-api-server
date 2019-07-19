@@ -36,4 +36,24 @@ public enum OperatingSystemFamily {
   public boolean isUnix() {
     return (this == UNIX);
   }
+
+  public static final OperatingSystemFamily RUNTIME_OS_FAMILY;
+
+  static {
+    OperatingSystemFamily osFamily = null;
+
+    final String osName = System.getProperty("os.name");
+    String lowerOSName = osName.toLowerCase().trim();
+    if (lowerOSName.startsWith("windows")) {
+      osFamily = WINDOWS;
+    } else if (lowerOSName.startsWith("mac")
+        || lowerOSName.indexOf("darwin") >= 0)
+    {
+      osFamily = MAC_OS;
+    } else {
+      osFamily = UNIX;
+    }
+
+    RUNTIME_OS_FAMILY = osFamily;
+  }
 }

@@ -15,6 +15,13 @@ public class SzRecordResponse extends SzResponseWithRawData {
   private SzEntityRecord entityRecord;
 
   /**
+   * Default constructor.
+   */
+  public SzRecordResponse() {
+    this.entityRecord = null;
+  }
+
+  /**
    * Constructs with only the HTTP method and the self link, leaving the
    * record data to be initialized later.
    *

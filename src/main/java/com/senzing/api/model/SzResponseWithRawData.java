@@ -25,6 +25,13 @@ public class SzResponseWithRawData extends SzBasicResponse {
   private Object rawData;
 
   /**
+   * Default constructor.
+   */
+  SzResponseWithRawData() {
+    this.rawData = null;
+  }
+
+  /**
    * Constructs with the specified HTTP method and self link.
    *
    * @param httpMethod The {@link SzHttpMethod} from the request.
@@ -128,7 +135,11 @@ public class SzResponseWithRawData extends SzBasicResponse {
    *
    * @param rawData The raw data associated with this response.
    */
-  public void setRawData(String rawData) {
-    this.rawData = JsonUtils.normalizeJsonText(rawData);
+  public void setRawData(Object rawData) {
+    if (rawData instanceof String) {
+      this.rawData = JsonUtils.normalizeJsonText((String) rawData);
+    } else {
+      this.rawData = rawData;
+    }
   }
 }

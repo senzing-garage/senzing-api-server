@@ -8,16 +8,19 @@ import javax.ws.rs.core.UriInfo;
  * A response object that contains attribute type data.
  *
  */
-public class SzAttributeTypeResponse extends SzResponseWithRawData {
-  /**
-   * The {@link SzAttributeType} describing the attribute type.
-   */
-  private SzAttributeType attributeType;
-
+public class SzAttributeTypeResponse extends SzResponseWithRawData
+{
   /**
    * The data for this instance.
    */
   private Data data = new Data();
+
+  /**
+   * Package-private default constructor.
+   */
+  SzAttributeTypeResponse() {
+    this.data.attributeType = null;
+  }
 
   /**
    * Constructs with only the HTTP method and the self link, leaving the
@@ -52,7 +55,7 @@ public class SzAttributeTypeResponse extends SzResponseWithRawData {
                                  SzAttributeType  data)
   {
     super(httpMethod, httpStatusCode, selfLink, timers);
-    this.attributeType = data;
+    this.data.attributeType = data;
   }
 
   /**
@@ -89,7 +92,7 @@ public class SzAttributeTypeResponse extends SzResponseWithRawData {
                                  SzAttributeType  data)
   {
     super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.attributeType = data;
+    this.data.attributeType = data;
   }
 
   /**
@@ -109,13 +112,18 @@ public class SzAttributeTypeResponse extends SzResponseWithRawData {
    * @param data The {@link SzAttributeType} describing the attribute type.
    */
   public void setAttributeType(SzAttributeType data) {
-    this.attributeType = data;
+    this.data.attributeType = data;
   }
 
   /**
    * Inner class to represent the data section for this response.
    */
-  public class Data {
+  public static class Data {
+    /**
+     * The {@link SzAttributeType} describing the attribute type.
+     */
+    private SzAttributeType attributeType;
+
     /**
      * Private default constructor.
      */
@@ -129,7 +137,7 @@ public class SzAttributeTypeResponse extends SzResponseWithRawData {
      * @return The {@link SzAttributeType} describing the attributeType.
      */
     public SzAttributeType getAttributeType() {
-      return SzAttributeTypeResponse.this.attributeType;
+      return this.attributeType;
     }
   }
 

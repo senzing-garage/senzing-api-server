@@ -461,6 +461,164 @@ public class JsonUtils {
   }
 
   /**
+   * Adds the specified key/value pair to the specified {@link
+   * JsonArrayBuilder}.  If the specified value is <tt>null</tt> then
+   * {@link JsonArrayBuilder#addNull()} is used, otherwise
+   * {@link JsonArrayBuilder#add(String)} is used.
+   *
+   * @param job The {@link JsonArrayBuilder} to add the key/value pair to.
+   *
+   * @param val The {@link String} value, or <tt>null</tt>.
+   */
+  public static JsonArrayBuilder add(JsonArrayBuilder job, String val) {
+    if (val == null) {
+      job.addNull();
+    } else {
+      job.add(val);
+    }
+    return job;
+  }
+
+  /**
+   * Adds the specified key/value pair to the specified {@link
+   * JsonArrayBuilder}.  If the specified value is <tt>null</tt> then
+   * {@link JsonArrayBuilder#addNull()} is used, otherwise
+   * {@link JsonArrayBuilder#add(int)} is used.
+   *
+   * @param job The {@link JsonArrayBuilder} to add the key/value pair to.
+   *
+   * @param val The {@link Integer} value, or <tt>null</tt>.
+   */
+  public static JsonArrayBuilder add(JsonArrayBuilder job, Integer val) {
+    if (val == null) {
+      job.addNull();
+    } else {
+      job.add(val);
+    }
+    return job;
+  }
+
+  /**
+   * Adds the specified key/value pair to the specified {@link
+   * JsonArrayBuilder}.  If the specified value is <tt>null</tt> then
+   * {@link JsonArrayBuilder#addNull()} is used, otherwise
+   * {@link JsonArrayBuilder#add(long)} is used.
+   *
+   * @param job The {@link JsonArrayBuilder} to add the key/value pair to.
+   *
+   * @param val The {@link Long} value, or <tt>null</tt>.
+   */
+  public static JsonArrayBuilder add(JsonArrayBuilder job, Long val) {
+    if (val == null) {
+      job.addNull();
+    } else {
+      job.add(val);
+    }
+    return job;
+  }
+
+  /**
+   * Adds the specified key/value pair to the specified {@link
+   * JsonArrayBuilder}.  If the specified value is <tt>null</tt> then
+   * {@link JsonArrayBuilder#addNull()} is used, otherwise
+   * {@link JsonArrayBuilder#add(double)} is used.
+   *
+   * @param job The {@link JsonArrayBuilder} to add the key/value pair to.
+   *
+   * @param val The {@link Double} value, or <tt>null</tt>.
+   */
+  public static JsonArrayBuilder add(JsonArrayBuilder job, Double val) {
+    if (val == null) {
+      job.addNull();
+    } else {
+      job.add(val);
+    }
+    return job;
+  }
+
+  /**
+   * Adds the specified key/value pair to the specified {@link
+   * JsonArrayBuilder}.  If the specified value is <tt>null</tt> then
+   * {@link JsonArrayBuilder#addNull()} is used, otherwise
+   * {@link JsonArrayBuilder#add(double)} is used.
+   *
+   * @param job The {@link JsonArrayBuilder} to add the key/value pair to.
+   *
+   * @param val The {@link Float} value, or <tt>null</tt>.
+   */
+  public static JsonArrayBuilder add(JsonArrayBuilder job, Float val) {
+    if (val == null) {
+      job.addNull();
+    } else {
+      job.add(val.doubleValue());
+    }
+    return job;
+  }
+
+  /**
+   * Adds the specified key/value pair to the specified {@link
+   * JsonArrayBuilder}.  If the specified value is <tt>null</tt> then
+   * {@link JsonArrayBuilder#addNull()} is used, otherwise
+   * {@link JsonArrayBuilder#add(BigInteger)} is used.
+   *
+   * @param job The {@link JsonArrayBuilder} to add the key/value pair to.
+   *
+   * @param val The {@link BigInteger} value, or <tt>null</tt>.
+   */
+  public static JsonArrayBuilder add(JsonArrayBuilder job, BigInteger val)
+  {
+    if (val == null) {
+      job.addNull();
+    } else {
+      job.add(val);
+    }
+    return job;
+  }
+
+  /**
+   * Adds the specified key/value pair to the specified {@link
+   * JsonArrayBuilder}.  If the specified value is <tt>null</tt> then
+   * {@link JsonArrayBuilder#addNull()} is used, otherwise
+   * {@link JsonArrayBuilder#add(BigDecimal)} is used.
+   *
+   * @param job The {@link JsonArrayBuilder} to add the key/value pair to.
+   *
+   * @param key The {@link String} key.
+   *
+   * @param val The {@link BigDecimal} value, or <tt>null</tt>.
+   */
+  public static JsonArrayBuilder add(JsonArrayBuilder job, String key, BigDecimal val)
+  {
+    if (val == null) {
+      job.addNull();
+    } else {
+      job.add(val);
+    }
+    return job;
+  }
+
+  /**
+   * Adds the specified key/value pair to the specified {@link
+   * JsonArrayBuilder}.  If the specified value is <tt>null</tt> then
+   * {@link JsonArrayBuilder#addNull()} is used, otherwise
+   * {@link JsonArrayBuilder#add(boolean)} is used.
+   *
+   * @param job The {@link JsonArrayBuilder} to add the key/value pair to.
+   *
+   * @param key The {@link String} key.
+   *
+   * @param val The {@link Boolean} value, or <tt>null</tt>.
+   */
+  public static JsonArrayBuilder add(JsonArrayBuilder job, String key, Boolean val) {
+    if (val == null) {
+      job.addNull();
+    } else {
+      job.add(val);
+    }
+    return job;
+  }
+
+  /**
    * Parses JSON text as a {@link JsonObject}.  If the specified text is not
    * formatted as a JSON object then an exception will be thrown.
    *

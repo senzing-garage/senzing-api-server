@@ -30,6 +30,15 @@ public class SzEntityPath {
   private List<Long> entityIds;
 
   /**
+   * Package-private default constructor.
+   */
+  SzEntityPath() {
+    this.startEntityId  = 0;
+    this.endEntityId    = 0;
+    this.entityIds      = null;
+  }
+
+  /**
    * Constructs with the specified list of entity IDs.
    *
    * @param startEntityId The starting entity ID for the path.

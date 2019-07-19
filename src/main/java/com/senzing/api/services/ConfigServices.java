@@ -86,17 +86,22 @@ public class ConfigServices {
       // return the response
       return response;
 
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
     } catch (WebApplicationException e) {
       throw e;
 
     } catch (Exception e) {
+      e.printStackTrace();
       throw newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
   @GET
   @Path("/attribute-types")
-  public SzAttributeTypesResponse geAttributeTypes(
+  public SzAttributeTypesResponse getAttributeTypes(
       @DefaultValue("false") @QueryParam("withInternal") boolean withInternal,
       @QueryParam("attributeClass")                      String  attributeClass,
       @QueryParam("featureType")                         String  featureType,
@@ -195,17 +200,22 @@ public class ConfigServices {
       // return the response
       return response;
 
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
     } catch (WebApplicationException e) {
       throw e;
 
     } catch (Exception e) {
+      e.printStackTrace();
       throw newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
   @GET
   @Path("/attribute-types/{attributeCode}")
-  public SzAttributeTypeResponse geAttributeType(
+  public SzAttributeTypeResponse getAttributeType(
       @PathParam("attributeCode")                   String  attributeCode,
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
       @Context                                      UriInfo uriInfo)
@@ -264,10 +274,15 @@ public class ConfigServices {
       // return the response
       return response;
 
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
     } catch (WebApplicationException e) {
       throw e;
 
     } catch (Exception e) {
+      e.printStackTrace();
       throw newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }

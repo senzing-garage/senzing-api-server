@@ -4,14 +4,14 @@
   <groupId>com.senzing</groupId>
   <artifactId>senzing-api-server</artifactId>
   <packaging>jar</packaging>
-  <version>1.6.1</version>
+  <version>1.7</version>
   <name>senzing-api-server</name>
   <url>http://maven.apache.org</url>
   <dependencies>
     <dependency>
      <groupId>com.senzing</groupId>
      <artifactId>g2</artifactId>
-       <version>[1.7.0,2)</version>
+       <version>[1.10.0,2)</version>
     </dependency>
     <dependency>
      <groupId>org.xerial</groupId>
@@ -96,15 +96,9 @@
       <version>2.9.8</version>
     </dependency>
     <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-      <version>4.12</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.mockito</groupId>
-      <artifactId>mockito-all</artifactId>
-      <version>1.10.19</version>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.4.2</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -134,11 +128,60 @@
     </dependency>
   </dependencies>
   <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
+    <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
+    <junit.jupiter.version>5.4.2</junit.jupiter.version>
   </properties>
   <build>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.8</version>
+        <executions>
+          <execution>
+            <phase>process-test-classes</phase>
+            <configuration>
+
+              <target>
+                <property environment="env"/>
+                <condition property="senzing.install.dir"
+                           value="${env.SENZING_DIR}"
+                           else="">
+                  <isset property="env.SENZING_DIR"/>
+                </condition>
+                <java classname="com.senzing.api.GenerateTestJVMScript">
+                  <classpath>
+                    <pathelement location="${project.build.directory}/test-classes/"/>
+                    <pathelement location="${project.build.directory}/classes/"/>
+                  </classpath>
+                  <sysproperty key="senzing.install.dir"
+                               value="${senzing.install.dir}"/>
+                  <arg value="${project.build.directory}/java-wrapper/bin/java-wrapper.bat"/>
+                </java>
+              </target>
+
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.22.1</version>
+        <configuration>
+          <jvm>target/java-wrapper/bin/java-wrapper.bat</jvm>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.8.1</version>
+      </plugin>
       <plugin>
         <artifactId>maven-resources-plugin</artifactId>
         <version>3.0.2</version>
