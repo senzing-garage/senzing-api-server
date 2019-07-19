@@ -20,10 +20,11 @@ import com.senzing.util.JsonUtils;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObjectBuilder;
-import javax.ws.rs.HttpMethod;
 import javax.ws.rs.core.UriInfo;
 
 import static com.senzing.api.BuildInfo.MAVEN_VERSION;
+import static com.senzing.api.model.SzFeatureInclusion.NONE;
+import static com.senzing.api.model.SzFeatureInclusion.REPRESENTATIVE;
 import static com.senzing.api.model.SzHttpMethod.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
@@ -1158,6 +1159,242 @@ public abstract class AbstractServiceTest {
       list.add(element);
     }
     return list;
+  }
+
+  /**
+   * Validates an entity
+   */
+  protected void validateEntity(
+      String                              testInfo,
+      SzResolvedEntity                    entity,
+      List<SzRelatedEntity>               relatedEntities,
+      Boolean                             forceMinimal,
+      SzFeatureInclusion                  featureMode,
+      Integer                             expectedRecordCount,
+      Set<SzRecordId>                     expectedRecordIds,
+      Boolean                             relatedSuppressed,
+      Integer                             relatedEntityCount,
+      Boolean                             relatedPartial,
+      Map<String,Integer>                 expectedFeatureCounts,
+      Map<String,Set<String>>             primaryFeatureValues,
+      Map<String,Set<String>>             duplicateFeatureValues,
+      Map<SzAttributeClass, Set<String>>  expectedDataValues)
+  {
+    if (expectedRecordCount != null) {
+      assertEquals(expectedRecordCount, entity.getRecords().size(),
+                   "Unexpected number of records: " + testInfo);
+    }
+    if (expectedRecordIds != null) {
+      // get the records and convert to record ID set
+      Set<SzRecordId> actualRecordIds = new HashSet<>();
+      List<SzMatchedRecord> matchedRecords = entity.getRecords();
+      for (SzMatchedRecord record : matchedRecords) {
+        SzRecordId recordId = new SzRecordId(record.getDataSource(),
+                                             record.getRecordId());
+        actualRecordIds.add(recordId);
+      }
+      this.assertSameElements(expectedRecordIds, actualRecordIds,
+                              "Unexpected record IDs: " + testInfo);
+    }
+
+    // check the features
+    if (forceMinimal != null && forceMinimal) {
+      assertEquals(0, entity.getFeatures().size(),
+                   "Features included in minimal results: " + testInfo
+                       + " / " + entity.getFeatures());
+    } else if (featureMode != null && featureMode == NONE) {
+      assertEquals(
+          0, entity.getFeatures().size(),
+          "Features included despite NONE feature mode: " + testInfo
+              + " / " + entity.getFeatures());
+
+    } else {
+      assertNotEquals(0, entity.getFeatures().size(),
+                      "Features not present for entity: " + testInfo);
+
+      // validate representative feature mode
+      if (featureMode == REPRESENTATIVE) {
+        entity.getFeatures().entrySet().forEach(entry -> {
+          String                featureKey    = entry.getKey();
+          List<SzEntityFeature> featureValues = entry.getValue();
+          featureValues.forEach(featureValue -> {
+            if (featureValue.getDuplicateValues().size() != 0) {
+              fail("Duplicate feature values present for " + featureKey
+                       + " feature despite REPRESENTATIVE feature mode: "
+                       + testInfo + " / " + featureValue);
+            }
+          });
+        });
+      }
+
+      // validate the feature counts (if any)
+      if (expectedFeatureCounts != null) {
+        expectedFeatureCounts.entrySet().forEach(entry -> {
+          String featureKey = entry.getKey();
+          int expectedCount = entry.getValue();
+          List<SzEntityFeature> featureValues
+              = entity.getFeatures().get(featureKey);
+          assertEquals(expectedCount, featureValues.size(),
+                       "Unexpected feature count for " + featureKey
+                           + " feature: " + testInfo + " / " + featureValues);
+        });
+      }
+
+      // validate the feature values (if any)
+      if (primaryFeatureValues != null) {
+        primaryFeatureValues.entrySet().forEach(entry -> {
+          String      featureKey    = entry.getKey();
+          Set<String> primaryValues = entry.getValue();
+
+          List<SzEntityFeature> featureValues
+              = entity.getFeatures().get(featureKey);
+
+          primaryValues.forEach(primaryValue -> {
+            boolean found = false;
+            for (SzEntityFeature featureValue : featureValues) {
+              if (primaryValue.equalsIgnoreCase(featureValue.getPrimaryValue())) {
+                found = true;
+                break;
+              }
+            }
+            if (!found) {
+              fail("Could not find \"" + primaryValue + "\" among the "
+                       + featureKey + " primary feature values: " + testInfo
+                       + " / " + featureValues);
+            }
+          });
+        });
+      }
+      if (duplicateFeatureValues != null && (featureMode != REPRESENTATIVE)) {
+        duplicateFeatureValues.entrySet().forEach(entry -> {
+          String      featureKey      = entry.getKey();
+          Set<String> duplicateValues = entry.getValue();
+
+          List<SzEntityFeature> featureValues
+              = entity.getFeatures().get(featureKey);
+
+          duplicateValues.forEach(expectedDuplicate -> {
+            boolean found = false;
+            for (SzEntityFeature featureValue : featureValues) {
+              for (String duplicateValue : featureValue.getDuplicateValues()) {
+                if (expectedDuplicate.equalsIgnoreCase(duplicateValue)) {
+                  found = true;
+                  break;
+                }
+              }
+            }
+            if (!found) {
+              fail("Could not find \"" + expectedDuplicate + "\" among the "
+                       + featureKey + " duplicate feature values: " + testInfo
+                       + " / " + featureValues);
+            }
+          });
+        });
+      }
+
+      // validate the features versus the data elements
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      entity.getFeatures().entrySet().forEach(entry -> {
+        String featureKey = entry.getKey();
+        List<SzEntityFeature> featureValues = entry.getValue();
+
+        SzAttributeClass attrClass = SzAttributeClass.parseAttributeClass(
+            provider.getAttributeClassForFeature(featureKey));
+
+        List<String> dataSet = this.getDataElements(entity, attrClass);
+        if (dataSet == null) return;
+
+        for (SzEntityFeature feature : featureValues) {
+          String featureValue = feature.getPrimaryValue().trim().toUpperCase();
+          boolean found = false;
+          for (String dataValue : dataSet) {
+            if (dataValue.toUpperCase().indexOf(featureValue) >= 0) {
+              found = true;
+              break;
+            }
+          }
+          if (!found) {
+            fail(featureKey + " feature value (" + featureValue
+                     + ") not found in " + attrClass + " data values: "
+                     + dataSet + " (" + testInfo + ")");
+          }
+        }
+      });
+    }
+
+    // check if related entities are provided to validate
+    if (relatedEntities != null) {
+      if (relatedSuppressed == null || !relatedSuppressed) {
+        // check if verifying the number of related entities
+        if (relatedEntityCount != null) {
+          assertEquals(relatedEntityCount, relatedEntities.size(),
+                       "Unexpected number of related entities: "
+                           + testInfo);
+        }
+
+        // check if verifying if related entities are partial
+        if (relatedPartial != null || (forceMinimal != null && forceMinimal)) {
+          boolean partial = ((relatedPartial != null && relatedPartial)
+              || (forceMinimal != null && forceMinimal)
+              || (featureMode == NONE));
+
+          for (SzRelatedEntity related : relatedEntities) {
+            if (related.isPartial() != partial) {
+              if (partial) {
+                fail("Entity " + entity.getEntityId() + " has a complete "
+                         + "related entity (" + related.getEntityId()
+                         + ") where partial entities were expected: " + testInfo);
+              } else {
+                fail("Entity " + entity.getEntityId() + " has a partial "
+                         + "related entity (" + related.getEntityId()
+                         + ") where complete entities were expected: " + testInfo);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if (expectedDataValues != null
+        && (forceMinimal == null || !forceMinimal)
+        && (featureMode == null || featureMode != NONE))
+    {
+      expectedDataValues.entrySet().forEach(entry -> {
+        SzAttributeClass attrClass      = entry.getKey();
+        Set<String>      expectedValues = entry.getValue();
+        List<String>     actualValues   = this.getDataElements(entity, attrClass);
+        this.assertSameElements(expectedValues,
+                                actualValues,
+                                attrClass.toString() + " (" + testInfo + ")");
+      });
+    }
+  }
+
+  /**
+   * Gets the data elements from the specified entity for the given attribute
+   * class.
+   *
+   * @param entity The entity to get the data from.
+   * @param attrClass The attribute class identifying the type of data
+   * @return The {@link List} of data elements.
+   */
+  protected List<String> getDataElements(SzResolvedEntity  entity,
+                                         SzAttributeClass  attrClass)
+  {
+    switch (attrClass) {
+      case NAME:
+        return entity.getNameData();
+      case CHARACTERISTIC:
+        return entity.getAttributeData();
+      case PHONE:
+        return entity.getPhoneData();
+      case IDENTIFIER:
+        return entity.getIdentifierData();
+      case ADDRESS:
+        return entity.getAddressData();
+      default:
+        return null;
+    }
   }
 
 }

@@ -10,6 +10,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -110,6 +111,10 @@ public class EntityGraphServices {
         }
       }
 
+      if (avoidEntities == null || avoidEntities.size() == 0) {
+        forbidAvoided = false;
+      }
+
       if (sourcesParam != null && sourcesParam.size() > 0) {
         Set<String> dataSources = provider.getDataSources();
         withSources = new ArrayList<>(dataSources.size());
@@ -137,6 +142,8 @@ public class EntityGraphServices {
 
     final String encodedAvoid = (avoidEntities == null)
         ? null : nativeJsonEncodeEntityIds(avoidEntities);
+
+    final List<String> originalSources = withSources;
 
     final String encodedSources = (withSources == null)
         ? null : nativeJsonEncodeDataSources(withSources);
@@ -180,7 +187,8 @@ public class EntityGraphServices {
                 source2,
                 id2,
                 maxDegrees,
-                encodedAvoid,
+                (encodedAvoid != null ? encodedAvoid
+                    : nativeJsonEncodeEntityIds(Collections.emptyList())),
                 flags,
                 responseDataBuffer);
             calledNativeAPI(timers, "engine", "findPathExcludingByRecordID");
@@ -193,8 +201,10 @@ public class EntityGraphServices {
                 source2,
                 id2,
                 maxDegrees,
-                encodedAvoid,
-                encodedSources,
+                (encodedAvoid != null ? encodedAvoid
+                    : nativeJsonEncodeEntityIds(Collections.emptyList())),
+                (encodedSources != null ? encodedSources
+                    : nativeJsonEncodeDataSources(Collections.emptyList())),
                 flags,
                 responseDataBuffer);
             calledNativeAPI(timers, "engine", "findPathIncludingSourceByRecordID");
@@ -218,7 +228,8 @@ public class EntityGraphServices {
                 id1.getValue(),
                 id2.getValue(),
                 maxDegrees,
-                encodedAvoid,
+                (encodedAvoid != null ? encodedAvoid
+                    : nativeJsonEncodeEntityIds(Collections.emptyList())),
                 flags,
                 responseDataBuffer);
             calledNativeAPI(timers, "engine", "findPathExcludingByEntityID");
@@ -229,8 +240,10 @@ public class EntityGraphServices {
                 id1.getValue(),
                 id2.getValue(),
                 maxDegrees,
-                encodedAvoid,
-                encodedSources,
+                (encodedAvoid != null ? encodedAvoid
+                    : nativeJsonEncodeEntityIds(Collections.emptyList())),
+                (encodedSources != null ? encodedSources
+                    : nativeJsonEncodeDataSources(Collections.emptyList())),
                 flags,
                 responseDataBuffer);
             calledNativeAPI(timers, "engine", "findPathIncludingSourceByEntityID");
@@ -239,6 +252,8 @@ public class EntityGraphServices {
         }
 
         if (result != 0) {
+          System.err.println("********* SOURCES: " + originalSources);
+          System.err.println("********* ENCODED SOURCES: " + encodedSources);
           throw newWebApplicationException(GET, uriInfo, timers, engineApi);
         }
 
@@ -340,10 +355,10 @@ public class EntityGraphServices {
             "Build out must be zero or greater: " + buildOut);
       }
 
-      if (maxEntities < 1) {
+      if (maxEntities < 0) {
         throw newBadRequestException(
             GET, uriInfo, timers,
-            "Max entities must be greater than zero: " + maxEntities);
+            "Max entities must be zero or greater: " + maxEntities);
       }
 
     } catch (WebApplicationException e) {

@@ -72,10 +72,13 @@ public class ServicesUtil {
       G2Fallible    fallible)
   {
     Response.ResponseBuilder builder = Response.status(500);
-    builder.entity(
-        new SzErrorResponse(httpMethod, 500, uriInfo, timers, fallible));
+    SzErrorResponse errorResponse =
+        new SzErrorResponse(httpMethod, 500, uriInfo, timers, fallible);
+    builder.entity(errorResponse);
     fallible.clearLastException();
-    return new InternalServerErrorException(builder.build());
+    return new InternalServerErrorException(
+        errorResponse.getErrors().toString(),
+        builder.build());
   }
 
   /**
@@ -403,7 +406,7 @@ public class ServicesUtil {
     }
     JsonObjectBuilder builder = Json.createObjectBuilder();
     builder.add("DATA_SOURCES", jab);
-    return JsonUtils.toJsonText(jab);
+    return JsonUtils.toJsonText(builder);
   }
 
   /**

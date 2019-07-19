@@ -51,7 +51,8 @@ public class SzEntityIdentifiers {
    *
    * @throws NullPointerException If the specified parameter is null.
    */
-  public SzEntityIdentifiers(Collection<SzEntityIdentifier> identifiers)
+  public SzEntityIdentifiers(
+      Collection<? extends SzEntityIdentifier> identifiers)
     throws NullPointerException
   {
     Objects.requireNonNull(identifiers, "Identifiers cannot be null.");
@@ -114,6 +115,15 @@ public class SzEntityIdentifiers {
   }
 
   /**
+   * Returns the number of entity identifiers.
+   *
+   * @return The number of entity identifiers.
+   */
+  public int getCount() {
+    return (this.identifiers == null ? 0 : this.identifiers.size());
+  }
+
+  /**
    * Returns the unmodifiable {@link List} of {@link SzEntityIdentifier}
    * instances that were specified.
    *
@@ -122,6 +132,25 @@ public class SzEntityIdentifiers {
    */
   public List<SzEntityIdentifier> getIdentifiers() {
     return this.identifiers;
+  }
+
+  /**
+   * Overridden to convert the {@link SzEntityIdentifiers} instance to a JSON
+   * array string.
+   *
+   * @return The JSON array string representation of this instance.
+   *
+   */
+  public String toString() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("[");
+    String prefix = "";
+    for (SzEntityIdentifier identifier : this.getIdentifiers()) {
+      sb.append(prefix).append(identifier.toString());
+      prefix = ",";
+    }
+    sb.append("]");
+    return sb.toString();
   }
 
   /**
