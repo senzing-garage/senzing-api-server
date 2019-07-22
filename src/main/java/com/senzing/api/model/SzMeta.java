@@ -42,6 +42,11 @@ public class SzMeta {
   private String version;
 
   /**
+   * The Senzing REST API version implemented by the server.
+   */
+  private String restApiVersion;
+
+  /**
    * Default constructor for reconstructing from JSON.
    */
   SzMeta() {
@@ -51,6 +56,7 @@ public class SzMeta {
     this.timers         = null;
     this.timings        = null;
     this.version        = null;
+    this.restApiVersion = null;
   }
 
   /**
@@ -67,6 +73,7 @@ public class SzMeta {
     this.timers         = timers;
     this.timings        = null;
     this.version        = BuildInfo.MAVEN_VERSION;
+    this.restApiVersion = BuildInfo.REST_API_VERSION;
   }
 
   /**
@@ -100,6 +107,13 @@ public class SzMeta {
    * @return The build version of the server implementation.
    */
   public String getVersion() { return this.version; }
+
+  /**
+   * Returns the Senzing REST API version implemented by the server.
+   *
+   * @return The Senzing REST API version implemented by the server.
+   */
+  public String getRestApiVersion() { return this.restApiVersion; }
 
   /**
    * Returns the timings that were recorded for the operation as an

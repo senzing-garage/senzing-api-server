@@ -1,10 +1,16 @@
 package com.senzing.api.services;
 
+import com.senzing.api.BuildInfo;
 import com.senzing.api.model.*;
 
+import javax.json.JsonObject;
 import javax.ws.rs.core.UriInfo;
+import java.io.File;
 import java.util.*;
 
+import com.senzing.g2.engine.G2Product;
+import com.senzing.g2.engine.G2ProductJNI;
+import com.senzing.util.JsonUtils;
 import org.junit.jupiter.api.*;
 
 import static com.senzing.api.model.SzHttpMethod.*;
@@ -196,4 +202,149 @@ public class AdminServicesTest extends AbstractServiceTest {
 
     }
   }
+
+  @Test public void versionTest() {
+    this.assumeNativeApiAvailable();
+    String  uriText = this.formatServerUri("version");
+    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+    long              before    = System.currentTimeMillis();
+    SzVersionResponse response  = this.adminServices.version(false,
+                                                             uriInfo);
+    response.concludeTimers();
+    long              after     = System.currentTimeMillis();
+
+    this.validateVersionResponse(response, before, after, null);
+  }
+
+  @Test public void versionViaHttpTest() {
+    this.assumeNativeApiAvailable();
+    String  uriText = this.formatServerUri("version");
+
+    long before = System.currentTimeMillis();
+    SzVersionResponse response
+        = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
+    long after = System.currentTimeMillis();
+
+    this.validateVersionResponse(response, before, after, null);
+  }
+
+  @Test public void versionWithoutRawTest() {
+    this.assumeNativeApiAvailable();
+    String  uriText = this.formatServerUri("version?withRaw=false");
+    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+    long              before    = System.currentTimeMillis();
+    SzVersionResponse response  = this.adminServices.version(false, uriInfo);
+    response.concludeTimers();
+    long              after     = System.currentTimeMillis();
+
+    this.validateVersionResponse(response, before, after, false);
+  }
+
+  @Test public void versionWithoutRawViaHttpTest() {
+    this.assumeNativeApiAvailable();
+    String  uriText = this.formatServerUri("version?withRaw=false");
+
+    long before = System.currentTimeMillis();
+    SzVersionResponse response
+        = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
+    long after = System.currentTimeMillis();
+
+    this.validateVersionResponse(response, before, after,false);
+  }
+
+  @Test public void versionWithRawTest() {
+    this.assumeNativeApiAvailable();
+    String  uriText = this.formatServerUri("version?withRaw=true");
+    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+    long              before    = System.currentTimeMillis();
+    SzVersionResponse response  = this.adminServices.version(true, uriInfo);
+    response.concludeTimers();
+    long              after     = System.currentTimeMillis();
+
+    this.validateVersionResponse(response,
+                                 before,
+                                 after,
+                                 true);
+  }
+
+  @Test public void versionWithRawViaHttpTest() {
+    this.assumeNativeApiAvailable();
+    String uriText = this.formatServerUri("version?withRaw=true");
+
+    long before = System.currentTimeMillis();
+    SzVersionResponse response
+        = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
+    long after = System.currentTimeMillis();
+
+    this.validateVersionResponse(response, before, after, true);
+  }
+
+  private void validateVersionResponse(SzVersionResponse  response,
+                                       long               beforeTimestamp,
+                                       long               afterTimestamp,
+                                       Boolean            expectRawData)
+  {
+    String selfLink = this.formatServerUri("version");
+    if (expectRawData != null) {
+      selfLink += "?withRaw=" + expectRawData;
+    } else {
+      expectRawData = false;
+    }
+
+    this.validateBasics(
+        response, selfLink, beforeTimestamp, afterTimestamp, expectRawData);
+
+    SzVersionInfo info = response.getData();
+
+    assertNotNull(info, "Response data is null");
+
+    assertEquals(BuildInfo.MAVEN_VERSION,
+                 info.getApiServerVersion(),
+                 "API Server Version wrong");
+
+    assertEquals(BuildInfo.REST_API_VERSION,
+                 info.getRestApiVersion(),
+                 "REST API Version wrong");
+
+    // assume we can reinitialize the product API since it does not really do
+    // anything when we initialize it
+    File repoDir = this.getRepositoryDirectory();
+    File iniFile = new File(repoDir, "g2.ini");
+    G2Product product = new G2ProductJNI();
+    product.init("testApiServer", iniFile.toString(), false);
+    try {
+      String versionJson = product.version();
+
+      JsonObject jsonObject = JsonUtils.parseJsonObject(versionJson);
+      String expectedVersion = JsonUtils.getString(jsonObject, "VERSION");
+      String expectedBuildNum = JsonUtils.getString(jsonObject, "BUILD_NUMBER");
+
+      JsonObject subObject = JsonUtils.getJsonObject(
+          jsonObject, "COMPATIBILITY_VERSION");
+
+      int configCompatVers = Integer.parseInt(JsonUtils.getString(
+          subObject, "CONFIG_VERSION"));
+
+      assertEquals(expectedVersion, info.getNativeApiVersion(),
+                   "Native API Version wrong");
+
+      assertEquals(expectedBuildNum, info.getNativeApiBuildNumber(),
+                   "Native API Build Number wrong");
+
+      assertEquals(configCompatVers, info.getConfigCompatibilityVersion(),
+                   "Native API Config Compatibility wrong");
+    } finally {
+      product.destroy();
+
+    }
+    if (expectRawData) {
+      this.validateRawDataMap(
+          response.getRawData(),
+          "VERSION", "BUILD_NUMBER", "BUILD_DATE", "COMPATIBILITY_VERSION");
+    }
+  }
+
 }

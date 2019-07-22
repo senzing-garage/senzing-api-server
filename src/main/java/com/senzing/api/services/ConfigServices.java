@@ -23,7 +23,7 @@ import static com.senzing.api.services.ServicesUtil.*;
 @Path("/")
 public class ConfigServices {
   @GET
-  @Path("/data-sources")
+  @Path("data-sources")
   public SzDataSourcesResponse getDataSources(
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
       @Context                                      UriInfo uriInfo)
@@ -100,7 +100,7 @@ public class ConfigServices {
   }
 
   @GET
-  @Path("/attribute-types")
+  @Path("attribute-types")
   public SzAttributeTypesResponse getAttributeTypes(
       @DefaultValue("false") @QueryParam("withInternal") boolean withInternal,
       @QueryParam("attributeClass")                      String  attributeClass,
@@ -214,7 +214,7 @@ public class ConfigServices {
   }
 
   @GET
-  @Path("/attribute-types/{attributeCode}")
+  @Path("attribute-types/{attributeCode}")
   public SzAttributeTypeResponse getAttributeType(
       @PathParam("attributeCode")                   String  attributeCode,
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
@@ -286,6 +286,116 @@ public class ConfigServices {
       throw newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
+
+  @GET
+  @Path("config/current")
+  public SzConfigResponse getCurrentConfig(@Context UriInfo uriInfo)
+  {
+    Timers timers = newTimers();
+    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+
+    try {
+      enteringQueue(timers);
+      JsonObject configObject = provider.executeInThread(() -> {
+        exitingQueue(timers);
+        // get the engine API and the config API
+        G2Engine engineApi = provider.getEngineApi();
+
+        // export the config
+        String config = exportConfig(GET, uriInfo, timers, engineApi);
+
+        // parse the raw data
+        processingRawData(timers);
+        JsonObject configObj = JsonUtils.parseJsonObject(config);
+        processedRawData(timers);
+
+        return configObj;
+      });
+
+      processingRawData(timers);
+      String rawData = JsonUtils.toJsonText(configObject);
+      SzConfigResponse response = new SzConfigResponse(
+          GET, 200, uriInfo, timers, rawData);
+      processedRawData(timers);
+
+      // return the response
+      return response;
+
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw newInternalServerErrorException(GET, uriInfo, timers, e);
+    }
+  }
+
+  @GET
+  @Path("config/default")
+  public SzConfigResponse getDefaultConfig(@Context UriInfo uriInfo)
+  {
+    Timers timers = newTimers();
+    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+
+    try {
+      enteringQueue(timers);
+      JsonObject configObject = provider.executeInThread(() -> {
+        exitingQueue(timers);
+        // get the engine API and the config API
+        G2Config configApi = provider.getConfigApi();
+
+        // create the default config
+        StringBuffer sb = new StringBuffer();
+        timers.start("nativeAPI", "nativeAPI/config.create");
+        long configId = configApi.create();
+        timers.pause("nativeAPI", "nativeAPI/config.create");
+        try {
+          timers.start("nativeAPI", "nativeAPI/config.save");
+          configApi.save(configId, sb);
+          timers.pause("nativeAPI", "nativeAPI/config.save");
+        } finally {
+          timers.start("nativeAPI", "nativeAPI/config.close");
+          configApi.close(configId);
+          timers.pause("nativeAPI", "nativeAPI/config.close");
+        }
+
+        String config = sb.toString();
+
+        // parse the raw data
+        processingRawData(timers);
+        JsonObject configObj = JsonUtils.parseJsonObject(config);
+        processedRawData(timers);
+
+        return configObj;
+      });
+
+      processingRawData(timers);
+      String rawData = JsonUtils.toJsonText(configObject);
+      SzConfigResponse response = new SzConfigResponse(
+          GET, 200, uriInfo, timers);
+      response.setRawData(rawData);
+      processedRawData(timers);
+
+      // return the response
+      return response;
+
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw newInternalServerErrorException(GET, uriInfo, timers, e);
+    }
+  }
+
 
   /**
    * Exports the config using the specified {@link G2Engine} instance.

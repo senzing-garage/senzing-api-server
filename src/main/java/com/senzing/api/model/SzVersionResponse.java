@@ -1,24 +1,23 @@
 package com.senzing.api.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.senzing.util.Timers;
 
 import javax.ws.rs.core.UriInfo;
 
 /**
- * A response object that contains license data.
+ * A response object that contains version data.
  *
  */
-public class SzLicenseResponse extends SzResponseWithRawData {
+public class SzVersionResponse extends SzResponseWithRawData {
   /**
    * The data for this instance.
    */
-  private Data data = new Data();
+  private SzVersionInfo versionInfo;
 
   /**
    * Default constructor.
    */
-  SzLicenseResponse() {
+  SzVersionResponse() {
     // do nothing
   }
 
@@ -31,7 +30,7 @@ public class SzLicenseResponse extends SzResponseWithRawData {
    * @param selfLink The string URL link to generate this response.
    * @param timers The {@link Timers} object for the timings that were taken.
    */
-  public SzLicenseResponse(SzHttpMethod httpMethod,
+  public SzVersionResponse(SzHttpMethod httpMethod,
                            int          httpStatusCode,
                            String       selfLink,
                            Timers       timers)
@@ -40,28 +39,28 @@ public class SzLicenseResponse extends SzResponseWithRawData {
   }
 
   /**
-   * Constructs with the HTTP method, self link and the {@link SzLicenseInfo}
-   * describing the license.
+   * Constructs with the HTTP method, self link and the {@link SzVersionInfo}
+   * describing the version.
    *
    * @param httpMethod The {@link SzHttpMethod}.
    * @param httpStatusCode The HTTP response status code.
    * @param selfLink The string URL link to generate this response.
    * @param timers The {@link Timers} object for the timings that were taken.
-   * @param data The {@link SzLicenseInfo} describing the license.
+   * @param versionInfo The {@link SzVersionInfo} describing the version.
    */
-  public SzLicenseResponse(SzHttpMethod   httpMethod,
+  public SzVersionResponse(SzHttpMethod   httpMethod,
                            int            httpStatusCode,
                            String         selfLink,
                            Timers         timers,
-                           SzLicenseInfo  data)
+                           SzVersionInfo  versionInfo)
   {
     super(httpMethod, httpStatusCode, selfLink, timers);
-    this.data.license = data;
+    this.versionInfo = versionInfo;
   }
 
   /**
    * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
-   * license info data to be initialized later.
+   * version info data to be initialized later.
    *
    * @param httpMethod The {@link SzHttpMethod}.
    * @param httpStatusCode The HTTP response code.
@@ -69,7 +68,7 @@ public class SzLicenseResponse extends SzResponseWithRawData {
    * @param timers The {@link Timers} object for the timings that were taken.
    *
    */
-  public SzLicenseResponse(SzHttpMethod httpMethod,
+  public SzVersionResponse(SzHttpMethod httpMethod,
                            int          httpStatusCode,
                            UriInfo      uriInfo,
                            Timers       timers)
@@ -79,67 +78,39 @@ public class SzLicenseResponse extends SzResponseWithRawData {
 
   /**
    * Constructs with the HTTP method, {@link UriInfo} and the
-   * {@link SzLicenseInfo} describing the license.
+   * {@link SzVersionInfo} describing the version.
    *
    * @param httpMethod The {@link SzHttpMethod}.
    * @param httpStatusCode The HTTP response status code.
    * @param uriInfo The {@link UriInfo} from the request.
    * @param timers The {@link Timers} object for the timings that were taken.
-   * @param data The {@link SzLicenseInfo} describing the license.
+   * @param versionInfo The {@link SzVersionInfo} describing the version.
    */
-  public SzLicenseResponse(SzHttpMethod   httpMethod,
+  public SzVersionResponse(SzHttpMethod   httpMethod,
                            int            httpStatusCode,
                            UriInfo        uriInfo,
                            Timers         timers,
-                           SzLicenseInfo  data)
+                           SzVersionInfo  versionInfo)
   {
     super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.data.license = data;
+    this.versionInfo = versionInfo;
   }
 
   /**
-   * Returns the {@link Data} associated with this response which contains an
-   * {@link SzLicenseInfo}.
+   * Returns the {@link SzVersionInfo} associated with this response.
    *
    * @return The data associated with this response.
    */
-  public Data getData() {
-    return this.data;
+  public SzVersionInfo getData() {
+    return this.versionInfo;
   }
 
   /**
-   * Sets the data associated with this response with an {@link SzLicenseInfo}.
+   * Sets the data associated with this response with an {@link SzVersionInfo}.
    *
-   * @param data The {@link SzLicenseInfo} describing the license.
+   * @param info The {@link SzVersionInfo} describing the license.
    */
-  public void setLicense(SzLicenseInfo data) {
-    this.data.license = data;
+  public void setData(SzVersionInfo info) {
+    this.versionInfo = info;
   }
-
-  /**
-   * Inner class to represent the data section for this response.
-   */
-  public static class Data {
-    /**
-     * The {@link SzLicenseInfo} describing the license.
-     */
-    private SzLicenseInfo license;
-
-    /**
-     * Private default constructor.
-     */
-    private Data() {
-      // do nothing
-    }
-
-    /**
-     * Gets the {@link SzLicenseInfo} describing the license.
-     *
-     * @return The {@link SzLicenseInfo} describing the license.
-     */
-    public SzLicenseInfo getLicense() {
-      return this.license;
-    }
-  }
-
 }

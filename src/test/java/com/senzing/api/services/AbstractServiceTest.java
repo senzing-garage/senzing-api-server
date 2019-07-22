@@ -23,6 +23,7 @@ import javax.json.JsonObjectBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import static com.senzing.api.BuildInfo.MAVEN_VERSION;
+import static com.senzing.api.BuildInfo.REST_API_VERSION;
 import static com.senzing.api.model.SzFeatureInclusion.NONE;
 import static com.senzing.api.model.SzFeatureInclusion.REPRESENTATIVE;
 import static com.senzing.api.model.SzHttpMethod.*;
@@ -501,6 +502,7 @@ public abstract class AbstractServiceTest {
                  "Unexpected HTTP method" + suffix);
     assertEquals(200, meta.getHttpStatusCode(), "Unexpected HTTP status code" + suffix);
     assertEquals(MAVEN_VERSION, meta.getVersion(), "Unexpected server version" + suffix);
+    assertEquals(REST_API_VERSION, meta.getRestApiVersion(), "Unexpected REST API version" + suffix);
     assertNotNull(meta.getTimestamp(), "Timestamp unexpectedly null" + suffix);
     long now = meta.getTimestamp().getTime();
 
