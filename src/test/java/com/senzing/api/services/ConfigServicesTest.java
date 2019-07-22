@@ -1,6 +1,8 @@
 package com.senzing.api.services;
 
 import com.senzing.api.model.*;
+import com.senzing.g2.engine.G2Config;
+import com.senzing.g2.engine.G2ConfigJNI;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
 import org.junit.jupiter.api.AfterAll;
@@ -927,6 +929,115 @@ public class ConfigServicesTest extends AbstractServiceTest
                               "FELEM_CODE",
                               "ADVANCED");
     }
+  }
+
+  @Test public void getCurrentConfigTest() {
+    this.assumeNativeApiAvailable();
+    String  uriText = this.formatServerUri("config/current");
+    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+    long before = System.currentTimeMillis();
+    SzConfigResponse response
+        = this.configServices.getCurrentConfig(uriInfo);
+    response.concludeTimers();
+    long after = System.currentTimeMillis();
+
+    this.validateConfigResponse(response,
+                                uriText,
+                                before,
+                                after,
+                                EXPECTED_DATA_SOURCES);
+  }
+
+  @Test public void getCurrentConfigViaHttpTest() {
+    this.assumeNativeApiAvailable();
+    String  uriText = this.formatServerUri("config/current");
+    long    before  = System.currentTimeMillis();
+    SzConfigResponse response
+        = this.invokeServerViaHttp(GET, uriText, SzConfigResponse.class);
+    long after = System.currentTimeMillis();
+
+    this.validateConfigResponse(response,
+                                uriText,
+                                before,
+                                after,
+                                EXPECTED_DATA_SOURCES);
+  }
+
+  @Test public void getDefaultConfigTest() {
+    this.assumeNativeApiAvailable();
+    String  uriText = this.formatServerUri("config/default");
+    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+    long before = System.currentTimeMillis();
+    SzConfigResponse response
+        = this.configServices.getDefaultConfig(uriInfo);
+    response.concludeTimers();
+    long after = System.currentTimeMillis();
+
+    this.validateConfigResponse(response,
+                                uriText,
+                                before,
+                                after,
+                                DEFAULT_DATA_SOURCES);
+  }
+
+  @Test public void getDefaultConfigViaHttpTest() {
+    this.assumeNativeApiAvailable();
+    String  uriText = this.formatServerUri("config/default");
+    long    before  = System.currentTimeMillis();
+    SzConfigResponse response
+        = this.invokeServerViaHttp(GET, uriText, SzConfigResponse.class);
+    long after = System.currentTimeMillis();
+
+    this.validateConfigResponse(response,
+                                uriText,
+                                before,
+                                after,
+                                DEFAULT_DATA_SOURCES);
+  }
+
+  private void validateConfigResponse(
+      SzConfigResponse        response,
+      String                  selfLink,
+      long                    beforeTimestamp,
+      long                    afterTimestamp,
+      Set<String>             expectedDataSources)
+  {
+    selfLink = this.formatServerUri(selfLink);
+
+    this.validateBasics(
+        response, selfLink, beforeTimestamp, afterTimestamp, true);
+
+    Object rawData = response.getRawData();
+
+    this.validateRawDataMap(rawData, true, "G2_CONFIG");
+
+    Object g2Config = ((Map) rawData).get("G2_CONFIG");
+
+    this.validateRawDataMap(g2Config,
+                            false,
+                            "CFG_ATTR",
+                            "CFG_FELEM",
+                            "CFG_DSRC");
+
+    Object cfgDsrc = ((Map) g2Config).get("CFG_DSRC");
+
+    this.validateRawDataMapArray(cfgDsrc,
+                                 false,
+                                 "DSRC_ID",
+                                 "DSRC_DESC",
+                                 "DSRC_CODE");
+
+    Set<String> actualDataSources = new LinkedHashSet<>();
+    for (Object dsrc : ((Collection) cfgDsrc)) {
+      Map dsrcMap = (Map) dsrc;
+      String dsrcCode = (String) dsrcMap.get("DSRC_CODE");
+      actualDataSources.add(dsrcCode);
+    }
+
+    assertEquals(expectedDataSources, actualDataSources,
+                 "Unexpected set of data sources in config.");
   }
 
 }

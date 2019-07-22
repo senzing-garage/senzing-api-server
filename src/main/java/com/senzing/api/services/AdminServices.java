@@ -80,4 +80,54 @@ public class AdminServices {
       throw newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
+
+  /**
+   * Provides license information, optionally with raw data.
+   */
+  @GET
+  @Path("version")
+  public SzVersionResponse version(
+      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
+      @Context                                      UriInfo uriInfo)
+      throws WebApplicationException
+  {
+    Timers timers = newTimers();
+    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+
+    try {
+      enteringQueue(timers);
+      String rawData = provider.executeInThread(() -> {
+        exitingQueue(timers);
+        G2Product productApi = provider.getProductApi();
+        callingNativeAPI(timers, "product", "version");
+        return productApi.version();
+      });
+      calledNativeAPI(timers, "product", "version");
+      processingRawData(timers);
+
+      StringReader sr = new StringReader(rawData);
+      JsonReader jsonReader = Json.createReader(sr);
+      JsonObject jsonObject = jsonReader.readObject();
+      SzVersionInfo info = SzVersionInfo.parseVersionInfo(null, jsonObject);
+      processedRawData(timers);
+
+      SzVersionResponse response
+          = new SzVersionResponse(GET, 200, uriInfo, timers);
+      response.setData(info);
+      if (withRaw) response.setRawData(rawData);
+      return response;
+
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw newInternalServerErrorException(GET, uriInfo, timers, e);
+    }
+  }
+
 }
