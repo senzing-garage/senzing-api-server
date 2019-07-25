@@ -467,8 +467,10 @@ The following software programs need to be installed:
     ```console
     cd ${GIT_REPOSITORY_DIR}
 
+    export SENZING_DIR=/opt/senzing
+
     sudo make \
-        SENZING_DIR=/opt/senzing \
+        SENZING_DIR=${SENZING_DIR} \
         SENZING_G2_JAR_PATHNAME=${SENZING_DIR}/g2/lib/g2.jar \
         SENZING_G2_JAR_VERSION=$(cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION') \
         docker-build

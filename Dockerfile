@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=senzing/senzing-base:1.0.3
+ARG BASE_IMAGE=senzing/senzing-base:1.1.0
 
 # -----------------------------------------------------------------------------
 # Stage: builder
@@ -45,13 +45,17 @@ RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=pro
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2019-05-01
+ENV REFRESHED_AT=2019-07-23
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
-      Version="1.0.0"
+      Version="1.1.0"
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
+
+# Run as "root" for system installation.
+
+USER root
 
 # Install packages via apt.
 
@@ -68,8 +72,11 @@ EXPOSE 8080
 
 COPY --from=builder "/senzing-api-server.jar" "/app/senzing-api-server.jar"
 
+# Make non-root container.
+
+USER 1001
+
 # Runtime execution.
 
 WORKDIR /app
-ENTRYPOINT ["/app/docker-entrypoint.sh", "java -jar senzing-api-server.jar" ]
-CMD [""]
+ENTRYPOINT ["java", "-jar", "senzing-api-server.jar"]

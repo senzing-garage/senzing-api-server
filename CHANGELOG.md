@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Pinned to senzing/senzing-base:1.0.3
+- Pinned to senzing/senzing-base:1.1.0
+- Now a non-root, immutable container.
 
 ## [1.6.1] - 2019-06-10
 
