@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=senzing/senzing-base:latest
+ARG BASE_IMAGE=senzing/senzing-base:1.2.1
 
 # -----------------------------------------------------------------------------
 # Stage: builder
