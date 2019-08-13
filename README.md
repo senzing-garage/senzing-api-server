@@ -234,14 +234,14 @@ This repository assumes a working knowledge of:
 
 ### Get docker image
 
-1. Option #1. The `senzing/template` docker image is on [DockerHub](https://hub.docker.com/r/senzing/template) and can be downloaded.
+1. Option #1. The `senzing/senzing-api-server` docker image is on [DockerHub](https://hub.docker.com/r/senzing/senzing-api-server) and can be downloaded.
    Example:
 
     ```console
-    sudo docker pull senzing/template
+    sudo docker pull senzing/senzing-api-server
     ```
 
-1. Option #2. The `senzing/template` image can be built locally.
+1. Option #2. The `senzing/senzing-api-server` image can be built locally.
    See [Develop](#develop).
 
 ### Initialize Senzing
@@ -263,8 +263,10 @@ Configuration values specified by environment variable or command line parameter
 
 ### Volumes
 
-The output of `yum install senzingapi` placed files in different directories.
-Create a folder for each output directory.
+The output of
+[HOWTO - Initialize Senzing](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/initialize-senzing.md)
+placed files in different directories.
+Identify each output directory.
 
 1. :pencil2: Option #1.
    To mimic an actual RPM installation,
