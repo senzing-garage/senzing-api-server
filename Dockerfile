@@ -36,8 +36,8 @@ RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=pro
     make \
         SENZING_G2_JAR_PATHNAME=/git-repository/${SENZING_G2_JAR_RELATIVE_PATHNAME} \
         SENZING_G2_JAR_VERSION=${SENZING_G2_JAR_VERSION} \
-        package; \
-    cp /git-repository/target/senzing-api-server-${SENZING_API_SERVER_JAR_VERSION}.jar "/senzing-api-server.jar"
+        package;
+#    cp /git-repository/target/senzing-api-server-${SENZING_API_SERVER_JAR_VERSION}.jar "/senzing-api-server.jar"
 
 # -----------------------------------------------------------------------------
 # Stage: Final

@@ -41,15 +41,15 @@ You will also need the Senzing "g2.jar" file installed in your Maven repository.
 The Senzing REST API Server requires version 1.7.x or later of the Senzing API
 and Senzing App.  In order to install g2.jar you must:
 
- 1. Locate your [`${SENZING_DIR}` directory](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/create-senzing-dir.md).
+ 1. Locate your [`${SENZING_G2_DIR}` directory](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/create-senzing-dir.md).
     The default locations are:
     - Linux Archive Extraction: `/opt/senzing/` (see [Install Instructions](https://github.com/Senzing/hello-senzing-springboot-java/blob/master/doc/debian-based-installation.md#install))
     - Windows MSI Installer: `C:\Program Files\Senzing\`
 
  1. Determine your `${SENZING_VERSION}` version number:
     - Locate your `g2BuildVersion.json` file:
-        - Linux: `${SENZING_DIR}/g2/data/g2BuildVersion.json`
-        - Windows: `${SENZING_DIR}\g2\data\g2BuildVersion.json`
+        - Linux: `${SENZING_G2_DIR}/g2BuildVersion.json`
+        - Windows: `${SENZING_G2_DIR}\g2BuildVersion.json`
     - Find the value for the `"VERSION"` property in the JSON contents.
       Example:
 
@@ -62,16 +62,16 @@ and Senzing App.  In order to install g2.jar you must:
         ```
 
  1. Install the g2.jar file in your local Maven repository, replacing the
-    `${SENZING_DIR}` and `${SENZING_VERSION}` variables as determined above:
+    `${SENZING_G2_DIR}` and `${SENZING_VERSION}` variables as determined above:
 
      - Linux:
 
        ```console
-             export SENZING_DIR=/opt/senzing
+             export SENZING_G2_DIR=/opt/senzing/g2
              export SENZING_VERSION=1.7.19095
 
              mvn install:install-file \
-                 -Dfile=${SENZING_DIR}/g2/lib/g2.jar \
+                 -Dfile=${SENZING_G2_DIR}/lib/g2.jar \
                  -DgroupId=com.senzing \
                  -DartifactId=g2 \
                  -Dversion=${SENZING_VERSION} \
@@ -81,11 +81,11 @@ and Senzing App.  In order to install g2.jar you must:
      - Windows:
 
        ```console
-             set SENZING_DIR="C:\Program Files\Senzing"
+             set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
              set SENZING_VERSION=1.7.19095
 
              mvn install:install-file \
-                 -Dfile=%SENZING_DIR%\g2\lib\g2.jar \
+                 -Dfile=%SENZING_G2_DIR%\lib\g2.jar \
                  -DgroupId=com.senzing \
                  -DartifactId=g2 \
                  -Dversion=%SENZING_VERSION% \
@@ -98,17 +98,17 @@ and Senzing App.  In order to install g2.jar you must:
     - Linux
 
        ```console
-          export SENZING_DIR=/opt/senzing
+          export SENZING_G2_DIR=/opt/senzing/g2
 
-          export LD_LIBRARY_PATH=${SENZING_DIR}/g2/lib:${SENZING_DIR}/g2/lib/debian:$LD_LIBRARY_PATH
+          export LD_LIBRARY_PATH=${SENZING_G2_DIR}/lib:${SENZING_G2_DIR}/lib/debian:$LD_LIBRARY_PATH
        ```
 
     - Windows
 
       ```console
-          set SENZING_DIR="C:\Program Files\Senzing"
+          set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
 
-          set Path=%SENZING_DIR%\g2\lib;$Path
+          set Path=%SENZING_G2_DIR%\lib;$Path
       ```
 
 ### Building
@@ -478,15 +478,15 @@ see [Environment Variables](https://github.com/Senzing/knowledge-base/blob/maste
 1. Find value for `SENZING_G2_JAR_VERSION`.
 
     ```console
-    export SENZING_DIR=/opt/senzing
-    cat ${SENZING_DIR}/g2/data/g2BuildVersion.json
+    export SENZING_G2_DIR=/opt/senzing/g2
+    cat ${SENZING_G2_DIR}/g2BuildVersion.json
     ```
 
     or
 
     ```console
-    export SENZING_DIR=/opt/senzing
-    cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION'
+    export SENZING_G2_DIR=/opt/senzing/g2
+    cat ${SENZING_G2_DIR}/g2BuildVersion.json | jq --raw-output '.VERSION'
     ```
 
 1. Build docker image.
@@ -499,8 +499,9 @@ see [Environment Variables](https://github.com/Senzing/knowledge-base/blob/maste
     ```console
     cd ${GIT_REPOSITORY_DIR}
 
-    export SENZING_G2_JAR_PATHNAME=/opt/senzing/g2/lib/g2.jar
-    export SENZING_G2_JAR_VERSION=1.6.19058
+    export SENZING_G2_DIR=/opt/senzing/g2
+    export SENZING_G2_JAR_PATHNAME=${SENZING_G2_DIR}/lib/g2.jar
+    export SENZING_G2_JAR_VERSION=1.11.0
 
     make docker-build
     ```
@@ -510,12 +511,11 @@ see [Environment Variables](https://github.com/Senzing/knowledge-base/blob/maste
     ```console
     cd ${GIT_REPOSITORY_DIR}
 
-    export SENZING_DIR=/opt/senzing
+    export SENZING_G2_DIR=/opt/senzing/g2
 
     sudo make \
-        SENZING_DIR=${SENZING_DIR} \
-        SENZING_G2_JAR_PATHNAME=${SENZING_DIR}/g2/lib/g2.jar \
-        SENZING_G2_JAR_VERSION=$(cat ${SENZING_DIR}/g2/data/g2BuildVersion.json | jq --raw-output '.VERSION') \
+        SENZING_G2_JAR_PATHNAME=${SENZING_G2_DIR}/lib/g2.jar \
+        SENZING_G2_JAR_VERSION=$(cat ${SENZING_G2_DIR}/g2BuildVersion.json | jq --raw-output '.VERSION') \
         docker-build
     ```
 
