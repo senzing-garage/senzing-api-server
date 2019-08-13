@@ -90,7 +90,6 @@ docker-build: docker-rmi-for-build
 	mkdir -p $(TARGET)
 	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
 	docker build \
-		--target builder \
 		--build-arg SENZING_G2_JAR_RELATIVE_PATHNAME=$(TARGET)/g2.jar \
 		--build-arg SENZING_G2_JAR_VERSION=$(SENZING_G2_JAR_VERSION) \
 		--tag $(DOCKER_IMAGE_NAME) \

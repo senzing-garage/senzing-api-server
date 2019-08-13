@@ -475,43 +475,17 @@ see [Environment Variables](https://github.com/Senzing/knowledge-base/blob/maste
 
 ### Build docker image for development
 
-1. Find value for `SENZING_G2_JAR_VERSION`.
+1. :pencil2: Set environment variables.
+   Example:
 
     ```console
     export SENZING_G2_DIR=/opt/senzing/g2
-    cat ${SENZING_G2_DIR}/g2BuildVersion.json
-    ```
-
-    or
-
-    ```console
-    export SENZING_G2_DIR=/opt/senzing/g2
-    cat ${SENZING_G2_DIR}/g2BuildVersion.json | jq --raw-output '.VERSION'
     ```
 
 1. Build docker image.
 
-    - **SENZING_G2_JAR_PATHNAME** - Path to the `g2.jar`. Default: `/opt/senzing/g2/lib/g2.jar`
-    - **SENZING_G2_JAR_VERSION** - Version of the `g2.jar` file.
-
-    Example:
-
     ```console
     cd ${GIT_REPOSITORY_DIR}
-
-    export SENZING_G2_DIR=/opt/senzing/g2
-    export SENZING_G2_JAR_PATHNAME=${SENZING_G2_DIR}/lib/g2.jar
-    export SENZING_G2_JAR_VERSION=1.11.0
-
-    make docker-build
-    ```
-
-    Another example:
-
-    ```console
-    cd ${GIT_REPOSITORY_DIR}
-
-    export SENZING_G2_DIR=/opt/senzing/g2
 
     sudo make \
         SENZING_G2_JAR_PATHNAME=${SENZING_G2_DIR}/lib/g2.jar \
