@@ -5,8 +5,6 @@ import com.senzing.api.model.*;
 
 import javax.json.JsonObject;
 import javax.ws.rs.core.UriInfo;
-import java.io.File;
-import java.util.*;
 
 import com.senzing.g2.engine.G2Product;
 import com.senzing.g2.engine.G2ProductJNI;
@@ -311,10 +309,9 @@ public class AdminServicesTest extends AbstractServiceTest {
 
     // assume we can reinitialize the product API since it does not really do
     // anything when we initialize it
-    File repoDir = this.getRepositoryDirectory();
-    File iniFile = new File(repoDir, "g2.ini");
-    G2Product product = new G2ProductJNI();
-    product.init("testApiServer", iniFile.toString(), false);
+    String    initJson  = readInitJsonFile();
+    G2Product product   = new G2ProductJNI();
+    product.initV2("testApiServer", initJson, false);
     try {
       String versionJson = product.version();
 

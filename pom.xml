@@ -4,7 +4,7 @@
   <groupId>com.senzing</groupId>
   <artifactId>senzing-api-server</artifactId>
   <packaging>jar</packaging>
-  <version>1.7.0</version>
+  <version>1.7.2</version>
   <name>senzing-api-server</name>
   <url>http://maven.apache.org</url>
   <dependencies>
@@ -125,6 +125,11 @@
       <groupId>com.ibm.icu</groupId>
       <artifactId>icu4j</artifactId>
       <version>60.1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.ini4j</groupId>
+      <artifactId>ini4j</artifactId>
+      <version>0.5.4</version>
     </dependency>
   </dependencies>
   <properties>

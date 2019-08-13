@@ -23,6 +23,12 @@ public class WorkerThreadPool {
   private boolean closed;
 
   /**
+   * The {@link AccessToken} indicating if this instance is paused.  This is
+   * <tt>null</tt> if not paused.
+   */
+  private AccessToken pauseToken;
+
+  /**
    * Constructs with the specified number of threads in the pool.
    *
    * @param count The number of threads to create in the pool.
@@ -59,6 +65,7 @@ public class WorkerThreadPool {
       this.allThreads.add(wt);
       wt.start();
     }
+    this.allThreads = Collections.unmodifiableList(this.allThreads);
   }
 
   /**
@@ -127,7 +134,7 @@ public class WorkerThreadPool {
       }
 
       // wait for an available worker thread
-      while (this.available.size() == 0) {
+      while (this.available.size() == 0 || this.pauseToken != null) {
         try {
           this.available.wait(2000L);
         } catch (InterruptedException ignore) {
@@ -163,6 +170,90 @@ public class WorkerThreadPool {
           thread.markComplete();
         }
       }
+    }
+  }
+
+  /**
+   * Checks if this {@link WorkerThreadPool} has been paused.
+   *
+   * @return <tt>true</tt> if this instance has paused, otherwise <tt>false</tt>
+   */
+  public boolean isPaused() {
+    return (this.pauseToken != null);
+  }
+
+  /**
+   * Pauses access to this {@link WorkerThreadPool} by preventing others from
+   * obtaining a thread until the {@link #resume(AccessToken)} method is called
+   * (which should occur in a "finally" block typically).  If there are
+   * outstanding workers executing tasks on threads then this method waits until
+   * they are complete.
+   *
+   * @return The {@link AccessToken} to use for {@linkplain
+   *         #resume(AccessToken) unpausing}, or <tt>null</tt> if already
+   *         paused when this is called.
+   */
+  public AccessToken pause() {
+    synchronized (this.available) {
+      // check if already paused
+      if (this.isPaused()) return null;
+
+      // mark this instance as paused
+      this.pauseToken = new AccessToken();
+
+      // wait until all threads are available
+      while (this.available.size() < this.allThreads.size()) {
+        try {
+          this.available.wait(2000L);
+        } catch (InterruptedException ignore) {
+          // do nothing
+        }
+      }
+
+      // return the pause token
+      return this.pauseToken;
+    }
+
+  }
+
+  /**
+   * Unpauses the pool and allows tasks to be executed on the available
+   * threads if the specified {@link AccessToken} is valid.  If the specified
+   * parameter is <tt>null</tt> then this method does nothing and if it is the
+   * wrong {@link AccessToken} then an {@link IllegalArgumentException} is
+   * thrown.
+   *
+   * @param accessToken The {@link AccessToken} to use to verify unpausing the
+   *                    {@link WorkerThreadPool}, or <tt>null</tt> if the
+   *                    caller was not the one who paused this instance.
+   *
+   * @return <tt>true</tt> if the instance was unpaused, otherwise
+   *         <tt>false</tt>.
+   *
+   * @throws IllegalStateException If this instance is <b>not</b> in a paused
+   *                               state and the specified parameter is not
+   *                               <tt>null</tt>.
+   *
+   * @throws IllegalArgumentException If the specified parameter is not the
+   *                                  correct {@link AccessToken}.
+   */
+  public boolean resume(AccessToken accessToken) {
+    if (accessToken == null) return false;
+    synchronized (this.available) {
+      if (accessToken != null && this.pauseToken == null) {
+        throw new IllegalStateException(
+            "This WorkerThreadPool is NOT currently in a paused state.  Cannot "
+                + "resume.");
+      }
+      if (accessToken != null && this.pauseToken != accessToken) {
+        throw new IllegalArgumentException(
+            "The specifeid access token is not valid for unpausing this "
+                + "WorkerThreadPool instance.");
+      }
+      // resume
+      this.pauseToken = null;
+      this.available.notifyAll();
+      return true;
     }
   }
 

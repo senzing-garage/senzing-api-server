@@ -40,6 +40,7 @@ public class EntityDataServices {
     try {
       SzApiProvider provider = SzApiProvider.Factory.getProvider();
       dataSourceCode = dataSourceCode.toUpperCase();
+      ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
 
       final String dataSource = dataSourceCode;
 
@@ -63,12 +64,12 @@ public class EntityDataServices {
         // get the engine API and the config API
         G2Engine engineApi = provider.getEngineApi();
 
-        callingNativeAPI(timers, "engine", "addRecordWithReturnedRecordID");
+        callingNativeAPI(timers, "engine","addRecordWithReturnedRecordID");
         int result = engineApi.addRecordWithReturnedRecordID(dataSource,
                                                              sb,
                                                              recordText,
                                                              normalizedLoadId);
-        calledNativeAPI(timers, "engine", "addRecordWithReturnedRecordID");
+        calledNativeAPI(timers, "engine","addRecordWithReturnedRecordID");
 
         if (result != 0) {
           throw newWebApplicationException(POST, uriInfo, timers, engineApi);
@@ -109,6 +110,7 @@ public class EntityDataServices {
     Timers timers = newTimers();
     try {
       SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      ensureLoadingIsAllowed(provider, PUT, uriInfo, timers);
       dataSourceCode = dataSourceCode.toUpperCase();
 
       final String dataSource = dataSourceCode;
@@ -125,7 +127,7 @@ public class EntityDataServices {
                                            recordJsonData,
                                            map);
 
-      Set<String> dataSources = provider.getDataSources();
+      Set<String> dataSources = provider.getDataSources(dataSource);
 
       if (!dataSources.contains(dataSource)) {
         throw newNotFoundException(
@@ -777,10 +779,10 @@ public class EntityDataServices {
                                       UriInfo       uriInfo,
                                       Timers        timers,
                                       String        dataSource,
-                                      SzApiProvider   apiProvider)
+                                      SzApiProvider apiProvider)
     throws NotFoundException
   {
-    Set<String> dataSources = apiProvider.getDataSources();
+    Set<String> dataSources = apiProvider.getDataSources(dataSource);
 
     if (!dataSources.contains(dataSource)) {
       throw newNotFoundException(
@@ -839,6 +841,32 @@ public class EntityDataServices {
                                                 uriInfo,
                                                 timers,
                                                 e.getMessage());
+    }
+  }
+
+  /**
+   * Ensures that loading of records is allowed and if not throws an
+   * {@link ForbiddenException}.
+   *
+   * @param provider The {@link SzApiProvider} to check for read-only mode.
+   * @param method The {@link HttpMethod} used.
+   * @param uriInfo The {@link UriInfo} for the request path.
+   * @param timers The {@link Timers} being used by the request handler.
+   *
+   * @throws ForbiddenException If the specified {@link SzApiProvider} is in
+   *                            read-only mode.
+   */
+  private static void ensureLoadingIsAllowed(SzApiProvider provider,
+                                             SzHttpMethod  method,
+                                             UriInfo       uriInfo,
+                                             Timers        timers)
+    throws ForbiddenException
+  {
+    if (provider.isReadOnly()) {
+      throw newForbiddenException(
+          method, uriInfo, timers,
+          "Loading data is not allowed if Senzing API Server started "
+           + "in read-only mode");
     }
   }
 

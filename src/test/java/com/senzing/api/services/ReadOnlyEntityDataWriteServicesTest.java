@@ -1,48 +1,38 @@
 package com.senzing.api.services;
 
-import com.senzing.api.model.SzHttpMethod;
-import com.senzing.api.model.SzLoadRecordResponse;
-import com.senzing.repomgr.RepositoryManager;
+import com.senzing.api.model.SzErrorResponse;
+import com.senzing.api.server.SzApiServer;
+import com.senzing.api.server.SzApiServerOptions;
 import com.senzing.util.JsonUtils;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.core.UriInfo;
+import java.util.HashMap;
+import java.util.Map;
 
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static com.senzing.api.model.SzHttpMethod.POST;
+import static com.senzing.api.model.SzHttpMethod.PUT;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
-import static com.senzing.api.model.SzHttpMethod.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
-public class EntityDataWriteServicesTest extends AbstractServiceTest {
-  protected static final String TEST_DATA_SOURCE = "CUSTOMERS";
-
-  protected EntityDataServices entityDataServices;
-
-  @BeforeAll public void initializeEnvironment() {
-    this.initializeTestEnvironment();
-    this.entityDataServices = new EntityDataServices();
-  }
-
+public class ReadOnlyEntityDataWriteServicesTest
+    extends EntityDataWriteServicesTest
+{
   /**
-   * Overridden to configure some data sources.
+   * Sets the desired options for the {@link SzApiServer} during server
+   * initialization.
+   *
+   * @param options The {@link SzApiServerOptions} to initialize.
    */
-  protected void prepareRepository() {
-    RepositoryManager.configSources(this.getRepositoryDirectory(),
-                                    Collections.singleton(TEST_DATA_SOURCE),
-                                    true);
-  }
-
-  @AfterAll public void teardownEnvironment() {
-    this.teardownTestEnvironment(true);
+  protected void initializeServerOptions(SzApiServerOptions options) {
+    super.initializeServerOptions(options);
+    options.setReadOnly(true);
   }
 
   @Test public void postRecordTest() {
@@ -60,13 +50,18 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
     long before = System.currentTimeMillis();
-    SzLoadRecordResponse response = this.entityDataServices.loadRecord(
-        TEST_DATA_SOURCE, null, uriInfo, jsonText);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+    try {
+      this.entityDataServices.loadRecord(
+          TEST_DATA_SOURCE, null, uriInfo, jsonText);
+      fail("Did not get expected 403 ForbiddenException in read-only mode");
 
-    this.validateLoadRecordResponse(
-        response, POST, TEST_DATA_SOURCE, null, before, after);
+    } catch (ForbiddenException expected) {
+      SzErrorResponse response
+          = (SzErrorResponse) expected.getResponse().getEntity();
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
+      this.validateBasics(response, 403, POST, uriText, before, after);
+    }
   }
 
   @Test public void postRecordTestViaHttp() {
@@ -82,13 +77,12 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
     long before = System.currentTimeMillis();
-    SzLoadRecordResponse response = this.invokeServerViaHttp(
-        POST, uriText, null, recordBody, SzLoadRecordResponse.class);
+    SzErrorResponse response = this.invokeServerViaHttp(
+        POST, uriText, null, recordBody, SzErrorResponse.class);
     response.concludeTimers();
     long after = System.currentTimeMillis();
 
-    this.validateLoadRecordResponse(
-        response, POST, TEST_DATA_SOURCE, null, before, after);
+    this.validateBasics(response, 403, POST, uriText, before, after);
   }
 
   @Test public void putRecordTest() {
@@ -108,13 +102,18 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
     long before = System.currentTimeMillis();
-    SzLoadRecordResponse response = this.entityDataServices.loadRecord(
-        TEST_DATA_SOURCE, recordId, null, uriInfo, jsonText);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+    try {
+      this.entityDataServices.loadRecord(
+          TEST_DATA_SOURCE, recordId, null, uriInfo, jsonText);
 
-    this.validateLoadRecordResponse(
-        response, PUT, TEST_DATA_SOURCE, recordId, before, after);
+      fail("Did not get expected 403 ForbiddenException in read-only mode");
+    } catch (ForbiddenException expected) {
+      SzErrorResponse response
+          = (SzErrorResponse) expected.getResponse().getEntity();
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
+      this.validateBasics(response, 403, PUT, uriText, before, after);
+    }
   }
 
   @Test public void putRecordTestViaHttp() {
@@ -132,12 +131,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
 
     long before = System.currentTimeMillis();
-    SzLoadRecordResponse response = this.invokeServerViaHttp(
-        PUT, uriText, null, recordBody, SzLoadRecordResponse.class);
+    SzErrorResponse response = this.invokeServerViaHttp(
+        PUT, uriText, null, recordBody, SzErrorResponse.class);
     response.concludeTimers();
     long after = System.currentTimeMillis();
 
-    this.validateLoadRecordResponse(
-        response, PUT, TEST_DATA_SOURCE, recordId, before, after);
+    this.validateBasics(response, 403, PUT, uriText, before, after);
   }
 }
