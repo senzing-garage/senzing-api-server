@@ -43,7 +43,7 @@ and Senzing App.  In order to install g2.jar you must:
 
  1. Locate your [`${SENZING_G2_DIR}` directory](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/create-senzing-dir.md).
     The default locations are:
-    - Linux Archive Extraction: `/opt/senzing/` (see [Install Instructions](https://github.com/Senzing/hello-senzing-springboot-java/blob/master/doc/debian-based-installation.md#install))
+    - Linux Archive Extraction: `/opt/senzing/g2` (see [Install Instructions](https://github.com/Senzing/hello-senzing-springboot-java/blob/master/doc/debian-based-installation.md#install))
     - Windows MSI Installer: `C:\Program Files\Senzing\`
 
  1. Determine your `${SENZING_VERSION}` version number:
