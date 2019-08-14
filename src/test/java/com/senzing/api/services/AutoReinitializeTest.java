@@ -70,23 +70,25 @@ public class AutoReinitializeTest extends AbstractServiceTest
 
   @BeforeAll public void initializeEnvironment() throws IOException {
     this.initializeTestEnvironment();
-    this.configServices     = new ConfigServices();
-    this.entityDataServices = new EntityDataServices();
-    this.configMgrApi       = new G2ConfigMgrJNI();
-    this.configApi          = new G2ConfigJNI();
-    File initJsonFile       = new File(this.getRepositoryDirectory(),
-                                       "g2-init.json");
-
-    String initJson = readTextFileAsString(initJsonFile, "UTF-8");
-    this.configMgrApi.initV2(this.getModuleName(),
-                             initJson,
-                             this.isVerbose());
-    this.configApi.initV2(this.getModuleName(),
-                          initJson,
-                          this.isVerbose());
-
-    this.expectedDataSources = new LinkedHashSet<>();
+    this.configServices       = new ConfigServices();
+    this.entityDataServices   = new EntityDataServices();
+    this.expectedDataSources  = new LinkedHashSet<>();
     this.expectedDataSources.addAll(INITIAL_DATA_SOURCES);
+
+    if (NATIVE_API_AVAILABLE) {
+      this.configMgrApi       = new G2ConfigMgrJNI();
+      this.configApi          = new G2ConfigJNI();
+      File initJsonFile = new File(this.getRepositoryDirectory(),
+                                   "g2-init.json");
+
+      String initJson = readTextFileAsString(initJsonFile, "UTF-8");
+      this.configMgrApi.initV2(this.getModuleName(),
+                               initJson,
+                               this.isVerbose());
+      this.configApi.initV2(this.getModuleName(),
+                            initJson,
+                            this.isVerbose());
+    }
   }
 
   /**
