@@ -33,6 +33,8 @@ import org.eclipse.jetty.servlets.CrossOriginFilter;
 
 import javax.json.*;
 import javax.servlet.DispatcherType;
+import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.WebApplicationException;
 
 import static com.senzing.util.WorkerThreadPool.Task;
 import static com.senzing.cmdline.CommandLineUtilities.*;
@@ -1719,7 +1721,15 @@ public class SzApiServer implements SzApiProvider {
   {
     try {
       return this.workerThreadPool.execute(task);
-    } catch (RuntimeException e) {
+
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
       e.printStackTrace();
       throw e;
     }
