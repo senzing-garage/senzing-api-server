@@ -237,10 +237,10 @@ public class RepositoryManager {
       throw new IllegalArgumentException(msg);
     }
 
-    File iniFile = new File(directory, "g2.ini");
+    File iniFile = new File(directory, "g2-init.json");
     if (!iniFile.exists() || iniFile.isDirectory()) {
       String msg = "Specified repository directory path exists, but does not "
-                 + "contain a g2.ini file: " + directory;
+                 + "contain a g2-init.json file: " + directory;
 
       System.err.println();
       System.err.println(msg);
@@ -1360,9 +1360,10 @@ public class RepositoryManager {
           .withFirstRecordAsHeader().withIgnoreEmptyLines(true).withTrim(true);
 
       try {
+        final String       enc = "UTF-8";
         FileInputStream    fis = new FileInputStream(sourceFile);
-        InputStreamReader  isr = new InputStreamReader(fis, "UTF-8");
-        BufferedReader     br  = new BufferedReader(isr);
+        InputStreamReader  isr = new InputStreamReader(fis, enc);
+        BufferedReader     br  = new BufferedReader(bomSkippingReader(isr, enc));
 
         CSVParser parser = new CSVParser(br, csvFormat);
         Map<String, Integer> headerMap = parser.getHeaderMap();
