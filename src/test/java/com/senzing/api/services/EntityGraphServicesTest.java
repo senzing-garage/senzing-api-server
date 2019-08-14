@@ -169,7 +169,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
   @AfterAll
   public void teardownEnvironment() {
-    this.teardownTestEnvironment(true);
+    this.teardownTestEnvironment(false);
   }
 
   private Long getEntityIdForRecordId(SzRecordId recordId) {
@@ -967,6 +967,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                           null,
                           null,
                           null,
+                          null,
                           null);
     }
 
@@ -1752,6 +1753,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                           false,
                           null,
                           true,
+                          null,
                           null,
                           null,
                           null,

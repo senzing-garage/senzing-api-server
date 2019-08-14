@@ -193,6 +193,19 @@ public class SzResolvedEntity {
     this.records.clear();
     if (records != null) {
       this.records.addAll(records);
+
+      // recalculate the "other data"
+      this.otherData.clear();
+      Set<String> set = new LinkedHashSet<>();
+      for (SzMatchedRecord record : records) {
+        List<String> recordOtherData = record.getOtherData();
+        if (recordOtherData != null) {
+          for (String data : recordOtherData) {
+            set.add(data);
+          }
+        }
+      }
+      this.otherData.addAll(set);
     }
   }
 
@@ -205,6 +218,14 @@ public class SzResolvedEntity {
   public void addRecord(SzMatchedRecord record)
   {
     this.records.add(record);
+    List<String> recordOtherData = record.getOtherData();
+    if (recordOtherData != null) {
+      for (String data: recordOtherData) {
+        if (! this.otherData.contains(data)) {
+          this.otherData.add(data);
+        }
+      }
+    }
   }
 
 
@@ -540,6 +561,10 @@ public class SzResolvedEntity {
     getDataFields("IDENTIFIER", featureMap, mapper).forEach((ident) -> {
       this.addIdentifierData(ident);
     });
+
+    getDataFields("RELATIONSHIP", featureMap, mapper).forEach((rel) -> {
+      this.addRelationshipData(rel);
+    });
   }
 
   /**
@@ -844,16 +869,19 @@ public class SzResolvedEntity {
       String prefix = (attrClass.equalsIgnoreCase(ftypeCode)
           ? "" : ftypeCode + ": ");
 
+      boolean relLink = ftypeCode.equalsIgnoreCase("REL_LINK");
       values.forEach(val -> {
         String usageType = val.getUsageType();
         if (usageType != null && usageType.length() > 0) {
           usageType = usageType.trim()
-              + (prefix.endsWith(": ") ? " " : ": ");
+              + (!relLink && prefix.endsWith(": ") ? " " : ": ");
         } else {
           usageType = "";
         }
 
-        String dataValue = usageType + prefix + val.getPrimaryValue();
+        String dataValue = (relLink)
+            ? prefix + usageType + val.getPrimaryValue()
+            : usageType + prefix + val.getPrimaryValue();
 
         // add the value to the list
         dataList.add(dataValue);

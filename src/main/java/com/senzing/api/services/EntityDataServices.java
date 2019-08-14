@@ -27,6 +27,8 @@ public class EntityDataServices {
 
   private static final int RECORD_NOT_FOUND_CODE = 33;
 
+  private static final int ENTITY_ID_NOT_FOUND_CODE = 37;
+
   @POST
   @Path("data-sources/{dataSourceCode}/records")
   public SzLoadRecordResponse loadRecord(
@@ -618,7 +620,6 @@ public class EntityDataServices {
       throw e;
 
     } catch (WebApplicationException e) {
-      e.printStackTrace();
       throw e;
 
     } catch (Exception e) {
@@ -635,7 +636,9 @@ public class EntityDataServices {
   {
     int errorCode = engineApi.getLastExceptionCode();
     if (errorCode == DATA_SOURCE_NOT_FOUND_CODE
-        || errorCode == RECORD_NOT_FOUND_CODE) {
+        || errorCode == RECORD_NOT_FOUND_CODE
+        || errorCode == ENTITY_ID_NOT_FOUND_CODE)
+    {
       return newNotFoundException(GET, uriInfo, timers, engineApi);
     }
     return newInternalServerErrorException(GET, uriInfo, timers, engineApi);

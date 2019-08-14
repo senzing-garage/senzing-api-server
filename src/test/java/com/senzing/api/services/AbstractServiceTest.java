@@ -1260,7 +1260,8 @@ public abstract class AbstractServiceTest {
       Map<String,Integer>                 expectedFeatureCounts,
       Map<String,Set<String>>             primaryFeatureValues,
       Map<String,Set<String>>             duplicateFeatureValues,
-      Map<SzAttributeClass, Set<String>>  expectedDataValues)
+      Map<SzAttributeClass, Set<String>>  expectedDataValues,
+      Set<String>                         expectedOtherDataValues)
   {
     if (expectedRecordCount != null) {
       assertEquals(expectedRecordCount, entity.getRecords().size(),
@@ -1450,6 +1451,13 @@ public abstract class AbstractServiceTest {
                                 attrClass.toString() + " (" + testInfo + ")");
       });
     }
+    if (expectedOtherDataValues != null
+        && (forceMinimal == null || !forceMinimal) )
+    {
+      List<String> actualValues = entity.getOtherData();
+      this.assertSameElements(expectedOtherDataValues, actualValues,
+                              "OTHER DATA (" + testInfo + ")");
+    }
   }
 
   /**
@@ -1474,6 +1482,8 @@ public abstract class AbstractServiceTest {
         return entity.getIdentifierData();
       case ADDRESS:
         return entity.getAddressData();
+      case RELATIONSHIP:
+        return entity.getRelationshipData();
       default:
         return null;
     }
@@ -1720,6 +1730,8 @@ public abstract class AbstractServiceTest {
    *                               if not validating the identifier data.
    * @param expectedAttributeData The expected attribute data or <tt>null</tt>
    *                              if not validating the attribute data.
+   * @param expectedOtherData The expected other data or <tt>null</tt>
+   *                          if not validating the other data.
    * @param beforeTimestamp The timestamp before executing the request.
    * @param afterTimestamp The timestamp after executing the request and
    *                       concluding timers on the response.
@@ -1733,6 +1745,8 @@ public abstract class AbstractServiceTest {
                                         Set<String> expectedPhoneData,
                                         Set<String> expectedIdentifierData,
                                         Set<String> expectedAttributeData,
+                                        Set<String> expectedRelationshipData,
+                                        Set<String> expectedOtherData,
                                         long beforeTimestamp,
                                         long afterTimestamp,
                                         Boolean expectRawData)
@@ -1771,6 +1785,10 @@ public abstract class AbstractServiceTest {
         expectedIdentifierData, record.getIdentifierData(), "identifiers");
     this.assertSameElements(
         expectedAttributeData, record.getAttributeData(), "attributes");
+    this.assertSameElements(
+        expectedRelationshipData, record.getRelationshipData(), "relationships");
+    this.assertSameElements(
+        expectedOtherData, record.getOtherData(), "other");
 
     if (expectRawData) {
       this.validateRawDataMap(response.getRawData(),
@@ -1843,6 +1861,7 @@ public abstract class AbstractServiceTest {
       Map<String,Set<String>>             primaryFeatureValues,
       Map<String,Set<String>>             duplicateFeatureValues,
       Map<SzAttributeClass, Set<String>>  expectedDataValues,
+      Set<String>                         expectedOtherDataValues,
       long                                beforeTimestamp,
       long                                afterTimestamp)
   {
@@ -1877,7 +1896,8 @@ public abstract class AbstractServiceTest {
                         expectedFeatureCounts,
                         primaryFeatureValues,
                         duplicateFeatureValues,
-                        expectedDataValues);
+                        expectedDataValues,
+                        expectedOtherDataValues);
 
     if (withRaw != null && withRaw) {
       if (withRelated != null && withRelated
@@ -2014,6 +2034,7 @@ public abstract class AbstractServiceTest {
                           (withRelationships == null || !withRelationships),
                           null,
                           true,
+                          null,
                           null,
                           null,
                           null,
