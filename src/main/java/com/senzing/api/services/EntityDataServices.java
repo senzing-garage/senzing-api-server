@@ -133,7 +133,7 @@ public class EntityDataServices {
 
       if (!dataSources.contains(dataSource)) {
         throw newNotFoundException(
-            POST, uriInfo, timers,
+            PUT, uriInfo, timers,
             "The specified data source is not recognized: " + dataSource);
       }
 

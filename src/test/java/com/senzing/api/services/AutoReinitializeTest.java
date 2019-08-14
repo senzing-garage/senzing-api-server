@@ -26,11 +26,11 @@ import static com.senzing.util.LoggingUtilities.*;
 @TestInstance(Lifecycle.PER_CLASS)
 public class AutoReinitializeTest extends AbstractServiceTest
 {
-  private static final Set<String> CUSTOM_DATA_SOURCES;
+  protected static final Set<String> CUSTOM_DATA_SOURCES;
 
-  private static final Set<String> DEFAULT_DATA_SOURCES;
+  protected static final Set<String> DEFAULT_DATA_SOURCES;
 
-  private static final Set<String> INITIAL_DATA_SOURCES;
+  protected static final Set<String> INITIAL_DATA_SOURCES;
 
   static {
     Set<String> customSources   = null;
@@ -62,33 +62,18 @@ public class AutoReinitializeTest extends AbstractServiceTest
     }
   }
 
-  private ConfigServices configServices;
-  private EntityDataServices entityDataServices;
-  private G2ConfigMgr configMgrApi;
-  private G2Config configApi;
-  private Set<String> expectedDataSources;
+  protected ConfigServices configServices;
+  protected EntityDataServices entityDataServices;
+  protected G2ConfigMgr configMgrApi;
+  protected G2Config configApi;
+  protected Set<String> expectedDataSources;
 
-  @BeforeAll public void initializeEnvironment() throws IOException {
+  @BeforeAll public void initializeEnvironment() {
     this.initializeTestEnvironment();
     this.configServices       = new ConfigServices();
     this.entityDataServices   = new EntityDataServices();
     this.expectedDataSources  = new LinkedHashSet<>();
     this.expectedDataSources.addAll(INITIAL_DATA_SOURCES);
-
-    if (NATIVE_API_AVAILABLE) {
-      this.configMgrApi       = new G2ConfigMgrJNI();
-      this.configApi          = new G2ConfigJNI();
-      File initJsonFile = new File(this.getRepositoryDirectory(),
-                                   "g2-init.json");
-
-      String initJson = readTextFileAsString(initJsonFile, "UTF-8");
-      this.configMgrApi.initV2(this.getModuleName(),
-                               initJson,
-                               this.isVerbose());
-      this.configApi.initV2(this.getModuleName(),
-                            initJson,
-                            this.isVerbose());
-    }
   }
 
   /**
@@ -98,6 +83,25 @@ public class AutoReinitializeTest extends AbstractServiceTest
     RepositoryManager.configSources(this.getRepositoryDirectory(),
                                     CUSTOM_DATA_SOURCES,
                                     true);
+    if (NATIVE_API_AVAILABLE) {
+      try {
+        this.configMgrApi       = new G2ConfigMgrJNI();
+        this.configApi          = new G2ConfigJNI();
+        File initJsonFile = new File(this.getRepositoryDirectory(),
+                                     "g2-init.json");
+
+        String initJson = readTextFileAsString(initJsonFile, "UTF-8");
+        this.configMgrApi.initV2(this.getModuleName(),
+                                 initJson,
+                                 this.isVerbose());
+        this.configApi.initV2(this.getModuleName(),
+                              initJson,
+                              this.isVerbose());
+
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   @AfterAll public void teardownEnvironment() {
@@ -228,7 +232,7 @@ public class AutoReinitializeTest extends AbstractServiceTest
         response, PUT, newDataSource, recordId, before, after);
   }
 
-  private void addDataSource(String newDataSource) {
+  protected void addDataSource(String newDataSource) {
     // now get the default config ID
     Result<Long> result = new Result<>();
     int returnCode = this.configMgrApi.getDefaultConfigID(result);

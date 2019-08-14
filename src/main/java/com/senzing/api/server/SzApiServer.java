@@ -1,6 +1,7 @@
 package com.senzing.api.server;
 
 import java.io.*;
+import java.lang.reflect.Proxy;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.time.Instant;
@@ -190,10 +191,16 @@ public class SzApiServer implements SzApiProvider {
   private G2Engine engineApi;
 
   /**
+   * The {@link G2EngineRetryHandler} backing the proxied
+   * retry version of {@link G2Engine}.
+   */
+  private G2EngineRetryHandler engineRetryHandler = null;
+
+  /**
    * The {@link G2Engine} engine API instance wrapper that will automatically
    * retry some methods if the configuration is stale.
    */
-  private G2Engine g2EngineWithRetry = null;
+  private G2Engine retryEngineApi = null;
 
   /**
    * The {@link G2ConfigMgr} configuration manager API.
@@ -372,8 +379,8 @@ public class SzApiServer implements SzApiProvider {
    */
   public G2Engine getEngineApi() {
     this.assertNotShutdown();
-    return (this.g2EngineWithRetry == null)
-            ? this.engineApi : this.g2EngineWithRetry;
+    return (this.retryEngineApi == null)
+            ? this.engineApi : this.retryEngineApi;
   }
 
   /**
@@ -1612,8 +1619,12 @@ public class SzApiServer implements SzApiProvider {
             this.configMgrApi.getLastException()));
       }
 
-      this.g2EngineWithRetry
-          = new G2EngineWithRetry(this.engineApi, this);
+      Class[]     interfaces  = { G2Engine.class };
+      ClassLoader classLoader = this.getClass().getClassLoader();
+      this.engineRetryHandler
+          = new G2EngineRetryHandler(this.engineApi, this);
+      this.retryEngineApi = (G2Engine) Proxy.newProxyInstance(
+          classLoader, interfaces, this.engineRetryHandler);
     }
   }
 
