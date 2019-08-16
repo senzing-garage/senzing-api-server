@@ -127,8 +127,18 @@ Where `[version]` is the version number from the `pom.xml` file.
 To execute the server you will use `java -jar`.  It assumed that your environment
 is properly configured as described in the "Dependencies" section above.
 
-The only command-line option that is required is the `-iniFile` file option which
-specifies the path to the INI file used to initialize the API.
+To start up you must provide the initialization parameters for the Senzing 
+native API.  This is done through one of: `-initFile`, `-initEnvVar` or the
+`-initJson` options to specify how to obtain the initialization JSON parameters.
+The `G2CONFIGFILE` path is excluded from the initialization parameters in favor
+of loading the default configuration that has been set for the repository.
+
+The deprecated `-iniFile` option can also be used to startup with a deprecated
+INI file with a `G2CONFIGFILE` parameter referencing a configuration on the
+file system.  However, when starting up this way you do not get auto 
+reinitialization of the configuration when it changes (i.e.: when the default
+configuration changes) and you will be responsible for keeping the configuration
+in sync across multiple processes that may be using it.
 
 ***NOTE:*** *In lieu of using `java -jar` directly and the `-iniFile` option to
 specify your entity repository, you can use the
@@ -139,20 +149,22 @@ Senzing REST API Server using an entity repository from the
 for version compatibility and usage information.*
 
 Other command-line options may be useful to you as well.  Execute
-`java -jar target/senzing-api-server-1.6.0.jar -help` to obtain a help message
+`java -jar target/senzing-api-server-1.7.2.jar -help` to obtain a help message
 describing all available options.  For example:
 
   ```console
-     cd target
 
-    $ java -jar senzing-api-server-1.6.0.jar -help
+    $ java -jar target/senzing-api-server-1.7.2.jar -help
 
-    java -jar senzing-api-server-1.6.0.jar <options>
+    java -jar senzing-api-server-1.7.2.jar <options>
 
-    <options> includes:
+    <options> includes: 
+
+    [ Standard Options ]
+
        -help
             Should be the first and only option if provided.
-            Causes this help messasge to be displayed.
+            Causes this help message to be displayed.
             NOTE: If this option is provided, the server will not start.
 
        -version
@@ -160,34 +172,65 @@ describing all available options.  For example:
             Causes the version of the G2 REST API Server to be displayed.
             NOTE: If this option is provided, the server will not start.
 
-       -httpPort [port-number]
+       -httpPort <port-number>
             Sets the port for HTTP communication.  Defaults to 2080.
             Specify 0 for a randomly selected port number.
 
-       -bindAddr [ip-address|loopback|all]
+       -bindAddr <ip-address|loopback|all>
             Sets the port for HTTP bind address communication.
             Defaults to the loopback address.
 
-       -allowedOrigins [url-domain]
+       -allowedOrigins <url-domain>
             Sets the CORS Access-Control-Allow-Origin header for all endpoints.
-            No Default.
+            There is no default value.
 
-       -concurrency [thread-count]
-            Sets the number of threads available for executing
+       -concurrency <thread-count>
+            Sets the number of threads available for executing 
             Senzing API functions (i.e.: the number of engine threads).
             If not specified, then this defaults to 8.
 
-       -moduleName [module-name]
+       -moduleName <module-name>
             The module name to initialize with.  Defaults to 'ApiServer'.
 
-       -iniFile [ini-file-path]
+       -iniFile <ini-file-path>
             The path to the Senzing INI file to with which to initialize.
+            *** DEPRECATED: Use -initFile, -initEnvVar or -initJson instead.
+
+       -initFile <json-init-file>
+            The path to the file containing the JSON text to use for Senzing
+            initialization.
+
+       -initEnvVar <environment-variable-name>
+            The environment variable from which to extract the JSON text
+            to use for Senzing initialization.
+            *** SECURITY WARNING: If the JSON text contains a password
+            then it may be visible to other users via process monitoring.
+
+       -initJson <json-init-text>
+            The JSON text to use for Senzing initialization.
+            *** SECURITY WARNING: If the JSON text contains a password
+            then it may be visible to other users via process monitoring.
+
+       -configId <config-id>
+            Use with the -initFile, -initEnvVar or -initJson options to 
+            force a specific configuration ID to use for initialization.
+            NOTE: This will disable the auto-detection of config changes
 
        -verbose If specified then initialize in verbose mode.
 
        -monitorFile [filePath]
             Specifies a file whose timestamp is monitored to determine
             when to shutdown.
+
+    [ Advanced Options ]
+
+       --configmgr [config manager options]...
+            Should be the first option if provided.  All subsequent options
+            are interpreted as configuration manager options.  If this option
+            is specified by itself then a help message on configuration manager
+            options will be displayed.
+            NOTE: If this option is provided, the server will not start.
+
   ```
 
 For example, if you wanted to run the server on port 8080 and bind to all
@@ -198,7 +241,7 @@ network interfaces with a concurrency of 16 you would use:
         -concurrency 16 \
         -httpPort 8080 \
         -bindAddr all \
-        -iniFile /opt/senzing/g2/python/G2Module.ini
+        -initFile ~/senzing/data/g2-init.json
   ```
 
 #### Restart for Configuration Changes
