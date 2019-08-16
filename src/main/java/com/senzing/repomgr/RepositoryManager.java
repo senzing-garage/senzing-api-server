@@ -319,10 +319,6 @@ public class RepositoryManager {
               return Boolean.TRUE;
 
             case VERBOSE:
-              if (args.length > 1) {
-                throw new IllegalArgumentException(
-                    "Help option should be only option when provided.");
-              }
               return Boolean.TRUE;
 
             case CREATE_REPO: {
