@@ -76,9 +76,9 @@ public class IOUtilities {
     int maxReadCount = 10*1024*1024;
     boolean allAscii = true;
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    while ((readCount = is.read(buffer)) >= 0
-        && (totalReadCount < maxReadCount)
-        && !detector.isDone())
+    while ((totalReadCount < maxReadCount)
+           && !detector.isDone()
+           && ((readCount = is.read(buffer)) >= 0))
     {
       totalReadCount += readCount;
       detector.handleData(buffer, 0, readCount);
