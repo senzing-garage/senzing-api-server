@@ -1,9 +1,7 @@
 package com.senzing.repomgr;
 
-import com.senzing.g2.engine.G2Config;
-import com.senzing.g2.engine.G2Engine;
-import com.senzing.g2.engine.G2Fallible;
-import com.senzing.g2.engine.Result;
+import com.senzing.cmdline.CommandLineUtilities;
+import com.senzing.g2.engine.*;
 import com.senzing.util.JsonUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -17,9 +15,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-import static java.util.EnumSet.*;
 import static com.senzing.util.OperatingSystemFamily.*;
 import static java.nio.file.StandardCopyOption.*;
+import static com.senzing.io.IOUtilities.*;
+import static com.senzing.cmdline.CommandLineUtilities.*;
+import static com.senzing.util.LoggingUtilities.multilineFormat;
+import static com.senzing.repomgr.RepositoryManagerOption.*;
 
 public class RepositoryManager {
   private static final File SENZING_DIR;
@@ -28,7 +29,10 @@ public class RepositoryManager {
 
   private static final G2Config CONFIG_API;
 
-  private static String initializedWith = null;
+  private static final G2ConfigMgr CONFIG_MGR_API;
+
+  private static String baseInitializedWith = null;
+  private static String engineInitializedWith = null;
 
   static {
     File senzingDir = null;
@@ -118,14 +122,20 @@ public class RepositoryManager {
       SENZING_DIR = senzingDir;
     }
 
-    G2Engine engineApi = null;
-    G2Config configApi = null;
+    G2Engine    engineApi     = null;
+    G2Config    configApi     = null;
+    G2ConfigMgr configMgrApi  = null;
     try {
-      Class engineApiClass = Class.forName("com.senzing.g2.engine.G2JNI");
-      Class configApiClass = Class.forName("com.senzing.g2.engine.G2ConfigJNI");
+      Class engineApiClass
+          = Class.forName("com.senzing.g2.engine.G2JNI");
+      Class configApiClass
+          = Class.forName("com.senzing.g2.engine.G2ConfigJNI");
+      Class configMgrApiClass
+          = Class.forName("com.senzing.g2.engine.G2ConfigMgrJNI");
 
-      engineApi = (G2Engine) (engineApiClass.newInstance());
-      configApi = (G2Config) (configApiClass.newInstance());
+      engineApi     = (G2Engine) (engineApiClass.newInstance());
+      configApi     = (G2Config) (configApiClass.newInstance());
+      configMgrApi  = (G2ConfigMgr) (configMgrApiClass.newInstance());
 
     } catch (Exception e) {
       File libPath = new File(SENZING_DIR, "lib");
@@ -157,8 +167,9 @@ public class RepositoryManager {
       throw new ExceptionInInitializerError(e);
 
     } finally {
-      ENGINE_API = engineApi;
-      CONFIG_API = configApi;
+      ENGINE_API      = engineApi;
+      CONFIG_API      = configApi;
+      CONFIG_MGR_API  = configMgrApi;
     }
   }
 
@@ -204,108 +215,6 @@ public class RepositoryManager {
     }
   }
 
-  private enum Option {
-    HELP("-help"),
-    CREATE_REPO("-createRepo"),
-    PURGE_REPO("-purgeRepo"),
-    LOAD_FILE("-loadFile"),
-    ADD_RECORD("-addRecord"),
-    CONFIG_SOURCES("-configSources"),
-    DATA_SOURCE("-dataSource"),
-    REPOSITORY("-repo"),
-    VERBOSE("-verbose");
-
-    Option(String commandLineFlag) {
-      this.commandLineFlag = commandLineFlag;
-      this.conflicts       = null;
-      this.dependencies    = null;
-    }
-
-    private String commandLineFlag;
-    private EnumSet<Option> conflicts;
-    private EnumSet<Option> dependencies;
-
-    public static final EnumSet<Option> PRIMARY_OPTIONS
-        = complementOf(of(DATA_SOURCE, REPOSITORY, VERBOSE));
-
-    String getCommandLineFlag() {
-      return this.commandLineFlag;
-    }
-
-    public EnumSet<Option> getConflicts() {
-      return this.conflicts;
-    }
-
-    public EnumSet<Option> getDependencies() {
-      return this.dependencies;
-    }
-
-    static {
-      HELP.conflicts = complementOf(EnumSet.of(HELP));
-      HELP.dependencies = noneOf(Option.class);
-      CREATE_REPO.conflicts = complementOf(of(CREATE_REPO, VERBOSE));
-      CREATE_REPO.dependencies = noneOf(Option.class);
-      PURGE_REPO.conflicts = complementOf(of(PURGE_REPO, REPOSITORY, VERBOSE));
-      PURGE_REPO.dependencies = of(REPOSITORY);
-      LOAD_FILE.conflicts
-          = complementOf(of(LOAD_FILE, REPOSITORY, DATA_SOURCE, VERBOSE));
-      LOAD_FILE.dependencies = of(REPOSITORY);
-      ADD_RECORD.conflicts
-          = complementOf(of(ADD_RECORD, REPOSITORY, DATA_SOURCE, VERBOSE));
-      ADD_RECORD.dependencies = of(REPOSITORY);
-      CONFIG_SOURCES.conflicts
-          = complementOf(of(CONFIG_SOURCES, REPOSITORY, VERBOSE));
-      CONFIG_SOURCES.dependencies = of(REPOSITORY);
-      DATA_SOURCE.conflicts
-          = complementOf(of(DATA_SOURCE, LOAD_FILE, ADD_RECORD, VERBOSE, REPOSITORY));
-      DATA_SOURCE.dependencies = noneOf(Option.class);
-      REPOSITORY.conflicts = of(HELP, CREATE_REPO);
-      REPOSITORY.dependencies = noneOf(Option.class);
-    }
-  }
-
-  /**
-   * Utility method to ensure a command line argument with the specified index
-   * exists and if not then throws an exception.
-   *
-   * @param args  The array of command line arguments.
-   * @param index The index to check.
-   * @throws IllegalArgumentException If the argument does not exist.
-   */
-  private static void ensureArgument(String[] args, int index) {
-    if (index >= args.length) {
-      String msg = "Missing expected argument following " + args[index - 1];
-
-      System.err.println();
-      System.err.println(msg);
-
-      throw new IllegalArgumentException(msg);
-    }
-  }
-
-  /**
-   * Stores the option and its value in the specified option map, first
-   * checking to ensure that the option is NOT already specified.
-   *
-   */
-  private static void putOption(Map<Option, Object> optionMap,
-                                Option              option,
-                                Object              value)
-  {
-    if (optionMap.containsKey(option)) {
-      String msg = "Cannot specify command-line option more than once: "
-                 + option.getCommandLineFlag();
-
-      System.err.println();
-      System.err.println(msg);
-
-      throw new IllegalArgumentException(msg);
-    }
-
-    // put it in the option map
-    optionMap.put(option, value);
-  }
-
   /**
    * Validates a repository directory specified in the command-line arguments.
    *
@@ -328,10 +237,10 @@ public class RepositoryManager {
       throw new IllegalArgumentException(msg);
     }
 
-    File iniFile = new File(directory, "g2.ini");
+    File iniFile = new File(directory, "g2-init.json");
     if (!iniFile.exists() || iniFile.isDirectory()) {
       String msg = "Specified repository directory path exists, but does not "
-                 + "contain a g2.ini file: " + directory;
+                 + "contain a g2-init.json file: " + directory;
 
       System.err.println();
       System.err.println(msg);
@@ -396,165 +305,69 @@ public class RepositoryManager {
    * @param args
    * @return
    */
-  private static Map<Option, Object> parseCommandLine(String[] args) {
-    Map<Option, Object> result = new LinkedHashMap<>();
-    File repoDirectory = null;
-    for (int index = 0; index < args.length; index++) {
-      switch (args[index]) {
-        case "-help":
-          if (args.length > 1) {
-            System.err.println();
+  private static Map<RepositoryManagerOption, Object> parseCommandLine(String[] args) {
+    return CommandLineUtilities.parseCommandLine(
+        RepositoryManagerOption.class,
+        args,
+        (option, params) -> {
+          switch (option) {
+            case HELP:
+              if (args.length > 1) {
+                throw new IllegalArgumentException(
+                    "Help option should be only option when provided.");
+              }
+              return Boolean.TRUE;
 
-            System.err.println(
-                "Help option should be only option when provided.");
+            case VERBOSE:
+              return Boolean.TRUE;
 
-            throw new IllegalArgumentException("Extra options with help");
-          }
-          putOption(result, Option.HELP, Boolean.TRUE);
-          return result;
+            case CREATE_REPO: {
+              File repoDirectory = new File(params.get(0));
+              if (repoDirectory.exists()) {
+                throw new IllegalArgumentException(
+                    "Specified repository directory file path "
+                        + "already exists: " + repoDirectory);
+              }
+              return repoDirectory;
+            }
+            case REPOSITORY: {
+              File repoDirectory = new File(params.get(0));
+              validateRepositoryDirectory(repoDirectory);
+              return repoDirectory;
+            }
+            case PURGE_REPO:
+              return Boolean.TRUE;
 
-        case "-verbose":
-          putOption(result, Option.VERBOSE, Boolean.TRUE);
-          return result;
+            case LOAD_FILE:
+              File sourceFile = new File(params.get(0));
+              validateSourceFile(sourceFile);
+              return sourceFile;
 
-        case "-createRepo":
-          index++;
-          ensureArgument(args, index);
-          repoDirectory = new File(args[index]);
-          if (repoDirectory.exists()) {
-            String msg = "Specified repository directory file path "
-                       + "already exists: " + repoDirectory;
+            case ADD_RECORD:
+              String jsonRecord = params.get(0);
+              validateJsonRecord(jsonRecord);
+              return jsonRecord;
 
-            System.err.println(msg);
+            case CONFIG_SOURCES:
+              Set<String> sources = new LinkedHashSet<>(params);
+              if (sources.size() == 0) {
+                throw new IllegalArgumentException(
+                    "No data source names were provided for the "
+                    + option.getCommandLineFlag() + " option");
+              }
+              return sources;
 
-            throw new IllegalArgumentException(msg);
-          }
-          putOption(result, Option.CREATE_REPO, repoDirectory);
-          break;
+            case DATA_SOURCE:
+              String dataSource = params.get(0);
+              return dataSource;
 
-        case "-repo":
-          index++;
-          ensureArgument(args, index);
-          repoDirectory = new File(args[index]);
-          validateRepositoryDirectory(repoDirectory);
-          putOption(result, Option.REPOSITORY, repoDirectory);
-          break;
-
-        case "-purgeRepo":
-          putOption(result, Option.PURGE_REPO, Boolean.TRUE);
-          break;
-
-        case "-loadFile":
-          index++;
-          ensureArgument(args, index);
-          File sourceFile = new File(args[index]);
-          validateSourceFile(sourceFile);
-          putOption(result, Option.LOAD_FILE, sourceFile);
-          break;
-
-        case "-addRecord":
-          index++;
-          ensureArgument(args, index);
-          String jsonRecord = args[index];
-          validateJsonRecord(jsonRecord);
-          putOption(result, Option.ADD_RECORD, jsonRecord);
-          break;
-
-        case "-configSources":
-          Set<String> sources = new LinkedHashSet<>();
-          while ((index + 1) < args.length && !args[index + 1].startsWith("-"))
-          {
-            index++;
-            sources.add(args[index]);
-          }
-          if (sources.size() == 0) {
-            String msg = "No data source names were provided for "
-                       + "-configSources";
-            System.err.println();
-            System.err.println(msg);
-            throw new IllegalArgumentException(msg);
-          }
-          putOption(result, Option.CONFIG_SOURCES, sources);
-          break;
-
-        case "-dataSource":
-          index++;
-          ensureArgument(args, index);
-          String dataSource = args[index];
-          putOption(result, Option.DATA_SOURCE, dataSource);
-          break;
-
-        default:
-          System.err.println();
-
-          System.err.println("Unrecognized option: " + args[index]);
-
-          throw new IllegalArgumentException(
-              "Bad command line option: " + args[index]);
+            default:
+              throw new IllegalArgumentException(
+                  "Unhandled command line option: "
+                      + option.getCommandLineFlag()
+                      + " / " + option);
       }
-    }
-
-    // check for problems
-    Set<Option> options = result.keySet();
-
-    // check if we have one primary option
-    int primaryCount = 0;
-    for (Option option : options) {
-      if (Option.PRIMARY_OPTIONS.contains(option)) {
-        primaryCount++;
-      }
-    }
-    if (primaryCount == 0) {
-      System.err.println();
-      System.err.println("Must specify at least one of the following:");
-      for (Option option: Option.PRIMARY_OPTIONS) {
-        System.err.println("     " + option.getCommandLineFlag());
-      }
-      throw new IllegalArgumentException(
-          "Must specify at least one primary option.");
-    }
-
-    if (primaryCount > 1) {
-      System.err.println();
-      System.err.println("Only one of the following options can be specified:");
-      for (Option option: Option.PRIMARY_OPTIONS) {
-        if (options.contains(option)) {
-          System.err.println("     " + option.getCommandLineFlag());
-        }
-      }
-      throw new IllegalArgumentException(
-          "Cannot specify more than one primary option.");
-    }
-
-    // check for conflicts and dependencies
-    for (Option option : options) {
-      EnumSet<Option> conflicts     = option.getConflicts();
-      EnumSet<Option> dependencies  = option.getDependencies();
-      for (Option conflict : conflicts) {
-        if (options.contains(conflict)) {
-          String msg = "Cannot specify both " + option.getCommandLineFlag()
-              + " and " + conflict.getCommandLineFlag();
-
-          System.err.println();
-          System.err.println(msg);
-
-          throw new IllegalArgumentException(msg);
-        }
-      }
-      if (!options.containsAll(dependencies)) {
-        System.err.println();
-        System.err.println(
-            "The " + option.getCommandLineFlag() + " option also requires:");
-        for (Option dependency : dependencies) {
-          if (!options.contains(dependency)) {
-            System.err.println("     " + dependency.getCommandLineFlag());
-          }
-        }
-        throw new IllegalArgumentException(
-            "Missing dependencies for " + option.getCommandLineFlag());
-      }
-    }
-    return result;
+    });
   }
 
   /**
@@ -569,23 +382,12 @@ public class RepositoryManager {
    * @return
    */
   public static String getUsageString(boolean full) {
-    boolean jarMain = false;
-
     // check if called from the RepositoryManager.main() directly
-    Throwable t = new Throwable();
-    StackTraceElement[] trace = t.getStackTrace();
-    StackTraceElement lastStackFrame = trace[trace.length-1];
-    String className = lastStackFrame.getClassName();
-    String methodName = lastStackFrame.getMethodName();
-    Class<RepositoryManager> cls = RepositoryManager.class;
-    if ("main".equals(methodName) && cls.getName().equals(className)) {
-      jarMain = true;
-    }
-
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     pw.println();
-    if (jarMain) {
+    Class<RepositoryManager> cls = RepositoryManager.class;
+    if (checkClassIsMain(cls)) {
       pw.println("USAGE: java -cp " + JAR_FILE_NAME + " "
                  + cls.getName() + " <options>");
     } else {
@@ -594,51 +396,48 @@ public class RepositoryManager {
     pw.println();
     if (!full) {
       pw.flush();
-      sw.flush();
       return sw.toString();
     }
-    pw.println("<options> includes: ");
-    pw.println("   -help");
-    pw.println("        Should be the first and only option if provided.");
-    pw.println("        Displays a complete usage message describing all options.");
-    pw.println();
-    pw.println("   -createRepo [repository-directory-path]");
-    pw.println("        Creates a new Senzing repository at the specified path.");
-    pw.println();
-    pw.println("   -purgeRepo");
-    pw.println("        Purges the Senzing repository at the specified path.");
-    pw.println();
-    pw.println("   -configSources [data-source-1 data-source-2 ... data-source-n]");
-    pw.println("        Configures the specified data sources for the repository");
-    pw.println("        specified by the -repo option.");
-    pw.println();
-    pw.println("   -loadFile [source-file]");
-    pw.println("        Loads the records in the specified source CSV or JSON file.");
-    pw.println("        Records are loaded to the repository specified by the -repo option.");
-    pw.println("        Use the -dataSource option to specify or override a data source for");
-    pw.println("        the records.");
-    pw.println();
-    pw.println("   -addRecord [json-record]");
-    pw.println("        Loads the specified JSON record provided on the command line.");
-    pw.println("        The record is loaded to the repository specified by the -repo option.");
-    pw.println("        Use the -dataSource option to specify or override the data source for ");
-    pw.println("        the record.");
-    pw.println();
-    pw.println("   -repo [repository-directory-path]");
-    pw.println("        Specifies the directory path to the repository to use when performing");
-    pw.println("        other operations such as:");
-    pw.println("           o -purgeRepo");
-    pw.println("           o -configSources");
-    pw.println("           o -loadFile");
-    pw.println("           o -addRecord");
-    pw.println();
-    pw.println("   -dataSource [data-source]");
-    pw.println("        Specifies a data source to use when loading records.  If the records");
-    pw.println("        already have a DATA_SOURCE property then this will override that value.");
-    pw.println();
-    pw.println("   -verbose");
-    pw.println("        Provide this switch to initialize the native Senzing API's in verbose mode");
-    pw.println();
+    pw.print(multilineFormat(
+        "<options> includes: ",
+        "   --help",
+        "        Should be the first and only option if provided.",
+        "        Displays a complete usage message describing all options.",
+        "",
+        "   --createRepo <repository-directory-path>",
+        "        Creates a new Senzing repository at the specified path.",
+        "",
+        "   --purgeRepo",
+        "        Purges the Senzing repository at the specified path.",
+        "",
+        "   --configSources <data-source-1> [data-source-2 ... data-source-n]",
+        "        Configures the specified data sources for the repository",
+        "        specified by the -repo option.",
+        "",
+        "   --loadFile <source-file>",
+        "        Loads the records in the specified source CSV or JSON file.",
+        "        Records are loaded to the repository specified by the -repo option.",
+        "        Use the -dataSource option to specify or override a data source for",
+        "        the records.",
+        "",
+        "   --addRecord <json-record>",
+        "        Loads the specified JSON record provided on the command line.",
+        "        The record is loaded to the repository specified by the -repo option.",
+        "        Use the -dataSource option to specify or override the data source for ",
+        "        the record.",
+        "",
+        "   -repo <repository-directory-path>",
+        "        Specifies the directory path to the repository to use when performing",
+        "        other operations such as:",
+        formatUsageOptionsList(
+            "           ".length(),
+            PURGE_REPO, CONFIG_SOURCES, LOAD_FILE, ADD_RECORD),
+        "   -dataSource <data-source>",
+        "        Specifies a data source to use when loading records.  If the records",
+        "        already have a DATA_SOURCE property then this will override that value.",
+        "",
+        "   -verbose",
+        "        If provided then Senzing will be initialized in verbose mode"));
     pw.flush();
     sw.flush();
 
@@ -650,7 +449,7 @@ public class RepositoryManager {
    * @throws Exception
    */
   public static void main(String[] args) throws Exception {
-    Map<Option, Object> options = null;
+    Map<RepositoryManagerOption, Object> options = null;
     try {
       options = parseCommandLine(args);
     } catch (Exception e) {
@@ -658,46 +457,46 @@ public class RepositoryManager {
       System.exit(1);
     }
 
-    if (options.containsKey(Option.HELP)) {
+    if (options.containsKey(RepositoryManagerOption.HELP)) {
       System.out.println(RepositoryManager.getUsageString(true));
       System.exit(0);
     }
 
-    File repository = (File) options.get(Option.REPOSITORY);
-    String dataSource = (String) options.get(Option.DATA_SOURCE);
-    Boolean verbose = (Boolean) options.get(Option.VERBOSE);
+    File repository = (File) options.get(RepositoryManagerOption.REPOSITORY);
+    String dataSource = (String) options.get(RepositoryManagerOption.DATA_SOURCE);
+    Boolean verbose = (Boolean) options.get(RepositoryManagerOption.VERBOSE);
     if (verbose == null) verbose = Boolean.FALSE;
 
     try {
       // check if we are creating a repo
-      if (options.containsKey(Option.CREATE_REPO)) {
-        File directory = (File) options.get(Option.CREATE_REPO);
+      if (options.containsKey(RepositoryManagerOption.CREATE_REPO)) {
+        File directory = (File) options.get(RepositoryManagerOption.CREATE_REPO);
         createRepo(directory);
-      } else if (options.containsKey(Option.PURGE_REPO)) {
+      } else if (options.containsKey(RepositoryManagerOption.PURGE_REPO)) {
         try {
           purgeRepo(repository, verbose);
         } finally {
           destroyApis();
         }
 
-      } else if (options.containsKey(Option.LOAD_FILE)) {
-        File sourceFile = (File) options.get(Option.LOAD_FILE);
+      } else if (options.containsKey(RepositoryManagerOption.LOAD_FILE)) {
+        File sourceFile = (File) options.get(RepositoryManagerOption.LOAD_FILE);
         try {
           loadFile(repository, verbose, sourceFile, dataSource);
         } finally {
           destroyApis();
         }
 
-      } else if (options.containsKey(Option.ADD_RECORD)) {
-        String jsonRecord = (String) options.get(Option.ADD_RECORD);
+      } else if (options.containsKey(RepositoryManagerOption.ADD_RECORD)) {
+        String jsonRecord = (String) options.get(RepositoryManagerOption.ADD_RECORD);
         try {
           addRecord(repository, verbose, jsonRecord, dataSource);
         } finally {
           destroyApis();
         }
 
-      } else if (options.containsKey(Option.CONFIG_SOURCES)) {
-        Set<String> dataSources = (Set<String>) options.get(Option.CONFIG_SOURCES);
+      } else if (options.containsKey(RepositoryManagerOption.CONFIG_SOURCES)) {
+        Set<String> dataSources = (Set<String>) options.get(RepositoryManagerOption.CONFIG_SOURCES);
         try {
           configSources(repository, verbose, dataSources);
         } finally {
@@ -745,45 +544,66 @@ public class RepositoryManager {
       copyFile(templateDB, new File(directory, "G2_RES.db"));
       copyFile(templateDB, new File(directory, "G2_LIB_FEAT.db"));
 
-      File templateConfig = new File(dataDir, "g2config.json");
-      File configFile = new File(directory, "g2config.json");
-      File licensePath = new File(directory, "g2.lic");
-
-      copyFile(templateConfig, configFile);
+      File licensePath    = new File(directory, "g2.lic");
 
       String fileSep = System.getProperty("file.separator");
       String sqlitePrefix = "sqlite3://na:na@" + directory.toString() + fileSep;
 
-      File iniFile = new File(directory, "g2.ini");
-      try (FileOutputStream fos = new FileOutputStream(iniFile);
-           PrintWriter pw = new PrintWriter(new OutputStreamWriter(fos)))
+      File jsonInitFile = new File(directory, "g2-init.json");
+      JsonObjectBuilder builder = Json.createObjectBuilder();
+      JsonObjectBuilder subBuilder = Json.createObjectBuilder();
+      subBuilder.add("SUPPORTPATH", dataDir.getCanonicalPath());
+      subBuilder.add("LICENSEFILE", licensePath.getCanonicalPath());
+      builder.add("PIPELINE", subBuilder);
+
+      subBuilder = Json.createObjectBuilder();
+      subBuilder.add("BACKEND", "HYBRID");
+      subBuilder.add("CONNECTION", sqlitePrefix + "G2C.db");
+      builder.add("SQL", subBuilder);
+
+      subBuilder = Json.createObjectBuilder();
+      subBuilder.add("RES_FEAT", "C1");
+      subBuilder.add("RES_FEAT_EKEY", "C1");
+      subBuilder.add("RES_FEAT_LKEY", "C1");
+      subBuilder.add("RES_FEAT_STAT", "C1");
+      subBuilder.add("LIB_FEAT", "C2");
+      subBuilder.add("LIB_FEAT_HKEY", "C2");
+      builder.add("HYBRID", subBuilder);
+
+      subBuilder = Json.createObjectBuilder();
+      subBuilder.add("CLUSTER_SIZE", "1");
+      subBuilder.add("DB_1", sqlitePrefix + "G2_RES.db");
+      builder.add("C1", subBuilder);
+
+      subBuilder = Json.createObjectBuilder();
+      subBuilder.add("CLUSTER_SIZE", "1");
+      subBuilder.add("DB_1", sqlitePrefix + "G2_LIB_FEAT.db");
+      builder.add("C2", subBuilder);
+
+      JsonObject  initJson      = builder.build();
+      String      initJsonText  = JsonUtils.toJsonText(initJson);
+
+      try (FileOutputStream   fos = new FileOutputStream(jsonInitFile);
+           OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8"))
       {
-        pw.println("[PIPELINE]");
-        pw.println(" SUPPORTPATH=" + dataDir.getCanonicalPath());
-        pw.println(" LICENSEFILE=" + licensePath.getCanonicalPath());
-        pw.println();
-        pw.println("[SQL]");
-        pw.println(" BACKEND=HYBRID");
-        pw.println(" CONNECTION=" + sqlitePrefix + "G2C.db");
-        pw.println(" G2CONFIGFILE=" + configFile.getCanonicalPath());
-        pw.println();
-        pw.println("[HYBRID]");
-        pw.println(" RES_FEAT=C1");
-        pw.println(" RES_FEAT_EKEY=C1");
-        pw.println(" RES_FEAT_LKEY=C1");
-        pw.println(" RES_FEAT_STAT=C1");
-        pw.println();
-        pw.println(" LIB_FEAT=C2");
-        pw.println(" LIB_FEAT_HKEY=C2");
-        pw.println();
-        pw.println("[C1]");
-        pw.println(" CLUSTER_SIZE=1");
-        pw.println(" DB_1=" + sqlitePrefix + "G2_RES.db");
-        pw.println();
-        pw.println("[C2]");
-        pw.println(" CLUSTER_SIZE=1");
-        pw.println(" DB_1=" + sqlitePrefix + "G2_LIB_FEAT.db");
-        pw.flush();
+        osw.write(initJsonText);
+        osw.flush();
+      }
+
+      // setup the initial configuration
+      initBaseApis(directory, false);
+      try {
+        long configId = CONFIG_API.create();
+        StringBuffer sb = new StringBuffer();
+        CONFIG_API.save(configId, sb);
+        CONFIG_API.close(configId);
+
+        Result<Long> result = new Result<>();
+        CONFIG_MGR_API.addConfig(sb.toString(), "Initial Config", result);
+        CONFIG_MGR_API.setDefaultConfigID(result.getValue());
+
+      } finally {
+        destroyBaseApis();
       }
 
       if (!silent) {
@@ -816,27 +636,29 @@ public class RepositoryManager {
 
   }
 
-  private static synchronized void initApis(File repository, boolean verbose) {
+  private static synchronized void initBaseApis(File repository, boolean verbose)
+  {
     try {
       String initializer = verbose + ":" + repository.getCanonicalPath();
-      if (initializedWith == null || !initializedWith.equals(initializer))
+      if (baseInitializedWith == null || !baseInitializedWith.equals(initializer))
       {
-        if (initializedWith != null) {
-          destroyApis();
+        if (baseInitializedWith != null) {
+          destroyBaseApis();
         }
-        File iniFile = new File(repository, "g2.ini");
-        int returnCode = CONFIG_API.init("G2", iniFile.toString(), verbose);
+        File iniJsonFile = new File(repository, "g2-init.json");
+        String initJsonText = readTextFileAsString(iniJsonFile, "UTF-8");
+        int returnCode = CONFIG_API.initV2("G2", initJsonText, verbose);
         if (returnCode != 0) {
           logError("G2Config.init()", CONFIG_API);
           return;
         }
-        returnCode = ENGINE_API.init("G2", iniFile.toString(), verbose);
+        returnCode = CONFIG_MGR_API.initV2("G2", initJsonText, verbose);
         if (returnCode != 0) {
           CONFIG_API.destroy();
-          logError("G2Engine.init()", ENGINE_API);
+          logError("G2ConfigMgr.init()", CONFIG_MGR_API);
           return;
         }
-        initializedWith = initializer;
+        baseInitializedWith = initializer;
       }
 
     } catch (IOException e) {
@@ -844,12 +666,48 @@ public class RepositoryManager {
     }
   }
 
-  private static synchronized void destroyApis() {
-    if (initializedWith != null) {
-      ENGINE_API.destroy();
-      CONFIG_API.destroy();
-      initializedWith = null;
+  private static synchronized void initApis(File repository, boolean verbose) {
+    try {
+      initBaseApis(repository, verbose);
+
+      String initializer = verbose + ":" + repository.getCanonicalPath();
+      if (engineInitializedWith == null
+          || !engineInitializedWith.equals(initializer))
+      {
+        if (engineInitializedWith != null) {
+          destroyApis();
+        }
+        File iniJsonFile = new File(repository, "g2-init.json");
+        String initJsonText = readTextFileAsString(iniJsonFile, "UTF-8");
+        int returnCode = ENGINE_API.initV2("G2", initJsonText, verbose);
+        if (returnCode != 0) {
+          destroyBaseApis();
+          logError("G2Engine.init()", ENGINE_API);
+          return;
+        }
+        engineInitializedWith = initializer;
+      }
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
+  }
+
+  private static synchronized void destroyBaseApis() {
+    if (baseInitializedWith != null) {
+      CONFIG_API.destroy();
+      CONFIG_MGR_API.destroy();
+      baseInitializedWith = null;
+    }
+  }
+
+
+  private static synchronized void destroyApis() {
+    if (engineInitializedWith != null) {
+      ENGINE_API.destroy();
+      engineInitializedWith = null;
+    }
+    destroyBaseApis();
   }
 
   /**
@@ -1226,7 +1084,7 @@ public class RepositoryManager {
           System.err.println();
           System.err.println(
               "If records in the file do not have a DATA_SOURCE then "
-                  + Option.DATA_SOURCE.getCommandLineFlag() + " is required.");
+                  + RepositoryManagerOption.DATA_SOURCE.getCommandLineFlag() + " is required.");
           return false;
         }
 
@@ -1498,9 +1356,10 @@ public class RepositoryManager {
           .withFirstRecordAsHeader().withIgnoreEmptyLines(true).withTrim(true);
 
       try {
+        final String       enc = "UTF-8";
         FileInputStream    fis = new FileInputStream(sourceFile);
-        InputStreamReader  isr = new InputStreamReader(fis, "UTF-8");
-        BufferedReader     br  = new BufferedReader(isr);
+        InputStreamReader  isr = new InputStreamReader(fis, enc);
+        BufferedReader     br  = new BufferedReader(bomSkippingReader(isr, enc));
 
         CSVParser parser = new CSVParser(br, csvFormat);
         Map<String, Integer> headerMap = parser.getHeaderMap();
@@ -1510,7 +1369,7 @@ public class RepositoryManager {
         });
         if (dataSource == null && !headers.contains("DATA_SOURCE")) {
           throw new IllegalStateException(
-              "The " + Option.DATA_SOURCE.getCommandLineFlag() + " option is "
+              "The " + RepositoryManagerOption.DATA_SOURCE.getCommandLineFlag() + " option is "
               + "required if DATA_SOURCE missing from CSV");
         }
         this.recordIter = parser.iterator();
@@ -1793,41 +1652,60 @@ public class RepositoryManager {
       Set<String> existingSet = getDataSources(configId);
 
       Map<String, Boolean> dataSourceActions = new LinkedHashMap<>();
+      Set<String> addedDataSources = new LinkedHashSet<>();
       int addedCount = 0;
       for (String dataSource : dataSources) {
         if (existingSet.contains(dataSource)) {
           dataSourceActions.put(dataSource, false);
           continue;
         }
-        returnCode = CONFIG_API.addDataSource(configId.getValue(),
-                                                  dataSource);
+        returnCode = CONFIG_API.addDataSource(configId.getValue(), dataSource);
         if (returnCode != 0) {
           logError("G2Config.addDataSource()", CONFIG_API);
           return false;
         }
         dataSourceActions.put(dataSource, true);
+        addedDataSources.add(dataSource);
         addedCount++;
       }
-      StringBuffer sb = new StringBuffer();
-      returnCode = CONFIG_API.save(configId.getValue(), sb);
-      if (returnCode != 0) {
-        logError("G2Config.save()", CONFIG_API);
-        return false;
-      }
 
-      File configFile = new File(repository, "g2config.json");
-      try (FileOutputStream fos = new FileOutputStream(configFile);
-           OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8"))
-      {
-        osw.write(sb.toString());
-        osw.flush();
+      if (addedCount > 0) {
+        // write the modified config to a string buffer
+        StringBuffer sb = new StringBuffer();
+        returnCode = CONFIG_API.save(configId.getValue(), sb);
+        if (returnCode != 0) {
+          logError("G2Config.save()", CONFIG_API);
+          return false;
+        }
 
-      } catch (IOException e) {
-        e.printStackTrace();
-        System.err.println();
-        System.err.println("Failed to save updated config: " + configFile);
-        System.err.println();
-        return false;
+        String comment;
+        if (addedCount == 1) {
+          comment = "Added data source: " + addedDataSources.iterator().next();
+        } else {
+          StringBuilder commentSB = new StringBuilder();
+          commentSB.append("Added data sources: ");
+          Iterator<String> iter = addedDataSources.iterator();
+          String prefix = "";
+          while (iter.hasNext()) {
+            String dataSource = iter.next();
+            commentSB.append(prefix).append(dataSource);
+            prefix = iter.hasNext() ? ", " : " and ";
+          }
+          comment = commentSB.toString();
+        }
+
+        Result<Long> result = new Result<>();
+        returnCode = CONFIG_MGR_API.addConfig(sb.toString(), comment, result);
+        if (returnCode != 0) {
+          logError("G2ConfigMgr.addConfig()", CONFIG_MGR_API);
+          return false;
+        }
+
+        returnCode = CONFIG_MGR_API.setDefaultConfigID(result.getValue());
+        if (returnCode != 0) {
+          logError("G2ConfigMgr.setDefaultConfigID()", CONFIG_MGR_API);
+          return false;
+        }
       }
 
       if (!silent) {

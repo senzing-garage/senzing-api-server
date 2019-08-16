@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObjectBuilder;
+import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.UriInfo;
 import java.io.*;
 import java.net.URLEncoder;
@@ -31,6 +32,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   private static final String PASSENGERS = "PASSENGERS";
   private static final String EMPLOYEES  = "EMPLOYEES";
   private static final String VIPS       = "VIPS";
+  private static final String MARRIAGES  = "MARRIAGES";
 
   private static final SzRecordId ABC123 = new SzRecordId(PASSENGERS,
                                                           "ABC123");
@@ -48,6 +50,15 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
                                                           "STU901");
   private static final SzRecordId XYZ234 = new SzRecordId(VIPS,
                                                           "XYZ234");
+
+  private static final SzRecordId BCD123 = new SzRecordId(MARRIAGES,
+                                                          "BCD123");
+  private static final SzRecordId CDE456 = new SzRecordId(MARRIAGES,
+                                                          "CDE456");
+  private static final SzRecordId EFG789 = new SzRecordId(MARRIAGES,
+                                                          "EFG789");
+  private static final SzRecordId FGH012 = new SzRecordId(MARRIAGES,
+                                                          "FGH012");
 
   private EntityDataServices entityDataServices;
 
@@ -67,14 +78,17 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     dataSources.add("PASSENGERS");
     dataSources.add("EMPLOYEES");
     dataSources.add("VIPS");
+    dataSources.add("MARRIAGES");
 
     File passengerFile = this.preparePassengerFile();
     File employeeFile = this.prepareEmployeeFile();
     File vipFile = this.prepareVipFile();
+    File marriagesFile = this.prepareMariagesFile();
 
     employeeFile.deleteOnExit();
     passengerFile.deleteOnExit();
     vipFile.deleteOnExit();
+    marriagesFile.deleteOnExit();
 
     RepositoryManager.configSources(repoDirectory,
                                     dataSources,
@@ -94,6 +108,22 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
                                vipFile,
                                VIPS,
                                true);
+
+    RepositoryManager.loadFile(repoDirectory,
+                               marriagesFile,
+                               MARRIAGES,
+                               true);
+  }
+
+  private static String relationshipKey(SzRecordId recordId1,
+                                        SzRecordId recordId2) {
+    String rec1 = recordId1.getRecordId();
+    String rec2 = recordId2.getRecordId();
+    if (rec1.compareTo(rec2) <= 0) {
+      return rec1 + "|" + rec2;
+    } else {
+      return rec2 + "|" + rec1;
+    }
   }
 
   private File preparePassengerFile() {
@@ -117,13 +147,13 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   private File prepareEmployeeFile() {
     String[] headers = {
         "RECORD_ID", "NAME_FIRST", "NAME_LAST", "PHONE_NUMBER", "ADDR_FULL",
-        "DATE_OF_BIRTH"};
+        "DATE_OF_BIRTH","MOTHERS_MAIDEN_NAME"};
 
     String[][] employees = {
         {MNO345.getRecordId(), "Joseph", "Schmoe", "702-555-1212",
-            "101 Main Street, Las Vegas, NV 89101", "12-JAN-1981"},
+            "101 Main Street, Las Vegas, NV 89101", "12-JAN-1981", "WILSON"},
         {PQR678.getRecordId(), "Jo Anne", "Smith", "212-555-1212",
-            "101 Fifth Ave, Las Vegas, NV 10018", "15-MAY-1983"}
+            "101 Fifth Ave, Las Vegas, NV 10018", "15-MAY-1983", "JACOBS"}
     };
 
     return this.prepareJsonArrayFile("test-employees-", headers, employees);
@@ -132,16 +162,44 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   private File prepareVipFile() {
     String[] headers = {
         "RECORD_ID", "NAME_FIRST", "NAME_LAST", "PHONE_NUMBER", "ADDR_FULL",
-        "DATE_OF_BIRTH"};
+        "DATE_OF_BIRTH","MOTHERS_MAIDEN_NAME"};
 
     String[][] vips = {
         {STU901.getRecordId(), "John", "Doe", "818-555-1313",
-            "100 Main Street, Los Angeles, CA 90012", "17-OCT-1978"},
+            "100 Main Street, Los Angeles, CA 90012", "17-OCT-1978", "GREEN"},
         {XYZ234.getRecordId(), "Jane", "Doe", "818-555-1212",
-            "100 Main Street, Los Angeles, CA 90012", "5-FEB-1979"}
+            "100 Main Street, Los Angeles, CA 90012", "5-FEB-1979", "GRAHAM"}
     };
 
     return this.prepareJsonFile("test-vips-", headers, vips);
+  }
+
+  private File prepareMariagesFile() {
+    String[] headers = {
+        "RECORD_ID", "NAME_FULL", "AKA_NAME_FULL", "PHONE_NUMBER", "ADDR_FULL",
+        "MARRIAGE_DATE", "DATE_OF_BIRTH", "GENDER", "RELATIONSHIP_TYPE",
+        "RELATIONSHIP_ROLE", "RELATIONSHIP_KEY" };
+
+    String[][] spouses = {
+        {BCD123.getRecordId(), "Bruce Wayne", "Batman", "201-765-3451",
+            "101 Wayne Manor Rd; Gotham City, NJ 07017", "05-JUN-2008",
+            "08-SEP-1971", "M", "SPOUSE", "HUSBAND",
+            relationshipKey(BCD123, CDE456)},
+        {CDE456.getRecordId(), "Selina Kyle", "Catwoman", "201-875-2314",
+            "101 Wayne Manor Rd; Gotham City, NJ 07017", "05-JUN-2008",
+            "05-DEC-1981", "F", "SPOUSE", "WIFE",
+            relationshipKey(BCD123, CDE456)},
+        {EFG789.getRecordId(), "Barry Allen", "The Flash", "330-982-2133",
+            "1201 Main Street; Star City, OH 44308", "07-NOV-2014",
+            "04-MAR-1986", "M", "SPOUSE", "HUSBAND",
+            relationshipKey(EFG789, FGH012)},
+        {FGH012.getRecordId(), "Iris West-Allen", "", "330-675-1231",
+            "1201 Main Street; Star City, OH 44308", "07-NOV-2014",
+            "14-MAY-1986", "F", "SPOUSE", "WIFE",
+            relationshipKey(EFG789, FGH012)}
+    };
+
+    return this.prepareJsonFile("test-marriages-", headers, spouses);
   }
 
   @AfterAll
@@ -173,6 +231,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         Collections.singleton("702-555-1212"),
         null,
         Collections.singleton("DOB: 12-JAN-1981"),
+        null,
+        null,
         before,
         after,
         null);
@@ -202,6 +262,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         Collections.singleton("212-555-1212"),
         null,
         Collections.singleton("DOB: 15-MAY-1983"),
+        null,
+        null,
         before,
         after,
         null);
@@ -232,6 +294,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         Collections.singleton("818-555-1313"),
         null,
         Collections.singleton("DOB: 17-OCT-1978"),
+        null,
+        null,
         before,
         after,
         true);
@@ -262,6 +326,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         Collections.singleton("818-555-1212"),
         null,
         Collections.singleton("DOB: 5-FEB-1979"),
+        null,
+        null,
         before,
         after,
         true);
@@ -292,6 +358,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         Collections.singleton("702-555-1212"),
         null,
         Collections.singleton("DOB: 12-JAN-1981"),
+        null,
+        Collections.singleton("MOTHERS_MAIDEN_NAME: WILSON"),
         before,
         after,
         false);
@@ -322,9 +390,76 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         Collections.singleton("212-555-1212"),
         null,
         Collections.singleton("DOB: 15-MAY-1983"),
+        null,
+        Collections.singleton("MOTHERS_MAIDEN_NAME: JACOBS"),
         before,
         after,
         false);
+  }
+
+
+  @Test
+  public void getRelatedRecordTest() {
+    final String dataSource = BCD123.getDataSourceCode();
+    final String recordId = BCD123.getRecordId();
+    final String relKey = relationshipKey(BCD123, CDE456);
+
+    this.assumeNativeApiAvailable();
+    String uriText = this.formatServerUri(
+        "data-sources/" + dataSource + "/records/" + recordId);
+    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    long before = System.currentTimeMillis();
+    SzRecordResponse response = this.entityDataServices.getRecord(
+        dataSource, recordId, false, uriInfo);
+    response.concludeTimers();
+    long after = System.currentTimeMillis();
+
+    this.validateRecordResponse(
+        response,
+        dataSource,
+        recordId,
+        set("Bruce Wayne", "AKA: Batman"),
+        Collections.singleton("101 Wayne Manor Rd; Gotham City, NJ 07017"),
+        Collections.singleton("201-765-3451"),
+        null,
+        set("DOB: 08-SEP-1971", "GENDER: M"),
+        Collections.singleton("REL_LINK: HUSBAND: SPOUSE " + relKey),
+        null,
+        before,
+        after,
+        null);
+  }
+
+  @Test
+  public void getRelatedRecordTestViaHttp() {
+    final String dataSource = CDE456.getDataSourceCode();
+    final String recordId = CDE456.getRecordId();
+    final String relKey = relationshipKey(BCD123, CDE456);
+
+    this.assumeNativeApiAvailable();
+    String uriText = this.formatServerUri(
+        "data-sources/" + dataSource + "/records/" + recordId);
+
+    long before = System.currentTimeMillis();
+    SzRecordResponse response = this.invokeServerViaHttp(
+        GET, uriText, SzRecordResponse.class);
+    response.concludeTimers();
+    long after = System.currentTimeMillis();
+
+    this.validateRecordResponse(
+        response,
+        dataSource,
+        recordId,
+        set("Selina Kyle", "AKA: Catwoman"),
+        Collections.singleton("101 Wayne Manor Rd; Gotham City, NJ 07017"),
+        Collections.singleton("201-875-2314"),
+        null,
+        set("DOB: 05-DEC-1981", "GENDER: F"),
+        Collections.singleton("REL_LINK: WIFE: SPOUSE " + relKey),
+        null,
+        before,
+        after,
+        null);
   }
 
   private Long getEntityIdForRecordId(SzRecordId recordId) {
@@ -359,6 +494,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     expectedDataMap.put(PHONE, set("702-555-1212"));
     expectedDataMap.put(CHARACTERISTIC, set("DOB: 1981-01-12"));
 
+    Set<String> expectedOtherData = set("MOTHERS_MAIDEN_NAME: WILSON");
+
     Map<String, Set<String>> primaryFeatureValues = new LinkedHashMap<>();
     primaryFeatureValues.put("NAME", set("Joseph Schmoe"));
 
@@ -388,7 +525,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
              expectedFeatureCounts,
              primaryFeatureValues,
              duplicateFeatureValues,
-             expectedDataMap));
+             expectedDataMap,
+             expectedOtherData));
     result.add(
         list(recordId2,
              null,
@@ -401,7 +539,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
              expectedFeatureCounts,
              primaryFeatureValues,
              duplicateFeatureValues,
-             expectedDataMap));
+             expectedDataMap,
+             expectedOtherData));
     return result;
   }
 
@@ -413,6 +552,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     expectedDataMap.put(ADDRESS, set("101 Fifth Ave, Las Vegas, NV 10018"));
     expectedDataMap.put(PHONE, set("212-555-1212"));
     expectedDataMap.put(CHARACTERISTIC, set("DOB: 1983-05-15"));
+
+    Set<String> expectedOtherData = set("MOTHERS_MAIDEN_NAME: JACOBS");
 
     Map<String, Set<String>> primaryFeatureValues = new LinkedHashMap<>();
     primaryFeatureValues.put("NAME", set("Joanne Smith", "Jo Anne Smith"));
@@ -441,7 +582,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
              expectedFeatureCounts,
              primaryFeatureValues,
              duplicateFeatureValues,
-             expectedDataMap));
+             expectedDataMap,
+             expectedOtherData));
     result.add(
         list(recordId2,
              null,
@@ -454,7 +596,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
              expectedFeatureCounts,
              primaryFeatureValues,
              duplicateFeatureValues,
-             expectedDataMap));
+             expectedDataMap,
+             expectedOtherData));
     return result;
   }
 
@@ -466,6 +609,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     expectedDataMap.put(ADDRESS, set("100 Main Street, Los Angeles, CA 90012"));
     expectedDataMap.put(PHONE, set("818-555-1313"));
     expectedDataMap.put(CHARACTERISTIC, set("DOB: 1978-10-17"));
+
+    Set<String> expectedOtherData = set("MOTHERS_MAIDEN_NAME: GREEN");
 
     Map<String, Set<String>> primaryFeatureValues = new LinkedHashMap<>();
     primaryFeatureValues.put("NAME", set("John Doe"));
@@ -494,7 +639,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
              expectedFeatureCounts,
              primaryFeatureValues,
              duplicateFeatureValues,
-             expectedDataMap));
+             expectedDataMap,
+             expectedOtherData));
     result.add(
         list(recordId2,
              null,
@@ -507,7 +653,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
              expectedFeatureCounts,
              primaryFeatureValues,
              duplicateFeatureValues,
-             expectedDataMap));
+             expectedDataMap,
+             expectedOtherData));
     return result;
   }
 
@@ -519,6 +666,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     expectedDataMap.put(ADDRESS, set("100 Main Street, Los Angeles, CA 90012"));
     expectedDataMap.put(PHONE, set("818-555-1212"));
     expectedDataMap.put(CHARACTERISTIC, set("DOB: 1979-02-05"));
+
+    Set<String> expectedOtherData = set("MOTHERS_MAIDEN_NAME: GRAHAM");
 
     Map<String, Set<String>> primaryFeatureValues = new LinkedHashMap<>();
     primaryFeatureValues.put("NAME", set("Jane Doe"));
@@ -547,7 +696,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
              expectedFeatureCounts,
              primaryFeatureValues,
              duplicateFeatureValues,
-             expectedDataMap));
+             expectedDataMap,
+             expectedOtherData));
     result.add(
         list(recordId2,
              null,
@@ -560,7 +710,188 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
              expectedFeatureCounts,
              primaryFeatureValues,
              duplicateFeatureValues,
-             expectedDataMap));
+             expectedDataMap,
+             expectedOtherData));
+    return result;
+  }
+
+  private List<List> bruceWayneEntityArgs() {
+    final SzRecordId recordId1 = BCD123;
+    final SzRecordId recordId2 = CDE456;
+    final String key = relationshipKey(recordId1, recordId2);
+    Map<SzAttributeClass, Set<String>> expectedDataMap = new LinkedHashMap<>();
+    expectedDataMap.put(NAME, set("Bruce Wayne", "AKA: Batman"));
+    expectedDataMap.put(ADDRESS, set("101 Wayne Manor Rd; Gotham City, NJ 07017"));
+    expectedDataMap.put(PHONE, set("201-765-3451"));
+    expectedDataMap.put(CHARACTERISTIC, set("DOB: 1971-09-08", "GENDER: M"));
+    expectedDataMap.put(RELATIONSHIP, set("REL_LINK: HUSBAND: SPOUSE " + key));
+
+    Map<String, Set<String>> primaryFeatureValues = new LinkedHashMap<>();
+    primaryFeatureValues.put("NAME", set("Bruce Wayne", "Batman"));
+    Map<String, Set<String>> duplicateFeatureValues = null;
+
+    final int expectedRecordCount = 1;
+    final int expectedRelatedCount = 1;
+
+    Map<String, Integer> expectedFeatureCounts = new LinkedHashMap<>();
+    expectedFeatureCounts.put("NAME", 2);
+    expectedFeatureCounts.put("DOB", 1);
+    expectedFeatureCounts.put("ADDRESS", 1);
+    expectedFeatureCounts.put("PHONE", 1);
+    expectedFeatureCounts.put("GENDER", 1);
+    expectedFeatureCounts.put("REL_LINK", 1);
+
+    Set<SzRecordId> expectedRecordIds = Collections.singleton(recordId1);
+    List<List> result = new ArrayList<>(1);
+    result.add(
+        list(recordId1,
+             null,
+             null,
+             null,
+             null,
+             expectedRecordCount,
+             expectedRecordIds,
+             expectedRelatedCount,
+             expectedFeatureCounts,
+             primaryFeatureValues,
+             duplicateFeatureValues,
+             expectedDataMap,
+             null));
+    return result;
+  }
+
+  private List<List> selinaKyleEntityArgs() {
+    final SzRecordId recordId1 = CDE456;
+    final SzRecordId recordId2 = BCD123;
+    final String key = relationshipKey(recordId1, recordId2);
+    Map<SzAttributeClass, Set<String>> expectedDataMap = new LinkedHashMap<>();
+    expectedDataMap.put(NAME, set("Selina Kyle", "AKA: Catwoman"));
+    expectedDataMap.put(ADDRESS, set("101 Wayne Manor Rd; Gotham City, NJ 07017"));
+    expectedDataMap.put(PHONE, set("201-875-2314"));
+    expectedDataMap.put(CHARACTERISTIC, set("DOB: 1981-12-05", "GENDER: F"));
+    expectedDataMap.put(RELATIONSHIP, set("REL_LINK: WIFE: SPOUSE " + key));
+
+    Map<String, Set<String>> primaryFeatureValues = new LinkedHashMap<>();
+    primaryFeatureValues.put("NAME", set("Selina Kyle", "Catwoman"));
+    Map<String, Set<String>> duplicateFeatureValues = null;
+
+    final int expectedRecordCount = 1;
+    final int expectedRelatedCount = 1;
+
+    Map<String, Integer> expectedFeatureCounts = new LinkedHashMap<>();
+    expectedFeatureCounts.put("NAME", 2);
+    expectedFeatureCounts.put("DOB", 1);
+    expectedFeatureCounts.put("ADDRESS", 1);
+    expectedFeatureCounts.put("PHONE", 1);
+    expectedFeatureCounts.put("GENDER", 1);
+    expectedFeatureCounts.put("REL_LINK", 1);
+
+    Set<SzRecordId> expectedRecordIds = Collections.singleton(recordId1);
+    List<List> result = new ArrayList<>(1);
+    result.add(
+        list(recordId1,
+             null,
+             null,
+             null,
+             null,
+             expectedRecordCount,
+             expectedRecordIds,
+             expectedRelatedCount,
+             expectedFeatureCounts,
+             primaryFeatureValues,
+             duplicateFeatureValues,
+             expectedDataMap,
+             null));
+    return result;
+  }
+
+  private List<List> barryAllenEntityArgs() {
+    final SzRecordId recordId1 = EFG789;
+    final SzRecordId recordId2 = FGH012;
+    final String key = relationshipKey(recordId1, recordId2);
+    Map<SzAttributeClass, Set<String>> expectedDataMap = new LinkedHashMap<>();
+    expectedDataMap.put(NAME, set("Barry Allen", "AKA: The Flash"));
+    expectedDataMap.put(ADDRESS, set("1201 Main Street; Star City, OH 44308"));
+    expectedDataMap.put(PHONE, set("330-982-2133"));
+    expectedDataMap.put(CHARACTERISTIC, set("DOB: 1986-03-04", "GENDER: M"));
+    expectedDataMap.put(RELATIONSHIP, set("REL_LINK: HUSBAND: SPOUSE " + key));
+
+    Map<String, Set<String>> primaryFeatureValues = new LinkedHashMap<>();
+    primaryFeatureValues.put("NAME", set("Barry Allen", "The Flash"));
+    Map<String, Set<String>> duplicateFeatureValues = null;
+
+    final int expectedRecordCount = 1;
+    final int expectedRelatedCount = 1;
+
+    Map<String, Integer> expectedFeatureCounts = new LinkedHashMap<>();
+    expectedFeatureCounts.put("NAME", 2);
+    expectedFeatureCounts.put("DOB", 1);
+    expectedFeatureCounts.put("ADDRESS", 1);
+    expectedFeatureCounts.put("PHONE", 1);
+    expectedFeatureCounts.put("GENDER", 1);
+    expectedFeatureCounts.put("REL_LINK", 1);
+
+    Set<SzRecordId> expectedRecordIds = Collections.singleton(recordId1);
+    List<List> result = new ArrayList<>(1);
+    result.add(
+        list(recordId1,
+             null,
+             null,
+             null,
+             null,
+             expectedRecordCount,
+             expectedRecordIds,
+             expectedRelatedCount,
+             expectedFeatureCounts,
+             primaryFeatureValues,
+             duplicateFeatureValues,
+             expectedDataMap,
+             null));
+    return result;
+  }
+
+  private List<List> irisWestAllenEntityArgs() {
+    final SzRecordId recordId1 = FGH012;
+    final SzRecordId recordId2 = EFG789;
+    final String key = relationshipKey(recordId1, recordId2);
+    Map<SzAttributeClass, Set<String>> expectedDataMap = new LinkedHashMap<>();
+    expectedDataMap.put(NAME, set("Iris West-Allen"));
+    expectedDataMap.put(ADDRESS, set("1201 Main Street; Star City, OH 44308"));
+    expectedDataMap.put(PHONE, set("330-675-1231"));
+    expectedDataMap.put(CHARACTERISTIC, set("DOB: 1986-05-14", "GENDER: F"));
+    expectedDataMap.put(RELATIONSHIP, set("REL_LINK: WIFE: SPOUSE " + key));
+
+    Map<String, Set<String>> primaryFeatureValues = new LinkedHashMap<>();
+    primaryFeatureValues.put("NAME", set("Iris West-Allen"));
+    Map<String, Set<String>> duplicateFeatureValues = null;
+
+    final int expectedRecordCount = 1;
+    final int expectedRelatedCount = 1;
+
+    Map<String, Integer> expectedFeatureCounts = new LinkedHashMap<>();
+    expectedFeatureCounts.put("NAME", 1);
+    expectedFeatureCounts.put("DOB", 1);
+    expectedFeatureCounts.put("ADDRESS", 1);
+    expectedFeatureCounts.put("PHONE", 1);
+    expectedFeatureCounts.put("GENDER", 1);
+    expectedFeatureCounts.put("REL_LINK", 1);
+
+    Set<SzRecordId> expectedRecordIds = Collections.singleton(recordId1);
+    List<List> result = new ArrayList<>(1);
+    result.add(
+        list(recordId1,
+             null,
+             null,
+             null,
+             null,
+             expectedRecordCount,
+             expectedRecordIds,
+             expectedRelatedCount,
+             expectedFeatureCounts,
+             primaryFeatureValues,
+             duplicateFeatureValues,
+             expectedDataMap,
+             null));
     return result;
   }
 
@@ -571,6 +902,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     baseArgs.addAll(joanneSmithEntityArgs());
     baseArgs.addAll(johnDoeEntityArgs());
     baseArgs.addAll(janeDoeEntityArgs());
+    baseArgs.addAll(bruceWayneEntityArgs());
+    baseArgs.addAll(selinaKyleEntityArgs());
+    baseArgs.addAll(barryAllenEntityArgs());
+    baseArgs.addAll(irisWestAllenEntityArgs());
 
     List<Arguments> result = new LinkedList<>();
 
@@ -642,7 +977,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Map<String,Integer>                 expectedFeatureCounts,
       Map<String,Set<String>>             primaryFeatureValues,
       Map<String,Set<String>>             duplicateFeatureValues,
-      Map<SzAttributeClass, Set<String>>  expectedDataValues)
+      Map<SzAttributeClass, Set<String>>  expectedDataValues,
+      Set<String>                         expectedOtherDataValues)
   {
     String testInfo = "keyRecord=[ " + keyRecordId
         + " ], forceMinimal=[ " + forceMinimal
@@ -687,6 +1023,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
                                 primaryFeatureValues,
                                 duplicateFeatureValues,
                                 expectedDataValues,
+                                expectedOtherDataValues,
                                 before,
                                 after);
   }
@@ -705,7 +1042,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Map<String,Integer>                 expectedFeatureCounts,
       Map<String,Set<String>>             primaryFeatureValues,
       Map<String,Set<String>>             duplicateFeatureValues,
-      Map<SzAttributeClass, Set<String>>  expectedDataValues)
+      Map<SzAttributeClass, Set<String>>  expectedDataValues,
+      Set<String>                         expectedOtherDataValues)
   {
     String testInfo = "keyRecord=[ " + keyRecordId
         + " ], forceMinimal=[ " + forceMinimal
@@ -741,8 +1079,127 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
                                 primaryFeatureValues,
                                 duplicateFeatureValues,
                                 expectedDataValues,
+                                expectedOtherDataValues,
                                 before,
                                 after);
+  }
+
+  @Test
+  public void getNotFoundEntityByBadRecordIdTest()
+  {
+    final String badRecordId = "ABC123DEF456GHI789";
+    this.assumeNativeApiAvailable();
+    StringBuilder sb = new StringBuilder();
+    sb.append("data-sources/").append(PASSENGERS);
+    sb.append("/records/").append(badRecordId).append("/entity");
+
+    String uriText = this.formatServerUri(sb.toString());
+    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+    long before = System.currentTimeMillis();
+
+    try {
+      this.entityDataServices.getEntityByRecordId(
+          PASSENGERS,
+          badRecordId,
+          false,
+          false,
+          false,
+          WITH_DUPLICATES,
+          uriInfo);
+
+      fail("Expected entity for data source \"" + PASSENGERS
+               + "\" and record ID \"" + badRecordId + "\" to NOT be found");
+    } catch (NotFoundException expected) {
+      SzErrorResponse response
+          = (SzErrorResponse) expected.getResponse().getEntity();
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      this.validateBasics(
+          response, 404, GET, uriText, before, after);
+    }
+  }
+
+  @Test
+  public void getNotFoundEntityByBadDataSourceTest()
+  {
+    final String badDataSource = "FOOBAR";
+    final String badRecordId = "ABC123DEF456GHI789";
+    this.assumeNativeApiAvailable();
+    StringBuilder sb = new StringBuilder();
+    sb.append("data-sources/").append(badDataSource);
+    sb.append("/records/").append(badRecordId).append("/entity");
+
+    String uriText = this.formatServerUri(sb.toString());
+    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+    long before = System.currentTimeMillis();
+
+    try {
+      this.entityDataServices.getEntityByRecordId(
+          PASSENGERS,
+          badRecordId,
+          false,
+          false,
+          false,
+          WITH_DUPLICATES,
+          uriInfo);
+
+      fail("Expected entity for data source \"" + badDataSource
+               + "\" and record ID \"" + badRecordId + "\" to NOT be found");
+    } catch (NotFoundException expected) {
+      SzErrorResponse response
+          = (SzErrorResponse) expected.getResponse().getEntity();
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      this.validateBasics(
+          response, 404, GET, uriText, before, after);
+    }
+  }
+
+  @Test
+  public void getNotFoundEntityByBadRecordIdTestViaHttp()
+  {
+    final String badRecordId = "ABC123DEF456GHI789";
+    this.assumeNativeApiAvailable();
+    StringBuilder sb = new StringBuilder();
+    sb.append("data-sources/").append(PASSENGERS);
+    sb.append("/records/").append(badRecordId).append("/entity");
+
+    String uriText = this.formatServerUri(sb.toString());
+
+    long before = System.currentTimeMillis();
+    SzErrorResponse response = this.invokeServerViaHttp(
+        GET, uriText, SzErrorResponse.class);
+    response.concludeTimers();
+    long after = System.currentTimeMillis();
+
+    this.validateBasics(
+        response, 404, GET, uriText, before, after);
+  }
+
+  @Test
+  public void getNotFoundEntityByBadDataSourceTestViaHttp()
+  {
+    final String badDataSource = "FOOBAR";
+    final String badRecordId = "ABC123DEF456GHI789";
+    this.assumeNativeApiAvailable();
+    StringBuilder sb = new StringBuilder();
+    sb.append("data-sources/").append(badDataSource);
+    sb.append("/records/").append(badRecordId).append("/entity");
+
+    String uriText = this.formatServerUri(sb.toString());
+
+    long before = System.currentTimeMillis();
+    SzErrorResponse response = this.invokeServerViaHttp(
+        GET, uriText, SzErrorResponse.class);
+    response.concludeTimers();
+    long after = System.currentTimeMillis();
+
+    this.validateBasics(
+        response, 404, GET, uriText, before, after);
   }
 
   @ParameterizedTest
@@ -759,7 +1216,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Map<String,Integer>                 expectedFeatureCounts,
       Map<String,Set<String>>             primaryFeatureValues,
       Map<String,Set<String>>             duplicateFeatureValues,
-      Map<SzAttributeClass, Set<String>>  expectedDataValues)
+      Map<SzAttributeClass, Set<String>>  expectedDataValues,
+      Set<String>                         expectedOtherDataValues)
   {
     String testInfo = "keyRecord=[ " + keyRecordId
         + " ], forceMinimal=[ " + forceMinimal
@@ -806,6 +1264,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
                                 primaryFeatureValues,
                                 duplicateFeatureValues,
                                 expectedDataValues,
+                                expectedOtherDataValues,
                                 before,
                                 after);
   }
@@ -824,7 +1283,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Map<String,Integer>                 expectedFeatureCounts,
       Map<String,Set<String>>             primaryFeatureValues,
       Map<String,Set<String>>             duplicateFeatureValues,
-      Map<SzAttributeClass, Set<String>>  expectedDataValues)
+      Map<SzAttributeClass, Set<String>>  expectedDataValues,
+      Set<String>                         expectedOtherDataValues)
   {
     String testInfo = "keyRecord=[ " + keyRecordId
         + " ], forceMinimal=[ " + forceMinimal
@@ -861,9 +1321,64 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
                                 primaryFeatureValues,
                                 duplicateFeatureValues,
                                 expectedDataValues,
+                                expectedOtherDataValues,
                                 before,
                                 after);
   }
+
+
+  @Test
+  public void getNotFoundEntityByBadEntityIdTest()
+  {
+    final long badEntityId = Long.MAX_VALUE;
+    this.assumeNativeApiAvailable();
+
+    String uriText = this.formatServerUri("entities/" + badEntityId);
+    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+    long before = System.currentTimeMillis();
+
+    try {
+      this.entityDataServices.getEntityByEntityId(
+          badEntityId,
+          false,
+          false,
+          false,
+          WITH_DUPLICATES,
+          uriInfo);
+
+      fail("Expected entity for entity ID " + badEntityId + " to NOT be found");
+
+    } catch (NotFoundException expected) {
+      SzErrorResponse response
+          = (SzErrorResponse) expected.getResponse().getEntity();
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      this.validateBasics(
+          response, 404, GET, uriText, before, after);
+    }
+  }
+
+  @Test
+  public void getNotFoundEntityByBadEntityIdTestViaHttp()
+  {
+    final long badEntityId = Long.MAX_VALUE;
+    this.assumeNativeApiAvailable();
+
+    String uriText = this.formatServerUri("entities/" + badEntityId);
+
+    long before = System.currentTimeMillis();
+    SzErrorResponse response = this.invokeServerViaHttp(
+        GET, uriText, SzErrorResponse.class);
+    response.concludeTimers();
+    long after = System.currentTimeMillis();
+
+    this.validateBasics(
+        response, 404, GET, uriText, before, after);
+  }
+
+
 
   private static class Criterion {
     private String key;
@@ -1170,282 +1685,4 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         after,
         withRaw);
   }
-
-  private void validateRecordResponse(SzRecordResponse response,
-                                      String dataSourceCode,
-                                      String expectedRecordId,
-                                      Set<String> expectedNameData,
-                                      Set<String> expectedAddressData,
-                                      Set<String> expectedPhoneData,
-                                      Set<String> expectedIdentifierData,
-                                      Set<String> expectedAttributeData,
-                                      long beforeTimestamp,
-                                      long afterTimestamp,
-                                      Boolean expectRawData) {
-    String selfLink = this.formatServerUri(
-        "data-sources/" + dataSourceCode
-            + "/records/" + expectedRecordId);
-    if (expectRawData != null) {
-      selfLink += "?withRaw=" + expectRawData;
-    } else {
-      expectRawData = false;
-    }
-
-    this.validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp);
-
-    SzEntityRecord record = response.getData();
-
-    assertNotNull(record, "Response data is null");
-
-    String dataSource = record.getDataSource();
-    assertNotNull(dataSource, "Data source is null");
-    assertEquals(dataSourceCode, dataSource, "Unexpected data source value");
-
-    String recordId = record.getRecordId();
-    assertNotNull(recordId, "Record ID is null");
-    assertEquals(expectedRecordId, recordId, "Unexpected record ID value");
-
-    this.assertSameElements(
-        expectedNameData, record.getNameData(), "names");
-    this.assertSameElements(
-        expectedAddressData, record.getAddressData(), "addresses");
-    this.assertSameElements(
-        expectedPhoneData, record.getPhoneData(), "phone numbers");
-    this.assertSameElements(
-        expectedIdentifierData, record.getIdentifierData(), "identifiers");
-    this.assertSameElements(
-        expectedAttributeData, record.getAttributeData(), "attributes");
-
-    if (expectRawData) {
-      this.validateRawDataMap(response.getRawData(),
-                              false,
-                              "JSON_DATA",
-                              "NAME_DATA",
-                              "ATTRIBUTE_DATA",
-                              "IDENTIFIER_DATA",
-                              "ADDRESS_DATA",
-                              "PHONE_DATA",
-                              "RELATIONSHIP_DATA",
-                              "ENTITY_DATA",
-                              "OTHER_DATA",
-                              "DATA_SOURCE",
-                              "RECORD_ID");
-    }
-
-  }
-
-  private void validateEntityResponse(
-      String                              testInfo,
-      SzEntityResponse                    response,
-      String                              selfLink,
-      Boolean                             withRaw,
-      Boolean                             withRelated,
-      Boolean                             forceMinimal,
-      SzFeatureInclusion                  featureMode,
-      Integer                             expectedRecordCount,
-      Set<SzRecordId>                     expectedRecordIds,
-      Integer                             relatedEntityCount,
-      Map<String,Integer>                 expectedFeatureCounts,
-      Map<String,Set<String>>             primaryFeatureValues,
-      Map<String,Set<String>>             duplicateFeatureValues,
-      Map<SzAttributeClass, Set<String>>  expectedDataValues,
-      long                                beforeTimestamp,
-      long                                afterTimestamp)
-  {
-    selfLink = this.formatServerUri(selfLink);
-
-    this.validateBasics(
-        testInfo, response, selfLink, beforeTimestamp, afterTimestamp);
-
-    SzEntityData entityData = response.getData();
-
-    assertNotNull(entityData, "Response data is null: " + testInfo);
-
-    SzResolvedEntity resolvedEntity = entityData.getResolvedEntity();
-
-    assertNotNull(resolvedEntity, "Resolved entity is null: " + testInfo);
-
-    List<SzRelatedEntity> relatedEntities = entityData.getRelatedEntities();
-
-    assertNotNull(relatedEntities,
-                  "Related entities list is null: " + testInfo);
-
-    this.validateEntity(testInfo,
-                        resolvedEntity,
-                        relatedEntities,
-                        forceMinimal,
-                        featureMode,
-                        expectedRecordCount,
-                        expectedRecordIds,
-                        false,
-                        relatedEntityCount,
-                        (withRelated == null || !withRelated),
-                        expectedFeatureCounts,
-                        primaryFeatureValues,
-                        duplicateFeatureValues,
-                        expectedDataValues);
-
-    if (withRaw != null && withRaw) {
-      if (withRelated != null && withRelated
-          && (forceMinimal == null || !forceMinimal))
-      {
-        this.validateRawDataMap(testInfo,
-                                response.getRawData(),
-                                true,
-                                "ENTITY_PATHS", "ENTITIES");
-
-        Object entities = ((Map) response.getRawData()).get("ENTITIES");
-        this.validateRawDataMapArray(testInfo,
-                                     entities,
-                                     false,
-                                     "RESOLVED_ENTITY",
-                                     "RELATED_ENTITIES");
-
-
-        if (featureMode == NONE || (forceMinimal != null && forceMinimal)) {
-          for (Object entity : ((Collection) entities)) {
-            this.validateRawDataMap(testInfo,
-                                    ((Map) entity).get("RESOLVED_ENTITY"),
-                                    false,
-                                    "ENTITY_ID",
-                                    "RECORDS");
-          }
-
-        } else {
-          for (Object entity : ((Collection) entities)) {
-            this.validateRawDataMap(testInfo,
-                                    ((Map) entity).get("RESOLVED_ENTITY"),
-                                    false,
-                                    "ENTITY_ID",
-                                    "FEATURES",
-                                    "RECORD_SUMMARY",
-                                    "RECORDS");
-          }
-        }
-
-
-      } else {
-        this.validateRawDataMap(testInfo,
-                                response.getRawData(),
-                                false,
-                                "RESOLVED_ENTITY",
-                                "RELATED_ENTITIES");
-
-        Object entity = ((Map) response.getRawData()).get("RESOLVED_ENTITY");
-        if (featureMode == NONE || (forceMinimal != null && forceMinimal)) {
-          this.validateRawDataMap(testInfo,
-                                  entity,
-                                  false,
-                                  "ENTITY_ID",
-                                  "RECORDS");
-
-        } else {
-          this.validateRawDataMap(testInfo,
-                                  entity,
-                                  false,
-                                  "ENTITY_ID",
-                                  "FEATURES",
-                                  "RECORD_SUMMARY",
-                                  "RECORDS");
-        }
-      }
-    }
-  }
-
-  private void validateSearchResponse(String testInfo,
-                                      SzAttributeSearchResponse response,
-                                      String selfLink,
-                                      Integer expectedCount,
-                                      Boolean withRelationships,
-                                      Boolean forceMinimal,
-                                      SzFeatureInclusion featureInclusion,
-                                      long beforeTimestamp,
-                                      long afterTimestamp,
-                                      Boolean expectRawData) {
-    selfLink = this.formatServerUri(selfLink);
-    if (expectRawData == null) {
-      expectRawData = false;
-    }
-
-    this.validateBasics(
-        testInfo, response, selfLink, beforeTimestamp, afterTimestamp);
-
-    SzAttributeSearchResponse.Data data = response.getData();
-
-    assertNotNull(data, "Response data is null: " + testInfo);
-
-    List<SzAttributeSearchResult> results = data.getSearchResults();
-
-    assertNotNull(results, "Result list is null: " + testInfo);
-
-    if (expectedCount != null) {
-      assertEquals(expectedCount, results.size(),
-                   "Unexpected number of results: " + testInfo);
-    }
-
-    for (SzAttributeSearchResult result : results) {
-
-      this.validateEntity(testInfo,
-                          result,
-                          result.getRelatedEntities(),
-                          forceMinimal,
-                          featureInclusion,
-                          null,
-                          null,
-                          (withRelationships == null || !withRelationships),
-                          null,
-                          true,
-                          null,
-                          null,
-                          null,
-                          null);
-    }
-
-    if (expectRawData) {
-      this.validateRawDataMap(testInfo,
-                              response.getRawData(),
-                              true,
-                              "RESOLVED_ENTITIES");
-
-      Object entities = ((Map) response.getRawData()).get("RESOLVED_ENTITIES");
-      this.validateRawDataMapArray(testInfo,
-                                   entities,
-                                   true,
-                                   "MATCH_INFO", "ENTITY");
-      for (Object obj : ((Collection) entities)) {
-        Object matchInfo = ((Map) obj).get("MATCH_INFO");
-        this.validateRawDataMap(testInfo,
-                                matchInfo,
-                                true,
-                                "MATCH_LEVEL",
-                                "MATCH_KEY",
-                                "MATCH_SCORE",
-                                "ERRULE_CODE",
-                                "REF_SCORE",
-                                "FEATURE_SCORES");
-        Object entity = ((Map) obj).get("ENTITY");
-        Object resolvedEntity = ((Map) entity).get("RESOLVED_ENTITY");
-        if (featureInclusion == NONE || (forceMinimal != null && forceMinimal)) {
-          this.validateRawDataMap(testInfo,
-                                  resolvedEntity,
-                                  false,
-                                  "ENTITY_ID",
-                                  "RECORDS");
-
-        } else {
-          this.validateRawDataMap(testInfo,
-                                  resolvedEntity,
-                                  false,
-                                  "ENTITY_ID",
-                                  "FEATURES",
-                                  "RECORD_SUMMARY",
-                                  "RECORDS");
-
-        }
-      }
-
-    }
-  }
-
 }

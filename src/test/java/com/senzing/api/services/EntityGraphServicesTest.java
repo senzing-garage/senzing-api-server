@@ -967,6 +967,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                           null,
                           null,
                           null,
+                          null,
                           null);
     }
 
@@ -1752,6 +1753,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                           false,
                           null,
                           true,
+                          null,
                           null,
                           null,
                           null,

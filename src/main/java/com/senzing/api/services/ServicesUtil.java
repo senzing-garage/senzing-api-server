@@ -7,6 +7,7 @@ import com.senzing.util.Timers;
 
 import javax.json.*;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.Response;
@@ -240,6 +241,34 @@ public class ServicesUtil {
     builder.entity(
         new SzErrorResponse(httpMethod, 400, uriInfo, timers, exception));
     return new BadRequestException(builder.build());
+  }
+
+  /**
+   * Creates an {@link ForbiddenException} and builds a response
+   * with an {@link SzErrorResponse} using the specified {@link UriInfo}.
+   *
+   * @param httpMethod The HTTP method for the request.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
+   * @param errorMessage The error message.
+   *
+   * @return The {@link ForbiddenException} that was created with the
+   *         specified http method and {@link UriInfo}.
+   */
+  static ForbiddenException newForbiddenException(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      Timers        timers,
+      String        errorMessage)
+  {
+    Response.ResponseBuilder builder = Response.status(403);
+    builder.entity(
+        new SzErrorResponse(
+            httpMethod, 403, uriInfo, timers, errorMessage));
+    return new ForbiddenException(builder.build());
   }
 
 
