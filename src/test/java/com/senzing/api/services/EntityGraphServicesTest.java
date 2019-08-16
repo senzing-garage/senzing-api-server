@@ -169,7 +169,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
   @AfterAll
   public void teardownEnvironment() {
-    this.teardownTestEnvironment(false);
+    this.teardownTestEnvironment(true);
   }
 
   private Long getEntityIdForRecordId(SzRecordId recordId) {
@@ -1031,17 +1031,19 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       });
       pw.flush();
     }
-    pw.println("ACTUAL PATH: ");
-    actualPath.forEach(entityId -> {
-      SzResolvedEntity entity = entityMap.get(entityId);
-      pw.print("    " + entityId);
-      entity.getRecords().forEach(record -> {
-        pw.print(" / ");
-        pw.print(record.getDataSource() + ":" + record.getRecordId());
+    if (actualPath != null) {
+      pw.println("ACTUAL PATH: ");
+      actualPath.forEach(entityId -> {
+        SzResolvedEntity entity = entityMap.get(entityId);
+        pw.print("    " + entityId);
+        entity.getRecords().forEach(record -> {
+          pw.print(" / ");
+          pw.print(record.getDataSource() + ":" + record.getRecordId());
+        });
+        pw.println();
+        pw.flush();
       });
-      pw.println();
-      pw.flush();
-    });
+    }
     pw.flush();
     return sw.toString();
   }
