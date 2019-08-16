@@ -10,15 +10,15 @@ import static com.senzing.util.CollectionUtilities.recursivelyUnmodifiableMap;
  * Describes the command-line options for {@link SzApiServer}.
  */
 enum SzApiServerOption implements CommandLineOption<SzApiServerOption> {
-  HELP("-help", true,0),
-  VERSION("-version", true,0),
+  HELP("-help", true, 0),
+  VERSION("-version", true, 0),
   HTTP_PORT("-httpPort", 1),
   BIND_ADDRESS("-bindAddr", 1),
   MODULE_NAME("-moduleName", 1),
-  INI_FILE("-iniFile", true,1, true),
-  INIT_FILE("-initFile", true,1),
-  INIT_JSON("-initJson", true,1),
-  INIT_ENV_VAR("-initEnvVar", true,1),
+  INI_FILE("-iniFile", true, 1, true),
+  INIT_FILE("-initFile", true, 1),
+  INIT_JSON("-initJson", true, 1),
+  INIT_ENV_VAR("-initEnvVar", true, 1),
   CONFIG_ID("-configId", 1),
   READ_ONLY("-readOnly", 0),
   VERBOSE("-verbose", 0),
