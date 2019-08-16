@@ -1,8 +1,9 @@
 package com.senzing.api.services;
 
 import com.senzing.api.model.*;
-import com.senzing.g2.engine.G2Config;
-import com.senzing.g2.engine.G2ConfigJNI;
+import com.senzing.g2.engine.G2ConfigMgr;
+import com.senzing.g2.engine.G2ConfigMgrJNI;
+import com.senzing.g2.engine.Result;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
 import org.junit.jupiter.api.AfterAll;
@@ -12,15 +13,14 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
-import javax.json.JsonReader;
 import javax.ws.rs.core.UriInfo;
 import java.io.*;
 import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.GET;
+import static com.senzing.util.CollectionUtilities.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
 
@@ -102,99 +102,107 @@ public class ConfigServicesTest extends AbstractServiceTest
     set.add(value);
   }
 
-  private static <T> Map<T, Set<String>> unmodifiable(
-      Map<T, Set<String>> map)
-  {
-    Iterator<Map.Entry<T, Set<String>>> iter =
-      map.entrySet().iterator();
-    while (iter.hasNext()) {
-      Map.Entry<T,Set<String>> entry = iter.next();
-
-      Set<String> set = entry.getValue();
-      set = Collections.unmodifiableSet(set);
-      entry.setValue(set);
-    }
-    return Collections.unmodifiableMap(map);
-  }
-
   @BeforeAll public void initializeEnvironment() {
     this.initializeTestEnvironment();
     this.configServices = new ConfigServices();
-    File iniFile    = new File(this.getRepositoryDirectory(), "g2.ini");
-    File configFile = null;
-    try (FileInputStream   fis = new FileInputStream(iniFile);
-         InputStreamReader isr = new InputStreamReader(fis, "UTF-8");
-         BufferedReader    br  = new BufferedReader(isr))
-    {
-      String configPath = null;
-      for (String line = br.readLine(); line != null; line = br.readLine()) {
-        if (line.trim().toUpperCase().startsWith("G2CONFIGFILE=")) {
-          configPath = line.trim().substring("G2CONFIGFILE=".length());
-          break;
+    String configJson = null;
+    if (NATIVE_API_AVAILABLE) {
+      String initJsonText = readInitJsonFile();
+      G2ConfigMgr configMgr = new G2ConfigMgrJNI();
+      configMgr.initV2("testApiServer", initJsonText, false);
+      try {
+        Result<Long> configId = new Result<>();
+        int returnCode = configMgr.getDefaultConfigID(configId);
+        if (returnCode != 0) {
+          throw new IllegalStateException(
+              "Failed to get default config ID: "
+                  + configMgr.getLastExceptionCode()
+                  + configMgr.getLastException());
         }
+        StringBuffer sb = new StringBuffer();
+        returnCode = configMgr.getConfig(configId.getValue(), sb);
+        if (returnCode != 0) {
+          throw new IllegalStateException(
+              "Failed to get default config for ID ("
+                  + configId.getValue() + "): "
+                  + configMgr.getLastExceptionCode()
+                  + configMgr.getLastException());
+        }
+        configJson = sb.toString();
+
+      } finally {
+        configMgr.destroy();
       }
-      configFile = new File(configPath);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    try (FileInputStream   fis = new FileInputStream(configFile);
-         InputStreamReader isr = new InputStreamReader(fis, "UTF-8");
-         JsonReader        jr  = Json.createReader(isr))
-    {
-      JsonObject rootObject = jr.readObject();
-      JsonObject g2Config   = rootObject.getJsonObject("G2_CONFIG");
-      JsonArray  cfgAttrs   = g2Config.getJsonArray("CFG_ATTR");
 
-      for (int index = 0; index < cfgAttrs.size(); index++) {
-        JsonObject attrType = cfgAttrs.getJsonObject(index);
-
-        String attrCode   = attrType.getString("ATTR_CODE");
-        String attrClass  = JsonUtils.getString(attrType,"ATTR_CLASS");
-        String internal   = JsonUtils.getString(attrType,"INTERNAL");
-        String fTypeCode  = JsonUtils.getString(attrType,"FTYPE_CODE");
-
-        if (attrClass != null && attrClass.trim().length() == 0) {
-          attrClass = null;
+    } else {
+      // use a fixed G2 config file from resources
+      final String staticConfig = "static-g2-config.json";
+      try (InputStream is = this.getClass().getResourceAsStream(staticConfig);
+           InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+           BufferedReader br = new BufferedReader(isr))
+      {
+        StringBuilder sb = new StringBuilder();
+        for (int nextChar = br.read(); nextChar >= 0; nextChar = br.read()) {
+          if (nextChar == 0) continue;
+          sb.append((char) nextChar);
         }
-        if (fTypeCode != null && fTypeCode.trim().length() == 0) {
-          fTypeCode = null;
-        }
+        configJson = sb.toString();
 
-        SzAttributeClass szAttrClass
-            = SzAttributeClass.parseAttributeClass(attrClass);
-
-        boolean isInternal = internal.equalsIgnoreCase("YES");
-
-        if (isInternal) {
-          putInMap(this.internalAttrTypesByClass, szAttrClass, attrCode);
-          putInMap(this.allAttrTypesByClass, szAttrClass, attrCode);
-          putInMap(this.internalAttrTypesByFeature, fTypeCode, attrCode);
-          putInMap(this.allAttrTypesByFeature, fTypeCode, attrCode);
-          this.internalAttrTypes.add(attrCode);
-          this.allAttrTypes.add(attrCode);
-
-        } else {
-          putInMap(this.standardAttrTypesByClass, szAttrClass, attrCode);
-          putInMap(this.allAttrTypesByClass, szAttrClass, attrCode);
-          putInMap(this.standardAttrTypesByFeature, fTypeCode, attrCode);
-          putInMap(this.allAttrTypesByFeature, fTypeCode, attrCode);
-          this.standardAttrTypes.add(attrCode);
-          this.allAttrTypes.add(attrCode);
-        }
+      } catch (IOException e) {
+        throw new RuntimeException(e);
       }
-      this.internalAttrTypes = Collections.unmodifiableSet(this.internalAttrTypes);
-      this.standardAttrTypes = Collections.unmodifiableSet(this.standardAttrTypes);
-      this.allAttrTypes      = Collections.unmodifiableSet(this.allAttrTypes);
-      this.internalAttrTypesByClass   = unmodifiable(this.internalAttrTypesByClass);
-      this.standardAttrTypesByClass   = unmodifiable(this.standardAttrTypesByClass);
-      this.allAttrTypesByClass        = unmodifiable(this.allAttrTypesByClass);
-      this.internalAttrTypesByFeature = unmodifiable(this.internalAttrTypesByFeature);
-      this.standardAttrTypesByFeature = unmodifiable(this.standardAttrTypesByFeature);
-      this.allAttrTypesByFeature      = unmodifiable(this.allAttrTypesByFeature);
-
-    } catch (IOException e) {
-      throw new RuntimeException(e);
     }
+
+    JsonObject rootObject = JsonUtils.parseJsonObject(configJson);
+    JsonObject g2Config   = rootObject.getJsonObject("G2_CONFIG");
+    JsonArray  cfgAttrs   = g2Config.getJsonArray("CFG_ATTR");
+
+    for (int index = 0; index < cfgAttrs.size(); index++) {
+      JsonObject attrType = cfgAttrs.getJsonObject(index);
+
+      String attrCode   = attrType.getString("ATTR_CODE");
+      String attrClass  = JsonUtils.getString(attrType,"ATTR_CLASS");
+      String internal   = JsonUtils.getString(attrType,"INTERNAL");
+      String fTypeCode  = JsonUtils.getString(attrType,"FTYPE_CODE");
+
+      if (attrClass != null && attrClass.trim().length() == 0) {
+        attrClass = null;
+      }
+      if (fTypeCode != null && fTypeCode.trim().length() == 0) {
+        fTypeCode = null;
+      }
+
+      SzAttributeClass szAttrClass
+          = SzAttributeClass.parseAttributeClass(attrClass);
+
+      boolean isInternal = internal.equalsIgnoreCase("YES");
+
+      if (isInternal) {
+        putInMap(this.internalAttrTypesByClass, szAttrClass, attrCode);
+        putInMap(this.allAttrTypesByClass, szAttrClass, attrCode);
+        putInMap(this.internalAttrTypesByFeature, fTypeCode, attrCode);
+        putInMap(this.allAttrTypesByFeature, fTypeCode, attrCode);
+        this.internalAttrTypes.add(attrCode);
+        this.allAttrTypes.add(attrCode);
+
+      } else {
+        putInMap(this.standardAttrTypesByClass, szAttrClass, attrCode);
+        putInMap(this.allAttrTypesByClass, szAttrClass, attrCode);
+        putInMap(this.standardAttrTypesByFeature, fTypeCode, attrCode);
+        putInMap(this.allAttrTypesByFeature, fTypeCode, attrCode);
+        this.standardAttrTypes.add(attrCode);
+        this.allAttrTypes.add(attrCode);
+      }
+    }
+    this.internalAttrTypes = Collections.unmodifiableSet(this.internalAttrTypes);
+    this.standardAttrTypes = Collections.unmodifiableSet(this.standardAttrTypes);
+    this.allAttrTypes      = Collections.unmodifiableSet(this.allAttrTypes);
+    this.internalAttrTypesByClass   = recursivelyUnmodifiableMap(this.internalAttrTypesByClass);
+    this.standardAttrTypesByClass   = recursivelyUnmodifiableMap(this.standardAttrTypesByClass);
+    this.allAttrTypesByClass        = recursivelyUnmodifiableMap(this.allAttrTypesByClass);
+    this.internalAttrTypesByFeature = recursivelyUnmodifiableMap(this.internalAttrTypesByFeature);
+    this.standardAttrTypesByFeature = recursivelyUnmodifiableMap(this.standardAttrTypesByFeature);
+    this.allAttrTypesByFeature      = recursivelyUnmodifiableMap(this.allAttrTypesByFeature);
   }
 
   /**
@@ -808,129 +816,6 @@ public class ConfigServicesTest extends AbstractServiceTest
                                        true);
   }
 
-  private void validateDataSourcesResponse(
-      SzDataSourcesResponse   response,
-      long                    beforeTimestamp,
-      long                    afterTimestamp,
-      Boolean                 expectRawData,
-      Set<String>             expectedDataSources)
-  {
-    String selfLink = this.formatServerUri("data-sources");
-    if (expectRawData != null) {
-      selfLink += "?withRaw=" + expectRawData;
-    } else {
-      expectRawData = false;
-    }
-
-    this.validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, expectRawData);
-
-    SzDataSourcesResponse.Data data = response.getData();
-
-    assertNotNull(data, "Response data is null");
-
-    Set<String> sources = data.getDataSources();
-
-    assertNotNull(sources, "Data sources set is null");
-
-    assertEquals(expectedDataSources, sources,
-                 "Unexpected or missing data sources in set");
-
-    if (expectRawData) {
-      this.validateRawDataMap(response.getRawData(), "DSRC_CODE");
-    }
-  }
-
-  private void validateAttributeTypesResponse(
-      SzAttributeTypesResponse  response,
-      String                    selfLink,
-      long                      beforeTimestamp,
-      long                      afterTimestamp,
-      Boolean                   expectRawData,
-      Set<String>               expectedAttrTypeCodes)
-  {
-    selfLink = this.formatServerUri(selfLink);
-    if (expectRawData == null) {
-      expectRawData = false;
-    }
-
-    this.validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, expectRawData);
-
-    SzAttributeTypesResponse.Data data = response.getData();
-
-    assertNotNull(data, "Response data is null");
-
-    List<SzAttributeType> attrTypes = data.getAttributeTypes();
-
-    assertNotNull(attrTypes, "List of attribute types is null");
-
-    Map<String, SzAttributeType> map = new LinkedHashMap<>();
-    for (SzAttributeType attrType : attrTypes) {
-      map.put(attrType.getAttributeCode(), attrType);
-    }
-
-    assertEquals(expectedAttrTypeCodes, map.keySet(),
-                 "Unexpected or missing attribute types");
-
-    if (expectRawData) {
-      this.validateRawDataMapArray(response.getRawData(),
-                                   false,
-                                   "DEFAULT_VALUE",
-                                   "ATTR_CODE",
-                                   "FELEM_REQ",
-                                   "ATTR_CLASS",
-                                   "INTERNAL",
-                                   "ATTR_ID",
-                                   "FTYPE_CODE",
-                                   "FELEM_CODE",
-                                   "ADVANCED");
-    }
-  }
-
-  private void validateAttributeTypeResponse(
-      SzAttributeTypeResponse response,
-      String                  attributeCode,
-      long                    beforeTimestamp,
-      long                    afterTimestamp,
-      Boolean                 expectRawData)
-  {
-    String selfLink = this.formatServerUri(
-        "attribute-types/" + attributeCode);
-    if (expectRawData != null) {
-      selfLink += "?withRaw=" + expectRawData;
-    } else {
-      expectRawData = false;
-    }
-
-    this.validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, expectRawData);
-
-    SzAttributeTypeResponse.Data data = response.getData();
-
-    assertNotNull(data, "Response data is null");
-
-    SzAttributeType attrType = data.getAttributeType();
-
-    assertNotNull(attrType, "Attribute Type is null");
-
-    assertEquals(attributeCode, attrType.getAttributeCode(),
-                 "Unexpected attribute type code");
-
-    if (expectRawData) {
-      this.validateRawDataMap(response.getRawData(),
-                              "DEFAULT_VALUE",
-                              "ATTR_CODE",
-                              "FELEM_REQ",
-                              "ATTR_CLASS",
-                              "INTERNAL",
-                              "ATTR_ID",
-                              "FTYPE_CODE",
-                              "FELEM_CODE",
-                              "ADVANCED");
-    }
-  }
-
   @Test public void getCurrentConfigTest() {
     this.assumeNativeApiAvailable();
     String  uriText = this.formatServerUri("config/current");
@@ -996,48 +881,4 @@ public class ConfigServicesTest extends AbstractServiceTest
                                 after,
                                 DEFAULT_DATA_SOURCES);
   }
-
-  private void validateConfigResponse(
-      SzConfigResponse        response,
-      String                  selfLink,
-      long                    beforeTimestamp,
-      long                    afterTimestamp,
-      Set<String>             expectedDataSources)
-  {
-    selfLink = this.formatServerUri(selfLink);
-
-    this.validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, true);
-
-    Object rawData = response.getRawData();
-
-    this.validateRawDataMap(rawData, true, "G2_CONFIG");
-
-    Object g2Config = ((Map) rawData).get("G2_CONFIG");
-
-    this.validateRawDataMap(g2Config,
-                            false,
-                            "CFG_ATTR",
-                            "CFG_FELEM",
-                            "CFG_DSRC");
-
-    Object cfgDsrc = ((Map) g2Config).get("CFG_DSRC");
-
-    this.validateRawDataMapArray(cfgDsrc,
-                                 false,
-                                 "DSRC_ID",
-                                 "DSRC_DESC",
-                                 "DSRC_CODE");
-
-    Set<String> actualDataSources = new LinkedHashSet<>();
-    for (Object dsrc : ((Collection) cfgDsrc)) {
-      Map dsrcMap = (Map) dsrc;
-      String dsrcCode = (String) dsrcMap.get("DSRC_CODE");
-      actualDataSources.add(dsrcCode);
-    }
-
-    assertEquals(expectedDataSources, actualDataSources,
-                 "Unexpected set of data sources in config.");
-  }
-
 }

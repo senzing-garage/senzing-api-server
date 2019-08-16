@@ -132,10 +132,13 @@ public interface SzApiProvider {
    * Gets the <b>unmodifiable</b> {@Link Set} of Data Source codes that
    * are configured.
    *
+   * @param expectedDataSources The zero or more data source codes that the
+   *                            caller expects to exist.
+   *
    * @return The <b>unmodifiable</b> {@Link Set} of Data Source codes that
    *         are configured.
    */
-  Set<String> getDataSources();
+  Set<String> getDataSources(String... expectedDataSources);
 
   /**
    * Gets the attribute class associated with a feature type code.
@@ -147,4 +150,12 @@ public interface SzApiProvider {
    *         or not recognized.
    */
   String getAttributeClassForFeature(String featureType);
+
+  /**
+   * Checks if the API is running in read-only mode.
+   *
+   * @return <tt>true</tt> if only read-only endpoints should be allowed,
+   *         otherwise <tt>false</tt>.
+   */
+  boolean isReadOnly();
 }

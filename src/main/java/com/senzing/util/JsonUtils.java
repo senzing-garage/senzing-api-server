@@ -1,8 +1,8 @@
 package com.senzing.util;
 
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
+import org.ini4j.Wini;
+
+import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
@@ -984,5 +984,38 @@ public class JsonUtils {
     return JsonUtils.toJsonText(new StringWriter(), builder).toString();
   }
 
+  /**
+   * Converts an INI file to JSON format.
+   *
+   * @param iniFile The INI file to read.
+   *
+   * @return The {@link JsonObject} constructed from the file.
+   */
+  public static JsonObject iniToJson(File iniFile) {
+    try {
+      Wini windowsIni = new Wini(iniFile);
+
+      JsonObjectBuilder job = Json.createObjectBuilder();
+
+      windowsIni.entrySet().forEach(entry -> {
+        String              sectionKey  = entry.getKey();
+        Map<String,String>  section     = entry.getValue();
+
+        JsonObjectBuilder sectionBuilder = Json.createObjectBuilder();
+        section.entrySet().forEach(sectionEntry -> {
+          String key    = sectionEntry.getKey();
+          String value  = sectionEntry.getValue();
+          JsonUtils.add(sectionBuilder, key, value);
+        });
+
+        job.add(sectionKey, sectionBuilder);
+      });
+
+      return job.build();
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
 }
