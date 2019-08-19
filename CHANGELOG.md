@@ -13,11 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Now a non-root, immutable container.
 - RPM based installation.
 
-### Changed in 1.7.3
-
-- senzing/senzing-api-server:1.7.3 pinned to senzing/senzing-base:1.2.1
-
-## [1.7.2] - 2019-08-15
+## [1.7.2] - 2019-08-19
 
 ### Added in 1.7.2
 
@@ -37,6 +33,7 @@ for loading records to always return an `HTTP 403 Forbidden` response.
 
 ### Changed in 1.7.2
 
+- senzing/senzing-api-server:1.7.3 pinned to senzing/senzing-base:1.2.1
 - Modified `SzResolvedEntity` so the `relationshipData` is populated from the
 features and added auto tests to verify.  Note: this will not be provided if
 `featureMode` is set to `NONE`.
@@ -46,6 +43,8 @@ and added auto tests to verify.  Note: this will not be populated if
 - Internally upgraded the processing of command line arguments to reuse the same
 functions for the ConfigurationManager and SzApiServer classes as well as the
 intenral RepositoryManager class (used in auto tests).
+- Fixed Junit auto tests with windows (EntityGraphServicesTest) -- worked around
+libpostal bug in native Senzing API (Windows version).
 
 ### Deprecated in 1.7.2
 
