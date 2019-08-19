@@ -138,9 +138,9 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
         {MNO345.getRecordId(), "Bill", "Wright", "702-444-2121", "702-123-4567",
             "101 Main Street, Las Vegas, NV 89101", "22-AUG-1981"},
         {PQR678.getRecordId(), "Craig", "Smith", "212-555-1212", "702-888-3939",
-            "451 D Street, Las Vegas, NV 89018", "17-NOV-1982"},
+            "451 Dover Street, Las Vegas, NV 89108", "17-NOV-1982"},
         {ABC567.getRecordId(), "Kim", "Long", "702-246-8024", "702-135-7913",
-            "451 D Street, Las Vegas, NV 89018", "24-OCT-1976"},
+            "451 Dover Street, Las Vegas, NV 89108", "24-OCT-1976"},
         {DEF890.getRecordId(), "Kathy", "Osborne", "702-444-2121", "702-111-2222",
             "707 Seventh Ave, Las Vegas, NV 89143", "27-JUL-1981"}
     };
