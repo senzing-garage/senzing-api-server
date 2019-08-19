@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Pinned to senzing/senzing-base:1.2.0
+- senzing/senzing-api-server:1.7.3 pinned to senzing/senzing-base:1.2.0
 - Now a non-root, immutable container.
 - RPM based installation
 
