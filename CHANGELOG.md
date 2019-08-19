@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RPM based installation
 
 ## [1.7.2] - 2019-08-15
+
 - Deprecated `-iniFile` option in favor of newly added `-initFile`,
 `-initEnvVar` and `-initJson` options to initialize with JSON instead of an INI
 file.
@@ -40,11 +41,13 @@ and added auto tests to verify.  Note: this will not be populated if
 for loading records to always return an `HTTP 403 Forbidden` response.
 
 ## [1.7.1] - 2019-08-07
+
 - Upgraded third-party dependencies to get security patches
 - Modified Makefile to disable Junit tests during Docker build until failures
 specific to the Docker build can be diagnosed.
 
 ## [1.7.0] - 2019-07-22
+
 - Added `GET /version` endpoint to get detailed version information
 - Added `GET /config/current` to get the raw configuration JSON that is
 currently being used by the API Server
@@ -57,6 +60,7 @@ path "including source" functions which were broken (as exposed by tests).
 - Now requires g2.jar version 1.10.x or higher
 
 ## [1.6.1] - 2019-06-10
+
 - Added `SzMatchedRecord`, extending `SzEntityRecord`, to add match score
 information to matched records in an `SzResolvedEntity`.  Modified
 `SzResolvedEntity` to use `SzMatchedRecord` instead of `SzEntityRecord` for its
