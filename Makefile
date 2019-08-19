@@ -49,7 +49,7 @@ package:
 		-Dpackaging=jar
 
 	mvn package \
-                -DskipTests=true \
+		-DskipTests=true \
 		-Dproject.version=$(GIT_VERSION) \
 		-Dgit.branch=$(GIT_BRANCH) \
 		-Dgit.repository.name=$(GIT_REPOSITORY_NAME) \
@@ -96,8 +96,8 @@ docker-build: docker-rmi-for-build
 		--tag $(DOCKER_IMAGE_NAME):$(GIT_VERSION) \
 		.
 
-.PHONY: docker-build-base
-docker-build-base: docker-rmi-for-build-base
+.PHONY: docker-build-development-cache
+docker-build-development-cache: docker-rmi-for-build-development-cache
 	mkdir -p $(TARGET)
 	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
 	docker build \
@@ -116,8 +116,8 @@ docker-rmi-for-build:
 		$(DOCKER_IMAGE_NAME):$(GIT_VERSION) \
 		$(DOCKER_IMAGE_NAME)
 
-.PHONY: docker-rmi-for-build-base
-docker-rmi-for-build-base:
+.PHONY: docker-rmi-for-build-development-cache
+docker-rmi-for-build-development-cache:
 	-docker rmi --force $(DOCKER_IMAGE_TAG)
 
 .PHONY: docker-rmi-for-package
@@ -129,7 +129,7 @@ rm-target:
 	-rm -rf $(TARGET)
 
 .PHONY: clean
-clean: docker-rmi-for-build docker-rmi-for-build-base docker-rmi-for-package rm-target
+clean: docker-rmi-for-build docker-rmi-for-build-development-cache docker-rmi-for-package rm-target
 
 # -----------------------------------------------------------------------------
 # Help
