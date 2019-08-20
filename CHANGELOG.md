@@ -6,13 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.7.3] - 2019-08-xx
-
-### Added in 1.7.3
-
-- Now a non-root, immutable container.
-- RPM based installation.
-
 ## [1.7.2] - 2019-08-19
 
 ### Added in 1.7.2
@@ -30,6 +23,8 @@ configuration.  When this option is used then the auto reinitialization does not
 occur since the chosen configuration is likely not be the default configuration.
 - Added `-readOnly` command-line option to cause the `PUT` and `POST` endpoints
 for loading records to always return an `HTTP 403 Forbidden` response.
+- Now a non-root, immutable container.
+- RPM based installation.
 
 ### Changed in 1.7.2
 
