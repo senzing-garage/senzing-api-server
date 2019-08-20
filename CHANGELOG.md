@@ -28,7 +28,7 @@ for loading records to always return an `HTTP 403 Forbidden` response.
 
 ### Changed in 1.7.2
 
-- senzing/senzing-api-server:1.7.3 pinned to senzing/senzing-base:1.2.1
+- senzing/senzing-api-server:1.7.2 pinned to senzing/senzing-base:1.2.1
 - Modified `SzResolvedEntity` so the `relationshipData` is populated from the
 features and added auto tests to verify.  Note: this will not be provided if
 `featureMode` is set to `NONE`.
