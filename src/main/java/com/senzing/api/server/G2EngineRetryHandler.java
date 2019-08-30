@@ -30,6 +30,26 @@ class G2EngineRetryHandler implements InvocationHandler {
    */
   private static Set<Method> UNSUPPORTED_METHODS;
 
+  /**
+   * Utility method to get an optional method that may not exist on the version
+   * of g2.jar that we are building with.
+   */
+  private static void addMethodIfExists(Set<Method> set,
+                                        String      name,
+                                        Class...    argTypes)
+  {
+    Method method = null;
+    try {
+      method = G2Engine.class.getMethod(name, argTypes);
+    } catch (NoSuchMethodException ignore) {
+      return;
+    }
+    set.add(method);
+  }
+
+  /**
+   * static initializer
+   */
   static {
     Class<G2Engine> cls = G2Engine.class;
     Set<Method> retrySet        = new LinkedHashSet<>();
@@ -48,6 +68,27 @@ class G2EngineRetryHandler implements InvocationHandler {
           String.class, String.class, long.class, boolean.class));
       unsupportedSet.add(cls.getMethod("reinitV2", long.class));
       unsupportedSet.add(cls.getMethod("destroy"));
+
+      // handle unsupported methods that may not be in the version of g2.jar
+      // that is installed in the build/runtime environment
+      addMethodIfExists(unsupportedSet,"addRecordWithInfo",
+                        String.class, String.class, String.class,
+                        String.class, int.class, StringBuffer.class);
+      addMethodIfExists(unsupportedSet,"replaceRecordWithInfo",
+                        String.class, String.class, String.class,
+                        String.class, int.class, StringBuffer.class);
+      addMethodIfExists(unsupportedSet,"deleteRecordWithInfo",
+                        String.class, String.class, String.class,
+                        int.class, StringBuffer.class);
+      addMethodIfExists(unsupportedSet,"reevaluateEntityWithInfo",
+                        long.class, int.class, StringBuffer.class);
+      addMethodIfExists(unsupportedSet,"reevaluateRecordWithInfo",
+                        String.class, String.class,
+                        int.class, StringBuffer.class);
+      addMethodIfExists(unsupportedSet,"processRedoRecordWithInfo",
+                        int.class, StringBuffer.class, StringBuffer.class);
+      addMethodIfExists(unsupportedSet,"processWithInfo",
+                        String.class, int.class, StringBuffer.class);
 
       directSet.add(cls.getMethod("primeEngine"));
       directSet.add(cls.getMethod("purgeRepository"));

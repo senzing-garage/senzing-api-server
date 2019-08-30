@@ -992,11 +992,9 @@ public class SzApiServer implements SzApiProvider {
             = SzApiProvider.Factory.installProvider(SzApiServer.INSTANCE);
 
       } catch (RuntimeException e) {
-        e.printStackTrace();
         throw e;
 
       } catch (Exception e) {
-        e.printStackTrace();
         throw new RuntimeException(e);
       }
     }
@@ -1512,7 +1510,21 @@ public class SzApiServer implements SzApiProvider {
 
     boolean configInRepo = false;
     G2ConfigMgr configMgr = new G2ConfigMgrJNI();
-    configMgr.initV2(SzApiServer.class.getSimpleName(), initJsonText, false);
+    int returnCode = configMgr.initV2(SzApiServer.class.getSimpleName(), initJsonText, false);
+    if (returnCode != 0) {
+      String msg = multilineFormat(
+          "Failed to initialize with specified initialization parameters.",
+          "",
+          formatError("G2ConfigMgr.initV2", configMgr)
+          + "Initialization parameters:",
+          "",
+          (initJsonText.length() > 80
+            ? initJsonText.substring(0, 64) + " ... [truncated]"
+            : initJsonText),
+          "");
+
+      throw new RuntimeException(msg);
+    }
     try {
       Result<Long> defaultConfigResult = new Result<>();
       configMgr.getDefaultConfigID(defaultConfigResult);
