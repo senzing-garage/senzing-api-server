@@ -48,8 +48,8 @@ and Senzing App.  In order to install g2.jar you must:
 
  1. Determine your `${SENZING_VERSION}` version number:
     - Locate your `g2BuildVersion.json` file:
-        - Linux: `${SENZING_G2_DIR}/g2BuildVersion.json`
-        - Windows: `${SENZING_G2_DIR}\g2BuildVersion.json`
+        - Linux: `${SENZING_G2_DIR}/data/g2BuildVersion.json`
+        - Windows: `${SENZING_G2_DIR}\data\g2BuildVersion.json`
     - Find the value for the `"VERSION"` property in the JSON contents.
       Example:
 
@@ -85,10 +85,10 @@ and Senzing App.  In order to install g2.jar you must:
              set SENZING_VERSION=1.7.19095
 
              mvn install:install-file \
-                 -Dfile=%SENZING_G2_DIR%\lib\g2.jar \
+                 -Dfile="%SENZING_G2_DIR%\lib\g2.jar" \
                  -DgroupId=com.senzing \
                  -DartifactId=g2 \
-                 -Dversion=%SENZING_VERSION% \
+                 -Dversion="%SENZING_VERSION%" \
                  -Dpackaging=jar
        ```
 
@@ -108,7 +108,7 @@ and Senzing App.  In order to install g2.jar you must:
       ```console
           set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
 
-          set Path=%SENZING_G2_DIR%\lib;$Path
+          set Path=%SENZING_G2_DIR%\lib;%Path%
       ```
 
 ### Building
