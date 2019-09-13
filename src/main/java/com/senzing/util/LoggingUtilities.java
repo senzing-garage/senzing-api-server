@@ -4,8 +4,15 @@ import com.senzing.g2.engine.G2Fallible;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Objects;
 
 public class LoggingUtilities {
+  /**
+   * The last logged exception in this thread.
+   */
+  private static final ThreadLocal<Long> LAST_LOGGED_EXCEPTION
+      = new ThreadLocal<>();
+
   /**
    * Private default constructor
    */
@@ -119,4 +126,58 @@ public class LoggingUtilities {
     System.err.println(message);
   }
 
+  /**
+   * Convert a throwable to a {@link Long} value so we don't keep a reference
+   * to what could be a complex exception object.
+   * @param t The throwable to convert.
+   * @return The long hash represetation to identify the throwable instance.
+   */
+  private static Long throwableToLong(Throwable t) {
+    if (t == null) return null;
+    long hash1 = (long) System.identityHashCode(t);
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    t.printStackTrace(pw);
+    pw.flush();
+    long hash2 = (long) sw.toString().hashCode();
+    return ((hash1 << 32) | hash2);
+  }
+
+  /**
+   * Checks if the specified {@link Throwable} is the last logged exception.
+   * This is handy for telling if the exception has already been logged by a
+   * deeper level of the stack trace.
+   * @param t The {@link Throwable} to check.
+   * @return <tt>true</tt> if it is the last logged exception, otherwise
+   *         <tt>false</tt>.
+   */
+  public static boolean isLastLoggedException(Throwable t) {
+    if (t == null) return false;
+    if (LAST_LOGGED_EXCEPTION.get() == null) return false;
+    long value = throwableToLong(t);
+    return (LAST_LOGGED_EXCEPTION.get() == value);
+  }
+
+  /**
+   * Sets the specified {@link Throwable} as the last logged exception.
+   * This is handy for telling if the exception has already been logged by a
+   * deeper level of the stack trace.
+   *
+   * @param t The {@link Throwable} to set as the last logged exception.
+   */
+  public static void setLastLoggedException(Throwable t) {
+    LAST_LOGGED_EXCEPTION.set(throwableToLong(t));
+  }
+
+  /**
+   * Sets the last logged exception and rethrows the specified exception.
+   * @param t The {@link Throwable} describing the exception.
+   * @throws T The specified exception.
+   */
+  public static <T extends Throwable> void setLastLoggedAndThrow(T t)
+    throws T
+  {
+    setLastLoggedException(t);
+    throw t;
+  }
 }

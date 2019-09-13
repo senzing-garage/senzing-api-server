@@ -340,6 +340,7 @@ public class AdminServicesTest extends AbstractServiceTest {
     if (expectRawData) {
       this.validateRawDataMap(
           response.getRawData(),
+          false,
           "VERSION", "BUILD_NUMBER", "BUILD_DATE", "COMPATIBILITY_VERSION");
     }
   }

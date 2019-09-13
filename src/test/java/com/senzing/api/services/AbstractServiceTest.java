@@ -65,6 +65,7 @@ public abstract class AbstractServiceTest {
       try {
         engineApi = new G2JNI();
       } catch (Throwable ignore) {
+        ignore.printStackTrace();
         // do nothing
       }
     } finally {
@@ -2044,19 +2045,19 @@ public abstract class AbstractServiceTest {
     if (expectRawData) {
       this.validateRawDataMap(testInfo,
                               response.getRawData(),
-                              true,
+                              false,
                               "RESOLVED_ENTITIES");
 
       Object entities = ((Map) response.getRawData()).get("RESOLVED_ENTITIES");
       this.validateRawDataMapArray(testInfo,
                                    entities,
-                                   true,
+                                   false,
                                    "MATCH_INFO", "ENTITY");
       for (Object obj : ((Collection) entities)) {
         Object matchInfo = ((Map) obj).get("MATCH_INFO");
         this.validateRawDataMap(testInfo,
                                 matchInfo,
-                                true,
+                                false,
                                 "MATCH_LEVEL",
                                 "MATCH_KEY",
                                 "MATCH_SCORE",
