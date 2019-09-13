@@ -6,6 +6,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.4] - 2019-09-13
+
+### Changes in 1.7.4
+
+- Less repetitive/verbose output when invalid command line options are provided.
+- Fixes auto tests when building with 1.11.1.x versions of native Senzing libs.
+
+## [1.7.3] - 2019-08-30
+
+### Changes in 1.7.3
+
+- Fixed bug where the initialization of the configuration manager
+(`G2ConfigMgr.initV2()`) was not checked for success or failure.  Now the 
+API server ensures that initialization succeeded before proceeding further.
+- Removed warnings that could occur if building with version 1.11.x of g2.jar
+
 ## [1.7.2] - 2019-08-19
 
 ### Added in 1.7.2

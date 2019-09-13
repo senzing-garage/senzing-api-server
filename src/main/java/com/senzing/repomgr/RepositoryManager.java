@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+import static com.senzing.util.LoggingUtilities.isLastLoggedException;
 import static com.senzing.util.OperatingSystemFamily.*;
 import static java.nio.file.StandardCopyOption.*;
 import static com.senzing.io.IOUtilities.*;
@@ -453,6 +454,7 @@ public class RepositoryManager {
     try {
       options = parseCommandLine(args);
     } catch (Exception e) {
+      if (!isLastLoggedException(e)) e.printStackTrace();
       System.out.println(RepositoryManager.getUsageString(false));
       System.exit(1);
     }

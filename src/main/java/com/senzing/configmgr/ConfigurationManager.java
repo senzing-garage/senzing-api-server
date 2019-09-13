@@ -562,7 +562,7 @@ public class ConfigurationManager {
     try {
       options = parseCommandLine(args);
     } catch (Exception e) {
-      e.printStackTrace();
+      if (!isLastLoggedException(e)) e.printStackTrace();
       System.out.println(ConfigurationManager.getUsageString(false));
       System.exit(1);
     }
@@ -621,7 +621,7 @@ public class ConfigurationManager {
       }
 
     } catch (Exception e) {
-      e.printStackTrace();
+      if (!isLastLoggedException(e)) e.printStackTrace();
     }
   }
 

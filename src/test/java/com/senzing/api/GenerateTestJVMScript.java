@@ -103,6 +103,8 @@ public class GenerateTestJVMScript {
         if (RUNTIME_OS_FAMILY == WINDOWS) {
           pw.println("@echo off");
           pw.println("set Path=" + libraryPath + ";%Path%");
+          pw.println("set SENZING_ROOT="
+                         + quote + senzingDir.getCanonicalPath() + quote);
           pw.println("\"" + javaExecutable.toString() + "\" %*");
 
         } else {
@@ -113,6 +115,8 @@ public class GenerateTestJVMScript {
           }
           pw.println("export LD_LIBRARY_PATH=" + libraryPath
                      + ":$LD_LIBRARY_PATH");
+          pw.println("export SENZING_ROOT="
+                     + quote + senzingDir.getCanonicalPath() + quote);
           pw.println("\"" + javaExecutable.toString() + "\" \"$@\"");
         }
       }

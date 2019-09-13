@@ -4,6 +4,12 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
+import static com.senzing.util.LoggingUtilities.*;
+
+/**
+ * Utility functions for parsing command line arguments.
+ *
+ */
 public class CommandLineUtilities {
   /**
    * Private default constructor.
@@ -27,7 +33,7 @@ public class CommandLineUtilities {
       System.err.println();
       System.err.println(msg);
 
-      throw new IllegalArgumentException(msg);
+      setLastLoggedAndThrow(new IllegalArgumentException(msg));
     }
   }
 
@@ -82,7 +88,7 @@ public class CommandLineUtilities {
       System.err.println();
       System.err.println(msg);
 
-      throw new IllegalArgumentException(msg);
+      setLastLoggedAndThrow(new IllegalArgumentException(msg));
     }
 
     for (T opt : optionKeys) {
@@ -94,7 +100,7 @@ public class CommandLineUtilities {
         System.err.println();
         System.err.println(msg);
 
-        throw new IllegalArgumentException(msg);
+        setLastLoggedAndThrow(new IllegalArgumentException(msg));
       }
     }
 
@@ -205,8 +211,7 @@ public class CommandLineUtilities {
         pw.flush();
         System.err.println();
         System.err.println(msg);
-
-        throw new IllegalArgumentException(msg);
+        setLastLoggedException(new IllegalArgumentException(msg));
       }
     }
 
@@ -226,7 +231,7 @@ public class CommandLineUtilities {
             System.err.println();
             System.err.println(msg);
 
-            throw new IllegalArgumentException(msg);
+            setLastLoggedAndThrow(new IllegalArgumentException(msg));
           }
         }
       }
@@ -276,8 +281,8 @@ public class CommandLineUtilities {
             }
           }
         }
-        throw new IllegalArgumentException(
-            "Missing dependencies for " + option.getCommandLineFlag());
+        setLastLoggedAndThrow(new IllegalArgumentException(
+            "Missing dependencies for " + option.getCommandLineFlag()));
       }
     }
   }
@@ -307,8 +312,8 @@ public class CommandLineUtilities {
         System.err.println();
         System.err.println("Unrecognized option: " + args[index]);
 
-        throw new IllegalArgumentException(
-            "Unrecognized command line option: " + args[index]);
+        setLastLoggedAndThrow(new IllegalArgumentException(
+            "Unrecognized command line option: " + args[index]));
       }
       int minParamCount = option.getMinimumParameterCount();
       int maxParamCount = option.getMaximumParameterCount();
