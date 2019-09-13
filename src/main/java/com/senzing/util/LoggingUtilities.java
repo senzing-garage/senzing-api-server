@@ -159,12 +159,11 @@ public class LoggingUtilities {
   }
 
   /**
-   * Checks if the specified {@link Throwable} is the last logged exception.
+   * Sets the specified {@link Throwable} as the last logged exception.
    * This is handy for telling if the exception has already been logged by a
    * deeper level of the stack trace.
-   * @param t The {@link Throwable} to check.
-   * @return <tt>true</tt> if it is the last logged exception, otherwise
-   *         <tt>false</tt>.
+   *
+   * @param t The {@link Throwable} to set as the last logged exception.
    */
   public static void setLastLoggedException(Throwable t) {
     LAST_LOGGED_EXCEPTION.set(throwableToLong(t));
