@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.5] - 2019-09-17
+
+### Changes in 1.7.5
+
+- Corrected errant definition of SzVersionInfo's `configCompatabilityVersion` 
+field as an integer to make it a string to allow for semantic versioning.  This
+changes the response to the `GET /version` endpoint.
+*NOTE*: This change may require that previously generated client stubs be 
+regenerated to avoid trying to parse the semantic version string as an integer.
+
 ## [1.7.4] - 2019-09-13
 
 ### Changes in 1.7.4

@@ -322,8 +322,8 @@ public class AdminServicesTest extends AbstractServiceTest {
       JsonObject subObject = JsonUtils.getJsonObject(
           jsonObject, "COMPATIBILITY_VERSION");
 
-      int configCompatVers = Integer.parseInt(JsonUtils.getString(
-          subObject, "CONFIG_VERSION"));
+      String configCompatVers = JsonUtils.getString(subObject,
+                                                    "CONFIG_VERSION");
 
       assertEquals(expectedVersion, info.getNativeApiVersion(),
                    "Native API Version wrong");
