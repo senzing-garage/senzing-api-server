@@ -67,7 +67,7 @@ public class SzVersionInfo {
    * The configuration compatibility version for the underlying runtime
    * native Senzing API.
    */
-  private int configCompatibilityVersion = 0;
+  private String configCompatibilityVersion = null;
 
   /**
    * Default constructor.
@@ -182,7 +182,7 @@ public class SzVersionInfo {
    * @return The configuration compatibility version for the underlying runtime
    *         native Senzing API.
    */
-  public int getConfigCompatibilityVersion() {
+  public String getConfigCompatibilityVersion() {
     return configCompatibilityVersion;
   }
 
@@ -194,7 +194,7 @@ public class SzVersionInfo {
    *                                   for the underlying runtime native
    *                                   Senzing API.
    */
-  public void setConfigCompatibilityVersion(int configCompatibilityVersion) {
+  public void setConfigCompatibilityVersion(String configCompatibilityVersion) {
     this.configCompatibilityVersion = configCompatibilityVersion;
   }
 
@@ -246,8 +246,7 @@ public class SzVersionInfo {
         = JsonUtils.getJsonObject(jsonObject, "COMPATIBILITY_VERSION");
 
     String configCompatVersion = JsonUtils.getString(compatVersion,
-                                                     "CONFIG_VERSION",
-                                                     "-1");
+                                                     "CONFIG_VERSION");
 
     Date buildDate = null;
     if (buildNumber != null && buildNumber.length() > 0) {
@@ -259,7 +258,7 @@ public class SzVersionInfo {
 
     info.setApiServerVersion(BuildInfo.MAVEN_VERSION);
     info.setRestApiVersion(BuildInfo.REST_API_VERSION);
-    info.setConfigCompatibilityVersion(Integer.parseInt(configCompatVersion));
+    info.setConfigCompatibilityVersion(configCompatVersion);
     info.setNativeApiVersion(nativeVersion);
     info.setNativeApiBuildDate(buildDate);
     info.setNativeApiBuildNumber(buildNumber);
