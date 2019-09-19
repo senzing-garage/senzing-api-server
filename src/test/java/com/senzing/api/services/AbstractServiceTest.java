@@ -106,7 +106,13 @@ public abstract class AbstractServiceTest {
    */
   private static File createTempDirectory() {
     try {
-      return Files.createTempDirectory("sz-repo-").toFile();
+      String  workingDir  = System.getProperty("user.dir");
+      File    currentDir  = new File(workingDir);
+      File    testRepoDir = new File(currentDir, "test-repos");
+      if (!testRepoDir.exists()) {
+        testRepoDir.mkdirs();
+      }
+      return Files.createTempDirectory(testRepoDir.toPath(), "sz-repo-").toFile();
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
