@@ -176,12 +176,23 @@ public abstract class AbstractServiceTest {
    * initialize and start the Senzing API Server.
    */
   protected void initializeTestEnvironment() {
-    if (!NATIVE_API_AVAILABLE) return;
-    RepositoryManager.createRepo(this.getRepositoryDirectory(), true);
-    this.repoCreated = true;
-    this.prepareRepository();
-    RepositoryManager.conclude();
-    this.initializeServer();
+    try {
+      if (!NATIVE_API_AVAILABLE) return;
+      RepositoryManager.createRepo(this.getRepositoryDirectory(), true);
+      this.repoCreated = true;
+      this.prepareRepository();
+      RepositoryManager.conclude();
+      this.initializeServer();
+    } catch (RuntimeException e) {
+      e.printStackTrace();
+      throw e;
+    } catch (Error e) {
+      e.printStackTrace();
+      throw e;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
   }
 
   /**

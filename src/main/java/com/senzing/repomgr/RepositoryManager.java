@@ -15,12 +15,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.senzing.util.LoggingUtilities.isLastLoggedException;
+import static com.senzing.util.LoggingUtilities.*;
 import static com.senzing.util.OperatingSystemFamily.*;
 import static java.nio.file.StandardCopyOption.*;
 import static com.senzing.io.IOUtilities.*;
 import static com.senzing.cmdline.CommandLineUtilities.*;
-import static com.senzing.util.LoggingUtilities.multilineFormat;
 import static com.senzing.repomgr.RepositoryManagerOption.*;
 
 public class RepositoryManager {
@@ -593,16 +592,36 @@ public class RepositoryManager {
       }
 
       // setup the initial configuration
-      initBaseApis(directory, false);
+      initBaseApis(directory, true);
       try {
         long configId = CONFIG_API.create();
+        if (configId < 0) {
+          String msg = logError("G2Config.create()", CONFIG_API);
+          throw new IllegalStateException(msg);
+        }
         StringBuffer sb = new StringBuffer();
-        CONFIG_API.save(configId, sb);
+        int returnCode = CONFIG_API.save(configId, sb);
+        if (returnCode != 0) {
+          String msg = logError("G2Config.save()", CONFIG_API);
+          throw new IllegalStateException(msg);
+        }
         CONFIG_API.close(configId);
 
         Result<Long> result = new Result<>();
-        CONFIG_MGR_API.addConfig(sb.toString(), "Initial Config", result);
-        CONFIG_MGR_API.setDefaultConfigID(result.getValue());
+        returnCode = CONFIG_MGR_API.addConfig(sb.toString(),
+                                              "Initial Config",
+                                              result);
+        if (returnCode != 0) {
+          String msg = logError("G2ConfigMgr.addConfig()",
+                                CONFIG_MGR_API);
+          throw new IllegalStateException(msg);
+        }
+        returnCode = CONFIG_MGR_API.setDefaultConfigID(result.getValue());
+        if (returnCode != 0) {
+          String msg = logError("G2ConfigMgr.setDefaultConfigID()",
+                                CONFIG_MGR_API);
+          throw new IllegalStateException(msg);
+        }
 
       } finally {
         destroyBaseApis();
@@ -720,14 +739,12 @@ public class RepositoryManager {
     destroyApis();
   }
 
-  private static void logError(String operation, G2Fallible fallible) {
-    int errorCode = fallible.getLastExceptionCode();
-    String message = fallible.getLastException();
+  private static String logError(String operation, G2Fallible fallible) {
+    String errorMsg = formatError(operation, fallible, true);
     System.err.println();
-    System.err.println("Operation Failed : " + operation);
-    System.err.println("Error Code       : " + errorCode);
-    System.err.println("Reason           : " + message);
+    System.err.println(errorMsg);
     System.err.println();
+    return errorMsg;
   }
 
   private static Set<String> getDataSources() {
