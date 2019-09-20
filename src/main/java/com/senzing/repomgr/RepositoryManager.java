@@ -31,6 +31,9 @@ public class RepositoryManager {
 
   private static final G2ConfigMgr CONFIG_MGR_API;
 
+  private static final ThreadLocal<String> THREAD_MODULE_NAME
+      = new ThreadLocal<>();
+
   private static String baseInitializedWith = null;
   private static String engineInitializedWith = null;
 
@@ -379,6 +382,27 @@ public class RepositoryManager {
   }
 
   /**
+   * Use this method in conjunction with {@link #clearThreadModuleName()} to
+   * provide a specific module name for the repository manager to use when
+   * initializing the G2 API's.
+   *
+   * @param moduleName The module name to initialize with, or <tt>null</tt>
+   *                   to do the equivalent of clearing the name.
+   *
+   */
+  public static void setThreadModuleName(String moduleName) {
+    RepositoryManager.THREAD_MODULE_NAME.set(moduleName);
+  }
+
+  /**
+   * Clears any previously set thread module name.  This method should be called
+   * in a "finally" block.
+   */
+  public static void clearThreadModuleName() {
+    RepositoryManager.setThreadModuleName(null);
+  }
+
+  /**
    * @return
    */
   public static String getUsageString(boolean full) {
@@ -660,6 +684,8 @@ public class RepositoryManager {
   private static synchronized void initBaseApis(File repository, boolean verbose)
   {
     try {
+      String moduleName = THREAD_MODULE_NAME.get();
+      if (moduleName == null) moduleName = "G2 Repository Manager";
       String initializer = verbose + ":" + repository.getCanonicalPath();
       if (baseInitializedWith == null || !baseInitializedWith.equals(initializer))
       {
@@ -668,12 +694,12 @@ public class RepositoryManager {
         }
         File iniJsonFile = new File(repository, "g2-init.json");
         String initJsonText = readTextFileAsString(iniJsonFile, "UTF-8");
-        int returnCode = CONFIG_API.initV2("G2", initJsonText, verbose);
+        int returnCode = CONFIG_API.initV2(moduleName, initJsonText, verbose);
         if (returnCode != 0) {
           logError("G2Config.init()", CONFIG_API);
           return;
         }
-        returnCode = CONFIG_MGR_API.initV2("G2", initJsonText, verbose);
+        returnCode = CONFIG_MGR_API.initV2(moduleName, initJsonText, verbose);
         if (returnCode != 0) {
           CONFIG_API.destroy();
           logError("G2ConfigMgr.init()", CONFIG_MGR_API);
@@ -689,6 +715,9 @@ public class RepositoryManager {
 
   private static synchronized void initApis(File repository, boolean verbose) {
     try {
+      String moduleName = THREAD_MODULE_NAME.get();
+      if (moduleName == null) moduleName = "G2 Repository Manager";
+
       initBaseApis(repository, verbose);
 
       String initializer = verbose + ":" + repository.getCanonicalPath();
@@ -700,7 +729,7 @@ public class RepositoryManager {
         }
         File iniJsonFile = new File(repository, "g2-init.json");
         String initJsonText = readTextFileAsString(iniJsonFile, "UTF-8");
-        int returnCode = ENGINE_API.initV2("G2", initJsonText, verbose);
+        int returnCode = ENGINE_API.initV2(moduleName, initJsonText, verbose);
         if (returnCode != 0) {
           destroyBaseApis();
           logError("G2Engine.init()", ENGINE_API);
