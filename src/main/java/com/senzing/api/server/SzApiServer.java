@@ -1731,6 +1731,9 @@ public class SzApiServer implements SzApiProvider {
     synchronized (this.joinMonitor) {
       this.engineApi.destroy();
       this.configApi.destroy();
+      if (this.configMgrApi != null) {
+        this.configMgrApi.destroy();
+      }
       this.productApi.destroy();
       this.completed = true;
       this.joinMonitor.notifyAll();
