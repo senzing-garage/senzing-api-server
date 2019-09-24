@@ -49,7 +49,6 @@ package:
 		-Dpackaging=jar
 
 	mvn package \
-		-DskipTests=true \
 		-Dproject.version=$(GIT_VERSION) \
 		-Dgit.branch=$(GIT_BRANCH) \
 		-Dgit.repository.name=$(GIT_REPOSITORY_NAME) \

@@ -274,18 +274,6 @@ This repository assumes a working knowledge of:
 
 1. [Docker](https://github.com/Senzing/knowledge-base/blob/master/WHATIS/docker.md)
 
-### Get docker image
-
-1. Option #1. The `senzing/senzing-api-server` docker image is on [DockerHub](https://hub.docker.com/r/senzing/senzing-api-server) and can be downloaded.
-   Example:
-
-    ```console
-    sudo docker pull senzing/senzing-api-server
-    ```
-
-1. Option #2. The `senzing/senzing-api-server` image can be built locally.
-   See [Develop](#develop).
-
 ### Initialize Senzing
 
 1. If Senzing has not been initialized, visit
@@ -295,22 +283,24 @@ This repository assumes a working knowledge of:
 
 Configuration values specified by environment variable or command line parameter.
 
+- **[SENZING_API_SERVICE_PORT](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
 - **[SENZING_DATA_VERSION_DIR](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_data_version_dir)**
 - **[SENZING_DATABASE_URL](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_database_url)**
 - **[SENZING_DEBUG](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_debug)**
 - **[SENZING_ETC_DIR](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_etc_dir)**
 - **[SENZING_G2_DIR](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_g2_dir)**
+- **[SENZING_NETWORK](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_network)**
+- **[SENZING_RUNAS_USER](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_runas_user)**
 - **[SENZING_VAR_DIR](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_var_dir)**
-- **[SENZING_WEBAPP_PORT](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_webapp_port)**
 
 ### Volumes
 
-The output of
+:thinking: The output of
 [HOWTO - Initialize Senzing](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/initialize-senzing.md)
 placed files in different directories.
 Identify each output directory.
 
-1. :pencil2: Option #1.
+1. :pencil2: **Option #1**
    To mimic an actual RPM installation,
    identify directories for RPM output in this manner:
 
@@ -321,7 +311,7 @@ Identify each output directory.
     export SENZING_VAR_DIR=/var/opt/senzing
     ```
 
-1. :pencil2: Option #2.
+1. :pencil2: **Option #2**
    If Senzing directories were put in alternative directories,
    set environment variables to reflect where the directories were placed.
    Example:
@@ -335,44 +325,44 @@ Identify each output directory.
     export SENZING_VAR_DIR=${SENZING_VOLUME}/var
     ```
 
-### Run docker container
-
-#### Variation 1
-
-Run docker container with internal SQLite database and external volume.
-
-1. :pencil2: Set environment variables.
+1. :thinking: If internal database is used, permissions may need to be changed in `/var/opt/senzing`.
    Example:
 
     ```console
-    export SENZING_WEBAPP_PORT=8889
+    sudo chmod -R 777 ${SENZING_VAR_DIR}
     ```
 
-1. Run the docker container.
+### Docker network
+
+:thinking: **Optional:**  Use if docker container is part of a docker network.
+
+1. List docker networks.
    Example:
 
     ```console
-    sudo docker run \
-      --interactive \
-      --publish ${SENZING_WEBAPP_PORT}:8080 \
-      --rm \
-      --tty \
-      --volume ${SENZING_DATA_VERSION_DIR}:/opt/senzing/data \
-      --volume ${SENZING_ETC_DIR}:/etc/opt/senzing \
-      --volume ${SENZING_G2_DIR}:/opt/senzing/g2 \
-      --volume ${SENZING_VAR_DIR}:/var/opt/senzing \
-      senzing/senzing-api-server \
-        -concurrency 10 \
-        -httpPort 8080 \
-        -bindAddr all \
-        -iniFile /opt/senzing/g2/python/G2Module.ini
+    sudo docker network ls
     ```
 
-#### Variation 2
+1. :pencil2: Specify docker network.
+   Choose value from NAME column of `docker network ls`.
+   Example:
 
-Run docker container accessing an external PostgreSQL database and volumes.
+    ```console
+    export SENZING_NETWORK=*nameofthe_network*
+    ```
 
-1. :pencil2: Set environment variables.
+1. Construct parameter for `docker run`.
+   Example:
+
+    ```console
+    export SENZING_NETWORK_PARAMETER="--net ${SENZING_NETWORK}"
+    ```
+
+### External database
+
+:thinking: **Optional:**  Use if storing data in an external database.
+
+1. :pencil2: Specify database.
    Example:
 
     ```console
@@ -382,19 +372,61 @@ Run docker container accessing an external PostgreSQL database and volumes.
     export DATABASE_HOST=senzing-postgresql
     export DATABASE_PORT=5432
     export DATABASE_DATABASE=G2
-    export SENZING_WEBAPP_PORT=8889
+    ```
+
+1. Construct Database URL.
+   Example:
+
+    ```console
+    export SENZING_DATABASE_URL="${DATABASE_PROTOCOL}://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DATABASE}"
+    ```
+
+1. Construct parameter for `docker run`.
+   Example:
+
+    ```console
+    export SENZING_DATABASE_URL_PARAMETER="--env SENZING_DATABASE_URL=${SENZING_DATABASE_URL}
+    ```
+
+### Docker user
+
+:thinking: **Optional:**  The docker container runs as "USER 1001".
+Use if a different userid is required.
+
+1. :pencil2: Identify user.
+   User "0" is root.
+   Example:
+
+    ```console
+    export SENZING_RUNAS_USER="0"
+    ```
+
+1. Construct parameter for `docker run`.
+   Example:
+
+    ```console
+    export SENZING_RUNAS_USER_PARAMETER="--user ${SENZING_RUNAS_USER}"
+    ```
+
+### Run docker container
+
+1. :pencil2: Set environment variables.
+   Example:
+
+    ```console
+    export SENZING_API_SERVICE_PORT=8250
     ```
 
 1. Run docker container.
    Example:
 
     ```console
-    export SENZING_DATABASE_URL="${DATABASE_PROTOCOL}://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DATABASE}"
-
     sudo docker run \
-      --env SENZING_DATABASE_URL="${SENZING_DATABASE_URL}" \
+      ${SENZING_RUNAS_USER_PARAMETER} \
+      ${SENZING_DATABASE_URL_PARAMETER} \
+      ${SENZING_NETWORK_PARAMETER} \
       --interactive \
-      --publish ${SENZING_WEBAPP_PORT}:8080 \
+      --publish ${SENZING_API_SERVICE_PORT}:8250 \
       --rm \
       --tty \
       --volume ${SENZING_DATA_VERSION_DIR}:/opt/senzing/data \
@@ -402,60 +434,10 @@ Run docker container accessing an external PostgreSQL database and volumes.
       --volume ${SENZING_G2_DIR}:/opt/senzing/g2 \
       --volume ${SENZING_VAR_DIR}:/var/opt/senzing \
       senzing/senzing-api-server \
-        -concurrency 10 \
-        -httpPort 8080 \
+        -allowedOrigins "*" \
         -bindAddr all \
-        -iniFile /opt/senzing/g2/python/G2Module.ini
-    ```
-
-#### Variation 3
-
-Run docker container accessing an external MySQL database in a docker network.
-
-1. :pencil2: Determine docker network.
-   Example:
-
-    ```console
-    sudo docker network ls
-
-    # Choose value from NAME column of docker network ls
-    export SENZING_NETWORK=nameofthe_network
-    ```
-
-1. :pencil2: Set environment variables.
-   Example:
-
-    ```console
-        export DATABASE_PROTOCOL=mysql
-        export DATABASE_USERNAME=root
-        export DATABASE_PASSWORD=root
-        export DATABASE_HOST=senzing-mysql
-        export DATABASE_PORT=3306
-        export DATABASE_DATABASE=G2
-        export SENZING_WEBAPP_PORT=8889
-    ```
-
-1. Run the docker container.
-   Example:
-
-    ```console
-    export SENZING_DATABASE_URL="${DATABASE_PROTOCOL}://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DATABASE}"
-
-    sudo docker run \
-      --env SENZING_DATABASE_URL="${SENZING_DATABASE_URL}" \
-      --interactive \
-      --net ${SENZING_NETWORK} \
-      --publish ${SENZING_WEBAPP_PORT}:8080 \
-      --rm \
-      --tty \
-      --volume ${SENZING_DATA_VERSION_DIR}:/opt/senzing/data \
-      --volume ${SENZING_ETC_DIR}:/etc/opt/senzing \
-      --volume ${SENZING_G2_DIR}:/opt/senzing/g2 \
-      --volume ${SENZING_VAR_DIR}:/var/opt/senzing \
-      senzing/senzing-api-server \
         -concurrency 10 \
-        -httpPort 8080 \
-        -bindAddr all \
+        -httpPort 8250 \
         -iniFile /opt/senzing/g2/python/G2Module.ini
     ```
 
@@ -464,20 +446,20 @@ Run docker container accessing an external MySQL database in a docker network.
 1. Wait for the following message in the terminal showing docker log.
 
     ```console
-    Started Senzing REST API Server on port 8080.
+    Started Senzing REST API Server on port 8250.
 
     Server running at:
 
-    http://0.0.0.0/0.0.0.0:8080/
+    http://0.0.0.0/0.0.0.0:8250/
     ```
 
 1. Test Senzing REST API server.
-   *Note:* port 8889 on the localhost has been mapped to port 8080 in the docker container.
-   See `SENZING_WEBAPP_PORT` definition.
+   *Note:* port 8250 on the localhost has been mapped to port 8250 in the docker container.
+   See `SENZING_API_SERVICE_PORT` definition.
    Example:
 
     ```console
-    export SENZING_API_SERVICE=http://localhost:8889
+    export SENZING_API_SERVICE=http://localhost:8250
 
     curl -X GET ${SENZING_API_SERVICE}/heartbeat
     curl -X GET ${SENZING_API_SERVICE}/license
@@ -506,16 +488,11 @@ see [Environment Variables](https://github.com/Senzing/knowledge-base/blob/maste
     ```console
     export GIT_ACCOUNT=senzing
     export GIT_REPOSITORY=senzing-api-server
-    ```
-
-1. Follow steps in [clone-repository](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/clone-repository.md) to install the Git repository.
-
-1. After the repository has been cloned, be sure the following are set:
-
-    ```console
     export GIT_ACCOUNT_DIR=~/${GIT_ACCOUNT}.git
     export GIT_REPOSITORY_DIR="${GIT_ACCOUNT_DIR}/${GIT_REPOSITORY}"
     ```
+
+1. Follow steps in [clone-repository](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/clone-repository.md) to install the Git repository.
 
 ### Build docker image for development
 
@@ -536,6 +513,8 @@ see [Environment Variables](https://github.com/Senzing/knowledge-base/blob/maste
         SENZING_G2_JAR_VERSION=$(cat ${SENZING_G2_DIR}/g2BuildVersion.json | jq --raw-output '.VERSION') \
         docker-build
     ```
+
+    Note: `sudo make docker-build-development-cache` can be used to create cached docker layers.
 
 ## Examples
 
