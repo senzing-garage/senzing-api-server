@@ -334,6 +334,16 @@ Identify each output directory.
     sudo chmod -R 777 ${SENZING_VAR_DIR}
     ```
 
+1. :thinking: Unless previously created, the following files need to be created from their templates.
+   Example:
+
+    ```console
+    sudo cp --no-clobber ${SENZING_ETC_DIR}/cfgVariant.json.template ${SENZING_ETC_DIR}/cfgVariant.json
+    sudo cp --no-clobber ${SENZING_ETC_DIR}/g2config.json.template   ${SENZING_ETC_DIR}/g2config.json
+    sudo cp --no-clobber ${SENZING_ETC_DIR}/G2Module.ini.template    ${SENZING_ETC_DIR}/G2Module.ini
+    sudo cp --no-clobber ${SENZING_ETC_DIR}/stb.config.template      ${SENZING_ETC_DIR}/stb.config
+    ```
+
 ### Docker network
 
 :thinking: **Optional:**  Use if docker container is part of a docker network.
