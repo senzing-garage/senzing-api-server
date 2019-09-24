@@ -592,7 +592,7 @@ public class RepositoryManager {
       }
 
       // setup the initial configuration
-      initBaseApis(directory, true);
+      initBaseApis(directory, false);
       try {
         long configId = CONFIG_API.create();
         if (configId < 0) {
