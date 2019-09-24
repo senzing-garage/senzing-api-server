@@ -440,7 +440,7 @@ Use if a different userid is required.
         -bindAddr all \
         -concurrency 10 \
         -httpPort 8250 \
-        -iniFile /opt/senzing/g2/python/G2Module.ini
+        -iniFile /etc/opt/senzing/G2Module.ini
     ```
 
 ### Test Docker container
