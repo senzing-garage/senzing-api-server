@@ -106,7 +106,25 @@ public abstract class AbstractServiceTest {
    */
   private static File createTempDirectory() {
     try {
-      return Files.createTempDirectory("sz-repo-").toFile();
+      String  workingDir  = System.getProperty("user.dir");
+      File    currentDir  = new File(workingDir);
+      File    targetDir   = new File(currentDir, "target");
+
+      // check if we have a target directory (i.e.: maven build)
+      if (!targetDir.exists()) {
+        // if no target directory then use the temp directory
+        return Files.createTempDirectory("sz-repo-").toFile();
+      }
+
+      // if we have a target directory then use it as a parent for our test repo
+      File testRepoDir = new File(targetDir, "test-repos");
+      if (!testRepoDir.exists()) {
+        testRepoDir.mkdirs();
+      }
+
+      // create a temp directory inside the test repo directory
+      return Files.createTempDirectory(testRepoDir.toPath(), "sz-repo-").toFile();
+
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
@@ -176,13 +194,21 @@ public abstract class AbstractServiceTest {
    * initialize and start the Senzing API Server.
    */
   protected void initializeTestEnvironment() {
+    String moduleName = this.getModuleName("RepoMgr (create)");
+    RepositoryManager.setThreadModuleName(moduleName);
+    boolean concluded = false;
     try {
       if (!NATIVE_API_AVAILABLE) return;
       RepositoryManager.createRepo(this.getRepositoryDirectory(), true);
       this.repoCreated = true;
+
       this.prepareRepository();
+
       RepositoryManager.conclude();
+      concluded = true;
+
       this.initializeServer();
+
     } catch (RuntimeException e) {
       e.printStackTrace();
       throw e;
@@ -192,6 +218,9 @@ public abstract class AbstractServiceTest {
     } catch (Exception e) {
       e.printStackTrace();
       throw new RuntimeException(e);
+    } finally {
+       if (!concluded) RepositoryManager.conclude();
+       RepositoryManager.clearThreadModuleName();
     }
   }
 
@@ -267,8 +296,18 @@ public abstract class AbstractServiceTest {
   protected void purgeRepository(boolean restartServer) {
     boolean running = (this.server != null);
     if (running) this.destroyServer();
-    RepositoryManager.purgeRepo(this.repoDirectory);
-    if (running && restartServer) this.initializeServer();
+    String moduleName = this.getModuleName("RepoMgr (purge)");
+    RepositoryManager.setThreadModuleName(moduleName);
+    try {
+      RepositoryManager.purgeRepo(this.repoDirectory);
+    } finally {
+      RepositoryManager.clearThreadModuleName();
+    }
+    if (running && restartServer) {
+      this.initializeServer();
+    } else {
+      RepositoryManager.conclude();
+    }
   }
 
   /**
@@ -346,10 +385,17 @@ public abstract class AbstractServiceTest {
    * this returns <tt>"Test API Server"</tt>.  Override to use a different
    * module name.
    *
+   * param suffix The optional suffix to append to the module name.
+   *
    * @return The module name with which to initialize the server.
    */
-  protected String getModuleName() {
-    return "Test API Server";
+  protected String getModuleName(String suffix) {
+    if (suffix != null && suffix.trim().length() > 0) {
+      suffix = " - " + suffix.trim();
+    } else {
+      suffix = "";
+    }
+    return this.getClass().getSimpleName() + suffix;
   }
 
   /**
@@ -373,7 +419,7 @@ public abstract class AbstractServiceTest {
     options.setHttpPort(0);
     options.setBindAddress(this.getServerAddress());
     options.setConcurrency(this.getServerConcurrency());
-    options.setModuleName(this.getModuleName());
+    options.setModuleName(this.getModuleName("Test API Server"));
     options.setVerbose(this.isVerbose());
   }
 
@@ -381,10 +427,11 @@ public abstract class AbstractServiceTest {
    * Internal method for initializing the server.
    */
   private void initializeServer() {
+    RepositoryManager.conclude();
+
     if (this.server != null) {
       this.destroyServer();
     }
-    RepositoryManager.conclude();
 
     try {
       File        repoDirectory = this.getRepositoryDirectory();
