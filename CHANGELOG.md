@@ -6,16 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.7.6] - 2019-09-24
+## [1.7.6] - 2019-09-25
 
 ### Changes in 1.7.6
 
 - Updated dependency on FasterBind's Jackson library to version 2.9.10 to 
 address security vulnerabilities.
+- Added missing G2ConfigMgr.destroy() call in SzApiServer during shutdown
 - Updated repository manager code used for JUnit tests to check for errors
 when initializing the configuration manager and when creating the standard
 configuration.
-- Updated 
+- Changes to Unit Tests:
+    - Updated unit tests to preserve repos if any tests associated with that 
+    repo failed.
+    - Updated location of unit test entity repos to live in the 
+    `./target/test-repos` directory during a Maven build and modified the 
+    repo directory names to be based off the associated unit test name.
+    - Updated the module name used for Senzing initialization in auto tests to 
+    match the current auto test for post-failure diagnostic purposes.
+    - Added forced preservation of unit test entity repos passing the 
+    `-Dsenzing.preserve.test.repos=true` option to Maven.
 
 ## [1.7.5] - 2019-09-17
 
