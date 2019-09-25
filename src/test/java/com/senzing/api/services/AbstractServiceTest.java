@@ -108,11 +108,23 @@ public abstract class AbstractServiceTest {
     try {
       String  workingDir  = System.getProperty("user.dir");
       File    currentDir  = new File(workingDir);
-      File    testRepoDir = new File(currentDir, "test-repos");
+      File    targetDir   = new File(currentDir, "target");
+
+      // check if we have a target directory (i.e.: maven build)
+      if (!targetDir.exists()) {
+        // if no target directory then use the temp directory
+        return Files.createTempDirectory("sz-repo-").toFile();
+      }
+
+      // if we have a target directory then use it as a parent for our test repo
+      File testRepoDir = new File(targetDir, "test-repos");
       if (!testRepoDir.exists()) {
         testRepoDir.mkdirs();
       }
+
+      // create a temp directory inside the test repo directory
       return Files.createTempDirectory(testRepoDir.toPath(), "sz-repo-").toFile();
+
     } catch (RuntimeException e) {
       throw e;
     } catch (Exception e) {
