@@ -219,266 +219,276 @@ public class ConfigServicesTest extends AbstractServiceTest
   }
 
   @Test public void getDataSourcesTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("data-sources");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("data-sources");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long            before    = System.currentTimeMillis();
-    SzDataSourcesResponse response
-        = this.configServices.getDataSources(false, uriInfo);
-    response.concludeTimers();
-    long            after     = System.currentTimeMillis();
+      long            before    = System.currentTimeMillis();
+      SzDataSourcesResponse response
+          = this.configServices.getDataSources(false, uriInfo);
+      response.concludeTimers();
+      long            after     = System.currentTimeMillis();
 
-    this.validateDataSourcesResponse(response,
-                                     before,
-                                     after,
-                                     null,
-                                     EXPECTED_DATA_SOURCES);
+      this.validateDataSourcesResponse(response,
+                                       before,
+                                       after,
+                                       null,
+                                       EXPECTED_DATA_SOURCES);
+    });
   }
 
   @Test public void getDataSourcesViaHttpTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("data-sources");
-    long    before  = System.currentTimeMillis();
-    SzDataSourcesResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzDataSourcesResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("data-sources");
+      long    before  = System.currentTimeMillis();
+      SzDataSourcesResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzDataSourcesResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateDataSourcesResponse(response,
-                                     before,
-                                     after,
-                                     null,
-                                     EXPECTED_DATA_SOURCES);
+      this.validateDataSourcesResponse(response,
+                                       before,
+                                       after,
+                                       null,
+                                       EXPECTED_DATA_SOURCES);
+    });
   }
 
   @Test public void getDataSourcesWithoutRawTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("data-sources?withRaw=false");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("data-sources?withRaw=false");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long            before    = System.currentTimeMillis();
-    SzDataSourcesResponse response
-        = this.configServices.getDataSources(false, uriInfo);
-    response.concludeTimers();
-    long            after     = System.currentTimeMillis();
+      long            before    = System.currentTimeMillis();
+      SzDataSourcesResponse response
+          = this.configServices.getDataSources(false, uriInfo);
+      response.concludeTimers();
+      long            after     = System.currentTimeMillis();
 
-    this.validateDataSourcesResponse(response,
-                                     before,
-                                     after,
-                                     false,
-                                     EXPECTED_DATA_SOURCES);
+      this.validateDataSourcesResponse(response,
+                                       before,
+                                       after,
+                                       false,
+                                       EXPECTED_DATA_SOURCES);
+    });
   }
 
   @Test public void getDataSourcesWithoutRawViaHttpTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("data-sources?withRaw=false");
-    long    before  = System.currentTimeMillis();
-    SzDataSourcesResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzDataSourcesResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("data-sources?withRaw=false");
+      long    before  = System.currentTimeMillis();
+      SzDataSourcesResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzDataSourcesResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateDataSourcesResponse(response,
-                                     before,
-                                     after,
-                                     false,
-                                     EXPECTED_DATA_SOURCES);
+      this.validateDataSourcesResponse(response,
+                                       before,
+                                       after,
+                                       false,
+                                       EXPECTED_DATA_SOURCES);
+    });
   }
 
   @Test public void getDataSourcesWithRawTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("data-sources?withRaw=true");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("data-sources?withRaw=true");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long            before    = System.currentTimeMillis();
-    SzDataSourcesResponse response
-        = this.configServices.getDataSources(true, uriInfo);
-    response.concludeTimers();
-    long            after     = System.currentTimeMillis();
+      long            before    = System.currentTimeMillis();
+      SzDataSourcesResponse response
+          = this.configServices.getDataSources(true, uriInfo);
+      response.concludeTimers();
+      long            after     = System.currentTimeMillis();
 
-    this.validateDataSourcesResponse(response,
-                                     before,
-                                     after,
-                                     true,
-                                     EXPECTED_DATA_SOURCES);
+      this.validateDataSourcesResponse(response,
+                                       before,
+                                       after,
+                                       true,
+                                       EXPECTED_DATA_SOURCES);
+    });
   }
 
   @Test public void getDataSourcesWithRawViaHttpTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("data-sources?withRaw=true");
-    long    before  = System.currentTimeMillis();
-    SzDataSourcesResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzDataSourcesResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("data-sources?withRaw=true");
+      long    before  = System.currentTimeMillis();
+      SzDataSourcesResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzDataSourcesResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateDataSourcesResponse(response,
-                                     before,
-                                     after,
-                                     true,
-                                     EXPECTED_DATA_SOURCES);
+      this.validateDataSourcesResponse(response,
+                                       before,
+                                       after,
+                                       true,
+                                       EXPECTED_DATA_SOURCES);
+    });
   }
 
   @Test public void getAttributeTypesTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("attribute-types");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("attribute-types");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.configServices.getAttributeTypes(false,
-                                                null,
-                                                null,
-                                                false,
-                                                uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.configServices.getAttributeTypes(false,
+                                                  null,
+                                                  null,
+                                                  false,
+                                                  uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        null,
-                                        this.standardAttrTypes);
-
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          null,
+                                          this.standardAttrTypes);
+    });
   }
 
   @Test public void getAttributeTypesViaHttpTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("attribute-types");
-    long    before  = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("attribute-types");
+      long    before  = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        null,
-                                        this.standardAttrTypes);
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          null,
+                                          this.standardAttrTypes);
+    });
   }
 
   @Test public void getAttributeTypesWithRawTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("attribute-types?withRaw=true");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("attribute-types?withRaw=true");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.configServices.getAttributeTypes(false,
-                                                null,
-                                                null,
-                                                true,
-                                                uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.configServices.getAttributeTypes(false,
+                                                  null,
+                                                  null,
+                                                  true,
+                                                  uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        true,
-                                        this.standardAttrTypes);
-
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          true,
+                                          this.standardAttrTypes);
+    });
   }
 
   @Test public void getAttributeTypesWithRawViaHttpTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("attribute-types?withRaw=true");
-    long    before  = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("attribute-types?withRaw=true");
+      long    before  = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        true,
-                                        this.standardAttrTypes);
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          true,
+                                          this.standardAttrTypes);
+    });
   }
 
   @Test public void getAttributeTypesWithoutInternalTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri(
-        "attribute-types?withInternal=false");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri(
+          "attribute-types?withInternal=false");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.configServices.getAttributeTypes(false,
-                                                null,
-                                                null,
-                                                false,
-                                                uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.configServices.getAttributeTypes(false,
+                                                  null,
+                                                  null,
+                                                  false,
+                                                  uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        null,
-                                        this.standardAttrTypes);
-
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          null,
+                                          this.standardAttrTypes);
+    });
   }
 
   @Test public void getAttributeTypesWithoutInternalViaHttpTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri(
-        "attribute-types?withInternal=false");
-    long    before  = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri(
+          "attribute-types?withInternal=false");
+      long    before  = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        null,
-                                        this.standardAttrTypes);
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          null,
+                                          this.standardAttrTypes);
+    });
   }
 
   @Test public void getAttributeTypesWithInternalTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri(
-        "attribute-types?withInternal=true");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri(
+          "attribute-types?withInternal=true");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.configServices.getAttributeTypes(true,
-                                                null,
-                                                null,
-                                                false,
-                                                uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.configServices.getAttributeTypes(true,
+                                                  null,
+                                                  null,
+                                                  false,
+                                                  uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        null,
-                                        this.allAttrTypes);
-
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          null,
+                                          this.allAttrTypes);
+    });
   }
 
   @Test public void getAttributeTypesWithInternalViaHttpTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri(
-        "attribute-types?withInternal=true");
-    long    before  = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri(
+          "attribute-types?withInternal=true");
+      long    before  = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        null,
-                                        this.allAttrTypes);
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          null,
+                                          this.allAttrTypes);
+    });
   }
 
   private Set<SzAttributeClass> allAttributeClasses() {
@@ -492,98 +502,100 @@ public class ConfigServicesTest extends AbstractServiceTest
   @ParameterizedTest
   @MethodSource("standardAttributeClasses")
   public void getAttributeTypesForClassTest(SzAttributeClass attrClass) {
-    this.assumeNativeApiAvailable();
-    Set<String> attrTypes = this.standardAttrTypesByClass.get(attrClass);
-    String  uriText = this.formatServerUri(
-        "attribute-types?attributeClass=" + attrClass);
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      Set<String> attrTypes = this.standardAttrTypesByClass.get(attrClass);
+      String  uriText = this.formatServerUri(
+          "attribute-types?attributeClass=" + attrClass);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.configServices.getAttributeTypes(false,
-                                                attrClass.toString(),
-                                                null,
-                                                false,
-                                                uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.configServices.getAttributeTypes(false,
+                                                  attrClass.toString(),
+                                                  null,
+                                                  false,
+                                                  uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        null,
-                                        attrTypes);
-
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          null,
+                                          attrTypes);
+    });
   }
 
   @ParameterizedTest
   @MethodSource("standardAttributeClasses")
   public void getAttributeTypesForClassViaHttpTest(SzAttributeClass attrClass) {
-    this.assumeNativeApiAvailable();
-    Set<String> attrTypes = this.standardAttrTypesByClass.get(attrClass);
-    String  uriText = this.formatServerUri(
-        "attribute-types?attributeClass=" + attrClass);
-    long    before  = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      Set<String> attrTypes = this.standardAttrTypesByClass.get(attrClass);
+      String  uriText = this.formatServerUri(
+          "attribute-types?attributeClass=" + attrClass);
+      long    before  = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        null,
-                                        attrTypes);
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          null,
+                                          attrTypes);
+    });
   }
 
   @ParameterizedTest
   @MethodSource("allAttributeClasses")
   public void getAttributeTypesForClassWithInternalTest(SzAttributeClass attrClass) {
-    this.assumeNativeApiAvailable();
-    Set<String> attrTypes = this.allAttrTypesByClass.get(attrClass);
-    String  uriText = this.formatServerUri(
-        "attribute-types?withInternal=true&attributeClass=" + attrClass);
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      Set<String> attrTypes = this.allAttrTypesByClass.get(attrClass);
+      String  uriText = this.formatServerUri(
+          "attribute-types?withInternal=true&attributeClass=" + attrClass);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.configServices.getAttributeTypes(true,
-                                                attrClass.toString(),
-                                                null,
-                                                false,
-                                                uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.configServices.getAttributeTypes(true,
+                                                  attrClass.toString(),
+                                                  null,
+                                                  false,
+                                                  uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        null,
-                                        attrTypes);
-
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          null,
+                                          attrTypes);
+    });
   }
 
   @ParameterizedTest
   @MethodSource("allAttributeClasses")
   public void getAttributeTypesForClassWithInternalViaHttpTest(
       SzAttributeClass attrClass) {
-    this.assumeNativeApiAvailable();
-    Set<String> attrTypes = this.allAttrTypesByClass.get(attrClass);
-    String  uriText = this.formatServerUri(
-        "attribute-types?withInternal=true&attributeClass=" + attrClass);
-    long    before  = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      Set<String> attrTypes = this.allAttrTypesByClass.get(attrClass);
+      String  uriText = this.formatServerUri(
+          "attribute-types?withInternal=true&attributeClass=" + attrClass);
+      long    before  = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        null,
-                                        attrTypes);
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          null,
+                                          attrTypes);
+    });
   }
 
   private Set<String> allFeatureTypes() {
@@ -597,77 +609,78 @@ public class ConfigServicesTest extends AbstractServiceTest
   @ParameterizedTest
   @MethodSource("standardFeatureTypes")
   public void getAttributeTypesForFeatureTest(String featureType) {
-    this.assumeNativeApiAvailable();
-    Set<String> attrTypes = this.standardAttrTypesByFeature.get(featureType);
-    String  uriText = this.formatServerUri(
-        "attribute-types?featureType=" + featureType);
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      Set<String> attrTypes = this.standardAttrTypesByFeature.get(featureType);
+      String  uriText = this.formatServerUri(
+          "attribute-types?featureType=" + featureType);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.configServices.getAttributeTypes(false,
-                                                null,
-                                                featureType,
-                                                false,
-                                                uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.configServices.getAttributeTypes(false,
+                                                  null,
+                                                  featureType,
+                                                  false,
+                                                  uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        null,
-                                        attrTypes);
-
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          null,
+                                          attrTypes);
+    });
   }
 
   @ParameterizedTest
   @MethodSource("standardFeatureTypes")
   public void getAttributeTypesForFeatureViaHttpTest(String featureType) {
-    this.assumeNativeApiAvailable();
-    Set<String> attrTypes = this.standardAttrTypesByFeature.get(featureType);
-    String  uriText = this.formatServerUri(
-        "attribute-types?featureType=" + featureType);
-    long    before  = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      Set<String> attrTypes = this.standardAttrTypesByFeature.get(featureType);
+      String  uriText = this.formatServerUri(
+          "attribute-types?featureType=" + featureType);
+      long    before  = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        null,
-                                        attrTypes);
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          null,
+                                          attrTypes);
+    });
   }
 
   @ParameterizedTest
   @MethodSource("allFeatureTypes")
   public void getAttributeTypesForFeatureWithInternalTest(String featureType) {
-    this.assumeNativeApiAvailable();
-    Set<String> attrTypes = this.allAttrTypesByFeature.get(featureType);
-    String  uriText = this.formatServerUri(
-        "attribute-types?withInternal=true&featureType=" + featureType);
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      Set<String> attrTypes = this.allAttrTypesByFeature.get(featureType);
+      String  uriText = this.formatServerUri(
+          "attribute-types?withInternal=true&featureType=" + featureType);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.configServices.getAttributeTypes(true,
-                                                null,
-                                                featureType,
-                                                false,
-                                                uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.configServices.getAttributeTypes(true,
+                                                  null,
+                                                  featureType,
+                                                  false,
+                                                  uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        null,
-                                        attrTypes);
-
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          null,
+                                          attrTypes);
+    });
   }
 
   @ParameterizedTest
@@ -675,21 +688,22 @@ public class ConfigServicesTest extends AbstractServiceTest
   public void getAttributeTypesForFeatureWithInternalViaHttpTest(
       String featureType)
   {
-    this.assumeNativeApiAvailable();
-    Set<String> attrTypes = this.allAttrTypesByFeature.get(featureType);
-    String  uriText = this.formatServerUri(
-        "attribute-types?withInternal=true&featureType=" + featureType);
-    long    before  = System.currentTimeMillis();
-    SzAttributeTypesResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      Set<String> attrTypes = this.allAttrTypesByFeature.get(featureType);
+      String  uriText = this.formatServerUri(
+          "attribute-types?withInternal=true&featureType=" + featureType);
+      long    before  = System.currentTimeMillis();
+      SzAttributeTypesResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzAttributeTypesResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypesResponse(response,
-                                        uriText,
-                                        before,
-                                        after,
-                                        null,
-                                        attrTypes);
+      this.validateAttributeTypesResponse(response,
+                                          uriText,
+                                          before,
+                                          after,
+                                          null,
+                                          attrTypes);
+    });
   }
 
 
@@ -700,185 +714,193 @@ public class ConfigServicesTest extends AbstractServiceTest
   @ParameterizedTest
   @MethodSource("allAttributeCodes")
   public void getAttributeTypeTest(String attrCode) {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri(
-        "attribute-types/" + attrCode);
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri(
+          "attribute-types/" + attrCode);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
-    SzAttributeTypeResponse response
-        = this.configServices.getAttributeType(attrCode, false, uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzAttributeTypeResponse response
+          = this.configServices.getAttributeType(attrCode, false, uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypeResponse(response,
-                                       attrCode,
-                                       before,
-                                       after,
-                                       null);
-
+      this.validateAttributeTypeResponse(response,
+                                         attrCode,
+                                         before,
+                                         after,
+                                         null);
+    });
   }
 
   @ParameterizedTest
   @MethodSource("allAttributeCodes")
   public void getAttributeTypeViaHttpTest(String attrCode) {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri(
-        "attribute-types/" + attrCode);
-    long    before  = System.currentTimeMillis();
-    SzAttributeTypeResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzAttributeTypeResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri(
+          "attribute-types/" + attrCode);
+      long    before  = System.currentTimeMillis();
+      SzAttributeTypeResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzAttributeTypeResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypeResponse(response,
-                                       attrCode,
-                                       before,
-                                       after,
-                                       null);
+      this.validateAttributeTypeResponse(response,
+                                         attrCode,
+                                         before,
+                                         after,
+                                         null);
+    });
   }
 
   @ParameterizedTest
   @MethodSource("allAttributeCodes")
   public void getAttributeTypeWithoutRawTest(String attrCode) {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri(
-        "attribute-types/" + attrCode + "?withRaw=false");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri(
+          "attribute-types/" + attrCode + "?withRaw=false");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
-    SzAttributeTypeResponse response
-        = this.configServices.getAttributeType(attrCode, false, uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzAttributeTypeResponse response
+          = this.configServices.getAttributeType(attrCode, false, uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypeResponse(response,
-                                       attrCode,
-                                       before,
-                                       after,
-                                       false);
+      this.validateAttributeTypeResponse(response,
+                                         attrCode,
+                                         before,
+                                         after,
+                                         false);
+    });
   }
 
   @ParameterizedTest
   @MethodSource("allAttributeCodes")
   public void getAttributeTypeWithoutRawViaHttpTest(String attrCode) {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri(
-        "attribute-types/" + attrCode + "?withRaw=false");
-    long before  = System.currentTimeMillis();
-    SzAttributeTypeResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzAttributeTypeResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri(
+          "attribute-types/" + attrCode + "?withRaw=false");
+      long before  = System.currentTimeMillis();
+      SzAttributeTypeResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzAttributeTypeResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypeResponse(response,
-                                       attrCode,
-                                       before,
-                                       after,
-                                       false);
+      this.validateAttributeTypeResponse(response,
+                                         attrCode,
+                                         before,
+                                         after,
+                                         false);
+    });
   }
 
   @ParameterizedTest
   @MethodSource("allAttributeCodes")
   public void getAttributeTypeWithRawTest(String attrCode) {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri(
-        "attribute-types/" + attrCode + "?withRaw=true");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri(
+          "attribute-types/" + attrCode + "?withRaw=true");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
-    SzAttributeTypeResponse response
-        = this.configServices.getAttributeType(attrCode, true, uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzAttributeTypeResponse response
+          = this.configServices.getAttributeType(attrCode, true, uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypeResponse(response,
-                                       attrCode,
-                                       before,
-                                       after,
-                                       true);
-
+      this.validateAttributeTypeResponse(response,
+                                         attrCode,
+                                         before,
+                                         after,
+                                         true);
+    });
   }
 
   @ParameterizedTest
   @MethodSource("allAttributeCodes")
   public void getAttributeTypeWithRawViaHttpTest(String attrCode) {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri(
-        "attribute-types/" + attrCode + "?withRaw=true");
-    long before  = System.currentTimeMillis();
-    SzAttributeTypeResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzAttributeTypeResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri(
+          "attribute-types/" + attrCode + "?withRaw=true");
+      long before  = System.currentTimeMillis();
+      SzAttributeTypeResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzAttributeTypeResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateAttributeTypeResponse(response,
-                                       attrCode,
-                                       before,
-                                       after,
-                                       true);
+      this.validateAttributeTypeResponse(response,
+                                         attrCode,
+                                         before,
+                                         after,
+                                         true);
+    });
   }
 
   @Test public void getCurrentConfigTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("config/current");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("config/current");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
-    SzConfigResponse response
-        = this.configServices.getCurrentConfig(uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzConfigResponse response
+          = this.configServices.getCurrentConfig(uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateConfigResponse(response,
-                                uriText,
-                                before,
-                                after,
-                                EXPECTED_DATA_SOURCES);
+      this.validateConfigResponse(response,
+                                  uriText,
+                                  before,
+                                  after,
+                                  EXPECTED_DATA_SOURCES);
+    });
   }
 
   @Test public void getCurrentConfigViaHttpTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("config/current");
-    long    before  = System.currentTimeMillis();
-    SzConfigResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzConfigResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("config/current");
+      long    before  = System.currentTimeMillis();
+      SzConfigResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzConfigResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateConfigResponse(response,
-                                uriText,
-                                before,
-                                after,
-                                EXPECTED_DATA_SOURCES);
+      this.validateConfigResponse(response,
+                                  uriText,
+                                  before,
+                                  after,
+                                  EXPECTED_DATA_SOURCES);
+    });
   }
 
   @Test public void getDefaultConfigTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("config/default");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("config/default");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
-    SzConfigResponse response
-        = this.configServices.getDefaultConfig(uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzConfigResponse response
+          = this.configServices.getDefaultConfig(uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateConfigResponse(response,
-                                uriText,
-                                before,
-                                after,
-                                DEFAULT_DATA_SOURCES);
+      this.validateConfigResponse(response,
+                                  uriText,
+                                  before,
+                                  after,
+                                  DEFAULT_DATA_SOURCES);
+    });
   }
 
   @Test public void getDefaultConfigViaHttpTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("config/default");
-    long    before  = System.currentTimeMillis();
-    SzConfigResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzConfigResponse.class);
-    long after = System.currentTimeMillis();
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("config/default");
+      long    before  = System.currentTimeMillis();
+      SzConfigResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzConfigResponse.class);
+      long after = System.currentTimeMillis();
 
-    this.validateConfigResponse(response,
-                                uriText,
-                                before,
-                                after,
-                                DEFAULT_DATA_SOURCES);
+      this.validateConfigResponse(response,
+                                  uriText,
+                                  before,
+                                  after,
+                                  DEFAULT_DATA_SOURCES);
+    });
   }
 }

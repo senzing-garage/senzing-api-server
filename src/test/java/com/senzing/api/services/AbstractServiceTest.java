@@ -100,11 +100,23 @@ public abstract class AbstractServiceTest {
   private boolean repoCreated = false;
 
   /**
+   * The number of tests that failed for this instance.
+   */
+  private int failureCount = 0;
+
+  /**
+   * The number of tests that succeeded for this instance.
+   */
+  private int successCount = 0;
+
+  /**
    * Creates a temp repository directory.
+   *
+   * @param prefix The directory name prefix for the temp repo directory.
    *
    * @return The {@link File} representing the directory.
    */
-  private static File createTempDirectory() {
+  private static File createTempRepoDirectory(String prefix) {
     try {
       String  workingDir  = System.getProperty("user.dir");
       File    currentDir  = new File(workingDir);
@@ -113,7 +125,7 @@ public abstract class AbstractServiceTest {
       // check if we have a target directory (i.e.: maven build)
       if (!targetDir.exists()) {
         // if no target directory then use the temp directory
-        return Files.createTempDirectory("sz-repo-").toFile();
+        return Files.createTempDirectory(prefix).toFile();
       }
 
       // if we have a target directory then use it as a parent for our test repo
@@ -123,7 +135,7 @@ public abstract class AbstractServiceTest {
       }
 
       // create a temp directory inside the test repo directory
-      return Files.createTempDirectory(testRepoDir.toPath(), "sz-repo-").toFile();
+      return Files.createTempDirectory(testRepoDir.toPath(), prefix).toFile();
 
     } catch (RuntimeException e) {
       throw e;
@@ -136,7 +148,7 @@ public abstract class AbstractServiceTest {
    * Protected default constructor.
    */
   protected AbstractServiceTest() {
-    this(createTempDirectory());
+    this(null);
   }
 
   /**
@@ -147,6 +159,10 @@ public abstract class AbstractServiceTest {
    *                      repository.
    */
   protected AbstractServiceTest(File repoDirectory) {
+    if (repoDirectory == null) {
+      String repoPrefix = "sz-repo-" + this.getClass().getSimpleName() + "-";
+      repoDirectory = createTempRepoDirectory(repoPrefix);
+    }
     this.server = null;
     this.repoDirectory = repoDirectory;
     this.accessToken = new AccessToken();
@@ -226,6 +242,17 @@ public abstract class AbstractServiceTest {
 
   /**
    * This method can typically be called from a method annotated with
+   * "@AfterClass".  It will shutdown the server and delete the entity
+   * repository that was created for the tests if there are no test failures
+   * recorded via {@link #incrementFailureCount()}.
+   */
+  protected void teardownTestEnvironment() {
+    int failureCount = this.getFailureCount();
+    teardownTestEnvironment((failureCount == 0));
+  }
+
+  /**
+   * This method can typically be called from a method annotated with
    * "@AfterClass".  It will shutdown the server and optionally delete
    * the entity repository that was created for the tests.
    *
@@ -236,8 +263,12 @@ public abstract class AbstractServiceTest {
     // destroy the server
     if (this.server != null) this.destroyServer();
 
+    String preserveProp = System.getProperty("senzing.preserve.test.repos");
+    if (preserveProp != null) preserveProp = preserveProp.trim().toLowerCase();
+    boolean preserve = (preserveProp != null && preserveProp.equals("true"));
+
     // cleanup the repo directory
-    if (this.repoCreated && deleteRepository
+    if (this.repoCreated && deleteRepository && !preserve
         && this.repoDirectory.exists() && this.repoDirectory.isDirectory()) {
       try {
         // delete the repository
@@ -457,7 +488,95 @@ public abstract class AbstractServiceTest {
   }
 
   /**
+   * Increments the failure count and returns the new failure count.
+   * @return The new failure count.
+   */
+  protected int incrementFailureCount() {
+    return ++this.failureCount;
+  }
+
+  /**
+   * Increments the success count and returns the new success count.
+   * @return The new success count.
+   */
+  protected int incrementSuccessCount() {
+    return ++this.successCount;
+  }
+
+  /**
+   * Returns the current failure count.  The failure count is incremented via
+   * {@link #incrementFailureCount()}.
    *
+   * @return The current success count.
+   */
+  protected int getFailureCount() {
+    return this.failureCount;
+  }
+
+  /**
+   * Returns the current success count.  The success count is incremented via
+   * {@link #incrementSuccessCount()}.
+   *
+   * @return The current success count.
+   */
+  protected int getSuccessCount() {
+    return this.successCount;
+  }
+
+  /**
+   * Wrapper function for performing a test that will first check if
+   * the native API is available via {@link #assumeNativeApiAvailable()} and
+   * then record a success or failure.
+   *
+   * @param testFunction The {@link Runnable} to execute.
+   */
+  protected void performTest(Runnable testFunction) {
+    this.performTest(true, testFunction);
+  }
+
+  /**
+   * Wrapper function for performing a test that will first optionally check if
+   * the native API is available {@link #assumeNativeApiAvailable()} and then
+   * record a success or failure.
+   *
+   * @param testFunction The {@link Runnable} to execute.
+   */
+  protected void performTest(boolean requireNativeApi, Runnable testFunction) {
+    if (requireNativeApi) this.assumeNativeApiAvailable();
+    boolean success = false;
+    try {
+      testFunction.run();
+      success = true;
+    } finally {
+      if (!success) this.incrementFailureCount();
+      else this.incrementSuccessCount();
+    }
+  }
+
+  /**
+   * URL encodes the specified text using UTF-8 character encoding and traps
+   * the {@link UnsupportedEncodingException} that is not actually possible with
+   * UTF-8 encoding specified.
+   *
+   * @param text The text to encode.
+   *
+   * @return The URL-encoded text.
+   */
+  protected static String urlEncode(String text) {
+    try {
+      return URLEncoder.encode(text, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Creates a proxy {@link UriInfo} to simulate a {@link UriInfo} when directly
+   * calling the API services functions.
+   *
+   * @param selfLink The simulated request URI.
+   *
+   * @return The proxied {@link UriInfo} object using the specified URI.
    */
   protected UriInfo newProxyUriInfo(String selfLink) {
     try {
