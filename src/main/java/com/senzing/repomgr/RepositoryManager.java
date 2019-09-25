@@ -15,12 +15,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
-import static com.senzing.util.LoggingUtilities.isLastLoggedException;
+import static com.senzing.util.LoggingUtilities.*;
 import static com.senzing.util.OperatingSystemFamily.*;
 import static java.nio.file.StandardCopyOption.*;
 import static com.senzing.io.IOUtilities.*;
 import static com.senzing.cmdline.CommandLineUtilities.*;
-import static com.senzing.util.LoggingUtilities.multilineFormat;
 import static com.senzing.repomgr.RepositoryManagerOption.*;
 
 public class RepositoryManager {
@@ -31,6 +30,9 @@ public class RepositoryManager {
   private static final G2Config CONFIG_API;
 
   private static final G2ConfigMgr CONFIG_MGR_API;
+
+  private static final ThreadLocal<String> THREAD_MODULE_NAME
+      = new ThreadLocal<>();
 
   private static String baseInitializedWith = null;
   private static String engineInitializedWith = null;
@@ -380,6 +382,27 @@ public class RepositoryManager {
   }
 
   /**
+   * Use this method in conjunction with {@link #clearThreadModuleName()} to
+   * provide a specific module name for the repository manager to use when
+   * initializing the G2 API's.
+   *
+   * @param moduleName The module name to initialize with, or <tt>null</tt>
+   *                   to do the equivalent of clearing the name.
+   *
+   */
+  public static void setThreadModuleName(String moduleName) {
+    RepositoryManager.THREAD_MODULE_NAME.set(moduleName);
+  }
+
+  /**
+   * Clears any previously set thread module name.  This method should be called
+   * in a "finally" block.
+   */
+  public static void clearThreadModuleName() {
+    RepositoryManager.setThreadModuleName(null);
+  }
+
+  /**
    * @return
    */
   public static String getUsageString(boolean full) {
@@ -596,13 +619,33 @@ public class RepositoryManager {
       initBaseApis(directory, false);
       try {
         long configId = CONFIG_API.create();
+        if (configId < 0) {
+          String msg = logError("G2Config.create()", CONFIG_API);
+          throw new IllegalStateException(msg);
+        }
         StringBuffer sb = new StringBuffer();
-        CONFIG_API.save(configId, sb);
+        int returnCode = CONFIG_API.save(configId, sb);
+        if (returnCode != 0) {
+          String msg = logError("G2Config.save()", CONFIG_API);
+          throw new IllegalStateException(msg);
+        }
         CONFIG_API.close(configId);
 
         Result<Long> result = new Result<>();
-        CONFIG_MGR_API.addConfig(sb.toString(), "Initial Config", result);
-        CONFIG_MGR_API.setDefaultConfigID(result.getValue());
+        returnCode = CONFIG_MGR_API.addConfig(sb.toString(),
+                                              "Initial Config",
+                                              result);
+        if (returnCode != 0) {
+          String msg = logError("G2ConfigMgr.addConfig()",
+                                CONFIG_MGR_API);
+          throw new IllegalStateException(msg);
+        }
+        returnCode = CONFIG_MGR_API.setDefaultConfigID(result.getValue());
+        if (returnCode != 0) {
+          String msg = logError("G2ConfigMgr.setDefaultConfigID()",
+                                CONFIG_MGR_API);
+          throw new IllegalStateException(msg);
+        }
 
       } finally {
         destroyBaseApis();
@@ -641,6 +684,8 @@ public class RepositoryManager {
   private static synchronized void initBaseApis(File repository, boolean verbose)
   {
     try {
+      String moduleName = THREAD_MODULE_NAME.get();
+      if (moduleName == null) moduleName = "G2 Repository Manager";
       String initializer = verbose + ":" + repository.getCanonicalPath();
       if (baseInitializedWith == null || !baseInitializedWith.equals(initializer))
       {
@@ -649,12 +694,12 @@ public class RepositoryManager {
         }
         File iniJsonFile = new File(repository, "g2-init.json");
         String initJsonText = readTextFileAsString(iniJsonFile, "UTF-8");
-        int returnCode = CONFIG_API.initV2("G2", initJsonText, verbose);
+        int returnCode = CONFIG_API.initV2(moduleName, initJsonText, verbose);
         if (returnCode != 0) {
           logError("G2Config.init()", CONFIG_API);
           return;
         }
-        returnCode = CONFIG_MGR_API.initV2("G2", initJsonText, verbose);
+        returnCode = CONFIG_MGR_API.initV2(moduleName, initJsonText, verbose);
         if (returnCode != 0) {
           CONFIG_API.destroy();
           logError("G2ConfigMgr.init()", CONFIG_MGR_API);
@@ -670,6 +715,9 @@ public class RepositoryManager {
 
   private static synchronized void initApis(File repository, boolean verbose) {
     try {
+      String moduleName = THREAD_MODULE_NAME.get();
+      if (moduleName == null) moduleName = "G2 Repository Manager";
+
       initBaseApis(repository, verbose);
 
       String initializer = verbose + ":" + repository.getCanonicalPath();
@@ -681,7 +729,7 @@ public class RepositoryManager {
         }
         File iniJsonFile = new File(repository, "g2-init.json");
         String initJsonText = readTextFileAsString(iniJsonFile, "UTF-8");
-        int returnCode = ENGINE_API.initV2("G2", initJsonText, verbose);
+        int returnCode = ENGINE_API.initV2(moduleName, initJsonText, verbose);
         if (returnCode != 0) {
           destroyBaseApis();
           logError("G2Engine.init()", ENGINE_API);
@@ -720,14 +768,12 @@ public class RepositoryManager {
     destroyApis();
   }
 
-  private static void logError(String operation, G2Fallible fallible) {
-    int errorCode = fallible.getLastExceptionCode();
-    String message = fallible.getLastException();
+  private static String logError(String operation, G2Fallible fallible) {
+    String errorMsg = formatError(operation, fallible, true);
     System.err.println();
-    System.err.println("Operation Failed : " + operation);
-    System.err.println("Error Code       : " + errorCode);
-    System.err.println("Reason           : " + message);
+    System.err.println(errorMsg);
     System.err.println();
+    return errorMsg;
   }
 
   private static Set<String> getDataSources() {

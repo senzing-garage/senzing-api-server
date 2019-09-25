@@ -17,7 +17,6 @@ import javax.json.JsonObjectBuilder;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.UriInfo;
 import java.io.*;
-import java.net.URLEncoder;
 import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.GET;
@@ -204,262 +203,270 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @AfterAll
   public void teardownEnvironment() {
-    this.teardownTestEnvironment(true);
+    this.teardownTestEnvironment();
   }
 
   @Test
   public void getRecordTest() {
-    final String dataSource = ABC123.getDataSourceCode();
-    final String recordId = ABC123.getRecordId();
+    this.performTest(() -> {
+      final String dataSource = ABC123.getDataSourceCode();
+      final String recordId = ABC123.getRecordId();
 
-    this.assumeNativeApiAvailable();
-    String uriText = this.formatServerUri(
-        "data-sources/" + dataSource + "/records/" + recordId);
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
-    long before = System.currentTimeMillis();
-    SzRecordResponse response = this.entityDataServices.getRecord(
-        dataSource, recordId, false, uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      String uriText = this.formatServerUri(
+          "data-sources/" + dataSource + "/records/" + recordId);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      long before = System.currentTimeMillis();
+      SzRecordResponse response = this.entityDataServices.getRecord(
+          dataSource, recordId, false, uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateRecordResponse(
-        response,
-        dataSource,
-        recordId,
-        Collections.singleton("Schmoe Joe"),
-        Collections.singleton("101 Main Street, Las Vegas, NV 89101"),
-        Collections.singleton("702-555-1212"),
-        null,
-        Collections.singleton("DOB: 12-JAN-1981"),
-        null,
-        null,
-        before,
-        after,
-        null);
+      this.validateRecordResponse(
+          response,
+          dataSource,
+          recordId,
+          Collections.singleton("Schmoe Joe"),
+          Collections.singleton("101 Main Street, Las Vegas, NV 89101"),
+          Collections.singleton("702-555-1212"),
+          null,
+          Collections.singleton("DOB: 12-JAN-1981"),
+          null,
+          null,
+          before,
+          after,
+          null);
+    });
   }
 
   @Test
   public void getRecordTestViaHttp() {
-    final String dataSource = DEF456.getDataSourceCode();
-    final String recordId = DEF456.getRecordId();
+    this.performTest(() -> {
+      final String dataSource = DEF456.getDataSourceCode();
+      final String recordId = DEF456.getRecordId();
 
-    this.assumeNativeApiAvailable();
-    String uriText = this.formatServerUri(
-        "data-sources/" + dataSource + "/records/" + recordId);
+      String uriText = this.formatServerUri(
+          "data-sources/" + dataSource + "/records/" + recordId);
 
-    long before = System.currentTimeMillis();
-    SzRecordResponse response = this.invokeServerViaHttp(
-        GET, uriText, SzRecordResponse.class);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzRecordResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzRecordResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateRecordResponse(
-        response,
-        dataSource,
-        recordId,
-        Collections.singleton("Smith Joanne"),
-        Collections.singleton("101 Fifth Ave, Las Vegas, NV 10018"),
-        Collections.singleton("212-555-1212"),
-        null,
-        Collections.singleton("DOB: 15-MAY-1983"),
-        null,
-        null,
-        before,
-        after,
-        null);
+      this.validateRecordResponse(
+          response,
+          dataSource,
+          recordId,
+          Collections.singleton("Smith Joanne"),
+          Collections.singleton("101 Fifth Ave, Las Vegas, NV 10018"),
+          Collections.singleton("212-555-1212"),
+          null,
+          Collections.singleton("DOB: 15-MAY-1983"),
+          null,
+          null,
+          before,
+          after,
+          null);
+    });
   }
 
   @Test
   public void getRecordWithRawTest() {
-    final String dataSource = GHI789.getDataSourceCode();
-    final String recordId = GHI789.getRecordId();
+    this.performTest(() -> {
+      final String dataSource = GHI789.getDataSourceCode();
+      final String recordId = GHI789.getRecordId();
 
-    this.assumeNativeApiAvailable();
-    String uriText = this.formatServerUri(
-        "data-sources/" + dataSource + "/records/" + recordId
-            + "?withRaw=true");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
-    long before = System.currentTimeMillis();
-    SzRecordResponse response = this.entityDataServices.getRecord(
-        dataSource, recordId, true, uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      String uriText = this.formatServerUri(
+          "data-sources/" + dataSource + "/records/" + recordId
+              + "?withRaw=true");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      long before = System.currentTimeMillis();
+      SzRecordResponse response = this.entityDataServices.getRecord(
+          dataSource, recordId, true, uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateRecordResponse(
-        response,
-        dataSource,
-        recordId,
-        Collections.singleton("Doe John"),
-        Collections.singleton("100 Main Street, Los Angeles, CA 90012"),
-        Collections.singleton("818-555-1313"),
-        null,
-        Collections.singleton("DOB: 17-OCT-1978"),
-        null,
-        null,
-        before,
-        after,
-        true);
+      this.validateRecordResponse(
+          response,
+          dataSource,
+          recordId,
+          Collections.singleton("Doe John"),
+          Collections.singleton("100 Main Street, Los Angeles, CA 90012"),
+          Collections.singleton("818-555-1313"),
+          null,
+          Collections.singleton("DOB: 17-OCT-1978"),
+          null,
+          null,
+          before,
+          after,
+          true);
+    });
   }
 
   @Test
   public void getRecordWithRawTestViaHttp() {
-    final String dataSource = JKL012.getDataSourceCode();
-    final String recordId = JKL012.getRecordId();
+    this.performTest(() -> {
+      final String dataSource = JKL012.getDataSourceCode();
+      final String recordId = JKL012.getRecordId();
 
-    this.assumeNativeApiAvailable();
-    String uriText = this.formatServerUri(
-        "data-sources/" + dataSource + "/records/" + recordId
-            + "?withRaw=true");
+      String uriText = this.formatServerUri(
+          "data-sources/" + dataSource + "/records/" + recordId
+              + "?withRaw=true");
 
-    long before = System.currentTimeMillis();
-    SzRecordResponse response = this.invokeServerViaHttp(
-        GET, uriText, SzRecordResponse.class);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzRecordResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzRecordResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateRecordResponse(
-        response,
-        dataSource,
-        recordId,
-        Collections.singleton("Doe Jane"),
-        Collections.singleton("100 Main Street, Los Angeles, CA 90012"),
-        Collections.singleton("818-555-1212"),
-        null,
-        Collections.singleton("DOB: 5-FEB-1979"),
-        null,
-        null,
-        before,
-        after,
-        true);
+      this.validateRecordResponse(
+          response,
+          dataSource,
+          recordId,
+          Collections.singleton("Doe Jane"),
+          Collections.singleton("100 Main Street, Los Angeles, CA 90012"),
+          Collections.singleton("818-555-1212"),
+          null,
+          Collections.singleton("DOB: 5-FEB-1979"),
+          null,
+          null,
+          before,
+          after,
+          true);
+    });
   }
 
   @Test
   public void getRecordWithoutRawTest() {
-    final String dataSource = MNO345.getDataSourceCode();
-    final String recordId = MNO345.getRecordId();
+    this.performTest(() -> {
+      final String dataSource = MNO345.getDataSourceCode();
+      final String recordId = MNO345.getRecordId();
 
-    this.assumeNativeApiAvailable();
-    String uriText = this.formatServerUri(
-        "data-sources/" + dataSource + "/records/" + recordId
-            + "?withRaw=false");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
-    long before = System.currentTimeMillis();
-    SzRecordResponse response = this.entityDataServices.getRecord(
-        dataSource, recordId, false, uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      String uriText = this.formatServerUri(
+          "data-sources/" + dataSource + "/records/" + recordId
+              + "?withRaw=false");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      long before = System.currentTimeMillis();
+      SzRecordResponse response = this.entityDataServices.getRecord(
+          dataSource, recordId, false, uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateRecordResponse(
-        response,
-        dataSource,
-        recordId,
-        Collections.singleton("Schmoe Joseph"),
-        Collections.singleton("101 Main Street, Las Vegas, NV 89101"),
-        Collections.singleton("702-555-1212"),
-        null,
-        Collections.singleton("DOB: 12-JAN-1981"),
-        null,
-        Collections.singleton("MOTHERS_MAIDEN_NAME: WILSON"),
-        before,
-        after,
-        false);
+      this.validateRecordResponse(
+          response,
+          dataSource,
+          recordId,
+          Collections.singleton("Schmoe Joseph"),
+          Collections.singleton("101 Main Street, Las Vegas, NV 89101"),
+          Collections.singleton("702-555-1212"),
+          null,
+          Collections.singleton("DOB: 12-JAN-1981"),
+          null,
+          Collections.singleton("MOTHERS_MAIDEN_NAME: WILSON"),
+          before,
+          after,
+          false);
+    });
   }
 
   @Test
   public void getRecordWithoutRawTestViaHttp() {
-    final String dataSource = PQR678.getDataSourceCode();
-    final String recordId = PQR678.getRecordId();
+    this.performTest(() -> {
+      final String dataSource = PQR678.getDataSourceCode();
+      final String recordId = PQR678.getRecordId();
 
-    this.assumeNativeApiAvailable();
-    String uriText = this.formatServerUri(
-        "data-sources/" + dataSource + "/records/" + recordId
-            + "?withRaw=false");
+      String uriText = this.formatServerUri(
+          "data-sources/" + dataSource + "/records/" + recordId
+              + "?withRaw=false");
 
-    long before = System.currentTimeMillis();
-    SzRecordResponse response = this.invokeServerViaHttp(
-        GET, uriText, SzRecordResponse.class);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzRecordResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzRecordResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateRecordResponse(
-        response,
-        dataSource,
-        recordId,
-        Collections.singleton("Smith Jo Anne"),
-        Collections.singleton("101 Fifth Ave, Las Vegas, NV 10018"),
-        Collections.singleton("212-555-1212"),
-        null,
-        Collections.singleton("DOB: 15-MAY-1983"),
-        null,
-        Collections.singleton("MOTHERS_MAIDEN_NAME: JACOBS"),
-        before,
-        after,
-        false);
+      this.validateRecordResponse(
+          response,
+          dataSource,
+          recordId,
+          Collections.singleton("Smith Jo Anne"),
+          Collections.singleton("101 Fifth Ave, Las Vegas, NV 10018"),
+          Collections.singleton("212-555-1212"),
+          null,
+          Collections.singleton("DOB: 15-MAY-1983"),
+          null,
+          Collections.singleton("MOTHERS_MAIDEN_NAME: JACOBS"),
+          before,
+          after,
+          false);
+    });
   }
 
 
   @Test
   public void getRelatedRecordTest() {
-    final String dataSource = BCD123.getDataSourceCode();
-    final String recordId = BCD123.getRecordId();
-    final String relKey = relationshipKey(BCD123, CDE456);
+    this.performTest(() -> {
+      final String dataSource = BCD123.getDataSourceCode();
+      final String recordId = BCD123.getRecordId();
+      final String relKey = relationshipKey(BCD123, CDE456);
 
-    this.assumeNativeApiAvailable();
-    String uriText = this.formatServerUri(
-        "data-sources/" + dataSource + "/records/" + recordId);
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
-    long before = System.currentTimeMillis();
-    SzRecordResponse response = this.entityDataServices.getRecord(
-        dataSource, recordId, false, uriInfo);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      String uriText = this.formatServerUri(
+          "data-sources/" + dataSource + "/records/" + recordId);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      long before = System.currentTimeMillis();
+      SzRecordResponse response = this.entityDataServices.getRecord(
+          dataSource, recordId, false, uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateRecordResponse(
-        response,
-        dataSource,
-        recordId,
-        set("Bruce Wayne", "AKA: Batman"),
-        Collections.singleton("101 Wayne Manor Rd; Gotham City, NJ 07017"),
-        Collections.singleton("201-765-3451"),
-        null,
-        set("DOB: 08-SEP-1971", "GENDER: M"),
-        Collections.singleton("REL_LINK: HUSBAND: SPOUSE " + relKey),
-        null,
-        before,
-        after,
-        null);
+      this.validateRecordResponse(
+          response,
+          dataSource,
+          recordId,
+          set("Bruce Wayne", "AKA: Batman"),
+          Collections.singleton("101 Wayne Manor Rd; Gotham City, NJ 07017"),
+          Collections.singleton("201-765-3451"),
+          null,
+          set("DOB: 08-SEP-1971", "GENDER: M"),
+          Collections.singleton("REL_LINK: HUSBAND: SPOUSE " + relKey),
+          null,
+          before,
+          after,
+          null);
+    });
   }
 
   @Test
   public void getRelatedRecordTestViaHttp() {
-    final String dataSource = CDE456.getDataSourceCode();
-    final String recordId = CDE456.getRecordId();
-    final String relKey = relationshipKey(BCD123, CDE456);
+    this.performTest(() -> {
+      final String dataSource = CDE456.getDataSourceCode();
+      final String recordId = CDE456.getRecordId();
+      final String relKey = relationshipKey(BCD123, CDE456);
 
-    this.assumeNativeApiAvailable();
-    String uriText = this.formatServerUri(
-        "data-sources/" + dataSource + "/records/" + recordId);
+      String uriText = this.formatServerUri(
+          "data-sources/" + dataSource + "/records/" + recordId);
 
-    long before = System.currentTimeMillis();
-    SzRecordResponse response = this.invokeServerViaHttp(
-        GET, uriText, SzRecordResponse.class);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzRecordResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzRecordResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateRecordResponse(
-        response,
-        dataSource,
-        recordId,
-        set("Selina Kyle", "AKA: Catwoman"),
-        Collections.singleton("101 Wayne Manor Rd; Gotham City, NJ 07017"),
-        Collections.singleton("201-875-2314"),
-        null,
-        set("DOB: 05-DEC-1981", "GENDER: F"),
-        Collections.singleton("REL_LINK: WIFE: SPOUSE " + relKey),
-        null,
-        before,
-        after,
-        null);
+      this.validateRecordResponse(
+          response,
+          dataSource,
+          recordId,
+          set("Selina Kyle", "AKA: Catwoman"),
+          Collections.singleton("101 Wayne Manor Rd; Gotham City, NJ 07017"),
+          Collections.singleton("201-875-2314"),
+          null,
+          set("DOB: 05-DEC-1981", "GENDER: F"),
+          Collections.singleton("REL_LINK: WIFE: SPOUSE " + relKey),
+          null,
+          before,
+          after,
+          null);
+    });
   }
 
   private Long getEntityIdForRecordId(SzRecordId recordId) {
@@ -980,52 +987,53 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Map<SzAttributeClass, Set<String>>  expectedDataValues,
       Set<String>                         expectedOtherDataValues)
   {
-    String testInfo = "keyRecord=[ " + keyRecordId
-        + " ], forceMinimal=[ " + forceMinimal
-        + " ], featureMode=[ " + featureMode
-        + " ], withRelated=[ " + withRelated
-        + " ], withRaw=[ " + withRaw + " ]";
+    this.performTest(() -> {
+      String testInfo = "keyRecord=[ " + keyRecordId
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withRelated=[ " + withRelated
+          + " ], withRaw=[ " + withRaw + " ]";
 
-    this.assumeNativeApiAvailable();
-    StringBuilder sb = new StringBuilder();
-    sb.append("data-sources/").append(keyRecordId.getDataSourceCode());
-    sb.append("/records/").append(keyRecordId.getRecordId()).append("/entity");
-    buildEntityQueryString(sb, withRaw, withRelated, forceMinimal, featureMode);
+      StringBuilder sb = new StringBuilder();
+      sb.append("data-sources/").append(keyRecordId.getDataSourceCode());
+      sb.append("/records/").append(keyRecordId.getRecordId()).append("/entity");
+      buildEntityQueryString(sb, withRaw, withRelated, forceMinimal, featureMode);
 
-    String uriText = this.formatServerUri(sb.toString());
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      String uriText = this.formatServerUri(sb.toString());
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
 
-    SzEntityResponse response = this.entityDataServices.getEntityByRecordId(
-        keyRecordId.getDataSourceCode(),
-        keyRecordId.getRecordId(),
-        (withRaw != null ? withRaw : false),
-        (withRelated != null ? withRelated : false),
-        (forceMinimal != null ? forceMinimal : false),
-        (featureMode != null ? featureMode : WITH_DUPLICATES),
-        uriInfo);
+      SzEntityResponse response = this.entityDataServices.getEntityByRecordId(
+          keyRecordId.getDataSourceCode(),
+          keyRecordId.getRecordId(),
+          (withRaw != null ? withRaw : false),
+          (withRelated != null ? withRelated : false),
+          (forceMinimal != null ? forceMinimal : false),
+          (featureMode != null ? featureMode : WITH_DUPLICATES),
+          uriInfo);
 
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateEntityResponse(testInfo,
-                                response,
-                                uriText,
-                                withRaw,
-                                withRelated,
-                                forceMinimal,
-                                featureMode,
-                                expectedRecordCount,
-                                expectedRecordIds,
-                                relatedEntityCount,
-                                expectedFeatureCounts,
-                                primaryFeatureValues,
-                                duplicateFeatureValues,
-                                expectedDataValues,
-                                expectedOtherDataValues,
-                                before,
-                                after);
+      this.validateEntityResponse(testInfo,
+                                  response,
+                                  uriText,
+                                  withRaw,
+                                  withRelated,
+                                  forceMinimal,
+                                  featureMode,
+                                  expectedRecordCount,
+                                  expectedRecordIds,
+                                  relatedEntityCount,
+                                  expectedFeatureCounts,
+                                  primaryFeatureValues,
+                                  duplicateFeatureValues,
+                                  expectedDataValues,
+                                  expectedOtherDataValues,
+                                  before,
+                                  after);
+    });
   }
 
   @ParameterizedTest
@@ -1045,161 +1053,166 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Map<SzAttributeClass, Set<String>>  expectedDataValues,
       Set<String>                         expectedOtherDataValues)
   {
-    String testInfo = "keyRecord=[ " + keyRecordId
-        + " ], forceMinimal=[ " + forceMinimal
-        + " ], featureMode=[ " + featureMode
-        + " ], withRelated=[ " + withRelated
-        + " ], withRaw=[ " + withRaw + " ]";
-    this.assumeNativeApiAvailable();
+    this.performTest(() -> {
+      String testInfo = "keyRecord=[ " + keyRecordId
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withRelated=[ " + withRelated
+          + " ], withRaw=[ " + withRaw + " ]";
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("data-sources/").append(keyRecordId.getDataSourceCode());
-    sb.append("/records/").append(keyRecordId.getRecordId()).append("/entity");
-    buildEntityQueryString(sb, withRaw, withRelated, forceMinimal, featureMode);
+      StringBuilder sb = new StringBuilder();
+      sb.append("data-sources/").append(keyRecordId.getDataSourceCode());
+      sb.append("/records/").append(keyRecordId.getRecordId()).append("/entity");
+      buildEntityQueryString(sb, withRaw, withRelated, forceMinimal, featureMode);
 
-    String uriText = this.formatServerUri(sb.toString());
+      String uriText = this.formatServerUri(sb.toString());
 
-    long before = System.currentTimeMillis();
-    SzEntityResponse response = this.invokeServerViaHttp(
-        GET, uriText, SzEntityResponse.class);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzEntityResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzEntityResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateEntityResponse(testInfo,
-                                response,
-                                uriText,
-                                withRaw,
-                                withRelated,
-                                forceMinimal,
-                                featureMode,
-                                expectedRecordCount,
-                                expectedRecordIds,
-                                relatedEntityCount,
-                                expectedFeatureCounts,
-                                primaryFeatureValues,
-                                duplicateFeatureValues,
-                                expectedDataValues,
-                                expectedOtherDataValues,
-                                before,
-                                after);
+      this.validateEntityResponse(testInfo,
+                                  response,
+                                  uriText,
+                                  withRaw,
+                                  withRelated,
+                                  forceMinimal,
+                                  featureMode,
+                                  expectedRecordCount,
+                                  expectedRecordIds,
+                                  relatedEntityCount,
+                                  expectedFeatureCounts,
+                                  primaryFeatureValues,
+                                  duplicateFeatureValues,
+                                  expectedDataValues,
+                                  expectedOtherDataValues,
+                                  before,
+                                  after);
+    });
   }
 
   @Test
   public void getNotFoundEntityByBadRecordIdTest()
   {
-    final String badRecordId = "ABC123DEF456GHI789";
-    this.assumeNativeApiAvailable();
-    StringBuilder sb = new StringBuilder();
-    sb.append("data-sources/").append(PASSENGERS);
-    sb.append("/records/").append(badRecordId).append("/entity");
+    this.performTest(() -> {
+      final String badRecordId = "ABC123DEF456GHI789";
+      StringBuilder sb = new StringBuilder();
+      sb.append("data-sources/").append(PASSENGERS);
+      sb.append("/records/").append(badRecordId).append("/entity");
 
-    String uriText = this.formatServerUri(sb.toString());
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      String uriText = this.formatServerUri(sb.toString());
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
 
-    try {
-      this.entityDataServices.getEntityByRecordId(
-          PASSENGERS,
-          badRecordId,
-          false,
-          false,
-          false,
-          WITH_DUPLICATES,
-          uriInfo);
+      try {
+        this.entityDataServices.getEntityByRecordId(
+            PASSENGERS,
+            badRecordId,
+            false,
+            false,
+            false,
+            WITH_DUPLICATES,
+            uriInfo);
 
-      fail("Expected entity for data source \"" + PASSENGERS
-               + "\" and record ID \"" + badRecordId + "\" to NOT be found");
-    } catch (NotFoundException expected) {
-      SzErrorResponse response
-          = (SzErrorResponse) expected.getResponse().getEntity();
-      response.concludeTimers();
-      long after = System.currentTimeMillis();
+        fail("Expected entity for data source \"" + PASSENGERS
+                 + "\" and record ID \"" + badRecordId + "\" to NOT be found");
+      } catch (NotFoundException expected) {
+        SzErrorResponse response
+            = (SzErrorResponse) expected.getResponse().getEntity();
+        response.concludeTimers();
+        long after = System.currentTimeMillis();
 
-      this.validateBasics(
-          response, 404, GET, uriText, before, after);
-    }
+        this.validateBasics(
+            response, 404, GET, uriText, before, after);
+      }
+    });
   }
 
   @Test
   public void getNotFoundEntityByBadDataSourceTest()
   {
-    final String badDataSource = "FOOBAR";
-    final String badRecordId = "ABC123DEF456GHI789";
-    this.assumeNativeApiAvailable();
-    StringBuilder sb = new StringBuilder();
-    sb.append("data-sources/").append(badDataSource);
-    sb.append("/records/").append(badRecordId).append("/entity");
+    this.performTest(() -> {
+      final String badDataSource = "FOOBAR";
+      final String badRecordId = "ABC123DEF456GHI789";
+      StringBuilder sb = new StringBuilder();
+      sb.append("data-sources/").append(badDataSource);
+      sb.append("/records/").append(badRecordId).append("/entity");
 
-    String uriText = this.formatServerUri(sb.toString());
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      String uriText = this.formatServerUri(sb.toString());
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
 
-    try {
-      this.entityDataServices.getEntityByRecordId(
-          PASSENGERS,
-          badRecordId,
-          false,
-          false,
-          false,
-          WITH_DUPLICATES,
-          uriInfo);
+      try {
+        this.entityDataServices.getEntityByRecordId(
+            PASSENGERS,
+            badRecordId,
+            false,
+            false,
+            false,
+            WITH_DUPLICATES,
+            uriInfo);
 
-      fail("Expected entity for data source \"" + badDataSource
-               + "\" and record ID \"" + badRecordId + "\" to NOT be found");
-    } catch (NotFoundException expected) {
-      SzErrorResponse response
-          = (SzErrorResponse) expected.getResponse().getEntity();
-      response.concludeTimers();
-      long after = System.currentTimeMillis();
+        fail("Expected entity for data source \"" + badDataSource
+                 + "\" and record ID \"" + badRecordId + "\" to NOT be found");
+      } catch (NotFoundException expected) {
+        SzErrorResponse response
+            = (SzErrorResponse) expected.getResponse().getEntity();
+        response.concludeTimers();
+        long after = System.currentTimeMillis();
 
-      this.validateBasics(
-          response, 404, GET, uriText, before, after);
-    }
+        this.validateBasics(
+            response, 404, GET, uriText, before, after);
+      }
+    });
   }
 
   @Test
   public void getNotFoundEntityByBadRecordIdTestViaHttp()
   {
-    final String badRecordId = "ABC123DEF456GHI789";
-    this.assumeNativeApiAvailable();
-    StringBuilder sb = new StringBuilder();
-    sb.append("data-sources/").append(PASSENGERS);
-    sb.append("/records/").append(badRecordId).append("/entity");
+    this.performTest(() -> {
+      final String badRecordId = "ABC123DEF456GHI789";
+      StringBuilder sb = new StringBuilder();
+      sb.append("data-sources/").append(PASSENGERS);
+      sb.append("/records/").append(badRecordId).append("/entity");
 
-    String uriText = this.formatServerUri(sb.toString());
+      String uriText = this.formatServerUri(sb.toString());
 
-    long before = System.currentTimeMillis();
-    SzErrorResponse response = this.invokeServerViaHttp(
-        GET, uriText, SzErrorResponse.class);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzErrorResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzErrorResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateBasics(
-        response, 404, GET, uriText, before, after);
+      this.validateBasics(
+          response, 404, GET, uriText, before, after);
+    });
   }
 
   @Test
   public void getNotFoundEntityByBadDataSourceTestViaHttp()
   {
-    final String badDataSource = "FOOBAR";
-    final String badRecordId = "ABC123DEF456GHI789";
-    this.assumeNativeApiAvailable();
-    StringBuilder sb = new StringBuilder();
-    sb.append("data-sources/").append(badDataSource);
-    sb.append("/records/").append(badRecordId).append("/entity");
+    this.performTest(() -> {
+      final String badDataSource = "FOOBAR";
+      final String badRecordId = "ABC123DEF456GHI789";
+      StringBuilder sb = new StringBuilder();
+      sb.append("data-sources/").append(badDataSource);
+      sb.append("/records/").append(badRecordId).append("/entity");
 
-    String uriText = this.formatServerUri(sb.toString());
+      String uriText = this.formatServerUri(sb.toString());
 
-    long before = System.currentTimeMillis();
-    SzErrorResponse response = this.invokeServerViaHttp(
-        GET, uriText, SzErrorResponse.class);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzErrorResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzErrorResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateBasics(
-        response, 404, GET, uriText, before, after);
+      this.validateBasics(
+          response, 404, GET, uriText, before, after);
+    });
   }
 
   @ParameterizedTest
@@ -1219,54 +1232,54 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Map<SzAttributeClass, Set<String>>  expectedDataValues,
       Set<String>                         expectedOtherDataValues)
   {
-    String testInfo = "keyRecord=[ " + keyRecordId
-        + " ], forceMinimal=[ " + forceMinimal
-        + " ], featureMode=[ " + featureMode
-        + " ], withRelated=[ " + withRelated
-        + " ], withRaw=[ " + withRaw + " ]";
+    this.performTest(() -> {
+      String testInfo = "keyRecord=[ " + keyRecordId
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withRelated=[ " + withRelated
+          + " ], withRaw=[ " + withRaw + " ]";
 
-    this.assumeNativeApiAvailable();
+      final Long entityId = this.getEntityIdForRecordId(keyRecordId);
 
-    final Long entityId = this.getEntityIdForRecordId(keyRecordId);
+      StringBuilder sb = new StringBuilder();
+      sb.append("entities/").append(entityId);
+      buildEntityQueryString(sb, withRaw, withRelated, forceMinimal, featureMode);
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("entities/").append(entityId);
-    buildEntityQueryString(sb, withRaw, withRelated, forceMinimal, featureMode);
+      String uriText = this.formatServerUri(sb.toString());
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    String uriText = this.formatServerUri(sb.toString());
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      long before = System.currentTimeMillis();
 
-    long before = System.currentTimeMillis();
+      SzEntityResponse response = this.entityDataServices.getEntityByRecordId(
+          keyRecordId.getDataSourceCode(),
+          keyRecordId.getRecordId(),
+          (withRaw != null ? withRaw : false),
+          (withRelated != null ? withRelated : false),
+          (forceMinimal != null ? forceMinimal : false),
+          (featureMode != null ? featureMode : WITH_DUPLICATES),
+          uriInfo);
 
-    SzEntityResponse response = this.entityDataServices.getEntityByRecordId(
-        keyRecordId.getDataSourceCode(),
-        keyRecordId.getRecordId(),
-        (withRaw != null ? withRaw : false),
-        (withRelated != null ? withRelated : false),
-        (forceMinimal != null ? forceMinimal : false),
-        (featureMode != null ? featureMode : WITH_DUPLICATES),
-        uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
-
-    this.validateEntityResponse(testInfo,
-                                response,
-                                uriText,
-                                withRaw,
-                                withRelated,
-                                forceMinimal,
-                                featureMode,
-                                expectedRecordCount,
-                                expectedRecordIds,
-                                relatedEntityCount,
-                                expectedFeatureCounts,
-                                primaryFeatureValues,
-                                duplicateFeatureValues,
-                                expectedDataValues,
-                                expectedOtherDataValues,
-                                before,
-                                after);
+      this.validateEntityResponse(testInfo,
+                                  response,
+                                  uriText,
+                                  withRaw,
+                                  withRelated,
+                                  forceMinimal,
+                                  featureMode,
+                                  expectedRecordCount,
+                                  expectedRecordIds,
+                                  relatedEntityCount,
+                                  expectedFeatureCounts,
+                                  primaryFeatureValues,
+                                  duplicateFeatureValues,
+                                  expectedDataValues,
+                                  expectedOtherDataValues,
+                                  before,
+                                  after);
+    });
   }
 
   @ParameterizedTest
@@ -1286,99 +1299,101 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Map<SzAttributeClass, Set<String>>  expectedDataValues,
       Set<String>                         expectedOtherDataValues)
   {
-    String testInfo = "keyRecord=[ " + keyRecordId
-        + " ], forceMinimal=[ " + forceMinimal
-        + " ], featureMode=[ " + featureMode
-        + " ], withRelated=[ " + withRelated
-        + " ], withRaw=[ " + withRaw + " ]";
-    this.assumeNativeApiAvailable();
+    this.performTest(() -> {
+      String testInfo = "keyRecord=[ " + keyRecordId
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withRelated=[ " + withRelated
+          + " ], withRaw=[ " + withRaw + " ]";
 
-    final Long entityId = this.getEntityIdForRecordId(keyRecordId);
+      final Long entityId = this.getEntityIdForRecordId(keyRecordId);
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("entities/").append(entityId);
-    buildEntityQueryString(sb, withRaw, withRelated, forceMinimal, featureMode);
+      StringBuilder sb = new StringBuilder();
+      sb.append("entities/").append(entityId);
+      buildEntityQueryString(sb, withRaw, withRelated, forceMinimal, featureMode);
 
-    String uriText = this.formatServerUri(sb.toString());
+      String uriText = this.formatServerUri(sb.toString());
 
-    long before = System.currentTimeMillis();
-    SzEntityResponse response = this.invokeServerViaHttp(
-        GET, uriText, SzEntityResponse.class);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzEntityResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzEntityResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateEntityResponse(testInfo,
-                                response,
-                                uriText,
-                                withRaw,
-                                withRelated,
-                                forceMinimal,
-                                featureMode,
-                                expectedRecordCount,
-                                expectedRecordIds,
-                                relatedEntityCount,
-                                expectedFeatureCounts,
-                                primaryFeatureValues,
-                                duplicateFeatureValues,
-                                expectedDataValues,
-                                expectedOtherDataValues,
-                                before,
-                                after);
+      this.validateEntityResponse(testInfo,
+                                  response,
+                                  uriText,
+                                  withRaw,
+                                  withRelated,
+                                  forceMinimal,
+                                  featureMode,
+                                  expectedRecordCount,
+                                  expectedRecordIds,
+                                  relatedEntityCount,
+                                  expectedFeatureCounts,
+                                  primaryFeatureValues,
+                                  duplicateFeatureValues,
+                                  expectedDataValues,
+                                  expectedOtherDataValues,
+                                  before,
+                                  after);
+    });
   }
 
 
   @Test
   public void getNotFoundEntityByBadEntityIdTest()
   {
-    final long badEntityId = Long.MAX_VALUE;
-    this.assumeNativeApiAvailable();
+    this.performTest(() -> {
+      final long badEntityId = Long.MAX_VALUE;
 
-    String uriText = this.formatServerUri("entities/" + badEntityId);
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      String uriText = this.formatServerUri("entities/" + badEntityId);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long before = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
 
-    try {
-      this.entityDataServices.getEntityByEntityId(
-          badEntityId,
-          false,
-          false,
-          false,
-          WITH_DUPLICATES,
-          uriInfo);
+      try {
+        this.entityDataServices.getEntityByEntityId(
+            badEntityId,
+            false,
+            false,
+            false,
+            WITH_DUPLICATES,
+            uriInfo);
 
-      fail("Expected entity for entity ID " + badEntityId + " to NOT be found");
+        fail("Expected entity for entity ID " + badEntityId + " to NOT be found");
 
-    } catch (NotFoundException expected) {
-      SzErrorResponse response
-          = (SzErrorResponse) expected.getResponse().getEntity();
-      response.concludeTimers();
-      long after = System.currentTimeMillis();
+      } catch (NotFoundException expected) {
+        SzErrorResponse response
+            = (SzErrorResponse) expected.getResponse().getEntity();
+        response.concludeTimers();
+        long after = System.currentTimeMillis();
 
-      this.validateBasics(
-          response, 404, GET, uriText, before, after);
-    }
+        this.validateBasics(
+            response, 404, GET, uriText, before, after);
+      }
+    });
   }
 
   @Test
   public void getNotFoundEntityByBadEntityIdTestViaHttp()
   {
-    final long badEntityId = Long.MAX_VALUE;
-    this.assumeNativeApiAvailable();
+    this.performTest(() -> {
+      final long badEntityId = Long.MAX_VALUE;
 
-    String uriText = this.formatServerUri("entities/" + badEntityId);
+      String uriText = this.formatServerUri("entities/" + badEntityId);
 
-    long before = System.currentTimeMillis();
-    SzErrorResponse response = this.invokeServerViaHttp(
-        GET, uriText, SzErrorResponse.class);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzErrorResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzErrorResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    this.validateBasics(
-        response, 404, GET, uriText, before, after);
+      this.validateBasics(
+          response, 404, GET, uriText, before, after);
+
+    });
   }
-
-
 
   private static class Criterion {
     private String key;
@@ -1483,72 +1498,74 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
                                     SzFeatureInclusion featureMode,
                                     Boolean withRelationships,
                                     Boolean withRaw)
-      throws UnsupportedEncodingException {
-    String testInfo = "criteria=[ " + criteria
-        + " ], forceMinimal=[ " + forceMinimal
-        + " ], featureMode=[ " + featureMode
-        + " ], withRelationships=[ " + withRelationships
-        + " ], withRaw=[ " + withRaw + " ]";
+  {
+    this.performTest(() -> {
+      String testInfo = "criteria=[ " + criteria
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withRelationships=[ " + withRelationships
+          + " ], withRaw=[ " + withRaw + " ]";
 
-    JsonObjectBuilder job = Json.createObjectBuilder();
-    criteria.entrySet().forEach(entry -> {
-      String key = entry.getKey();
-      Set<String> values = entry.getValue();
-      if (values.size() == 1) {
-        job.add(key, values.iterator().next());
-      } else {
-        JsonArrayBuilder jab = Json.createArrayBuilder();
-        for (String value : values) {
-          JsonObjectBuilder job2 = Json.createObjectBuilder();
-          job2.add(key, value);
-          jab.add(job2);
+      JsonObjectBuilder job = Json.createObjectBuilder();
+      criteria.entrySet().forEach(entry -> {
+        String key = entry.getKey();
+        Set<String> values = entry.getValue();
+        if (values.size() == 1) {
+          job.add(key, values.iterator().next());
+        } else {
+          JsonArrayBuilder jab = Json.createArrayBuilder();
+          for (String value : values) {
+            JsonObjectBuilder job2 = Json.createObjectBuilder();
+            job2.add(key, value);
+            jab.add(job2);
+          }
+          job.add(key, jab);
         }
-        job.add(key, jab);
+      });
+      String attrs = JsonUtils.toJsonText(job);
+
+      String uriText = this.formatServerUri(
+          "entities?attrs=" + urlEncode(attrs));
+      if (forceMinimal != null) {
+        uriText += ("&forceMinimal=" + forceMinimal);
       }
+      if (featureMode != null) {
+        uriText += ("&featureMode=" + featureMode);
+      }
+      if (withRelationships != null) {
+        uriText += ("&withRelationships=" + withRelationships);
+      }
+      if (withRaw != null) {
+        uriText += ("&withRaw=" + withRaw);
+      }
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      long before = System.currentTimeMillis();
+      SzAttributeSearchResponse response
+          = this.entityDataServices.searchByAttributes(
+          attrs,
+          (forceMinimal != null ? forceMinimal : false),
+          (featureMode != null ? featureMode : WITH_DUPLICATES),
+          (withRelationships != null ? withRelationships : false),
+          (withRaw != null ? withRaw : false),
+          uriInfo);
+
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      this.validateSearchResponse(
+          testInfo,
+          response,
+          uriText,
+          expectedCount,
+          withRelationships,
+          forceMinimal,
+          featureMode,
+          before,
+          after,
+          withRaw);
+
     });
-    String attrs = JsonUtils.toJsonText(job);
-
-    this.assumeNativeApiAvailable();
-    String uriText = this.formatServerUri(
-        "entities?attrs=" + URLEncoder.encode(attrs, "UTF-8"));
-    if (forceMinimal != null) {
-      uriText += ("&forceMinimal=" + forceMinimal);
-    }
-    if (featureMode != null) {
-      uriText += ("&featureMode=" + featureMode);
-    }
-    if (withRelationships != null) {
-      uriText += ("&withRelationships=" + withRelationships);
-    }
-    if (withRaw != null) {
-      uriText += ("&withRaw=" + withRaw);
-    }
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
-
-    long before = System.currentTimeMillis();
-    SzAttributeSearchResponse response
-        = this.entityDataServices.searchByAttributes(
-        attrs,
-        (forceMinimal != null ? forceMinimal : false),
-        (featureMode != null ? featureMode : WITH_DUPLICATES),
-        (withRelationships != null ? withRelationships : false),
-        (withRaw != null ? withRaw : false),
-        uriInfo);
-
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
-
-    this.validateSearchResponse(
-        testInfo,
-        response,
-        uriText,
-        expectedCount,
-        withRelationships,
-        forceMinimal,
-        featureMode,
-        before,
-        after,
-        withRaw);
   }
 
   @ParameterizedTest
@@ -1560,65 +1577,66 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       SzFeatureInclusion featureMode,
       Boolean withRelationships,
       Boolean withRaw)
-      throws UnsupportedEncodingException {
-    String testInfo = "criteria=[ " + criteria
-        + " ], forceMinimal=[ " + forceMinimal
-        + " ], featureMode=[ " + featureMode
-        + " ], withRelationships=[ " + withRelationships
-        + " ], withRaw=[ " + withRaw + " ]";
+  {
+    this.performTest(() -> {
+      String testInfo = "criteria=[ " + criteria
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withRelationships=[ " + withRelationships
+          + " ], withRaw=[ " + withRaw + " ]";
 
-    JsonObjectBuilder job = Json.createObjectBuilder();
-    criteria.entrySet().forEach(entry -> {
-      String key = entry.getKey();
-      Set<String> values = entry.getValue();
-      if (values.size() == 1) {
-        job.add(key, values.iterator().next());
-      } else {
-        JsonArrayBuilder jab = Json.createArrayBuilder();
-        for (String value : values) {
-          JsonObjectBuilder job2 = Json.createObjectBuilder();
-          job2.add(key, value);
-          jab.add(job2);
+      JsonObjectBuilder job = Json.createObjectBuilder();
+      criteria.entrySet().forEach(entry -> {
+        String key = entry.getKey();
+        Set<String> values = entry.getValue();
+        if (values.size() == 1) {
+          job.add(key, values.iterator().next());
+        } else {
+          JsonArrayBuilder jab = Json.createArrayBuilder();
+          for (String value : values) {
+            JsonObjectBuilder job2 = Json.createObjectBuilder();
+            job2.add(key, value);
+            jab.add(job2);
+          }
+          job.add(key, jab);
         }
-        job.add(key, jab);
+      });
+      String attrs = JsonUtils.toJsonText(job);
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("entities?attrs=").append(urlEncode(attrs));
+      if (forceMinimal != null) {
+        sb.append("&forceMinimal=").append(forceMinimal);
       }
+      if (featureMode != null) {
+        sb.append("&featureMode=").append(featureMode);
+      }
+      if (withRelationships != null) {
+        sb.append("&withRelationships=").append(withRelationships);
+      }
+      if (withRaw != null) {
+        sb.append("&withRaw=").append(withRaw);
+      }
+      String uriText = this.formatServerUri(sb.toString());
+
+      long before = System.currentTimeMillis();
+      SzAttributeSearchResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzAttributeSearchResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      this.validateSearchResponse(
+          testInfo,
+          response,
+          uriText,
+          expectedCount,
+          withRelationships,
+          forceMinimal,
+          featureMode,
+          before,
+          after,
+          withRaw);
     });
-    String attrs = JsonUtils.toJsonText(job);
-
-    this.assumeNativeApiAvailable();
-    StringBuilder sb = new StringBuilder();
-    sb.append("entities?attrs=").append(URLEncoder.encode(attrs, "UTF-8"));
-    if (forceMinimal != null) {
-      sb.append("&forceMinimal=").append(forceMinimal);
-    }
-    if (featureMode != null) {
-      sb.append("&featureMode=").append(featureMode);
-    }
-    if (withRelationships != null) {
-      sb.append("&withRelationships=").append(withRelationships);
-    }
-    if (withRaw != null) {
-      sb.append("&withRaw=").append(withRaw);
-    }
-    String uriText = this.formatServerUri(sb.toString());
-
-    long before = System.currentTimeMillis();
-    SzAttributeSearchResponse response = this.invokeServerViaHttp(
-        GET, uriText, SzAttributeSearchResponse.class);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
-
-    this.validateSearchResponse(
-        testInfo,
-        response,
-        uriText,
-        expectedCount,
-        withRelationships,
-        forceMinimal,
-        featureMode,
-        before,
-        after,
-        withRaw);
   }
 
   @ParameterizedTest
@@ -1629,60 +1647,58 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Boolean forceMinimal,
       SzFeatureInclusion featureMode,
       Boolean withRelationships,
-      Boolean withRaw) {
-    String testInfo = "criteria=[ " + criteria
-        + " ], forceMinimal=[ " + forceMinimal
-        + " ], featureMode=[ " + featureMode
-        + " ], withRelationships=[ " + withRelationships
-        + " ], withRaw=[ " + withRaw + " ]";
+      Boolean withRaw)
+  {
+    this.performTest(() -> {
+      String testInfo = "criteria=[ " + criteria
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withRelationships=[ " + withRelationships
+          + " ], withRaw=[ " + withRaw + " ]";
 
-    this.assumeNativeApiAvailable();
-    StringBuilder sb = new StringBuilder(criteria.size() * 50);
-    criteria.entrySet().forEach(entry -> {
-      try {
+      StringBuilder sb = new StringBuilder(criteria.size() * 50);
+      criteria.entrySet().forEach(entry -> {
         String key = entry.getKey();
         Set<String> values = entry.getValue();
-        String encodedKey = URLEncoder.encode(key, "UTF-8");
+        String encodedKey = urlEncode(key);
         for (String value : values) {
-          String encodedVal = URLEncoder.encode(value, "UTF-8");
+          String encodedVal = urlEncode(value);
           sb.append("&attr_").append(encodedKey).append("=").append(encodedVal);
         }
-      } catch (UnsupportedEncodingException cannotHappen) {
-        throw new IllegalStateException(cannotHappen);
+      });
+      // replace the "&" with a "?" at the start
+      sb.setCharAt(0, '?');
+      if (forceMinimal != null) {
+        sb.append("&forceMinimal=").append(forceMinimal);
       }
+      if (featureMode != null) {
+        sb.append("&featureMode=").append(featureMode);
+      }
+      if (withRelationships != null) {
+        sb.append("&withRelationships=").append(withRelationships);
+      }
+      if (withRaw != null) {
+        sb.append("&withRaw=").append(withRaw);
+      }
+      String uriText = this.formatServerUri("entities" + sb.toString());
+
+      long before = System.currentTimeMillis();
+      SzAttributeSearchResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzAttributeSearchResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      this.validateSearchResponse(
+          testInfo,
+          response,
+          uriText,
+          expectedCount,
+          withRelationships,
+          forceMinimal,
+          featureMode,
+          before,
+          after,
+          withRaw);
     });
-    // replace the "&" with a "?" at the start
-    sb.setCharAt(0, '?');
-    if (forceMinimal != null) {
-      sb.append("&forceMinimal=").append(forceMinimal);
-    }
-    if (featureMode != null) {
-      sb.append("&featureMode=").append(featureMode);
-    }
-    if (withRelationships != null) {
-      sb.append("&withRelationships=").append(withRelationships);
-    }
-    if (withRaw != null) {
-      sb.append("&withRaw=").append(withRaw);
-    }
-    String uriText = this.formatServerUri("entities" + sb.toString());
-
-    long before = System.currentTimeMillis();
-    SzAttributeSearchResponse response = this.invokeServerViaHttp(
-        GET, uriText, SzAttributeSearchResponse.class);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
-
-    this.validateSearchResponse(
-        testInfo,
-        response,
-        uriText,
-        expectedCount,
-        withRelationships,
-        forceMinimal,
-        featureMode,
-        before,
-        after,
-        withRaw);
   }
 }

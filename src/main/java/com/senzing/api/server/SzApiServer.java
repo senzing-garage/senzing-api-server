@@ -1207,7 +1207,7 @@ public class SzApiServer implements SzApiProvider {
     }
     
     // validate the init JSON
-    this.configType = getConfigType(this.initJson);
+    this.configType = getConfigType(this.moduleName, this.initJson);
     if (this.configType == null) {
       StringWriter sw = new StringWriter();
       PrintWriter pw = new PrintWriter(sw);
@@ -1487,6 +1487,8 @@ public class SzApiServer implements SzApiProvider {
    * and if so verifies the JSON configuration against the default config and
    * if they do not match, cowardly refuses to startup.
    *
+   * @param moduleName The module name to use when initializing.
+   *
    * @param initJson The {@link JsonObject} representation of the Senzing
    *                intitialization parameters.
    *
@@ -1495,7 +1497,13 @@ public class SzApiServer implements SzApiProvider {
    *         is configured and negative one (-1) if a configuration file is
    *         provided and there is a default configuration configured.
    */
-  private static ConfigType getConfigType(JsonObject initJson) {
+  private static ConfigType getConfigType(String      moduleName,
+                                          JsonObject  initJson)
+  {
+    if (moduleName == null) {
+      moduleName = SzApiServer.class.getSimpleName();
+    }
+    moduleName +=  " (getConfigType)";
     boolean configInIni = false;
     JsonObject sqlSection = JsonUtils.getJsonObject(initJson, "SQL");
     if (sqlSection != null) {
@@ -1510,7 +1518,7 @@ public class SzApiServer implements SzApiProvider {
 
     boolean configInRepo = false;
     G2ConfigMgr configMgr = new G2ConfigMgrJNI();
-    int returnCode = configMgr.initV2(SzApiServer.class.getSimpleName(), initJsonText, false);
+    int returnCode = configMgr.initV2(moduleName, initJsonText, false);
     if (returnCode != 0) {
       String msg = multilineFormat(
           "Failed to initialize with specified initialization parameters.",
@@ -1723,6 +1731,9 @@ public class SzApiServer implements SzApiProvider {
     synchronized (this.joinMonitor) {
       this.engineApi.destroy();
       this.configApi.destroy();
+      if (this.configMgrApi != null) {
+        this.configMgrApi.destroy();
+      }
       this.productApi.destroy();
       this.completed = true;
       this.joinMonitor.notifyAll();

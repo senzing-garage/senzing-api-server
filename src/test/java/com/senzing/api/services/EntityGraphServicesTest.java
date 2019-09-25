@@ -169,7 +169,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
   @AfterAll
   public void teardownEnvironment() {
-    this.teardownTestEnvironment(true);
+    this.teardownTestEnvironment();
   }
 
   private Long getEntityIdForRecordId(SzRecordId recordId) {
@@ -485,85 +485,85 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                     Integer                 expectedPathLength,
                                     List<SzRecordId>        expectedPath)
   {
-    String testInfo = "fromRecord=[ " + fromRecordId
-        + " ], toRecord=[ " + toRecordId
-        + " ], maxDegrees=[ " + maxDegrees
-        + " ], avoidParam=[ " + avoidParam
-        + " ], avoidList=[ " + avoidList
-        + " ], forbidAvoided=[ " + forbidAvoided
-        + " ], sources=[ " + sourcesParam
-        + " ], forceMinimal=[ " + forceMinimal
-        + " ], featureMode=[ " + featureMode
-        + " ], withRaw=[ " + withRaw + " ]";
+    this.performTest(() -> {
+      String testInfo = "fromRecord=[ " + fromRecordId
+          + " ], toRecord=[ " + toRecordId
+          + " ], maxDegrees=[ " + maxDegrees
+          + " ], avoidParam=[ " + avoidParam
+          + " ], avoidList=[ " + avoidList
+          + " ], forbidAvoided=[ " + forbidAvoided
+          + " ], sources=[ " + sourcesParam
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withRaw=[ " + withRaw + " ]";
 
-    this.assumeNativeApiAvailable();
+      SzEntityIdentifier fromIdentifer
+          = this.normalizeIdentifier(fromRecordId,false);
 
-    SzEntityIdentifier fromIdentifer
-        = this.normalizeIdentifier(fromRecordId,false);
+      SzEntityIdentifier toIdentifier
+          = this.normalizeIdentifier(toRecordId,false);
 
-    SzEntityIdentifier toIdentifier
-        = this.normalizeIdentifier(toRecordId,false);
+      SzEntityIdentifiers avoidParamIds
+          = this.normalizeIdentifiers(avoidParam,false);
 
-    SzEntityIdentifiers avoidParamIds
-        = this.normalizeIdentifiers(avoidParam,false);
+      SzEntityIdentifiers avoidListIds
+          = this.normalizeIdentifiers(avoidList,false);
 
-    SzEntityIdentifiers avoidListIds
-        = this.normalizeIdentifiers(avoidList,false);
+      StringBuilder sb = new StringBuilder();
+      sb.append("entity-paths");
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("entity-paths");
+      buildPathQueryString(sb,
+                           fromIdentifer,
+                           toIdentifier,
+                           maxDegrees,
+                           avoidParamIds,
+                           avoidListIds,
+                           forbidAvoided,
+                           sourcesParam,
+                           forceMinimal,
+                           featureMode,
+                           withRaw);
 
-    buildPathQueryString(sb,
-                         fromIdentifer,
-                         toIdentifier,
-                         maxDegrees,
-                         avoidParamIds,
-                         avoidListIds,
-                         forbidAvoided,
-                         sourcesParam,
-                         forceMinimal,
-                         featureMode,
-                         withRaw);
+      String uriText = this.formatServerUri(sb.toString());
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    String uriText = this.formatServerUri(sb.toString());
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      long before = System.currentTimeMillis();
 
-    long before = System.currentTimeMillis();
+      SzEntityPathResponse response = this.entityGraphServices.getEntityPath(
+          fromIdentifer.toString(),
+          toIdentifier.toString(),
+          (maxDegrees == null ? DEFAULT_PATH_DEGREES : maxDegrees),
+          formatIdentifierParam(avoidParamIds),
+          formatIdentifierList(avoidListIds),
+          (forbidAvoided == null ? false : forbidAvoided),
+          sourcesParam,
+          (forceMinimal == null ? false : forceMinimal),
+          (featureMode == null ? WITH_DUPLICATES : featureMode),
+          (withRaw == null ? false : withRaw),
+          uriInfo);
 
-    SzEntityPathResponse response = this.entityGraphServices.getEntityPath(
-        fromIdentifer.toString(),
-        toIdentifier.toString(),
-        (maxDegrees == null ? DEFAULT_PATH_DEGREES : maxDegrees),
-        formatIdentifierParam(avoidParamIds),
-        formatIdentifierList(avoidListIds),
-        (forbidAvoided == null ? false : forbidAvoided),
-        sourcesParam,
-        (forceMinimal == null ? false : forceMinimal),
-        (featureMode == null ? WITH_DUPLICATES : featureMode),
-        (withRaw == null ? false : withRaw),
-        uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
-
-    this.validateEntityPathResponse(
-        testInfo,
-        response,
-        uriText,
-        fromIdentifer,
-        toIdentifier,
-        (maxDegrees != null ? maxDegrees : DEFAULT_PATH_DEGREES),
-        avoidParamIds,
-        avoidListIds,
-        forbidAvoided,
-        sourcesParam,
-        forceMinimal,
-        featureMode,
-        withRaw,
-        expectedPathLength,
-        expectedPath,
-        before,
-        after);
+      this.validateEntityPathResponse(
+          testInfo,
+          response,
+          uriText,
+          fromIdentifer,
+          toIdentifier,
+          (maxDegrees != null ? maxDegrees : DEFAULT_PATH_DEGREES),
+          avoidParamIds,
+          avoidListIds,
+          forbidAvoided,
+          sourcesParam,
+          forceMinimal,
+          featureMode,
+          withRaw,
+          expectedPathLength,
+          expectedPath,
+          before,
+          after);
+    });
   }
 
   @ParameterizedTest
@@ -582,73 +582,73 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Integer                 expectedPathLength,
       List<SzRecordId>        expectedPath)
   {
-    String testInfo = "fromRecord=[ " + fromRecordId
-        + " ], toRecord=[ " + toRecordId
-        + " ], maxDegrees=[ " + maxDegrees
-        + " ], avoidParam=[ " + avoidParam
-        + " ], avoidList=[ " + avoidList
-        + " ], forbidAvoided=[ " + forbidAvoided
-        + " ], sources=[ " + sourcesParam
-        + " ], forceMinimal=[ " + forceMinimal
-        + " ], featureMode=[ " + featureMode
-        + " ], withRaw=[ " + withRaw + " ]";
+    this.performTest(() -> {
+      String testInfo = "fromRecord=[ " + fromRecordId
+          + " ], toRecord=[ " + toRecordId
+          + " ], maxDegrees=[ " + maxDegrees
+          + " ], avoidParam=[ " + avoidParam
+          + " ], avoidList=[ " + avoidList
+          + " ], forbidAvoided=[ " + forbidAvoided
+          + " ], sources=[ " + sourcesParam
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withRaw=[ " + withRaw + " ]";
 
-    this.assumeNativeApiAvailable();
+      SzEntityIdentifier fromIdentifer
+          = this.normalizeIdentifier(fromRecordId,false);
 
-    SzEntityIdentifier fromIdentifer
-        = this.normalizeIdentifier(fromRecordId,false);
+      SzEntityIdentifier toIdentifier
+          = this.normalizeIdentifier(toRecordId,false);
 
-    SzEntityIdentifier toIdentifier
-        = this.normalizeIdentifier(toRecordId,false);
+      SzEntityIdentifiers avoidParamIds
+          = this.normalizeIdentifiers(avoidParam,false);
 
-    SzEntityIdentifiers avoidParamIds
-        = this.normalizeIdentifiers(avoidParam,false);
+      SzEntityIdentifiers avoidListIds
+          = this.normalizeIdentifiers(avoidList,false);
 
-    SzEntityIdentifiers avoidListIds
-        = this.normalizeIdentifiers(avoidList,false);
+      StringBuilder sb = new StringBuilder();
+      sb.append("entity-paths");
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("entity-paths");
+      buildPathQueryString(sb,
+                           fromIdentifer,
+                           toIdentifier,
+                           maxDegrees,
+                           avoidParamIds,
+                           avoidListIds,
+                           forbidAvoided,
+                           sourcesParam,
+                           forceMinimal,
+                           featureMode,
+                           withRaw);
 
-    buildPathQueryString(sb,
-                         fromIdentifer,
-                         toIdentifier,
-                         maxDegrees,
-                         avoidParamIds,
-                         avoidListIds,
-                         forbidAvoided,
-                         sourcesParam,
-                         forceMinimal,
-                         featureMode,
-                         withRaw);
+      String uriText = this.formatServerUri(sb.toString());
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    String uriText = this.formatServerUri(sb.toString());
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      long before = System.currentTimeMillis();
+      SzEntityPathResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzEntityPathResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    long before = System.currentTimeMillis();
-    SzEntityPathResponse response = this.invokeServerViaHttp(
-        GET, uriText, SzEntityPathResponse.class);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
-
-    this.validateEntityPathResponse(
-        testInfo,
-        response,
-        uriText,
-        fromIdentifer,
-        toIdentifier,
-        (maxDegrees != null ? maxDegrees : DEFAULT_PATH_DEGREES),
-        avoidParamIds,
-        avoidListIds,
-        forbidAvoided,
-        sourcesParam,
-        forceMinimal,
-        featureMode,
-        withRaw,
-        expectedPathLength,
-        expectedPath,
-        before,
-        after);
+      this.validateEntityPathResponse(
+          testInfo,
+          response,
+          uriText,
+          fromIdentifer,
+          toIdentifier,
+          (maxDegrees != null ? maxDegrees : DEFAULT_PATH_DEGREES),
+          avoidParamIds,
+          avoidListIds,
+          forbidAvoided,
+          sourcesParam,
+          forceMinimal,
+          featureMode,
+          withRaw,
+          expectedPathLength,
+          expectedPath,
+          before,
+          after);
+    });
   }
 
   @ParameterizedTest
@@ -666,85 +666,85 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                     Integer                 expectedPathLength,
                                     List<SzRecordId>        expectedPath)
   {
-    String testInfo = "fromRecord=[ " + fromRecordId
-        + " ], toRecord=[ " + toRecordId
-        + " ], maxDegrees=[ " + maxDegrees
-        + " ], avoidParam=[ " + avoidParam
-        + " ], avoidList=[ " + avoidList
-        + " ], forbidAvoided=[ " + forbidAvoided
-        + " ], sources=[ " + sourcesParam
-        + " ], forceMinimal=[ " + forceMinimal
-        + " ], featureMode=[ " + featureMode
-        + " ], withRaw=[ " + withRaw + " ]";
+    this.performTest(() -> {
+      String testInfo = "fromRecord=[ " + fromRecordId
+          + " ], toRecord=[ " + toRecordId
+          + " ], maxDegrees=[ " + maxDegrees
+          + " ], avoidParam=[ " + avoidParam
+          + " ], avoidList=[ " + avoidList
+          + " ], forbidAvoided=[ " + forbidAvoided
+          + " ], sources=[ " + sourcesParam
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withRaw=[ " + withRaw + " ]";
 
-    this.assumeNativeApiAvailable();
+      SzEntityIdentifier fromIdentifer
+          = this.normalizeIdentifier(fromRecordId,true);
 
-    SzEntityIdentifier fromIdentifer
-        = this.normalizeIdentifier(fromRecordId,true);
+      SzEntityIdentifier toIdentifier
+          = this.normalizeIdentifier(toRecordId,true);
 
-    SzEntityIdentifier toIdentifier
-        = this.normalizeIdentifier(toRecordId,true);
+      SzEntityIdentifiers avoidParamIds
+          = this.normalizeIdentifiers(avoidParam,true);
 
-    SzEntityIdentifiers avoidParamIds
-        = this.normalizeIdentifiers(avoidParam,true);
+      SzEntityIdentifiers avoidListIds
+          = this.normalizeIdentifiers(avoidList,true);
 
-    SzEntityIdentifiers avoidListIds
-        = this.normalizeIdentifiers(avoidList,true);
+      StringBuilder sb = new StringBuilder();
+      sb.append("entity-paths");
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("entity-paths");
+      buildPathQueryString(sb,
+                           fromIdentifer,
+                           toIdentifier,
+                           maxDegrees,
+                           avoidParamIds,
+                           avoidListIds,
+                           forbidAvoided,
+                           sourcesParam,
+                           forceMinimal,
+                           featureMode,
+                           withRaw);
 
-    buildPathQueryString(sb,
-                         fromIdentifer,
-                         toIdentifier,
-                         maxDegrees,
-                         avoidParamIds,
-                         avoidListIds,
-                         forbidAvoided,
-                         sourcesParam,
-                         forceMinimal,
-                         featureMode,
-                         withRaw);
+      String uriText = this.formatServerUri(sb.toString());
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    String uriText = this.formatServerUri(sb.toString());
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      long before = System.currentTimeMillis();
 
-    long before = System.currentTimeMillis();
+      SzEntityPathResponse response = this.entityGraphServices.getEntityPath(
+          fromIdentifer.toString(),
+          toIdentifier.toString(),
+          (maxDegrees == null ? DEFAULT_PATH_DEGREES : maxDegrees),
+          formatIdentifierParam(avoidParamIds),
+          formatIdentifierList(avoidListIds),
+          (forbidAvoided == null ? false : forbidAvoided),
+          sourcesParam,
+          (forceMinimal == null ? false : forceMinimal),
+          (featureMode == null ? WITH_DUPLICATES : featureMode),
+          (withRaw == null ? false : withRaw),
+          uriInfo);
 
-    SzEntityPathResponse response = this.entityGraphServices.getEntityPath(
-        fromIdentifer.toString(),
-        toIdentifier.toString(),
-        (maxDegrees == null ? DEFAULT_PATH_DEGREES : maxDegrees),
-        formatIdentifierParam(avoidParamIds),
-        formatIdentifierList(avoidListIds),
-        (forbidAvoided == null ? false : forbidAvoided),
-        sourcesParam,
-        (forceMinimal == null ? false : forceMinimal),
-        (featureMode == null ? WITH_DUPLICATES : featureMode),
-        (withRaw == null ? false : withRaw),
-        uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
-
-    this.validateEntityPathResponse(
-        testInfo,
-        response,
-        uriText,
-        fromIdentifer,
-        toIdentifier,
-        (maxDegrees != null ? maxDegrees : DEFAULT_PATH_DEGREES),
-        avoidParamIds,
-        avoidListIds,
-        forbidAvoided,
-        sourcesParam,
-        forceMinimal,
-        featureMode,
-        withRaw,
-        expectedPathLength,
-        expectedPath,
-        before,
-        after);
+      this.validateEntityPathResponse(
+          testInfo,
+          response,
+          uriText,
+          fromIdentifer,
+          toIdentifier,
+          (maxDegrees != null ? maxDegrees : DEFAULT_PATH_DEGREES),
+          avoidParamIds,
+          avoidListIds,
+          forbidAvoided,
+          sourcesParam,
+          forceMinimal,
+          featureMode,
+          withRaw,
+          expectedPathLength,
+          expectedPath,
+          before,
+          after);
+    });
   }
 
   @ParameterizedTest
@@ -763,73 +763,73 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Integer                 expectedPathLength,
       List<SzRecordId>        expectedPath)
   {
-    String testInfo = "fromRecord=[ " + fromRecordId
-        + " ], toRecord=[ " + toRecordId
-        + " ], maxDegrees=[ " + maxDegrees
-        + " ], avoidParam=[ " + avoidParam
-        + " ], avoidList=[ " + avoidList
-        + " ], forbidAvoided=[ " + forbidAvoided
-        + " ], sources=[ " + sourcesParam
-        + " ], forceMinimal=[ " + forceMinimal
-        + " ], featureMode=[ " + featureMode
-        + " ], withRaw=[ " + withRaw + " ]";
+    this.performTest(() -> {
+      String testInfo = "fromRecord=[ " + fromRecordId
+          + " ], toRecord=[ " + toRecordId
+          + " ], maxDegrees=[ " + maxDegrees
+          + " ], avoidParam=[ " + avoidParam
+          + " ], avoidList=[ " + avoidList
+          + " ], forbidAvoided=[ " + forbidAvoided
+          + " ], sources=[ " + sourcesParam
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withRaw=[ " + withRaw + " ]";
 
-    this.assumeNativeApiAvailable();
+      SzEntityIdentifier fromIdentifer
+          = this.normalizeIdentifier(fromRecordId,true);
 
-    SzEntityIdentifier fromIdentifer
-        = this.normalizeIdentifier(fromRecordId,true);
+      SzEntityIdentifier toIdentifier
+          = this.normalizeIdentifier(toRecordId,true);
 
-    SzEntityIdentifier toIdentifier
-        = this.normalizeIdentifier(toRecordId,true);
+      SzEntityIdentifiers avoidParamIds
+          = this.normalizeIdentifiers(avoidParam,true);
 
-    SzEntityIdentifiers avoidParamIds
-        = this.normalizeIdentifiers(avoidParam,true);
+      SzEntityIdentifiers avoidListIds
+          = this.normalizeIdentifiers(avoidList,true);
 
-    SzEntityIdentifiers avoidListIds
-        = this.normalizeIdentifiers(avoidList,true);
+      StringBuilder sb = new StringBuilder();
+      sb.append("entity-paths");
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("entity-paths");
+      buildPathQueryString(sb,
+                           fromIdentifer,
+                           toIdentifier,
+                           maxDegrees,
+                           avoidParamIds,
+                           avoidListIds,
+                           forbidAvoided,
+                           sourcesParam,
+                           forceMinimal,
+                           featureMode,
+                           withRaw);
 
-    buildPathQueryString(sb,
-                         fromIdentifer,
-                         toIdentifier,
-                         maxDegrees,
-                         avoidParamIds,
-                         avoidListIds,
-                         forbidAvoided,
-                         sourcesParam,
-                         forceMinimal,
-                         featureMode,
-                         withRaw);
+      String uriText = this.formatServerUri(sb.toString());
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    String uriText = this.formatServerUri(sb.toString());
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      long before = System.currentTimeMillis();
+      SzEntityPathResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzEntityPathResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    long before = System.currentTimeMillis();
-    SzEntityPathResponse response = this.invokeServerViaHttp(
-        GET, uriText, SzEntityPathResponse.class);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
-
-    this.validateEntityPathResponse(
-        testInfo,
-        response,
-        uriText,
-        fromIdentifer,
-        toIdentifier,
-        (maxDegrees != null ? maxDegrees : DEFAULT_PATH_DEGREES),
-        avoidParamIds,
-        avoidListIds,
-        forbidAvoided,
-        sourcesParam,
-        forceMinimal,
-        featureMode,
-        withRaw,
-        expectedPathLength,
-        expectedPath,
-        before,
-        after);
+      this.validateEntityPathResponse(
+          testInfo,
+          response,
+          uriText,
+          fromIdentifer,
+          toIdentifier,
+          (maxDegrees != null ? maxDegrees : DEFAULT_PATH_DEGREES),
+          avoidParamIds,
+          avoidListIds,
+          forbidAvoided,
+          sourcesParam,
+          forceMinimal,
+          featureMode,
+          withRaw,
+          expectedPathLength,
+          expectedPath,
+          before,
+          after);
+    });
   }
 
   private void validateEntityPathResponse(
@@ -1270,7 +1270,8 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       List<List<SzRecordId>>   expectedPaths,
       Set<SzRecordId>          expectedEntities)
   {
-    String testInfo = "entityParam=[ " + entityParam
+    this.performTest(() -> {
+      String testInfo = "entityParam=[ " + entityParam
         + " ], entityList=[ " + entityList
         + " ], maxDegrees=[ " + maxDegrees
         + " ], buildOut=[ " + buildOut
@@ -1279,64 +1280,63 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
         + " ], featureMode=[ " + featureMode
         + " ], withRaw=[ " + withRaw + " ]";
 
-    this.assumeNativeApiAvailable();
+      SzEntityIdentifiers entityParamIds
+          = this.normalizeIdentifiers(entityParam,false);
 
-    SzEntityIdentifiers entityParamIds
-        = this.normalizeIdentifiers(entityParam,false);
+      SzEntityIdentifiers entityListIds
+          = this.normalizeIdentifiers(entityList,false);
 
-    SzEntityIdentifiers entityListIds
-        = this.normalizeIdentifiers(entityList,false);
+      StringBuilder sb = new StringBuilder();
+      sb.append("entity-networks");
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("entity-networks");
+      buildNetworkQueryString(sb,
+                              entityParamIds,
+                              entityListIds,
+                              maxDegrees,
+                              buildOut,
+                              maxEntities,
+                              forceMinimal,
+                              featureMode,
+                              withRaw);
 
-    buildNetworkQueryString(sb,
-                            entityParamIds,
-                            entityListIds,
-                            maxDegrees,
-                            buildOut,
-                            maxEntities,
-                            forceMinimal,
-                            featureMode,
-                            withRaw);
+      String uriText = this.formatServerUri(sb.toString());
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    String uriText = this.formatServerUri(sb.toString());
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      long before = System.currentTimeMillis();
 
-    long before = System.currentTimeMillis();
+      SzEntityNetworkResponse response
+          = this.entityGraphServices.getEntityNetwork(
+          formatIdentifierParam(entityParamIds),
+          formatIdentifierList(entityListIds),
+          (maxDegrees == null   ? DEFAULT_NETWORK_DEGREES : maxDegrees),
+          (buildOut == null     ? DEFAULT_BUILD_OUT : buildOut),
+          (maxEntities == null  ? DEFAULT_MAX_ENTITIES : maxEntities),
+          (forceMinimal == null ? false : forceMinimal),
+          (featureMode == null  ? WITH_DUPLICATES : featureMode),
+          (withRaw == null      ? false : withRaw),
+          uriInfo);
 
-    SzEntityNetworkResponse response
-        = this.entityGraphServices.getEntityNetwork(
-            formatIdentifierParam(entityParamIds),
-            formatIdentifierList(entityListIds),
-            (maxDegrees == null   ? DEFAULT_NETWORK_DEGREES : maxDegrees),
-            (buildOut == null     ? DEFAULT_BUILD_OUT : buildOut),
-            (maxEntities == null  ? DEFAULT_MAX_ENTITIES : maxEntities),
-            (forceMinimal == null ? false : forceMinimal),
-            (featureMode == null  ? WITH_DUPLICATES : featureMode),
-            (withRaw == null      ? false : withRaw),
-            uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
-
-    this.validateEntityNetworkResponse(
-        testInfo,
-        response,
-        uriText,
-        entityParamIds,
-        entityListIds,
-        (maxDegrees != null) ? maxDegrees : DEFAULT_NETWORK_DEGREES,
-        (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
-        (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
-        forceMinimal,
-        featureMode,
-        withRaw,
-        expectedPathCount,
-        expectedPaths,
-        expectedEntities,
-        before,
-        after);
+      this.validateEntityNetworkResponse(
+          testInfo,
+          response,
+          uriText,
+          entityParamIds,
+          entityListIds,
+          (maxDegrees != null) ? maxDegrees : DEFAULT_NETWORK_DEGREES,
+          (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
+          (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
+          forceMinimal,
+          featureMode,
+          withRaw,
+          expectedPathCount,
+          expectedPaths,
+          expectedEntities,
+          before,
+          after);
+    });
   }
 
   @ParameterizedTest
@@ -1354,62 +1354,62 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       List<List<SzRecordId>>   expectedPaths,
       Set<SzRecordId>          expectedEntities)
   {
-    String testInfo = "entityParam=[ " + entityParam
-        + " ], entityList=[ " + entityList
-        + " ], maxDegrees=[ " + maxDegrees
-        + " ], buildOut=[ " + buildOut
-        + " ], maxEntities=[ " + maxEntities
-        + " ], forceMinimal=[ " + forceMinimal
-        + " ], featureMode=[ " + featureMode
-        + " ], withRaw=[ " + withRaw + " ]";
+    this.performTest(() -> {
+      String testInfo = "entityParam=[ " + entityParam
+          + " ], entityList=[ " + entityList
+          + " ], maxDegrees=[ " + maxDegrees
+          + " ], buildOut=[ " + buildOut
+          + " ], maxEntities=[ " + maxEntities
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withRaw=[ " + withRaw + " ]";
 
-    this.assumeNativeApiAvailable();
+      SzEntityIdentifiers entityParamIds
+          = this.normalizeIdentifiers(entityParam,false);
 
-    SzEntityIdentifiers entityParamIds
-        = this.normalizeIdentifiers(entityParam,false);
+      SzEntityIdentifiers entityListIds
+          = this.normalizeIdentifiers(entityList,false);
 
-    SzEntityIdentifiers entityListIds
-        = this.normalizeIdentifiers(entityList,false);
+      StringBuilder sb = new StringBuilder();
+      sb.append("entity-networks");
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("entity-networks");
+      buildNetworkQueryString(sb,
+                              entityParamIds,
+                              entityListIds,
+                              maxDegrees,
+                              buildOut,
+                              maxEntities,
+                              forceMinimal,
+                              featureMode,
+                              withRaw);
 
-    buildNetworkQueryString(sb,
-                            entityParamIds,
-                            entityListIds,
-                            maxDegrees,
-                            buildOut,
-                            maxEntities,
-                            forceMinimal,
-                            featureMode,
-                            withRaw);
+      String uriText = this.formatServerUri(sb.toString());
 
-    String uriText = this.formatServerUri(sb.toString());
+      long before = System.currentTimeMillis();
 
-    long before = System.currentTimeMillis();
+      SzEntityNetworkResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzEntityNetworkResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    SzEntityNetworkResponse response = this.invokeServerViaHttp(
-        GET, uriText, SzEntityNetworkResponse.class);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
-
-    this.validateEntityNetworkResponse(
-        testInfo,
-        response,
-        uriText,
-        entityParamIds,
-        entityListIds,
-        (maxDegrees != null) ? maxDegrees : DEFAULT_NETWORK_DEGREES,
-        (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
-        (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
-        forceMinimal,
-        featureMode,
-        withRaw,
-        expectedPathCount,
-        expectedPaths,
-        expectedEntities,
-        before,
-        after);
+      this.validateEntityNetworkResponse(
+          testInfo,
+          response,
+          uriText,
+          entityParamIds,
+          entityListIds,
+          (maxDegrees != null) ? maxDegrees : DEFAULT_NETWORK_DEGREES,
+          (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
+          (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
+          forceMinimal,
+          featureMode,
+          withRaw,
+          expectedPathCount,
+          expectedPaths,
+          expectedEntities,
+          before,
+          after);
+    });
   }
 
   @ParameterizedTest
@@ -1427,73 +1427,73 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       List<List<SzRecordId>>   expectedPaths,
       Set<SzRecordId>          expectedEntities)
   {
-    String testInfo = "entityParam=[ " + entityParam
-        + " ], entityList=[ " + entityList
-        + " ], maxDegrees=[ " + maxDegrees
-        + " ], buildOut=[ " + buildOut
-        + " ], maxEntities=[ " + maxEntities
-        + " ], forceMinimal=[ " + forceMinimal
-        + " ], featureMode=[ " + featureMode
-        + " ], withRaw=[ " + withRaw + " ]";
+    this.performTest(() -> {
+      String testInfo = "entityParam=[ " + entityParam
+          + " ], entityList=[ " + entityList
+          + " ], maxDegrees=[ " + maxDegrees
+          + " ], buildOut=[ " + buildOut
+          + " ], maxEntities=[ " + maxEntities
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withRaw=[ " + withRaw + " ]";
 
-    this.assumeNativeApiAvailable();
+      SzEntityIdentifiers entityParamIds
+          = this.normalizeIdentifiers(entityParam,true);
 
-    SzEntityIdentifiers entityParamIds
-        = this.normalizeIdentifiers(entityParam,true);
+      SzEntityIdentifiers entityListIds
+          = this.normalizeIdentifiers(entityList,true);
 
-    SzEntityIdentifiers entityListIds
-        = this.normalizeIdentifiers(entityList,true);
+      StringBuilder sb = new StringBuilder();
+      sb.append("entity-networks");
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("entity-networks");
+      buildNetworkQueryString(sb,
+                              entityParamIds,
+                              entityListIds,
+                              maxDegrees,
+                              buildOut,
+                              maxEntities,
+                              forceMinimal,
+                              featureMode,
+                              withRaw);
 
-    buildNetworkQueryString(sb,
-                            entityParamIds,
-                            entityListIds,
-                            maxDegrees,
-                            buildOut,
-                            maxEntities,
-                            forceMinimal,
-                            featureMode,
-                            withRaw);
+      String uriText = this.formatServerUri(sb.toString());
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    String uriText = this.formatServerUri(sb.toString());
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      long before = System.currentTimeMillis();
 
-    long before = System.currentTimeMillis();
+      SzEntityNetworkResponse response
+          = this.entityGraphServices.getEntityNetwork(
+          formatIdentifierParam(entityParamIds),
+          formatIdentifierList(entityListIds),
+          (maxDegrees == null   ? DEFAULT_NETWORK_DEGREES : maxDegrees),
+          (buildOut == null     ? DEFAULT_BUILD_OUT : buildOut),
+          (maxEntities == null  ? DEFAULT_MAX_ENTITIES : maxEntities),
+          (forceMinimal == null ? false : forceMinimal),
+          (featureMode == null  ? WITH_DUPLICATES : featureMode),
+          (withRaw == null      ? false : withRaw),
+          uriInfo);
 
-    SzEntityNetworkResponse response
-        = this.entityGraphServices.getEntityNetwork(
-        formatIdentifierParam(entityParamIds),
-        formatIdentifierList(entityListIds),
-        (maxDegrees == null   ? DEFAULT_NETWORK_DEGREES : maxDegrees),
-        (buildOut == null     ? DEFAULT_BUILD_OUT : buildOut),
-        (maxEntities == null  ? DEFAULT_MAX_ENTITIES : maxEntities),
-        (forceMinimal == null ? false : forceMinimal),
-        (featureMode == null  ? WITH_DUPLICATES : featureMode),
-        (withRaw == null      ? false : withRaw),
-        uriInfo);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
-
-    this.validateEntityNetworkResponse(
-        testInfo,
-        response,
-        uriText,
-        entityParamIds,
-        entityListIds,
-        (maxDegrees != null) ? maxDegrees : DEFAULT_NETWORK_DEGREES,
-        (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
-        (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
-        forceMinimal,
-        featureMode,
-        withRaw,
-        expectedPathCount,
-        expectedPaths,
-        expectedEntities,
-        before,
-        after);
+      this.validateEntityNetworkResponse(
+          testInfo,
+          response,
+          uriText,
+          entityParamIds,
+          entityListIds,
+          (maxDegrees != null) ? maxDegrees : DEFAULT_NETWORK_DEGREES,
+          (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
+          (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
+          forceMinimal,
+          featureMode,
+          withRaw,
+          expectedPathCount,
+          expectedPaths,
+          expectedEntities,
+          before,
+          after);
+    });
   }
 
   @ParameterizedTest
@@ -1511,62 +1511,62 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       List<List<SzRecordId>>   expectedPaths,
       Set<SzRecordId>          expectedEntities)
   {
-    String testInfo = "entityParam=[ " + entityParam
-        + " ], entityList=[ " + entityList
-        + " ], maxDegrees=[ " + maxDegrees
-        + " ], buildOut=[ " + buildOut
-        + " ], maxEntities=[ " + maxEntities
-        + " ], forceMinimal=[ " + forceMinimal
-        + " ], featureMode=[ " + featureMode
-        + " ], withRaw=[ " + withRaw + " ]";
+    this.performTest(() -> {
+      String testInfo = "entityParam=[ " + entityParam
+          + " ], entityList=[ " + entityList
+          + " ], maxDegrees=[ " + maxDegrees
+          + " ], buildOut=[ " + buildOut
+          + " ], maxEntities=[ " + maxEntities
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withRaw=[ " + withRaw + " ]";
 
-    this.assumeNativeApiAvailable();
+      SzEntityIdentifiers entityParamIds
+          = this.normalizeIdentifiers(entityParam,true);
 
-    SzEntityIdentifiers entityParamIds
-        = this.normalizeIdentifiers(entityParam,true);
+      SzEntityIdentifiers entityListIds
+          = this.normalizeIdentifiers(entityList,true);
 
-    SzEntityIdentifiers entityListIds
-        = this.normalizeIdentifiers(entityList,true);
+      StringBuilder sb = new StringBuilder();
+      sb.append("entity-networks");
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("entity-networks");
+      buildNetworkQueryString(sb,
+                              entityParamIds,
+                              entityListIds,
+                              maxDegrees,
+                              buildOut,
+                              maxEntities,
+                              forceMinimal,
+                              featureMode,
+                              withRaw);
 
-    buildNetworkQueryString(sb,
-                            entityParamIds,
-                            entityListIds,
-                            maxDegrees,
-                            buildOut,
-                            maxEntities,
-                            forceMinimal,
-                            featureMode,
-                            withRaw);
+      String uriText = this.formatServerUri(sb.toString());
 
-    String uriText = this.formatServerUri(sb.toString());
+      long before = System.currentTimeMillis();
 
-    long before = System.currentTimeMillis();
+      SzEntityNetworkResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzEntityNetworkResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
 
-    SzEntityNetworkResponse response = this.invokeServerViaHttp(
-        GET, uriText, SzEntityNetworkResponse.class);
-    response.concludeTimers();
-    long after = System.currentTimeMillis();
-
-    this.validateEntityNetworkResponse(
-        testInfo,
-        response,
-        uriText,
-        entityParamIds,
-        entityListIds,
-        (maxDegrees != null) ? maxDegrees : DEFAULT_NETWORK_DEGREES,
-        (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
-        (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
-        forceMinimal,
-        featureMode,
-        withRaw,
-        expectedPathCount,
-        expectedPaths,
-        expectedEntities,
-        before,
-        after);
+      this.validateEntityNetworkResponse(
+          testInfo,
+          response,
+          uriText,
+          entityParamIds,
+          entityListIds,
+          (maxDegrees != null) ? maxDegrees : DEFAULT_NETWORK_DEGREES,
+          (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
+          (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
+          forceMinimal,
+          featureMode,
+          withRaw,
+          expectedPathCount,
+          expectedPaths,
+          expectedEntities,
+          before,
+          after);
+    });
   }
 
   private void validateEntityNetworkResponse(

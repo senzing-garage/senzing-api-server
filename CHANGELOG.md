@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.6] - 2019-09-24
+
+### Changes in 1.7.6
+
+- Updated dependency on FasterBind's Jackson library to version 2.9.10 to 
+address security vulnerabilities.
+- Updated repository manager code used for JUnit tests to check for errors
+when initializing the configuration manager and when creating the standard
+configuration.
+- Updated 
+
 ## [1.7.5] - 2019-09-17
 
 ### Changes in 1.7.5
