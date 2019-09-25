@@ -215,7 +215,7 @@ public class ConfigServicesTest extends AbstractServiceTest
   }
 
   @AfterAll public void teardownEnvironment() {
-    this.teardownTestEnvironment(true);
+    this.teardownTestEnvironment();
   }
 
   @Test public void getDataSourcesTest() {
