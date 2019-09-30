@@ -211,7 +211,7 @@ public class CommandLineUtilities {
         pw.flush();
         System.err.println();
         System.err.println(msg);
-        setLastLoggedException(new IllegalArgumentException(msg));
+        setLastLoggedAndThrow(new IllegalArgumentException(msg));
       }
     }
 
