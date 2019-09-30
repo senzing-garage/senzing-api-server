@@ -65,7 +65,6 @@ public abstract class AbstractServiceTest {
       try {
         engineApi = new G2JNI();
       } catch (Throwable ignore) {
-        ignore.printStackTrace();
         // do nothing
       }
     } finally {
@@ -210,11 +209,11 @@ public abstract class AbstractServiceTest {
    * initialize and start the Senzing API Server.
    */
   protected void initializeTestEnvironment() {
+    if (!NATIVE_API_AVAILABLE) return;
     String moduleName = this.getModuleName("RepoMgr (create)");
     RepositoryManager.setThreadModuleName(moduleName);
     boolean concluded = false;
     try {
-      if (!NATIVE_API_AVAILABLE) return;
       RepositoryManager.createRepo(this.getRepositoryDirectory(), true);
       this.repoCreated = true;
 
