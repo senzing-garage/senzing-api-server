@@ -883,10 +883,13 @@ public class SzApiServer implements SzApiProvider {
     Map<SzApiServerOption, ?> options = null;
     try {
       options = parseCommandLine(args);
+
     } catch (Exception e) {
-      System.err.println();
-      System.err.println(e.getMessage());
-      System.err.println();
+      if (!isLastLoggedException(e)) {
+        System.err.println();
+        System.err.println(e.getMessage());
+        System.err.println();
+      }
       System.err.println(SzApiServer.getUsageString());
       System.exit(1);
     }
@@ -1205,7 +1208,9 @@ public class SzApiServer implements SzApiProvider {
         this.initJson = JsonUtils.iniToJson(this.iniFile);
       }
     }
-    
+
+    this.configId = (Long) options.get(SzApiServerOption.CONFIG_ID);
+
     // validate the init JSON
     this.configType = getConfigType(this.moduleName, this.initJson);
     if (this.configType == null) {
@@ -1303,12 +1308,9 @@ public class SzApiServer implements SzApiProvider {
       pw.flush();
       String msg = sw.toString();
       System.err.println(msg);
-
     }
 
     this.allowedOrigins = (String) options.get(SzApiServerOption.ALLOWED_ORIGINS);
-
-    this.configId = (Long) options.get(SzApiServerOption.CONFIG_ID);
 
     this.baseUrl = "http://" + ipAddr.getHostAddress() + ":" + httpPort + "/";
 
