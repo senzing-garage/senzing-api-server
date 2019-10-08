@@ -763,7 +763,8 @@ public abstract class AbstractServiceTest {
 
     // check the timestamp
     if (now < beforeTimestamp || now > afterTimestamp) {
-      fail("Timestamp should be between " + new Date(beforeTimestamp) + " and "
+      fail("Timestamp (" + new Date(now) + ") should be between "
+               + new Date(beforeTimestamp) + " and "
                + new Date(afterTimestamp) + suffix);
     }
     Map<String, Long> timings = meta.getTimings();
