@@ -23,7 +23,13 @@ import static com.senzing.cmdline.CommandLineUtilities.*;
 import static com.senzing.repomgr.RepositoryManagerOption.*;
 
 public class RepositoryManager {
-  private static final File SENZING_DIR;
+  private static final File INSTALL_DIR;
+
+  private static final File CONFIG_DIR;
+
+  private static final File RESOURCE_DIR;
+
+  private static final File SUPPORT_DIR;
 
   private static final G2Engine ENGINE_API;
 
@@ -38,91 +44,178 @@ public class RepositoryManager {
   private static String engineInitializedWith = null;
 
   static {
-    File senzingDir = null;
+    File installDir   = null;
+    File configDir    = null;
+    File resourceDir  = null;
+    File supportDir   = null;
     try {
-      String defaultDir;
+      String defaultInstallPath;
+      String defaultConfigPath = null;
+
       switch (RUNTIME_OS_FAMILY) {
         case WINDOWS:
-          defaultDir = "C:\\Program Files\\Senzing\\g2";
+          defaultInstallPath = "C:\\Program Files\\Senzing\\g2";
           break;
         case MAC_OS:
-          defaultDir = "/Applications/Senzing.app/Contents/Resources/app/g2";
+          defaultInstallPath = "/Applications/Senzing.app/Contents/Resources/app/g2";
           break;
         case UNIX:
-          defaultDir = "/opt/senzing/g2";
+          defaultInstallPath = "/opt/senzing/g2";
+          defaultConfigPath = "/etc/opt/senzing";
           break;
         default:
           throw new ExceptionInInitializerError(
               "Unrecognized Operating System: " + RUNTIME_OS_FAMILY);
       }
 
-      // check environment for SENZING_DIR
-      String envVariable = "SENZING_DIR";
-      String senzingPath = System.getenv(envVariable);
-      if (senzingPath == null) {
-        // check environment for SENZING_ROOT
-        envVariable = "SENZING_ROOT";
-        senzingPath = System.getenv(envVariable);
-      }
-      if (senzingPath == null) {
-        envVariable = null;
-        senzingPath = defaultDir;
-      }
+      // check for senzing system properties
+      String installPath  = System.getProperty("senzing.install.dir");
+      String configPath   = System.getProperty("senzing.config.dir");
+      String resourcePath = System.getProperty("senzing.resource.dir");
 
       // check the senzing directory
-      senzingDir = new File(senzingPath);
-      if (!senzingDir.exists()) {
+      installDir = new File(installPath == null ? defaultInstallPath : installPath);
+      if (!installDir.exists()) {
         System.err.println("Could not find Senzing installation directory:");
-        System.err.println("     " + senzingPath);
+        System.err.println("     " + installDir);
         System.err.println();
-        if (envVariable != null) {
+        if (installPath != null) {
           System.err.println(
-              "Check the " + envVariable + " environment variable");
+              "Check the -Dsenzing.install.dir=[path] command line option.");
+        } else {
+          System.err.println(
+              "Use the -Dsenzing.install.dir=[path] command line option to "
+              + "specify a path");
         }
 
         throw new ExceptionInInitializerError(
-            "Could not find Senzing installation directory: " + senzingPath);
+            "Could not find Senzing installation directory: " + installDir);
       }
 
       // normalize the senzing directory
-      String dirName = senzingDir.getName();
-      if (senzingDir.isDirectory()
+      String dirName = installDir.getName();
+      if (installDir.isDirectory()
           && !dirName.equalsIgnoreCase("g2")) {
         if (RUNTIME_OS_FAMILY == MAC_OS) {
           // for macOS be tolerant of Senzing.app or the electron app dir
           if (dirName.equalsIgnoreCase("Senzing.app")) {
-            File contents = new File(senzingDir, "Contents");
+            File contents = new File(installDir, "Contents");
             File resources = new File(contents, "Resources");
-            senzingDir = new File(resources, "app");
-            dirName = senzingDir.getName();
+            installDir = new File(resources, "app");
+            dirName = installDir.getName();
           }
           if (dirName.equalsIgnoreCase("app")) {
-            senzingDir = new File(senzingDir, "g2");
+            installDir = new File(installDir, "g2");
           }
         } else if (dirName.equalsIgnoreCase("senzing")) {
           // for windows or linux allow the "Senzing" dir as well
-          senzingDir = new File(senzingDir, "g2");
+          installDir = new File(installDir, "g2");
         }
       }
 
-      if (!senzingDir.isDirectory()
-          || (!(new File(senzingDir, "data")).exists())
-          || (!(new File(senzingDir, "data")).isDirectory())) {
+      if (!installDir.isDirectory()
+          || (!(new File(installDir, "data")).exists())
+          || (!(new File(installDir, "data")).isDirectory())) {
         System.err.println("Senzing installation directory appears invalid:");
-        System.err.println("     " + senzingPath);
+        System.err.println("     " + installDir);
         System.err.println();
-        if (envVariable != null) {
+        if (installPath != null) {
           System.err.println(
-              "Check the " + envVariable + " environment variable");
+              "Check the -Dsenzing.install.dir=[path] command line option.");
+        } else {
+          System.err.println(
+              "Use the -Dsenzing.install.dir=[path] command line option to "
+                  + "specify a path");
         }
 
         throw new ExceptionInInitializerError(
-            "Could not find Senzing installation directory: " + senzingPath);
+            "Invalid Senzing installation directory: " + installDir);
       }
+
+      // get the support path
+      supportDir = new File(installDir, "data");
+
+      // check the config path
+      if (configPath != null) {
+        configDir = new File(configPath);
+      }
+      if (configDir == null && defaultConfigPath != null) {
+        configDir = new File(defaultConfigPath);
+      }
+      if (configPath != null && !configDir.exists()) {
+        System.err.println(
+            "The -Dsenzing.config.dir=[path] option specifies a path that does not exist:");
+        System.err.println(
+            "         " + configPath);
+
+        throw new ExceptionInInitializerError(
+            "Explicit config path does not exist: " + configPath);
+      }
+      if (configDir != null && configDir.exists()) {
+        if (!configDir.isDirectory()) {
+          System.err.println(
+              "The -Dsenzing.config.dir=[path] option specifies a file, not a directory:");
+          System.err.println(
+              "         " + configPath);
+
+          throw new ExceptionInInitializerError(
+              "Explicit config path is not directory: " + configPath);
+        }
+
+        String[] requiredFiles = { "cfgVariant.json" };
+        List<String> missingFiles = new ArrayList<>(requiredFiles.length);
+
+        for (String fileName : requiredFiles) {
+          File configFile   = new File(configDir, fileName);
+          File supportFile  = new File(supportDir, fileName);
+          if (!configFile.exists() && !supportFile.exists()) {
+            missingFiles.add(fileName);
+          }
+        }
+        if (missingFiles.size() > 0 && configPath != null) {
+          System.err.println(
+              "The -Dsenzing.config.dir=[path] option specifies an invalid config directory:");
+          for (String missing : missingFiles) {
+            System.err.println(
+                "         " + missing + " was not found");
+          }
+          throw new ExceptionInInitializerError(
+              "Explicit config path missing required files: " + missingFiles);
+        }
+      }
+
+      // now determine the resource path
+      resourceDir = (resourcePath == null) ? null : new File(resourcePath);
+      if (resourceDir == null) {
+        resourceDir = new File(installDir, "resources");
+      }
+      if (resourcePath != null) {
+        if (!resourceDir.exists()) {
+          System.err.println(
+              "The -Dsenzing.resource.dir=[path] option specifies a path that does not exist:");
+          System.err.println(
+              "         " + resourcePath);
+
+          throw new ExceptionInInitializerError(
+              "Explicit resource path does not exist: " + resourcePath);
+        }
+        if (!resourceDir.isDirectory()) {
+          System.err.println(
+              "The -Dsenzing.resource.dir=[path] option specifies an invalid resource directory:");
+          throw new ExceptionInInitializerError(
+              "Explicit resource path is not a directory: " + resourcePath);
+        }
+      } else if (!resourceDir.exists() || !resourceDir.isDirectory()) {
+        resourceDir = null;
+      }
+
     } catch (Exception e) {
       e.printStackTrace();
     } finally {
-      SENZING_DIR = senzingDir;
+      INSTALL_DIR   = installDir;
+      CONFIG_DIR    = configDir;
+      SUPPORT_DIR   = supportDir;
+      RESOURCE_DIR  = resourceDir;
     }
 
     G2Engine    engineApi     = null;
@@ -141,7 +234,7 @@ public class RepositoryManager {
       configMgrApi  = (G2ConfigMgr) (configMgrApiClass.newInstance());
 
     } catch (Exception e) {
-      File libPath = new File(SENZING_DIR, "lib");
+      File libPath = new File(INSTALL_DIR, "lib");
       e.printStackTrace();
       System.err.println();
       switch (RUNTIME_OS_FAMILY) {
@@ -562,8 +655,7 @@ public class RepositoryManager {
     }
     try {
       directory.mkdirs();
-      File dataDir    = new File(SENZING_DIR, "data");
-      File templateDB = new File(dataDir, "G2C.db");
+      File templateDB = new File(SUPPORT_DIR, "G2C.db");
 
       copyFile(templateDB, new File(directory, "G2C.db"));
       copyFile(templateDB, new File(directory, "G2_RES.db"));
@@ -577,7 +669,13 @@ public class RepositoryManager {
       File jsonInitFile = new File(directory, "g2-init.json");
       JsonObjectBuilder builder = Json.createObjectBuilder();
       JsonObjectBuilder subBuilder = Json.createObjectBuilder();
-      subBuilder.add("SUPPORTPATH", dataDir.getCanonicalPath());
+      subBuilder.add("SUPPORTPATH", SUPPORT_DIR.toString());
+      if (RESOURCE_DIR != null) {
+        subBuilder.add("RESOURCEPATH", RESOURCE_DIR.toString());
+      }
+      if (CONFIG_DIR != null) {
+        subBuilder.add("CONFIGPATH", CONFIG_DIR.toString());
+      }
       subBuilder.add("LICENSEFILE", licensePath.getCanonicalPath());
       builder.add("PIPELINE", subBuilder);
 
@@ -606,7 +704,7 @@ public class RepositoryManager {
       builder.add("C2", subBuilder);
 
       JsonObject  initJson      = builder.build();
-      String      initJsonText  = JsonUtils.toJsonText(initJson);
+      String      initJsonText  = JsonUtils.toJsonText(initJson, true);
 
       try (FileOutputStream   fos = new FileOutputStream(jsonInitFile);
            OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8"))
@@ -619,7 +717,7 @@ public class RepositoryManager {
       initBaseApis(directory, false);
       try {
         long configId = CONFIG_API.create();
-        if (configId < 0) {
+        if (configId <= 0) {
           String msg = logError("G2Config.create()", CONFIG_API);
           throw new IllegalStateException(msg);
         }
