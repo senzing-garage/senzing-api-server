@@ -55,6 +55,7 @@ test-repos
 
 # extra ignores
 public/
+artifacts/
 
 # build output directories
 dist
