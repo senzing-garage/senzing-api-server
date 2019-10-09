@@ -1,0 +1,56 @@
+FROM centos:7
+
+# Install system packages.
+
+RUN yum -y install epel-release \
+ && yum -y update \
+ && yum -y install \
+      jq \
+      maven \
+ && yum clean all
+
+# Identify files stored in git repository artifacts directory.
+
+ENV SENZING_API_RPM=senzingapi-1.12.0-19276.x86_64.rpm
+ENV SENZING_DATA_RPM=senzingdata-v1-1.0.0-19276.x86_64.rpm
+
+# Copy files into docker image.
+
+COPY . /git-repository
+
+# Set environment variables.
+
+ENV LD_LIBRARY_PATH=/opt/senzing/g2/lib
+ENV PYTHONPATH=/opt/senzing/g2/python
+ENV SENZING_ETC_DIR=/etc/opt/senzing
+ENV SENZING_G2_DIR=/opt/senzing/g2
+ENV SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA
+
+# Install Senzing.
+
+RUN yum install -y \
+    /git-repository/artifacts/${SENZING_DATA_RPM} \
+    /git-repository/artifacts/${SENZING_API_RPM}
+
+# Create files from templates.
+
+RUN cp --no-clobber ${SENZING_ETC_DIR}/cfgVariant.json.template ${SENZING_ETC_DIR}/cfgVariant.json \
+ && cp --no-clobber ${SENZING_ETC_DIR}/g2config.json.template   ${SENZING_ETC_DIR}/g2config.json \
+ && cp --no-clobber ${SENZING_ETC_DIR}/G2Module.ini.template    ${SENZING_ETC_DIR}/G2Module.ini \
+ && cp --no-clobber ${SENZING_ETC_DIR}/stb.config.template      ${SENZING_ETC_DIR}/stb.config
+
+# Install g2.jar file into maven repository
+
+WORKDIR /git-repository
+
+RUN export SENZING_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq -r .BUILD_VERSION) \
+ && mvn install:install-file \
+      -Dfile=${SENZING_G2_DIR}/lib/g2.jar \
+      -DgroupId=com.senzing \
+      -DartifactId=g2 \
+      -Dversion=${SENZING_VERSION} \
+      -Dpackaging=jar
+
+# Create and install senzing-api-server.jar.
+
+RUN mvn install
