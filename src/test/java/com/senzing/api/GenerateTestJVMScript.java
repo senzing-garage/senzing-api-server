@@ -52,12 +52,12 @@ public class GenerateTestJVMScript {
       }
     }
 
-    System.err.println("*********************************************");
-    System.err.println();
-    System.err.println("senzing.install.dir = " + senzingDirPath);
-    System.err.println("java.home = " + javaHome);
-    System.err.println();
-    System.err.println("*********************************************");
+    System.out.println("*********************************************");
+    System.out.println();
+    System.out.println("senzing.install.dir = " + senzingDirPath);
+    System.out.println("java.home = " + javaHome);
+    System.out.println();
+    System.out.println("*********************************************");
 
     File libDir = null;
     File platformLibDir = null;
