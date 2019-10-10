@@ -53,4 +53,5 @@ RUN export SENZING_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq -r .BU
 
 # Create and install senzing-api-server.jar.
 
-RUN mvn install
+# RUN mvn install
+RUN mvn package
