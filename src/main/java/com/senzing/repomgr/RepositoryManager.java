@@ -2,7 +2,6 @@ package com.senzing.repomgr;
 
 import com.senzing.cmdline.CommandLineUtilities;
 import com.senzing.g2.engine.*;
-import com.senzing.io.IOUtilities;
 import com.senzing.util.JsonUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -132,7 +131,7 @@ public class RepositoryManager {
       }
 
       String supportPath = System.getProperty("senzing.support.dir");
-      if (supportPath == null) {
+      if (supportPath == null || supportPath.trim().length() == 0) {
         // try to determine the support path
         File installParent = installDir.getParentFile();
         File dataRoot = new File(installParent, "data");
@@ -154,11 +153,19 @@ public class RepositoryManager {
             if (versionDirs.length == 1) {
               // use the single data version found
               dataVersion = versionDirs[0].getName();
+            } else {
+              System.err.println(
+                  "Could not infer support directory.  Multiple data "
+                  + "directory versions at: ");
+              System.err.println("     " + dataRoot);
+              throw new ExceptionInInitializerError(
+                  "Count not infer support directory.  Multiple data "
+                  + "directory versions found at: " + dataRoot);
             }
-          } else {
-            // use the path for the version number requested
-            supportDir = new File(dataRoot, dataVersion.trim());
           }
+
+          // use the path for the version number requested
+          supportDir = new File(dataRoot, dataVersion.trim());
 
         } else {
           // use the default path
