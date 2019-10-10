@@ -169,6 +169,7 @@ public class RepositoryManager {
         supportDir = new File(supportPath);
       }
 
+      System.out.println("SUPPORT DIR: " + supportDir);
       if (!supportDir.exists()) {
         System.err.println("The support directory does not exist:");
         System.err.println("         " + supportDir);
@@ -740,6 +741,8 @@ public class RepositoryManager {
       }
 
       File templateDB = new File(SUPPORT_DIR, "G2C.db");
+
+      System.out.println("TEMPLATE DB PATH: " + templateDB);
 
       copyFile(templateDB, new File(directory, "G2C.db"));
       copyFile(templateDB, new File(directory, "G2_RES.db"));
