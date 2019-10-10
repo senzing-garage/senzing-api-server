@@ -61,8 +61,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   private EntityDataServices entityDataServices;
 
-  private int counter = 0;
-  
   @BeforeAll
   public void initializeEnvironment() {
     this.initializeTestEnvironment();
@@ -210,7 +208,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @Test
   public void getRecordTest() {
-    System.out.println("RUNNING (" + (counter++) + ") getRecordTest()");
     this.performTest(() -> {
       final String dataSource = ABC123.getDataSourceCode();
       final String recordId = ABC123.getRecordId();
@@ -243,7 +240,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @Test
   public void getRecordTestViaHttp() {
-    System.out.println("RUNNING (" + (counter++) + ") getRecordTestViaHttp()");
     this.performTest(() -> {
       final String dataSource = DEF456.getDataSourceCode();
       final String recordId = DEF456.getRecordId();
@@ -276,7 +272,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @Test
   public void getRecordWithRawTest() {
-    System.out.println("RUNNING (" + (counter++) + ") getRecordWithRawTest()");
     this.performTest(() -> {
       final String dataSource = GHI789.getDataSourceCode();
       final String recordId = GHI789.getRecordId();
@@ -310,7 +305,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @Test
   public void getRecordWithRawTestViaHttp() {
-    System.out.println("RUNNING (" + (counter++) + ") getRecordWithRawTestViaHttp()");
     this.performTest(() -> {
       final String dataSource = JKL012.getDataSourceCode();
       final String recordId = JKL012.getRecordId();
@@ -344,7 +338,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @Test
   public void getRecordWithoutRawTest() {
-    System.out.println("RUNNING (" + (counter++) + ") getRecordWithoutRawTest()");
     this.performTest(() -> {
       final String dataSource = MNO345.getDataSourceCode();
       final String recordId = MNO345.getRecordId();
@@ -378,7 +371,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @Test
   public void getRecordWithoutRawTestViaHttp() {
-    System.out.println("RUNNING (" + (counter++) + ") getRecordWithoutRawTestViaHttp()");
     this.performTest(() -> {
       final String dataSource = PQR678.getDataSourceCode();
       final String recordId = PQR678.getRecordId();
@@ -413,7 +405,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @Test
   public void getRelatedRecordTest() {
-    System.out.println("RUNNING (" + (counter++) + ") getRelatedRecordTest()");
     this.performTest(() -> {
       final String dataSource = BCD123.getDataSourceCode();
       final String recordId = BCD123.getRecordId();
@@ -447,7 +438,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @Test
   public void getRelatedRecordTestViaHttp() {
-    System.out.println("RUNNING (" + (counter++) + ") getRelatedRecordTestViaHttp()");
     this.performTest(() -> {
       final String dataSource = CDE456.getDataSourceCode();
       final String recordId = CDE456.getRecordId();
@@ -997,7 +987,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Map<SzAttributeClass, Set<String>>  expectedDataValues,
       Set<String>                         expectedOtherDataValues)
   {
-    System.out.println("RUNNING (" + (counter++) + ") getEntityByRecordIdTest()");
     this.performTest(() -> {
       String testInfo = "keyRecord=[ " + keyRecordId
           + " ], forceMinimal=[ " + forceMinimal
@@ -1064,7 +1053,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Map<SzAttributeClass, Set<String>>  expectedDataValues,
       Set<String>                         expectedOtherDataValues)
   {
-    System.out.println("RUNNING (" + (counter++) + ") getEntityByRecordIdTestViaHttp()");
     this.performTest(() -> {
       String testInfo = "keyRecord=[ " + keyRecordId
           + " ], forceMinimal=[ " + forceMinimal
@@ -1108,7 +1096,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @Test
   public void getNotFoundEntityByBadRecordIdTest()
   {
-    System.out.println("RUNNING (" + (counter++) + ") getNotFoundEntityByBadRecordIdTest()");
     this.performTest(() -> {
       final String badRecordId = "ABC123DEF456GHI789";
       StringBuilder sb = new StringBuilder();
@@ -1147,7 +1134,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @Test
   public void getNotFoundEntityByBadDataSourceTest()
   {
-    System.out.println("RUNNING (" + (counter++) + ") getNotFoundEntityByBadDataSourceTest()");
     this.performTest(() -> {
       final String badDataSource = "FOOBAR";
       final String badRecordId = "ABC123DEF456GHI789";
@@ -1187,7 +1173,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @Test
   public void getNotFoundEntityByBadRecordIdTestViaHttp()
   {
-    System.out.println("RUNNING (" + (counter++) + ") getNotFoundEntityByBadRecordIdTestViaHttp()");
     this.performTest(() -> {
       final String badRecordId = "ABC123DEF456GHI789";
       StringBuilder sb = new StringBuilder();
@@ -1210,7 +1195,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @Test
   public void getNotFoundEntityByBadDataSourceTestViaHttp()
   {
-    System.out.println("RUNNING (" + (counter++) + ") getNotFoundEntityByBadDataSourceTestViaHttp()");
     this.performTest(() -> {
       final String badDataSource = "FOOBAR";
       final String badRecordId = "ABC123DEF456GHI789";
@@ -1248,7 +1232,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Map<SzAttributeClass, Set<String>>  expectedDataValues,
       Set<String>                         expectedOtherDataValues)
   {
-    System.out.println("RUNNING (" + (counter++) + ") getEntityByEntityIdTest()");
     this.performTest(() -> {
       String testInfo = "keyRecord=[ " + keyRecordId
           + " ], forceMinimal=[ " + forceMinimal
@@ -1316,7 +1299,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Map<SzAttributeClass, Set<String>>  expectedDataValues,
       Set<String>                         expectedOtherDataValues)
   {
-    System.out.println("RUNNING (" + (counter++) + ") getEntityByEntityIdTestViaHttp()");
     this.performTest(() -> {
       String testInfo = "keyRecord=[ " + keyRecordId
           + " ], forceMinimal=[ " + forceMinimal
@@ -1362,7 +1344,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @Test
   public void getNotFoundEntityByBadEntityIdTest()
   {
-    System.out.println("RUNNING (" + (counter++) + ") getNotFoundEntityByBadEntityIdTest()");
     this.performTest(() -> {
       final long badEntityId = Long.MAX_VALUE;
 
@@ -1397,7 +1378,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @Test
   public void getNotFoundEntityByBadEntityIdTestViaHttp()
   {
-    System.out.println("RUNNING (" + (counter++) + ") getNotFoundEntityByBadEntityIdTestViaHttp()");
     this.performTest(() -> {
       final long badEntityId = Long.MAX_VALUE;
 
@@ -1519,7 +1499,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
                                     Boolean withRelationships,
                                     Boolean withRaw)
   {
-    System.out.println("RUNNING (" + (counter++) + ") searchByJsonAttrsTest()");
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
           + " ], forceMinimal=[ " + forceMinimal
@@ -1599,7 +1578,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Boolean withRelationships,
       Boolean withRaw)
   {
-    System.out.println("RUNNING (" + (counter++) + ") searchByJsonAttrsTestViaHttp()");
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
           + " ], forceMinimal=[ " + forceMinimal
@@ -1671,7 +1649,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Boolean withRelationships,
       Boolean withRaw)
   {
-    System.out.println("RUNNING (" + (counter++) + ") searchByParamAttrsTestViaHttp()");
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
           + " ], forceMinimal=[ " + forceMinimal

@@ -2,6 +2,7 @@ package com.senzing.repomgr;
 
 import com.senzing.cmdline.CommandLineUtilities;
 import com.senzing.g2.engine.*;
+import com.senzing.io.IOUtilities;
 import com.senzing.util.JsonUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -113,9 +114,7 @@ public class RepositoryManager {
         }
       }
 
-      if (!installDir.isDirectory()
-          || (!(new File(installDir, "data")).exists())
-          || (!(new File(installDir, "data")).isDirectory())) {
+      if (!installDir.isDirectory()) {
         System.err.println("Senzing installation directory appears invalid:");
         System.err.println("     " + installDir);
         System.err.println();
@@ -132,8 +131,75 @@ public class RepositoryManager {
             "Invalid Senzing installation directory: " + installDir);
       }
 
-      // get the support path
-      supportDir = new File(installDir, "data");
+      String supportPath = System.getProperty("senzing.support.dir");
+      if (supportPath == null) {
+        // try to determine the support path
+        File installParent = installDir.getParentFile();
+        File dataRoot = new File(installParent, "data");
+        if (dataRoot.exists() && dataRoot.isDirectory()) {
+          File versionFile = new File(installDir, "g2BuildVersion.json");
+          String dataVersion = null;
+          if (versionFile.exists()) {
+            String text = readTextFileAsString(versionFile, "UTF-8");
+            JsonObject jsonObject = JsonUtils.parseJsonObject(text);
+            dataVersion = JsonUtils.getString(jsonObject, "DATA_VERSION");
+          }
+
+          // check if data version was not found
+          if (dataVersion == null) {
+            // look to see if we only have one data version installed
+            File[] versionDirs = dataRoot.listFiles( f -> {
+              return f.getName().matches("\\d+\\.\\d+\\.\\d+");
+            });
+            if (versionDirs.length == 1) {
+              // use the single data version found
+              dataVersion = versionDirs[0].getName();
+            }
+          } else {
+            // use the path for the version number requested
+            supportDir = new File(dataRoot, dataVersion.trim());
+          }
+
+        } else {
+          // use the default path
+          supportDir = new File(installDir, "data");
+        }
+      } else {
+        // use the specified explicit path
+        supportDir = new File(supportPath);
+      }
+
+      if (!supportDir.exists()) {
+        System.err.println("The support directory does not exist:");
+        System.err.println("         " + supportDir);
+        if (supportPath != null) {
+          System.err.println(
+              "Check the -Dsenzing.support.dir=[path] command line option.");
+        } else {
+          System.err.println(
+              "Use the -Dsenzing.support.dir=[path] command line option to "
+                  + "specify a path");
+        }
+
+        throw new ExceptionInInitializerError(
+            "The support directory does not exist: " + supportDir);
+      }
+
+      if (!supportDir.isDirectory()) {
+        System.err.println("The support directory is invalid:");
+        System.err.println("         " + supportDir);
+        if (supportPath != null) {
+          System.err.println(
+              "Check the -Dsenzing.support.dir=[path] command line option.");
+        } else {
+          System.err.println(
+              "Use the -Dsenzing.support.dir=[path] command line option to "
+              + "specify a path");
+        }
+        throw new ExceptionInInitializerError(
+            "The support directory is invalid: " + supportDir);
+
+      }
 
       // check the config path
       if (configPath != null) {
@@ -655,6 +721,24 @@ public class RepositoryManager {
     }
     try {
       directory.mkdirs();
+      File repoConfigDir = null;
+      if (CONFIG_DIR != null) {
+        File[] templateFiles = CONFIG_DIR.listFiles(
+            f -> f.getName().endsWith(".template"));
+        if (templateFiles.length > 0) {
+          repoConfigDir = new File(directory, "config");
+          repoConfigDir.mkdirs();
+          for (File templateFile : templateFiles) {
+            String  templateName  = templateFile.getName();
+            int     nameLength    = templateName.length();
+            int     targetLength  = nameLength - ".template".length();
+            String  targetName    = templateName.substring(0, targetLength);
+            File    targetFile    = new File(repoConfigDir, targetName);
+            copyFile(templateFile, targetFile);
+          }
+        }
+      }
+
       File templateDB = new File(SUPPORT_DIR, "G2C.db");
 
       copyFile(templateDB, new File(directory, "G2C.db"));
@@ -673,7 +757,9 @@ public class RepositoryManager {
       if (RESOURCE_DIR != null) {
         subBuilder.add("RESOURCEPATH", RESOURCE_DIR.toString());
       }
-      if (CONFIG_DIR != null) {
+      if (repoConfigDir != null) {
+        subBuilder.add("CONFIGPATH", repoConfigDir.toString());
+      } else if (CONFIG_DIR != null) {
         subBuilder.add("CONFIGPATH", CONFIG_DIR.toString());
       }
       subBuilder.add("LICENSEFILE", licensePath.getCanonicalPath());
