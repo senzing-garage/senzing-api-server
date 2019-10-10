@@ -8,6 +8,11 @@ defined in by the [Senzing Rest API Proposal](https://github.com/Senzing/senzing
 The [Senzing API OAS specification](http://editor.swagger.io/?url=https://raw.githubusercontent.com/Senzing/senzing-rest-api/master/senzing-rest-api.yaml)
 documents the available API methods, their parameters and the response formats.
 
+### Related artifacts
+
+1. [DockerHub](https://hub.docker.com/r/senzing/senzing-api-server)
+1. [Helm Chart](https://github.com/Senzing/charts/tree/master/charts/senzing-api-server)
+
 ### Contents
 
 1. [Demonstrate using Command Line](#demonstrate-using-command-line)
