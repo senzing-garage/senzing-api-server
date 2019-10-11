@@ -1262,7 +1262,7 @@ public class SzApiServer implements SzApiProvider {
       System.err.println(msg);
       throw new IllegalStateException(msg);
       
-    } if (this.configType == ConfigType.BOTH) {
+    } else if (this.configType == ConfigType.BOTH) {
       File configPath = extractIniConfigPath(this.initJson);
       StringWriter sw = new StringWriter();
       PrintWriter pw = new PrintWriter(sw);
