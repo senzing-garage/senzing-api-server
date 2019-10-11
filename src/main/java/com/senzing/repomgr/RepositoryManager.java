@@ -31,11 +31,15 @@ public class RepositoryManager {
 
   private static final File SUPPORT_DIR;
 
+  private static final File TEMPLATES_DIR;
+
   private static final G2Engine ENGINE_API;
 
   private static final G2Config CONFIG_API;
 
   private static final G2ConfigMgr CONFIG_MGR_API;
+
+  private static final Set<String> EXCLUDED_TEMPLATE_FILES;
 
   private static final ThreadLocal<String> THREAD_MODULE_NAME
       = new ThreadLocal<>();
@@ -44,10 +48,20 @@ public class RepositoryManager {
   private static String engineInitializedWith = null;
 
   static {
+    Set<String> set = new LinkedHashSet<>();
+    set.add("G2Module.ini.template".toLowerCase());
+    set.add("G2Project.ini.template".toLowerCase());
+    set.add("G2C.db.template".toLowerCase());
+    set.add("g2config.json.template".toLowerCase());
+    EXCLUDED_TEMPLATE_FILES = Collections.unmodifiableSet(set);
+  }
+
+  static {
     File installDir   = null;
     File configDir    = null;
     File resourceDir  = null;
     File supportDir   = null;
+    File templatesDir = null;
     try {
       String defaultInstallPath;
       String defaultConfigPath = null;
@@ -263,6 +277,12 @@ public class RepositoryManager {
       if (resourceDir == null) {
         resourceDir = new File(installDir, "resources");
       }
+      if (resourceDir != null && resourceDir.exists()
+          && resourceDir.isDirectory())
+      {
+        templatesDir = new File(resourceDir, "templates");
+      }
+
       if (resourcePath != null) {
         if (!resourceDir.exists()) {
           System.err.println(
@@ -273,23 +293,36 @@ public class RepositoryManager {
           throw new ExceptionInInitializerError(
               "Explicit resource path does not exist: " + resourcePath);
         }
-        if (!resourceDir.isDirectory()) {
+
+        if (!resourceDir.isDirectory()
+            || !templatesDir.exists()
+            || !templatesDir.isDirectory())
+        {
           System.err.println(
-              "The -Dsenzing.resource.dir=[path] option specifies an invalid resource directory:");
+              "The -Dsenzing.resource.dir=[path] option specifies an invalid "
+                  + "resource directory:");
+          System.err.println("         " + resourcePath);
+
           throw new ExceptionInInitializerError(
-              "Explicit resource path is not a directory: " + resourcePath);
+              "Explicit resource path is not valid: " + resourcePath);
         }
-      } else if (!resourceDir.exists() || !resourceDir.isDirectory()) {
-        resourceDir = null;
+
+      } else if (!resourceDir.exists() || !resourceDir.isDirectory()
+                 || !templatesDir.exists() || !templatesDir.isDirectory())
+      {
+        resourceDir   = null;
+        templatesDir  = null;
       }
 
     } catch (Exception e) {
       e.printStackTrace();
+
     } finally {
       INSTALL_DIR   = installDir;
       CONFIG_DIR    = configDir;
       SUPPORT_DIR   = supportDir;
       RESOURCE_DIR  = resourceDir;
+      TEMPLATES_DIR = templatesDir;
     }
 
     G2Engine    engineApi     = null;
@@ -730,11 +763,14 @@ public class RepositoryManager {
     try {
       directory.mkdirs();
       File repoConfigDir = null;
-      if (CONFIG_DIR != null) {
-        File[] templateFiles = CONFIG_DIR.listFiles(
-            f -> f.getName().endsWith(".template"));
-        if (templateFiles.length > 0) {
-          repoConfigDir = new File(directory, "config");
+      if (TEMPLATES_DIR != null) {
+        File[] templateFiles = TEMPLATES_DIR.listFiles(
+            f -> f.getName().endsWith(".template") && !f.isDirectory()
+             && (!EXCLUDED_TEMPLATE_FILES.contains(f.getName().toLowerCase())));
+
+        if (templateFiles.length > 0)
+        {
+          repoConfigDir = new File(directory, "etc");
           repoConfigDir.mkdirs();
           for (File templateFile : templateFiles) {
             String  templateName  = templateFile.getName();
@@ -747,7 +783,13 @@ public class RepositoryManager {
         }
       }
 
-      File templateDB = new File(SUPPORT_DIR, "G2C.db");
+      // find the template DB file
+      File templateDB = (TEMPLATES_DIR != null)
+          ? new File(TEMPLATES_DIR, "G2C.db.template")
+          : new File(SUPPORT_DIR, "G2C.db.template");
+      if (!templateDB.exists()) {
+        templateDB = new File(SUPPORT_DIR, "G2C.db");
+      }
 
       System.out.println("TEMPLATE DB PATH: " + templateDB);
 
