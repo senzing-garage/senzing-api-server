@@ -332,21 +332,27 @@ Identify each output directory.
     export SENZING_VAR_DIR=${SENZING_VOLUME}/var
     ```
 
+### Init container
+
 1. :thinking: If internal database is used, permissions may need to be changed in `/var/opt/senzing`.
    Example:
 
     ```console
-    sudo chmod -R 777 ${SENZING_VAR_DIR}
+    xsudo mkdir ${SENZING_VAR_DIR}/sqlite
+    xsudo chmod -R 777 ${SENZING_VAR_DIR}
+    xsudo cp --no-clobber ${SENZING_G2_DIR}/resources/templates/G2C.db.template    ${SENZING_VAR_DIR}/sqlite/G2C.db
     ```
 
 1. :thinking: Unless previously created, the following files need to be created from their templates.
    Example:
 
     ```console
-    sudo cp --no-clobber ${SENZING_ETC_DIR}/cfgVariant.json.template ${SENZING_ETC_DIR}/cfgVariant.json
-    sudo cp --no-clobber ${SENZING_ETC_DIR}/g2config.json.template   ${SENZING_ETC_DIR}/g2config.json
-    sudo cp --no-clobber ${SENZING_ETC_DIR}/G2Module.ini.template    ${SENZING_ETC_DIR}/G2Module.ini
-    sudo cp --no-clobber ${SENZING_ETC_DIR}/stb.config.template      ${SENZING_ETC_DIR}/stb.config
+
+    xsudo cp --no-clobber ${SENZING_G2_DIR}/resources/templates/G2Module.ini.template    ${SENZING_ETC_DIR}/G2Module.ini
+
+    xsudo cp --no-clobber ${SENZING_ETC_DIR}/cfgVariant.json.template ${SENZING_ETC_DIR}/cfgVariant.json
+    xsudo cp --no-clobber ${SENZING_ETC_DIR}/g2config.json.template   ${SENZING_ETC_DIR}/g2config.json
+    xsudo cp --no-clobber ${SENZING_ETC_DIR}/stb.config.template      ${SENZING_ETC_DIR}/stb.config
     ```
 
 ### Docker network
@@ -403,6 +409,24 @@ Identify each output directory.
 
     ```console
     export SENZING_DATABASE_URL_PARAMETER="--env SENZING_DATABASE_URL=${SENZING_DATABASE_URL}"
+    ```
+
+### Init container
+
+1. Initialize volumes and database.
+   Example:
+
+    ```console
+    sudo docker run \
+      ${SENZING_DATABASE_URL_PARAMETER} \
+      ${SENZING_NETWORK_PARAMETER} \
+      --rm \
+      --user 0 \
+      --volume ${SENZING_DATA_VERSION_DIR}:/opt/senzing/data \
+      --volume ${SENZING_ETC_DIR}:/etc/opt/senzing \
+      --volume ${SENZING_G2_DIR}:/opt/senzing/g2 \
+      --volume ${SENZING_VAR_DIR}:/var/opt/senzing \
+      senzing/init-container
     ```
 
 ### Docker user
