@@ -52,12 +52,12 @@ public class GenerateTestJVMScript {
       }
     }
 
-    System.err.println("*********************************************");
-    System.err.println();
-    System.err.println("senzing.install.dir = " + senzingDirPath);
-    System.err.println("java.home = " + javaHome);
-    System.err.println();
-    System.err.println("*********************************************");
+    System.out.println("*********************************************");
+    System.out.println();
+    System.out.println("senzing.install.dir = " + senzingDirPath);
+    System.out.println("java.home = " + javaHome);
+    System.out.println();
+    System.out.println("*********************************************");
 
     File libDir = null;
     File platformLibDir = null;
@@ -103,8 +103,6 @@ public class GenerateTestJVMScript {
         if (RUNTIME_OS_FAMILY == WINDOWS) {
           pw.println("@echo off");
           pw.println("set Path=" + libraryPath + ";%Path%");
-          pw.println("set SENZING_ROOT="
-                         + quote + senzingDir.getCanonicalPath() + quote);
           pw.println("\"" + javaExecutable.toString() + "\" %*");
 
         } else {
@@ -115,8 +113,6 @@ public class GenerateTestJVMScript {
           }
           pw.println("export LD_LIBRARY_PATH=" + libraryPath
                      + ":$LD_LIBRARY_PATH");
-          pw.println("export SENZING_ROOT="
-                     + quote + senzingDir.getCanonicalPath() + quote);
           pw.println("\"" + javaExecutable.toString() + "\" \"$@\"");
         }
       }

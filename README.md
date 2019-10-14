@@ -8,6 +8,11 @@ defined in by the [Senzing Rest API Proposal](https://github.com/Senzing/senzing
 The [Senzing API OAS specification](http://editor.swagger.io/?url=https://raw.githubusercontent.com/Senzing/senzing-rest-api/master/senzing-rest-api.yaml)
 documents the available API methods, their parameters and the response formats.
 
+### Related artifacts
+
+1. [DockerHub](https://hub.docker.com/r/senzing/senzing-api-server)
+1. [Helm Chart](https://github.com/Senzing/charts/tree/master/charts/senzing-api-server)
+
 ### Contents
 
 1. [Demonstrate using Command Line](#demonstrate-using-command-line)
@@ -397,7 +402,7 @@ Identify each output directory.
    Example:
 
     ```console
-    export SENZING_DATABASE_URL_PARAMETER="--env SENZING_DATABASE_URL=${SENZING_DATABASE_URL}
+    export SENZING_DATABASE_URL_PARAMETER="--env SENZING_DATABASE_URL=${SENZING_DATABASE_URL}"
     ```
 
 ### Docker user
@@ -488,6 +493,7 @@ The following software programs need to be installed:
 
 1. [git](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/install-git.md)
 1. [make](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/install-make.md)
+1. [jq](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/install-jq.md)
 1. [docker](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/install-docker.md)
 
 ### Clone repository
