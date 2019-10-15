@@ -48,83 +48,86 @@ You will also need the Senzing "g2.jar" file installed in your Maven repository.
 The Senzing REST API Server requires version 1.7.x or later of the Senzing API
 and Senzing App.  In order to install g2.jar you must:
 
- 1. Locate your [`${SENZING_G2_DIR}` directory](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/create-senzing-dir.md).
-    The default locations are:
-    - Linux Archive Extraction: `/opt/senzing/g2` (see [Install Instructions](https://github.com/Senzing/hello-senzing-springboot-java/blob/master/doc/debian-based-installation.md#install))
+1. Locate your
+   [SENZING_G2_DIR](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_g2_dir)
+   directory.
+   The default locations are:
+    - [Linux](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/install-senzing-api.md#centos): `/opt/senzing/g2`
     - Windows MSI Installer: `C:\Program Files\Senzing\`
 
- 1. Determine your `${SENZING_VERSION}` version number:
-    - Locate your `g2BuildVersion.json` file:
-        - Linux: `${SENZING_G2_DIR}/data/g2BuildVersion.json`
-        - Windows: `${SENZING_G2_DIR}\data\g2BuildVersion.json`
-    - Find the value for the `"VERSION"` property in the JSON contents.
-      Example:
+1. Determine your `SENZING_G2_JAR_VERSION` version number:
+    1. Locate your `g2BuildVersion.json` file:
+        1. Linux: `${SENZING_G2_DIR}/g2BuildVersion.json`
+        1. Windows: `${SENZING_G2_DIR}\g2BuildVersion.json`
+    1. Find the value for the `"VERSION"` property in the JSON contents.
+       Example:
 
         ```console
         {
             "PLATFORM": "Linux",
-            "VERSION": "1.7.19095",
-            "BUILD_NUMBER": "2019_04_05__02_00"
+            "VERSION": "1.12.0",
+            "BUILD_VERSION": "1.12.0.19284",
+            "BUILD_NUMBER": "2019_10_11__15_46"
         }
         ```
 
- 1. Install the g2.jar file in your local Maven repository, replacing the
-    `${SENZING_G2_DIR}` and `${SENZING_VERSION}` variables as determined above:
+1. Install the `g2.jar` file in your local Maven repository, replacing the
+   `${SENZING_G2_DIR}` and `${SENZING_G2_JAR_VERSION}` variables as determined above:
 
-     - Linux:
+    1. Linux:
 
-       ```console
-             export SENZING_G2_DIR=/opt/senzing/g2
-             export SENZING_VERSION=1.7.19095
+        ```console
+        export SENZING_G2_DIR=/opt/senzing/g2
+        export SENZING_G2_JAR_VERSION=1.12.0
 
-             mvn install:install-file \
-                 -Dfile=${SENZING_G2_DIR}/lib/g2.jar \
-                 -DgroupId=com.senzing \
-                 -DartifactId=g2 \
-                 -Dversion=${SENZING_VERSION} \
-                 -Dpackaging=jar
-       ```
+        mvn install:install-file \
+            -Dfile=${SENZING_G2_DIR}/lib/g2.jar \
+            -DgroupId=com.senzing \
+            -DartifactId=g2 \
+            -Dversion=${SENZING_G2_JAR_VERSION} \
+            -Dpackaging=jar
+        ```
 
-     - Windows:
+    1. Windows:
 
-       ```console
-             set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
-             set SENZING_VERSION=1.7.19095
+        ```console
+        set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
+        set SENZING_G2_JAR_VERSION=1.12.0
 
-             mvn install:install-file \
-                 -Dfile="%SENZING_G2_DIR%\lib\g2.jar" \
-                 -DgroupId=com.senzing \
-                 -DartifactId=g2 \
-                 -Dversion="%SENZING_VERSION%" \
-                 -Dpackaging=jar
-       ```
+        mvn install:install-file \
+            -Dfile="%SENZING_G2_DIR%\lib\g2.jar" \
+            -DgroupId=com.senzing \
+            -DartifactId=g2 \
+            -Dversion="%SENZING_G2_JAR_VERSION%" \
+            -Dpackaging=jar
+        ```
 
- 1. Setup your environment.  The API's rely on native libraries and the
-    environment must be properly setup to find those libraries:
+1. Setup your environment.  The API's rely on native libraries and the
+   environment must be properly setup to find those libraries:
 
-    - Linux
+    1. Linux
 
-       ```console
-          export SENZING_G2_DIR=/opt/senzing/g2
+        ```console
+        export SENZING_G2_DIR=/opt/senzing/g2
 
-          export LD_LIBRARY_PATH=${SENZING_G2_DIR}/lib:${SENZING_G2_DIR}/lib/debian:$LD_LIBRARY_PATH
-       ```
+        export LD_LIBRARY_PATH=${SENZING_G2_DIR}/lib:${SENZING_G2_DIR}/lib/debian:$LD_LIBRARY_PATH
+        ```
 
-    - Windows
+    1. Windows
 
-      ```console
-          set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
+        ```console
+        set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
 
-          set Path=%SENZING_G2_DIR%\lib;%Path%
-      ```
+        set Path=%SENZING_G2_DIR%\lib;%Path%
+        ```
 
 ### Building
 
 To build simply execute:
 
-   ```console
-      mvn install
-   ```
+```console
+mvn install
+```
 
 The JAR file will be contained in the `target` directory under the name `senzing-api-server-[version].jar`.
 
