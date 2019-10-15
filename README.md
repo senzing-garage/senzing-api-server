@@ -52,8 +52,8 @@ and Senzing App.  In order to install g2.jar you must:
    [SENZING_G2_DIR](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_g2_dir)
    directory.
    The default locations are:
-    - [Linux](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/install-senzing-api.md#centos): `/opt/senzing/g2`
-    - Windows MSI Installer: `C:\Program Files\Senzing\`
+    1. [Linux](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/install-senzing-api.md#centos): `/opt/senzing/g2`
+    1. Windows MSI Installer: `C:\Program Files\Senzing\`
 
 1. Determine your `SENZING_G2_JAR_VERSION` version number:
     1. Locate your `g2BuildVersion.json` file:
@@ -160,8 +160,13 @@ Senzing REST API Server using an entity repository from the
 for version compatibility and usage information.*
 
 Other command-line options may be useful to you as well.  Execute
-`java -jar target/senzing-api-server-1.7.2.jar -help` to obtain a help message
-describing all available options.  For example:
+
+```console
+java -jar target/senzing-api-server-1.7.2.jar -help
+```
+
+to obtain a help message describing all available options.
+For example:
 
 ```console
 $ java -jar target/senzing-api-server-1.7.2.jar -help
@@ -239,7 +244,6 @@ java -jar senzing-api-server-1.7.2.jar <options>
         is specified by itself then a help message on configuration manager
         options will be displayed.
         NOTE: If this option is provided, the server will not start.
-
 ```
 
 If you wanted to run the server on port 8080 and bind to all
@@ -252,17 +256,6 @@ java -jar target/senzing-api-server-[version].jar \
   -bindAddr all \
   -initFile ~/senzing/data/g2-init.json
 ```
-
-#### Restart for Configuration Changes
-
-It is important to note that the Senzing configuration is currently read by the
-Senzing API Server on startup.  If the configuration changes, the changes will
-not be detected until the Server is restarted.  This may cause stale values to
-be returned from some operations and may cause other operations to completely
-fail.
-
-Be sure to restart the API server when the configuration changes to guarantee
-stability and accurate results from the API server.
 
 ## Demonstrate using Docker
 
