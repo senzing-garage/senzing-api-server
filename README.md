@@ -44,9 +44,9 @@ documents the available API methods, their parameters and the response formats.
 To build the Senzing REST API Server you will need Apache Maven (recommend version 3.5.4 or later)
 as well as Java 1.8.x (recommend version 1.8.0_171 or later).
 
-You will also need the Senzing "g2.jar" file installed in your Maven repository.
-The Senzing REST API Server requires version 1.7.x or later of the Senzing API
-and Senzing App.  In order to install g2.jar you must:
+You will also need the Senzing `g2.jar` file installed in your Maven repository.
+The Senzing REST API Server requires version 1.7.x or later of the Senzing API and Senzing App.
+In order to install `g2.jar` you must:
 
 1. Locate your
    [SENZING_G2_DIR](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_g2_dir)
