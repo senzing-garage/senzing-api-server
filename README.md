@@ -160,97 +160,95 @@ Other command-line options may be useful to you as well.  Execute
 `java -jar target/senzing-api-server-1.7.2.jar -help` to obtain a help message
 describing all available options.  For example:
 
-  ```console
+```console
+$ java -jar target/senzing-api-server-1.7.2.jar -help
+java -jar senzing-api-server-1.7.2.jar <options>
 
-    $ java -jar target/senzing-api-server-1.7.2.jar -help
+<options> includes:
 
-    java -jar senzing-api-server-1.7.2.jar <options>
+[ Standard Options ]
 
-    <options> includes:
+   -help
+        Should be the first and only option if provided.
+        Causes this help message to be displayed.
+        NOTE: If this option is provided, the server will not start.
 
-    [ Standard Options ]
+   -version
+        Should be the first and only option if provided.
+        Causes the version of the G2 REST API Server to be displayed.
+        NOTE: If this option is provided, the server will not start.
 
-       -help
-            Should be the first and only option if provided.
-            Causes this help message to be displayed.
-            NOTE: If this option is provided, the server will not start.
+   -httpPort <port-number>
+        Sets the port for HTTP communication.  Defaults to 2080.
+        Specify 0 for a randomly selected port number.
 
-       -version
-            Should be the first and only option if provided.
-            Causes the version of the G2 REST API Server to be displayed.
-            NOTE: If this option is provided, the server will not start.
+   -bindAddr <ip-address|loopback|all>
+        Sets the port for HTTP bind address communication.
+        Defaults to the loopback address.
 
-       -httpPort <port-number>
-            Sets the port for HTTP communication.  Defaults to 2080.
-            Specify 0 for a randomly selected port number.
+   -allowedOrigins <url-domain>
+        Sets the CORS Access-Control-Allow-Origin header for all endpoints.
+        There is no default value.
 
-       -bindAddr <ip-address|loopback|all>
-            Sets the port for HTTP bind address communication.
-            Defaults to the loopback address.
+   -concurrency <thread-count>
+        Sets the number of threads available for executing
+        Senzing API functions (i.e.: the number of engine threads).
+        If not specified, then this defaults to 8.
 
-       -allowedOrigins <url-domain>
-            Sets the CORS Access-Control-Allow-Origin header for all endpoints.
-            There is no default value.
+   -moduleName <module-name>
+        The module name to initialize with.  Defaults to 'ApiServer'.
 
-       -concurrency <thread-count>
-            Sets the number of threads available for executing
-            Senzing API functions (i.e.: the number of engine threads).
-            If not specified, then this defaults to 8.
+   -iniFile <ini-file-path>
+        The path to the Senzing INI file to with which to initialize.
+        *** DEPRECATED: Use -initFile, -initEnvVar or -initJson instead.
 
-       -moduleName <module-name>
-            The module name to initialize with.  Defaults to 'ApiServer'.
+   -initFile <json-init-file>
+        The path to the file containing the JSON text to use for Senzing
+        initialization.
 
-       -iniFile <ini-file-path>
-            The path to the Senzing INI file to with which to initialize.
-            *** DEPRECATED: Use -initFile, -initEnvVar or -initJson instead.
+   -initEnvVar <environment-variable-name>
+        The environment variable from which to extract the JSON text
+        to use for Senzing initialization.
+        *** SECURITY WARNING: If the JSON text contains a password
+        then it may be visible to other users via process monitoring.
 
-       -initFile <json-init-file>
-            The path to the file containing the JSON text to use for Senzing
-            initialization.
+   -initJson <json-init-text>
+        The JSON text to use for Senzing initialization.
+        *** SECURITY WARNING: If the JSON text contains a password
+        then it may be visible to other users via process monitoring.
 
-       -initEnvVar <environment-variable-name>
-            The environment variable from which to extract the JSON text
-            to use for Senzing initialization.
-            *** SECURITY WARNING: If the JSON text contains a password
-            then it may be visible to other users via process monitoring.
+   -configId <config-id>
+        Use with the -initFile, -initEnvVar or -initJson options to
+        force a specific configuration ID to use for initialization.
+        NOTE: This will disable the auto-detection of config changes
 
-       -initJson <json-init-text>
-            The JSON text to use for Senzing initialization.
-            *** SECURITY WARNING: If the JSON text contains a password
-            then it may be visible to other users via process monitoring.
+   -verbose If specified then initialize in verbose mode.
 
-       -configId <config-id>
-            Use with the -initFile, -initEnvVar or -initJson options to
-            force a specific configuration ID to use for initialization.
-            NOTE: This will disable the auto-detection of config changes
+   -monitorFile [filePath]
+        Specifies a file whose timestamp is monitored to determine
+        when to shutdown.
 
-       -verbose If specified then initialize in verbose mode.
+[ Advanced Options ]
 
-       -monitorFile [filePath]
-            Specifies a file whose timestamp is monitored to determine
-            when to shutdown.
+   --configmgr [config manager options]...
+        Should be the first option if provided.  All subsequent options
+        are interpreted as configuration manager options.  If this option
+        is specified by itself then a help message on configuration manager
+        options will be displayed.
+        NOTE: If this option is provided, the server will not start.
 
-    [ Advanced Options ]
-
-       --configmgr [config manager options]...
-            Should be the first option if provided.  All subsequent options
-            are interpreted as configuration manager options.  If this option
-            is specified by itself then a help message on configuration manager
-            options will be displayed.
-            NOTE: If this option is provided, the server will not start.
-
-  ```
+```
 
 If you wanted to run the server on port 8080 and bind to all
 network interfaces with a concurrency of 16 you would use:
 
-  ```console
-     java -jar target/senzing-api-server-[version].jar \
-        -concurrency 16 \
-        -httpPort 8080 \
-        -bindAddr all \
-        -initFile ~/senzing/data/g2-init.json
-  ```
+```console
+java -jar target/senzing-api-server-[version].jar \
+  -concurrency 16 \
+  -httpPort 8080 \
+  -bindAddr all \
+  -initFile ~/senzing/data/g2-init.json
+```
 
 #### Restart for Configuration Changes
 
@@ -391,6 +389,7 @@ Identify each output directory.
 ### Init container
 
 1. Initialize volumes and database.
+   This docker container is a job that runs to completion and exits.
    Example:
 
     ```console
