@@ -1,14 +1,25 @@
 name: Test Debian Build
 
-on: [push]
+on:
+  push:
+    branches:
+      - master
 
 jobs:
-
-  build:
-
+  buildSenzingJavaApiServer:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v1
-      - name: Build the Docker image
+      - name: Build Java API Server
+        uses: actions/checkout@v1
         run: docker build --tag sezing-java-api-server .github/build/debian
+      - name: Slack Notification
+        if: failure()
+        uses: rtCamp/action-slack-notify@master
+        env:
+          SLACK_CHANNEL: general
+          SLACK_COLOR: '#3278BD'
+          SLACK_ICON: https://github.com/rtCamp.png?size=48
+          SLACK_MESSAGE: 'Post Content :rocket:'
+          SLACK_TITLE: Post Title
+          SLACK_USERNAME: rtCamp
+          SLACK_WEBHOOK: 'https://hooks.slack.com/services/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'
