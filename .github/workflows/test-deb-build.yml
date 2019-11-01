@@ -21,5 +21,5 @@ jobs:
           SLACK_ICON: https://github.com/rtCamp.png?size=48
           SLACK_MESSAGE: 'Post Content :rocket:'
           SLACK_TITLE: Post Title
-          SLACK_USERNAME: rtCamp
-          SLACK_WEBHOOK: 'Ae1WN3qhBTwI4Tysqps8itMU'
+          SLACK_USERNAME: mr-nice
+          SLACK_WEBHOOK: 'TKNTD2P5L/BQ4J8BBF1/WOA26y8FD8cYfRVYLk7O1MXW'
