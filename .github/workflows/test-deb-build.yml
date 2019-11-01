@@ -8,12 +8,12 @@ on:
 jobs:
   buildSenzingJavaApiServer:
     runs-on: ubuntu-latest
-    uses: actions/checkout@v1
-    uses: rtCamp/action-slack-notify@master
     steps:
       - name: Build Java API Server
+      - uses: actions/checkout@v1
         run: docker build --tag sezing-java-api-server .github/build/debian
       - name: Slack Notification
+      - uses: rtCamp/action-slack-notify@master
         if: failure()
         env:
           SLACK_CHANNEL: general
