@@ -10,8 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Build Java API Server
-        run: docker build --tag sezing-java-api-server .github/build/debian
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@master
         if: failure()
@@ -22,4 +20,4 @@ jobs:
           SLACK_MESSAGE: 'Post Content :rocket:'
           SLACK_TITLE: Post Title
           SLACK_USERNAME: rtCamp
-          SLACK_WEBHOOK: 'TKNTD2P5L/BQ4J8BBF1/Ae1WN3qhBTwI4Tysqps8itMU'
+          SLACK_WEBHOOK: 'https://hooks.slack.com/services/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'
