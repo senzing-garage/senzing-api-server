@@ -16,10 +16,9 @@ jobs:
         uses: rtCamp/action-slack-notify@master
         if: failure()
         env:
-          SLACK_CHANNEL: general
+          SLACK_CHANNEL: spike-ci-cd
           SLACK_COLOR: '#3278BD'
-          SLACK_ICON: https://github.com/rtCamp.png?size=48
-          SLACK_MESSAGE: 'Post Content :rocket:'
-          SLACK_TITLE: Post Title
-          SLACK_USERNAME: mr-nice
+          SLACK_TITLE: 'I''m alive!!!!!'
+          SLACK_MESSAGE: ':partydocker:'
+          SLACK_USERNAME: build-bot
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
