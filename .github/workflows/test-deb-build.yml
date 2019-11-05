@@ -2,7 +2,6 @@ name: Test Debian Build
 
 on:
   push:
-    # Sequence of patterns matched against refs/heads
     branches:
       - master
 
@@ -19,7 +18,6 @@ jobs:
         env:
           SLACK_CHANNEL: playground
           SLACK_COLOR: '#3278BD'
-          SLACK_ICON: ''
           SLACK_TITLE: 'Failure: ' ${{ github.repository }}
           SLACK_MESSAGE: 'Failed on commit SHA '${{ github.sha }}
           SLACK_USERNAME: senzing-api-server
