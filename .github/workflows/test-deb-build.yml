@@ -10,15 +10,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Build Java API Server
-        run: docker build --tag sezing-java-api-server .github/build/debian
+      #- name: Build Java API Server
+      #  run: docker build --tag sezing-java-api-server .github/build/debian
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@master
         if: failure()
         env:
-          SLACK_CHANNEL: spike-ci-cd
+          SLACK_CHANNEL: playground
           SLACK_COLOR: '#3278BD'
-          SLACK_TITLE: 'I''m alive!!!!!'
-          SLACK_MESSAGE: ':partydocker:'
-          SLACK_USERNAME: build-bot
+          SLACK_ICON:
+          SLACK_TITLE: 'Failure: ' ${{ github.repository }}
+          SLACK_MESSAGE: 'Failed on commit SHA '${{ github.sha }}
+          SLACK_USERNAME: senzing-api-server
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
