@@ -11,7 +11,7 @@ jobs:
       #  run: docker build --tag sezing-java-api-server .github/build/debian
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@master
-        if: failure()
+        #if: failure()
         env:
           SLACK_CHANNEL: playground
           SLACK_COLOR: '#3278BD'
