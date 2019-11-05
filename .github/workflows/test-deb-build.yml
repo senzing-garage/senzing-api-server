@@ -1,9 +1,6 @@
 name: Test Debian Build
 
-on:
-  push:
-    branches:
-      - master
+on: push
 
 jobs:
   buildSenzingJavaApiServer:
@@ -18,5 +15,7 @@ jobs:
         env:
           SLACK_CHANNEL: playground
           SLACK_COLOR: '#3278BD'
+          SLACK_TITLE: 'Failure: ' ${{ github.repository }}
+          SLACK_MESSAGE: 'Failed on commit SHA '${{ github.sha }}
           SLACK_USERNAME: senzing-api-server
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
