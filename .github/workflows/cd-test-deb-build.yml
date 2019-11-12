@@ -2,7 +2,7 @@ name: Test Java API Server Build With Debian Install
 
 on:
   schedule:
-    - cron:  '0 * * * *'
+    - cron:  '0 */2 * * *'
 
 jobs:
   buildSenzingJavaApiServer:
@@ -17,7 +17,7 @@ jobs:
         env:
           SLACK_CHANNEL: playground
           SLACK_COLOR: '#3278BD'
-          SLACK_TITLE: ${{ job.status }}
+          SLACK_TITLE: 'FIALURE'
           SLACK_MESSAGE: ${{ github.event }}
           SLACK_USERNAME: senzing-api-server
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
