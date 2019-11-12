@@ -2,7 +2,7 @@ name: Test Java API Server Build With Debian Install
 
 on:
   schedule:
-    - cron: '0 */2 * * *'
+    - cron: '0 */3 * * *'
 
 jobs:
   buildSenzingJavaApiServer:
