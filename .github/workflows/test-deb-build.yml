@@ -8,7 +8,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       # - name: Build Java API Server
-      # run: docker build --tag sezing-java-api-server .github/build/debian
+      # run:   docker build --tag sezing-java-api-server .github/build/debian
       - name: Slack Notification
         uses: bryan-nice/slack-notification@master
         #if: failure()
