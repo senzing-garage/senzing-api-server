@@ -7,12 +7,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+      - uses: ./
       # - name:  Build Java API Server
       #     run: docker build --tag sezing-java-api-server .github/build/debian
       - name: Slack Notification
         uses: bryan-nice/slack-notification@master
-        #with:
-          #version: '1.0.0'
+        with:
+          version: '1.0.0'
         #if: failure()
         env:
           INPUT_VERSION: '1.0.0'
