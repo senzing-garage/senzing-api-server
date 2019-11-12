@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.7.9] - 2019-11-12
 
-### Changes in 1.7.8
+### Changes in 1.7.9
 
 - Added support for MS SQL in Dockerfile by upgrading to senzing/senzing-base:1.3.0
 
