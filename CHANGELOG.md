@@ -40,14 +40,14 @@ address security vulnerabilities.
 when initializing the configuration manager and when creating the standard
 configuration.
 - Changes to Unit Tests:
-    - Updated unit tests to preserve repos if any tests associated with that
+  - Updated unit tests to preserve repos if any tests associated with that
     repo failed.
-    - Updated location of unit test entity repos to live in the
+  - Updated location of unit test entity repos to live in the
     `./target/test-repos` directory during a Maven build and modified the
     repo directory names to be based off the associated unit test name.
-    - Updated the module name used for Senzing initialization in auto tests to
+  - Updated the module name used for Senzing initialization in auto tests to
     match the current auto test for post-failure diagnostic purposes.
-    - Added forced preservation of unit test entity repos passing the
+  - Added forced preservation of unit test entity repos passing the
     `-Dsenzing.preserve.test.repos=true` option to Maven.
 
 ## [1.7.5] - 2019-09-17
