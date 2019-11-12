@@ -12,10 +12,10 @@ jobs:
       - name: Slack Notification
         uses: bryan-nice/slack-notification@master
         with:
-          version: '1.0.0'
+          version: '1.0.1'
         #if: failure()
         env:
-          INPUT_VERSION: '1.0.0'
+          INPUT_VERSION: '1.0.1'
           SLACK_CHANNEL: playground
           SLACK_COLOR: '#3278BD'
           SLACK_TITLE: ${{ github.repository }}
