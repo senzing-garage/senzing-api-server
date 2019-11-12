@@ -6,7 +6,7 @@ jobs:
   buildSenzingJavaApiServer:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      # - uses: actions/checkout@v1
       # - name:  Build Java API Server
       #   run: docker build --tag sezing-java-api-server .github/build/debian
       - name: Slack Notification
