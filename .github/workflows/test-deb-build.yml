@@ -10,10 +10,7 @@ jobs:
       # - name:  Build Java API Server
       # run: docker build --tag sezing-java-api-server .github/build/debian
       - name: Slack Notification
-        uses: bryan-nice/slack-notification@master
-        with:
-          version: '1.0.1'
-        #if: failure()
+        run: docker run --rm -it bryannice/slack-notificatin:1.0.1
         env:
           SLACK_CHANNEL: playground
           SLACK_COLOR: '#3278BD'
