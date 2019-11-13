@@ -6,7 +6,7 @@ ARG BASE_IMAGE=senzing/senzing-base:1.3.0
 
 FROM openjdk:8 as builder
 
-ENV REFRESHED_AT=2019-05-01
+ENV REFRESHED_AT=2019-11-13
 
 LABEL Name="senzing/senzing-api-server-builder" \
       Maintainer="support@senzing.com" \
@@ -45,11 +45,11 @@ RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=pro
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2019-08-05
+ENV REFRESHED_AT=2019-11-13
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
-      Version="1.7.2"
+      Version="1.7.9"
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
 
