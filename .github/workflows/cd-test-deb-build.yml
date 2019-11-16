@@ -20,7 +20,7 @@ jobs:
           SLACK_CHANNEL: playground
           SLACK_COLOR: '#3278BD'
           SLACK_TITLE: 'FAILURE'
-          SLACK_MESSAGE: 'Fialed to build GitHub SHA'${{ github.sha }}
+          SLACK_MESSAGE: 'Fialed to build GitHub SHA ${{ github.sha }}'
           SLACK_USERNAME: senzing-api-server
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           GITHUB_ACTOR: ${{ github.actor }}
