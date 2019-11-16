@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+      - name: get env vars
+        run: printenv
       - name:  Build Java API Server
         run: docker build --tag sezing-java-api-server .github/build/debian
       - name: Slack Notification
@@ -18,7 +20,7 @@ jobs:
           SLACK_CHANNEL: playground
           SLACK_COLOR: '#3278BD'
           SLACK_TITLE: 'FAILURE'
-          SLACK_MESSAGE: ${{ github.sha }}
+          SLACK_MESSAGE: 'Fialed to build GitHub SHA'${{ github.sha }}
           SLACK_USERNAME: senzing-api-server
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           GITHUB_ACTOR: ${{ github.actor }}
