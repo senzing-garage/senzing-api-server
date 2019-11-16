@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+      - name: set var
+        run: export GITHUB_CHECK_SUITE_ID=`curl -s https://api.github.com/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-suites?app_id=15368 | jq -r '.check_suites[0].id'`
       - name: get env vars
         run: printenv
       - name:  Build Java API Server
