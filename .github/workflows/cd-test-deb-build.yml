@@ -21,7 +21,6 @@ jobs:
           SLACK_MESSAGE: 'Fialed to build GitHub SHA ${{ github.sha }}'
           SLACK_USERNAME: senzing-api-server
           SLACK_WEBHOOK: ${{ secrets.SLACK_NOTIFICATION }}
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REF: ${{ github.ref }}
