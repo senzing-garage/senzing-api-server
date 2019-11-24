@@ -14,7 +14,7 @@ jobs:
         id: build_java_api_server
         run: |
           docker build --tag sezing-java-api-server \
-            --build-arg "GITHUB_REPO_OWNER=bryan-nice" \
+            --build-arg "GITHUB_REPO_OWNER=Senzing" \
             --build-arg "BRANCH=${GITHUB_HEAD_REF}" \
             .github/workflows/docker/senzing-cd-pr-deb-test-builder
       - name: Create Git Issue on Build Failure
