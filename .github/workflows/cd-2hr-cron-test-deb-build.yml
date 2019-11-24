@@ -1,4 +1,4 @@
-name: Test Java API Server Build With Debian Install
+name: Cron Schedule 3 hr Test Java API Server Build on Debian
 
 on:
   schedule:
@@ -17,8 +17,8 @@ jobs:
         env:
           SLACK_CHANNEL: ci-cd-dev
           SLACK_COLOR: '#3278BD'
-          SLACK_TITLE: 'FAILURE'
-          SLACK_MESSAGE: 'Fialed to build GitHub SHA ${{ github.sha }}'
+          SLACK_TITLE: 'Failed to build on GitHub Commit SHA ${{ github.sha }}'
+          SLACK_MESSAGE: 'Failed to build on GitHub Commit SHA ${{ github.sha }}'
           SLACK_USERNAME: senzing-api-server
           SLACK_WEBHOOK: ${{ secrets.SLACK_NOTIFICATION }}
           GITHUB_ACTOR: ${{ github.actor }}

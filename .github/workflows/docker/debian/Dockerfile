@@ -1,5 +1,9 @@
 FROM python:3.8.0-buster
 
+LABEL Name="senzing/senzing-api-server-cd-test-builder" \
+      Maintainer="support@senzing.com" \
+      Version="1.0.0"
+
 # Install packages via apt.
 RUN apt-get update \
     && apt-get -y install \
