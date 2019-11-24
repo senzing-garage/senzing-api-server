@@ -10,8 +10,14 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name:  Build Java API Server
-        run: docker build --tag sezing-java-api-server .github/workflows/docker/debian
+        id: build_java_api_server
+        run: |
+          docker build --tag sezing-java-api-server \
+            --build-arg "GITHUB_REPO_OWNER=bryan-nice" \
+            --build-arg "BRANCH=${GITHUB_HEAD_REF}" \
+            .github/workflows/docker/senzing-ci-cd-deb-test-builder
       - name: Slack Notification
+        id: slack_notification
         uses: bryan-nice/slack-notification@1.0.2
         if: failure()
         env:

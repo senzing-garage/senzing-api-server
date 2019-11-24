@@ -1,6 +1,9 @@
 FROM python:3.8.0-buster
 
-LABEL Name="senzing/senzing-api-server-cd-test-builder" \
+ARG BRANCH="master"
+ARG GITHUB_REPO_OWNER="Senzing"
+
+LABEL Name="senzing-ci-cd-deb-test-builder" \
       Maintainer="support@senzing.com" \
       Version="1.0.0"
 
@@ -35,8 +38,9 @@ ENV LD_LIBRARY_PATH=${SENZING_ROOT}/g2/lib:${SENZING_ROOT}/g2/lib/debian
 
 # Build Senzing API Server
 RUN mkdir -p /app \
-   && git clone https://github.com/Senzing/senzing-api-server.git \
+   && git clone https://github.com/${GITHUB_REPO_OWNER}/senzing-api-server.git \
    && cd /senzing-api-server \
+   && git checkout ${BRANCH} \
    && export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
    && make \
         SENZING_G2_JAR_VERSION=$(grep -oP "(?<=(\"VERSION\"\:\s\"))(\d{1,}\.\d{1,}\.\d{1,})(?=\",)" ${SENZING_G2_DIR}/g2BuildVersion.json) \
