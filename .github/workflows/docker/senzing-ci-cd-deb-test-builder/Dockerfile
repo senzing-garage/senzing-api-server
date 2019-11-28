@@ -1,21 +1,27 @@
-FROM python:3.8.0-buster
+FROM debian:buster
 
 ARG BRANCH="master"
-ARG GITHUB_REPO_OWNER="Senzing"
+ARG GITHUB_OWNER="Senzing"
 
 LABEL Name="senzing-ci-cd-deb-test-builder" \
       Maintainer="support@senzing.com" \
       Version="1.0.0"
 
 # Install packages via apt.
-RUN apt-get update \
-    && apt-get -y install \
+RUN echo "deb http://ftp.us.debian.org/debian sid main" >> /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
         apt-transport-https \
+        git \
         gnupg2 \
-        wget \
-        sudo \
+        jq \
         make \
-        openjdk-11-jdk \
+        openjdk-8-jdk \
+        sudo \
+        wget
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
         maven \
     && rm -rf /var/lib/apt/lists/*
 
@@ -36,12 +42,13 @@ ENV SENZING_G2_DIR=${SENZING_ROOT}/g2
 ENV PYTHONPATH=${SENZING_ROOT}/g2/python
 ENV LD_LIBRARY_PATH=${SENZING_ROOT}/g2/lib:${SENZING_ROOT}/g2/lib/debian
 
+# Clone Senzing API Server repository.
+WORKDIR /
+RUN git clone https://github.com/${GITHUB_OWNER}/senzing-api-server.git
+
 # Build Senzing API Server
-RUN mkdir -p /app \
-   && git clone https://github.com/${GITHUB_REPO_OWNER}/senzing-api-server.git \
-   && cd /senzing-api-server \
-   && git checkout ${BRANCH} \
-   && export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
-   && make \
-        SENZING_G2_JAR_VERSION=$(grep -oP "(?<=(\"VERSION\"\:\s\"))(\d{1,}\.\d{1,}\.\d{1,})(?=\",)" ${SENZING_G2_DIR}/g2BuildVersion.json) \
-        package
+WORKDIR /senzing-api-server
+RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
+ && make \
+      SENZING_G2_JAR_VERSION=$(cat ${SENZING_G2_DIR}/g2BuildVersion.json | jq --raw-output '.VERSION') \
+      package
