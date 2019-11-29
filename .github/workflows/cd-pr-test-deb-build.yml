@@ -10,22 +10,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name:  Build Java API Server
+      - name: Print Environment Variables
+        run: printenv
+      - name: Build Java API Server
         id: build_java_api_server
         run: |
-          docker build --tag sezing-java-api-server \
-            --build-arg "GITHUB_REPO_OWNER=Senzing" \
-            --build-arg "BRANCH=${GITHUB_HEAD_REF}" \
-            .github/workflows/docker/senzing-cd-pr-deb-test-builder
+          docker build --tag sezing-java-api-server:${GITHUB_HEAD_REF:-${GITHUB_REF##*/}} \
+            --build-arg "GITHUB_HEAD_REF=${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}" \
+            --build-arg "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}" \
+            .github/workflows/docker/ci-cd-deb-buster-build
       - name: Create Git Issue on Build Failure
-        uses: bryan-nice/git-issue-creation@1.1.1
+        uses: bryan-nice/git-issue-creation@2.0.0
         id: create_git_issue
         if: failure()
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_COMMIT_SHA: ${{ github.sha }}
-          GITHUB_REPO_OWNER: 'Senzing'
-          GITHUB_REPO_NAME: 'senzing-api-server'
+          GITHUB_OWNER: 'Senzing'
+          GITHUB_REPOSITORY: 'senzing-api-server'
           GITHUB_ISSUE_TITLE: 'Failed to build on GitHub Commit SHA ${{ github.sha }}'
           GITHUB_ISSUE_BODY: |
             Please review git actions log and trouble shoot the build failure.

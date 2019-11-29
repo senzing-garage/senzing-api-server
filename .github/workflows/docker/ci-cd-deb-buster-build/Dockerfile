@@ -1,7 +1,8 @@
 FROM debian:buster
 
-ARG BRANCH="master"
+ARG GITHUB_HEAD_REF="master"
 ARG GITHUB_OWNER="Senzing"
+ARG GITHUB_EVENT_NAME="push"
 
 LABEL Name="senzing-ci-cd-deb-test-builder" \
       Maintainer="support@senzing.com" \
@@ -48,6 +49,11 @@ RUN git clone https://github.com/${GITHUB_OWNER}/senzing-api-server.git
 
 # Build Senzing API Server
 WORKDIR /senzing-api-server
+RUN git checkout ${GITHUB_HEAD_REF}; \
+    if [[ "${GITHUB_HEAD_REF}" != "master" && ${GITHUB_EVENT_NAME} == "pull_request" ]]; then \
+        git merge master; \
+    fi
+
 RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
  && make \
       SENZING_G2_JAR_VERSION=$(cat ${SENZING_G2_DIR}/g2BuildVersion.json | jq --raw-output '.VERSION') \
