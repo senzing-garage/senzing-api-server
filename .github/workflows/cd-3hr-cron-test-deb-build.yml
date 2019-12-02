@@ -20,7 +20,7 @@ jobs:
             .github/workflows/docker/ci-cd-deb-buster-build
       - name: Slack Notification
         id: slack_notification
-        uses: bryan-nice/slack-notification@2.0.0
+        uses: bryan-nice/slack-notification@1.0.2
         if: failure()
         env:
           SLACK_CHANNEL: ci-cd-dev
