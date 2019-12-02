@@ -1,0 +1,39 @@
+name: Cron Schedule 3 hr Test Java API Server Build on Debian
+
+on:
+  schedule:
+    - cron: '0 */3 * * *'
+
+jobs:
+  buildSenzingJavaApiServer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Print Environment Variables
+        run: printenv
+      - name: Build Java API Server
+        id: build_java_api_server
+        run: |
+          docker build --tag sezing-java-api-server:${GITHUB_HEAD_REF:-${GITHUB_REF##*/}} \
+            --build-arg "GITHUB_HEAD_REF=${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}" \
+            --build-arg "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}" \
+            .github/workflows/docker/ci-cd-deb-buster-build
+      - name: Slack Notification
+        id: slack_notification
+        uses: bryan-nice/slack-notification@2.0.0
+        if: failure()
+        env:
+          SLACK_CHANNEL: ci-cd-dev
+          SLACK_COLOR: '#3278BD'
+          SLACK_TITLE: 'Failed to build on GitHub Commit SHA ${{ github.sha }}'
+          SLACK_MESSAGE: |
+            Failed to build on GitHub Commit SHA ${{ github.sha }}
+            Git Issue URL: ${{ steps.create_git_issue.outputs.git_issue_url }}
+          SLACK_USERNAME: senzing-api-server
+          SLACK_WEBHOOK: ${{ secrets.SLACK_NOTIFICATION }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_ACTION: ${{ github.action }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_WORKFLOW: ${{ github.workflow }}
