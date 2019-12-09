@@ -284,7 +284,7 @@ public class ConfigurationManager {
                 throw new IllegalArgumentException(
                     multilineFormat(
                         "Initialization JSON is not valid JSON: ",
-                        initJson));
+                        initJson), e);
               }
 
             case CONFIG_ID:
@@ -956,6 +956,7 @@ public class ConfigurationManager {
       // get the JSON text and parse it to be sure it parses as JSON
       String      jsonText  = sb.toString();
       JsonObject  configObj = JsonUtils.parseJsonObject(jsonText);
+      jsonText = JsonUtils.toJsonText(configObj, true);
 
       // write the text to the specified file
       if (outputFile != null) {

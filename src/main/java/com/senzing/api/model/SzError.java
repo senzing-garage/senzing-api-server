@@ -2,6 +2,8 @@ package com.senzing.api.model;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Objects;
+
 import com.senzing.g2.engine.G2Fallible;
 
 /**
@@ -120,6 +122,20 @@ public class SzError {
    */
   public void setMessage(String message) {
     this.message = message;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof SzError)) return false;
+    SzError error = (SzError) o;
+    return Objects.equals(getCode(), error.getCode()) &&
+        Objects.equals(getMessage(), error.getMessage());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(getCode(), getMessage());
   }
 
   /**

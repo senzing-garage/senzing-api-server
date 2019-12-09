@@ -1,6 +1,7 @@
 package com.senzing.api.services;
 
 import com.senzing.g2.engine.G2Config;
+import com.senzing.g2.engine.G2ConfigMgr;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.g2.engine.G2Product;
 import com.senzing.util.AccessToken;
@@ -115,6 +116,27 @@ public interface SzApiProvider {
   G2Config getConfigApi();
 
   /**
+   * Returns the assocaited {@link G2ConfigMgr} API implementation.
+   * This returns <tt>null</tt> if the configuration is not automatically
+   * being picked up as the current default configuration.
+   *
+   * @return The associated {@link G2ConfigMgr} API implementation, or
+   *         <tt>null</tt> if the configuration is not automatically
+   *         being picked up as the current default configuration.
+   */
+  G2ConfigMgr getConfigMgrApi();
+
+  /**
+   * Returns the concurrency for the API provider.  This is the number
+   * of initialized threads to do work against the Senzing repository.
+   * This method returns
+   *
+   * @return The maximum concurrency for the API provider, or zero (0) if
+   *         the number of threads is unknown.
+   */
+  int getConcurrency();
+
+  /**
    * Executes the specified task with the proper thread for utilizing the
    * various G2 API implementations.
    *
@@ -141,6 +163,30 @@ public interface SzApiProvider {
   Set<String> getDataSources(String... expectedDataSources);
 
   /**
+   * Gets the <b>unmodifiable</b> {@Link Set} of Entity Class codes that
+   * are configured.
+   *
+   * @param expectedEntityClasses The zero or more entity class codes that the
+   *                              caller expects to exist.
+   *
+   * @return The <b>unmodifiable</b> {@Link Set} of Entity Class codes that
+   *         are configured.
+   */
+  Set<String> getEntityClasses(String... expectedEntityClasses);
+
+  /**
+   * Gets the <b>unmodifiable</b> {@Link Set} of Entity Type codes that
+   * are configured.
+   *
+   * @param expectedEntityTypes The zero or more entity type codes that the
+   *                            caller expects to exist.
+   *
+   * @return The <b>unmodifiable</b> {@Link Set} of Entity Type codes that
+   *         are configured.
+   */
+  Set<String> getEntityTypes(String... expectedEntityTypes);
+
+  /**
    * Gets the attribute class associated with a feature type code.
    *
    * @param featureType The feature type code.
@@ -158,4 +204,12 @@ public interface SzApiProvider {
    *         otherwise <tt>false</tt>.
    */
   boolean isReadOnly();
+
+  /**
+   * Checks if the API is running with admin features enabled.
+   *
+   * @return <tt>true</tt> if admin features are enabled, otherwise
+   *         <tt>false</tt>.
+   */
+  boolean isAdminEnabled();
 }

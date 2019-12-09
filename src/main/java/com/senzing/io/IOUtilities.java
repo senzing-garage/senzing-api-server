@@ -104,10 +104,6 @@ public class IOUtilities {
     if (matches.length == 0) return null;
     CharsetMatch bestMatch = null;
     for (CharsetMatch match : matches) {
-      System.out.println(
-          "POSSIBLE CHARACTER ENCODING / CONFIDENCE "
-              + match.getName() + " / " + match.getConfidence());
-
       // get the first match as the best candidate
       if (bestMatch == null) {
         bestMatch = match;

@@ -14,6 +14,7 @@ import org.junit.jupiter.api.*;
 import static com.senzing.api.model.SzHttpMethod.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.*;
+import static com.senzing.api.services.ResponseValidators.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class AdminServicesTest extends AbstractServiceTest {
@@ -38,7 +39,7 @@ public class AdminServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateBasics(response, uriText, before, after);
+      validateBasics(response, uriText, before, after);
     });
   }
 
@@ -50,7 +51,7 @@ public class AdminServicesTest extends AbstractServiceTest {
           = this.invokeServerViaHttp(GET, uriText, SzBasicResponse.class);
       long after = System.currentTimeMillis();
 
-      this.validateBasics(response, uriText, before, after);
+      validateBasics(response, uriText, before, after);
     });
   }
 
@@ -64,12 +65,13 @@ public class AdminServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long              after     = System.currentTimeMillis();
 
-      this.validateLicenseResponse(response,
-                                   before,
-                                   after,
-                                   null,
-                                   "EVAL",
-                                   10000);
+      validateLicenseResponse(response,
+                              uriText,
+                              before,
+                              after,
+                              null,
+                              "EVAL",
+                              10000);
     });
   }
 
@@ -83,12 +85,13 @@ public class AdminServicesTest extends AbstractServiceTest {
           = this.invokeServerViaHttp(GET, uriText, SzLicenseResponse.class);
       long after = System.currentTimeMillis();
 
-      this.validateLicenseResponse(response,
-                                   before,
-                                   after,
-                                   null,
-                                   "EVAL",
-                                   10000);
+      validateLicenseResponse(response,
+                              uriText,
+                              before,
+                              after,
+                              null,
+                              "EVAL",
+                              10000);
     });
   }
 
@@ -102,12 +105,13 @@ public class AdminServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long              after     = System.currentTimeMillis();
 
-      this.validateLicenseResponse(response,
-                                   before,
-                                   after,
-                                   false,
-                                   "EVAL",
-                                   10000);
+      validateLicenseResponse(response,
+                              uriText,
+                              before,
+                              after,
+                              false,
+                              "EVAL",
+                              10000);
 
     });
   }
@@ -121,12 +125,13 @@ public class AdminServicesTest extends AbstractServiceTest {
           = this.invokeServerViaHttp(GET, uriText, SzLicenseResponse.class);
       long after = System.currentTimeMillis();
 
-      this.validateLicenseResponse(response,
-                                   before,
-                                   after,
-                                   false,
-                                   "EVAL",
-                                   10000);
+      validateLicenseResponse(response,
+                              uriText,
+                              before,
+                              after,
+                              false,
+                              "EVAL",
+                              10000);
     });
   }
 
@@ -140,12 +145,13 @@ public class AdminServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long              after     = System.currentTimeMillis();
 
-      this.validateLicenseResponse(response,
-                                   before,
-                                   after,
-                                   true,
-                                   "EVAL",
-                                   10000);
+      validateLicenseResponse(response,
+                              uriText,
+                              before,
+                              after,
+                              true,
+                              "EVAL",
+                              10000);
     });
   }
 
@@ -158,55 +164,14 @@ public class AdminServicesTest extends AbstractServiceTest {
           = this.invokeServerViaHttp(GET, uriText, SzLicenseResponse.class);
       long after = System.currentTimeMillis();
 
-      this.validateLicenseResponse(response,
-                                   before,
-                                   after,
-                                   true,
-                                   "EVAL",
-                                   10000);
+      validateLicenseResponse(response,
+                              uriText,
+                              before,
+                              after,
+                              true,
+                              "EVAL",
+                              10000);
     });
-  }
-
-  private void validateLicenseResponse(SzLicenseResponse  response,
-                                       long               beforeTimestamp,
-                                       long               afterTimestamp,
-                                       Boolean            expectRawData,
-                                       String             expectedLicenseType,
-                                       long               expectedRecordLimit)
-  {
-    String selfLink = this.formatServerUri("license");
-    if (expectRawData != null) {
-      selfLink += "?withRaw=" + expectRawData;
-    } else {
-      expectRawData = false;
-    }
-
-    this.validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, expectRawData);
-
-    SzLicenseResponse.Data data = response.getData();
-
-    assertNotNull(data, "Response data is null");
-
-    SzLicenseInfo licenseInfo = data.getLicense();
-
-    assertNotNull(licenseInfo, "License data is null");
-
-    assertEquals(10000,
-                 licenseInfo.getRecordLimit(),
-                 "Record limit wrong");
-
-    assertEquals("EVAL",
-                 licenseInfo.getLicenseType(),
-                 "Unexpected license type");
-
-    if (expectRawData) {
-      this.validateRawDataMap(
-          response.getRawData(),
-          "customer", "contract", "issueDate", "licenseType",
-          "licenseLevel", "billing", "expireDate", "recordLimit");
-
-    }
   }
 
   @Test public void versionTest() {
@@ -220,7 +185,12 @@ public class AdminServicesTest extends AbstractServiceTest {
     response.concludeTimers();
     long              after     = System.currentTimeMillis();
 
-    this.validateVersionResponse(response, before, after, null);
+    validateVersionResponse(response,
+                            uriText,
+                            before,
+                            after,
+                            null,
+                            this.readInitJsonFile());
   }
 
   @Test public void versionViaHttpTest() {
@@ -232,7 +202,12 @@ public class AdminServicesTest extends AbstractServiceTest {
         = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
     long after = System.currentTimeMillis();
 
-    this.validateVersionResponse(response, before, after, null);
+    validateVersionResponse(response,
+                            uriText,
+                            before,
+                            after,
+                            null,
+                            this.readInitJsonFile());
   }
 
   @Test public void versionWithoutRawTest() {
@@ -245,7 +220,12 @@ public class AdminServicesTest extends AbstractServiceTest {
     response.concludeTimers();
     long              after     = System.currentTimeMillis();
 
-    this.validateVersionResponse(response, before, after, false);
+    validateVersionResponse(response,
+                            uriText,
+                            before,
+                            after,
+                            false,
+                            this.readInitJsonFile());
   }
 
   @Test public void versionWithoutRawViaHttpTest() {
@@ -257,7 +237,12 @@ public class AdminServicesTest extends AbstractServiceTest {
         = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
     long after = System.currentTimeMillis();
 
-    this.validateVersionResponse(response, before, after,false);
+    validateVersionResponse(response,
+                            uriText,
+                            before,
+                            after,
+                            false,
+                            this.readInitJsonFile());
   }
 
   @Test public void versionWithRawTest() {
@@ -270,10 +255,12 @@ public class AdminServicesTest extends AbstractServiceTest {
     response.concludeTimers();
     long              after     = System.currentTimeMillis();
 
-    this.validateVersionResponse(response,
-                                 before,
-                                 after,
-                                 true);
+    validateVersionResponse(response,
+                            uriText,
+                            before,
+                            after,
+                            true,
+                            this.readInitJsonFile());
   }
 
   @Test public void versionWithRawViaHttpTest() {
@@ -285,72 +272,11 @@ public class AdminServicesTest extends AbstractServiceTest {
         = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
     long after = System.currentTimeMillis();
 
-    this.validateVersionResponse(response, before, after, true);
+    validateVersionResponse(response,
+                            uriText,
+                            before,
+                            after,
+                            true,
+                            this.readInitJsonFile());
   }
-
-  private void validateVersionResponse(SzVersionResponse  response,
-                                       long               beforeTimestamp,
-                                       long               afterTimestamp,
-                                       Boolean            expectRawData)
-  {
-    String selfLink = this.formatServerUri("version");
-    if (expectRawData != null) {
-      selfLink += "?withRaw=" + expectRawData;
-    } else {
-      expectRawData = false;
-    }
-
-    this.validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, expectRawData);
-
-    SzVersionInfo info = response.getData();
-
-    assertNotNull(info, "Response data is null");
-
-    assertEquals(BuildInfo.MAVEN_VERSION,
-                 info.getApiServerVersion(),
-                 "API Server Version wrong");
-
-    assertEquals(BuildInfo.REST_API_VERSION,
-                 info.getRestApiVersion(),
-                 "REST API Version wrong");
-
-    // assume we can reinitialize the product API since it does not really do
-    // anything when we initialize it
-    String    initJson  = readInitJsonFile();
-    G2Product product   = new G2ProductJNI();
-    product.initV2("testApiServer", initJson, false);
-    try {
-      String versionJson = product.version();
-
-      JsonObject jsonObject = JsonUtils.parseJsonObject(versionJson);
-      String expectedVersion = JsonUtils.getString(jsonObject, "VERSION");
-      String expectedBuildNum = JsonUtils.getString(jsonObject, "BUILD_NUMBER");
-
-      JsonObject subObject = JsonUtils.getJsonObject(
-          jsonObject, "COMPATIBILITY_VERSION");
-
-      String configCompatVers = JsonUtils.getString(subObject,
-                                                    "CONFIG_VERSION");
-
-      assertEquals(expectedVersion, info.getNativeApiVersion(),
-                   "Native API Version wrong");
-
-      assertEquals(expectedBuildNum, info.getNativeApiBuildNumber(),
-                   "Native API Build Number wrong");
-
-      assertEquals(configCompatVers, info.getConfigCompatibilityVersion(),
-                   "Native API Config Compatibility wrong");
-    } finally {
-      product.destroy();
-
-    }
-    if (expectRawData) {
-      this.validateRawDataMap(
-          response.getRawData(),
-          false,
-          "VERSION", "BUILD_NUMBER", "BUILD_DATE", "COMPATIBILITY_VERSION");
-    }
-  }
-
 }

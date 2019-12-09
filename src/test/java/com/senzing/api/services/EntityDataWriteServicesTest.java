@@ -1,6 +1,5 @@
 package com.senzing.api.services;
 
-import com.senzing.api.model.SzHttpMethod;
 import com.senzing.api.model.SzLoadRecordResponse;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
@@ -16,10 +15,9 @@ import javax.ws.rs.core.UriInfo;
 
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static com.senzing.api.model.SzHttpMethod.*;
+import static com.senzing.api.services.ResponseValidators.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class EntityDataWriteServicesTest extends AbstractServiceTest {
@@ -65,8 +63,13 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateLoadRecordResponse(
-          response, POST, TEST_DATA_SOURCE, null, before, after);
+      validateLoadRecordResponse(response,
+                                 POST,
+                                 uriText,
+                                 TEST_DATA_SOURCE,
+                                 null,
+                                 before,
+                                 after);
     });
   }
 
@@ -88,8 +91,13 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateLoadRecordResponse(
-          response, POST, TEST_DATA_SOURCE, null, before, after);
+      validateLoadRecordResponse(response,
+                                 POST,
+                                 uriText,
+                                 TEST_DATA_SOURCE,
+                                 null,
+                                 before,
+                                 after);
     });
   }
 
@@ -115,8 +123,13 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateLoadRecordResponse(
-          response, PUT, TEST_DATA_SOURCE, recordId, before, after);
+      validateLoadRecordResponse(response,
+                                 PUT,
+                                 uriText,
+                                 TEST_DATA_SOURCE,
+                                 recordId,
+                                 before,
+                                 after);
     });
   }
 
@@ -140,8 +153,13 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateLoadRecordResponse(
-          response, PUT, TEST_DATA_SOURCE, recordId, before, after);
+      validateLoadRecordResponse(response,
+                                 PUT,
+                                 uriText,
+                                 TEST_DATA_SOURCE,
+                                 recordId,
+                                 before,
+                                 after);
 
     });
   }

@@ -20,6 +20,15 @@ public class Timers {
       this(now());
     }
 
+    private TimerInfo(TimerInfo other) {
+      this(other, now());
+    }
+
+    private TimerInfo(TimerInfo other, long atTime) {
+      this.start        = null;
+      this.accumulated  = other.getDuration(atTime);
+    }
+
     private long getDuration() {
       return this.getDuration(now());
     }
@@ -58,6 +67,14 @@ public class Timers {
       if (this.start != null) return false;
       this.start = atTime;
       return true;
+    }
+
+    private void mergeWith(TimerInfo timerInfo) {
+      this.accumulated += timerInfo.getDuration();
+    }
+
+    private void mergeWith(TimerInfo timerInfo, long now) {
+      this.accumulated += timerInfo.getDuration(now);
     }
   }
 
@@ -251,5 +268,28 @@ public class Timers {
       result.put(e.getKey(), e.getValue().getDuration(now));
     });
     return result;
+  }
+
+  /**
+   * Merges the durations from the specified {@link Timers} with this {@link
+   * Timers} instance.  All the durations and timers from the specified
+   * {@link Timers} instance are added to this one.
+   *
+   * @param timers The {@link Timers} to merge with.
+   */
+  public void mergeWith(Timers timers) {
+    if (timers == null) return;
+    long now = now();
+    timers.timerInfos.entrySet().forEach(e -> {
+      String    key    = e.getKey();
+      TimerInfo info1  = this.timerInfos.get(key);
+      TimerInfo info2  = e.getValue();
+      if (info1 == null) {
+        info1 = new TimerInfo(info2, now);
+        this.timerInfos.put(key, info1);
+      } else {
+        info1.mergeWith(info2, now);
+      }
+    });
   }
 }

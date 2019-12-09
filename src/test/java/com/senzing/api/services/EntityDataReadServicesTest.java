@@ -21,10 +21,12 @@ import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.GET;
 import static com.senzing.api.model.SzAttributeClass.*;
+import static com.senzing.util.CollectionUtilities.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static com.senzing.api.model.SzFeatureInclusion.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static com.senzing.api.services.ResponseValidators.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class EntityDataReadServicesTest extends AbstractServiceTest {
@@ -221,8 +223,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateRecordResponse(
+      validateRecordResponse(
           response,
+          GET,
+          uriText,
           dataSource,
           recordId,
           Collections.singleton("Schmoe Joe"),
@@ -253,8 +257,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateRecordResponse(
+      validateRecordResponse(
           response,
+          GET,
+          uriText,
           dataSource,
           recordId,
           Collections.singleton("Smith Joanne"),
@@ -286,8 +292,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateRecordResponse(
+      validateRecordResponse(
           response,
+          GET,
+          uriText,
           dataSource,
           recordId,
           Collections.singleton("Doe John"),
@@ -319,8 +327,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateRecordResponse(
+      validateRecordResponse(
           response,
+          GET,
+          uriText,
           dataSource,
           recordId,
           Collections.singleton("Doe Jane"),
@@ -352,8 +362,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateRecordResponse(
+      validateRecordResponse(
           response,
+          GET,
+          uriText,
           dataSource,
           recordId,
           Collections.singleton("Schmoe Joseph"),
@@ -385,8 +397,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateRecordResponse(
+      validateRecordResponse(
           response,
+          GET,
+          uriText,
           dataSource,
           recordId,
           Collections.singleton("Smith Jo Anne"),
@@ -419,8 +433,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateRecordResponse(
+      validateRecordResponse(
           response,
+          GET,
+          uriText,
           dataSource,
           recordId,
           set("Bruce Wayne", "AKA: Batman"),
@@ -452,8 +468,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateRecordResponse(
+      validateRecordResponse(
           response,
+          GET,
+          uriText,
           dataSource,
           recordId,
           set("Selina Kyle", "AKA: Catwoman"),
@@ -1016,23 +1034,24 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateEntityResponse(testInfo,
-                                  response,
-                                  uriText,
-                                  withRaw,
-                                  withRelated,
-                                  forceMinimal,
-                                  featureMode,
-                                  expectedRecordCount,
-                                  expectedRecordIds,
-                                  relatedEntityCount,
-                                  expectedFeatureCounts,
-                                  primaryFeatureValues,
-                                  duplicateFeatureValues,
-                                  expectedDataValues,
-                                  expectedOtherDataValues,
-                                  before,
-                                  after);
+      validateEntityResponse(testInfo,
+                             response,
+                             GET,
+                             uriText,
+                             withRaw,
+                             withRelated,
+                             forceMinimal,
+                             featureMode,
+                             expectedRecordCount,
+                             expectedRecordIds,
+                             relatedEntityCount,
+                             expectedFeatureCounts,
+                             primaryFeatureValues,
+                             duplicateFeatureValues,
+                             expectedDataValues,
+                             expectedOtherDataValues,
+                             before,
+                             after);
     });
   }
 
@@ -1073,23 +1092,24 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateEntityResponse(testInfo,
-                                  response,
-                                  uriText,
-                                  withRaw,
-                                  withRelated,
-                                  forceMinimal,
-                                  featureMode,
-                                  expectedRecordCount,
-                                  expectedRecordIds,
-                                  relatedEntityCount,
-                                  expectedFeatureCounts,
-                                  primaryFeatureValues,
-                                  duplicateFeatureValues,
-                                  expectedDataValues,
-                                  expectedOtherDataValues,
-                                  before,
-                                  after);
+      validateEntityResponse(testInfo,
+                             response,
+                             GET,
+                             uriText,
+                             withRaw,
+                             withRelated,
+                             forceMinimal,
+                             featureMode,
+                             expectedRecordCount,
+                             expectedRecordIds,
+                             relatedEntityCount,
+                             expectedFeatureCounts,
+                             primaryFeatureValues,
+                             duplicateFeatureValues,
+                             expectedDataValues,
+                             expectedOtherDataValues,
+                             before,
+                             after);
     });
   }
 
@@ -1125,7 +1145,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         response.concludeTimers();
         long after = System.currentTimeMillis();
 
-        this.validateBasics(
+        validateBasics(
             response, 404, GET, uriText, before, after);
       }
     });
@@ -1164,7 +1184,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         response.concludeTimers();
         long after = System.currentTimeMillis();
 
-        this.validateBasics(
+        validateBasics(
             response, 404, GET, uriText, before, after);
       }
     });
@@ -1187,7 +1207,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateBasics(
+      validateBasics(
           response, 404, GET, uriText, before, after);
     });
   }
@@ -1210,7 +1230,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateBasics(
+      validateBasics(
           response, 404, GET, uriText, before, after);
     });
   }
@@ -1262,23 +1282,24 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateEntityResponse(testInfo,
-                                  response,
-                                  uriText,
-                                  withRaw,
-                                  withRelated,
-                                  forceMinimal,
-                                  featureMode,
-                                  expectedRecordCount,
-                                  expectedRecordIds,
-                                  relatedEntityCount,
-                                  expectedFeatureCounts,
-                                  primaryFeatureValues,
-                                  duplicateFeatureValues,
-                                  expectedDataValues,
-                                  expectedOtherDataValues,
-                                  before,
-                                  after);
+      validateEntityResponse(testInfo,
+                             response,
+                             GET,
+                             uriText,
+                             withRaw,
+                             withRelated,
+                             forceMinimal,
+                             featureMode,
+                             expectedRecordCount,
+                             expectedRecordIds,
+                             relatedEntityCount,
+                             expectedFeatureCounts,
+                             primaryFeatureValues,
+                             duplicateFeatureValues,
+                             expectedDataValues,
+                             expectedOtherDataValues,
+                             before,
+                             after);
     });
   }
 
@@ -1320,23 +1341,24 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateEntityResponse(testInfo,
-                                  response,
-                                  uriText,
-                                  withRaw,
-                                  withRelated,
-                                  forceMinimal,
-                                  featureMode,
-                                  expectedRecordCount,
-                                  expectedRecordIds,
-                                  relatedEntityCount,
-                                  expectedFeatureCounts,
-                                  primaryFeatureValues,
-                                  duplicateFeatureValues,
-                                  expectedDataValues,
-                                  expectedOtherDataValues,
-                                  before,
-                                  after);
+      validateEntityResponse(testInfo,
+                             response,
+                             GET,
+                             uriText,
+                             withRaw,
+                             withRelated,
+                             forceMinimal,
+                             featureMode,
+                             expectedRecordCount,
+                             expectedRecordIds,
+                             relatedEntityCount,
+                             expectedFeatureCounts,
+                             primaryFeatureValues,
+                             duplicateFeatureValues,
+                             expectedDataValues,
+                             expectedOtherDataValues,
+                             before,
+                             after);
     });
   }
 
@@ -1369,7 +1391,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         response.concludeTimers();
         long after = System.currentTimeMillis();
 
-        this.validateBasics(
+        validateBasics(
             response, 404, GET, uriText, before, after);
       }
     });
@@ -1389,7 +1411,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateBasics(
+      validateBasics(
           response, 404, GET, uriText, before, after);
 
     });
@@ -1553,9 +1575,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateSearchResponse(
+      validateSearchResponse(
           testInfo,
           response,
+          GET,
           uriText,
           expectedCount,
           withRelationships,
@@ -1625,9 +1648,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateSearchResponse(
+      validateSearchResponse(
           testInfo,
           response,
+          GET,
           uriText,
           expectedCount,
           withRelationships,
@@ -1688,9 +1712,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateSearchResponse(
+      validateSearchResponse(
           testInfo,
           response,
+          GET,
           uriText,
           expectedCount,
           withRelationships,

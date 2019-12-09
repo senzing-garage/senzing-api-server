@@ -2,14 +2,10 @@ package com.senzing.repomgr;
 
 import com.senzing.cmdline.CommandLineUtilities;
 import com.senzing.g2.engine.*;
+import com.senzing.io.RecordReader;
 import com.senzing.util.JsonUtils;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 
 import javax.json.*;
-import javax.json.stream.JsonParser;
-import javax.json.stream.JsonParserFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,6 +17,7 @@ import static java.nio.file.StandardCopyOption.*;
 import static com.senzing.io.IOUtilities.*;
 import static com.senzing.cmdline.CommandLineUtilities.*;
 import static com.senzing.repomgr.RepositoryManagerOption.*;
+import static com.senzing.io.RecordReader.Format.*;
 
 public class RepositoryManager {
   private static final File INSTALL_DIR;
@@ -419,6 +416,35 @@ public class RepositoryManager {
   }
 
   /**
+   * Describes a repository configuration.
+   *
+   */
+  public static class Configuration {
+    private long configId;
+    private JsonObject configJson;
+    public Configuration(long configId, JsonObject configJson) {
+      this.configId   = configId;
+      this.configJson = configJson;
+    }
+
+    /**
+     * Returns the configuration ID.
+     * @return The configuration ID.
+     */
+    public long getConfigId() {
+      return this.configId;
+    }
+
+    /**
+     * Returns the configuration JSON as a {@link JsonObject}.
+     * @return The {@link JsonObject} describing the configuration.
+     */
+    public JsonObject getConfigJson() {
+      return this.configJson;
+    }
+  }
+
+  /**
    * Validates a repository directory specified in the command-line arguments.
    *
    */
@@ -738,17 +764,23 @@ public class RepositoryManager {
    * Creates a new Senzing SQLite repository from the default repository data.
    *
    * @param directory The directory at which to create the repository.
+   *
+   * @return The {@link Configuration} describing the initial configuration.
    */
-  public static void createRepo(File directory) {
-    createRepo(directory, false);
+  public static Configuration createRepo(File directory) {
+    return createRepo(directory, false);
   }
 
   /**
    * Creates a new Senzing SQLite repository from the default repository data.
    *
    * @param directory The directory at which to create the repository.
+   *
+   * @return The {@link Configuration} describing the initial configuration.
    */
-  public static void createRepo(File directory, boolean silent) {
+  public static Configuration createRepo(File directory, boolean silent) {
+    JsonObject resultConfig = null;
+    Long resultConfigId = null;
     if (directory.exists()) {
       if (!directory.isDirectory()) {
         throw new IllegalArgumentException(
@@ -867,8 +899,12 @@ public class RepositoryManager {
         }
         CONFIG_API.close(configId);
 
+        String configJsonText = sb.toString();
+
+        resultConfig = JsonUtils.parseJsonObject(configJsonText);
+
         Result<Long> result = new Result<>();
-        returnCode = CONFIG_MGR_API.addConfig(sb.toString(),
+        returnCode = CONFIG_MGR_API.addConfig(configJsonText,
                                               "Initial Config",
                                               result);
         if (returnCode != 0) {
@@ -876,7 +912,9 @@ public class RepositoryManager {
                                 CONFIG_MGR_API);
           throw new IllegalStateException(msg);
         }
-        returnCode = CONFIG_MGR_API.setDefaultConfigID(result.getValue());
+
+        resultConfigId = result.getValue();
+        returnCode = CONFIG_MGR_API.setDefaultConfigID(resultConfigId);
         if (returnCode != 0) {
           String msg = logError("G2ConfigMgr.setDefaultConfigID()",
                                 CONFIG_MGR_API);
@@ -896,6 +934,7 @@ public class RepositoryManager {
       deleteRecursively(directory);
       throw new RuntimeException(e);
     }
+    return new Configuration(resultConfigId, resultConfig);
   }
 
   private static void copyFile(File source, File target)
@@ -1340,14 +1379,14 @@ public class RepositoryManager {
       dataSources.add(dataSource);
     }
 
-    RecordProvider provider = null;
+    RecordReader recordReader = null;
     // check the file type
     if (normalizedFileName.endsWith(".JSON")) {
-      provider = provideJsonRecords(sourceFile, dataSource);
+      recordReader = provideJsonRecords(sourceFile, dataSource);
     } else if (normalizedFileName.endsWith(".CSV")) {
-      provider = provideCsvRecords(sourceFile, dataSource);
+      recordReader = provideCsvRecords(sourceFile, dataSource);
     }
-    if (provider == null) {
+    if (recordReader == null) {
       return false;
     }
 
@@ -1358,9 +1397,9 @@ public class RepositoryManager {
     int failedInterval = 100;
     PrintStream printStream = System.err;
     try {
-      for (JsonObject record = provider.getNextRecord();
+      for (JsonObject record = recordReader.readRecord();
            (record != null);
-           record = provider.getNextRecord())
+           record = recordReader.readRecord())
       {
         String recordId = JsonUtils.getString(record, "RECORD_ID");
         String recordSource = JsonUtils.getString(record, "DATA_SOURCE");
@@ -1504,213 +1543,34 @@ public class RepositoryManager {
                                        boolean  verbose)
   {
     // add the data source and reinitialize
-    boolean success = configSources(repository,
-                                    Collections.singleton(dataSource),
-                                    verbose);
-    if (!success) return false;
+    Configuration config = configSources(repository,
+                                         Collections.singleton(dataSource),
+                                         verbose);
+    if (config == null) return false;
     destroyApis();
     initApis(repository, verbose);
     return true;
   }
 
-  private interface RecordProvider {
-    JsonObject getNextRecord();
-  }
-
-  private static JsonObject augmentRecord(JsonObject   record,
-                                          String       dataSource,
-                                          File         sourceFile)
+  private static RecordReader provideJsonRecords(File    sourceFile,
+                                                 String  dataSource)
   {
-    if (record == null) return null;
-    JsonObjectBuilder job = Json.createObjectBuilder(record);
-    if (dataSource != null) {
-      if (record.containsKey("DATA_SOURCE")) {
-        job.remove("DATA_SOURCE");
-      }
-      if (record.containsKey("ENTITY_TYPE")) {
-        job.remove("ENTITY_TYPE");
-      }
-      job.add("DATA_SOURCE", dataSource);
-      job.add("ENTITY_TYPE", dataSource);
-    }
-    job.add("SOURCE_ID", sourceFile.toString());
-    return job.build();
-  }
-
-  private static class JsonArrayRecordProvider implements RecordProvider {
-    private Iterator<JsonObject> recordIter;
-    private String dataSource;
-    private File sourceFile;
-
-    public JsonArrayRecordProvider(File sourceFile, String dataSource) {
-      this.sourceFile = sourceFile;
-      JsonParserFactory jpf = Json.createParserFactory(Collections.emptyMap());
-      try {
-        FileInputStream    fis = new FileInputStream(sourceFile);
-        InputStreamReader  isr = new InputStreamReader(fis, "UTF-8");
-        BufferedReader     br  = new BufferedReader(isr);
-
-        JsonParser jp = jpf.createParser(br);
-        jp.next();
-        this.recordIter = jp.getArrayStream()
-            .map(jv -> (JsonObject) jv).iterator();
-
-        this.dataSource = dataSource;
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    public JsonObject getNextRecord() {
-      if (this.recordIter.hasNext()) {
-        return augmentRecord(this.recordIter.next(), this.dataSource, this.sourceFile);
-      } else {
-        return null;
-      }
-    }
-  }
-
-  private static class JsonRecordProvider implements RecordProvider {
-    private BufferedReader reader;
-    private String dataSource;
-    private File sourceFile;
-
-    public JsonRecordProvider(File sourceFile, String dataSource) {
-      this.sourceFile = sourceFile;
-      JsonParserFactory jpf = Json.createParserFactory(Collections.emptyMap());
-      try {
-        FileInputStream    fis = new FileInputStream(sourceFile);
-        InputStreamReader  isr = new InputStreamReader(fis, "UTF-8");
-        this.reader = new BufferedReader(isr);
-        this.dataSource = dataSource;
-
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    public JsonObject getNextRecord() {
-      try {
-        JsonObject record = null;
-        while (this.reader != null && record == null) {
-          // read the next line and check for EOF
-          String line = this.reader.readLine();
-          if (line == null) {
-            this.reader.close();
-            this.reader = null;
-            continue;
-          }
-
-          // trim the line of extra whitespace
-          line = line.trim();
-
-          // check for blank lines and skip them
-          if (line.length() == 0) continue;
-
-          // check if the line begins with a "#" for a comment lines
-          if (line.startsWith("#")) continue;
-
-          // check if the line does NOT start with "{"
-          if (!line.startsWith("{")) {
-            throw new IllegalStateException(
-                "Line does not appear to be JSON record: " + line);
-          }
-
-          // parse the line
-          record = JsonUtils.parseJsonObject(line);
-        }
-
-        return augmentRecord(record, this.dataSource, this.sourceFile);
-
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  }
-
-  private static class CsvRecordProvider implements RecordProvider {
-    private Iterator<CSVRecord> recordIter;
-    private String dataSource;
-    private File sourceFile;
-
-    public CsvRecordProvider(File sourceFile, String dataSource) {
-      this.dataSource = dataSource;
-      this.sourceFile = sourceFile;
-      CSVFormat csvFormat = CSVFormat.DEFAULT
-          .withFirstRecordAsHeader().withIgnoreEmptyLines(true).withTrim(true);
-
-      try {
-        final String       enc = "UTF-8";
-        FileInputStream    fis = new FileInputStream(sourceFile);
-        InputStreamReader  isr = new InputStreamReader(fis, enc);
-        BufferedReader     br  = new BufferedReader(bomSkippingReader(isr, enc));
-
-        CSVParser parser = new CSVParser(br, csvFormat);
-        Map<String, Integer> headerMap = parser.getHeaderMap();
-        Set<String> headers = new HashSet<>();
-        headerMap.keySet().forEach(h -> {
-          headers.add(h.toUpperCase());
-        });
-        if (dataSource == null && !headers.contains("DATA_SOURCE")) {
-          throw new IllegalStateException(
-              "The " + RepositoryManagerOption.DATA_SOURCE.getCommandLineFlag() + " option is "
-              + "required if DATA_SOURCE missing from CSV");
-        }
-        this.recordIter = parser.iterator();
-
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-
-    }
-    public JsonObject getNextRecord() {
-      try {
-        if (!this.recordIter.hasNext()) return null;
-        CSVRecord record = this.recordIter.next();
-        Map<String,String> recordMap = record.toMap();
-        Iterator<Map.Entry<String,String>> entryIter
-            = recordMap.entrySet().iterator();
-        while (entryIter.hasNext()) {
-          Map.Entry<String,String> entry = entryIter.next();
-          String value = entry.getValue();
-          if (value == null || value.trim().length() == 0) {
-            entryIter.remove();
-          }
-        }
-        if (this.dataSource != null) {
-          recordMap.put("DATA_SOURCE", this.dataSource);
-          recordMap.put("ENTITY_TYPE", this.dataSource);
-        }
-        recordMap.put("SOURCE_ID", this.sourceFile.toString());
-
-        Map<String,Object> map = (Map) recordMap;
-        return Json.createObjectBuilder(map).build();
-
-      } catch (RuntimeException e) {
-        throw e;
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-  }
-
-  private static RecordProvider provideJsonRecords(File    sourceFile,
-                                                   String  dataSource)
-  {
+    RecordReader recordReader = null;
     // check if we have a real JSON array
-    boolean array = false;
-    try (FileInputStream    fis = new FileInputStream(sourceFile);
-         InputStreamReader  isr = new InputStreamReader(fis, "UTF-8");
-         BufferedReader     br  = new BufferedReader(isr))
-    {
-      for (int nextChar = br.read(); nextChar >= 0; nextChar = br.read()) {
-        if (!Character.isWhitespace((char) nextChar)) {
-          if (((char) nextChar) == '[') {
-            array = true;
-          }
-          break;
-        }
+    try {
+      FileInputStream    fis = new FileInputStream(sourceFile);
+      InputStreamReader  isr = new InputStreamReader(fis, "UTF-8");
+      BufferedReader     br  = new BufferedReader(isr);
+
+      recordReader = new RecordReader(br, dataSource);
+
+      RecordReader.Format format = recordReader.getFormat();
+      if (format != JSON && format != JSON_LINES) {
+        System.err.println();
+        System.err.println(
+            "JSON file does not contain JSON or JSON-lines formatted records");
+        System.err.println();
+        return null;
       }
 
     } catch (IOException e) {
@@ -1721,18 +1581,32 @@ public class RepositoryManager {
       return null;
     }
 
-    if (array) {
-      return new JsonArrayRecordProvider(sourceFile, dataSource);
-
-    } else {
-      return new JsonRecordProvider(sourceFile, dataSource);
-    }
+    // return the record reader
+    return recordReader;
   }
 
-  private static RecordProvider provideCsvRecords(File   sourceFile,
-                                                  String dataSource)
+  private static RecordReader provideCsvRecords(File   sourceFile,
+                                                String dataSource)
   {
-    return new CsvRecordProvider(sourceFile, dataSource);
+    RecordReader recordReader = null;
+    // check if we have a real JSON array
+    try {
+      FileInputStream    fis = new FileInputStream(sourceFile);
+      InputStreamReader  isr = new InputStreamReader(fis, "UTF-8");
+      BufferedReader     br  = new BufferedReader(isr);
+
+      recordReader = new RecordReader(CSV, br, dataSource);
+
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.err.println();
+      System.err.println("Failed to read file: " + sourceFile);
+      System.err.println();
+      return null;
+    }
+
+    // return the record reader
+    return recordReader;
   }
 
   /**
@@ -1867,10 +1741,11 @@ public class RepositoryManager {
    * @param repository The directory for the repository.
    * @param dataSources The {@link List} of data source names.
    *
-   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
    */
-  public static boolean configSources(File         repository,
-                                      Set<String>  dataSources)
+  public static Configuration configSources(File         repository,
+                                            Set<String>  dataSources)
   {
     return configSources(repository, dataSources, false);
   }
@@ -1884,11 +1759,12 @@ public class RepositoryManager {
    * @param verbose <tt>true</tt> for verbose API logging, otherwise
    *                <tt>false</tt>
    *
-   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
    */
-  public static boolean configSources(File         repository,
-                                      boolean      verbose,
-                                      Set<String>  dataSources)
+  public static Configuration configSources(File         repository,
+                                            boolean      verbose,
+                                            Set<String>  dataSources)
   {
     return configSources(repository, verbose, dataSources, false);
   }
@@ -1902,11 +1778,12 @@ public class RepositoryManager {
    * @param silent <tt>true</tt> if no feedback should be given to the user
    *               upon completion, otherwise <tt>false</tt>
    *
-   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
    */
-  public static boolean configSources(File         repository,
-                                      Set<String>  dataSources,
-                                      boolean      silent)
+  public static Configuration configSources(File         repository,
+                                            Set<String>  dataSources,
+                                            boolean      silent)
   {
     return configSources(repository, false, dataSources, silent);
   }
@@ -1922,14 +1799,18 @@ public class RepositoryManager {
    * @param silent <tt>true</tt> if no feedback should be given to the user
    *               upon completion, otherwise <tt>false</tt>
    *
-   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
    */
-  public static boolean configSources(File         repository,
-                                      boolean      verbose,
-                                      Set<String>  dataSources,
-                                      boolean      silent)
+  public static Configuration configSources(File         repository,
+                                            boolean      verbose,
+                                            Set<String>  dataSources,
+                                            boolean      silent)
   {
     initApis(repository, verbose);
+    Long        resultConfigId  = null;
+    JsonObject  resultConfig    = null;
+
     Result<Long> configId = new Result<>();
     int returnCode = 0;
     try {
@@ -1946,7 +1827,7 @@ public class RepositoryManager {
         returnCode = CONFIG_API.addDataSource(configId.getValue(), dataSource);
         if (returnCode != 0) {
           logError("G2Config.addDataSource()", CONFIG_API);
-          return false;
+          return null;
         }
         dataSourceActions.put(dataSource, true);
         addedDataSources.add(dataSource);
@@ -1959,7 +1840,7 @@ public class RepositoryManager {
         returnCode = CONFIG_API.save(configId.getValue(), sb);
         if (returnCode != 0) {
           logError("G2Config.save()", CONFIG_API);
-          return false;
+          return null;
         }
 
         String comment;
@@ -1979,17 +1860,22 @@ public class RepositoryManager {
         }
 
         Result<Long> result = new Result<>();
-        returnCode = CONFIG_MGR_API.addConfig(sb.toString(), comment, result);
+        String configJsonText = sb.toString();
+        returnCode = CONFIG_MGR_API.addConfig(configJsonText, comment, result);
         if (returnCode != 0) {
           logError("G2ConfigMgr.addConfig()", CONFIG_MGR_API);
-          return false;
+          return null;
         }
 
         returnCode = CONFIG_MGR_API.setDefaultConfigID(result.getValue());
         if (returnCode != 0) {
           logError("G2ConfigMgr.setDefaultConfigID()", CONFIG_MGR_API);
-          return false;
+          return null;
         }
+
+        // get the result config and its ID for the result
+        resultConfig    = JsonUtils.parseJsonObject(configJsonText);
+        resultConfigId  = result.getValue();
       }
 
       if (!silent) {
@@ -2016,7 +1902,26 @@ public class RepositoryManager {
       }
     }
 
-    return true;
+    // check if the result config ID is not set (usually means that all the
+    // data sources to be added already existed)
+    if (resultConfigId == null) {
+      Result<Long> result = new Result<>();
+      returnCode = CONFIG_MGR_API.getDefaultConfigID(result);
+      if (returnCode != 0) {
+        logError("G2ConfigMgr.getDefaultConfigID()", CONFIG_MGR_API);
+        return null;
+      }
+      resultConfigId = result.getValue();
+      StringBuffer sb = new StringBuffer();
+      returnCode = CONFIG_MGR_API.getConfig(resultConfigId, sb);
+      if (returnCode != 0) {
+        logError("G2ConfigMgr.getConfig()", CONFIG_MGR_API);
+        return null;
+      }
+      resultConfig = JsonUtils.parseJsonObject(sb.toString());
+    }
+
+    return new Configuration(resultConfigId, resultConfig);
   }
 
 }

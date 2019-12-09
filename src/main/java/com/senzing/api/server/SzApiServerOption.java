@@ -21,7 +21,9 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption> {
   INIT_ENV_VAR("-initEnvVar", true, 1),
   CONFIG_ID("-configId", 1),
   READ_ONLY("-readOnly", 0),
+  ENABLE_ADMIN("-enableAdmin", 0),
   VERBOSE("-verbose", 0),
+  QUIET("-quiet", 0),
   MONITOR_FILE("-monitorFile", 1),
   CONCURRENCY("-concurrency", 1),
   ALLOWED_ORIGINS("-allowedOrigins", 1);

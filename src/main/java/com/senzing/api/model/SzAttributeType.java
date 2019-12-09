@@ -303,6 +303,10 @@ public class SzAttributeType {
     String  ftypeCode     = JsonUtils.getString(jsonObject, "FTYPE_CODE");
     boolean advanced      = interpretBoolean(jsonObject,"ADVANCED");
 
+    if (ftypeCode != null && ftypeCode.trim().length() == 0) {
+      ftypeCode = null;
+    }
+
     attributeType.setAttributeCode(attrCode);
     attributeType.setDefaultValue(defaultValue);
     attributeType.setNecessity(

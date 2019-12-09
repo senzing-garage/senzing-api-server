@@ -53,7 +53,7 @@ public class SzEntityData {
    * @return The {@link List} of {@linkplain SzRelatedEntity related entities}.
    */
   public List<SzRelatedEntity> getRelatedEntities() {
-    return relatedEntities;
+    return Collections.unmodifiableList(this.relatedEntities);
   }
 
   /**

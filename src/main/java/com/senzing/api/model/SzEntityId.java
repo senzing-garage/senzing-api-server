@@ -12,7 +12,8 @@ public class SzEntityId implements SzEntityIdentifier {
   private long value;
 
   /**
-   * Default constructor.
+   * Constructs with the specified entity ID.
+   * @param id The entity ID.
    */
   public SzEntityId(long id) {
     this.value = id;

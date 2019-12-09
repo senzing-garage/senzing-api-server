@@ -20,6 +20,7 @@ import static com.senzing.api.model.SzHttpMethod.*;
 import static com.senzing.util.LoggingUtilities.formatError;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
+import static com.senzing.api.services.ResponseValidators.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class ExplicitConfigIdTest extends AutoReinitializeTest
@@ -66,11 +67,13 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
       long after = System.currentTimeMillis();
 
       synchronized (this.expectedDataSources) {
-        this.validateDataSourcesResponse(response,
-                                         before,
-                                         after,
-                                         null,
-                                         INITIAL_DATA_SOURCES);
+        validateDataSourcesResponse(response,
+                                    GET,
+                                    uriText,
+                                    before,
+                                    after,
+                                    false,
+                                    INITIAL_DATA_SOURCES);
       }
     });
   }
@@ -97,11 +100,11 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
       long after = System.currentTimeMillis();
 
       synchronized (this.expectedDataSources) {
-        this.validateConfigResponse(response,
-                                    uriText,
-                                    before,
-                                    after,
-                                    INITIAL_DATA_SOURCES);
+        validateConfigResponse(response,
+                               uriText,
+                               before,
+                               after,
+                               INITIAL_DATA_SOURCES.keySet());
       }
     });
   }
@@ -138,7 +141,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
         response.concludeTimers();
         long after = System.currentTimeMillis();
 
-        this.validateBasics(
+        validateBasics(
             response, 404, POST, uriText, before, after);
       }
     });
@@ -177,7 +180,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
         response.concludeTimers();
         long after = System.currentTimeMillis();
 
-        this.validateBasics(
+        validateBasics(
             response, 404, PUT, uriText, before, after);
       }
     });

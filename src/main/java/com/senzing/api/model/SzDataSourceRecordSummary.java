@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Describes a record summary by data source.
  */
-public class SzRecordSummary {
+public class SzDataSourceRecordSummary {
   /**
    * The data source for the record summary.
    */
@@ -29,7 +29,7 @@ public class SzRecordSummary {
   /**
    * Default constructor.
    */
-  public SzRecordSummary() {
+  public SzDataSourceRecordSummary() {
     this(null, 0);
   }
 
@@ -40,7 +40,7 @@ public class SzRecordSummary {
    * @param recordCount The number of records from the data source in
    *                    the entity.
    */
-  public SzRecordSummary(String dataSource, int recordCount) {
+  public SzDataSourceRecordSummary(String dataSource, int recordCount) {
     this.dataSource   = dataSource;
     this.recordCount  = recordCount;
     this.topRecordIds = new LinkedList<>();
@@ -114,7 +114,7 @@ public class SzRecordSummary {
   }
 
   /**
-   * Parses a list of {@link SzRecordSummary} instances from native API JSON
+   * Parses a list of {@link SzDataSourceRecordSummary} instances from native API JSON
    * format and populates the specified {@link List} or creates a new {@link
    * List} if the specified {@link List} is <tt>null</tt>.
    *
@@ -127,8 +127,8 @@ public class SzRecordSummary {
    * @return The specified {@link List} that was populated or the new
    *         {@link List} that was created.
    */
-  public static List<SzRecordSummary> parseRecordSummaryList(
-      List<SzRecordSummary> list,
+  public static List<SzDataSourceRecordSummary> parseRecordSummaryList(
+      List<SzDataSourceRecordSummary> list,
       JsonArray             jsonArray)
   {
     if (list == null) {
@@ -142,19 +142,19 @@ public class SzRecordSummary {
 
   /**
    * Parses the native API JSON and creates or populates an
-   * {@link SzRecordSummary}.
+   * {@link SzDataSourceRecordSummary}.
    *
    * @param summary The summary to populate or <tt>null</tt> if a new
    *                instance should be created.
    *
    * @param jsonObject The {@link JsonObject} to parse.
    *
-   * @return The {@link SzRecordSummary} that was specified or created.
+   * @return The {@link SzDataSourceRecordSummary} that was specified or created.
    */
-  public static SzRecordSummary parseRecordSummary(SzRecordSummary summary,
-                                                   JsonObject      jsonObject)
+  public static SzDataSourceRecordSummary parseRecordSummary(SzDataSourceRecordSummary summary,
+                                                             JsonObject      jsonObject)
   {
-    if (summary == null) summary = new SzRecordSummary();
+    if (summary == null) summary = new SzDataSourceRecordSummary();
 
     String dataSource  = jsonObject.getString("DATA_SOURCE");
     int    recordCount = jsonObject.getJsonNumber("RECORD_COUNT").intValue();

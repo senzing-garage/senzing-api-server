@@ -5,7 +5,6 @@ import com.senzing.util.JsonUtils;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class SzResolvedEntity {
@@ -30,9 +29,9 @@ public class SzResolvedEntity {
   private String bestName;
 
   /**
-   * The {@link List} of {@link SzRecordSummary} instances.
+   * The {@link List} of {@link SzDataSourceRecordSummary} instances.
    */
-  private List<SzRecordSummary> recordSummaries;
+  private List<SzDataSourceRecordSummary> recordSummaries;
 
   /**
    * The list of address data strings.
@@ -230,21 +229,21 @@ public class SzResolvedEntity {
 
 
   /**
-   * Returns the list of {@link SzRecordSummary} instances for the entity.
+   * Returns the list of {@link SzDataSourceRecordSummary} instances for the entity.
    *
-   * @return The list of {@link SzRecordSummary} instances for the entity.
+   * @return The list of {@link SzDataSourceRecordSummary} instances for the entity.
    */
-  public List<SzRecordSummary> getRecordSummaries() {
+  public List<SzDataSourceRecordSummary> getRecordSummaries() {
     return Collections.unmodifiableList(this.recordSummaries);
   }
 
   /**
-   * Sets the list {@link SzRecordSummary record summaries} for the entity.
+   * Sets the list {@link SzDataSourceRecordSummary record summaries} for the entity.
    *
-   * @param summaries The list {@link SzRecordSummary record summaries}
+   * @param summaries The list {@link SzDataSourceRecordSummary record summaries}
    *                  for the entity.
    */
-  public void setRecordSummaries(List<SzRecordSummary> summaries) {
+  public void setRecordSummaries(List<SzDataSourceRecordSummary> summaries) {
     this.recordSummaries.clear();
     if (summaries != null) {
       this.recordSummaries.addAll(summaries);
@@ -252,12 +251,12 @@ public class SzResolvedEntity {
   }
 
   /**
-   * Adds the specified {@link SzRecordSummary} to the list of associated
-   * {@linkplain SzRecordSummary record summaries}.
+   * Adds the specified {@link SzDataSourceRecordSummary} to the list of associated
+   * {@linkplain SzDataSourceRecordSummary record summaries}.
    *
-   * @param summary The {@link SzRecordSummary} to add to the record summaries.
+   * @param summary The {@link SzDataSourceRecordSummary} to add to the record summaries.
    */
-  public void addRecordSummary(SzRecordSummary summary)
+  public void addRecordSummary(SzDataSourceRecordSummary summary)
   {
     this.recordSummaries.add(summary);
   }
@@ -741,7 +740,7 @@ public class SzResolvedEntity {
 
     // get the records
     List<SzMatchedRecord> recordList = null;
-    List<SzRecordSummary> summaries = null;
+    List<SzDataSourceRecordSummary> summaries = null;
 
     if (jsonObject.containsKey("RECORDS")) {
       JsonArray records = jsonObject.getJsonArray("RECORDS");
@@ -750,7 +749,7 @@ public class SzResolvedEntity {
 
     } else if (jsonObject.containsKey("RECORD_SUMMARY")) {
       JsonArray jsonArray = jsonObject.getJsonArray("RECORD_SUMMARY");
-      summaries = SzRecordSummary.parseRecordSummaryList(null, jsonArray);
+      summaries = SzDataSourceRecordSummary.parseRecordSummaryList(null, jsonArray);
 
     }
 
@@ -767,13 +766,13 @@ public class SzResolvedEntity {
 
   /**
    * Summarizes the specified {@link List} of {@linkplain SzMatchedRecord
-   * records} and produces a {@link List} of {@link SzRecordSummary} instances.
+   * records} and produces a {@link List} of {@link SzDataSourceRecordSummary} instances.
    *
    * @param records The records to be summarized.
-   * @return The {@link List} of {@link SzRecordSummary} instances describing
+   * @return The {@link List} of {@link SzDataSourceRecordSummary} instances describing
    *         the summaries.
    */
-  public static List<SzRecordSummary> summarizeRecords(
+  public static List<SzDataSourceRecordSummary> summarizeRecords(
       List<SzMatchedRecord>  records)
   {
     // check if we have no records
@@ -800,7 +799,7 @@ public class SzResolvedEntity {
     });
 
     // construct the result list
-    final List<SzRecordSummary> tempList = new ArrayList<>(map.size());
+    final List<SzDataSourceRecordSummary> tempList = new ArrayList<>(map.size());
 
     // for each entry in the map....
     map.entrySet().stream().forEach(entry -> {
@@ -821,7 +820,7 @@ public class SzResolvedEntity {
       recordIds = Collections.unmodifiableList(recordIds);
 
       // create a new record summary
-      SzRecordSummary summary = new SzRecordSummary();
+      SzDataSourceRecordSummary summary = new SzDataSourceRecordSummary();
       summary.setDataSource(dataSource);
       summary.setRecordCount(recordCount);
       summary.setTopRecordIds(recordIds);
@@ -830,9 +829,9 @@ public class SzResolvedEntity {
     });
 
     Collections.sort(
-        tempList, Comparator.comparing(SzRecordSummary::getDataSource));
+        tempList, Comparator.comparing(SzDataSourceRecordSummary::getDataSource));
 
-    List<SzRecordSummary> result = Collections.unmodifiableList(tempList);
+    List<SzDataSourceRecordSummary> result = Collections.unmodifiableList(tempList);
 
     return result;
   }

@@ -19,6 +19,7 @@ import static com.senzing.api.model.SzHttpMethod.POST;
 import static com.senzing.api.model.SzHttpMethod.PUT;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
+import static com.senzing.api.services.ResponseValidators.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class ReadOnlyEntityDataWriteServicesTest
@@ -60,7 +61,7 @@ public class ReadOnlyEntityDataWriteServicesTest
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
         long after = System.currentTimeMillis();
-        this.validateBasics(response, 403, POST, uriText, before, after);
+        validateBasics(response, 403, POST, uriText, before, after);
       }
     });
   }
@@ -83,7 +84,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateBasics(response, 403, POST, uriText, before, after);
+      validateBasics(response, 403, POST, uriText, before, after);
     });
   }
 
@@ -114,7 +115,7 @@ public class ReadOnlyEntityDataWriteServicesTest
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
         long after = System.currentTimeMillis();
-        this.validateBasics(response, 403, PUT, uriText, before, after);
+        validateBasics(response, 403, PUT, uriText, before, after);
       }
     });
   }
@@ -139,7 +140,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateBasics(response, 403, PUT, uriText, before, after);
+      validateBasics(response, 403, PUT, uriText, before, after);
     });
   }
 }

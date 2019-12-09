@@ -20,11 +20,13 @@ import java.util.*;
 import static com.senzing.api.model.SzFeatureInclusion.NONE;
 import static com.senzing.api.model.SzFeatureInclusion.WITH_DUPLICATES;
 import static com.senzing.api.model.SzHttpMethod.GET;
+import static com.senzing.util.CollectionUtilities.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static com.senzing.api.services.ResponseValidators.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class EntityGraphServicesTest extends AbstractServiceTest {
@@ -548,6 +550,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       this.validateEntityPathResponse(
           testInfo,
           response,
+          GET,
           uriText,
           fromIdentifer,
           toIdentifier,
@@ -633,6 +636,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       this.validateEntityPathResponse(
           testInfo,
           response,
+          GET,
           uriText,
           fromIdentifer,
           toIdentifier,
@@ -729,6 +733,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       this.validateEntityPathResponse(
           testInfo,
           response,
+          GET,
           uriText,
           fromIdentifer,
           toIdentifier,
@@ -814,6 +819,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       this.validateEntityPathResponse(
           testInfo,
           response,
+          GET,
           uriText,
           fromIdentifer,
           toIdentifier,
@@ -832,9 +838,10 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
     });
   }
 
-  private void validateEntityPathResponse(
+  public void validateEntityPathResponse(
       String                              testInfo,
       SzEntityPathResponse                response,
+      SzHttpMethod                        httpMethod,
       String                              selfLink,
       SzEntityIdentifier                  fromIdentifer,
       SzEntityIdentifier                  toIdentifier,
@@ -851,10 +858,12 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       long                                beforeTimestamp,
       long                                afterTimestamp)
   {
-    selfLink = this.formatServerUri(selfLink);
-
-    this.validateBasics(
-        testInfo, response, selfLink, beforeTimestamp, afterTimestamp);
+    validateBasics(testInfo,
+                   response,
+                   httpMethod,
+                   selfLink,
+                   beforeTimestamp,
+                   afterTimestamp);
 
     SzEntityPathData pathData = response.getData();
 
@@ -907,7 +916,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
         if (entityId.equals(entityPath.getStartEntityId())) continue;
         if (entityId.equals(entityPath.getEndEntityId())) continue;
         SzResolvedEntity entity = entityMap.get(entityId);
-        for (SzRecordSummary summary : entity.getRecordSummaries()) {
+        for (SzDataSourceRecordSummary summary : entity.getRecordSummaries()) {
           if (sourcesParam.contains(summary.getDataSource())) {
             sourcesSatisifed = true;
             break;
@@ -954,61 +963,61 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       SzResolvedEntity resolvedEntity = entityData.getResolvedEntity();
       List<SzRelatedEntity> relatedEntities = entityData.getRelatedEntities();
 
-      this.validateEntity(testInfo,
-                          resolvedEntity,
-                          relatedEntities,
-                          forceMinimal,
-                          featureMode,
-                          null,
-                          null,
-                          false,
-                          null,
-                          true,
-                          null,
-                          null,
-                          null,
-                          null,
-                          null);
+      validateEntity(testInfo,
+                     resolvedEntity,
+                     relatedEntities,
+                     forceMinimal,
+                     featureMode,
+                     null,
+                     null,
+                     false,
+                     null,
+                     true,
+                     null,
+                     null,
+                     null,
+                     null,
+                     null);
     }
 
     if (withRaw != null && withRaw) {
-      this.validateRawDataMap(testInfo,
-                              response.getRawData(),
-                              true,
-                              "ENTITY_PATHS", "ENTITIES");
+      validateRawDataMap(testInfo,
+                         response.getRawData(),
+                         true,
+                         "ENTITY_PATHS", "ENTITIES");
 
       Object rawPaths = ((Map) response.getRawData()).get("ENTITY_PATHS");
 
-      this.validateRawDataMapArray(testInfo,
-                                   rawPaths,
-                                   true,
-                                   "START_ENTITY_ID",
-                                   "END_ENTITY_ID",
-                                   "ENTITIES");
+      validateRawDataMapArray(testInfo,
+                              rawPaths,
+                              true,
+                              "START_ENTITY_ID",
+                              "END_ENTITY_ID",
+                              "ENTITIES");
 
       Object rawEntities = ((Map) response.getRawData()).get("ENTITIES");
 
-      this.validateRawDataMapArray(testInfo,
-                                   rawEntities,
-                                   true,
-                                   "RESOLVED_ENTITY",
-                                   "RELATED_ENTITIES");
+      validateRawDataMapArray(testInfo,
+                              rawEntities,
+                              true,
+                              "RESOLVED_ENTITY",
+                              "RELATED_ENTITIES");
 
       for (Object entity : ((Collection) rawEntities)) {
         if (featureMode == NONE || (forceMinimal != null && forceMinimal)) {
-          this.validateRawDataMap(testInfo,
-                                  ((Map) entity).get("RESOLVED_ENTITY"),
-                                  false,
-                                  "ENTITY_ID",
-                                  "RECORDS");
+          validateRawDataMap(testInfo,
+                             ((Map) entity).get("RESOLVED_ENTITY"),
+                             false,
+                             "ENTITY_ID",
+                             "RECORDS");
         } else {
-          this.validateRawDataMap(testInfo,
-                                  ((Map) entity).get("RESOLVED_ENTITY"),
-                                  false,
-                                  "ENTITY_ID",
-                                  "FEATURES",
-                                  "RECORD_SUMMARY",
-                                  "RECORDS");
+          validateRawDataMap(testInfo,
+                             ((Map) entity).get("RESOLVED_ENTITY"),
+                             false,
+                             "ENTITY_ID",
+                             "FEATURES",
+                             "RECORD_SUMMARY",
+                             "RECORDS");
         }
       }
     }
@@ -1322,6 +1331,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       this.validateEntityNetworkResponse(
           testInfo,
           response,
+          GET,
           uriText,
           entityParamIds,
           entityListIds,
@@ -1395,6 +1405,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       this.validateEntityNetworkResponse(
           testInfo,
           response,
+          GET,
           uriText,
           entityParamIds,
           entityListIds,
@@ -1479,6 +1490,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       this.validateEntityNetworkResponse(
           testInfo,
           response,
+          GET,
           uriText,
           entityParamIds,
           entityListIds,
@@ -1552,6 +1564,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       this.validateEntityNetworkResponse(
           testInfo,
           response,
+          GET,
           uriText,
           entityParamIds,
           entityListIds,
@@ -1572,6 +1585,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
   private void validateEntityNetworkResponse(
       String                              testInfo,
       SzEntityNetworkResponse             response,
+      SzHttpMethod                        httpMethod,
       String                              selfLink,
       SzEntityIdentifiers                 entityParam,
       SzEntityIdentifiers                 entityList,
@@ -1589,8 +1603,12 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
   {
     selfLink = this.formatServerUri(selfLink);
 
-    this.validateBasics(
-        testInfo, response, selfLink, beforeTimestamp, afterTimestamp);
+    validateBasics(testInfo,
+                   response,
+                   httpMethod,
+                   selfLink,
+                   beforeTimestamp,
+                   afterTimestamp);
 
     SzEntityNetworkData networkData = response.getData();
 
@@ -1745,70 +1763,70 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       SzResolvedEntity resolvedEntity = entityData.getResolvedEntity();
       List<SzRelatedEntity> relatedEntities = entityData.getRelatedEntities();
 
-      this.validateEntity(testInfo,
-                          resolvedEntity,
-                          relatedEntities,
-                          forceMinimal,
-                          featureMode,
-                          null,
-                          null,
-                          false,
-                          null,
-                          true,
-                          null,
-                          null,
-                          null,
-                          null,
-                          null);
+      validateEntity(testInfo,
+                     resolvedEntity,
+                     relatedEntities,
+                     forceMinimal,
+                     featureMode,
+                     null,
+                     null,
+                     false,
+                     null,
+                     true,
+                     null,
+                     null,
+                     null,
+                     null,
+                     null);
     }
 
     if (withRaw != null && withRaw) {
       if (maxEntities == null || expectedEntities.size() < maxEntities) {
-        this.validateRawDataMap(testInfo,
-                                response.getRawData(),
-                                true,
-                                "ENTITY_PATHS", "ENTITIES");
+        validateRawDataMap(testInfo,
+                           response.getRawData(),
+                           true,
+                           "ENTITY_PATHS", "ENTITIES");
       } else {
-        this.validateRawDataMap(testInfo,
-                                response.getRawData(),
-                                true,
-                                "ENTITY_PATHS",
-                                "ENTITIES",
-                                "MAX_ENTITY_LIMIT_REACHED");
+        validateRawDataMap(testInfo,
+                           response.getRawData(),
+                           true,
+                           "ENTITY_PATHS",
+                           "ENTITIES",
+                           "MAX_ENTITY_LIMIT_REACHED");
       }
 
       Object rawPaths = ((Map) response.getRawData()).get("ENTITY_PATHS");
 
-      this.validateRawDataMapArray(testInfo,
-                                   rawPaths,
-                                   true,
-                                   "START_ENTITY_ID",
-                                   "END_ENTITY_ID",
-                                   "ENTITIES");
+      validateRawDataMapArray(testInfo,
+                              rawPaths,
+                              true,
+                              "START_ENTITY_ID",
+                              "END_ENTITY_ID",
+                              "ENTITIES");
 
       Object rawEntities = ((Map) response.getRawData()).get("ENTITIES");
 
-      this.validateRawDataMapArray(testInfo,
-                                   rawEntities,
-                                   true,
-                                   "RESOLVED_ENTITY",
-                                   "RELATED_ENTITIES");
+      validateRawDataMapArray(testInfo,
+                              rawEntities,
+                              true,
+                              "RESOLVED_ENTITY",
+                              "RELATED_ENTITIES");
 
       for (Object entity : ((Collection) rawEntities)) {
         if (featureMode == NONE || (forceMinimal != null && forceMinimal)) {
-          this.validateRawDataMap(testInfo,
-                                  ((Map) entity).get("RESOLVED_ENTITY"),
-                                  false,
-                                  "ENTITY_ID",
-                                  "RECORDS");
+          validateRawDataMap(testInfo,
+                             ((Map) entity).get("RESOLVED_ENTITY"),
+                             false,
+                             "ENTITY_ID",
+                             "RECORDS");
         } else {
-          this.validateRawDataMap(testInfo,
-                                  ((Map) entity).get("RESOLVED_ENTITY"),
-                                  false,
-                                  "ENTITY_ID",
-                                  "FEATURES",
-                                  "RECORD_SUMMARY",
-                                  "RECORDS");
+          validateRawDataMap(testInfo,
+                             ((Map) entity).get("RESOLVED_ENTITY"),
+                             false,
+                             "ENTITY_ID",
+                             "FEATURES",
+                             "RECORD_SUMMARY",
+                             "RECORDS");
         }
       }
     }

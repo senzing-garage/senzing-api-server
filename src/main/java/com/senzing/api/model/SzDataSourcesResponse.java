@@ -42,7 +42,6 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
                                String       selfLink,
                                Timers       timers) {
     super(httpMethod, httpStatusCode, selfLink, timers);
-    this.data.dataSources = new LinkedHashSet<>();
   }
 
   /**
@@ -64,7 +63,6 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
                                Timers       timers)
   {
     super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.data.dataSources = new LinkedHashSet<>();
   }
 
   /**
@@ -82,10 +80,8 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
    *
    * @param dataSource The data source code to add.
    */
-  public void addDataSource(String dataSource) {
-    dataSource = dataSource.trim().toUpperCase();
-    if (this.data.dataSources.contains(dataSource)) return;
-    this.data.dataSources.add(dataSource);
+  public void addDataSource(SzDataSource dataSource) {
+    this.data.dataSources.remove(dataSource.getDataSourceCode());
   }
 
   /**
@@ -94,11 +90,14 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
    *
    * @param dataSources The {@link Collection} of data sources to set.
    */
-  public void setDataSources(Collection<String> dataSources)
+  public void setDataSources(Collection<SzDataSource> dataSources)
   {
     this.data.dataSources.clear();
     if (dataSources != null) {
-      this.data.dataSources.addAll(dataSources);
+      // ensure the data sources are unique
+      for (SzDataSource dataSource : dataSources) {
+        this.data.dataSources.put(dataSource.getDataSourceCode(), dataSource);
+      }
     }
   }
 
@@ -107,25 +106,69 @@ public class SzDataSourcesResponse extends SzResponseWithRawData
    */
   public static class Data {
     /**
-     * The set of data source codes.
+     * The map of {@link String} data source codes to {@link SzDataSource}
+     * instances.
      */
-    private Set<String> dataSources;
+    private Map<String, SzDataSource> dataSources;
 
     /**
      * Private default constructor.
      */
     private Data() {
-      this.dataSources = null;
+      this.dataSources = new LinkedHashMap<>();
     }
 
     /**
-     * Gets the unmodifiable {@link Set} of data sources.
+     * Gets the unmodifiable {@link Set} of data source codes.
      *
-     * @return The unmodifiable {@link Set} of data sources.
+     * @return The unmodifiable {@link Set} of data source codes.
      */
     public Set<String> getDataSources() {
-      Set<String> set = this.dataSources;
+      Set<String> set = this.dataSources.keySet();
       return Collections.unmodifiableSet(set);
+    }
+
+    /**
+     * Private setter used for deserialization.
+     */
+    private void setDataSources(Collection<String> dataSources) {
+      Iterator<Map.Entry<String,SzDataSource>> iter
+          = this.dataSources.entrySet().iterator();
+
+      // remove entries in the map that are not in the specified set
+      while (iter.hasNext()) {
+        Map.Entry<String,SzDataSource> entry = iter.next();
+        if (!dataSources.contains(entry.getKey())) {
+          iter.remove();
+        }
+      }
+
+      // add place-holder entries to the map for data sources in the set
+      for (String dataSource: dataSources) {
+        this.dataSources.put(dataSource, null);
+      }
+    }
+
+    /**
+     * Gets the unmodifiable {@link Map} of {@link String} data source codes
+     * to {@link SzDataSource} values describing the configured data sources.
+     *
+     * @return The unmodifiable {@link Map} of {@link String} data source codes
+     *         to {@link SzDataSource} values describing the configured data
+     *         sources.
+     */
+    public Map<String, SzDataSource> getDataSourceDetails() {
+      return Collections.unmodifiableMap(this.dataSources);
+    }
+
+    /**
+     * Private setter used for deserialization.
+     */
+    private void setDataSourceDetails(Map<String, SzDataSource> details) {
+      this.dataSources.clear();
+      for (SzDataSource dataSource: details.values()) {
+        this.dataSources.put(dataSource.getDataSourceCode(), dataSource);
+      }
     }
   }
 }

@@ -22,38 +22,47 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static com.senzing.io.IOUtilities.*;
 import static com.senzing.util.LoggingUtilities.*;
+import static com.senzing.api.services.ResponseValidators.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class AutoReinitializeTest extends AbstractServiceTest
 {
-  protected static final Set<String> CUSTOM_DATA_SOURCES;
+  protected static final Map<String, SzDataSource> CUSTOM_DATA_SOURCES;
 
-  protected static final Set<String> DEFAULT_DATA_SOURCES;
+  protected static final Map<String, SzDataSource> DEFAULT_DATA_SOURCES;
 
-  protected static final Set<String> INITIAL_DATA_SOURCES;
+  protected static final Map<String, SzDataSource> INITIAL_DATA_SOURCES;
 
   static {
-    Set<String> customSources   = null;
-    Set<String> expectedSources = null;
-    Set<String> defaultSources  = null;
+    Map<String, SzDataSource> customSources   = null;
+    Map<String, SzDataSource> expectedSources = null;
+    Map<String, SzDataSource> defaultSources  = null;
 
     try {
-      customSources   = new LinkedHashSet<>();
-      expectedSources = new LinkedHashSet<>();
-      defaultSources  = new LinkedHashSet<>();
+      customSources   = new LinkedHashMap<>();
+      expectedSources = new LinkedHashMap<>();
+      defaultSources  = new LinkedHashMap<>();
 
-      defaultSources.add("TEST");
-      defaultSources.add("SEARCH");
-      defaultSources = Collections.unmodifiableSet(defaultSources);
+      List<SzDataSource> sources = new LinkedList<>();
+      sources.add(new SzDataSource("TEST", 1));
+      sources.add(new SzDataSource("SEARCH", 2));
+      for (SzDataSource source : sources) {
+        defaultSources.put(source.getDataSourceCode(), source);
+      }
+      defaultSources = Collections.unmodifiableMap(defaultSources);
 
-      customSources.add("EMPLOYEES");
-      customSources.add("CUSTOMERS");
-      customSources.add("VENDORS");
-      customSources = Collections.unmodifiableSet(customSources);
+      sources.clear();
+      sources.add(new SzDataSource("EMPLOYEES", 1001));
+      sources.add(new SzDataSource("CUSTOMERS", 1002));
+      sources.add(new SzDataSource("VENDORS", 1003));
+      for (SzDataSource source: sources) {
+        customSources.put(source.getDataSourceCode(), source);
+      }
+      customSources = Collections.unmodifiableMap(customSources);
 
-      expectedSources.addAll(defaultSources);
-      expectedSources.addAll(customSources);
-      expectedSources = Collections.unmodifiableSet(expectedSources);
+      expectedSources.putAll(defaultSources);
+      expectedSources.putAll(customSources);
+      expectedSources = Collections.unmodifiableMap(expectedSources);
 
     } finally {
       DEFAULT_DATA_SOURCES  = defaultSources;
@@ -66,14 +75,14 @@ public class AutoReinitializeTest extends AbstractServiceTest
   protected EntityDataServices entityDataServices;
   protected G2ConfigMgr configMgrApi;
   protected G2Config configApi;
-  protected Set<String> expectedDataSources;
+  protected Map<String, SzDataSource> expectedDataSources;
 
   @BeforeAll public void initializeEnvironment() {
     this.initializeTestEnvironment();
     this.configServices       = new ConfigServices();
     this.entityDataServices   = new EntityDataServices();
-    this.expectedDataSources  = new LinkedHashSet<>();
-    this.expectedDataSources.addAll(INITIAL_DATA_SOURCES);
+    this.expectedDataSources  = new LinkedHashMap<>();
+    this.expectedDataSources.putAll(INITIAL_DATA_SOURCES);
   }
 
   /**
@@ -81,7 +90,7 @@ public class AutoReinitializeTest extends AbstractServiceTest
    */
   protected void prepareRepository() {
     RepositoryManager.configSources(this.getRepositoryDirectory(),
-                                    CUSTOM_DATA_SOURCES,
+                                    CUSTOM_DATA_SOURCES.keySet(),
                                     true);
     if (NATIVE_API_AVAILABLE) {
       try {
@@ -133,11 +142,13 @@ public class AutoReinitializeTest extends AbstractServiceTest
       long after = System.currentTimeMillis();
 
       synchronized (this.expectedDataSources) {
-        this.validateDataSourcesResponse(response,
-                                         before,
-                                         after,
-                                         null,
-                                         this.expectedDataSources);
+        validateDataSourcesResponse(response,
+                                    GET,
+                                    uriText,
+                                    before,
+                                    after,
+                                    false,
+                                    this.expectedDataSources);
       }
     });
   }
@@ -165,11 +176,11 @@ public class AutoReinitializeTest extends AbstractServiceTest
       long after = System.currentTimeMillis();
 
       synchronized (this.expectedDataSources) {
-        this.validateConfigResponse(response,
-                                    uriText,
-                                    before,
-                                    after,
-                                    this.expectedDataSources);
+        validateConfigResponse(response,
+                               uriText,
+                               before,
+                               after,
+                               this.expectedDataSources.keySet());
       }
     });
   }
@@ -187,6 +198,7 @@ public class AutoReinitializeTest extends AbstractServiceTest
       job.add("NAME_LAST", "Schmoe");
       job.add("PHONE_NUMBER", "702-555-1212");
       job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
+      job.add("ENTITY_TYPE", "GENERIC");
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
@@ -200,8 +212,13 @@ public class AutoReinitializeTest extends AbstractServiceTest
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateLoadRecordResponse(
-          response, POST, newDataSource, null, before, after);
+      validateLoadRecordResponse(response,
+                                 POST,
+                                 uriText,
+                                 newDataSource,
+                                 null,
+                                 before,
+                                 after);
     });
   }
 
@@ -220,6 +237,7 @@ public class AutoReinitializeTest extends AbstractServiceTest
       job.add("NAME_LAST", "Doe");
       job.add("PHONE_NUMBER", "818-555-1313");
       job.add("ADDR_FULL", "100 Main Street, Los Angeles, CA 90012");
+      job.add("ENTITY_TYPE", "GENERIC");
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
@@ -233,12 +251,17 @@ public class AutoReinitializeTest extends AbstractServiceTest
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      this.validateLoadRecordResponse(
-          response, PUT, newDataSource, recordId, before, after);
+      validateLoadRecordResponse(response,
+                                 PUT,
+                                 uriText,
+                                 newDataSource,
+                                 recordId,
+                                 before,
+                                 after);
     });
   }
 
-  protected void addDataSource(String newDataSource) {
+  protected SzDataSource addDataSource(String newDataSource) {
     // now get the default config ID
     Result<Long> result = new Result<>();
     int returnCode = this.configMgrApi.getDefaultConfigID(result);
@@ -259,16 +282,26 @@ public class AutoReinitializeTest extends AbstractServiceTest
     }
     String configJsonText = sb.toString();
 
+    // create the JSON to create the data source
+    JsonObjectBuilder job = Json.createObjectBuilder();
+    job.add("DSRC_CODE", newDataSource);
+    JsonObject jsonObject = job.build();
+    String jsonText = JsonUtils.toJsonText(jsonObject);
+
     // now modify the config
+    sb.delete(0, sb.length());
     long configId = this.configApi.load(configJsonText);
-    this.configApi.addDataSource(configId, newDataSource);
+    this.configApi.addDataSourceV2(configId, jsonText, sb);
+
+    jsonObject = JsonUtils.parseJsonObject(sb.toString());
+    int dataSourceId = jsonObject.getInt("DSRC_ID");
 
     // save the new config
     sb.delete(0, sb.length());
     this.configApi.save(configId, sb);
     this.configApi.close(configId);
     returnCode = this.configMgrApi.addConfig(
-        sb.toString(), "Added data source FOOBAR", result);
+        sb.toString(), "Added data source " + newDataSource, result);
     if (returnCode != 0) {
       String errorMsg = formatError("G2ConfigMgr.addConfig",
                                     this.configMgrApi);
@@ -283,8 +316,11 @@ public class AutoReinitializeTest extends AbstractServiceTest
       fail("Failure in native API call: " + errorMsg);
     }
 
+    SzDataSource newDS = new SzDataSource(newDataSource, dataSourceId);
     synchronized (this.expectedDataSources) {
-      this.expectedDataSources.add(newDataSource);
+      this.expectedDataSources.put(newDS.getDataSourceCode(), newDS);
     }
+
+    return newDS;
   }
 }
