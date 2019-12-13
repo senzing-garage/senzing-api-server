@@ -27,6 +27,7 @@ public class AdminServicesTest extends AbstractServiceTest {
 
   @AfterAll public void teardownEnvironment() {
     this.teardownTestEnvironment();
+    this.conditionallyLogCounts(true);
   }
 
   @Test public void heartbeatTest() {

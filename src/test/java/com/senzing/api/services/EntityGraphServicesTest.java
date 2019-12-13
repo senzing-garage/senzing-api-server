@@ -172,6 +172,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
   @AfterAll
   public void teardownEnvironment() {
     this.teardownTestEnvironment();
+    this.conditionallyLogCounts(true);
   }
 
   private Long getEntityIdForRecordId(SzRecordId recordId) {

@@ -55,7 +55,6 @@ public class SzError {
   public SzError(Throwable t) {
     this.code     = null;
     this.message  = formatThrowable(t);
-    t.printStackTrace();
   }
 
   /**

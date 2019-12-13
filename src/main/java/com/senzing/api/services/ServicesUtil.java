@@ -722,4 +722,16 @@ public class ServicesUtil {
               + "specific configuration ID in the database.");
     }
   }
+
+  /**
+   * Formats a test-info string using the URI text and the body content.
+   * @param uriText
+   * @param bodyContent
+   * @return The formatted string.
+   */
+  public static String formatTestInfo(String uriText, String bodyContent)
+  {
+    return "uriText=[ " + uriText + " ], bodyContent=[ " + bodyContent + " ]";
+  }
+
 }

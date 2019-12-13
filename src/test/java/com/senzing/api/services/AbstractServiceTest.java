@@ -69,6 +69,11 @@ public abstract class AbstractServiceTest {
   }
 
   /**
+   * The time of the last progress log.
+   */
+  private long progressLogTimestamp = -1L;
+
+  /**
    * The API Server being used to run the tests.
    */
   private SzApiServer server;
@@ -859,7 +864,9 @@ public abstract class AbstractServiceTest {
    * @return The new failure count.
    */
   protected int incrementFailureCount() {
-    return ++this.failureCount;
+    this.failureCount++;
+    this.conditionallyLogCounts(false);
+    return this.failureCount;
   }
 
   /**
@@ -867,7 +874,38 @@ public abstract class AbstractServiceTest {
    * @return The new success count.
    */
   protected int incrementSuccessCount() {
-    return ++this.successCount;
+    this.successCount++;
+    this.conditionallyLogCounts(false);
+    return this.successCount;
+  }
+
+  /**
+   * Conditionally logs the progress of the tests.
+   *
+   * @param complete <tt>true</tt> if tests are complete for this class,
+   *                 otherwise <tt>false</tt>.
+   */
+  protected void conditionallyLogCounts(boolean complete) {
+    int successCount = this.getSuccessCount();
+    int failureCount = this.getFailureCount();
+
+    long now = System.currentTimeMillis();
+    long lapse = (this.progressLogTimestamp > 0L)
+        ? (now - this.progressLogTimestamp) : 0L;
+
+    if (complete || (lapse > 30000L)) {
+      System.out.println(this.getClass().getSimpleName()
+                         + (complete ? " Complete: " : " Progress: ")
+                         + successCount + " (succeeded) / " + failureCount
+                         + " (failed)");
+      this.progressLogTimestamp = now;
+    }
+    if (complete) {
+      System.out.println();
+    }
+    if (this.progressLogTimestamp < 0L) {
+      this.progressLogTimestamp = now;
+    }
   }
 
   /**
@@ -1398,6 +1436,11 @@ public abstract class AbstractServiceTest {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected String formatTestInfo(String uriText, String bodyContent)
+  {
+    return "uriText=[ " + uriText + " ], bodyContent=[ " + bodyContent + " ]";
   }
 
 }

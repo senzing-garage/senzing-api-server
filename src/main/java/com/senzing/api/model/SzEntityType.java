@@ -205,7 +205,7 @@ public class SzEntityType implements SzEntityTypeDescriptor {
     if (id == null) {
       id = JsonUtils.getInteger(jsonObject, "ETYPE_ID");
     }
-    String classCode = JsonUtils.getString(jsonObject, "entityTypeCode");
+    String classCode = JsonUtils.getString(jsonObject, "entityClassCode");
     if (classCode == null) {
       classCode = JsonUtils.getString(jsonObject, "ECLASS_CODE");
     }

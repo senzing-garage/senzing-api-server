@@ -117,6 +117,7 @@ public class AutoReinitializeTest extends AbstractServiceTest
     this.teardownTestEnvironment();
     if (this.configMgrApi != null) this.configMgrApi.destroy();
     if (this.configApi != null) this.configApi.destroy();
+    this.conditionallyLogCounts(true);
   }
 
   @Test public void getDataSourcesTest() {

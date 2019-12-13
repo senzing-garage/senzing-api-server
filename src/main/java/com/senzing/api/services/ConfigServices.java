@@ -24,8 +24,6 @@ import static com.senzing.api.services.ServicesUtil.*;
 @Produces("application/json; charset=UTF-8")
 @Path("/")
 public class ConfigServices {
-  public static ThreadLocal<Map<String,String>> NATIVE_JSON = new ThreadLocal<>();
-
   @GET
   @Path("data-sources")
   public SzDataSourcesResponse getDataSources(
@@ -968,8 +966,6 @@ public class ConfigServices {
       Timers timers) {
     SzApiProvider provider = SzApiProvider.Factory.getProvider();
 
-    Map<String,String> nativeJsonMap = new LinkedHashMap<>();
-
     try {
       // get the engine API and the config API
       G2Engine    engineApi     = provider.getEngineApi();
@@ -1061,7 +1057,6 @@ public class ConfigServices {
               }
 
               String nativeJson = entityClass.toNativeJson();
-              nativeJsonMap.put(entityClass.getEntityClassCode(), nativeJson);
 
               // add the data source to the config without a data source ID
               callingNativeAPI(timers, "config", "addEntityClassV2");
@@ -1102,8 +1097,6 @@ public class ConfigServices {
 
       });
 
-      NATIVE_JSON.set(nativeJsonMap);
-
       // return the data sources response
       return this.buildEntityClassesResponse(
           httpMethod, uriInfo, timers, rawData, withRaw);
@@ -1129,6 +1122,7 @@ public class ConfigServices {
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
       @Context UriInfo uriInfo,
       String entityTypesInBody)
+      throws BadRequestException, NotFoundException
   {
     Timers timers = newTimers();
 
@@ -1138,6 +1132,7 @@ public class ConfigServices {
     this.checkEntityClassNotFound(POST, uriInfo, timers, entityClassCode);
 
     return this.postEntityTypes(entityClassCode,
+                                true,
                                 entityTypeCodes,
                                 withRaw,
                                 uriInfo,
@@ -1164,6 +1159,7 @@ public class ConfigServices {
     this.checkEntityClassInvalid(POST, uriInfo, timers, entityClassCode);
 
     return this.postEntityTypes(entityClassCode,
+                                false,
                                 entityTypeCodes,
                                 withRaw,
                                 uriInfo,
@@ -1172,6 +1168,7 @@ public class ConfigServices {
   }
 
   private SzEntityTypesResponse postEntityTypes(String        entityClassCode,
+                                                boolean       enforceSameClass,
                                                 List<String>  entityTypeCodes,
                                                 boolean       withRaw,
                                                 UriInfo       uriInfo,
@@ -1208,16 +1205,18 @@ public class ConfigServices {
         }
 
         // check for consistency on the entity class codes
-        for (SzEntityType entityType : entityTypes) {
-          if (entityType.getEntityClassCode() != null
-              && entityClassCode != null
-              && !entityClassCode.equals(entityType.getEntityClassCode()))
-          {
-            throw newBadRequestException(
-                POST, uriInfo, timers,
-                "Entity class code in URL (" + entityClassCode + ") does not "
-                    + "match entity class code in at least one of the "
-                    + "specified entity types: " + entityType);
+        if (enforceSameClass) {
+          for (SzEntityType entityType : entityTypes) {
+            if (entityType.getEntityClassCode() != null
+                && entityClassCode != null
+                && !entityClassCode.equals(entityType.getEntityClassCode()))
+            {
+              throw newBadRequestException(
+                  POST, uriInfo, timers,
+                  "Entity class code in URL (" + entityClassCode + ") does not "
+                      + "match entity class code in at least one of the "
+                      + "specified entity types: " + entityType);
+            }
           }
         }
 
@@ -1227,6 +1226,8 @@ public class ConfigServices {
             entityType.setEntityClassCode(entityClassCode);
           }
         }
+      } catch (WebApplicationException e) {
+        throw e;
       } catch (Exception e) {
         throw newBadRequestException(POST, uriInfo, timers, e);
       }

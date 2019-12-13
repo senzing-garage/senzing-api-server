@@ -1051,16 +1051,16 @@ public class ResponseValidators {
       if (expected.getEntityClassId() != null)
       {
         assertEquals(expected.getEntityClassId(), actual.getEntityClassId(),
-                     "Unexpected entity class ID" + testSuffix);
+                     "Unexpected entity class ID for " + code
+                         + testSuffix);
       }
       Boolean expectedResolving = expected.isResolving();
       if (expectedResolving == null) expectedResolving = defaultResolving;
       if (expectedResolving == null) expectedResolving = true;
       assertEquals(expectedResolving, actual.isResolving(),
                    "Unexpected resolving flag for entity class ("
-                       + actual.getEntityClassCode() + ")" + testSuffix
-                       + ", nativeJson=[ " + ConfigServices.NATIVE_JSON.get()
-                       + " ], expectedEntityClass=[ " + expected + " ]");
+                       + actual.getEntityClassCode() + ")" + info
+                       + "expectedEntityClass=[ " + expected + " ]");
     });
 
     if (expectRawData) {
@@ -1124,42 +1124,66 @@ public class ResponseValidators {
    * @param expectedEntityTypes The expected entity types.
    */
   public static void validateEntityTypesResponse(
+      String                      testInfo,
       SzEntityTypesResponse       response,
+      SzHttpMethod                httpMethod,
       String                      selfLink,
       long                        beforeTimestamp,
       long                        afterTimestamp,
       boolean                     expectRawData,
       Map<String, SzEntityType>   expectedEntityTypes)
   {
-    validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, expectRawData);
+    validateBasics(testInfo,
+                   response,
+                   httpMethod,
+                   selfLink,
+                   beforeTimestamp,
+                   afterTimestamp,
+                   expectRawData);
+
+    String testSuffix = (testInfo == null) ? "" : ": " + testInfo;
+    String info = (testInfo == null) ? "" : "testInfo=[ " + testInfo + " ], ";
 
     SzEntityTypesResponse.Data data = response.getData();
 
-    assertNotNull(data, "Response data is null");
+    assertNotNull(data, "Response data is null" + testSuffix);
 
     Set<String> types = data.getEntityTypes();
     Map<String, SzEntityType> details = data.getEntityTypeDetails();
 
-    assertNotNull(types, "Entity type set is null");
-    assertNotNull(details, "Entity type details map is null");
+    assertNotNull(types, "Entity type set is null" + testSuffix);
+    assertNotNull(details, "Entity type details map is null" + testSuffix);
 
     assertEquals(expectedEntityTypes.keySet(), types,
                  "Unexpected or missing entity types in set.  "
+                     + info
                      + "unexpected=[ "
                      + diffSets(types, expectedEntityTypes.keySet())
                      + " ], missing=[ "
                      + diffSets(expectedEntityTypes.keySet(), types)
                      + " ]");
 
-    assertEquals(expectedEntityTypes, details,
-                 "Unexpected or missing entity type details");
+    expectedEntityTypes.values().forEach(expected -> {
+      String code = expected.getEntityTypeCode();
+      SzEntityType actual = details.get(code);
+      if (expected.getEntityTypeId() != null)
+      {
+        assertEquals(expected.getEntityTypeId(), actual.getEntityTypeId(),
+                     "Unexpected entity type ID for " + code + testSuffix);
+      }
+
+      assertEquals(expected.getEntityClassCode(), actual.getEntityClassCode(),
+                   "Unexpected entity class code for entity type ("
+                       + expected.getEntityTypeCode() + "): " + info
+                       + "expectedEntityType=[ " + expected + " ]");
+    });
 
     if (expectRawData) {
-      validateRawDataMap(response.getRawData(), "ENTITY_TYPES");
+      validateRawDataMap(testInfo, response.getRawData(), "ENTITY_TYPES");
       Object array = ((Map) response.getRawData()).get("ENTITY_TYPES");
       validateRawDataMapArray(
-          array,false,"ETYPE_CODE", "ETYPE_ID", "ECLASS_CODE");
+          testInfo, array,false,
+          "ETYPE_CODE", "ETYPE_ID", "ECLASS_CODE");
     }
   }
 

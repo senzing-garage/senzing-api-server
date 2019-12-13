@@ -139,6 +139,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
 
   @AfterAll public void teardownEnvironment() {
     this.teardownTestEnvironment();
+    this.conditionallyLogCounts(true);
   }
 
   private List<Arguments> getWithRawVariants() {
@@ -491,9 +492,8 @@ public class ConfigServicesReadTest extends AbstractServiceTest
 
       long before = System.currentTimeMillis();
       try {
-        SzEntityClassResponse response
-            = this.configServices.getEntityClass(
-            badEntityClassCode, TRUE.equals(withRaw), uriInfo);
+        this.configServices.getEntityClass(
+             badEntityClassCode, TRUE.equals(withRaw), uriInfo);
 
         fail("Expected entity class \"" + badEntityClassCode
                  + "\" to NOT be found");
@@ -611,7 +611,9 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      validateEntityTypesResponse(response,
+      validateEntityTypesResponse(null,
+                                  response,
+                                  GET,
                                   uriText,
                                   before,
                                   after,
@@ -636,7 +638,9 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      validateEntityTypesResponse(response,
+      validateEntityTypesResponse(null,
+                                  response,
+                                  GET,
                                   uriText,
                                   before,
                                   after,
@@ -805,7 +809,9 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      validateEntityTypesResponse(response,
+      validateEntityTypesResponse(null,
+                                  response,
+                                  GET,
                                   uriText,
                                   before,
                                   after,
@@ -834,7 +840,9 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
-      validateEntityTypesResponse(response,
+      validateEntityTypesResponse(null,
+                                  response,
+                                  GET,
                                   uriText,
                                   before,
                                   after,
