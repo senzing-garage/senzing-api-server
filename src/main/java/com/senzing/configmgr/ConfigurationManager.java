@@ -30,7 +30,7 @@ public class ConfigurationManager {
 
   private static final File INSTALL_DIR
       = INSTALL_LOCATIONS.getInstallDirectory();
-  
+
   private static final G2ConfigMgr CONFIG_MGR_API;
 
   private static String initializationKey = null;
