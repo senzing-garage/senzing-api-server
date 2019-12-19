@@ -2,6 +2,7 @@ package com.senzing.api.services;
 
 import com.senzing.api.BuildInfo;
 import com.senzing.api.model.*;
+import com.senzing.api.raw.RawApiFactory;
 import com.senzing.g2.engine.G2Product;
 import com.senzing.g2.engine.G2ProductJNI;
 import com.senzing.util.JsonUtils;
@@ -1886,7 +1887,7 @@ public class ResponseValidators {
 
     // assume we can reinitialize the product API since it does not really do
     // anything when we initialize it
-    G2Product product   = new G2ProductJNI();
+    G2Product product = RawApiFactory.createProductApi();
     product.initV2("testApiServer", repoInitJson, false);
     try {
       String versionJson = product.version();

@@ -1,6 +1,7 @@
 package com.senzing.api.services;
 
 import com.senzing.api.model.*;
+import com.senzing.api.raw.RawApiFactory;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.g2.engine.*;
 import com.senzing.repomgr.RepositoryManager;
@@ -94,8 +95,8 @@ public class AutoReinitializeTest extends AbstractServiceTest
                                     true);
     if (NATIVE_API_AVAILABLE) {
       try {
-        this.configMgrApi       = new G2ConfigMgrJNI();
-        this.configApi          = new G2ConfigJNI();
+        this.configMgrApi = RawApiFactory.createConfigMgrApi();
+        this.configApi    = RawApiFactory.createConfigApi();
         File initJsonFile = new File(this.getRepositoryDirectory(),
                                      "g2-init.json");
 

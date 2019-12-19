@@ -18,6 +18,11 @@ import static java.nio.file.FileVisitResult.*;
  * Static I/O utility functions.
  */
 public class IOUtilities {
+  /**
+   * Constant for the name of the UTF-8 character encoding.
+   */
+  public static final String UTF_8 = "UTF-8";
+
   private IOUtilities() {
     // do nothing
   }

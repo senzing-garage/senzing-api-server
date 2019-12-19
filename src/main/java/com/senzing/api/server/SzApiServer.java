@@ -11,6 +11,7 @@ import java.time.format.FormatStyle;
 import java.util.*;
 
 import com.senzing.api.BuildInfo;
+import com.senzing.api.raw.RawApiFactory;
 import com.senzing.api.services.SzApiProvider;
 import com.senzing.api.model.SzLicenseInfo;
 import com.senzing.cmdline.CommandLineUtilities;
@@ -832,7 +833,7 @@ public class SzApiServer implements SzApiProvider {
    */
   private static String getVersionString() {
     // use G2Product API without "init()" for now
-    G2Product productApi = new G2ProductJNI();
+    G2Product productApi = RawApiFactory.createProductApi();
     return JAR_FILE_NAME + " version " + BuildInfo.MAVEN_VERSION
            + "(Senzing API version " + productApi.version() + ")";
   }
@@ -1678,7 +1679,7 @@ public class SzApiServer implements SzApiProvider {
     String initJsonText = JsonUtils.toJsonText(initJson);
 
     boolean configInRepo = false;
-    G2ConfigMgr configMgr = new G2ConfigMgrJNI();
+    G2ConfigMgr configMgr = RawApiFactory.createConfigMgrApi();
     int returnCode = configMgr.initV2(moduleName, initJsonText, false);
     if (returnCode != 0) {
       String msg = multilineFormat(
@@ -1730,7 +1731,7 @@ public class SzApiServer implements SzApiProvider {
         throw new RuntimeException(e);
       }
     }
-    this.productApi = new G2ProductJNI();
+    this.productApi = RawApiFactory.createProductApi();
     int initResult = 0;
     if (this.configType.isManaged()) {
       initResult = this.productApi.initV2(
@@ -1747,7 +1748,7 @@ public class SzApiServer implements SzApiProvider {
           this.productApi.getLastException()));
     }
 
-    this.configApi = new G2ConfigJNI();
+    this.configApi = RawApiFactory.createConfigApi();
     if (this.configType.isManaged()) {
       initResult = this.configApi.initV2(
           this.moduleName, initJsonText, this.verbose);
@@ -1763,7 +1764,7 @@ public class SzApiServer implements SzApiProvider {
     }
 
     // init the engine API
-    this.engineApi = new G2JNI();
+    this.engineApi = RawApiFactory.createEngineApi();
 
     if (this.configType.isManaged() && this.configId != null) {
       // config ID is hard coded and config is in the repository
@@ -1790,7 +1791,7 @@ public class SzApiServer implements SzApiProvider {
 
     // initialize the config manager API
     if (this.configType.isManaged() && this.configId == null) {
-      this.configMgrApi = new G2ConfigMgrJNI();
+      this.configMgrApi = RawApiFactory.createConfigMgrApi();
       initResult = this.configMgrApi.initV2(this.moduleName, initJsonText, this.verbose);
 
       if (initResult < 0) {

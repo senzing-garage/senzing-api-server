@@ -1,5 +1,6 @@
 package com.senzing.api.services;
 
+import com.senzing.api.raw.RawApiFactory;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
 import com.senzing.g2.engine.G2ConfigMgr;
@@ -29,7 +30,7 @@ public class ConfigServicesExplicitConfigIdTest extends ConfigServicesReadOnlyTe
     super.initializeServerOptions(options);
     options.setAdminEnabled(true);
     if (NATIVE_API_AVAILABLE) {
-      G2ConfigMgr configMgrApi = new G2ConfigMgrJNI();
+      G2ConfigMgr configMgrApi = RawApiFactory.createConfigMgrApi();
       boolean     initialized  = false;
       try {
         File initJsonFile = new File(this.getRepositoryDirectory(),
