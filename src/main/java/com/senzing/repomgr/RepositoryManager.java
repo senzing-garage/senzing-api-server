@@ -516,7 +516,11 @@ public class RepositoryManager {
   public static Configuration createRepo(File directory, boolean silent) {
     JsonObject resultConfig = null;
     Long resultConfigId = null;
-    directory = directory.getAbsoluteFile();
+    try {
+      directory = directory.getCanonicalFile();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     if (directory.exists()) {
       if (!directory.isDirectory()) {
         throw new IllegalArgumentException(
