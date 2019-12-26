@@ -28,7 +28,7 @@ jobs:
           JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
           JIRA_PROJECT: 'senzing-api-server'
           JIRA_ISSUE_TYPE: 'Task'
-          JIRA_ISSUE_SUMMARY: 'Failed to build on GitHub Commit SHA ${{ github.sha }}'
+          JIRA_ISSUE_SUMMARY: 'Failed to build Debian version on GitHub Commit SHA ${{ github.sha }}'
           JIRA_ISSUE_DESCRIPTION: |
             Please review git actions log and trouble shoot the build failure.
             The commit SHA is: _${{ github.sha }}_.
@@ -39,7 +39,7 @@ jobs:
         env:
           SLACK_CHANNEL: ci-cd-dev
           SLACK_COLOR: '#3278BD'
-          SLACK_TITLE: 'Failed to build on GitHub Commit SHA ${{ github.sha }}'
+          SLACK_TITLE: 'Failed to build Debian version on GitHub Commit SHA ${{ github.sha }}'
           SLACK_MESSAGE: |
             Failed to build on GitHub Commit SHA ${{ github.sha }}
             Git Issue URL: ${{ steps.create_jira_issue.outputs.jira_issue_url }}

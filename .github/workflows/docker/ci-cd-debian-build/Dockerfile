@@ -30,8 +30,8 @@ RUN apt-get update \
 ENV SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA
 
 # Add Senzing Files
-RUN wget https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb \
-   && apt-get -y install ./senzingrepo_1.0.0-1_amd64.deb \
+RUN wget https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb \
+   && apt-get -y install ./senzingstagingrepo_1.0.0-1_amd64.deb \
    && apt-get -y update \
    && rm -rf senzingrepo_1.0.0-1_amd64.deb \
    && apt-get -y install \

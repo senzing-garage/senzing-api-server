@@ -1,4 +1,4 @@
-name: Pull Request Test Java API Server Build on Debian
+name: Pull Request Test Java API Server Build on RHEL
 
 on:
   pull_request:
@@ -28,7 +28,7 @@ jobs:
           GITHUB_COMMIT_SHA: ${{ github.sha }}
           GITHUB_OWNER: 'Senzing'
           GITHUB_REPOSITORY: 'senzing-api-server'
-          GITHUB_ISSUE_TITLE: 'Failed to build on GitHub Commit SHA ${{ github.sha }}'
+          GITHUB_ISSUE_TITLE: 'Failed to build RHEL version on GitHub Commit SHA ${{ github.sha }}'
           GITHUB_ISSUE_BODY: |
             Please review git actions log and trouble shoot the build failure.
             The commit SHA is: _${{ github.sha }}_.
@@ -39,7 +39,7 @@ jobs:
         env:
           SLACK_CHANNEL: ci-cd-dev
           SLACK_COLOR: '#3278BD'
-          SLACK_TITLE: 'Failed to build on GitHub Commit SHA ${{ github.sha }}'
+          SLACK_TITLE: 'Failed to build RHEL version on GitHub Commit SHA ${{ github.sha }}'
           SLACK_MESSAGE: |
             Failed to build on GitHub Commit SHA ${{ github.sha }}
             Git Issue URL: ${{ steps.create_git_issue.outputs.git_issue_url }}

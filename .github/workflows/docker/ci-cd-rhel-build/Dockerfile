@@ -24,7 +24,7 @@ ENV SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA
 
 # Add Senzing Files
 RUN yum install -y \
-        https://senzing-production-yum.s3.amazonaws.com/senzingrepo-1.0.0-1.x86_64.rpm \
+        https://senzing-staging-yum.s3.amazonaws.com/senzingstagingrepo-1.0.0-1.x86_64.rpm \
    && yum install -y \
         senzingapi
 
