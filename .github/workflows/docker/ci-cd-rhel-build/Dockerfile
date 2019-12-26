@@ -3,6 +3,7 @@ FROM centos:8
 ARG GITHUB_HEAD_REF="master"
 ARG GITHUB_OWNER="Senzing"
 ARG GITHUB_EVENT_NAME="push"
+ARG SENZING_REPO_ENV="PRD"
 
 LABEL Name="senzing-ci-cd-rhel-test-builder" \
       Maintainer="support@senzing.com" \
@@ -23,9 +24,14 @@ RUN yum update -y \
 ENV SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA
 
 # Add Senzing Files
-RUN yum install -y \
-        https://senzing-staging-yum.s3.amazonaws.com/senzingstagingrepo-1.0.0-1.x86_64.rpm \
-   && yum install -y \
+RUN if [[ "${SENZING_REPO_ENV}" == "PRD" ]]; then \
+        SENZING_REPO_URL="https://senzing-production-yum.s3.amazonaws.com/senzingrepo-1.0.0-1.x86_64.rpm"; \
+    else \
+        SENZING_REPO_URL="https://senzing-staging-yum.s3.amazonaws.com/senzingstagingrepo-1.0.0-1.x86_64.rpm"; \
+    fi \
+    && yum install -y \
+        ${SENZING_REPO_URL} \
+    && yum install -y \
         senzingapi
 
 # Set environment variables.
@@ -46,6 +52,6 @@ RUN git checkout ${GITHUB_HEAD_REF}; \
     fi
 
 RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
- && make \
-      SENZING_G2_JAR_VERSION=$(cat ${SENZING_G2_DIR}/g2BuildVersion.json | jq --raw-output '.VERSION') \
-      package
+    && make \
+        SENZING_G2_JAR_VERSION=$(cat ${SENZING_G2_DIR}/g2BuildVersion.json | jq --raw-output '.VERSION') \
+        package
