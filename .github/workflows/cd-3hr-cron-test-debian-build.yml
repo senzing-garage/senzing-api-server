@@ -17,7 +17,7 @@ jobs:
           docker build --tag sezing-java-api-server:${GITHUB_HEAD_REF:-${GITHUB_REF##*/}} \
             --build-arg "GITHUB_HEAD_REF=${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}" \
             --build-arg "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}" \
-            .github/workflows/docker/ci-cd-deb-buster-build
+            .github/workflows/docker/ci-cd-debian-build
       - name: Create Git Issue on Build Failure
         uses: bryan-nice/jira-issue-creation@1.0.0
         id: create_jira_issue

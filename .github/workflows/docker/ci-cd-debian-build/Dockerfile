@@ -4,7 +4,7 @@ ARG GITHUB_HEAD_REF="master"
 ARG GITHUB_OWNER="Senzing"
 ARG GITHUB_EVENT_NAME="push"
 
-LABEL Name="senzing-ci-cd-deb-test-builder" \
+LABEL Name="senzing-ci-cd-debian-builder" \
       Maintainer="support@senzing.com" \
       Version="1.0.0"
 
