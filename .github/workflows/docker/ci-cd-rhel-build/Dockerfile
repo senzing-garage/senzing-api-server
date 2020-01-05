@@ -1,4 +1,4 @@
-FROM centos:8
+FROM centos:7
 
 ARG GITHUB_HEAD_REF="master"
 ARG GITHUB_OWNER="Senzing"
@@ -10,7 +10,8 @@ LABEL Name="senzing-ci-cd-rhel-test-builder" \
       Version="1.0.0"
 
 # Install packages via apt.
-RUN yum update -y \
+RUN yum install -y   https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+    && yum update -y \
     && yum install -y \
         git \
         jq \
