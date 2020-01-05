@@ -14,7 +14,11 @@ jobs:
       - name: Build Java API Server
         id: build_java_api_server
         run: |
+<<<<<<< HEAD
           docker build --tag sezing-java-api-serrver:${GITHUB_HEAD_REF:-${GITHUB_REF##*/}} \
+=======
+          docker build --tag sezing-java-api-sever:${GITHUB_HEAD_REF:-${GITHUB_REF##*/}} \
+>>>>>>> master
             --build-arg "GITHUB_HEAD_REF=${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}" \
             --build-arg "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}" \
             --build-arg "SENZING_REPO_ENV=STAGING" \
