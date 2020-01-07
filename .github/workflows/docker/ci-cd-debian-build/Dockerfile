@@ -32,7 +32,7 @@ ENV SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA
 
 # Add Senzing Files
 RUN wget ${SENZING_REPO_URL} \
-    && apt-get -y install ./senzingstagingrepo_1.0.0-1_amd64.deb \
+    && apt-get -y install ./${SENZING_REPO_URL##*/} \
     && apt-get -y update \
     && rm -rf senzingrepo_1.0.0-1_amd64.deb \
     && apt-get -y install \
