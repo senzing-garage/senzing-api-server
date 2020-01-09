@@ -15,7 +15,7 @@ RUN echo "deb http://ftp.us.debian.org/debian sid main" >> /etc/apt/sources.list
     && apt-get install -y --no-install-recommends \
         apt-transport-https \
         git \
-        gnupg \
+        gnupg2 \
         jq \
         make \
         openjdk-8-jdk \
