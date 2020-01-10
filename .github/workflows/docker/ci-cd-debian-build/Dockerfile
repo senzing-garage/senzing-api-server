@@ -3,13 +3,13 @@ FROM debian:buster
 ARG GITHUB_HEAD_REF="master"
 ARG GITHUB_OWNER="Senzing"
 ARG GITHUB_EVENT_NAME="push"
-ARG SENZING_REPO_ENV="PRD"
+ARG SENZING_REPO_URL="https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb"
 
 LABEL Name="senzing-ci-cd-debian-builder" \
       Maintainer="support@senzing.com" \
       Version="1.0.0"
 
-# Install packages via apt.
+# Install packages via apt
 RUN echo "deb http://ftp.us.debian.org/debian sid main" >> /etc/apt/sources.list \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -31,13 +31,8 @@ RUN apt-get update \
 ENV SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA
 
 # Add Senzing Files
-RUN if [[ "${SENZING_REPO_ENV}" == "PRD" ]]; then \
-        SENZING_REPO_URL="https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb"; \
-    else \
-        SENZING_REPO_URL="https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb"; \
-    fi \
-    && wget ${SENZING_REPO_URL} \
-    && apt-get -y install ./senzingstagingrepo_1.0.0-1_amd64.deb \
+RUN wget ${SENZING_REPO_URL} \
+    && apt-get -y install ./${SENZING_REPO_URL##*/} \
     && apt-get -y update \
     && rm -rf senzingrepo_1.0.0-1_amd64.deb \
     && apt-get -y install \

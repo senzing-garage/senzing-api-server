@@ -1,16 +1,17 @@
-FROM centos:8
+FROM centos:7
 
 ARG GITHUB_HEAD_REF="master"
 ARG GITHUB_OWNER="Senzing"
 ARG GITHUB_EVENT_NAME="push"
-ARG SENZING_REPO_ENV="PRD"
+ARG SENZING_REPO_URL="https://senzing-production-yum.s3.amazonaws.com/senzingrepo-1.0.0-1.x86_64.rpm"
 
 LABEL Name="senzing-ci-cd-rhel-test-builder" \
       Maintainer="support@senzing.com" \
       Version="1.0.0"
 
 # Install packages via apt.
-RUN yum update -y \
+RUN yum install -y   https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
+    && yum update -y \
     && yum install -y \
         git \
         jq \
@@ -24,12 +25,7 @@ RUN yum update -y \
 ENV SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA
 
 # Add Senzing Files
-RUN if [[ "${SENZING_REPO_ENV}" == "PRD" ]]; then \
-        SENZING_REPO_URL="https://senzing-production-yum.s3.amazonaws.com/senzingrepo-1.0.0-1.x86_64.rpm"; \
-    else \
-        SENZING_REPO_URL="https://senzing-staging-yum.s3.amazonaws.com/senzingstagingrepo-1.0.0-1.x86_64.rpm"; \
-    fi \
-    && yum install -y \
+RUN yum install -y \
         ${SENZING_REPO_URL} \
     && yum install -y \
         senzingapi
