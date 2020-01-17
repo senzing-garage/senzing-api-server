@@ -21,13 +21,18 @@ public class AdminServicesTest extends AbstractServiceTest {
   private AdminServices adminServices;
 
   @BeforeAll public void initializeEnvironment() {
+    this.beginTests();
     this.initializeTestEnvironment();
     this.adminServices = new AdminServices();
   }
 
   @AfterAll public void teardownEnvironment() {
-    this.teardownTestEnvironment();
-    this.conditionallyLogCounts(true);
+    try {
+      this.teardownTestEnvironment();
+      this.conditionallyLogCounts(true);
+    } finally {
+      this.endTests();
+    }
   }
 
   @Test public void heartbeatTest() {
@@ -176,108 +181,115 @@ public class AdminServicesTest extends AbstractServiceTest {
   }
 
   @Test public void versionTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("version");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(()-> {
+      String  uriText = this.formatServerUri("version");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long              before    = System.currentTimeMillis();
-    SzVersionResponse response  = this.adminServices.version(false,
-                                                             uriInfo);
-    response.concludeTimers();
-    long              after     = System.currentTimeMillis();
+      long              before    = System.currentTimeMillis();
+      SzVersionResponse response  = this.adminServices.version(false,
+                                                               uriInfo);
+      response.concludeTimers();
+      long              after     = System.currentTimeMillis();
 
-    validateVersionResponse(response,
-                            uriText,
-                            before,
-                            after,
-                            null,
-                            this.readInitJsonFile());
+      validateVersionResponse(response,
+                              uriText,
+                              before,
+                              after,
+                              null,
+                              this.readInitJsonFile());
+    });
   }
 
   @Test public void versionViaHttpTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("version");
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("version");
 
-    long before = System.currentTimeMillis();
-    SzVersionResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzVersionResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
+      long after = System.currentTimeMillis();
 
-    validateVersionResponse(response,
-                            uriText,
-                            before,
-                            after,
-                            null,
-                            this.readInitJsonFile());
+      validateVersionResponse(response,
+                              uriText,
+                              before,
+                              after,
+                              null,
+                              this.readInitJsonFile());
+
+    });
   }
 
   @Test public void versionWithoutRawTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("version?withRaw=false");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("version?withRaw=false");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long              before    = System.currentTimeMillis();
-    SzVersionResponse response  = this.adminServices.version(false, uriInfo);
-    response.concludeTimers();
-    long              after     = System.currentTimeMillis();
+      long              before    = System.currentTimeMillis();
+      SzVersionResponse response  = this.adminServices.version(false, uriInfo);
+      response.concludeTimers();
+      long              after     = System.currentTimeMillis();
 
-    validateVersionResponse(response,
-                            uriText,
-                            before,
-                            after,
-                            false,
-                            this.readInitJsonFile());
+      validateVersionResponse(response,
+                              uriText,
+                              before,
+                              after,
+                              false,
+                              this.readInitJsonFile());
+    });
   }
 
   @Test public void versionWithoutRawViaHttpTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("version?withRaw=false");
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("version?withRaw=false");
 
-    long before = System.currentTimeMillis();
-    SzVersionResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzVersionResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
+      long after = System.currentTimeMillis();
 
-    validateVersionResponse(response,
-                            uriText,
-                            before,
-                            after,
-                            false,
-                            this.readInitJsonFile());
+      validateVersionResponse(response,
+                              uriText,
+                              before,
+                              after,
+                              false,
+                              this.readInitJsonFile());
+    });
   }
 
   @Test public void versionWithRawTest() {
-    this.assumeNativeApiAvailable();
-    String  uriText = this.formatServerUri("version?withRaw=true");
-    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("version?withRaw=true");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-    long              before    = System.currentTimeMillis();
-    SzVersionResponse response  = this.adminServices.version(true, uriInfo);
-    response.concludeTimers();
-    long              after     = System.currentTimeMillis();
+      long              before    = System.currentTimeMillis();
+      SzVersionResponse response  = this.adminServices.version(true, uriInfo);
+      response.concludeTimers();
+      long              after     = System.currentTimeMillis();
 
-    validateVersionResponse(response,
-                            uriText,
-                            before,
-                            after,
-                            true,
-                            this.readInitJsonFile());
+      validateVersionResponse(response,
+                              uriText,
+                              before,
+                              after,
+                              true,
+                              this.readInitJsonFile());
+    });
   }
 
   @Test public void versionWithRawViaHttpTest() {
-    this.assumeNativeApiAvailable();
-    String uriText = this.formatServerUri("version?withRaw=true");
+    this.performTest(() -> {
+      String uriText = this.formatServerUri("version?withRaw=true");
 
-    long before = System.currentTimeMillis();
-    SzVersionResponse response
-        = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
-    long after = System.currentTimeMillis();
+      long before = System.currentTimeMillis();
+      SzVersionResponse response
+          = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
+      long after = System.currentTimeMillis();
 
-    validateVersionResponse(response,
-                            uriText,
-                            before,
-                            after,
-                            true,
-                            this.readInitJsonFile());
+      validateVersionResponse(response,
+                              uriText,
+                              before,
+                              after,
+                              true,
+                              this.readInitJsonFile());
+    });
   }
 }

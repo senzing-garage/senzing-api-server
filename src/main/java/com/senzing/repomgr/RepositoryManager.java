@@ -1,9 +1,10 @@
 package com.senzing.repomgr;
 
-import com.senzing.api.raw.RawApiFactory;
+import com.senzing.io.IOUtilities;
+import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.cmdline.CommandLineUtilities;
 import com.senzing.g2.engine.*;
-import com.senzing.installenv.InstallLocations;
+import com.senzing.nativeapi.InstallLocations;
 import com.senzing.io.RecordReader;
 import com.senzing.util.JsonUtils;
 
@@ -58,19 +59,27 @@ public class RepositoryManager {
   static {
     InstallLocations locations = InstallLocations.findLocations();
 
-    INSTALL_DIR   = locations.getInstallDirectory();
-    CONFIG_DIR    = locations.getConfigDirectory();
-    SUPPORT_DIR   = locations.getSupportDirectory();
-    RESOURCE_DIR  = locations.getResourceDirectory();
-    TEMPLATES_DIR = locations.getTemplatesDirectory();
+    if (locations != null) {
+      INSTALL_DIR   = locations.getInstallDirectory();
+      CONFIG_DIR    = locations.getConfigDirectory();
+      SUPPORT_DIR   = locations.getSupportDirectory();
+      RESOURCE_DIR  = locations.getResourceDirectory();
+      TEMPLATES_DIR = locations.getTemplatesDirectory();
+    } else {
+      INSTALL_DIR   = null;
+      CONFIG_DIR    = null;
+      SUPPORT_DIR   = null;
+      RESOURCE_DIR  = null;
+      TEMPLATES_DIR = null;
+    }
 
     G2Engine    engineApi     = null;
     G2Config    configApi     = null;
     G2ConfigMgr configMgrApi  = null;
     try {
-      engineApi     = RawApiFactory.createEngineApi();
-      configApi     = RawApiFactory.createConfigApi();
-      configMgrApi  = RawApiFactory.createConfigMgrApi();
+      engineApi     = NativeApiFactory.createEngineApi();
+      configApi     = NativeApiFactory.createConfigApi();
+      configMgrApi  = NativeApiFactory.createConfigMgrApi();
 
     } catch (Exception e) {
       File libPath = new File(INSTALL_DIR, "lib");
@@ -563,12 +572,17 @@ public class RepositoryManager {
         templateDB = new File(SUPPORT_DIR, "G2C.db");
       }
 
-      System.out.println("TEMPLATE DB PATH: " + templateDB);
-
-      copyFile(templateDB, new File(directory, "G2C.db"));
-      copyFile(templateDB, new File(directory, "G2_RES.db"));
-      copyFile(templateDB, new File(directory, "G2_LIB_FEAT.db"));
-
+      if (templateDB.exists()) {
+        // copy the file
+        copyFile(templateDB, new File(directory, "G2C.db"));
+        copyFile(templateDB, new File(directory, "G2_RES.db"));
+        copyFile(templateDB, new File(directory, "G2_LIB_FEAT.db"));
+      } else {
+        // handle running in mock replay mode (no installation)
+        touchFile(new File(directory, "G2C.db"));
+        touchFile(new File(directory, "G2_RES.db"));
+        touchFile(new File(directory, "G2_LIB_FEAT.db"));
+      }
       File licensePath    = new File(directory, "g2.lic");
 
       String fileSep = System.getProperty("file.separator");
@@ -577,7 +591,9 @@ public class RepositoryManager {
       File jsonInitFile = new File(directory, "g2-init.json");
       JsonObjectBuilder builder = Json.createObjectBuilder();
       JsonObjectBuilder subBuilder = Json.createObjectBuilder();
-      subBuilder.add("SUPPORTPATH", SUPPORT_DIR.toString());
+      if (SUPPORT_DIR != null) {
+        subBuilder.add("SUPPORTPATH", SUPPORT_DIR.toString());
+      }
       if (RESOURCE_DIR != null) {
         subBuilder.add("RESOURCEPATH", RESOURCE_DIR.toString());
       }

@@ -1,9 +1,9 @@
 package com.senzing.configmgr;
 
-import com.senzing.api.raw.RawApiFactory;
+import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.cmdline.CommandLineUtilities;
 import com.senzing.g2.engine.*;
-import com.senzing.installenv.InstallLocations;
+import com.senzing.nativeapi.InstallLocations;
 import com.senzing.io.IOUtilities;
 import com.senzing.util.JsonUtils;
 
@@ -16,7 +16,6 @@ import java.util.*;
 
 import static com.senzing.io.IOUtilities.readTextFileAsString;
 import static com.senzing.util.LoggingUtilities.*;
-import static com.senzing.util.OperatingSystemFamily.MAC_OS;
 import static com.senzing.util.OperatingSystemFamily.RUNTIME_OS_FAMILY;
 import static com.senzing.configmgr.ConfigurationManagerOption.*;
 import static com.senzing.cmdline.CommandLineUtilities.*;
@@ -28,8 +27,8 @@ public class ConfigurationManager {
   private static final InstallLocations INSTALL_LOCATIONS
       = InstallLocations.findLocations();
 
-  private static final File INSTALL_DIR
-      = INSTALL_LOCATIONS.getInstallDirectory();
+  private static final File INSTALL_DIR = (INSTALL_LOCATIONS == null)
+      ? null : INSTALL_LOCATIONS.getInstallDirectory();
 
   private static final G2ConfigMgr CONFIG_MGR_API;
 
@@ -40,7 +39,7 @@ public class ConfigurationManager {
   static {
     G2ConfigMgr configMgrApi  = null;
     try {
-      configMgrApi = RawApiFactory.createConfigMgrApi();
+      configMgrApi = NativeApiFactory.createConfigMgrApi();
 
     } catch (Exception e) {
       File libPath = new File(INSTALL_DIR, "lib");

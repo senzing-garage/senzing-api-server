@@ -33,7 +33,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
    */
   protected void initializeServerOptions(SzApiServerOptions options) {
     super.initializeServerOptions(options);
-    if (NATIVE_API_AVAILABLE) {
+    if (this.checkNativeApiAvailable()) {
       Result<Long> result = new Result<>();
       int returnCode = this.configMgrApi.getDefaultConfigID(result);
       if (returnCode != 0) {
@@ -52,12 +52,8 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
 
       this.addDataSource(newDataSource);
 
-      // now sleep for 1 second longer than the config refresh period
-      try {
-        Thread.sleep(SzApiServer.CONFIG_REFRESH_PERIOD + 1000L);
-      } catch (InterruptedException ignore) {
-        fail("Interrupted while sleeping and waiting for config refresh.");
-      }
+      // now request a config refresh check
+      this.requestConfigRefreshCheck();
 
       // now retry the request to get the data sources
       long before = System.currentTimeMillis();
@@ -86,12 +82,8 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
 
       this.addDataSource(newDataSource);
 
-      // now sleep for 1 second longer than the config refresh period
-      try {
-        Thread.sleep(SzApiServer.CONFIG_REFRESH_PERIOD + 1000L);
-      } catch (InterruptedException ignore) {
-        fail("Interrupted while sleeping and waiting for config refresh.");
-      }
+      // now request a config refresh check
+      this.requestConfigRefreshCheck();
 
       long before = System.currentTimeMillis();
       SzConfigResponse response

@@ -19,7 +19,6 @@ import javax.ws.rs.BadRequestException;
 import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.UriInfo;
 import java.io.UnsupportedEncodingException;
-import java.security.SecureRandom;
 import java.util.*;
 
 import static java.lang.Boolean.FALSE;
@@ -33,8 +32,6 @@ import static com.senzing.api.model.SzHttpMethod.*;
 @TestInstance(Lifecycle.PER_CLASS)
 public class ConfigServicesWriteTest extends AbstractServiceTest
 {
-  private static final SecureRandom PRNG = new SecureRandom();
-
   private static final int ID_STEP = 2;
 
   private static final int RESOLVE_STEP = 3;
@@ -686,14 +683,27 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
   }
 
   @BeforeAll public void initializeEnvironment() {
+    this.beginTests();
     this.initializeTestEnvironment();
     this.configServices = new ConfigServices();
   }
 
   @AfterAll public void teardownEnvironment() {
-    this.teardownTestEnvironment();
-    this.conditionallyLogCounts(true);
+    try {
+      this.teardownTestEnvironment();
+      this.conditionallyLogCounts(true);
+    } finally {
+      this.endTests();
+    }
   }
+
+  protected void revertToInitialConfig() {
+    super.revertToInitialConfig();
+    this.nextDataSourceId   = 10001;
+    this.nextEntityTypeId   = 10001;
+    this.nextEntityClassId  = 10001;
+  }
+
 
   private List<Arguments> getWithRawVariants() {
     List<Arguments> result = new LinkedList<>();
@@ -729,7 +739,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     String  classCode = "TEST_CLASS_" + classId;
     boolean withId    = idMode.isSpecified(classCode, ID_STEP);
     boolean withRes   = resolveMode.isSpecified(classCode, RESOLVE_STEP);
-    Boolean resolving = (withRes) ? PRNG.nextBoolean() : null;
+    Boolean resolving = (withRes) ? (classId.intValue()%2 == 0) : null;
     return new SzEntityClass(classCode, withId ? classId : null, resolving);
   }
 
@@ -1118,7 +1128,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           = this.nextDataSources(queryOnlyCount, AUTOMATIC);
 
       int             bodyCount = bodySourceVariant.getCount();
-      SpecifiedMode idMode    = bodySourceVariant.getIdentifierMode();
+      SpecifiedMode idMode      = bodySourceVariant.getIdentifierMode();
 
       List<SzDataSource> overlapSources
           = this.nextDataSources(overlapCount, idMode);

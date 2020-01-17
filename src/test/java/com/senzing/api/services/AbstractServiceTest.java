@@ -10,12 +10,11 @@ import java.util.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senzing.api.model.*;
+import com.senzing.nativeapi.NativeApiFactory;
+import com.senzing.nativeapi.replay.ReplayNativeApiProvider;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
-import com.senzing.g2.engine.G2ConfigMgr;
-import com.senzing.g2.engine.G2Engine;
-import com.senzing.g2.engine.G2JNI;
-import com.senzing.g2.engine.Result;
+import com.senzing.g2.engine.*;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.AccessToken;
 import com.senzing.util.JsonUtils;
@@ -35,19 +34,25 @@ import static com.senzing.repomgr.RepositoryManager.*;
  */
 public abstract class AbstractServiceTest {
   /**
+   * The replay provider to use.
+   */
+  private static final ReplayNativeApiProvider REPLAY_PROVIDER
+      = new ReplayNativeApiProvider();
+
+  /**
    * Whether or not the Senzing native API is available and the G2 native
    * library could be loaded.
    */
-  protected static final boolean NATIVE_API_AVAILABLE;
+  private static final boolean NATIVE_API_AVAILABLE;
 
   /**
    * Message to display when the Senzing API is not available and the tests
    * are being skipped.
    */
-  protected static final String NATIVE_API_UNAVAILABLE_MESSAGE;
+  private static final String NATIVE_API_UNAVAILABLE_MESSAGE;
 
   static {
-    G2Engine engineApi = null;
+    G2Product productApi = null;
     StringWriter sw = new StringWriter();
     try {
       PrintWriter pw = new PrintWriter(sw);
@@ -58,12 +63,15 @@ public abstract class AbstractServiceTest {
       pw.println();
 
       try {
-        engineApi = new G2JNI();
+        productApi = new G2ProductJNI();
       } catch (Throwable ignore) {
         // do nothing
       }
+
+      NativeApiFactory.installProvider(REPLAY_PROVIDER);
+
     } finally {
-      NATIVE_API_AVAILABLE = (engineApi != null);
+      NATIVE_API_AVAILABLE = (productApi != null);
       NATIVE_API_UNAVAILABLE_MESSAGE = sw.toString();
     }
   }
@@ -163,6 +171,11 @@ public abstract class AbstractServiceTest {
       = Collections.emptyMap();
 
   /**
+   * The access token to deregister the current test suite.
+   */
+  private AccessToken replayTestToken = null;
+
+  /**
    * Creates a temp repository directory.
    *
    * @param prefix The directory name prefix for the temp repo directory.
@@ -229,6 +242,25 @@ public abstract class AbstractServiceTest {
   }
 
   /**
+   * Signals the beginning of the current test suite.
+   *
+   * @return <tt>true</tt> if replaying previous results and <tt>false</tt>
+   *         if using the live API.
+   */
+  protected boolean beginTests() {
+    this.replayTestToken = REPLAY_PROVIDER.beginTests(this.getClass());
+    return REPLAY_PROVIDER.isReplaying();
+  }
+
+  /**
+   * Signals the end of the current test suite.
+   */
+  protected void endTests() {
+    REPLAY_PROVIDER.endTests(this.replayTestToken);
+    this.replayTestToken = null;
+  }
+
+  /**
    * Creates an absolute URI for the relative URI provided.  For example, if
    * <tt>"license"</tt> was passed as the parameter then
    * <tt>"http://localhost:[port]/license"</tt> will be returned where
@@ -259,8 +291,19 @@ public abstract class AbstractServiceTest {
    * <tt>false</tt>
    */
   protected boolean assumeNativeApiAvailable() {
-    assumeTrue(NATIVE_API_AVAILABLE, NATIVE_API_UNAVAILABLE_MESSAGE);
-    return NATIVE_API_AVAILABLE;
+    assumeTrue(checkNativeApiAvailable(), NATIVE_API_UNAVAILABLE_MESSAGE);
+    return checkNativeApiAvailable();
+  }
+
+  /**
+   * Checks if the native API is directly available or is being replayed from
+   * a cache.
+   *
+   * @return <tt>true</tt> if the native API functions can be called, otherwise
+   *         <tt>false</tt>.
+   */
+  protected boolean checkNativeApiAvailable() {
+    return NATIVE_API_AVAILABLE || REPLAY_PROVIDER.isReplaying();
   }
 
   /**
@@ -269,7 +312,7 @@ public abstract class AbstractServiceTest {
    * initialize and start the Senzing API Server.
    */
   protected void initializeTestEnvironment() {
-    if (!NATIVE_API_AVAILABLE) return;
+    if (!NATIVE_API_AVAILABLE && !REPLAY_PROVIDER.isReplaying()) return;
     String moduleName = this.getModuleName("RepoMgr (create)");
     RepositoryManager.setThreadModuleName(moduleName);
     boolean concluded = false;
@@ -641,7 +684,7 @@ public abstract class AbstractServiceTest {
       }
     }
     // for good measure
-    if (NATIVE_API_AVAILABLE) {
+    if (NATIVE_API_AVAILABLE || REPLAY_PROVIDER.isReplaying()) {
       RepositoryManager.conclude();
     }
   }
@@ -698,6 +741,16 @@ public abstract class AbstractServiceTest {
     } else {
       RepositoryManager.conclude();
     }
+  }
+
+  /**
+   * Prompts the reinitializer thread to ensure the config is current if the
+   * server has a reinitializer thread running.  This does nothing if there is
+   * no reinitializer thread.
+   */
+  protected void requestConfigRefreshCheck() {
+    if (this.server == null) return;
+    this.server.requestConfigRefreshCheck();
   }
 
   /**
@@ -824,6 +877,7 @@ public abstract class AbstractServiceTest {
     options.setModuleName(this.getModuleName("Test API Server"));
     options.setVerbose(this.isVerbose());
     options.setQuiet(this.isQuiet());
+    options.setAutoRefreshPeriod(-1L); // refresh on demand for auto-tests
   }
 
   /**

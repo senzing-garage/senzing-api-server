@@ -1,4 +1,4 @@
-package com.senzing.api.raw;
+package com.senzing.nativeapi;
 
 import com.senzing.g2.engine.*;
 import com.senzing.util.AccessToken;
@@ -11,26 +11,41 @@ import java.util.Objects;
  * during auto tests.
  *
  */
-public class RawApiFactory {
+public class NativeApiFactory {
   /**
    * The current {@link AccessToken} required to authorize uninstalling the
-   * {@link RawApiProvider}, or <tt>null</tt> if no provider is installed.
+   * {@link NativeApiProvider}, or <tt>null</tt> if no provider is installed.
    */
   private static AccessToken current_token = null;
 
   /**
-   * The currently installed {@link RawApiProvider}, or <tt>null</tt> if no
+   * The currently installed {@link NativeApiProvider}, or <tt>null</tt> if no
    * provider is installed.
    */
-  private static RawApiProvider api_provider = null;
+  private static NativeApiProvider api_provider = null;
 
   /**
-   * Installs the {@link RawApiProvider} to be used by the factory.  If
+   * The {@link InstallLocations} describing the installation directories.
+   */
+  private static InstallLocations INSTALL_LOCATIONS = null;
+
+  /**
+   * Gets the install locations.
+   */
+  private static synchronized InstallLocations getInstallLocations() {
+    if (INSTALL_LOCATIONS == null) {
+      INSTALL_LOCATIONS = InstallLocations.findLocations();
+    }
+    return INSTALL_LOCATIONS;
+  }
+
+  /**
+   * Installs the {@link NativeApiProvider} to be used by the factory.  If
    * none is installed then the default mechanism of constructing new
    * raw API objects is used.  This returns an {@link AccessToken} to be
    * used for uninstalling the provider later.
    *
-   * @param provider The non-null {@link RawApiProvider} to install.
+   * @param provider The non-null {@link NativeApiProvider} to install.
    *
    * @return The {@link AccessToken} to be used for uninstalling the provider.
    *
@@ -39,7 +54,7 @@ public class RawApiFactory {
    * @throws IllegalStateException If a provider is already installed and must
    *                               first be uninstalled.
    */
-  public synchronized static AccessToken installProvider(RawApiProvider provider) {
+  public synchronized static AccessToken installProvider(NativeApiProvider provider) {
     Objects.requireNonNull(provider, "The specified provider cannot be null.");
     if (current_token != null) {
       throw new IllegalStateException(
@@ -51,9 +66,9 @@ public class RawApiFactory {
   }
 
   /**
-   * Checks if a {@link RawApiProvider} has been installed.
+   * Checks if a {@link NativeApiProvider} has been installed.
    *
-   * @return <tt>true</tt> if a {@link RawApiProvider} has been installed,
+   * @return <tt>true</tt> if a {@link NativeApiProvider} has been installed,
    *         otherwise <tt>false</tt>.
    */
   public synchronized static boolean isProviderInstalled() {
@@ -61,7 +76,7 @@ public class RawApiFactory {
   }
 
   /**
-   * Uninstalls a previously installed {@link RawApiProvider} using the
+   * Uninstalls a previously installed {@link NativeApiProvider} using the
    * specified {@link AccessToken} to authorize the operation.  If no provider
    * has been installed then this method does nothing.
    *
@@ -92,22 +107,32 @@ public class RawApiFactory {
    * @return The currently installed provider, or <tt>null</tt> if no provider
    *         is currently installed.
    */
-  private synchronized static RawApiProvider getInstalledProvider() {
+  private static NativeApiProvider getInstalledProvider() {
     return api_provider;
   }
 
   /**
    * Creates a new instance of {@link G2Engine} to use.  If a
-   * {@link RawApiProvider} is installed then it is used to create
+   * {@link NativeApiProvider} is installed then it is used to create
    * the instance, otherwise a new instance of {@link G2JNI} is
    * constructed and returned.
    *
    * @return A new instance of {@link G2Engine} to use.
    */
   public static G2Engine createEngineApi() {
-    RawApiProvider provider = getInstalledProvider();
+    NativeApiProvider provider = getInstalledProvider();
+    if (provider == null) {
+      System.out.println();
+      System.out.println("********** PROVIDER IS NULL");
+      System.out.println();
+    }
     if (provider != null) {
       return provider.createEngineApi();
+
+    } else if (getInstallLocations() == null) {
+      throw new InvalidInstallationException(
+          "Unable to find Senzing native installation.");
+
     } else {
       return new G2JNI();
     }
@@ -115,16 +140,21 @@ public class RawApiFactory {
 
   /**
    * Provides a new instance of {@link G2Config} to use.  If a
-   * {@link RawApiProvider} is installed then it is used to create
+   * {@link NativeApiProvider} is installed then it is used to create
    * the instance, otherwise a new instance of {@link G2ConfigJNI} is
    * constructed and returned.
    *
    * @return A new instance of {@link G2Config} to use.
    */
   public static G2Config createConfigApi() {
-    RawApiProvider provider = getInstalledProvider();
+    NativeApiProvider provider = getInstalledProvider();
     if (provider != null) {
       return provider.createConfigApi();
+
+    } else if (getInstallLocations() == null) {
+      throw new InvalidInstallationException(
+          "Unable to find Senzing native installation.");
+
     } else {
       return new G2ConfigJNI();
     }
@@ -132,16 +162,21 @@ public class RawApiFactory {
 
   /**
    * Provides a new instance of {@link G2Product} to use.  If a
-   * {@link RawApiProvider} is installed then it is used to create
+   * {@link NativeApiProvider} is installed then it is used to create
    * the instance, otherwise a new instance of {@link G2ProductJNI} is
    * constructed and returned.
    *
    * @return A new instance of {@link G2Product} to use.
    */
   public static G2Product createProductApi() {
-    RawApiProvider provider = getInstalledProvider();
+    NativeApiProvider provider = getInstalledProvider();
     if (provider != null) {
       return provider.createProductApi();
+
+    } else if (getInstallLocations() == null) {
+      throw new InvalidInstallationException(
+          "Unable to find Senzing native installation.");
+
     } else {
       return new G2ProductJNI();
     }
@@ -149,7 +184,7 @@ public class RawApiFactory {
 
   /**
    * Provides a new instance of {@link G2ConfigMgr} to use.  If a
-   * {@link RawApiProvider} is installed then it is used to create
+   * {@link NativeApiProvider} is installed then it is used to create
    * the instance, otherwise a new instance of {@link G2ConfigMgrJNI} is
    * constructed and returned.
    *
@@ -157,9 +192,14 @@ public class RawApiFactory {
    *
    */
   public static G2ConfigMgr createConfigMgrApi() {
-    RawApiProvider provider = getInstalledProvider();
+    NativeApiProvider provider = getInstalledProvider();
     if (provider != null) {
       return provider.createConfigMgrApi();
+
+    } else if (getInstallLocations() == null) {
+      throw new InvalidInstallationException(
+          "Unable to find Senzing native installation.");
+
     } else {
       return new G2ConfigMgrJNI();
     }

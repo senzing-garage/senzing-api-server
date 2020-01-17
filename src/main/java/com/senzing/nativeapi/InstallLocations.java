@@ -1,4 +1,4 @@
-package com.senzing.installenv;
+package com.senzing.nativeapi;
 
 import com.senzing.util.JsonUtils;
 
@@ -126,7 +126,7 @@ public class InstallLocations {
           defaultConfigPath = "/etc/opt/senzing";
           break;
         default:
-          throw new ExceptionInInitializerError(
+          throw new IllegalStateException(
               "Unrecognized Operating System: " + RUNTIME_OS_FAMILY);
       }
 
@@ -150,8 +150,7 @@ public class InstallLocations {
                   + "specify a path");
         }
 
-        throw new ExceptionInInitializerError(
-            "Could not find Senzing installation directory: " + installDir);
+        return null;
       }
 
       // normalize the senzing directory
@@ -188,8 +187,7 @@ public class InstallLocations {
                   + "specify a path");
         }
 
-        throw new ExceptionInInitializerError(
-            "Invalid Senzing installation directory: " + installDir);
+        return null;
       }
 
       String supportPath = System.getProperty("senzing.support.dir");
@@ -220,7 +218,7 @@ public class InstallLocations {
                   "Could not infer support directory.  Multiple data "
                       + "directory versions at: ");
               System.err.println("     " + dataRoot);
-              throw new ExceptionInInitializerError(
+              throw new InvalidInstallationException(
                   "Count not infer support directory.  Multiple data "
                       + "directory versions found at: " + dataRoot);
             }
@@ -251,7 +249,7 @@ public class InstallLocations {
                   + "specify a path");
         }
 
-        throw new ExceptionInInitializerError(
+        throw new InvalidInstallationException(
             "The support directory does not exist: " + supportDir);
       }
 
@@ -266,7 +264,7 @@ public class InstallLocations {
               "Use the -Dsenzing.support.dir=[path] command line option to "
                   + "specify a path");
         }
-        throw new ExceptionInInitializerError(
+        throw new InvalidInstallationException(
             "The support directory is invalid: " + supportDir);
 
       }
@@ -284,7 +282,7 @@ public class InstallLocations {
         System.err.println(
             "         " + configPath);
 
-        throw new ExceptionInInitializerError(
+        throw new InvalidInstallationException(
             "Explicit config path does not exist: " + configPath);
       }
       if (configDir != null && configDir.exists()) {
@@ -294,7 +292,7 @@ public class InstallLocations {
           System.err.println(
               "         " + configPath);
 
-          throw new ExceptionInInitializerError(
+          throw new InvalidInstallationException(
               "Explicit config path is not directory: " + configPath);
         }
 
@@ -315,7 +313,7 @@ public class InstallLocations {
             System.err.println(
                 "         " + missing + " was not found");
           }
-          throw new ExceptionInInitializerError(
+          throw new InvalidInstallationException(
               "Explicit config path missing required files: " + missingFiles);
         }
       }
@@ -338,7 +336,7 @@ public class InstallLocations {
           System.err.println(
               "         " + resourcePath);
 
-          throw new ExceptionInInitializerError(
+          throw new InvalidInstallationException(
               "Explicit resource path does not exist: " + resourcePath);
         }
 
@@ -351,7 +349,7 @@ public class InstallLocations {
                   + "resource directory:");
           System.err.println("         " + resourcePath);
 
-          throw new ExceptionInInitializerError(
+          throw new InvalidInstallationException(
               "Explicit resource path is not valid: " + resourcePath);
         }
 

@@ -39,13 +39,28 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
   }
 
   @BeforeAll public void initializeEnvironment() {
-    this.initializeTestEnvironment();
-    this.configServices = new ConfigServices();
+    try {
+      this.beginTests();
+      try {
+        this.initializeTestEnvironment();
+      } catch (Error error) {
+        error.printStackTrace();
+        throw error;
+      }
+      this.configServices = new ConfigServices();
+    } catch (RuntimeException e) {
+      e.printStackTrace();
+      throw e;
+    }
   }
 
   @AfterAll public void teardownEnvironment() {
-    this.teardownTestEnvironment();
-    this.conditionallyLogCounts(true);
+    try {
+      this.teardownTestEnvironment();
+      this.conditionallyLogCounts(true);
+    } finally {
+      this.endTests();
+    }
   }
 
   @Test

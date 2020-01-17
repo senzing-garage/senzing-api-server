@@ -26,6 +26,7 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption> {
   QUIET("-quiet", 0),
   MONITOR_FILE("-monitorFile", 1),
   CONCURRENCY("-concurrency", 1),
+  AUTO_REFRESH_PERIOD("-autoRefreshPeriod", 1),
   ALLOWED_ORIGINS("-allowedOrigins", 1);
 
   private static Map<SzApiServerOption, Set<SzApiServerOption>> CONFLICTING_OPTIONS;
@@ -137,10 +138,6 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption> {
         }
       }
     }
-    Set<SzApiServerOption> iniConflicts = conflictMap.get(INI_FILE);
-    iniConflicts.add(CONFIG_ID);
-    Set<SzApiServerOption> configConflicts = conflictMap.get(CONFIG_ID);
-    configConflicts.add(INI_FILE);
 
     Set<SzApiServerOption> iniAlts = altMap.get(INI_FILE);
     iniAlts.add(INIT_ENV_VAR);

@@ -1,12 +1,10 @@
 package com.senzing.api.services;
 
-import com.senzing.api.raw.RawApiFactory;
+import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
 import com.senzing.g2.engine.G2ConfigMgr;
-import com.senzing.g2.engine.G2ConfigMgrJNI;
 import com.senzing.g2.engine.Result;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.TestInstance;
 
 import java.io.File;
@@ -29,8 +27,8 @@ public class ConfigServicesExplicitConfigIdTest extends ConfigServicesReadOnlyTe
   protected void initializeServerOptions(SzApiServerOptions options) {
     super.initializeServerOptions(options);
     options.setAdminEnabled(true);
-    if (NATIVE_API_AVAILABLE) {
-      G2ConfigMgr configMgrApi = RawApiFactory.createConfigMgrApi();
+    if (this.checkNativeApiAvailable()) {
+      G2ConfigMgr configMgrApi = NativeApiFactory.createConfigMgrApi();
       boolean     initialized  = false;
       try {
         File initJsonFile = new File(this.getRepositoryDirectory(),

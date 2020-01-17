@@ -1,8 +1,7 @@
 package com.senzing.api.services;
 
 import com.senzing.api.model.*;
-import com.senzing.api.raw.RawApiFactory;
-import com.senzing.api.server.SzApiServer;
+import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.g2.engine.*;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
@@ -79,6 +78,7 @@ public class AutoReinitializeTest extends AbstractServiceTest
   protected Map<String, SzDataSource> expectedDataSources;
 
   @BeforeAll public void initializeEnvironment() {
+    this.beginTests();
     this.initializeTestEnvironment();
     this.configServices       = new ConfigServices();
     this.entityDataServices   = new EntityDataServices();
@@ -93,10 +93,10 @@ public class AutoReinitializeTest extends AbstractServiceTest
     RepositoryManager.configSources(this.getRepositoryDirectory(),
                                     CUSTOM_DATA_SOURCES.keySet(),
                                     true);
-    if (NATIVE_API_AVAILABLE) {
+    if (this.checkNativeApiAvailable()) {
       try {
-        this.configMgrApi = RawApiFactory.createConfigMgrApi();
-        this.configApi    = RawApiFactory.createConfigApi();
+        this.configMgrApi = NativeApiFactory.createConfigMgrApi();
+        this.configApi    = NativeApiFactory.createConfigApi();
         File initJsonFile = new File(this.getRepositoryDirectory(),
                                      "g2-init.json");
 
@@ -115,10 +115,14 @@ public class AutoReinitializeTest extends AbstractServiceTest
   }
 
   @AfterAll public void teardownEnvironment() {
-    this.teardownTestEnvironment();
-    if (this.configMgrApi != null) this.configMgrApi.destroy();
-    if (this.configApi != null) this.configApi.destroy();
-    this.conditionallyLogCounts(true);
+    try {
+      this.teardownTestEnvironment();
+      if (this.configMgrApi != null) this.configMgrApi.destroy();
+      if (this.configApi != null) this.configApi.destroy();
+      this.conditionallyLogCounts(true);
+    } finally {
+      this.endTests();
+    }
   }
 
   @Test public void getDataSourcesTest() {
@@ -129,12 +133,8 @@ public class AutoReinitializeTest extends AbstractServiceTest
 
       this.addDataSource(newDataSource);
 
-      // now sleep for 1 second longer than the config refresh period
-      try {
-        Thread.sleep(SzApiServer.CONFIG_REFRESH_PERIOD + 1000L);
-      } catch (InterruptedException ignore) {
-        fail("Interrupted while sleeping and waiting for config refresh.");
-      }
+      // now request a config refresh check
+      this.requestConfigRefreshCheck();
 
       // now retry the request to get the data sources
       long before = System.currentTimeMillis();
@@ -158,18 +158,13 @@ public class AutoReinitializeTest extends AbstractServiceTest
   @Test public void getCurrentConfigTest() {
     this.performTest(() -> {
       final String newDataSource = "PHOO";
-      this.assumeNativeApiAvailable();
       String  uriText = this.formatServerUri("config/current");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       this.addDataSource(newDataSource);
 
-      // now sleep for 1 second longer than the config refresh period
-      try {
-        Thread.sleep(SzApiServer.CONFIG_REFRESH_PERIOD + 1000L);
-      } catch (InterruptedException ignore) {
-        fail("Interrupted while sleeping and waiting for config refresh.");
-      }
+      // now request a config refresh check
+      this.requestConfigRefreshCheck();
 
       long before = System.currentTimeMillis();
       SzConfigResponse response
@@ -190,7 +185,6 @@ public class AutoReinitializeTest extends AbstractServiceTest
   @Test public void postRecordTest() {
     this.performTest(() -> {
       final String newDataSource = "FOOX";
-      this.assumeNativeApiAvailable();
       String  uriText = this.formatServerUri(
           "data-sources/" + newDataSource + "/records");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
@@ -229,7 +223,6 @@ public class AutoReinitializeTest extends AbstractServiceTest
       final String recordId = "ABC123";
       final String newDataSource = "PHOOX";
 
-      this.assumeNativeApiAvailable();
       String  uriText = this.formatServerUri(
           "data-sources/" + newDataSource + "/records/" + recordId);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);

@@ -69,6 +69,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
   @BeforeAll
   public void initializeEnvironment() {
+    this.beginTests();
     this.initializeTestEnvironment();
     this.entityGraphServices  = new EntityGraphServices();
     this.entityDataServices   = new EntityDataServices();
@@ -171,8 +172,12 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
   @AfterAll
   public void teardownEnvironment() {
-    this.teardownTestEnvironment();
-    this.conditionallyLogCounts(true);
+    try {
+      this.teardownTestEnvironment();
+      this.conditionallyLogCounts(true);
+    } finally {
+      this.endTests();
+    }
   }
 
   private Long getEntityIdForRecordId(SzRecordId recordId) {

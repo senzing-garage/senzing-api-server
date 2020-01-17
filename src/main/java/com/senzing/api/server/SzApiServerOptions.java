@@ -17,17 +17,18 @@ import static com.senzing.api.server.SzApiServerOption.*;
  *
  */
 public class SzApiServerOptions {
-  private int         httpPort        = DEFAULT_PORT;
-  private InetAddress bindAddress     = null;
-  private int         concurrency     = DEFAULT_CONCURRENCY;
-  private String      moduleName      = DEFAULT_MODULE_NAME;
-  private boolean     verbose         = false;
-  private boolean     quiet           = false;
-  private boolean     readOnly        = false;
-  private boolean     adminEnabled    = false;
-  private String      allowedOrigins  = null;
-  private Long        configId        = null;
-  private JsonObject  jsonInit        = null;
+  private int         httpPort          = DEFAULT_PORT;
+  private InetAddress bindAddress       = null;
+  private int         concurrency       = DEFAULT_CONCURRENCY;
+  private String      moduleName        = DEFAULT_MODULE_NAME;
+  private boolean     verbose           = false;
+  private boolean     quiet             = false;
+  private boolean     readOnly          = false;
+  private boolean     adminEnabled      = false;
+  private String      allowedOrigins    = null;
+  private Long        configId          = null;
+  private Long        autoRefreshPeriod = null;
+  private JsonObject  jsonInit          = null;
 
   /**
    * Constructs with the JSON initialization parameters as a {@link
@@ -330,6 +331,29 @@ public class SzApiServerOptions {
   }
 
   /**
+   * Returns the auto refresh period which is positive to indicate a number of
+   * seconds to delay, zero if auto-refresh is disabled, and negative to
+   * indicate that the auto refresh thread should run but refreshes will be
+   * requested manually (used for testing).
+   *
+   * @return The auto refresh period.
+   */
+  public Long getAutoRefreshPeriod() {
+    return this.autoRefreshPeriod;
+  }
+
+  /**
+   * Sets the configuration auto refresh period.  Set the value to <tt>null</tt>
+   * if the API server should use {@link
+   * SzApiServer#DEFAULT_CONFIG_REFRESH_PERIOD}.
+   *
+   * @param autoRefreshPeriod The number of seconds to automatically
+   */
+  public void setAutoRefreshPeriod(Long autoRefreshPeriod) {
+    this.autoRefreshPeriod = autoRefreshPeriod;
+  }
+
+  /**
    * Creates a {@link Map} of {@link SzApiServerOption} keys to {@link Object} values
    * for initializing an {@link SzApiServer} instance.
    *
@@ -338,17 +362,18 @@ public class SzApiServerOptions {
    */
   Map<SzApiServerOption, ?> buildOptionsMap() {
     Map<SzApiServerOption, Object> map = new HashMap<>();
-    map.put(HTTP_PORT,        this.getHttpPort());
-    map.put(BIND_ADDRESS,     this.getBindAddress());
-    map.put(CONCURRENCY,      this.getConcurrency());
-    map.put(MODULE_NAME,      this.getModuleName());
-    map.put(VERBOSE,          this.isVerbose());
-    map.put(QUIET,            this.isQuiet());
-    map.put(READ_ONLY,        this.isReadOnly());
-    map.put(ENABLE_ADMIN,     this.isAdminEnabled());
-    map.put(ALLOWED_ORIGINS,  this.getAllowedOrigins());
-    map.put(CONFIG_ID,        this.getConfigurationId());
-    map.put(INIT_JSON,        this.getJsonInitParameters());
+    map.put(HTTP_PORT,            this.getHttpPort());
+    map.put(BIND_ADDRESS,         this.getBindAddress());
+    map.put(CONCURRENCY,          this.getConcurrency());
+    map.put(MODULE_NAME,          this.getModuleName());
+    map.put(VERBOSE,              this.isVerbose());
+    map.put(QUIET,                this.isQuiet());
+    map.put(READ_ONLY,            this.isReadOnly());
+    map.put(ENABLE_ADMIN,         this.isAdminEnabled());
+    map.put(ALLOWED_ORIGINS,      this.getAllowedOrigins());
+    map.put(CONFIG_ID,            this.getConfigurationId());
+    map.put(INIT_JSON,            this.getJsonInitParameters());
+    map.put(AUTO_REFRESH_PERIOD,  this.getAutoRefreshPeriod());
     return map;
   }
 }

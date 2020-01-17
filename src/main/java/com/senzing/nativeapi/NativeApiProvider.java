@@ -1,11 +1,11 @@
-package com.senzing.api.raw;
+package com.senzing.nativeapi;
 
 import com.senzing.g2.engine.G2Config;
 import com.senzing.g2.engine.G2ConfigMgr;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.g2.engine.G2Product;
 
-public interface RawApiProvider {
+public interface NativeApiProvider {
   /**
    * Provides a new instance of {@link G2Engine} to use.
    *

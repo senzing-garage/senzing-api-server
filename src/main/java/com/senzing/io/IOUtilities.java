@@ -23,6 +23,14 @@ public class IOUtilities {
    */
   public static final String UTF_8 = "UTF-8";
 
+  /**
+   * Constant for the UTF-8 {@link Charset}.
+   */
+  public static final Charset UTF_8_CHARSET = Charset.forName(UTF_8);
+
+  /**
+   * Private default constructor.
+   */
   private IOUtilities() {
     // do nothing
   }
@@ -299,5 +307,24 @@ public class IOUtilities {
       // if we get here then they are identical
       return false;
     }
+  }
+
+  /**
+   * Creates the specified file if it does not exist, otherwise it updates
+   * the modified time for the specified file.
+   *
+   * @param file The {@link File} to be touched.
+   *
+   * @return The last modified time of the file in milliseconds.
+   *
+   * @throws IOException If a failure occurs.
+   */
+  public static long touchFile(File file) throws IOException {
+    if (file.exists()) {
+      file.setLastModified(System.currentTimeMillis());
+    } else {
+      file.createNewFile();
+    }
+    return file.lastModified();
   }
 }
