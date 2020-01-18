@@ -1,4 +1,4 @@
-FROM centos:7
+FROM senzing/base-image-centos:1.0.0
 
 ARG GITHUB_HEAD_REF="master"
 ARG GITHUB_OWNER="Senzing"
@@ -8,18 +8,6 @@ ARG SENZING_REPO_URL="https://senzing-production-yum.s3.amazonaws.com/senzingrep
 LABEL Name="senzing-ci-cd-rhel-test-builder" \
       Maintainer="support@senzing.com" \
       Version="1.0.0"
-
-# Install packages via apt.
-RUN yum install -y   https://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm \
-    && yum update -y \
-    && yum install -y \
-        git \
-        jq \
-        make \
-        java-1.8.0-openjdk \
-        sudo \
-    && yum install -y \
-        maven
 
 # Set environment variables.
 ENV SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA
