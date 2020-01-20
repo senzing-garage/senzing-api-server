@@ -258,6 +258,15 @@ public abstract class AbstractServiceTest {
   protected void endTests() {
     REPLAY_PROVIDER.endTests(this.replayTestToken);
     this.replayTestToken = null;
+    if (this.getFailureCount() > 0 && REPLAY_PROVIDER.isCacheStale()) {
+      System.out.println();
+      System.out.println("**********************");
+      System.out.println("** WARNING: DEPENDENCIES HAVE CHANGED");
+      System.out.println("** CACHED TEST RESULTS MAY BE INVALID");
+      System.out.println("** " + REPLAY_PROVIDER.getTestCacheZip());
+      System.out.println("**********************");
+      System.out.println();
+    }
   }
 
   /**

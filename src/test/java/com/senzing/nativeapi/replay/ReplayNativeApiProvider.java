@@ -357,6 +357,12 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   private Map<String, InvocationCache> currentCache = null;
 
   /**
+   * Flag indicating if the cache dependencies have changed and the cache is
+   * stale.
+   */
+  private boolean cacheStale = false;
+
+  /**
    * Default constructor.
    */
   public ReplayNativeApiProvider() {
@@ -497,20 +503,14 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       // check if recording
       if (this.recording) {
         System.out.println();
-        System.out.println("**********************");
-        System.out.println("** RECORDING NATIVE API RESULT CACHE");
-        System.out.println("** " + this.getTestCacheDir());
-        System.out.println("**********************");
+        System.out.println("RECORDING CACHE: " + this.getTestCacheZip());
         System.out.println();
         // if recording, setup empty caches
         this.currentDependencies  = new LinkedHashSet<>();
         this.currentCache         = new LinkedHashMap<>();
       } else {
         System.out.println();
-        System.out.println("**********************");
-        System.out.println("** REPLAYING CACHED NATIVE API RESULTS");
-        System.out.println("** " + this.getTestCacheDir());
-        System.out.println("**********************");
+        System.out.println("USING CACHE: " + this.getTestCacheZip());
         System.out.println();
       }
     }
@@ -530,6 +530,16 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   }
 
   /**
+   * Checks if the cache being used for replay may be stale -- meaning that the
+   * dependencies have changed since the cache was created.
+   *
+   * @return <tt>true</tt> if the cache may be stale, otherwise <tt>false</tt>.
+   */
+  public synchronized boolean isCacheStale() {
+    return this.cacheStale;
+  }
+
+  /**
    * Ends the current test class run using the specified {@link AccessToken}
    * to authorize the operation.
    *
@@ -545,8 +555,12 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
     // save the cache if recording
     if (this.recording) {
-      // save the cache file
-      this.saveCacheFile();
+      try {
+        // save the cache file
+        this.saveCacheFile();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
 
     // clear the dependencies and cache out
@@ -672,6 +686,9 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
    *         if we are replaying the results.
    */
   private synchronized boolean loadCacheFile() throws IOException {
+    // clear the cache stale flag
+    this.cacheStale = false;
+
     // check if there is a cache to extract
     File cacheZip = this.getTestCacheZip();
     File cacheDir = this.getTestCacheDir();
@@ -704,15 +721,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       }
       String computedDependencyHash = this.hashDependencies();
       String cachedDependencyHash   = jsonObject.getString("dependencyHash");
-      if (!computedDependencyHash.equals(cachedDependencyHash)) {
-        System.out.println();
-        System.out.println("**********************");
-        System.out.println("** WARNING: DEPENDENCIES HAVE CHANGED");
-        System.out.println("** CACHED TEST RESULTS MAY BE INVALID");
-        System.out.println("** " + cacheFile);
-        System.out.println("**********************");
-        System.out.println();
-      }
+      this.cacheStale = (!computedDependencyHash.equals(cachedDependencyHash));
 
       // create the cache map
       this.currentCache = new LinkedHashMap<>();
@@ -758,7 +767,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   /**
    * Saves the current cache to the file.
    */
-  private synchronized void saveCacheFile() {
+  private synchronized void saveCacheFile() throws IOException {
     // get the cache directory
     File cacheDir = this.getTestCacheDir();
     if (!cacheDir.exists()) {
@@ -829,12 +838,16 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       job.add("invocations", invocationsJob);
 
       jsonWriter.writeObject(job.build());
-
-      zip(this.getTestCacheDir(), this.getTestCacheZip());
-
-    } catch (IOException e) {
-      throw new RuntimeException(e);
     }
+
+    // delete any existing zip cache
+    File cacheZip = this.getTestCacheZip();
+    if (cacheZip.exists()) {
+      cacheZip.delete();
+    }
+
+    // zip the cache for this test
+    zip(this.getTestCacheDir(), cacheZip);
   }
 
   /**
@@ -1242,6 +1255,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
         String stackClass = stackFrame.getClassName();
         if (stackClass.startsWith(PACKAGE_PREFIX)) continue;
         if (!stackClass.startsWith(SENZING_PACKAGE_PREFIX)) continue;
+        if (stackClass.contains("$Proxy")) stackClass = apiClass.getName();
         md5.update(((stackIndex++) + ": " + stackClass).getBytes(UTF_8));
         md5.update(ZEROES);
 
@@ -1262,7 +1276,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   /**
    * Gets the cache file for the current test class.
    */
-  private File getTestCacheFile() {
+  public File getTestCacheFile() {
     File dir = this.getTestCacheDir();
     File cacheFile = new File(dir, "cache-index.json");
     return cacheFile;
@@ -1271,7 +1285,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   /**
    * Gets the results cache directory for the current test class.
    */
-  private File getTestCacheDir() {
+  public File getTestCacheDir() {
     String  simpleClassName = this.currentTestClass.getSimpleName();
     String  cacheFileName   = simpleClassName + "-cache";
     File    result          = new File(this.workingCacheDir, cacheFileName);
@@ -1281,7 +1295,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   /**
    * Gets the result cache ZIP file for the current test class.
    */
-  private File getTestCacheZip() {
+  public File getTestCacheZip() {
     String  simpleClassName = this.currentTestClass.getSimpleName();
     String  cacheFileName   = simpleClassName + "-cache" + ".zip";
     File    result          = new File(this.cacheDir, cacheFileName);
