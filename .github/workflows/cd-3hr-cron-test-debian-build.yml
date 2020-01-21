@@ -20,7 +20,7 @@ jobs:
             --build-arg "SENZING_REPO_URL=https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb" \
             .github/workflows/docker/ci-cd-debian-build
       - name: Create Git Issue on Build Failure
-        uses: bryan-nice/jira-issue-creation@1.0.0
+        uses: Senzing/git-action-jira-issue-creation@1.0.0
         id: create_jira_issue
         if: failure()
         env:
@@ -35,7 +35,7 @@ jobs:
             The commit SHA is: _${{ github.sha }}_.
       - name: Slack Notification
         id: slack_notification
-        uses: bryan-nice/slack-notification@1.0.2
+        uses: Senzing/git-action-slack-notification@1.0.0
         if: failure()
         env:
           SLACK_CHANNEL: ci-cd-dev
