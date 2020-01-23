@@ -723,6 +723,19 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       String cachedDependencyHash   = jsonObject.getString("dependencyHash");
       this.cacheStale = (!computedDependencyHash.equals(cachedDependencyHash));
 
+      // check if refreshing stale caches
+      boolean refresh = Boolean.TRUE.toString().toLowerCase().equals(
+          System.getProperty("com.senzing.api.test.replay.refresh"));
+
+      if (this.cacheStale && refresh) {
+        this.cacheStale = false;
+        if (cacheDir.exists()) {
+          recursiveDeleteDirectory(cacheDir);
+        }
+        cacheDir.mkdirs();
+        return true;
+      }
+
       // create the cache map
       this.currentCache = new LinkedHashMap<>();
 
@@ -1163,7 +1176,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
         dependency = dependency + ".class";
         File classFile = new File(MAIN_CLASS_DIR, dependency);
         if (!classFile.exists()) {
-          classFile = new File(MAIN_CLASS_DIR, dependency);
+          classFile = new File(TEST_CLASS_DIR, dependency);
         }
         if (classFile.exists()) {
           try (InputStream is = new FileInputStream(classFile)) {
