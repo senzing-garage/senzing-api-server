@@ -38,6 +38,9 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     RepositoryManager.configSources(this.getRepositoryDirectory(),
                                     Collections.singleton(TEST_DATA_SOURCE),
                                     true);
+    RepositoryManager.configEntityTypes(this.getRepositoryDirectory(),
+                                        Collections.singleton(TEST_DATA_SOURCE),
+                                        true);
   }
 
   @AfterAll public void teardownEnvironment() {

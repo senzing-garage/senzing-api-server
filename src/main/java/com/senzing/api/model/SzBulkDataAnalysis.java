@@ -36,17 +36,30 @@ public class SzBulkDataAnalysis {
   private int dataSourceCount;
 
   /**
+   * The number of records having an entity type.
+   */
+  private int entityTypeCount;
+
+  /**
    * Internal {@link Map} for tracking the analysis by data source.
    */
   private Map<String, SzDataSourceRecordAnalysis> analysisByDataSource;
 
   /**
+   * Internal {@link Map} for tracking the analysis by entity type.
+   */
+  private Map<String, SzEntityTypeRecordAnalysis> analysisByEntityType;
+
+  /**
    * Default constructor.
    */
   public SzBulkDataAnalysis() {
-    this.recordCount = 0;
-    this.recordIdCount  = 0;
+    this.recordCount      = 0;
+    this.recordIdCount    = 0;
+    this.dataSourceCount  = 0;
+    this.entityTypeCount  = 0;
     this.analysisByDataSource = new HashMap<>();
+    this.analysisByEntityType = new HashMap<>();
   }
 
   /**
@@ -162,7 +175,7 @@ public class SzBulkDataAnalysis {
    * <tt>"DATA_SOURCE"</tt> property.
    *
    * @param dataSourceCount The number of records in the bulk data set that
-   *                        have a <tt>"RECORD_ID"</tt> property.
+   *                        have a <tt>"DATA_SOURCE"</tt> property.
    */
   private void setRecordsWithDataSourceCount(int dataSourceCount) {
     this.dataSourceCount = dataSourceCount;
@@ -176,6 +189,39 @@ public class SzBulkDataAnalysis {
    *         have a <tt>"DATA_SOURCE"</tt> property.
    */
   private int incrementRecordsWithDataSourceCount() {
+    return ++this.dataSourceCount;
+  }
+
+  /**
+   * Gets the number of records in the bulk data set that have a
+   * <tt>"ENTITY_TYPE"</tt> property.
+   *
+   * @return The number of records in the bulk data set that have a
+   *         <tt>"ENTITY_TYPE"</tt> property.
+   */
+  public int getRecordsWithEntityTypeCount() {
+    return this.entityTypeCount;
+  }
+
+  /**
+   * Sets the number of records in the bulk data set that have a
+   * <tt>"ENTITY_TYPE"</tt> property.
+   *
+   * @param entityTypeCount The number of records in the bulk data set that
+   *                        have a <tt>"ENTITY_TYPE"</tt> property.
+   */
+  private void setRecordsWithEntityTypeCount(int entityTypeCount) {
+    this.entityTypeCount = entityTypeCount;
+  }
+
+  /**
+   * Increments the number of records in the bulk data set that have a
+   * <tt>"ENTITY_TYPE"</tt> property and returns the new count.
+   *
+   * @return The newly incremented count of records in the bulk data set that
+   *         have a <tt>"ENTITY_TYPE"</tt> property.
+   */
+  private int incrementRecordsWithEntityTypeCount() {
     return ++this.dataSourceCount;
   }
 
@@ -241,43 +287,128 @@ public class SzBulkDataAnalysis {
   }
 
   /**
+   * Gets the list of {@link SzEntityTypeRecordAnalysis} instances for the
+   * bulk data describing the statistics by entity type (including those with
+   * no entity type).
+   *
+   * @return A {@link List} of {@link SzEntityTypeRecordAnalysis} instances
+   *         describing the statistics for the bulk data.
+   */
+  public List<SzEntityTypeRecordAnalysis> getAnalysisByEntityType() {
+    List<SzEntityTypeRecordAnalysis> list
+        = new ArrayList<>(this.analysisByEntityType.values());
+    list.sort((a1, a2) -> {
+      int diff = a1.getRecordCount() - a2.getRecordCount();
+      if (diff != 0) return diff;
+      diff = a1.getRecordsWithRecordIdCount() - a2.getRecordsWithRecordIdCount();
+      if (diff != 0) return diff;
+      String et1 = a1.getEntityType();
+      String et2 = a2.getEntityType();
+      if (et1 == null) return -1;
+      if (et2 == null) return 1;
+      return et1.compareTo(et2);
+    });
+    return list;
+  }
+
+  /**
+   * Set the analysis by entity type for this instance.  This will reset the
+   * top-level counts according to what is discovered in the specified
+   * collection of {@link SzEntityTypeRecordAnalysis} instances.
+   *
+   * @param analysisList The {@link Collection} of
+   *                     {@link SzEntityTypeRecordAnalysis} instances.
+   */
+  private void setAnalysisByEntityType(
+      Collection<SzEntityTypeRecordAnalysis> analysisList)
+  {
+    // count the records
+    int recordCount = analysisList.stream()
+        .mapToInt(SzEntityTypeRecordAnalysis::getRecordCount).sum();
+    this.setRecordCount(recordCount);
+
+    // count the records having a data source specified
+    int entityTypeCount = analysisList.stream()
+        .filter(a -> a.getEntityType() != null)
+        .mapToInt(SzEntityTypeRecordAnalysis::getRecordCount)
+        .sum();
+    this.setRecordsWithEntityTypeCount(entityTypeCount);
+
+    // count the records having a record ID specified
+    int recordIdCount = analysisList.stream()
+        .mapToInt(SzEntityTypeRecordAnalysis::getRecordsWithRecordIdCount)
+        .sum();
+    this.setRecordsWithRecordIdCount(recordIdCount);
+
+    // clear the current analysis map and repopulate it
+    this.analysisByEntityType.clear();
+    for (SzEntityTypeRecordAnalysis analysis : analysisList) {
+      this.analysisByEntityType.put(analysis.getEntityType(), analysis);
+    }
+  }
+
+  /**
    * Utility method for tracking a record that has been analyzed with the
-   * specified data source and record ID (which may be <tt>null</tt> to indicate
-   * if they are absent in the record).
+   * specified data source, entity type and record ID (any of which may be
+   * <tt>null</tt> to indicate if they are absent in the record).
    *
    * @param dataSource The data source for the record, or <tt>null</tt> if it
    *                   does not have a <tt>"DATA_SOURCE"</tt> property.
+   * @param entityType The entity type for the record, or <tt>null</tt> if it
+   *                   does not have a <tt>"ENTITY_TYPE"</tt> property.
    * @param recordId The record ID for the record, or <tt>null</tt> if it does
    *                 not have a <tt>"RECORD_ID"</tt> property.
    */
-  public void trackRecord(String dataSource, String recordId) {
+  public void trackRecord(String dataSource, String entityType, String recordId)
+  {
     // check if data source is empty string and if so, normalize it to null
     if (dataSource != null && dataSource.trim().length() == 0) {
       dataSource = null;
     }
 
+    // check if entity type is empty string and if so, normalize it to null
+    if (entityType != null && entityType.trim().length() == 0) {
+      entityType = null;
+    }
+
     // get the analysis for that data source
-    SzDataSourceRecordAnalysis analysis
+    SzDataSourceRecordAnalysis dsrcAnalysis
         = this.analysisByDataSource.get(dataSource);
 
     // check if it does not yet exist
-    if (analysis == null) {
+    if (dsrcAnalysis == null) {
       // if not, create it and store it for later
-      analysis = new SzDataSourceRecordAnalysis(dataSource);
-      this.analysisByDataSource.put(dataSource, analysis);
+      dsrcAnalysis = new SzDataSourceRecordAnalysis(dataSource);
+      this.analysisByDataSource.put(dataSource, dsrcAnalysis);
     }
 
-    // increment the global and data-source specified
-    analysis.incrementRecordCount();
+    // get the analysis for that entity type
+    SzEntityTypeRecordAnalysis etypeAnalysis
+        = this.analysisByEntityType.get(entityType);
+
+    // check if it does not yet exist
+    if (etypeAnalysis == null) {
+      // if not, create it and store it for later
+      etypeAnalysis = new SzEntityTypeRecordAnalysis(entityType);
+      this.analysisByEntityType.put(entityType, etypeAnalysis);
+    }
+
+    // increment the global count, data-source count and entity type count
+    dsrcAnalysis.incrementRecordCount();
+    etypeAnalysis.incrementRecordCount();
     this.incrementRecordCount();
 
     if (recordId != null) {
-      analysis.incrementRecordsWithRecordIdCount();
+      dsrcAnalysis.incrementRecordsWithRecordIdCount();
+      etypeAnalysis.incrementRecordsWithRecordIdCount();
       this.incrementRecordsWithRecordIdCount();
     }
 
     if (dataSource != null) {
       this.incrementRecordsWithDataSourceCount();
+    }
+    if (entityType != null) {
+      this.incrementRecordsWithEntityTypeCount();
     }
   }
 }

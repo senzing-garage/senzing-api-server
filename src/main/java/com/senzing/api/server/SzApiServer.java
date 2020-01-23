@@ -1153,27 +1153,21 @@ public class SzApiServer implements SzApiProvider {
    * @return
    */
   private static boolean initialize(Map<SzApiServerOption, ?> options) {
-    System.out.println("*************** INITIALIZING SERVER (1).....");
     if (options.containsKey(SzApiServerOption.HELP)) {
       System.out.println(SzApiServer.getUsageString());
       return false;
     }
-    System.out.println("*************** INITIALIZING SERVER (2).....");
     if (options.containsKey(SzApiServerOption.VERSION)) {
       System.out.println(SzApiServer.getVersionString());
       return false;
     }
-    System.out.println("*************** INITIALIZING SERVER (3).....");
     synchronized (SzApiServer.class) {
-      System.out.println("*************** INITIALIZING SERVER (4).....");
       if (SzApiServer.INSTANCE != null) {
         throw new IllegalStateException("Server already initialized!");
       }
 
-      System.out.println("*************** INITIALIZING SERVER (5).....");
       try {
         SzApiServer.INSTANCE = new SzApiServer(options);
-        System.out.println("*************** INITIALIZING SERVER (6).....");
         SzApiServer.PROVIDER_TOKEN
             = SzApiProvider.Factory.installProvider(SzApiServer.INSTANCE);
 

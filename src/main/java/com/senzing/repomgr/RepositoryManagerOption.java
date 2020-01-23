@@ -13,7 +13,9 @@ enum RepositoryManagerOption implements CommandLineOption<RepositoryManagerOptio
   LOAD_FILE("--loadFile", true, 1),
   ADD_RECORD("--addRecord", true, 1),
   CONFIG_SOURCES("--configSources", true),
+  CONFIG_ENTITY_TYPES("--configEntityTypes", true),
   DATA_SOURCE("-dataSource", false, 1),
+  ENTITY_TYPE("-entityType", false, 1),
   REPOSITORY("-repo", false, 1),
   VERBOSE("-verbose", false, 0);
 
@@ -98,17 +100,23 @@ enum RepositoryManagerOption implements CommandLineOption<RepositoryManagerOptio
     PURGE_REPO.conflicts = complementOf(of(PURGE_REPO, REPOSITORY, VERBOSE));
     PURGE_REPO.dependencies = Collections.singleton(of(REPOSITORY));
     LOAD_FILE.conflicts
-        = complementOf(of(LOAD_FILE, REPOSITORY, DATA_SOURCE, VERBOSE));
+        = complementOf(of(LOAD_FILE, REPOSITORY, DATA_SOURCE, ENTITY_TYPE, VERBOSE));
     LOAD_FILE.dependencies = Collections.singleton(of(REPOSITORY));
     ADD_RECORD.conflicts
-        = complementOf(of(ADD_RECORD, REPOSITORY, DATA_SOURCE, VERBOSE));
+        = complementOf(of(ADD_RECORD, REPOSITORY, DATA_SOURCE, ENTITY_TYPE, VERBOSE));
     ADD_RECORD.dependencies = Collections.singleton(of(REPOSITORY));
     CONFIG_SOURCES.conflicts
         = complementOf(of(CONFIG_SOURCES, REPOSITORY, VERBOSE));
     CONFIG_SOURCES.dependencies = Collections.singleton(of(REPOSITORY));
+    CONFIG_ENTITY_TYPES.conflicts
+        = complementOf(of(CONFIG_ENTITY_TYPES, REPOSITORY, VERBOSE));
+    CONFIG_ENTITY_TYPES.dependencies = Collections.singleton(of(REPOSITORY));
     DATA_SOURCE.conflicts
         = complementOf(of(DATA_SOURCE, LOAD_FILE, ADD_RECORD, VERBOSE, REPOSITORY));
     DATA_SOURCE.dependencies = Collections.singleton(noneOf(RepositoryManagerOption.class));
+    ENTITY_TYPE.conflicts
+        = complementOf(of(ENTITY_TYPE, LOAD_FILE, ADD_RECORD, VERBOSE, REPOSITORY));
+    ENTITY_TYPE.dependencies = Collections.singleton(noneOf(RepositoryManagerOption.class));
     REPOSITORY.conflicts = of(HELP, CREATE_REPO);
     REPOSITORY.dependencies = Collections.singleton(noneOf(RepositoryManagerOption.class));
   }

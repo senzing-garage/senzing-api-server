@@ -34,6 +34,11 @@ import static com.senzing.repomgr.RepositoryManager.*;
  */
 public abstract class AbstractServiceTest {
   /**
+   * The entity type code for the GENERIC entity type.
+   */
+  public static final String GENERIC_ENTITY_TYPE = "GENERIC";
+
+  /**
    * The replay provider to use.
    */
   private static final ReplayNativeApiProvider REPLAY_PROVIDER
@@ -1166,7 +1171,8 @@ public abstract class AbstractServiceTest {
       }
 
       int responseCode = conn.getResponseCode();
-      InputStream is = (responseCode >= 200 && responseCode < 300)
+      boolean errorResponse = (responseCode < 200 || responseCode >= 300);
+      InputStream is = (!errorResponse)
           ? conn.getInputStream() : conn.getErrorStream();
       InputStreamReader isr = new InputStreamReader(is, "UTF-8");
       BufferedReader br = new BufferedReader(isr);
@@ -1180,10 +1186,21 @@ public abstract class AbstractServiceTest {
       T result = null;
       try {
         result = objectMapper.readValue(responseJson, responseClass);
+
       } catch (Exception e) {
-        System.out.println("DESERIALIZING RESPONSE JSON: ");
-        System.out.println(responseJson);
-        System.out.println();
+        // check if we have an unexpected error response
+        if (errorResponse && !responseClass.equals(SzErrorResponse.class)) {
+          System.err.println("UNEXPECTED ERROR RESPONSE: ");
+          System.err.println(responseJson);
+          System.err.println();
+          throw new IllegalStateException(
+              "UNEXPECTED ERROR RESPONSE: " + responseJson);
+        }
+
+        // log the deserialization exception
+        System.err.println("DESERIALIZING RESPONSE JSON: ");
+        System.err.println(responseJson);
+        System.err.println();
         throw e;
       }
       return result;

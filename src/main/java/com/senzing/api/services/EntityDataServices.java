@@ -639,9 +639,10 @@ public class EntityDataServices {
         || errorCode == RECORD_NOT_FOUND_CODE
         || errorCode == ENTITY_ID_NOT_FOUND_CODE)
     {
-      return newNotFoundException(GET, uriInfo, timers, engineApi);
+      return newNotFoundException(httpMethod, uriInfo, timers, engineApi);
     }
-    return newInternalServerErrorException(GET, uriInfo, timers, engineApi);
+    return newInternalServerErrorException(
+        httpMethod, uriInfo, timers, engineApi);
   }
 
   /**

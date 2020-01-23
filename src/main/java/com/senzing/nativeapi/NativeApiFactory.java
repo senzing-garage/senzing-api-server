@@ -121,11 +121,6 @@ public class NativeApiFactory {
    */
   public static G2Engine createEngineApi() {
     NativeApiProvider provider = getInstalledProvider();
-    if (provider == null) {
-      System.out.println();
-      System.out.println("********** PROVIDER IS NULL");
-      System.out.println();
-    }
     if (provider != null) {
       return provider.createEngineApi();
 

@@ -146,6 +146,7 @@ public class BulkDataServices {
   @Path("/load")
   public SzBulkLoadResponse loadBulkRecordsViaForm(
       @QueryParam("dataSource") String dataSource,
+      @QueryParam("entityType") String entityType,
       @QueryParam("loadId") String loadId,
       @DefaultValue("-1") @QueryParam("maxFailures") int maxFailures,
       @HeaderParam("Content-Type") MediaType mediaType,
@@ -155,6 +156,7 @@ public class BulkDataServices {
   {
     try {
       return this.loadBulkRecords(dataSource,
+                                  entityType,
                                   loadId,
                                   maxFailures,
                                   mediaType,
@@ -182,6 +184,7 @@ public class BulkDataServices {
       "application/x-jsonlines"})
   public SzBulkLoadResponse loadBulkRecordsDirect(
       @QueryParam("dataSource") String dataSource,
+      @QueryParam("entityType") String entityType,
       @QueryParam("loadId") String loadId,
       @DefaultValue("-1") @QueryParam("maxFailures") int maxFailures,
       @HeaderParam("Content-Type") MediaType mediaType,
@@ -190,6 +193,7 @@ public class BulkDataServices {
   {
     try {
       return this.loadBulkRecords(dataSource,
+                                  entityType,
                                   loadId,
                                   maxFailures,
                                   mediaType,
@@ -240,9 +244,12 @@ public class BulkDataServices {
              (record != null);
              record = recordReader.readRecord())
         {
-          String dataSrc  = JsonUtils.getString(record, "DATA_SOURCE");
-          String recordId = JsonUtils.getString(record, "RECORD_ID");
-          dataAnalysis.trackRecord(dataSrc, recordId);
+          System.out.println("RECORD: " + JsonUtils.toJsonText(record));
+          String dataSrc    = JsonUtils.getString(record, "DATA_SOURCE");
+          String entityType = JsonUtils.getString(record, "ENTITY_TYPE");
+          String recordId   = JsonUtils.getString(record, "RECORD_ID");
+          System.out.println("A: DATA_SOURCE / ENTITY_TYPE: " + dataSrc + " / " + entityType);
+          dataAnalysis.trackRecord(dataSrc, entityType, recordId);
         }
       }
 
@@ -263,6 +270,7 @@ public class BulkDataServices {
    */
   private SzBulkLoadResponse loadBulkRecords(
       String                      dataSource,
+      String                      entityType,
       String                      explicitLoadId,
       int                         maxFailures,
       MediaType                   mediaType,
@@ -280,26 +288,36 @@ public class BulkDataServices {
     SzApiProvider provider = SzApiProvider.Factory.getProvider();
     ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
     Map<String, String> dataSourceMap = new HashMap<>();
+    Map<String, String> entityTypeMap = new HashMap<>();
     MultivaluedMap<String,String> params = uriInfo.getQueryParameters(true);
     params.entrySet().forEach(e -> {
       String key = e.getKey();
       if (key == null) return; // skip this one
       key = key.trim().toUpperCase();
-      if (!key.toUpperCase().startsWith("DATASOURCE_")
-          || key.equals("DATASOURCE_"))
+      if (key.startsWith("DATASOURCE_") && !key.equals("DATASOURCE_"))
       {
-        // skip this one
-        return;
+        String origDataSource = key.substring("DATASOURCE_".length());
+        List<String> values = e.getValue();
+        String newDataSource = values.get(0);
+        if (newDataSource == null) return; // skip this one
+        newDataSource = newDataSource.trim().toUpperCase();
+        dataSourceMap.put(origDataSource, newDataSource);
       }
-      String origDataSource = key.substring("DATASOURCE_".length());
-      List<String> values = e.getValue();
-      String newDataSource = values.get(0);
-      if (newDataSource == null) return; // skip this one
-      newDataSource = newDataSource.trim().toUpperCase();
-      dataSourceMap.put(origDataSource, newDataSource);
+      if (key.startsWith("ENTITYTYPE_") && !key.equals("ENTITYTYPE_"))
+      {
+        String origEntityType = key.substring("ENTITYTYPE_".length());
+        List<String> values = e.getValue();
+        String newEntityType = values.get(0);
+        if (newEntityType == null) return;
+        newEntityType = newEntityType.trim().toUpperCase();
+        entityTypeMap.put(origEntityType, newEntityType);
+      }
     });
     dataSourceMap.put(null, dataSource);
     dataSourceMap.put("", dataSource);
+    entityTypeMap.put(null, entityType);
+    entityTypeMap.put("", entityType);
+
 
     try {
       BulkDataSet bulkDataSet = new BulkDataSet(mediaType, dataInputStream);
@@ -329,6 +347,7 @@ public class BulkDataServices {
         RecordReader recordReader = new RecordReader(bulkDataSet.format,
                                                      br,
                                                      dataSourceMap,
+                                                     entityTypeMap,
                                                      loadId);
         bulkDataSet.format = recordReader.getFormat();
         bulkLoadResult.setCharacterEncoding(charset);
@@ -338,10 +357,14 @@ public class BulkDataServices {
         for (JsonObject record = recordReader.readRecord();
              (record != null);
              record = recordReader.readRecord()) {
-          // check if we have a data source
+          // check if we have a data source and entity type
           String resolvedDS = JsonUtils.getString(record, "DATA_SOURCE");
-          if (resolvedDS == null || resolvedDS.trim().length() == 0) {
+          String resolvedET = JsonUtils.getString(record, "ENTITY_TYPE");
+          if (resolvedDS == null || resolvedDS.trim().length() == 0
+              || resolvedET == null || resolvedET.trim().length() == 0)
+          {
             bulkLoadResult.trackIncompleteRecord();
+
           } else {
             Timers subTimers  = timerPool.remove(0);
             AsyncResult<EngineResult> asyncResult = null;

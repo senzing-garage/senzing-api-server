@@ -95,6 +95,11 @@ public class RecordReader {
   private Map<String, String> dataSourceMap;
 
   /**
+   * The mapping for the entity types.
+   */
+  private Map<String, String> entityTypeMap;
+
+  /**
    * The source ID to assign to the records.
    */
   private String sourceId;
@@ -114,12 +119,16 @@ public class RecordReader {
    * @throws IOException If an I/O failure occurs.
    */
   public RecordReader(Reader reader) throws IOException {
-    this(null, reader, Collections.emptyMap(), null);
+    this(null,
+         reader,
+         Collections.emptyMap(),
+         Collections.emptyMap(),
+         null);
   }
 
   /**
-   * Constructs a {@link RecordReader} with the specified {@link Reader}.
-   * The format is explicitly specified by the first parameter.
+   * Constructs a {@link RecordReader} with the specified {@link Format} and
+   * {@link Reader}.
    *
    * @param format The expected format of the records.
    *
@@ -129,29 +138,40 @@ public class RecordReader {
    * @throws IOException If an I/O failure occurs.
    */
   public RecordReader(Format format, Reader reader) throws IOException {
-    this(format, reader, Collections.emptyMap(), null);
+    this(format,
+         reader,
+         Collections.emptyMap(),
+         Collections.emptyMap(),
+         null);
   }
 
   /**
-   * Constructs a {@link RecordReader} with the specified {@link Reader}.
-   * The format of the reader is inferred from the first character read.
+   * Constructs a {@link RecordReader} with the specified {@link Reader},
+   * data source code and entity type code.  The format of the reader is
+   * inferred from the first character read.
    *
    * @param reader The {@link Reader} from which to read the text for the
    *               records.
    *
    * @param dataSource The data source to assign to each record.
    *
+   * @param entityType The entity type to assign to each record.
+   *
    * @throws IOException If an I/O failure occurs.
    */
-  public RecordReader(Reader reader, String dataSource)
+  public RecordReader(Reader reader, String dataSource, String entityType)
       throws IOException
   {
-    this(null, reader, Collections.singletonMap("", dataSource), null);
+    this(null,
+         reader,
+         Collections.singletonMap("", dataSource),
+         Collections.singletonMap("", entityType),
+         null);
   }
 
   /**
-   * Constructs a {@link RecordReader} with the specified {@link Reader}.
-   * The format is explicitly specified by the first parameter.
+   * Constructs a {@link RecordReader} with the specified {@link Format},
+   * {@link Reader}, data source code and entity type code.
    *
    * @param format The expected format of the records.
    *
@@ -160,36 +180,55 @@ public class RecordReader {
    *
    * @param dataSource The data source to assign to each record.
    *
+   * @param entityType The entity type to assign to each record.
+   *
    * @throws IOException If an I/O failure occurs.
    */
-  public RecordReader(Format format, Reader reader, String dataSource)
+  public RecordReader(Format format,
+                      Reader reader,
+                      String dataSource,
+                      String entityType)
       throws IOException
   {
-    this(format, reader, Collections.singletonMap("", dataSource), null);
+    this(format,
+         reader,
+         Collections.singletonMap("", dataSource),
+         Collections.singletonMap("", entityType),
+         null);
   }
 
   /**
-   * Constructs a {@link RecordReader} with the specified {@link Reader}.
-   * The format of the reader is inferred from the first character.
+   * Constructs a {@link RecordReader} with the specified {@link Reader},
+   * data source code, entity type code and source ID.  The format of the reader
+   * is inferred from the first character.
    *
    * @param reader The {@link Reader} from which to read the text for the
    *               records.
    *
    * @param dataSource The data source to assign to each record.
+   *
+   * @param entityType The entity type to assign to each record.
    *
    * @param sourceId the source ID to assign to each record.
    *
    * @throws IOException If an I/O failure occurs.
    */
-  public RecordReader(Reader reader, String dataSource, String sourceId)
+  public RecordReader(Reader reader,
+                      String dataSource,
+                      String entityType,
+                      String sourceId)
       throws IOException
   {
-    this(null, reader, Collections.singletonMap("", dataSource), sourceId);
+    this(null,
+         reader,
+         Collections.singletonMap("", dataSource),
+         Collections.singletonMap("", entityType),
+         sourceId);
   }
 
   /**
-   * Constructs a {@link RecordReader} with the specified {@link Reader}.
-   * The format is explicitly specified by the first parameter.
+   * Constructs a {@link RecordReader} with the specified {@link Format},
+   * {@link Reader}, data source, entity type and source ID.
    *
    * @param format The expected format of the records.
    *
@@ -197,6 +236,8 @@ public class RecordReader {
    *               records.
    *
    * @param dataSource The data source to assign to each record.
+   *
+   * @param entityType The entity type to assign to each record.
    *
    * @param sourceId the source ID to assign to each record.
    *
@@ -205,35 +246,48 @@ public class RecordReader {
   public RecordReader(Format  format,
                       Reader  reader,
                       String  dataSource,
+                      String  entityType,
                       String  sourceId)
       throws IOException
   {
-    this(format, reader, Collections.singletonMap("", dataSource), sourceId);
+    this(format,
+         reader,
+         Collections.singletonMap("", dataSource),
+         Collections.singletonMap("", entityType),
+         sourceId);
   }
 
   /**
-   * Constructs a {@link RecordReader} with the specified {@link Reader}.
-   * The format of the reader is inferred from the first character.
+   * Constructs a {@link RecordReader} with the specified {@link Reader},
+   * data source code map and entity type code map.  The format of the reader
+   * is inferred from the first character.
    *
    * @param reader The {@link Reader} from which to read the text for the
    *               records.
    *
-   * @param dataSourceMap The map of original data source names to replacement
-   *                      data source name.  The mapping from empty-string will
+   * @param dataSourceMap The map of original data source codes to replacement
+   *                      data source codes.  The mapping from empty-string will
    *                      be used for any record that has no data source or
    *                      whose data source is not in the map.
    *
+   * @param entityTypeMap The map of original entity type codes to replacement
+   *                      entity type codes.  The mapping from empty-string will
+   *                      be used for any record that has no entity type or
+   *                      whose entity type is not in the map.
+   *
    * @throws IOException If an I/O failure occurs.
    */
-  public RecordReader(Reader reader, Map<String, String> dataSourceMap)
+  public RecordReader(Reader reader,
+                      Map<String, String> dataSourceMap,
+                      Map<String, String> entityTypeMap)
       throws IOException
   {
-    this(null, reader, dataSourceMap, null);
+    this(null, reader, dataSourceMap, entityTypeMap, null);
   }
 
   /**
-   * Constructs a {@link RecordReader} with the specified {@link Reader}.
-   * The format is explicitly specified by the first parameter.
+   * Constructs a {@link RecordReader} with the specified {@link Format},
+   * {@link Reader}, data source code map, and entity type code map.
    *
    * @param format The expected format of the records.
    *
@@ -245,19 +299,26 @@ public class RecordReader {
    *                      be used for any record that has no data source or
    *                      whose data source is not in the map.
    *
+   * @param entityTypeMap The map of original entity type codes to replacement
+   *                      entity type codes.  The mapping from empty-string will
+   *                      be used for any record that has no entity type or
+   *                      whose entity type is not in the map.
+   *
    * @throws IOException If an I/O failure occurs.
    */
   public RecordReader(Format              format,
                       Reader              reader,
-                      Map<String, String> dataSourceMap)
+                      Map<String, String> dataSourceMap,
+                      Map<String, String> entityTypeMap)
       throws IOException
   {
-    this(format, reader, dataSourceMap, null);
+    this(format, reader, dataSourceMap, entityTypeMap, null);
   }
 
   /**
-   * Constructs a {@link RecordReader} with the specified {@link Reader}.
-   * The format of the reader is inferred using the first character read.
+   * Constructs a {@link RecordReader} with the specified {@link Reader},
+   * data source code map, entity type code map and source ID.  The format of
+   * the reader is inferred using the first character read.
    *
    * @param reader The {@link Reader} from which to read the text for the
    *               records.
@@ -266,6 +327,11 @@ public class RecordReader {
    *                      data source name.  The mapping from empty-string will
    *                      be used for any record that has no data source or
    *                      whose data source is not in the map.
+   *
+   * @param entityTypeMap The map of original entity type codes to replacement
+   *                      entity type codes.  The mapping from empty-string will
+   *                      be used for any record that has no entity type or
+   *                      whose entity type is not in the map.
    *
    * @param sourceId the source ID to assign to each record.
    *
@@ -273,14 +339,16 @@ public class RecordReader {
    */
   public RecordReader(Reader              reader,
                       Map<String, String> dataSourceMap,
+                      Map<String, String> entityTypeMap,
                       String              sourceId)
       throws IOException
   {
-    this(null, reader, dataSourceMap, sourceId);
+    this(null, reader, dataSourceMap, entityTypeMap, sourceId);
   }
 
   /**
-   * Constructs a {@link RecordReader} with the specified {@link Reader}.
+   * Constructs a {@link RecordReader} with the specified {@link Format},
+   * {@link Reader}, data source map, entity type map and source ID.
    * The format is explicitly specified by the first parameter.
    *
    * @param format The expected format of the records.
@@ -293,6 +361,11 @@ public class RecordReader {
    *                      be used for any record that has no data source or
    *                      whose data source is not in the map.
    *
+   * @param entityTypeMap The map of original entity type codes to replacement
+   *                      entity type codes.  The mapping from empty-string will
+   *                      be used for any record that has no entity type or
+   *                      whose entity type is not in the map.
+   *
    * @param sourceId the source ID to assign to each record.
    *
    * @throws IOException If an I/O failure occurs.
@@ -300,6 +373,7 @@ public class RecordReader {
   public RecordReader(Format              format,
                       Reader              reader,
                       Map<String, String> dataSourceMap,
+                      Map<String, String> entityTypeMap,
                       String              sourceId)
       throws IOException
   {
@@ -375,6 +449,21 @@ public class RecordReader {
       this.dataSourceMap = Collections.unmodifiableMap(this.dataSourceMap);
     }
 
+    // initialize the data source map with upper-case keys
+    this.entityTypeMap = (entityTypeMap == null) ? Collections.emptyMap()
+        : new LinkedHashMap<>();
+    if (entityTypeMap != null) {
+      entityTypeMap.entrySet().forEach(entry -> {
+        String key = entry.getKey();
+        if (key == null) {
+          if (this.entityTypeMap.containsKey("")) return;
+          key = "";
+        }
+        this.entityTypeMap.put(key.toUpperCase(), entry.getValue());
+      });
+      this.entityTypeMap = Collections.unmodifiableMap(this.entityTypeMap);
+    }
+
     this.sourceId = sourceId;
     if (this.sourceId != null) {
       this.sourceId = this.sourceId.trim();
@@ -430,37 +519,42 @@ public class RecordReader {
     dsrc = dsrc.trim().toUpperCase();
     String etype = JsonUtils.getString(record, "ENTITY_TYPE", "");
     etype = etype.trim().toUpperCase();
-    if (dsrc.length() == 0) {
-      dsrc = etype;
-    }
 
+    // get the mapped data source
     String dataSource = this.dataSourceMap.get(dsrc);
     if (dataSource == null) dataSource = this.dataSourceMap.get("");
     if (dataSource != null && dataSource.trim().length() == 0) {
       dataSource = null;
     }
+
+    // get the mapped entity type
+    String entityType = this.entityTypeMap.get(etype);
+    if (entityType == null) entityType = this.entityTypeMap.get("");
+    if (entityType != null && entityType.trim().length() == 0) {
+      entityType = null;
+    }
+
+    // remap the data source
     if (dataSource != null) {
       job.remove("DATA_SOURCE");
       job.add("DATA_SOURCE", dataSource);
-      job.remove("ENTITY_TYPE");
-      job.add("ENTITY_TYPE", dataSource);
       dsrc = dataSource;
-      etype = dataSource;
-    }
-    if (!dsrc.equals(etype)) {
-      if (dsrc.length() > 0) {
-        job.remove("ENTITY_TYPE");
-        job.add("ENTITY_TYPE", dsrc);
-      } else if (etype.length() > 0) {
-        job.remove("DATA_SOURCE");
-        job.add("DATA_SOURCE", etype);
-      }
     }
 
+    // remap the entity type
+    if (entityType != null) {
+      job.remove("ENTITY_TYPE");
+      job.add("ENTITY_TYPE", entityType);
+      etype = entityType;
+    }
+
+    // set the source ID
     if (this.sourceId != null) {
       job.remove("SOURCE_ID");
       job.add("SOURCE_ID", this.sourceId);
     }
+
+    // build the object
     return job.build();
   }
 

@@ -47,6 +47,7 @@ public class RecordReaderTest {
     this.records = new ArrayList<>();
     JsonObjectBuilder job = Json.createObjectBuilder();
     job.add("DATA_SOURCE", "EMPLOYEES");
+    job.add("ENTITY_TYPE", "EMPL");
     job.add("NAME_FIRST", "JOE");
     job.add("NAME_LAST", "SCHMOE");
     job.add("PHONE_NUMBER", "702-555-1212");
@@ -60,6 +61,7 @@ public class RecordReaderTest {
 
     job = Json.createObjectBuilder();
     job.add("DATA_SOURCE", "CUSTOMERS");
+    job.add("ENTITY_TYPE", "CUST");
     job.add("NAME_FIRST", "JANE");
     job.add("NAME_LAST", "SMITH");
     job.add("PHONE_NUMBER", "702-444-1313");
@@ -87,9 +89,11 @@ public class RecordReaderTest {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
 
-    pw.println("DATA_SOURCE,NAME_FIRST,NAME_LAST,PHONE_NUMBER");
+    pw.println("DATA_SOURCE,ENTITY_TYPE,NAME_FIRST,NAME_LAST,PHONE_NUMBER");
     for (JsonObject obj: this.records) {
       pw.print(JsonUtils.getString(obj,"DATA_SOURCE", ""));
+      pw.print(",");
+      pw.print(obj.getString("ENTITY_TYPE", ""));
       pw.print(",");
       pw.print(obj.getString("NAME_FIRST"));
       pw.print(",");
@@ -136,7 +140,7 @@ public class RecordReaderTest {
     sw = new StringWriter();
     pw = new PrintWriter(sw);
 
-    for (JsonObject obj: records) {
+    for (JsonObject obj: this.records) {
       pw.println(JsonUtils.toJsonText(obj));
     }
     pw.flush();
@@ -204,7 +208,8 @@ public class RecordReaderTest {
     try {
       RecordReader rr = new RecordReader(sr);
       for (JsonObject expected : this.records) {
-        expected = augmentRecord(expected, null, null);
+        expected = augmentRecord(
+            expected, null, null, null);
         JsonObject actual = rr.readRecord();
         assertEquals(expected, actual,
                      multilineFormat(
@@ -240,12 +245,28 @@ public class RecordReaderTest {
     specificMap2.put("", "PEOPLE");
     specificMap2 = Collections.unmodifiableMap(specificMap2);
 
+    Map<String, String> specificMap3 = new HashMap<>();
+    specificMap3.put("EMPL", "WORKER");
+    specificMap3.put("", "CONSUMER");
+
+    Map<String, String> specificMap4 = new HashMap<>();
+    specificMap4.put("EMPL", "WORKER");
+    specificMap4.put("CUST", "CONSUMER");
+    specificMap4.put("", "GENERIC");
+
     List<Map<String,String>> dataSourceMaps = new LinkedList<>();
     dataSourceMaps.add(null);
     dataSourceMaps.add(Collections.emptyMap());
     dataSourceMaps.add(Collections.singletonMap("", "PEOPLE"));
     dataSourceMaps.add(specificMap1);
     dataSourceMaps.add(specificMap2);
+
+    List<Map<String,String>> entityTypeMaps = new LinkedList<>();
+    entityTypeMaps.add(null);
+    entityTypeMaps.add(Collections.emptyMap());
+    entityTypeMaps.add(Collections.singletonMap("", "GENERIC"));
+    entityTypeMaps.add(specificMap3);
+    entityTypeMaps.add(specificMap4);
 
     String[] sourceIds = { null, "", "SomeFile" };
 
@@ -255,11 +276,14 @@ public class RecordReaderTest {
       List<JsonObject> expected = entry.getValue();
 
       for (Map<String,String> dataSourceMap : dataSourceMaps) {
-        for (String sourceId : sourceIds) {
-          result.add(arguments(recordsText,
-                               expected,
-                               dataSourceMap,
-                               sourceId));
+        for (Map<String, String> entityTypeMap: entityTypeMaps) {
+          for (String sourceId : sourceIds) {
+            result.add(arguments(recordsText,
+                                 expected,
+                                 dataSourceMap,
+                                 entityTypeMap,
+                                 sourceId));
+          }
         }
       }
     });
@@ -271,14 +295,17 @@ public class RecordReaderTest {
   public void readRecordsTest(String              recordsText,
                               List<JsonObject>    expectedRecords,
                               Map<String,String>  dataSourceMap,
+                              Map<String,String>  entityTypeMap,
                               String              sourceId)
   {
     StringReader sr = new StringReader(recordsText);
     Map<String,String> dsMap = dataSourceMap;
     try {
-      RecordReader rr = new RecordReader(sr, dataSourceMap, sourceId);
+      RecordReader rr = new RecordReader(
+          sr, dataSourceMap, entityTypeMap, sourceId);
       for (JsonObject expected : expectedRecords) {
-        expected = augmentRecord(expected, dataSourceMap, sourceId);
+        expected = augmentRecord(
+            expected, dataSourceMap, entityTypeMap, sourceId);
         JsonObject actual = rr.readRecord();
         assertEquals(expected, actual,
                      multilineFormat(
@@ -300,6 +327,7 @@ public class RecordReaderTest {
 
   private static JsonObject augmentRecord(JsonObject          record,
                                           Map<String,String>  dataSourceMap,
+                                          Map<String,String>  entityTypeMap,
                                           String              sourceId)
   {
     JsonObjectBuilder job = Json.createObjectBuilder(record);
@@ -311,7 +339,7 @@ public class RecordReaderTest {
     dataSource = dataSource.trim().toUpperCase();
     entityType = entityType.trim().toUpperCase();
 
-    if (dataSource.length() == 0) dataSource = entityType;
+    // map the data source
     if (dataSourceMap != null) {
       String origDS = dataSource;
       dataSource = dataSourceMap.get(dataSource);
@@ -327,19 +355,33 @@ public class RecordReaderTest {
       if (record.containsKey("DATA_SOURCE")) {
         job.remove("DATA_SOURCE");
       }
-      if (record.containsKey("ENTITY_TYPE")) {
-        job.remove("ENTITY_TYPE");
-      }
       job.add("DATA_SOURCE", dataSource);
-      job.add("ENTITY_TYPE", dataSource);
-      entityType = dataSource;
     } else {
       dataSource = "";
     }
-    if (!entityType.equals(dataSource) && dataSource.length() > 0) {
-      job.remove("ENTITY_TYPE");
-      job.add("ENTITY_TYPE", dataSource);
+
+    // map the entity type
+    if (entityTypeMap != null) {
+      String origET = entityType;
+      entityType = entityTypeMap.get(entityType);
+      if (entityType == null) {
+        entityType = entityTypeMap.get("");
+      }
+      if (entityType == null) {
+        entityType = origET;
+      }
     }
+    if (entityType != null && entityType.trim().length() > 0)
+    {
+      if (record.containsKey("ENTITY_TYPE")) {
+        job.remove("ENTITY_TYPE");
+      }
+      job.add("ENTITY_TYPE", entityType);
+    } else {
+      entityType = "";
+    }
+
+    // add the source ID
     if (sourceId != null && sourceId.trim().length() > 0) {
       if (record.containsKey("SOURCE_ID")) {
         job.remove("SOURCE_ID");
