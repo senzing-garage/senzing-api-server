@@ -7,7 +7,6 @@ import com.senzing.io.RecordReader;
 import com.senzing.io.TemporaryDataCache;
 import com.senzing.util.AsyncWorkerPool;
 import com.senzing.util.JsonUtils;
-import com.senzing.util.LoggingUtilities;
 import com.senzing.util.Timers;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
@@ -18,6 +17,9 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
+import javax.ws.rs.sse.OutboundSseEvent;
+import javax.ws.rs.sse.Sse;
+import javax.ws.rs.sse.SseEventSink;
 import java.io.*;
 import java.security.MessageDigest;
 import java.time.ZoneId;
@@ -30,12 +32,14 @@ import static com.senzing.api.services.ServicesUtil.*;
 import static com.senzing.text.TextUtilities.*;
 import static com.senzing.util.AsyncWorkerPool.*;
 import static com.senzing.api.model.SzBulkLoadStatus.*;
+import static javax.ws.rs.core.MediaType.*;
+import static com.senzing.util.LoggingUtilities.*;
 
 /**
  * Bulk data REST services.
  */
 @Path("/bulk-data")
-@Produces("application/json; charset=UTF-8")
+@Produces("application/json; charset=UTF-8; qs=1.0")
 public class BulkDataServices {
   /**
    * The file date pattern.
@@ -54,6 +58,31 @@ public class BulkDataServices {
       = DateTimeFormatter.ofPattern(FILE_DATE_PATTERN);
 
   /**
+   * The period between progress events when providing SSE events.
+   */
+  public static final long PROGRESS_EVENT_PERIOD = 3000L;
+
+  /**
+   * The reconnect delay to use for events when providing SSE events.
+   */
+  public static final long RECONNECT_DELAY = 5000L;
+
+  /**
+   * SSE event type string for progress events.
+   */
+  public static final String PROGRESS_EVENT = "progress";
+
+  /**
+   * SSE event type string for abort events.
+   */
+  public static final String ABORT_EVENT = "abort";
+
+  /**
+   * SSE event type string for complete events.
+   */
+  public static final String COMPLETE_EVENT = "complete";
+
+  /**
    * Analyzes the bulk data records.
    */
   @POST
@@ -64,13 +93,44 @@ public class BulkDataServices {
       @Context UriInfo uriInfo)
   {
     try {
-      return this.analyzeBulkRecords(mediaType, dataInputStream, uriInfo);
+      return this.analyzeBulkRecords(mediaType,
+                                     dataInputStream,
+                                     uriInfo,
+                                     null,
+                                     null);
     } catch (RuntimeException e) {
-      e.printStackTrace();
-      throw e;
+      throw logOnceAndThrow(e);
+
     } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
+      throw logOnceAndThrow(new RuntimeException(e));
+    }
+  }
+
+  /**
+   * Analyzes the bulk data records.
+   */
+  @POST
+  @Path("/analyze")
+  @Consumes({ MediaType.APPLICATION_JSON,
+      MediaType.TEXT_PLAIN,
+      "text/csv",
+      "application/x-jsonlines"})
+  public SzBulkDataAnalysisResponse analyzeBulkRecordsDirect(
+      @HeaderParam("Content-Type") MediaType mediaType,
+      InputStream dataInputStream,
+      @Context UriInfo uriInfo)
+  {
+    try {
+      return this.analyzeBulkRecords(mediaType,
+                                     dataInputStream,
+                                     uriInfo,
+                                     null,
+                                     null);
+    } catch (RuntimeException e) {
+      throw logOnceAndThrow(e);
+
+    } catch (Exception e) {
+      throw logOnceAndThrow(new RuntimeException(e));
     }
   }
 
@@ -83,60 +143,55 @@ public class BulkDataServices {
               MediaType.TEXT_PLAIN,
               "text/csv",
               "application/x-jsonlines"})
-  public SzBulkDataAnalysisResponse analyzeBulkRecordsDirect(
+  @Produces("text/event-stream;qs=0.9")
+  public void analyzeBulkRecordsDirect(
       @HeaderParam("Content-Type") MediaType mediaType,
       InputStream dataInputStream,
-      @Context UriInfo uriInfo)
+      @Context UriInfo uriInfo,
+      @Context SseEventSink sseEventSink,
+      @Context Sse sse)
   {
     try {
-      return this.analyzeBulkRecords(mediaType, dataInputStream, uriInfo);
+      this.analyzeBulkRecords(mediaType,
+                              dataInputStream,
+                              uriInfo,
+                              sseEventSink,
+                              sse);
     } catch (RuntimeException e) {
-      e.printStackTrace();
-      throw e;
+      throw logOnceAndThrow(e);
+
     } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
+      throw logOnceAndThrow(new RuntimeException(e));
+
     }
   }
 
   /**
-   * Formats load ID using the specified data cache
+   * Analyzes the bulk data records.
    */
-  private static String formatLoadId(TemporaryDataCache         dataCache,
-                                     FormDataContentDisposition fileMetaData)
+  @POST
+  @Path("/analyze")
+  @Produces("text/event-stream;qs=0.9")
+  public void analyzeBulkRecordsViaForm(
+      @HeaderParam("Content-Type") MediaType mediaType,
+      @FormDataParam("data") InputStream dataInputStream,
+      @Context UriInfo uriInfo,
+      @Context SseEventSink sseEventSink,
+      @Context Sse sse)
   {
-    String fileKey = (fileMetaData != null) ? fileMetaData.getName() : null;
-    if (fileKey == null) {
-      try (InputStream is = dataCache.getInputStream();)
-      {
-        byte[]        bytes     = new byte[1024];
-        MessageDigest md5       = MessageDigest.getInstance("MD5");
-        int           readCount = is.read(bytes);
-        md5.update(bytes, 0, readCount);
-        byte[] hash = md5.digest();
-        fileKey = Base64.getEncoder().encodeToString(hash);
+    try {
+      this.analyzeBulkRecords(mediaType,
+                              dataInputStream,
+                              uriInfo,
+                              sseEventSink,
+                              sse);
 
-      } catch (Exception e) {
-        fileKey = randomPrintableText(30);
-      }
+    } catch (RuntimeException e) {
+      throw logOnceAndThrow(e);
+
+    } catch (Exception e) {
+      throw logOnceAndThrow(new RuntimeException(e));
     }
-    Date fileDate = (fileMetaData != null)
-        ? fileMetaData.getModificationDate()
-        : null;
-
-    if (fileDate == null && fileMetaData != null) {
-      fileDate = fileMetaData.getCreationDate();
-    }
-
-    ZonedDateTime fileDateTime = (fileDate == null)
-        ? null : ZonedDateTime.ofInstant(fileDate.toInstant(), UTC_ZONE);
-    ZonedDateTime now = ZonedDateTime.now(UTC_ZONE);
-
-    String fileDateText = (fileDate == null)
-        ? "?" : FILE_DATE_FORMATTER.format(fileDate.toInstant());
-    String nowText = (now == null) ? "?" : FILE_DATE_FORMATTER.format(now);
-
-    return fileKey + "_" + fileDateText + "_" + nowText;
   }
 
   /**
@@ -162,14 +217,16 @@ public class BulkDataServices {
                                   mediaType,
                                   dataInputStream,
                                   fileMetaData,
-                                  uriInfo);
+                                  uriInfo,
+                                  null,
+                                  null);
 
     } catch (RuntimeException e) {
-      e.printStackTrace();
-      throw e;
+      throw logOnceAndThrow(e);
+
     } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
+      throw logOnceAndThrow(new RuntimeException(e));
+
     }
   }
 
@@ -199,14 +256,98 @@ public class BulkDataServices {
                                   mediaType,
                                   dataInputStream,
                                   null,
-                                  uriInfo);
+                                  uriInfo,
+                                  null,
+                                  null);
 
     } catch (RuntimeException e) {
-      e.printStackTrace();
-      throw e;
+      throw logOnceAndThrow(e);
+
     } catch (Exception e) {
-      e.printStackTrace();
-      throw new RuntimeException(e);
+      throw logOnceAndThrow(new RuntimeException(e));
+
+    }
+  }
+
+  /**
+   * Analyzes the bulk data records.
+   */
+  @POST
+  @Path("/load")
+  @Produces("text/event-stream;qs=0.9")
+  public void loadBulkRecordsViaForm(
+      @QueryParam("dataSource") String dataSource,
+      @QueryParam("entityType") String entityType,
+      @QueryParam("loadId") String loadId,
+      @DefaultValue("-1") @QueryParam("maxFailures") int maxFailures,
+      @HeaderParam("Content-Type") MediaType mediaType,
+      @FormDataParam("data") InputStream dataInputStream,
+      @FormDataParam("data") FormDataContentDisposition fileMetaData,
+      @Context UriInfo uriInfo,
+      @Context SseEventSink sseEventSink,
+      @Context Sse sse)
+
+  {
+    try {
+      this.loadBulkRecords(dataSource,
+                           entityType,
+                           loadId,
+                           maxFailures,
+                           mediaType,
+                           dataInputStream,
+                           fileMetaData,
+                           uriInfo,
+                           sseEventSink,
+                           sse);
+
+    } catch (RuntimeException e) {
+      throw logOnceAndThrow(e);
+
+    } catch (Exception e) {
+      throw logOnceAndThrow(new RuntimeException(e));
+
+    }
+  }
+
+  /**
+   * Analyzes the bulk data records.
+   */
+  @POST
+  @Path("/load")
+  @Consumes({ MediaType.APPLICATION_JSON,
+      MediaType.TEXT_PLAIN,
+      "text/csv",
+      "application/x-jsonlines"})
+  @Produces("text/event-stream;qs=0.9")
+  public void loadBulkRecordsDirect(
+      @QueryParam("dataSource") String dataSource,
+      @QueryParam("entityType") String entityType,
+      @QueryParam("loadId") String loadId,
+      @DefaultValue("-1") @QueryParam("maxFailures") int maxFailures,
+      @HeaderParam("Content-Type") MediaType mediaType,
+      InputStream dataInputStream,
+      @Context UriInfo uriInfo,
+      @Context SseEventSink sseEventSink,
+      @Context Sse sse)
+  {
+    try {
+      this.loadBulkRecords(dataSource,
+                           entityType,
+                           loadId,
+                           maxFailures,
+                           mediaType,
+                           dataInputStream,
+                           null,
+                           uriInfo,
+                           sseEventSink,
+                           sse);
+
+    } catch (RuntimeException e) {
+      throw logOnceAndThrow(e);
+
+    } catch (Exception e) {
+      throw logOnceAndThrow(new RuntimeException(e));
+
     }
   }
 
@@ -216,9 +357,15 @@ public class BulkDataServices {
   private SzBulkDataAnalysisResponse analyzeBulkRecords(
       MediaType                   mediaType,
       InputStream                 dataInputStream,
-      UriInfo                     uriInfo)
+      UriInfo                     uriInfo,
+      SseEventSink                sseEventSink,
+      Sse                         sse)
   {
     System.out.println("MEDIA TYPE: " + mediaType);
+    OutboundSseEvent.Builder eventBuilder
+        = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
+    int eventId = 0;
+
     SzBulkDataAnalysis dataAnalysis = new SzBulkDataAnalysis();
     Timers timers = newTimers();
     try {
@@ -229,6 +376,7 @@ public class BulkDataServices {
       String charset = bulkDataSet.characterEncoding;
       dataAnalysis.setCharacterEncoding(charset);
 
+      long start = System.currentTimeMillis();
       // check if we need to auto-detect the media type
       try (InputStream        is  = dataCache.getInputStream(true);
            InputStreamReader  isr = new InputStreamReader(is, charset);
@@ -244,25 +392,55 @@ public class BulkDataServices {
              (record != null);
              record = recordReader.readRecord())
         {
-          System.out.println("RECORD: " + JsonUtils.toJsonText(record));
           String dataSrc    = JsonUtils.getString(record, "DATA_SOURCE");
           String entityType = JsonUtils.getString(record, "ENTITY_TYPE");
           String recordId   = JsonUtils.getString(record, "RECORD_ID");
-          System.out.println("A: DATA_SOURCE / ENTITY_TYPE: " + dataSrc + " / " + entityType);
           dataAnalysis.trackRecord(dataSrc, entityType, recordId);
+
+          long now = System.currentTimeMillis();
+          if (eventBuilder != null && (now - start > PROGRESS_EVENT_PERIOD)) {
+            start = now;
+            OutboundSseEvent event =
+                eventBuilder.name(PROGRESS_EVENT)
+                    .id(String.valueOf(eventId++))
+                    .mediaType(APPLICATION_JSON_TYPE)
+                    .data(new SzBulkDataAnalysisResponse(
+                        POST, 200, uriInfo, timers, dataAnalysis))
+                    .reconnectDelay(RECONNECT_DELAY)
+                    .build();
+            sseEventSink.send(event);
+          }
         }
       }
 
     } catch (IOException e) {
-      e.printStackTrace();
-      throw newInternalServerErrorException(POST, uriInfo, timers, e);
+      if (!isLastLoggedException(e)) {
+        e.printStackTrace();
+      }
+      if (eventBuilder == null) {
+        throw newInternalServerErrorException(POST, uriInfo, timers, e);
+
+      } else {
+        SzErrorResponse errorResponse
+            = new SzErrorResponse(POST, 500, uriInfo, timers, e);
+        OutboundSseEvent event
+            = eventBuilder.name(ABORT_EVENT)
+            .id(String.valueOf(eventId++))
+            .mediaType(APPLICATION_JSON_TYPE)
+            .data(errorResponse)
+            .reconnectDelay(RECONNECT_DELAY)
+            .build();
+        sseEventSink.send(event);
+        sseEventSink.close();
+        return null;
+      }
     }
 
-    return new SzBulkDataAnalysisResponse(POST,
-                                          200,
-                                          uriInfo,
-                                          timers,
-                                          dataAnalysis);
+    SzBulkDataAnalysisResponse response = new SzBulkDataAnalysisResponse(
+        POST,200, uriInfo, timers, dataAnalysis);
+
+    return completeOperation(
+        eventBuilder, sseEventSink, ++eventId, response);
   }
 
   /**
@@ -276,8 +454,14 @@ public class BulkDataServices {
       MediaType                   mediaType,
       InputStream                 dataInputStream,
       FormDataContentDisposition  fileMetaData,
-      UriInfo                     uriInfo)
+      UriInfo                     uriInfo,
+      SseEventSink                sseEventSink,
+      Sse                         sse)
   {
+    OutboundSseEvent.Builder eventBuilder
+        = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
+    int eventId = 0;
+
     SzBulkLoadResult bulkLoadResult = new SzBulkLoadResult();
 
     if (dataSource != null) {
@@ -338,6 +522,8 @@ public class BulkDataServices {
         timerPool.add(new Timers());
       }
 
+      long start = System.currentTimeMillis();
+
       // check if we need to auto-detect the media type
       try (InputStream        is  = dataCache.getInputStream(true);
            InputStreamReader  isr = new InputStreamReader(is, charset);
@@ -388,6 +574,21 @@ public class BulkDataServices {
             bulkLoadResult.setStatus(ABORTED);
             break;
           }
+
+          long now = System.currentTimeMillis();
+
+          if (eventBuilder != null && (now - start > PROGRESS_EVENT_PERIOD)) {
+            start = now;
+            OutboundSseEvent event =
+                eventBuilder.name(PROGRESS_EVENT)
+                    .id(String.valueOf(eventId++))
+                    .mediaType(APPLICATION_JSON_TYPE)
+                    .data(new SzBulkLoadResponse(
+                        POST, 200, uriInfo, timers, bulkLoadResult))
+                    .reconnectDelay(RECONNECT_DELAY)
+                    .build();
+            sseEventSink.send(event);
+          }
         }
 
         // close out any in-flight loads from the asynchronous pool
@@ -408,17 +609,36 @@ public class BulkDataServices {
       }
 
     } catch (IOException e) {
-      if (!LoggingUtilities.isLastLoggedException(e)) {
+      if (!isLastLoggedException(e)) {
         e.printStackTrace();
       }
-      throw newInternalServerErrorException(POST, uriInfo, timers, e);
+      if (eventBuilder == null) {
+        throw newInternalServerErrorException(POST, uriInfo, timers, e);
+      } else {
+        SzErrorResponse errorResponse
+            = new SzErrorResponse(POST, 500, uriInfo, timers, e);
+        OutboundSseEvent event
+            = eventBuilder.name(ABORT_EVENT)
+            .id(String.valueOf(eventId++))
+            .mediaType(APPLICATION_JSON_TYPE)
+            .data(errorResponse)
+            .reconnectDelay(RECONNECT_DELAY)
+            .build();
+        sseEventSink.send(event);
+        sseEventSink.close();
+        return null;
+      }
     }
 
-    return new SzBulkLoadResponse(POST,
-                                  200,
-                                  uriInfo,
-                                  timers,
-                                  bulkLoadResult);
+    SzBulkLoadResponse response
+        = new SzBulkLoadResponse(POST,
+                                 200,
+                                 uriInfo,
+                                 timers,
+                                 bulkLoadResult);
+
+    return completeOperation(
+        eventBuilder, sseEventSink, ++eventId, response);
   }
 
   /**
@@ -507,6 +727,46 @@ public class BulkDataServices {
   }
 
   /**
+   * Formats load ID using the specified data cache
+   */
+  private static String formatLoadId(TemporaryDataCache         dataCache,
+                                     FormDataContentDisposition fileMetaData)
+  {
+    String fileKey = (fileMetaData != null) ? fileMetaData.getName() : null;
+    if (fileKey == null) {
+      try (InputStream is = dataCache.getInputStream();)
+      {
+        byte[]        bytes     = new byte[1024];
+        MessageDigest md5       = MessageDigest.getInstance("MD5");
+        int           readCount = is.read(bytes);
+        md5.update(bytes, 0, readCount);
+        byte[] hash = md5.digest();
+        fileKey = Base64.getEncoder().encodeToString(hash);
+
+      } catch (Exception e) {
+        fileKey = randomPrintableText(30);
+      }
+    }
+    Date fileDate = (fileMetaData != null)
+        ? fileMetaData.getModificationDate()
+        : null;
+
+    if (fileDate == null && fileMetaData != null) {
+      fileDate = fileMetaData.getCreationDate();
+    }
+
+    ZonedDateTime fileDateTime = (fileDate == null)
+        ? null : ZonedDateTime.ofInstant(fileDate.toInstant(), UTC_ZONE);
+    ZonedDateTime now = ZonedDateTime.now(UTC_ZONE);
+
+    String fileDateText = (fileDate == null)
+        ? "?" : FILE_DATE_FORMATTER.format(fileDate.toInstant());
+    String nowText = (now == null) ? "?" : FILE_DATE_FORMATTER.format(now);
+
+    return fileKey + "_" + fileDateText + "_" + nowText;
+  }
+
+  /**
    * Encapsulates a bulk data set.
    */
   private static class BulkDataSet {
@@ -544,8 +804,10 @@ public class BulkDataServices {
         }
 
       } catch (IOException e) {
-        e.printStackTrace();
-        LoggingUtilities.setLastLoggedAndThrow(e);
+        if (!isLastLoggedException(e)) {
+          e.printStackTrace();
+        }
+        setLastLoggedAndThrow(e);
       }
     }
   }
@@ -577,4 +839,25 @@ public class BulkDataServices {
     }
   }
 
+  public static <T extends SzBasicResponse> T completeOperation(
+      OutboundSseEvent.Builder  eventBuilder,
+      SseEventSink              sseEventSink,
+      int                       eventId,
+      T                         response)
+  {
+    if (eventBuilder != null) {
+      OutboundSseEvent event
+          = eventBuilder.name(COMPLETE_EVENT)
+          .id(String.valueOf(eventId))
+          .mediaType(APPLICATION_JSON_TYPE)
+          .data(response)
+          .reconnectDelay(RECONNECT_DELAY)
+          .build();
+      sseEventSink.send(event);
+      sseEventSink.close();
+      return null;
+    }
+
+    return response;
+  }
 }

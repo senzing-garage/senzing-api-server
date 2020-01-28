@@ -130,10 +130,13 @@ public class LoggingUtilities {
    * Convert a throwable to a {@link Long} value so we don't keep a reference
    * to what could be a complex exception object.
    * @param t The throwable to convert.
-   * @return The long hash represetation to identify the throwable instance.
+   * @return The long hash representation to identify the throwable instance.
    */
   private static Long throwableToLong(Throwable t) {
     if (t == null) return null;
+    if (t.getClass() == RuntimeException.class && t.getCause() != null) {
+      t = t.getCause();
+    }
     long hash1 = (long) System.identityHashCode(t);
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
@@ -144,8 +147,10 @@ public class LoggingUtilities {
   }
 
   /**
-   * Checks if the specified {@link Throwable} is the last logged exception.
-   * This is handy for telling if the exception has already been logged by a
+   * Checks if the specified {@link Throwable} is the last logged exception
+   * or if the class of specified {@link Throwable} is {@link RuntimeException}
+   * and it has a {@linkplain Throwable#getCause()} then if the cause is the
+   * last logged exception.  This is handy for telling if the exception has already been logged by a
    * deeper level of the stack trace.
    * @param t The {@link Throwable} to check.
    * @return <tt>true</tt> if it is the last logged exception, otherwise
@@ -179,5 +184,23 @@ public class LoggingUtilities {
   {
     setLastLoggedException(t);
     throw t;
+  }
+
+  /**
+   * Conditionally logs to stderr the specified {@link Throwable} is <b>not</b> the {@linkplain
+   * #isLastLoggedException(Throwable) last logged exception} and then rethrows
+   * it.
+   *
+   * @param t The {@link Throwable} to log and throw.
+   * @return Never returns anything since it always throws.
+   */
+  public static <T extends Throwable> T logOnceAndThrow(T t)
+    throws T
+  {
+    if (!isLastLoggedException(t)) {
+      t.printStackTrace();
+    }
+    setLastLoggedAndThrow(t);
+    return null; // we never get here
   }
 }
