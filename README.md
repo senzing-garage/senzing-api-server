@@ -171,15 +171,15 @@ for version compatibility and usage information.*
 Other command-line options may be useful to you as well.  Execute
 
 ```console
-java -jar target/senzing-api-server-1.7.9.jar -help
+java -jar target/senzing-api-server-1.7.10.jar -help
 ```
 
 to obtain a help message describing all available options.
 For example:
 
 ```console
-$ java -jar target/senzing-api-server-1.7.9.jar -help
-java -jar senzing-api-server-1.7.9.jar <options>
+$ java -jar target/senzing-api-server-1.7.10.jar -help
+java -jar senzing-api-server-1.7.10.jar <options>
 
 <options> includes:
 
