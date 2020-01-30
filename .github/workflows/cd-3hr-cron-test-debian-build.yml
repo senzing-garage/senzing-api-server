@@ -1,8 +1,11 @@
 name: Cron Schedule 3 hr Test Java API Server Build on Debian
 
 on:
-  schedule:
-    - cron: '0 */3 * * *'
+  push:
+    branches:
+      - issue-125.bryan-nice
+#  schedule:
+#    - cron: '0 */3 * * *'
 
 jobs:
   buildSenzingJavaApiServer:
@@ -22,7 +25,7 @@ jobs:
       - name: Create Git Issue on Build Failure
         uses: Senzing/git-action-jira-issue-creation@1.0.0
         id: create_jira_issue
-        if: failure()
+        #if: failure()
         env:
           JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
           JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
@@ -31,8 +34,9 @@ jobs:
           JIRA_ISSUE_TYPE: 'Task'
           JIRA_ISSUE_SUMMARY: 'Failed to build Debian version on GitHub Commit SHA ${{ github.sha }}'
           JIRA_ISSUE_DESCRIPTION: |
-            Please review git actions log and trouble shoot the build failure.
             The commit SHA is: _${{ github.sha }}_.
+
+            ${{ steps.build_java_api_server.outputs.build_log }}
       - name: Slack Notification
         id: slack_notification
         uses: Senzing/git-action-slack-notification@1.0.0

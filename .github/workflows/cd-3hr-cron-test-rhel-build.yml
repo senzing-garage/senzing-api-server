@@ -27,7 +27,7 @@ jobs:
           JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
           JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
           JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
-          JIRA_PROJECT: 'senzing-api-server'
+          JIRA_PROJECT: 'PBF'
           JIRA_ISSUE_TYPE: 'Task'
           JIRA_ISSUE_SUMMARY: 'Failed to build RHEL version on GitHub Commit SHA ${{ github.sha }}'
           JIRA_ISSUE_DESCRIPTION: |

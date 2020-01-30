@@ -37,7 +37,8 @@ RUN git checkout ${GITHUB_HEAD_REF}; \
         git merge master; \
     fi
 
-RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
+RUN make_log=$(export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
     && make \
         SENZING_G2_JAR_VERSION=$(cat ${SENZING_G2_DIR}/g2BuildVersion.json | jq --raw-output '.VERSION') \
-        package
+        package) \
+    && echo "::set-output name=build_log::${make_log}"
