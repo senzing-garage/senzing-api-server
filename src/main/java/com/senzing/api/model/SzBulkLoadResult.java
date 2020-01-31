@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.senzing.g2.engine.G2Fallible;
 import java.util.*;
 
-import static com.senzing.api.model.SzBulkLoadStatus.*;
+import static com.senzing.api.model.SzBulkDataStatus.*;
 
 /**
  * Describes an analysis of bulk data records that are being prepared for
@@ -43,7 +43,7 @@ public class SzBulkLoadResult {
   /**
    * The status of the bulk load.
    */
-  private SzBulkLoadStatus status;
+  private SzBulkDataStatus status;
 
   /**
    * Internal {@link Map} for tracking the analysis by data source.
@@ -69,20 +69,20 @@ public class SzBulkLoadResult {
   }
 
   /**
-   * Gets the {@linkplain SzBulkLoadStatus status} of the bulk load.
+   * Gets the {@linkplain SzBulkDataStatus status} of the bulk load.
    *
    * @return The status of the bulk load.
    */
-  public SzBulkLoadStatus getStatus() {
+  public SzBulkDataStatus getStatus() {
     return status;
   }
 
   /**
-   * Sets the {@linkplain SzBulkLoadStatus status} of the bulk load.
+   * Sets the {@linkplain SzBulkDataStatus status} of the bulk load.
    *
    * @param status The status of the bulk load.
    */
-  public void setStatus(SzBulkLoadStatus status) {
+  public void setStatus(SzBulkDataStatus status) {
     this.status = status;
   }
 

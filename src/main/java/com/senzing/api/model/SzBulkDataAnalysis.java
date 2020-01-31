@@ -1,15 +1,19 @@
 package com.senzing.api.model;
 
-import com.senzing.io.RecordReader;
-import com.sun.java.accessibility.util.EventID;
-
 import java.util.*;
+
+import static com.senzing.api.model.SzBulkDataStatus.NOT_STARTED;
 
 /**
  * Describes an analysis of bulk data records that are being prepared for
  * loading.
  */
 public class SzBulkDataAnalysis {
+  /**
+   * The status of the analysis.
+   */
+  private SzBulkDataStatus status;
+
   /**
    * The character encoding used to interpret the bulk data file.
    */
@@ -60,6 +64,26 @@ public class SzBulkDataAnalysis {
     this.entityTypeCount  = 0;
     this.analysisByDataSource = new HashMap<>();
     this.analysisByEntityType = new HashMap<>();
+    this.status = NOT_STARTED;
+
+  }
+
+  /**
+   * Gets the {@linkplain SzBulkDataStatus status} of the bulk data analysis.
+   *
+   * @return The status of the bulk data analysis.
+   */
+  public SzBulkDataStatus getStatus() {
+    return status;
+  }
+
+  /**
+   * Sets the {@linkplain SzBulkDataStatus status} of the bulk data analysis.
+   *
+   * @param status The status of the bulk data analysis.
+   */
+  public void setStatus(SzBulkDataStatus status) {
+    this.status = status;
   }
 
   /**
@@ -222,7 +246,7 @@ public class SzBulkDataAnalysis {
    *         have a <tt>"ENTITY_TYPE"</tt> property.
    */
   private int incrementRecordsWithEntityTypeCount() {
-    return ++this.dataSourceCount;
+    return ++this.entityTypeCount;
   }
 
   /**

@@ -57,6 +57,18 @@ public class AsyncWorkerPool<T> {
       if (this.failure != null) throw this.failure;
       return this.value;
     }
+
+    /**
+     * Returns a diagnostic string describing this instance.
+     *
+     * @return A diagnostic string describing this instance.
+     */
+    public String toString() {
+      return "{ value=[ " + this.value + " ]"
+              + ((this.failure != null)
+                  ? ", failure=[ " + this.failure + " ]" : "")
+              + " }";
+    }
   }
 
   /**

@@ -31,7 +31,7 @@ import static com.senzing.api.model.SzHttpMethod.POST;
 import static com.senzing.api.services.ServicesUtil.*;
 import static com.senzing.text.TextUtilities.*;
 import static com.senzing.util.AsyncWorkerPool.*;
-import static com.senzing.api.model.SzBulkLoadStatus.*;
+import static com.senzing.api.model.SzBulkDataStatus.*;
 import static javax.ws.rs.core.MediaType.*;
 import static com.senzing.util.LoggingUtilities.*;
 
@@ -60,7 +60,7 @@ public class BulkDataServices {
   /**
    * The period between progress events when providing SSE events.
    */
-  public static final long PROGRESS_EVENT_PERIOD = 3000L;
+  public static final long PROGRESSING_EVENT_PERIOD = 3000L;
 
   /**
    * The reconnect delay to use for events when providing SSE events.
@@ -73,14 +73,14 @@ public class BulkDataServices {
   public static final String PROGRESS_EVENT = "progress";
 
   /**
-   * SSE event type string for abort events.
+   * SSE event type string for failure events.
    */
-  public static final String ABORT_EVENT = "abort";
+  public static final String FAILED_EVENT = "failed";
 
   /**
-   * SSE event type string for complete events.
+   * SSE event type string for completion events.
    */
-  public static final String COMPLETE_EVENT = "complete";
+  public static final String COMPLETED_EVENT = "completed";
 
   /**
    * Analyzes the bulk data records.
@@ -375,6 +375,7 @@ public class BulkDataServices {
       // if charset is unknown then try to detect
       String charset = bulkDataSet.characterEncoding;
       dataAnalysis.setCharacterEncoding(charset);
+      dataAnalysis.setStatus(IN_PROGRESS);
 
       long start = System.currentTimeMillis();
       // check if we need to auto-detect the media type
@@ -398,7 +399,7 @@ public class BulkDataServices {
           dataAnalysis.trackRecord(dataSrc, entityType, recordId);
 
           long now = System.currentTimeMillis();
-          if (eventBuilder != null && (now - start > PROGRESS_EVENT_PERIOD)) {
+          if (eventBuilder != null && (now - start > PROGRESSING_EVENT_PERIOD)) {
             start = now;
             OutboundSseEvent event =
                 eventBuilder.name(PROGRESS_EVENT)
@@ -414,33 +415,27 @@ public class BulkDataServices {
       }
 
     } catch (IOException e) {
-      if (!isLastLoggedException(e)) {
-        e.printStackTrace();
-      }
-      if (eventBuilder == null) {
-        throw newInternalServerErrorException(POST, uriInfo, timers, e);
+      dataAnalysis.setStatus(ABORTED);
 
-      } else {
-        SzErrorResponse errorResponse
-            = new SzErrorResponse(POST, 500, uriInfo, timers, e);
-        OutboundSseEvent event
-            = eventBuilder.name(ABORT_EVENT)
-            .id(String.valueOf(eventId++))
-            .mediaType(APPLICATION_JSON_TYPE)
-            .data(errorResponse)
-            .reconnectDelay(RECONNECT_DELAY)
-            .build();
-        sseEventSink.send(event);
-        sseEventSink.close();
-        return null;
-      }
+      SzBulkDataAnalysisResponse response = new SzBulkDataAnalysisResponse(
+          POST,200, uriInfo, timers, dataAnalysis);
+
+      abortOperation(e,
+                     response,
+                     uriInfo,
+                     timers,
+                     eventId,
+                     eventBuilder,
+                     sseEventSink);
     }
+
+    dataAnalysis.setStatus(COMPLETED);
 
     SzBulkDataAnalysisResponse response = new SzBulkDataAnalysisResponse(
         POST,200, uriInfo, timers, dataAnalysis);
 
     return completeOperation(
-        eventBuilder, sseEventSink, ++eventId, response);
+        eventBuilder, sseEventSink, eventId, response);
   }
 
   /**
@@ -538,6 +533,7 @@ public class BulkDataServices {
         bulkDataSet.format = recordReader.getFormat();
         bulkLoadResult.setCharacterEncoding(charset);
         bulkLoadResult.setMediaType(bulkDataSet.format.getMediaType());
+        bulkLoadResult.setStatus(IN_PROGRESS);
 
         // loop through the records and handle each record
         for (JsonObject record = recordReader.readRecord();
@@ -555,6 +551,7 @@ public class BulkDataServices {
             Timers subTimers  = timerPool.remove(0);
             AsyncResult<EngineResult> asyncResult = null;
             try {
+              System.out.println("RECORD BEING LOADED: " + record);
               asyncResult = this.asyncProcessRecord(asyncPool,
                                                     provider,
                                                     subTimers,
@@ -577,7 +574,7 @@ public class BulkDataServices {
 
           long now = System.currentTimeMillis();
 
-          if (eventBuilder != null && (now - start > PROGRESS_EVENT_PERIOD)) {
+          if (eventBuilder != null && (now - start > PROGRESSING_EVENT_PERIOD)) {
             start = now;
             OutboundSseEvent event =
                 eventBuilder.name(PROGRESS_EVENT)
@@ -593,6 +590,7 @@ public class BulkDataServices {
 
         // close out any in-flight loads from the asynchronous pool
         List<AsyncResult<EngineResult>> results = asyncPool.close();
+        System.out.println("REMAINING RESULTS TO BE TRACKED: " + results.size());
         for (AsyncResult<EngineResult> asyncResult : results) {
           this.trackLoadResult(asyncResult, bulkLoadResult);
         }
@@ -602,32 +600,29 @@ public class BulkDataServices {
           timers.mergeWith(subTimer);
         }
 
-        bulkLoadResult.setStatus(COMPLETED);
+        if (bulkLoadResult.getStatus() != ABORTED) {
+          bulkLoadResult.setStatus(COMPLETED);
+        }
 
       } finally {
         dataCache.delete();
       }
 
     } catch (IOException e) {
-      if (!isLastLoggedException(e)) {
-        e.printStackTrace();
-      }
-      if (eventBuilder == null) {
-        throw newInternalServerErrorException(POST, uriInfo, timers, e);
-      } else {
-        SzErrorResponse errorResponse
-            = new SzErrorResponse(POST, 500, uriInfo, timers, e);
-        OutboundSseEvent event
-            = eventBuilder.name(ABORT_EVENT)
-            .id(String.valueOf(eventId++))
-            .mediaType(APPLICATION_JSON_TYPE)
-            .data(errorResponse)
-            .reconnectDelay(RECONNECT_DELAY)
-            .build();
-        sseEventSink.send(event);
-        sseEventSink.close();
-        return null;
-      }
+      bulkLoadResult.setStatus(ABORTED);
+      SzBulkLoadResponse response
+          = new SzBulkLoadResponse(POST,
+                                   200,
+                                   uriInfo,
+                                   timers,
+                                   bulkLoadResult);
+      abortOperation(e,
+                     response,
+                     uriInfo,
+                     timers,
+                     eventId,
+                     eventBuilder,
+                     sseEventSink);
     }
 
     SzBulkLoadResponse response
@@ -638,7 +633,7 @@ public class BulkDataServices {
                                  bulkLoadResult);
 
     return completeOperation(
-        eventBuilder, sseEventSink, ++eventId, response);
+        eventBuilder, sseEventSink, eventId, response);
   }
 
   /**
@@ -666,7 +661,7 @@ public class BulkDataServices {
         return provider.executeInThread(() -> {
           exitingQueue(timers);
           int returnCode;
-          if (recordId == null) {
+          if (recordId != null) {
             callingNativeAPI(timers, "engine", "addRecord");
             returnCode = engineApi.addRecord(dataSource,
                                              recordId,
@@ -699,6 +694,7 @@ public class BulkDataServices {
   private void trackLoadResult(AsyncResult<EngineResult> asyncResult,
                                SzBulkLoadResult          bulkLoadResult)
   {
+    System.out.println("TRACKING LOAD RESULT: " + asyncResult);
     // check the result
     if (asyncResult != null) {
       try {
@@ -837,9 +833,16 @@ public class BulkDataServices {
     private boolean isFailed() {
       return (this.returnCode != 0);
     }
+    public String toString() {
+      return "{ returnCode=[ " + this.returnCode
+              + " ], dataSource=[ " + this.dataSource
+              + " ], errorCode=[ " + this.errorCode
+              + " ], errorMsg=[ " + this.errorMsg
+              + " ] }";
+    }
   }
 
-  public static <T extends SzBasicResponse> T completeOperation(
+  private static <T extends SzBasicResponse> T completeOperation(
       OutboundSseEvent.Builder  eventBuilder,
       SseEventSink              sseEventSink,
       int                       eventId,
@@ -847,8 +850,8 @@ public class BulkDataServices {
   {
     if (eventBuilder != null) {
       OutboundSseEvent event
-          = eventBuilder.name(COMPLETE_EVENT)
-          .id(String.valueOf(eventId))
+          = eventBuilder.name(COMPLETED_EVENT)
+          .id(String.valueOf(eventId++))
           .mediaType(APPLICATION_JSON_TYPE)
           .data(response)
           .reconnectDelay(RECONNECT_DELAY)
@@ -859,5 +862,49 @@ public class BulkDataServices {
     }
 
     return response;
+  }
+
+  private static <T extends SzBasicResponse> T abortOperation(
+      Exception                 failure,
+      T                         response,
+      UriInfo                   uriInfo,
+      Timers                    timers,
+      int                       eventId,
+      OutboundSseEvent.Builder  eventBuilder,
+      SseEventSink              sseEventSink)
+      throws WebApplicationException
+  {
+    if (!isLastLoggedException(failure)) {
+      failure.printStackTrace();
+    }
+    setLastLoggedException(failure);
+    if (eventBuilder == null) {
+      throw newInternalServerErrorException(POST, uriInfo, timers, failure);
+
+    } else {
+      OutboundSseEvent abortEvent
+          = eventBuilder.name(PROGRESS_EVENT)
+          .id(String.valueOf(eventId++))
+          .mediaType(APPLICATION_JSON_TYPE)
+          .data(response)
+          .reconnectDelay(RECONNECT_DELAY)
+          .build();
+      sseEventSink.send(abortEvent);
+
+      SzErrorResponse errorResponse
+          = new SzErrorResponse(POST, 500, uriInfo, timers, failure);
+
+      OutboundSseEvent failEvent
+          = eventBuilder.name(FAILED_EVENT)
+          .id(String.valueOf(eventId++))
+          .mediaType(APPLICATION_JSON_TYPE)
+          .data(errorResponse)
+          .reconnectDelay(RECONNECT_DELAY)
+          .build();
+      sseEventSink.send(failEvent);
+      sseEventSink.close();
+
+      return null;
+    }
   }
 }
