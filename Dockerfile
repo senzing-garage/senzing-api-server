@@ -67,10 +67,10 @@ RUN apt update \
 # Install Java-8 - To be removed after Senzing API server supports Java 11
 # Once fixed, add "default-jdk" to "apt install ..."
 
-RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add -
-RUN add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/
-RUN apt update
-RUN apt -y install adoptopenjdk-8-hotspot
+RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add - \
+ && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
+ && apt update \
+ && apt -y install adoptopenjdk-8-hotspot
 
 # Service exposed on port 8080.
 
