@@ -2,6 +2,7 @@ package com.senzing.api.model;
 
 import java.util.*;
 
+import static com.senzing.api.model.SzBulkDataStatus.IN_PROGRESS;
 import static com.senzing.api.model.SzBulkDataStatus.NOT_STARTED;
 
 /**
@@ -65,7 +66,6 @@ public class SzBulkDataAnalysis {
     this.analysisByDataSource = new HashMap<>();
     this.analysisByEntityType = new HashMap<>();
     this.status = NOT_STARTED;
-
   }
 
   /**
@@ -434,5 +434,6 @@ public class SzBulkDataAnalysis {
     if (entityType != null) {
       this.incrementRecordsWithEntityTypeCount();
     }
+    if (this.status == NOT_STARTED) this.status = IN_PROGRESS;
   }
 }

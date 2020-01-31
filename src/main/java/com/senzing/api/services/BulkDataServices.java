@@ -11,7 +11,9 @@ import com.senzing.util.Timers;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
+import javax.json.Json;
 import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -58,11 +60,6 @@ public class BulkDataServices {
       = DateTimeFormatter.ofPattern(FILE_DATE_PATTERN);
 
   /**
-   * The period between progress events when providing SSE events.
-   */
-  public static final long PROGRESSING_EVENT_PERIOD = 3000L;
-
-  /**
    * The reconnect delay to use for events when providing SSE events.
    */
   public static final long RECONNECT_DELAY = 5000L;
@@ -97,6 +94,7 @@ public class BulkDataServices {
                                      dataInputStream,
                                      uriInfo,
                                      null,
+                                     null,
                                      null);
     } catch (RuntimeException e) {
       throw logOnceAndThrow(e);
@@ -125,6 +123,7 @@ public class BulkDataServices {
                                      dataInputStream,
                                      uriInfo,
                                      null,
+                                     null,
                                      null);
     } catch (RuntimeException e) {
       throw logOnceAndThrow(e);
@@ -148,6 +147,7 @@ public class BulkDataServices {
       @HeaderParam("Content-Type") MediaType mediaType,
       InputStream dataInputStream,
       @Context UriInfo uriInfo,
+      @QueryParam("progressPeriod") @DefaultValue("3000") long progressPeriod,
       @Context SseEventSink sseEventSink,
       @Context Sse sse)
   {
@@ -155,6 +155,7 @@ public class BulkDataServices {
       this.analyzeBulkRecords(mediaType,
                               dataInputStream,
                               uriInfo,
+                              progressPeriod,
                               sseEventSink,
                               sse);
     } catch (RuntimeException e) {
@@ -176,6 +177,7 @@ public class BulkDataServices {
       @HeaderParam("Content-Type") MediaType mediaType,
       @FormDataParam("data") InputStream dataInputStream,
       @Context UriInfo uriInfo,
+      @QueryParam("progressPeriod") @DefaultValue("3000") long progressPeriod,
       @Context SseEventSink sseEventSink,
       @Context Sse sse)
   {
@@ -183,6 +185,7 @@ public class BulkDataServices {
       this.analyzeBulkRecords(mediaType,
                               dataInputStream,
                               uriInfo,
+                              progressPeriod,
                               sseEventSink,
                               sse);
 
@@ -218,6 +221,7 @@ public class BulkDataServices {
                                   dataInputStream,
                                   fileMetaData,
                                   uriInfo,
+                                  null,
                                   null,
                                   null);
 
@@ -258,6 +262,7 @@ public class BulkDataServices {
                                   null,
                                   uriInfo,
                                   null,
+                                  null,
                                   null);
 
     } catch (RuntimeException e) {
@@ -284,6 +289,7 @@ public class BulkDataServices {
       @FormDataParam("data") InputStream dataInputStream,
       @FormDataParam("data") FormDataContentDisposition fileMetaData,
       @Context UriInfo uriInfo,
+      @QueryParam("progressPeriod") @DefaultValue("3000") long progressPeriod,
       @Context SseEventSink sseEventSink,
       @Context Sse sse)
 
@@ -297,6 +303,7 @@ public class BulkDataServices {
                            dataInputStream,
                            fileMetaData,
                            uriInfo,
+                           progressPeriod,
                            sseEventSink,
                            sse);
 
@@ -327,6 +334,7 @@ public class BulkDataServices {
       @HeaderParam("Content-Type") MediaType mediaType,
       InputStream dataInputStream,
       @Context UriInfo uriInfo,
+      @QueryParam("progressPeriod") @DefaultValue("3000") long progressPeriod,
       @Context SseEventSink sseEventSink,
       @Context Sse sse)
   {
@@ -339,6 +347,7 @@ public class BulkDataServices {
                            dataInputStream,
                            null,
                            uriInfo,
+                           progressPeriod,
                            sseEventSink,
                            sse);
 
@@ -358,6 +367,7 @@ public class BulkDataServices {
       MediaType                   mediaType,
       InputStream                 dataInputStream,
       UriInfo                     uriInfo,
+      Long                        sseProgressPeriod,
       SseEventSink                sseEventSink,
       Sse                         sse)
   {
@@ -375,7 +385,6 @@ public class BulkDataServices {
       // if charset is unknown then try to detect
       String charset = bulkDataSet.characterEncoding;
       dataAnalysis.setCharacterEncoding(charset);
-      dataAnalysis.setStatus(IN_PROGRESS);
 
       long start = System.currentTimeMillis();
       // check if we need to auto-detect the media type
@@ -399,7 +408,7 @@ public class BulkDataServices {
           dataAnalysis.trackRecord(dataSrc, entityType, recordId);
 
           long now = System.currentTimeMillis();
-          if (eventBuilder != null && (now - start > PROGRESSING_EVENT_PERIOD)) {
+          if (eventBuilder != null && (now - start > sseProgressPeriod)) {
             start = now;
             OutboundSseEvent event =
                 eventBuilder.name(PROGRESS_EVENT)
@@ -450,6 +459,7 @@ public class BulkDataServices {
       InputStream                 dataInputStream,
       FormDataContentDisposition  fileMetaData,
       UriInfo                     uriInfo,
+      Long                        sseProgressPeriod,
       SseEventSink                sseEventSink,
       Sse                         sse)
   {
@@ -533,7 +543,6 @@ public class BulkDataServices {
         bulkDataSet.format = recordReader.getFormat();
         bulkLoadResult.setCharacterEncoding(charset);
         bulkLoadResult.setMediaType(bulkDataSet.format.getMediaType());
-        bulkLoadResult.setStatus(IN_PROGRESS);
 
         // loop through the records and handle each record
         for (JsonObject record = recordReader.readRecord();
@@ -545,13 +554,12 @@ public class BulkDataServices {
           if (resolvedDS == null || resolvedDS.trim().length() == 0
               || resolvedET == null || resolvedET.trim().length() == 0)
           {
-            bulkLoadResult.trackIncompleteRecord();
+            bulkLoadResult.trackIncompleteRecord(resolvedDS, resolvedET);
 
           } else {
             Timers subTimers  = timerPool.remove(0);
             AsyncResult<EngineResult> asyncResult = null;
             try {
-              System.out.println("RECORD BEING LOADED: " + record);
               asyncResult = this.asyncProcessRecord(asyncPool,
                                                     provider,
                                                     subTimers,
@@ -574,7 +582,7 @@ public class BulkDataServices {
 
           long now = System.currentTimeMillis();
 
-          if (eventBuilder != null && (now - start > PROGRESSING_EVENT_PERIOD)) {
+          if (eventBuilder != null && (now - start > sseProgressPeriod)) {
             start = now;
             OutboundSseEvent event =
                 eventBuilder.name(PROGRESS_EVENT)
@@ -590,7 +598,6 @@ public class BulkDataServices {
 
         // close out any in-flight loads from the asynchronous pool
         List<AsyncResult<EngineResult>> results = asyncPool.close();
-        System.out.println("REMAINING RESULTS TO BE TRACKED: " + results.size());
         for (AsyncResult<EngineResult> asyncResult : results) {
           this.trackLoadResult(asyncResult, bulkLoadResult);
         }
@@ -650,6 +657,7 @@ public class BulkDataServices {
       String                        loadId)
   {
     String dataSource = JsonUtils.getString(record, "DATA_SOURCE");
+    String entityType = JsonUtils.getString(record, "ENTITY_TYPE");
     String recordId   = JsonUtils.getString(record, "RECORD_ID");
     String recordJSON = JsonUtils.toJsonText(record);
 
@@ -679,11 +687,15 @@ public class BulkDataServices {
                             "addRecordWithReturnedRecordID");
           }
           return new EngineResult(
-              dataSource, timers, returnCode, engineApi);
+              dataSource, entityType, timers, returnCode, engineApi);
         });
 
       } catch (Exception e) {
-        throw new Exception(dataSource, e);
+        JsonObjectBuilder job = Json.createObjectBuilder();
+        job.add("dataSource", dataSource);
+        job.add("entityType", entityType);
+        String details = JsonUtils.toJsonText(job);
+        throw new Exception(details, e);
       }
     });
   }
@@ -694,7 +706,6 @@ public class BulkDataServices {
   private void trackLoadResult(AsyncResult<EngineResult> asyncResult,
                                SzBulkLoadResult          bulkLoadResult)
   {
-    System.out.println("TRACKING LOAD RESULT: " + asyncResult);
     // check the result
     if (asyncResult != null) {
       try {
@@ -706,18 +717,24 @@ public class BulkDataServices {
           // adding the record failed, record the failure
           bulkLoadResult.trackFailedRecord(
               engineResult.dataSource,
+              engineResult.entityType,
               engineResult.errorCode,
               engineResult.errorMsg);
         } else {
           // adding the record succeeded, record the loaded record
-          bulkLoadResult.trackLoadedRecord(engineResult.dataSource);
+          bulkLoadResult.trackLoadedRecord(engineResult.dataSource,
+                                           engineResult.entityType);
         }
       } catch (Exception e) {
         // an exception was thrown in trying to get the result
-        String failedDataSource = e.getMessage();
+        String      jsonText  = e.getMessage();
+        JsonObject  jsonObj   = JsonUtils.parseJsonObject(jsonText);
+
+        String failDataSource = JsonUtils.getString(jsonObj, "dataSource");
+        String failEntityType = JsonUtils.getString(jsonObj, "entityType");
         Throwable cause = e.getCause();
         bulkLoadResult.trackFailedRecord(
-            failedDataSource, new SzError(cause.getMessage()));
+            failDataSource, failEntityType, new SzError(cause.getMessage()));
       }
     }
   }
@@ -814,15 +831,18 @@ public class BulkDataServices {
   public static class EngineResult {
     private int     returnCode  = 0;
     private String  dataSource  = null;
+    private String  entityType  = null;
     private String  errorCode   = null;
     private String  errorMsg    = null;
     private Timers  timers      = null;
     private EngineResult(String   dataSource,
+                         String   entityType,
                          Timers   timers,
                          int      returnCode,
                          G2Engine engine)
     {
       this.dataSource = dataSource;
+      this.entityType = entityType;
       this.returnCode = returnCode;
       this.timers     = timers;
       if (this.returnCode != 0) {
@@ -836,6 +856,7 @@ public class BulkDataServices {
     public String toString() {
       return "{ returnCode=[ " + this.returnCode
               + " ], dataSource=[ " + this.dataSource
+              + " ], entityType=[ " + this.entityType
               + " ], errorCode=[ " + this.errorCode
               + " ], errorMsg=[ " + this.errorMsg
               + " ] }";
