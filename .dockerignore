@@ -1,4 +1,5 @@
 .github/
+artifacts/
 docs/
 .DS_Store
 .gitignore
