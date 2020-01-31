@@ -14,14 +14,14 @@ jobs:
       - uses: actions/checkout@v1
       - name: Print Environment Variables
         run: printenv
-      - name: Build Java API Server
-        id: build_java_api_server
-        run: |
-          docker build --tag sezing-java-api-server:${GITHUB_HEAD_REF:-${GITHUB_REF##*/}} \
-            --build-arg "GITHUB_HEAD_REF=${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}" \
-            --build-arg "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}" \
-            --build-arg "SENZING_REPO_URL=https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb" \
-            .github/workflows/docker/ci-cd-debian-build
+#      - name: Build Java API Server
+#        id: build_java_api_server
+#        run: |
+#          docker build --tag sezing-java-api-server:${GITHUB_HEAD_REF:-${GITHUB_REF##*/}} \
+#            --build-arg "GITHUB_HEAD_REF=${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}" \
+#            --build-arg "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}" \
+#            --build-arg "SENZING_REPO_URL=https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb" \
+#            .github/workflows/docker/ci-cd-debian-build
       - name: Create Git Issue on Build Failure
         uses: Senzing/git-action-jira-issue-creation@1.0.0
         id: create_jira_issue
@@ -30,9 +30,9 @@ jobs:
           JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
           JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
           JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
-          JIRA_PROJECT: 'PBF'
+          JIRA_PROJECT: 'pbf'
           JIRA_ISSUE_TYPE: 'Task'
-          JIRA_ISSUE_SUMMARY: 'Failed to build Deban version on GitHub Commit SHA ${{ github.sha }}'
+          JIRA_ISSUE_SUMMARY: 'Failed to build Debian version on GitHub Commit SHA ${{ github.sha }}'
           JIRA_ISSUE_DESCRIPTION: |
             The commit SHA is: _${{ github.sha }}_.
 
