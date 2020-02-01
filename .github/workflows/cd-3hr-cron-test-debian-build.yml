@@ -30,29 +30,11 @@ jobs:
           JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
           JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
           JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
-          JIRA_PROJECT: '"DevSecOps Project"'
+          JIRA_PROJECT: 'PBF'
           JIRA_ISSUE_TYPE: 'Task'
           JIRA_ISSUE_SUMMARY: 'Failed to build Debian version on GitHub Commit SHA ${{ github.sha }}'
           JIRA_ISSUE_DESCRIPTION: |
             The commit SHA is: _${{ github.sha }}_.
 
             ${{ steps.build_java_api_server.outputs.build_log }}
-      - name: Slack Notification
-        id: slack_notification
-        uses: Senzing/git-action-slack-notification@1.0.0
-        if: failure()
-        env:
-          SLACK_CHANNEL: ci-cd-dev
-          SLACK_COLOR: '#3278BD'
-          SLACK_TITLE: 'Failed to build Debian version on GitHub Commit SHA ${{ github.sha }}'
-          SLACK_MESSAGE: |
-            Failed to build on GitHub Commit SHA ${{ github.sha }}
-            Git Issue URL: ${{ steps.create_jira_issue.outputs.jira_issue_url }}
-          SLACK_USERNAME: senzing-api-server
-          SLACK_WEBHOOK: ${{ secrets.SLACK_NOTIFICATION }}
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_REF: ${{ github.ref }}
-          GITHUB_ACTION: ${{ github.action }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_WORKFLOW: ${{ github.workflow }}
+
