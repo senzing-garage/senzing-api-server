@@ -27,8 +27,8 @@ jobs:
         id: create_jira_issue
         #if: failure()
         env:
-          JIRA_API_TOKEN: al5rCq3hY390h5deU2EXCA54
-          JIRA_USERNAME: nice@senzing.com
+          JIRA_API_TOKEN: 
+          JIRA_USERNAME: 
           JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
           JIRA_PROJECT: 'PBF'
           JIRA_ISSUE_TYPE: 'Task'
