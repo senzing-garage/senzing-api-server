@@ -22,7 +22,7 @@ jobs:
 #            --build-arg "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}" \
 #            --build-arg "SENZING_REPO_URL=https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb" \
 #            .github/workflows/docker/ci-cd-debian-build
-      - name: Create Git Issue on Build Failure
+      - name: Create Jira Issue on Build Failure
         uses: Senzing/git-action-jira-issue-creation@1.0.0
         id: create_jira_issue
         #if: failure()
