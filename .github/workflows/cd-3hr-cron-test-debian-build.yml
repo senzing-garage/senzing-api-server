@@ -32,7 +32,7 @@ jobs:
           JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
           JIRA_PROJECT: 'PBF'
           JIRA_ISSUE_TYPE: 'Task'
-          JIRA_ISSUE_SUMMARY: 'Failed to build Dedfdfdbid adfadfadsfersion on GitHub Commit SHA ${{ github.sha }}'
+          JIRA_ISSUE_SUMMARY: 'Failed to build Dedfdfdbid adfadfadsfehfjhfjhgfrsion on GitHub Commit SHA ${{ github.sha }}'
           JIRA_ISSUE_DESCRIPTION: |
             The commit SHA is: _${{ github.sha }}_.
 
