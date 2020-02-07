@@ -17,14 +17,7 @@ jobs:
       - name: Install base packages
         run: |
           sudo apt update \
-          && sudo apt install -y --no-install-recommends \
-              apt-transport-https \
-              gnupg2 \
-              jq \
-              make \
-              software-properties-common \
-              sudo \
-              wget 
+          && sudo apt install -y sqlite
       - name: Install G2 Engine
         run: |
           export SENZING_REPO_URL="https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb" \
