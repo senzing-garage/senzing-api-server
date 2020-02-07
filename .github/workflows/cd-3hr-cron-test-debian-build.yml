@@ -18,10 +18,10 @@ jobs:
         run: |
           export SENZING_REPO_URL="https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb" \
           && wget ${SENZING_REPO_URL} \
-          && apt-get -y install ./${SENZING_REPO_URL##*/} \
-          && apt-get -y update \
+          && sudo apt-get -y install ./${SENZING_REPO_URL##*/} \
+          && sudo apt-get -y update \
           && rm -rf senzingrepo_1.0.0-1_amd64.deb \
-          && apt-get -y install \
+          && sudo apt-get -y install \
             senzingapi
 #      - name: Build Java API Server
 #        id: build_java_api_server
