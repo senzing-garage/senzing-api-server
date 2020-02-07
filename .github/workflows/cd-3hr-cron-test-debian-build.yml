@@ -14,19 +14,19 @@ jobs:
       - uses: actions/checkout@v1
       - name: Print Environment Variables
         run: printenv
-      - name: test
-        run: sqlite3 --version
-      - name: Install base packages
-        run: |
-          sudo apt update \
-          && sudo apt install -y sqlite3 libsqlite3-dev \
-          && export SENZING_REPO_URL="https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb" \
-          && wget ${SENZING_REPO_URL} \
-          && sudo apt-get -y install ./${SENZING_REPO_URL##*/} \
-          && sudo apt-get -y update \
-          && rm -rf senzingrepo_1.0.0-1_amd64.deb \
-          && sudo apt-get -y install \
-            senzingapi
+#      - name: test
+#        run: sqlite3 --version
+#      - name: Install base packages
+#       run: |
+#         sudo apt update \
+#          && sudo apt install -y sqlite3 libsqlite3-dev \
+#          && export SENZING_REPO_URL="https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb" \
+#          && wget ${SENZING_REPO_URL} \
+#          && sudo apt-get -y install ./${SENZING_REPO_URL##*/} \
+#         && sudo apt-get -y update \
+#          && rm -rf senzingrepo_1.0.0-1_amd64.deb \
+#          && sudo apt-get -y install \
+#            senzingapi
 #      - name: Build Java API Server
 #        id: build_java_api_server
 #        run: |
@@ -40,8 +40,8 @@ jobs:
         id: create_jira_issue
         #if: failure()
         env:
-          JIRA_API_TOKEN: cZcFSWhTg22Xbu23nhqz53AD #${{ secrets.JIRA_SECRET }}
-          JIRA_USERNAME: devopsservice@senzing.com #${{ secrets.JIRA_USERNAME }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
+          JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
           JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
           JIRA_PROJECT: 'PBF'
           JIRA_ISSUE_TYPE: 'Task'
