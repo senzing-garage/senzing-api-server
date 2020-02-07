@@ -17,10 +17,8 @@ jobs:
       - name: Install base packages
         run: |
           sudo apt update \
-          && sudo apt install -y sqlite3 libsqlite3-dev
-      - name: Install G2 Engine
-        run: |
-          export SENZING_REPO_URL="https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb" \
+          && sudo apt install -y sqlite3 libsqlite3-dev \
+          && export SENZING_REPO_URL="https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb" \
           && wget ${SENZING_REPO_URL} \
           && sudo apt-get -y install ./${SENZING_REPO_URL##*/} \
           && sudo apt-get -y update \
