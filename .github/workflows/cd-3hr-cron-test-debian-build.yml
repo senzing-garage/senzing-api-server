@@ -37,8 +37,7 @@ jobs:
           sudo apt-get update -y
           sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/
           sudo apt-get download -o=dir::cache=${HOME} senzingapi
-          export SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA
-          sudo dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb
+          sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb
           ls -lart /home/runner/work/senzing-api-server/senzing-api-server/
           echo ${HOME}
 #      - name: Build Java API Server
