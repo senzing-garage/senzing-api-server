@@ -15,7 +15,7 @@ jobs:
       - name: Install base packages
         run: |
           sudo apt-get install -y sqlite3
-          sqlite --version
+          sqlite3 --version
       - name: Checking packages
         run: |
           export SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA
