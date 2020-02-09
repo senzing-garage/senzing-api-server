@@ -31,7 +31,7 @@ jobs:
         run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb
       - name: Copy /opt/senzing to Runner working directory
         id: copy_senzing_wrk_dir
-        run: mv /opt/senzing ${HOME}/senzing-api-server/senzing-api-server/opt/senzing
+        run: mv /opt/senzing ${HOME}/work/senzing-api-server/senzing-api-server/opt/senzing
       - name: Build Java API Server
         id: build_java_api_server
         run: |
