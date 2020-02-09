@@ -18,7 +18,7 @@ jobs:
 #        run: sqlite3 --version
       - name: Install base packages
         run: |
-          sudo apt-get install -f -y gnupg2
+          sudo apt-get install -y gnupg2
       - name: Checking packages
         run: |
           export SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA \
@@ -27,7 +27,7 @@ jobs:
           && sudo apt-get -y install ./${SENZING_REPO_URL##*/} \
           && sudo apt-get -y update \
           && rm -rf senzingrepo_1.0.0-1_amd64.deb \
-          && sudo apt-get -y -f install \
+          && sudo apt-get install -y --nodeps \
             senzingapi
 #      - name: Build Java API Server
 #        id: build_java_api_server
