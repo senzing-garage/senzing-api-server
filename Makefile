@@ -6,6 +6,7 @@ PROGRAM_NAME := $(shell basename `git rev-parse --show-toplevel`)
 
 SENZING_G2_JAR_PATHNAME ?= /opt/senzing/g2/lib/g2.jar
 SENZING_G2_JAR_VERSION ?= unknown
+SENZING_FILES = ${SENZING_FILES}
 
 # Information from git.
 
@@ -16,9 +17,12 @@ GIT_TAG ?= $(shell git describe --always --tags | awk -F "-" '{print $$1}')
 GIT_TAG_END ?= HEAD
 GIT_VERSION := $(shell git describe --always --tags --long --dirty | sed -e 's/\-0//' -e 's/\-g.......//')
 GIT_VERSION_LONG := $(shell git describe --always --tags --long --dirty)
+GITHUB_HEAD_REF := ${GITHUB_HEAD_REF}
+GITHUB_EVENT_NAME := ${GITHUB_EVENT_NAME}
 
 # Docker.
 
+BASE_BUILDER_IMAGE := ${BASE_BUILDER_IMAGE}
 DOCKER_IMAGE_PACKAGE := $(GIT_REPOSITORY_NAME)-package:$(GIT_VERSION)
 DOCKER_IMAGE_TAG ?= $(GIT_REPOSITORY_NAME):$(GIT_VERSION)
 DOCKER_IMAGE_NAME := senzing/senzing-api-server
@@ -89,6 +93,10 @@ docker-build: docker-rmi-for-build
 	mkdir -p $(TARGET)
 	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
 	docker build \
+		--build-arg BASE_BUILDER_IMAGE=$(BASE_BUILDER_IMAGE) \
+		--build-arg GITHUB_HEAD_REF=$(GITHUB_HEAD_REF) \
+		--build-arg GITHUB_EVENT_NAME=$(GITHUB_EVENT_NAME) \
+		--build-arg SENZING_FILES=$(SENZING_FILES) \
 		--build-arg SENZING_G2_JAR_RELATIVE_PATHNAME=$(TARGET)/g2.jar \
 		--build-arg SENZING_G2_JAR_VERSION=$(SENZING_G2_JAR_VERSION) \
 		--tag $(DOCKER_IMAGE_NAME) \

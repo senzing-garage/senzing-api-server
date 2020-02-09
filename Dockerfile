@@ -20,7 +20,6 @@ ARG SENZING_G2_JAR_VERSION=unknown
 ARG GITHUB_HEAD_REF="master"
 ARG GITHUB_OWNER="Senzing"
 ARG GITHUB_EVENT_NAME="push"
-ARG SENZING_REPO_URL="https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb"
 ARG SENZING_FILES="/opt/senzing"
 
 # Set environment variables.
@@ -29,14 +28,6 @@ ENV SENZING_ROOT=/opt/senzing
 ENV SENZING_G2_DIR=${SENZING_ROOT}/g2
 ENV PYTHONPATH=${SENZING_ROOT}/g2/python
 ENV LD_LIBRARY_PATH=${SENZING_ROOT}/g2/lib:${SENZING_ROOT}/g2/lib/debian
-
-# Install packages via apt.
-
-RUN apt-get update
-RUN apt-get -y install \
-      make \
-      maven \
- && rm -rf /var/lib/apt/lists/*
 
 # Copy Senzing RPM Support Builder step.
 
@@ -51,7 +42,7 @@ RUN git clone https://github.com/${GITHUB_OWNER}/senzing-api-server.git
 
 WORKDIR /senzing-api-server
 RUN git checkout ${GITHUB_HEAD_REF}; \
-    if [[ "${GITHUB_HEAD_REF}" != "master" && "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then \
+    if [ "${GITHUB_HEAD_REF}" != "master" && "${GITHUB_EVENT_NAME}" == "pull_request" ]; then \
         git merge master; \
     fi
 
