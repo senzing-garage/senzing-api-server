@@ -19,7 +19,7 @@ jobs:
           export SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA \
           ; export SENZING_REPO_URL="https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb" \
           && wget ${SENZING_REPO_URL} \
-          && sudo apt-get -y install./${SENZING_REPO_URL##*/} \
+          && sudo apt-get -y install ./${SENZING_REPO_URL##*/} \
           && rm -rf senzingrepo_1.0.0-1_amd64.deb \
           && sudo apt-get update -y \
           && sudo apt-get install -y \
