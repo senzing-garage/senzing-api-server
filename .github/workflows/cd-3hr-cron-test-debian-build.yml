@@ -19,7 +19,7 @@ jobs:
       - name: Install base packages
         run: |
          sudo apt update \
-          && sudo apt install -y sqlite3 libsqlite3-dev
+          && sudo apt install -y sqlite3 libsqlite3-dev apt-transport-https
       - name: Checking packages
         run: |
           export SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA \
