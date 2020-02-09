@@ -15,8 +15,8 @@ jobs:
       - name: Install base packages
         run: | 
           sudo apt-get install -y sqlite3 libsqlite3-dev libsqlite3-tcl
-#      - name: symlink
-#        run: sudo ln -s /usr/lib/python3.6/sqlite3 /usr/lib/python3.6/sqlite
+      - name: Check Sqlite
+        run: sudo ldd sqlite3
       - name: Checking packages
         run: |
           export SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA
