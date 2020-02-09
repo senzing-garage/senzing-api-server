@@ -12,11 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Install Senzing RPM Onto Runner
-        id: install_senzing_rpm
+      - name: Download Senzing Deb Package Onto Runner
+        id: download_senzing_deb
         env:
           SENZING_REPO_URL: https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb
-          SENZING_ACCEPT_EULA: I_ACCEPT_THE_SENZING_EULA
         run: |
           wget ${SENZING_REPO_URL}
           sudo apt-get -y install ./${SENZING_REPO_URL##*/} 
@@ -24,8 +23,12 @@ jobs:
           sudo apt-get update -y
           sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/
           sudo apt-get download -o=dir::cache=${HOME} senzingapi senzingdata-v1
-          sudo dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb
-          sudo dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb
+      - name: Install Senzing Data Without Sqlite Dependency
+        id: install_senzing_data
+        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb
+      - name: Install Senzing Api Without Sqlite Dependency
+        id: install_senzing_api
+        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb
 #      - name: Build Java API Server
 #        id: build_java_api_server
 #        run: |
