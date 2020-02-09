@@ -21,6 +21,7 @@ ARG GITHUB_HEAD_REF="master"
 ARG GITHUB_OWNER="Senzing"
 ARG GITHUB_EVENT_NAME="push"
 ARG SENZING_REPO_URL="https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb"
+ARG SENZING_FILES="/opt/senzing"
 
 # Set environment variables.
 
@@ -39,7 +40,7 @@ RUN apt-get -y install \
 
 # Copy Senzing RPM Support Builder step.
 
-COPY opt/senzing /opt/senzing
+COPY ${SENZING_FILES} /opt/senzing
 
 # Clone Senzing API Server repository.
 
