@@ -16,14 +16,17 @@ jobs:
         run: printenv
 #      - name: test
 #        run: sqlite3 --version
-#      - name: Install base packages
-#       run: |
-#         sudo apt update \
-#          && sudo apt install -y sqlite3 libsqlite3-dev \
+      - name: Install base packages
+        run: |
+         sudo apt update \
+          && sudo apt install -y sqlite3 libsqlite3-dev
+      - name: Checking packages
+        run: |
+          dpkg -l sqlite3
 #          && export SENZING_REPO_URL="https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb" \
 #          && wget ${SENZING_REPO_URL} \
 #          && sudo apt-get -y install ./${SENZING_REPO_URL##*/} \
-#         && sudo apt-get -y update \
+#          && sudo apt-get -y update \
 #          && rm -rf senzingrepo_1.0.0-1_amd64.deb \
 #          && sudo apt-get -y install \
 #            senzingapi
@@ -35,19 +38,19 @@ jobs:
 #            --build-arg "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}" \
 #            --build-arg "SENZING_REPO_URL=https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb" \
 #            .github/workflows/docker/ci-cd-debian-build
-      - name: Create Jira Issue on Build Failure
-        uses: Senzing/git-action-jira-issue-creation@1.0.0
-        id: create_jira_issue
+#      - name: Create Jira Issue on Build Failure
+#        uses: Senzing/git-action-jira-issue-creation@1.0.0
+#        id: create_jira_issue
         #if: failure()
-        env:
-          JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
-          JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
-          JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
-          JIRA_PROJECT: 'PBF'
-          JIRA_ISSUE_TYPE: 'Task'
-          JIRA_ISSUE_SUMMARY: 'Failed to build Debian test on GitHub Commit SHA ${{ github.sha }}'
-          JIRA_ISSUE_DESCRIPTION: |
-            The commit SHA is: _${{ github.sha }}_.
-
-            ${{ steps.build_java_api_server.outputs.build_log }}
+#        env:
+#          JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
+#          JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
+#          JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
+#          JIRA_PROJECT: 'PBF'
+#          JIRA_ISSUE_TYPE: 'Task'
+#          JIRA_ISSUE_SUMMARY: 'Failed to build Debian test on GitHub Commit SHA ${{ github.sha }}'
+#          JIRA_ISSUE_DESCRIPTION: |
+#            The commit SHA is: _${{ github.sha }}_.
+#
+#            ${{ steps.build_java_api_server.outputs.build_log }}
 
