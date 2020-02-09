@@ -19,7 +19,12 @@ jobs:
             apt-transport-https \
             gnupg2 \
             jq \
-            software-properties-common 
+            software-properties-common \
+            sqlite \
+            libsqlite-dev \
+            sqlite3 \
+            libsqlite3-dev \
+            libsqlite3-tcl
           sudo rm -rf /var/lib/apt/lists/*
 #      - name: Check Sqlite
 #        run: sudo sqlite3 --help
