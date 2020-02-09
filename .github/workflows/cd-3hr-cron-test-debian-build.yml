@@ -16,7 +16,7 @@ jobs:
         run: | 
           sudo apt-get install -y sqlite3 libsqlite3-dev libsqlite3-tcl
       - name: Check Sqlite
-        run: sudo sqlite3 -h
+        run: sudo sqlite3 --help
       - name: Checking packages
         run: |
           export SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA
