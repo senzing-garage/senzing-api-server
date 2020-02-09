@@ -15,7 +15,12 @@ jobs:
       - name: Install base packages
         run: | 
           sudo apt-get upgrade -y
-          sudo apt-get install -y sqlite libsqlite-dev sqlite3 libsqlite3-dev libsqlite3-tcl
+          sudo apt-get install -y --no-install-recommends \
+            apt-transport-https \
+            gnupg2 \
+            jq \
+            software-properties-common 
+          rm -rf /var/lib/apt/lists/*
 #      - name: Check Sqlite
 #        run: sudo sqlite3 --help
       - name: Checking packages
