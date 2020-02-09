@@ -12,11 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Install base packages
-        run: | 
-          sudo apt-get install -y sqlite3 libsqlite3-dev libsqlite3-tcl
-      - name: Check Sqlite
-        run: sudo sqlite3 --help
+#      - name: Install base packages
+#        run: | 
+#          sudo apt-get install -y sqlite3 libsqlite3-dev libsqlite3-tcl
+#      - name: Check Sqlite
+#        run: sudo sqlite3 --help
       - name: Checking packages
         run: |
           export SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA
@@ -25,7 +25,9 @@ jobs:
           sudo apt-get -y install ./${SENZING_REPO_URL##*/} 
           rm -rf senzingrepo_1.0.0-1_amd64.deb
           sudo apt-get update -y 
-          sudo apt-get install -y senzingapi
+      - name: Check for dependcies
+        run: apt-cache depends senzingapi
+#          sudo apt-get install -y senzingapi
 #      - name: Build Java API Server
 #        id: build_java_api_server
 #        run: |
