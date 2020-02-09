@@ -29,14 +29,15 @@ jobs:
       - name: Install Senzing Api Without Sqlite Dependency
         id: install_senzing_api
         run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb
-#      - name: Build Java API Server
-#        id: build_java_api_server
-#        run: |
-#          docker build --tag sezing-java-api-server:${GITHUB_HEAD_REF:-${GITHUB_REF##*/}} \
-#            --build-arg "GITHUB_HEAD_REF=${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}" \
-#            --build-arg "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}" \
-#            --build-arg "SENZING_REPO_URL=https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb" \
-#            .github/workflows/docker/ci-cd-debian-build
+      - name: Build Java API Server
+        id: build_java_api_server
+        run: |
+          docker build --tag sezing-java-api-server:${GITHUB_HEAD_REF:-${GITHUB_REF##*/}} \
+            --build-arg "BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.1" \
+            --build-arg "GITHUB_HEAD_REF=${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}" \
+            --build-arg "GITHUB_EVENT_NAME=${GITHUB_EVENT_NAME}" \
+            --build-arg "SENZING_REPO_URL=https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb" \
+            ../../
 #      - name: Create Jira Issue on Build Failure
 #        uses: Senzing/git-action-jira-issue-creation@1.0.0
 #        id: create_jira_issue

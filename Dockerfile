@@ -1,10 +1,11 @@
 ARG BASE_IMAGE=senzing/senzing-base:1.4.0
+ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.1
 
 # -----------------------------------------------------------------------------
 # Stage: builder
 # -----------------------------------------------------------------------------
 
-FROM openjdk:8 as builder
+FROM ${BASE_BUILDER_IMAGE} as builder
 
 ENV REFRESHED_AT=2019-11-13
 
@@ -16,6 +17,17 @@ LABEL Name="senzing/senzing-api-server-builder" \
 
 ARG SENZING_G2_JAR_RELATIVE_PATHNAME=unknown
 ARG SENZING_G2_JAR_VERSION=unknown
+ARG GITHUB_HEAD_REF="master"
+ARG GITHUB_OWNER="Senzing"
+ARG GITHUB_EVENT_NAME="push"
+ARG SENZING_REPO_URL="https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb"
+
+# Set environment variables.
+
+ENV SENZING_ROOT=/opt/senzing
+ENV SENZING_G2_DIR=${SENZING_ROOT}/g2
+ENV PYTHONPATH=${SENZING_ROOT}/g2/python
+ENV LD_LIBRARY_PATH=${SENZING_ROOT}/g2/lib:${SENZING_ROOT}/g2/lib/debian
 
 # Install packages via apt.
 
@@ -25,19 +37,31 @@ RUN apt-get -y install \
       maven \
  && rm -rf /var/lib/apt/lists/*
 
-# Copy the repository from the local host.
+# Copy Senzing RPM Support Builder step.
 
-COPY . /git-repository
+COPY /opt/senzing /opt/senzing
+
+# Clone Senzing API Server repository.
+
+WORKDIR /
+RUN git clone https://github.com/${GITHUB_OWNER}/senzing-api-server.git
+
+# Check If build is trigger by a git event, then chek.
+
+WORKDIR /senzing-api-server
+RUN git checkout ${GITHUB_HEAD_REF}; \
+    if [[ "${GITHUB_HEAD_REF}" != "master" && "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then \
+        git merge master; \
+    fi
 
 # Run the "make" command to create the artifacts.
 
-WORKDIR /git-repository
-RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout); \
-    make \
-        SENZING_G2_JAR_PATHNAME=/git-repository/${SENZING_G2_JAR_RELATIVE_PATHNAME} \
-        SENZING_G2_JAR_VERSION=${SENZING_G2_JAR_VERSION} \
-        package; \
-    cp /git-repository/target/senzing-api-server-${SENZING_API_SERVER_JAR_VERSION}.jar "/senzing-api-server.jar"
+RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
+    && make \
+        SENZING_G2_JAR_PATHNAME=/senzing-api-server/${SENZING_G2_JAR_RELATIVE_PATHNAME} \
+        SENZING_G2_JAR_VERSION=$(cat ${SENZING_G2_DIR}/g2BuildVersion.json | jq --raw-output '.VERSION') \
+        package \
+    && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_JAR_VERSION}.jar "/senzing-api-server.jar"
 
 # -----------------------------------------------------------------------------
 # Stage: Final
