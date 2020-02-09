@@ -15,7 +15,7 @@ jobs:
       - name: Install base packages
         run: | 
           sudo apt-get install -y sqlite3 libsqlite3-dev
-          sqlite3 --version
+          source ${HOME}/.bashrc
 #      - name: symlink
 #        run: sudo ln -s /usr/lib/python3.6/sqlite3 /usr/lib/python3.6/sqlite
       - name: Checking packages
