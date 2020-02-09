@@ -37,9 +37,8 @@ jobs:
           rm -rf senzingrepo_1.0.0-1_amd64.deb
           sudo apt-get update -y
           sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/
-          sudo apt-get download -o=dir::cache=${HOME} sqlite3 libsqlite3-dev
-          sudo dpkg -i *sqlite3*.deb
-          sudo apt-get install -y senzingapi
+          sudo apt-get download -o=dir::cache=${HOME} senzingapi
+          sudo dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb
           ls -lart /home/runner/work/senzing-api-server/senzing-api-server/
           echo ${HOME}
 #      - name: Build Java API Server
