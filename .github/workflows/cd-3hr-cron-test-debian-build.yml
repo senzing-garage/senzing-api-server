@@ -12,34 +12,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-#      - name: Install base packages
-#        run: | 
-#          sudo apt-get upgrade -y
-#          sudo apt-get install -y --no-install-recommends \
-#            apt-transport-https \
-#            gnupg2 \
-#            jq \
-#            software-properties-common \
-#            sqlite \
-#            libsqlite-dev \
-#            sqlite3 \
-#            libsqlite3-dev \
-#            libsqlite3-tcl
-#          sudo rm -rf /var/lib/apt/lists/*
-#      - name: Check Sqlite
-#        run: sudo sqlite3 --help
-      - name: Checking packages
+      - name: Install Senzing RPM Onto Runner
+        id: install_senzing_rpm
+        env:
+          SENZING_REPO_URL: https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb
+          SENZING_ACCEPT_EULA: I_ACCEPT_THE_SENZING_EULA
         run: |
-          export SENZING_REPO_URL="https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb"
           wget ${SENZING_REPO_URL}
           sudo apt-get -y install ./${SENZING_REPO_URL##*/} 
           rm -rf senzingrepo_1.0.0-1_amd64.deb
           sudo apt-get update -y
           sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/
           sudo apt-get download -o=dir::cache=${HOME} senzingapi senzingdata-v1
-          sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb
-          sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb
-          ls -lart /opt
+          sudo dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb
+          sudo dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb
 #      - name: Build Java API Server
 #        id: build_java_api_server
 #        run: |
