@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=senzing/senzing-base:1.3.0
+ARG BASE_IMAGE=senzing/senzing-base:1.4.0
 
 # -----------------------------------------------------------------------------
 # Stage: builder
@@ -45,11 +45,11 @@ RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=pro
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2019-11-13
+ENV REFRESHED_AT=2020-01-29
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
-      Version="1.7.9"
+      Version="1.7.10"
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
 
@@ -59,10 +59,18 @@ USER root
 
 # Install packages via apt.
 
-RUN apt-get update \
- && apt-get -y install \
-      default-jdk \
+RUN apt update \
+ && apt -y install \
+      software-properties-common \
  && rm -rf /var/lib/apt/lists/*
+
+# Install Java-8 - To be removed after Senzing API server supports Java 11
+# Once fixed, add "default-jdk" to "apt install ..."
+
+RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add - \
+ && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
+ && apt update \
+ && apt -y install adoptopenjdk-8-hotspot
 
 # Service exposed on port 8080.
 
