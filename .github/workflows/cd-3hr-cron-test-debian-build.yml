@@ -30,13 +30,13 @@ jobs:
 #        run: sudo sqlite3 --help
       - name: Checking packages
         run: |
-          sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/
           export SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA
           export SENZING_REPO_URL="https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb"
           wget ${SENZING_REPO_URL}
           sudo apt-get -y install ./${SENZING_REPO_URL##*/} 
           rm -rf senzingrepo_1.0.0-1_amd64.deb
           sudo apt-get update -y
+          sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/
           sudo apt-get download -o=dir::cache=/senzing senzingapi
           ls -lart /senzing
 #      - name: Build Java API Server
