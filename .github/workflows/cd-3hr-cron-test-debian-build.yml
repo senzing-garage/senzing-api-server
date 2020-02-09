@@ -36,8 +36,8 @@ jobs:
           sudo apt-get -y install ./${SENZING_REPO_URL##*/} 
           rm -rf senzingrepo_1.0.0-1_amd64.deb
           sudo apt-get update -y
-          sudo apt-get -d install senzingapi
-          ls -lart /var/cache/apt/archives
+          sudo apt-get download -o=dir::cache=/senzing senzingapi
+          ls -lart /senzing
 #      - name: Build Java API Server
 #        id: build_java_api_server
 #        run: |
