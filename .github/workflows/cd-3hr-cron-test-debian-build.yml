@@ -12,20 +12,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: Install base packages
-        run: | 
-          sudo apt-get upgrade -y
-          sudo apt-get install -y --no-install-recommends \
-            apt-transport-https \
-            gnupg2 \
-            jq \
-            software-properties-common \
-            sqlite \
-            libsqlite-dev \
-            sqlite3 \
-            libsqlite3-dev \
-            libsqlite3-tcl
-          sudo rm -rf /var/lib/apt/lists/*
+#      - name: Install base packages
+#        run: | 
+#          sudo apt-get upgrade -y
+#          sudo apt-get install -y --no-install-recommends \
+#            apt-transport-https \
+#            gnupg2 \
+#            jq \
+#            software-properties-common \
+#            sqlite \
+#            libsqlite-dev \
+#            sqlite3 \
+#            libsqlite3-dev \
+#            libsqlite3-tcl
+#          sudo rm -rf /var/lib/apt/lists/*
 #      - name: Check Sqlite
 #        run: sudo sqlite3 --help
       - name: Checking packages
@@ -36,8 +36,8 @@ jobs:
           sudo apt-get -y install ./${SENZING_REPO_URL##*/} 
           rm -rf senzingrepo_1.0.0-1_amd64.deb
           sudo apt-get update -y
-          sudo apt-get install -y senzingapi
-          sudo apt-get install -f
+          sudo apt-get install -y --download-only senzingapi
+          ls -lart /opt
 #      - name: Build Java API Server
 #        id: build_java_api_server
 #        run: |
