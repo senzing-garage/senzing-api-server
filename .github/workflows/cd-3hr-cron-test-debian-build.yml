@@ -20,7 +20,7 @@ jobs:
             gnupg2 \
             jq \
             software-properties-common 
-          rm -rf /var/lib/apt/lists/*
+          sudo rm -rf /var/lib/apt/lists/*
 #      - name: Check Sqlite
 #        run: sudo sqlite3 --help
       - name: Checking packages
