@@ -14,7 +14,7 @@ jobs:
       - uses: actions/checkout@v1
       - name: Install base packages
         run: | 
-          sudo apt-get install -y sqlite sqlite3 libsqlite3-dev libsqlite3-tcl
+          sudo apt-get upgrade -y
 #      - name: Check Sqlite
 #        run: sudo sqlite3 --help
       - name: Checking packages
@@ -25,13 +25,7 @@ jobs:
           sudo apt-get -y install ./${SENZING_REPO_URL##*/} 
           rm -rf senzingrepo_1.0.0-1_amd64.deb
           sudo apt-get update -y
-          sudo apt-get install -u senzingapi 
-      - name: Install dependcies
-        run: sudo apt-get install -f
-        if: failure()
-      - name: list files
-        run: ls -lart /opt 
-        if: failure()
+          sudo apt-get install -y senzingapi 
 #      - name: Build Java API Server
 #        id: build_java_api_server
 #        run: |
