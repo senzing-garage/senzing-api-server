@@ -39,7 +39,7 @@ RUN apt-get -y install \
 
 # Copy Senzing RPM Support Builder step.
 
-COPY /opt/senzing /opt/senzing
+COPY opt/senzing /opt/senzing
 
 # Clone Senzing API Server repository.
 
