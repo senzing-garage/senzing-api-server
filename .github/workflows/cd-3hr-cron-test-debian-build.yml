@@ -33,7 +33,7 @@ jobs:
       - name: Copy /opt/senzing to Runner working directory
         id: copy_senzing_wrk_dir
         run: |
-          sudo mkdir -p ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib
+          sudo mkdir -p ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib >> output.log 2>&1
           sudo mv /opt/senzing/g2/lib/g2.jar ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar >> output.log 2>&1
       - name: Build Java API Server
         id: build_java_api_server
@@ -44,6 +44,7 @@ jobs:
           GITHUB_OWNER: Senzing
         run: |
           make \
+            SENZING_G2_JAR_PATHNAME=${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar \
             SENZING_G2_JAR_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION') \
             docker-build
       - name: Create Jira Issue on Build Failure
