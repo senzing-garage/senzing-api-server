@@ -6,6 +6,7 @@ PROGRAM_NAME := $(shell basename `git rev-parse --show-toplevel`)
 
 SENZING_G2_JAR_PATHNAME ?= /opt/senzing/g2/lib/g2.jar
 SENZING_G2_JAR_VERSION ?= unknown
+SENZING_G2_FILES := ${SENZING_G2_FILES}
 
 # Information from git.
 

@@ -30,7 +30,12 @@ ENV SENZING_G2_DIR=${SENZING_ROOT}/g2
 ENV PYTHONPATH=${SENZING_ROOT}/g2/python
 ENV LD_LIBRARY_PATH=${SENZING_ROOT}/g2/lib:${SENZING_ROOT}/g2/lib/debian
 
+# Copy Senzing RPM Support Builder step.
+
+COPY ${SENZING_G2_FILES} /opt/senzing
+
 # Copy Repo files to Builder step.
+
 COPY . /senzing-api-server
 
 WORKDIR /senzing-api-server
@@ -44,7 +49,8 @@ RUN git checkout ${GITHUB_HEAD_REF}; \
 
 RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
     && make \
-        SENZING_G2_JAR_VERSION=$(cat ${SENZING_G2_DIR}/g2BuildVersion.json | jq --raw-output '.VERSION') \
+        SENZING_G2_JAR_PATHNAME=/senzing-api-server/${SENZING_G2_JAR_RELATIVE_PATHNAME} \
+        SENZING_G2_JAR_VERSION=${SENZING_G2_JAR_VERSION} \
         package \
     && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_JAR_VERSION}.jar "/senzing-api-server.jar"
 
