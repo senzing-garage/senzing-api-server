@@ -12,23 +12,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-        id: hello_world
-      - name: Hello world
-        run: docker run hello-world > hello_world.log 2>&1
+      - name: Download Senzing Deb Package Onto Runner
+        id: download_senzing_deb
+        env:
+          SENZING_REPO_URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
+        run: |
+          wget ${SENZING_REPO_URL}: \
+          sudo apt-get -y install ./${SENZING_REPO_URL##*/}; \
+          rm -rf senzingrepo_1.0.0-1_amd64.deb; \
+          sudo apt-get update -y; \
+          sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/; \
+          sudo apt-get download -o=dir::cache=${HOME} senzingapi senzingdata-v1; \
+          sudo chown runner /home/runner/work/senzing-api-server/senzing-api-server/ > output.log 2>&1
       - name: Print output
-        run: cat hello_world.log
-#      - name: Download Senzing Deb Package Onto Runner
-#        id: download_senzing_deb
-#        env:
-#          SENZING_REPO_URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
-#        run: |
-#          wget ${SENZING_REPO_URL}
-#          sudo apt-get -y install ./${SENZING_REPO_URL##*/}
-#          rm -rf senzingrepo_1.0.0-1_amd64.deb
-#          sudo apt-get update -y
-#          sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/
-#          sudo apt-get download -o=dir::cache=${HOME} senzingapi senzingdata-v1
-#          sudo chown runner /home/runner/work/senzing-api-server/senzing-api-server/
+        run: cat output.log
 #      - name: Install Senzing Data Without Sqlite Dependency
 #        id: install_senzing_data
 #        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb
