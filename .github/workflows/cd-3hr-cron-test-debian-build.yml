@@ -34,6 +34,10 @@ jobs:
         run: ls -lart ${HOME}/work/_PipelineMapping/Senzing/senzing-api-server
       - name: finding logs
         run: ls -lart /
+      - name: finding logs
+        run: ls -lart ${HOME}/work/_temp/_github_workflow
+      - name: finding logs
+        run: ls -lart /home
 #      - name: Download Senzing Deb Package Onto Runner
 #        id: download_senzing_deb
 #        env:
