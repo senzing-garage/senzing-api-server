@@ -58,7 +58,7 @@ jobs:
 #            The commit SHA is: _${{ github.sha }}_.
 #            $(cat output.log)
         run: |
-          docker run -it --rm \
+          docker run --rm \
             -e JIRA_ISSUE_DESCRIPTION="The commit SHA is: _${{ github.sha }}_.\n$(cat output.log)" \
             -e JIRA_API_TOKEN=${{ secrets.JIRA_SECRET }} \
             -e JIRA_USERNAME=${{ secrets.JIRA_USERNAME }} \
