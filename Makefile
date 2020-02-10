@@ -16,13 +16,14 @@ GIT_TAG ?= $(shell git describe --always --tags | awk -F "-" '{print $$1}')
 GIT_TAG_END ?= HEAD
 GIT_VERSION := $(shell git describe --always --tags --long --dirty | sed -e 's/\-0//' -e 's/\-g.......//')
 GIT_VERSION_LONG := $(shell git describe --always --tags --long --dirty)
-GITHUB_HEAD_REF := ${GITHUB_HEAD_REF}
-GITHUB_EVENT_NAME := ${GITHUB_EVENT_NAME}
-GITHUB_OWNER :=  ${GITHUB_OWNER}
+GITHUB_HEAD_REF ?= unknown
+GITHUB_EVENT_NAME ?= unknown
+GITHUB_OWNER ?=  Senzing
 
 # Docker.
 
-BASE_BUILDER_IMAGE := ${BASE_BUILDER_IMAGE}
+BASE_IMAGE ?= senzing/senzing-base:1.4.0
+BASE_BUILDER_IMAGE ?= senzing/base-image-debian:1.0.1
 DOCKER_IMAGE_PACKAGE := $(GIT_REPOSITORY_NAME)-package:$(GIT_VERSION)
 DOCKER_IMAGE_TAG ?= $(GIT_REPOSITORY_NAME):$(GIT_VERSION)
 DOCKER_IMAGE_NAME := senzing/senzing-api-server
@@ -93,6 +94,7 @@ docker-build: docker-rmi-for-build
 	mkdir -p $(TARGET)
 	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
 	docker build \
+		--build-arg BASE_IMAGE=$(BASE_IMAGE) \
 		--build-arg BASE_BUILDER_IMAGE=$(BASE_BUILDER_IMAGE) \
 		--build-arg GITHUB_HEAD_REF=$(GITHUB_HEAD_REF) \
 		--build-arg GITHUB_EVENT_NAME=$(GITHUB_EVENT_NAME) \
