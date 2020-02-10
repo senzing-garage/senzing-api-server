@@ -12,7 +12,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name:
+      - name: Hello world
+        run: docker run hello-world
+      - name: finding logs
         run: |
           ls -lart /
           ls -lart ${HOME}
