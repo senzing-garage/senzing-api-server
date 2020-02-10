@@ -24,40 +24,37 @@ jobs:
           sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/ >> output.log 2>&1
           sudo apt-get download -o=dir::cache=${HOME} senzingapi senzingdata-v1 >> output.log 2>&1
           sudo chown runner /home/runner/work/senzing-api-server/senzing-api-server/ >> output.log 2>&1
-      - name: Print output
-        run: cat output.log
-#      - name: Install Senzing Data Without Sqlite Dependency
-#        id: install_senzing_data
-#        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb
-#      - name: Install Senzing Api Without Sqlite Dependency
-#        id: install_senzing_api
-#        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb
-#      - name: Copy /opt/senzing to Runner working directory
-#        id: copy_senzing_wrk_dir
-#        run: sudo mv /opt/senzing ${HOME}/work/senzing-api-server/senzing-api-server/senzing
-#      - name: Build Java API Server
-#        id: build_java_api_server
-#        env:
-#          BASE_BUILDER_IMAGE: "senzing/base-image-debian:1.0.1"
-#          GITHUB_HEAD_REF: ${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}
-#          GITHUB_EVENT_NAME: ${GITHUB_EVENT_NAME}
-#          GITHUB_OWNER: Senzing
-#          SENZING_G2_FILES: senzing
-#          SENZING_G2_JAR_PATHNAME: ${HOME}/work/senzing-api-server/senzing-api-server/senzing/g2/lib/g2.jar
-#        run: make docker-build
-#      - name: Create Jira Issue on Build Failure
-#        uses: Senzing/git-action-jira-issue-creation@1.0.0
-#        id: create_jira_issue
+      - name: Install Senzing Data Without Sqlite Dependency
+        id: install_senzing_data
+        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb >> output.log 2>&1
+      - name: Install Senzing Api Without Sqlite Dependency
+        id: install_senzing_api
+        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb >> output.log 2>&1
+      - name: Copy /opt/senzing to Runner working directory
+        id: copy_senzing_wrk_dir
+        run: sudo mv /opt/senzing ${HOME}/work/senzing-api-server/senzing-api-server/senzing >> output.log 2>&1
+      - name: Build Java API Server
+        id: build_java_api_server
+        env:
+          BASE_BUILDER_IMAGE: "senzing/base-image-debian:1.0.1"
+          GITHUB_HEAD_REF: ${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}
+          GITHUB_EVENT_NAME: ${GITHUB_EVENT_NAME}
+          GITHUB_OWNER: Senzing
+          SENZING_G2_FILES: senzing
+          SENZING_G2_JAR_PATHNAME: ${HOME}/work/senzing-api-server/senzing-api-server/senzing/g2/lib/g2.jar
+        run: make docker-build >> output.log 2>&1
+      - name: Create Jira Issue on Build Failure
+        uses: Senzing/git-action-jira-issue-creation@1.0.0
+        id: create_jira_issue
 #        if: failure()
-#        env:
-#          JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
-#          JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
-#          JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
-#          JIRA_PROJECT: 'PBF'
-#          JIRA_ISSUE_TYPE: 'Task'
-#          JIRA_ISSUE_SUMMARY: 'Failed to build Debian test on GitHub Commit SHA ${{ github.sha }}'
-#          JIRA_ISSUE_DESCRIPTION: |
-#            The commit SHA is: _${{ github.sha }}_.
-#
-#            ${{ steps.build_java_api_server.outputs.build_log }}
+        env:
+          JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
+          JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
+          JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
+          JIRA_PROJECT: 'PBF'
+          JIRA_ISSUE_TYPE: 'Task'
+          JIRA_ISSUE_SUMMARY: 'Failed to build Debian test on GitHub Commit SHA ${{ github.sha }}'
+          JIRA_ISSUE_DESCRIPTION: |
+            The commit SHA is: _${{ github.sha }}_.
+            $(cat output.log)
 
