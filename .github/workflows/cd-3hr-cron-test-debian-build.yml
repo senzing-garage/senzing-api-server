@@ -40,6 +40,10 @@ jobs:
         run: ls -lart /home
       - name: finding logs
         run: ls -lart /home/runneradmin
+      - name: finding logs
+        run: ls -lart /var
+      - name: finding logs
+        run: ls -lart /root
 #      - name: Download Senzing Deb Package Onto Runner
 #        id: download_senzing_deb
 #        env:
