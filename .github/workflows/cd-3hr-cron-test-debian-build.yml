@@ -36,7 +36,7 @@ jobs:
       - name: Build Java API Server
         id: build_java_api_server
         env:
-          BASE_BUILDER_IMAGE: senzing/base-image-debian:1.0.1
+          BASE_BUILDER_IMAGE: "senzing/base-image-debian:1.0.1"
           GITHUB_HEAD_REF: ${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}
           GITHUB_EVENT_NAME: ${GITHUB_EVENT_NAME}
           GITHUB_OWNER: Senzing
