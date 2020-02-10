@@ -20,7 +20,7 @@ ARG SENZING_G2_JAR_RELATIVE_PATHNAME=unknown
 ARG SENZING_G2_JAR_VERSION=unknown
 ARG GITHUB_HEAD_REF="master"
 ARG GITHUB_OWNER="Senzing"
-ARG GITHUB_EVENT_NAME="push"
+ARG GITHUB_EVENT_NAME="none"
 ARG SENZING_G2_FILES="/opt/senzing"
 
 # Set environment variables.
@@ -43,8 +43,7 @@ RUN git clone https://github.com/${GITHUB_OWNER}/senzing-api-server.git
 
 WORKDIR /senzing-api-server
 RUN git checkout ${GITHUB_HEAD_REF}; \
-    [[ "${GITHUB_HEAD_REF}" != "master" && "${GITHUB_EVENT_NAME}" == "pull_request" ]] \
-    && git merge master
+    [[ "${GITHUB_HEAD_REF}" != "master" && "${GITHUB_EVENT_NAME}" == "pull_request" ]] && git merge master
 
 # Run the "make" command to create the artifacts.
 
