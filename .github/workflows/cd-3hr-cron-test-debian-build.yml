@@ -63,8 +63,8 @@ jobs:
             -e JIRA_API_TOKEN=${{ secrets.JIRA_SECRET }} \
             -e JIRA_USERNAME=${{ secrets.JIRA_USERNAME }} \
             -e JIRA_ACCOUNT_URL=${{ secrets.JIRA_ACCOUNT_URL }} \
-            -e JIRA_PROJECT=PBF
-            -e JIRA_ISSUE_TYPE=Task
-            -e JIRA_ISSUE_SUMMARY='Failed to build Debian test on GitHub Commit SHA ${{ github.sha }}'
+            -e JIRA_PROJECT=PBF \
+            -e JIRA_ISSUE_TYPE=Task \
+            -e JIRA_ISSUE_SUMMARY='Failed to build Debian test on GitHub Commit SHA ${{ github.sha }}' \
             senzing/git-action-jira-issue-creation:1.0.1
 
