@@ -39,7 +39,7 @@ jobs:
           BASE_BUILDER_IMAGE: senzing/base-image-debian:1.0.1
           GITHUB_HEAD_REF: ${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}
           GITHUB_EVENT_NAME: ${GITHUB_EVENT_NAME}
-          SENZING_FILES: senzing
+          SENZING_G2_JAR_PATHNAME: ${HOME}/work/senzing-api-server/senzing-api-server/senzing/g2/lib/g2.jar
         run: make docker-build
 #      - name: Create Jira Issue on Build Failure
 #        uses: Senzing/git-action-jira-issue-creation@1.0.0
