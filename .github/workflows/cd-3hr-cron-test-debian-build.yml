@@ -50,7 +50,7 @@ jobs:
             cat build_failure.log >> output.log 2>&1
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
-        #if: failure()
+        if: failure()
         run: |
           docker run --rm \
             -e JIRA_ISSUE_DESCRIPTION="The commit SHA is: _${{ github.sha }}_." \
