@@ -7,6 +7,10 @@ ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.1
 
 FROM ${BASE_BUILDER_IMAGE} as builder
 
+# Set Shell to use for RUN commands in builder step
+
+SHELL ["/bin/bash", "-c"]
+
 ENV REFRESHED_AT=2019-11-13
 
 LABEL Name="senzing/senzing-api-server-builder" \
@@ -41,7 +45,9 @@ RUN git clone https://github.com/${GITHUB_OWNER}/senzing-api-server.git
 # Check If build is trigger by a git event, then chek.
 
 WORKDIR /senzing-api-server
-RUN git checkout ${GITHUB_HEAD_REF}; [[ "${GITHUB_HEAD_REF}" != "master" && "${GITHUB_EVENT_NAME}" == "pull_request" ]] && git merge master
+RUN git checkout ${GITHUB_HEAD_REF}; \
+    [[ "${GITHUB_HEAD_REF}" != "master" && "${GITHUB_EVENT_NAME}" == "pull_request" ]] \
+    && git merge master
 
 # Run the "make" command to create the artifacts.
 
