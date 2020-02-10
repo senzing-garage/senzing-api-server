@@ -6,7 +6,6 @@ PROGRAM_NAME := $(shell basename `git rev-parse --show-toplevel`)
 
 SENZING_G2_JAR_PATHNAME ?= /opt/senzing/g2/lib/g2.jar
 SENZING_G2_JAR_VERSION ?= unknown
-SENZING_G2_FILES := ${SENZING_G2_FILES}
 
 # Information from git.
 
@@ -97,7 +96,6 @@ docker-build: docker-rmi-for-build
 		--build-arg BASE_BUILDER_IMAGE=$(BASE_BUILDER_IMAGE) \
 		--build-arg GITHUB_HEAD_REF=$(GITHUB_HEAD_REF) \
 		--build-arg GITHUB_EVENT_NAME=$(GITHUB_EVENT_NAME) \
-		--build-arg SENZING_G2_FILES=$(SENZING_G2_FILES) \
 		--build-arg SENZING_G2_JAR_RELATIVE_PATHNAME=$(TARGET)/g2.jar \
 		--build-arg SENZING_G2_JAR_VERSION=$(SENZING_G2_JAR_VERSION) \
 		--tag $(DOCKER_IMAGE_NAME) \

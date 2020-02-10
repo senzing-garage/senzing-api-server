@@ -32,7 +32,9 @@ jobs:
         run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb >> output.log 2>&1
       - name: Copy /opt/senzing to Runner working directory
         id: copy_senzing_wrk_dir
-        run: sudo mv /opt/senzing ${HOME}/work/senzing-api-server/senzing-api-server/senzing >> output.log 2>&1
+        run: |
+          sudo mkdir -p ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib
+          sudo mv /opt/senzing/g2/lib/g2.jar ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar >> output.log 2>&1
       - name: Build Java API Server
         id: build_java_api_server
         env:
@@ -41,11 +43,11 @@ jobs:
           GITHUB_EVENT_NAME: ${GITHUB_EVENT_NAME}
           GITHUB_OWNER: Senzing
           SENZING_G2_FILES: senzing
-          SENZING_G2_JAR_PATHNAME: ${HOME}/work/senzing-api-server/senzing-api-server/senzing/g2/lib/g2.jar
+          SENZING_G2_JAR_PATHNAME: ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar
         run: make docker-build >> output.log 2>&1
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
-#        if: failure()
+        #if: failure()
         run: |
           docker run --rm \
             -e JIRA_ISSUE_DESCRIPTION="The commit SHA is: _${{ github.sha }}_.\n$(cat output.log)" \
