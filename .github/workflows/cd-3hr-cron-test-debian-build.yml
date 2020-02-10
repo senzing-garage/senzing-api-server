@@ -47,18 +47,24 @@ jobs:
 #        uses: Senzing/git-action-jira-issue-creation@1.0.0
         id: create_jira_issue
 #        if: failure()
-        env:
-          JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
-          JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
-          JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
-          JIRA_PROJECT: 'PBF'
-          JIRA_ISSUE_TYPE: 'Task'
-          JIRA_ISSUE_SUMMARY: 'Failed to build Debian test on GitHub Commit SHA ${{ github.sha }}'
-          JIRA_ISSUE_DESCRIPTION: |
-            The commit SHA is: _${{ github.sha }}_.
-            $(cat output.log)
+#        env:
+#          JIRA_API_TOKEN:
+#          JIRA_USERNAME:
+#          JIRA_ACCOUNT_URL:
+#          JIRA_PROJECT: 'PBF'
+#          JIRA_ISSUE_TYPE: 'Task'
+#          JIRA_ISSUE_SUMMARY: 'Failed to build Debian test on GitHub Commit SHA ${{ github.sha }}'
+#          JIRA_ISSUE_DESCRIPTION: |
+#            The commit SHA is: _${{ github.sha }}_.
+#            $(cat output.log)
         run: |
-          docker run -e JIRA_ISSUE_DESCRIPTION="The commit SHA is: _${{ github.sha }}_.\n \
-          $(cat output.log)" \
-          senzing/git-action-jira-issue-creation
+          docker run \
+            -e JIRA_ISSUE_DESCRIPTION="The commit SHA is: _${{ github.sha }}_.\n$(cat output.log)" \
+            -e JIRA_API_TOKEN=${{ secrets.JIRA_SECRET }} \
+            -e JIRA_USERNAME=${{ secrets.JIRA_USERNAME }} \
+            -e JIRA_ACCOUNT_URL=${{ secrets.JIRA_ACCOUNT_URL }} \
+            -e JIRA_PROJECT=PBF
+            -e JIRA_ISSUE_TYPE=Task
+            -e JIRA_ISSUE_SUMMARY='Failed to build Debian test on GitHub Commit SHA ${{ github.sha }}'
+            senzing/git-action-jira-issue-creation
 
