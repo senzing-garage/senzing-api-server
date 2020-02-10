@@ -44,7 +44,7 @@ jobs:
           GITHUB_OWNER: Senzing
           SENZING_G2_FILES: senzing
           SENZING_G2_JAR_PATHNAME: ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar
-        run: make docker-build >> output.log 2>&1
+        run: make docker-build
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
         if: failure()
