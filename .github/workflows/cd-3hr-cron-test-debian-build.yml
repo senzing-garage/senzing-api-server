@@ -46,24 +46,26 @@ jobs:
             GITHUB_OWNER=Senzing \
             SENZING_G2_JAR_PATHNAME=${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar \
             SENZING_G2_JAR_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION') \
-            docker-build >> output.log 2>&1
+            docker-build >> build_failure.log 2>&1
       - name: Persisting log
         id: persisting_log
+        if: failure()
         uses: actions/upload-artifact@v1
+        run: cat build_failure.log >> output.log 2>&1
         with:
           name: workflow_log
           path: output.log
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
-        if: failure()
+        #if: failure()
         run: |
           docker run --rm \
-            -e JIRA_ISSUE_DESCRIPTION="The commit SHA is: _${{ github.sha }}_.\n$(cat output.log)" \
             -e JIRA_API_TOKEN=${{ secrets.JIRA_SECRET }} \
             -e JIRA_USERNAME=${{ secrets.JIRA_USERNAME }} \
             -e JIRA_ACCOUNT_URL=${{ secrets.JIRA_ACCOUNT_URL }} \
             -e JIRA_PROJECT=PBF \
             -e JIRA_ISSUE_TYPE=Task \
             -e JIRA_ISSUE_SUMMARY='Failed on GitHub Commit SHA ${{ github.sha }}: Senzing API server Debian build' \
+            -e JIRA_ISSUE_DESCRIPTION="The commit SHA is: _${{ github.sha }}_.\n$(cat build_failure.log)" \
             senzing/git-action-jira-issue-creation:1.0.0
 
