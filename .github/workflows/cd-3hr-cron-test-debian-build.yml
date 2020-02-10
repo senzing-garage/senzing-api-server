@@ -17,7 +17,7 @@ jobs:
         env:
           SENZING_REPO_URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
         run: |
-          wget ${SENZING_REPO_URL}: \
+          wget ${SENZING_REPO_URL}; \
           sudo apt-get -y install ./${SENZING_REPO_URL##*/}; \
           rm -rf senzingrepo_1.0.0-1_amd64.deb; \
           sudo apt-get update -y; \
