@@ -41,10 +41,7 @@ RUN git clone https://github.com/${GITHUB_OWNER}/senzing-api-server.git
 # Check If build is trigger by a git event, then chek.
 
 WORKDIR /senzing-api-server
-RUN git checkout ${GITHUB_HEAD_REF}; \
-    if [ "${GITHUB_HEAD_REF}" != "master" && "${GITHUB_EVENT_NAME}" == "pull_request" ]; then \
-        git merge master; \
-    fi
+RUN git checkout ${GITHUB_HEAD_REF}; [[ "${GITHUB_HEAD_REF}" != "master" && "${GITHUB_EVENT_NAME}" == "pull_request" ]] && git merge master
 
 # Run the "make" command to create the artifacts.
 
