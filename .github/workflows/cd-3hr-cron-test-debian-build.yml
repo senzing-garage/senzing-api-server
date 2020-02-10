@@ -15,17 +15,25 @@ jobs:
       - name: Hello world
         run: docker run hello-world
       - name: finding logs
-        run: |
-          ls -lart ${HOME}/work
-          ls -lart ${HOME}/work/_actions
-          ls -lart ${HOME}/work/_PipelineMapping
-          ls -lart ${HOME}/work/_temp
-          ls -lart ${HOME}/work/senzing-api-server
-          ls -lart ${HOME}/work/senzing-api-server/senzing-api-server
-          ls -lart ${HOME}/work/_actions/actions
-          ls -lart ${HOME}/work/_PipelineMapping/Senzing
-          ls -lart ${HOME}/work/_PipelineMapping/Senzing/senzing-api-server
-          cat ${HOME}/work/_PipelineMapping/Senzing/senzing-api-server/PipelineFolder.json
+        run: ls -lart ${HOME}/work
+      - name: finding logs
+        run: ls -lart ${HOME}/work/_actions
+      - name: finding logs
+        run: ls -lart ${HOME}/work/_PipelineMapping
+      - name: finding logs
+        run: ls -lart ${HOME}/work/_temp
+      - name: finding logs
+        run: ls -lart ${HOME}/work/senzing-api-server
+      - name: finding logs
+        run: ls -lart ${HOME}/work/senzing-api-server/senzing-api-server
+      - name: finding logs
+        run: ls -lart ${HOME}/work/_actions/actions
+      - name: finding logs
+        run: ls -lart ${HOME}/work/_PipelineMapping/Senzing
+      - name: finding logs
+        run: ls -lart ${HOME}/work/_PipelineMapping/Senzing/senzing-api-server
+      - name: finding logs
+        run: ls -lart /
 #      - name: Download Senzing Deb Package Onto Runner
 #        id: download_senzing_deb
 #        env:
