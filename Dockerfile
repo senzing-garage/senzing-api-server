@@ -21,7 +21,6 @@ ARG SENZING_G2_JAR_VERSION=unknown
 ARG GITHUB_HEAD_REF="master"
 ARG GITHUB_OWNER="Senzing"
 ARG GITHUB_EVENT_NAME="none"
-ARG SENZING_G2_FILES="/opt/senzing"
 
 # Set environment variables.
 
@@ -29,10 +28,6 @@ ENV SENZING_ROOT=/opt/senzing
 ENV SENZING_G2_DIR=${SENZING_ROOT}/g2
 ENV PYTHONPATH=${SENZING_ROOT}/g2/python
 ENV LD_LIBRARY_PATH=${SENZING_ROOT}/g2/lib:${SENZING_ROOT}/g2/lib/debian
-
-# Copy Senzing RPM Support Builder step.
-
-COPY ${SENZING_G2_FILES} /opt/senzing
 
 # Copy Repo files to Builder step.
 
