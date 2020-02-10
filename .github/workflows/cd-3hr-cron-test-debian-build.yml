@@ -66,5 +66,5 @@ jobs:
             -e JIRA_PROJECT=PBF \
             -e JIRA_ISSUE_TYPE=Task \
             -e JIRA_ISSUE_SUMMARY='Failed to build Debian test on GitHub Commit SHA ${{ github.sha }}' \
-            senzing/git-action-jira-issue-creation:1.0.1
+            senzing/git-action-jira-issue-creation:1.0.0
 
