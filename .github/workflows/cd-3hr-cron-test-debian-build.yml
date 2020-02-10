@@ -47,9 +47,15 @@ jobs:
             SENZING_G2_JAR_PATHNAME=${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar \
             SENZING_G2_JAR_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION') \
             docker-build >> output.log 2>&1
+      - name: Persisting log
+        id: persisting_log
+        uses: actions/upload-artifact@v1
+        with:
+          name: workflow_log
+          path: output.log
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
-        #if: failure()
+        if: failure()
         run: |
           docker run --rm \
             -e JIRA_ISSUE_DESCRIPTION="The commit SHA is: _${{ github.sha }}_.\n$(cat output.log)" \
