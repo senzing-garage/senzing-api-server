@@ -60,7 +60,7 @@ jobs:
             -e JIRA_PROJECT=PBF \
             -e JIRA_ISSUE_TYPE=Task \
             -e JIRA_ISSUE_SUMMARY="Senzing API server Debian build failed on GitHub SHA ${{ github.sha }}" \
-            senzing/git-action-jira-issue-creation:1.0.0 #>> output.log 2>&1
+            senzing/git-action-jira-issue-creation:1.0.0
       - name: Persisting log
         id: persisting_log
         if: failure()
