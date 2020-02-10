@@ -12,38 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+        id: hello_world
       - name: Hello world
-        run: docker run hello-world
-      - name: finding logs
-        run: ls -lart ${HOME}/work
-      - name: finding logs
-        run: ls -lart ${HOME}/work/_actions
-      - name: finding logs
-        run: ls -lart ${HOME}/work/_PipelineMapping
-      - name: finding logs
-        run: ls -lart ${HOME}/work/_temp
-      - name: finding logs
-        run: ls -lart ${HOME}/work/senzing-api-server
-      - name: finding logs
-        run: ls -lart ${HOME}/work/senzing-api-server/senzing-api-server
-      - name: finding logs
-        run: ls -lart ${HOME}/work/_actions/actions
-      - name: finding logs
-        run: ls -lart ${HOME}/work/_PipelineMapping/Senzing
-      - name: finding logs
-        run: ls -lart ${HOME}/work/_PipelineMapping/Senzing/senzing-api-server
-      - name: finding logs
-        run: ls -lart /
-      - name: finding logs
-        run: ls -lart ${HOME}/work/_temp/_github_workflow
-      - name: finding logs
-        run: ls -lart /home
-      - name: finding logs
-        run: ls -lart /home/runneradmin
-      - name: finding logs
-        run: ls -lart /var
-      - name: finding logs
-        run: sudo ls -lart /root
+        run: docker run hello-world > hello_world.log 2>&1
+      - name: Print output
+        run: cat hello_world.log
 #      - name: Download Senzing Deb Package Onto Runner
 #        id: download_senzing_deb
 #        env:
