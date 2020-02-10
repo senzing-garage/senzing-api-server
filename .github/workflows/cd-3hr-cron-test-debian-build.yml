@@ -53,8 +53,8 @@ jobs:
         #if: failure()
         run: |
           docker run --rm \
-            -e JIRA_ISSUE_SUMMARY="Failed on GitHub Commit SHA ${{ github.sha }}: Senzing API server Debian build" \
-            -e JIRA_ISSUE_DESCRIPTION="The commit SHA is: _${{ github.sha }}_.\n$(cat build_failure.log)" \
+            -e JIRA_ISSUE_SUMMARY=" Senzing API server Debian build failed on GitHub SHA ${{ github.sha }}" \
+            -e JIRA_ISSUE_DESCRIPTION="$(cat build_failure.log)" \
             -e JIRA_API_TOKEN=${{ secrets.JIRA_SECRET }} \
             -e JIRA_USERNAME=${{ secrets.JIRA_USERNAME }} \
             -e JIRA_ACCOUNT_URL=${{ secrets.JIRA_ACCOUNT_URL }} \
