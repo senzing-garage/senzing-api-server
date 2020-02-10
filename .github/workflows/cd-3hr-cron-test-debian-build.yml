@@ -38,6 +38,8 @@ jobs:
         run: ls -lart ${HOME}/work/_temp/_github_workflow
       - name: finding logs
         run: ls -lart /home
+      - name: finding logs
+        run: ls -lart /home/runneradmin
 #      - name: Download Senzing Deb Package Onto Runner
 #        id: download_senzing_deb
 #        env:
