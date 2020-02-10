@@ -16,7 +16,7 @@ jobs:
         run: docker run hello-world
       - name: finding logs
         run: |
-          ls -lart ${HOME}/runners
+          ls -lart ${HOME}
 #      - name: Download Senzing Deb Package Onto Runner
 #        id: download_senzing_deb
 #        env:
