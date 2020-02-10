@@ -17,11 +17,10 @@ jobs:
       - name: finding logs
         run: |
           ls -lart /
-          ls -lart ${HOME}
-          ls -lart ${HOME}/work
-          ls -lart ${HOME}/work/_temp
-          ls -lart ${HOME}/work/_temp/_github_workflow
-          cat ${HOME}/work/_temp/_github_workflow/event.json
+          ls -lart /var
+          ls -lart /tmp
+          ls -lart /data
+          ls -lart /var/log
 #      - name: Download Senzing Deb Package Onto Runner
 #        id: download_senzing_deb
 #        env:
