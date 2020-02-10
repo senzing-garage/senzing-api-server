@@ -17,13 +17,13 @@ GIT_TAG ?= $(shell git describe --always --tags | awk -F "-" '{print $$1}')
 GIT_TAG_END ?= HEAD
 GIT_VERSION := $(shell git describe --always --tags --long --dirty | sed -e 's/\-0//' -e 's/\-g.......//')
 GIT_VERSION_LONG := $(shell git describe --always --tags --long --dirty)
-GITHUB_HEAD_REF := ${GITHUB_HEAD_REF:-master}
-GITHUB_EVENT_NAME := ${GITHUB_EVENT_NAME:-push}
-GITHUB_OWNER :=  ${GITHUB_OWNER:-Senzing}
+GITHUB_HEAD_REF := ${GITHUB_HEAD_REF}
+GITHUB_EVENT_NAME := ${GITHUB_EVENT_NAME}
+GITHUB_OWNER :=  ${GITHUB_OWNER}
 
 # Docker.
 
-BASE_BUILDER_IMAGE := ${BASE_BUILDER_IMAGE:-senzing/base-image-debian:1.0.1}
+BASE_BUILDER_IMAGE := ${BASE_BUILDER_IMAGE}
 DOCKER_IMAGE_PACKAGE := $(GIT_REPOSITORY_NAME)-package:$(GIT_VERSION)
 DOCKER_IMAGE_TAG ?= $(GIT_REPOSITORY_NAME):$(GIT_VERSION)
 DOCKER_IMAGE_NAME := senzing/senzing-api-server
