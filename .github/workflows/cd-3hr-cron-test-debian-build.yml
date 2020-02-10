@@ -21,6 +21,9 @@ jobs:
           ls -lart ${HOME}/work/_PipelineMapping
           ls -lart ${HOME}/work/_temp
           ls -lart ${HOME}/work/senzing-api-server
+          ls -lart ${HOME}/work/senzing-api-server/senzing-api-server
+          ls -lart ${HOME}/work/_actions/actions
+          ls -lart ${HOME}/work/_PipelineMapping/Senzing
 #      - name: Download Senzing Deb Package Onto Runner
 #        id: download_senzing_deb
 #        env:
