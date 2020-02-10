@@ -17,6 +17,7 @@ jobs:
           ls -lart /
           ls -lart ${HOME}
           ls -lart ${HOME}/work
+          ls -lart ${HOME}/work/_temp
 #      - name: Download Senzing Deb Package Onto Runner
 #        id: download_senzing_deb
 #        env:
