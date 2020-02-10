@@ -20,7 +20,7 @@ ARG SENZING_G2_JAR_VERSION=unknown
 ARG GITHUB_HEAD_REF="master"
 ARG GITHUB_OWNER="Senzing"
 ARG GITHUB_EVENT_NAME="push"
-ARG SENZING_FILES="/opt/senzing"
+ARG SENZING_G2_FILES="/opt/senzing"
 
 # Set environment variables.
 
@@ -31,7 +31,7 @@ ENV LD_LIBRARY_PATH=${SENZING_ROOT}/g2/lib:${SENZING_ROOT}/g2/lib/debian
 
 # Copy Senzing RPM Support Builder step.
 
-COPY ${SENZING_FILES} /opt/senzing
+COPY ${SENZING_G2_FILES} /opt/senzing
 
 # Clone Senzing API Server repository.
 
