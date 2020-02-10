@@ -19,6 +19,7 @@ jobs:
           ls -lart ${HOME}/work
           ls -lart ${HOME}/work/_temp
           ls -lart ${HOME}/work/_temp/_github_workflow
+          cat ${HOME}/work/_temp/_github_workflow/event.json
 #      - name: Download Senzing Deb Package Onto Runner
 #        id: download_senzing_deb
 #        env:
