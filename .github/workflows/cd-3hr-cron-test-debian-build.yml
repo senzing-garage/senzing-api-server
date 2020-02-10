@@ -42,9 +42,10 @@ jobs:
           GITHUB_HEAD_REF: ${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}
           GITHUB_EVENT_NAME: ${GITHUB_EVENT_NAME}
           GITHUB_OWNER: Senzing
-          SENZING_G2_JAR_VERSION: $(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION')
-          SENZING_G2_JAR_PATHNAME: ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar
-        run: make docker-build
+        run: make \
+          SENZING_G2_JAR_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION') \
+          SENZING_G2_JAR_PATHNAME=${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar \
+          docker-build
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
         #if: failure()
