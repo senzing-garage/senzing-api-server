@@ -13,7 +13,7 @@ jobs:
       - name: Download Senzing Deb Package Onto Runner
         id: download_senzing_deb
         env:
-          SENZING_REPO_URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
+          SENZING_REPO_URL: https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb
         run: |
           wget ${SENZING_REPO_URL} >> output.log 2>&1
           sudo apt-get -y install ./${SENZING_REPO_URL##*/} >> output.log 2>&1
