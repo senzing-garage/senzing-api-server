@@ -10,6 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+      - name: Check if there are conflicts when local merging master
+        id: local_merge_master
+        run: git merge origin/master >> output.log 2>&1
       - name: Download Senzing Deb Package Onto Runner
         id: download_senzing_deb
         env:

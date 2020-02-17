@@ -19,9 +19,6 @@ LABEL Name="senzing/senzing-api-server-builder" \
 
 ARG SENZING_G2_JAR_RELATIVE_PATHNAME=unknown
 ARG SENZING_G2_JAR_VERSION=unknown
-ARG GITHUB_HEAD_REF="master"
-ARG GITHUB_OWNER="Senzing"
-ARG GITHUB_EVENT_NAME="none"
 
 # Set environment variables.
 
@@ -35,12 +32,6 @@ ENV LD_LIBRARY_PATH=${SENZING_ROOT}/g2/lib:${SENZING_ROOT}/g2/lib/debian
 COPY . /senzing-api-server
 
 WORKDIR /senzing-api-server
-RUN git checkout ${GITHUB_HEAD_REF}; \
-    if [[ "${GITHUB_HEAD_REF}" != "master" && "${GITHUB_EVENT_NAME}" == "pull_request" ]]; \
-    then \
-        git merge master; \
-    fi
-
 # Run the "make" command to create the artifacts.
 
 RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
