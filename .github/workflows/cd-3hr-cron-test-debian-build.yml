@@ -1,14 +1,20 @@
 name: Cron Schedule 3 hr Test Java API Server Build on Debian
 
 on:
-  schedule:
-    - cron: '0 */3 * * *'
+  push:
+    branches:
+      - issue-125.bryan-nice
+#  schedule:
+#    - cron: '0 */3 * * *'
 
 jobs:
   cronBuildSenzingJavaApiServer:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+      - name: Check if there are conflicts when local merging master
+        id: local_merge_master
+        run: git merge master #>> output.log 2>&1
       - name: Download Senzing Deb Package Onto Runner
         id: download_senzing_deb
         env:
