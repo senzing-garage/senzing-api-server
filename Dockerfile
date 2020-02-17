@@ -33,11 +33,11 @@ WORKDIR /senzing-api-server
 # Run the "make" command to create the artifacts.
 
 RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
-    && make \
-        SENZING_G2_JAR_PATHNAME=/senzing-api-server/${SENZING_G2_JAR_RELATIVE_PATHNAME} \
-        SENZING_G2_JAR_VERSION=${SENZING_G2_JAR_VERSION} \
-        package \
-    && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_JAR_VERSION}.jar "/senzing-api-server.jar"
+ && make \
+     SENZING_G2_JAR_PATHNAME=/senzing-api-server/${SENZING_G2_JAR_RELATIVE_PATHNAME} \
+     SENZING_G2_JAR_VERSION=${SENZING_G2_JAR_VERSION} \
+     package \
+ && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_JAR_VERSION}.jar "/senzing-api-server.jar"
 
 # -----------------------------------------------------------------------------
 # Stage: Final
