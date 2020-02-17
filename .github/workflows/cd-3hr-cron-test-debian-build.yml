@@ -14,7 +14,14 @@ jobs:
       - uses: actions/checkout@v1
       - name: Check if there are conflicts when local merging master
         id: local_merge_master
-        run: git merge origin/master #>> output.log 2>&1
+        env:
+
+        run: |
+          git checkout origin/${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}
+          if [[ "${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}" != "master" ]]
+          then
+            git merge origin/master #>> output.log 2>&1
+          fi
       - name: Download Senzing Deb Package Onto Runner
         id: download_senzing_deb
         env:
