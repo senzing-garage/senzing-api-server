@@ -7,8 +7,6 @@ FROM ${BASE_BUILDER_IMAGE} as builder
 
 # Set Shell to use for RUN commands in builder step
 
-SHELL ["/bin/bash", "-c"]
-
 ENV REFRESHED_AT=2019-11-13
 
 LABEL Name="senzing/senzing-api-server-builder" \
