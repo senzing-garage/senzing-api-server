@@ -1,10 +1,11 @@
 ARG BASE_IMAGE=senzing/senzing-base:1.4.0
-
+ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.1
 # -----------------------------------------------------------------------------
 # Stage: builder
 # -----------------------------------------------------------------------------
+FROM ${BASE_BUILDER_IMAGE} as builder
 
-FROM openjdk:8 as builder
+# Set Shell to use for RUN commands in builder step
 
 ENV REFRESHED_AT=2019-11-13
 
@@ -17,32 +18,30 @@ LABEL Name="senzing/senzing-api-server-builder" \
 ARG SENZING_G2_JAR_RELATIVE_PATHNAME=unknown
 ARG SENZING_G2_JAR_VERSION=unknown
 
-# Install packages via apt.
+# Set environment variables.
 
-RUN apt-get update
-RUN apt-get -y install \
-      make \
-      maven \
- && rm -rf /var/lib/apt/lists/*
+ENV SENZING_ROOT=/opt/senzing
+ENV SENZING_G2_DIR=${SENZING_ROOT}/g2
+ENV PYTHONPATH=${SENZING_ROOT}/g2/python
+ENV LD_LIBRARY_PATH=${SENZING_ROOT}/g2/lib:${SENZING_ROOT}/g2/lib/debian
 
-# Copy the repository from the local host.
+# Copy Repo files to Builder step.
 
-COPY . /git-repository
+COPY . /senzing-api-server
 
+WORKDIR /senzing-api-server
 # Run the "make" command to create the artifacts.
 
-WORKDIR /git-repository
-RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout); \
-    make \
-        SENZING_G2_JAR_PATHNAME=/git-repository/${SENZING_G2_JAR_RELATIVE_PATHNAME} \
-        SENZING_G2_JAR_VERSION=${SENZING_G2_JAR_VERSION} \
-        package; \
-    cp /git-repository/target/senzing-api-server-${SENZING_API_SERVER_JAR_VERSION}.jar "/senzing-api-server.jar"
+RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
+ && make \
+     SENZING_G2_JAR_PATHNAME=/senzing-api-server/${SENZING_G2_JAR_RELATIVE_PATHNAME} \
+     SENZING_G2_JAR_VERSION=${SENZING_G2_JAR_VERSION} \
+     package \
+ && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_JAR_VERSION}.jar "/senzing-api-server.jar"
 
 # -----------------------------------------------------------------------------
 # Stage: Final
 # -----------------------------------------------------------------------------
-
 FROM ${BASE_IMAGE}
 
 ENV REFRESHED_AT=2020-01-29
