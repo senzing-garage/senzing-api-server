@@ -1,6 +1,5 @@
 package com.senzing.io;
 
-import com.ibm.icu.text.UFormat;
 import com.senzing.util.JsonUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
