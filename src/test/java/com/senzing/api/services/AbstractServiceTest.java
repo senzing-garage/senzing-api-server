@@ -65,7 +65,6 @@ public abstract class AbstractServiceTest {
       try {
         engineApi = new G2JNI();
       } catch (Throwable ignore) {
-        ignore.printStackTrace();
         // do nothing
       }
     } finally {
@@ -122,8 +121,14 @@ public abstract class AbstractServiceTest {
       File    currentDir  = new File(workingDir);
       File    targetDir   = new File(currentDir, "target");
 
+      boolean forceTempRepos = false;
+      String prop = System.getProperty("senzing.test.tmp.repos");
+      if (prop != null && prop.toLowerCase().trim().equals("true")) {
+        forceTempRepos = true;
+      }
+
       // check if we have a target directory (i.e.: maven build)
-      if (!targetDir.exists()) {
+      if (forceTempRepos || !targetDir.exists()) {
         // if no target directory then use the temp directory
         return Files.createTempDirectory(prefix).toFile();
       }
@@ -210,11 +215,11 @@ public abstract class AbstractServiceTest {
    * initialize and start the Senzing API Server.
    */
   protected void initializeTestEnvironment() {
+    if (!NATIVE_API_AVAILABLE) return;
     String moduleName = this.getModuleName("RepoMgr (create)");
     RepositoryManager.setThreadModuleName(moduleName);
     boolean concluded = false;
     try {
-      if (!NATIVE_API_AVAILABLE) return;
       RepositoryManager.createRepo(this.getRepositoryDirectory(), true);
       this.repoCreated = true;
 
@@ -263,7 +268,7 @@ public abstract class AbstractServiceTest {
     // destroy the server
     if (this.server != null) this.destroyServer();
 
-    String preserveProp = System.getProperty("senzing.preserve.test.repos");
+    String preserveProp = System.getProperty("senzing.test.preserve.repos");
     if (preserveProp != null) preserveProp = preserveProp.trim().toLowerCase();
     boolean preserve = (preserveProp != null && preserveProp.equals("true"));
 
@@ -764,7 +769,8 @@ public abstract class AbstractServiceTest {
 
     // check the timestamp
     if (now < beforeTimestamp || now > afterTimestamp) {
-      fail("Timestamp should be between " + new Date(beforeTimestamp) + " and "
+      fail("Timestamp (" + new Date(now) + ") should be between "
+               + new Date(beforeTimestamp) + " and "
                + new Date(afterTimestamp) + suffix);
     }
     Map<String, Long> timings = meta.getTimings();

@@ -6,35 +6,65 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.10] - 2020-01-29
+
+### Changed in 1.7.10
+
+- Update to senzing/senzing-base:1.4.0
+
+## [1.7.9] - 2019-11-13
+
+### Changes in 1.7.9
+
+- Added support for MS SQL in Dockerfile by upgrading to senzing/senzing-base:1.3.0
+- Updated jackson-databind to version 2.9.10.1
+
+## [1.7.8] - 2019-10-14
+
+### Changes in 1.7.8
+
+- Changes to support RPM file layout on Linux for auto tests including support.
+- Added JSON pretty-printing option to JsonUtils' toJsonText() functions
+- Removed Dockerfile-package
+
+## [1.7.7] - 2019-09-30
+
+### Changes in 1.7.7
+
+- Fixed auto tests to skip instead of fail if Senzing native libraries are not
+available.
+- Fixed output when command line options do not provide initialization
+parameters
+
 ## [1.7.6] - 2019-09-25
 
 ### Changes in 1.7.6
 
-- Updated dependency on FasterBind's Jackson library to version 2.9.10 to 
+- Updated dependency on FasterBind's Jackson library to version 2.9.10 to
 address security vulnerabilities.
 - Added missing G2ConfigMgr.destroy() call in SzApiServer during shutdown
 - Updated repository manager code used for JUnit tests to check for errors
 when initializing the configuration manager and when creating the standard
 configuration.
 - Changes to Unit Tests:
-    - Updated unit tests to preserve repos if any tests associated with that 
+  - Updated unit tests to preserve repos if any tests associated with that
     repo failed.
-    - Updated location of unit test entity repos to live in the 
-    `./target/test-repos` directory during a Maven build and modified the 
+  - Updated location of unit test entity repos to live in the
+    `./target/test-repos` directory during a Maven build and modified the
     repo directory names to be based off the associated unit test name.
-    - Updated the module name used for Senzing initialization in auto tests to 
+  - Updated the module name used for Senzing initialization in auto tests to
     match the current auto test for post-failure diagnostic purposes.
-    - Added forced preservation of unit test entity repos passing the 
+  - Added forced preservation of unit test entity repos passing the
     `-Dsenzing.preserve.test.repos=true` option to Maven.
 
 ## [1.7.5] - 2019-09-17
 
 ### Changes in 1.7.5
 
-- Corrected errant definition of SzVersionInfo's `configCompatabilityVersion` 
+- Corrected errant definition of SzVersionInfo's `configCompatabilityVersion`
 field as an integer to make it a string to allow for semantic versioning.  This
 changes the response to the `GET /version` endpoint.
-*NOTE*: This change may require that previously generated client stubs be 
+*NOTE*: This change may require that previously generated client stubs be
 regenerated to avoid trying to parse the semantic version string as an integer.
 
 ## [1.7.4] - 2019-09-13
@@ -49,7 +79,7 @@ regenerated to avoid trying to parse the semantic version string as an integer.
 ### Changes in 1.7.3
 
 - Fixed bug where the initialization of the configuration manager
-(`G2ConfigMgr.initV2()`) was not checked for success or failure.  Now the 
+(`G2ConfigMgr.initV2()`) was not checked for success or failure.  Now the
 API server ensures that initialization succeeded before proceeding further.
 - Removed warnings that could occur if building with version 1.11.x of g2.jar
 

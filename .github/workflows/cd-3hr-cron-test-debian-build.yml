@@ -1,0 +1,84 @@
+name: Cron Schedule 3 hr Test Java API Server Build on Debian
+
+on:
+  schedule:
+    - cron: '0 */3 * * *'
+
+jobs:
+  cronBuildSenzingJavaApiServer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Download Senzing Deb Package Onto Runner
+        id: download_senzing_deb
+        env:
+          SENZING_REPO_URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
+        run: |
+          wget ${SENZING_REPO_URL} >> output.log 2>&1
+          sudo apt-get -y install ./${SENZING_REPO_URL##*/} >> output.log 2>&1
+          rm -rf senzingrepo_1.0.0-1_amd64.deb >> output.log 2>&1
+          sudo apt-get update -y >> output.log 2>&1
+          sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/ >> output.log 2>&1
+          sudo apt-get download -o=dir::cache=${HOME} senzingapi senzingdata-v1 >> output.log 2>&1
+          sudo chown runner /home/runner/work/senzing-api-server/senzing-api-server/ >> output.log 2>&1
+      - name: Install Senzing Data Without Sqlite Dependency
+        id: install_senzing_data
+        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb >> output.log 2>&1
+      - name: Install Senzing Api Without Sqlite Dependency
+        id: install_senzing_api
+        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb >> output.log 2>&1
+      - name: Copy /opt/senzing to Runner working directory
+        id: copy_senzing_wrk_dir
+        run: |
+          sudo mkdir -p ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib >> output.log 2>&1
+          sudo mv /opt/senzing/g2/lib/g2.jar ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar >> output.log 2>&1
+      - name: Build Java API Server
+        id: build_java_api_server
+        run: |
+          make \
+            BASE_BUILDER_IMAGE="senzing/base-image-debian:1.0.1" \
+            BASE_IMAGE="senzing/senzing-base:1.4.0" \
+            SENZING_G2_JAR_PATHNAME=${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar \
+            SENZING_G2_JAR_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION') \
+            docker-build >> build_failure.log 2>&1
+            cat build_failure.log >> output.log 2>&1
+      - name: Create Jira Issue on Build Failure
+        id: create_jira_issue
+        if: failure()
+        run: |
+          docker run --rm \
+            --env JIRA_ISSUE_DESCRIPTION="The commit SHA is: _${{ github.sha }}_." \
+            --env JIRA_API_TOKEN=${{ secrets.JIRA_SECRET }} \
+            --env JIRA_USERNAME=${{ secrets.JIRA_USERNAME }} \
+            --env JIRA_ACCOUNT_URL=${{ secrets.JIRA_ACCOUNT_URL }} \
+            --env JIRA_PROJECT=PBF \
+            --env JIRA_ISSUE_TYPE=Task \
+            --env JIRA_ISSUE_SUMMARY="Senzing API server Debian build failed on GitHub SHA ${{ github.sha }}" \
+            senzing/git-action-jira-issue-creation:1.0.0
+      - name: Slack Notification
+        id: slack_notification
+        uses: Senzing/git-action-slack-notification@1.0.0
+        if: failure()
+        env:
+          SLACK_CHANNEL: ci-cd-dev
+          SLACK_COLOR: '#3278BD'
+          SLACK_TITLE: 'Failed to build Debian version on GitHub Commit SHA ${{ github.sha }}'
+          SLACK_MESSAGE: |
+            Failed to build on GitHub Commit SHA ${{ github.sha }}
+            Git Issue URL: ${{ steps.create_jira_issue.outputs.jira_issue_url }}
+          SLACK_USERNAME: senzing-api-server
+          SLACK_WEBHOOK: ${{ secrets.SLACK_NOTIFICATION }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_ACTION: ${{ github.action }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_WORKFLOW: ${{ github.workflow }}
+      - name: Persisting log
+        id: persisting_log
+        if: failure()
+        uses: actions/upload-artifact@v1
+        with:
+          name: workflow_log
+          path: output.log
+

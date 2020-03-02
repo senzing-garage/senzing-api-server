@@ -8,7 +8,16 @@ import java.math.BigInteger;
 import java.util.*;
 import javax.json.*;
 
+import static javax.json.stream.JsonGenerator.PRETTY_PRINTING;
+
 public class JsonUtils {
+  /**
+   * Pretty printing {@link JsonWriterFactory}.
+   */
+  private static JsonWriterFactory PRETTY_WRITER_FACTORY
+      = Json.createWriterFactory(
+      Collections.singletonMap(PRETTY_PRINTING, true));
+
   /**
    * Private constructor since this class only has static methods.
    */
@@ -753,64 +762,6 @@ public class JsonUtils {
   }
 
   /**
-   * Converts the specified {@link JsonValue} to a JSON string.
-   *
-   * @param writer The {@link Writer} to write to.
-   *
-   * @param jsonValue The {@link JsonValue} describing the JSON.
-   *
-   * @return The specified {@link Writer}.
-   *
-   */
-  public static <T extends Writer> T toJsonText(T writer, JsonValue jsonValue)
-  {
-    Objects.requireNonNull(writer, "Writer cannot be null");
-    JsonWriter jsonWriter = Json.createWriter(writer);
-
-    if (jsonValue != null) {
-      jsonWriter.write(jsonValue);
-    } else {
-      jsonWriter.write(JsonValue.NULL);
-    }
-
-    return writer;
-  }
-
-  /**
-   * Converts the specified {@link JsonValue} to a JSON string.
-   *
-   * @param jsonValue The {@link JsonValue} describing the JSON.
-   *
-   * @return The specified {@link JsonValue} converted to a JSON string.
-   */
-  public static String toJsonText(JsonValue jsonValue) {
-    return JsonUtils.toJsonText(new StringWriter(), jsonValue).toString();
-  }
-
-  /**
-   * Converts the specified {@link JsonObjectBuilder} to a JSON string.
-   *
-   * @param writer The {@link Writer} to write to.
-   *
-   * @param builder The {@link JsonObjectBuilder} describing the object.
-   *
-   * @return The specified {@link Writer}.
-   *
-   */
-  public static <T extends Writer> T toJsonText(T                 writer,
-                                                JsonObjectBuilder builder)
-  {
-    Objects.requireNonNull(writer, "Writer cannot be null");
-    JsonWriter jsonWriter = Json.createWriter(writer);
-
-    JsonObject jsonObject = builder.build();
-
-    jsonWriter.writeObject(jsonObject);
-
-    return writer;
-  }
-
-  /**
    * Creates a {@link JsonObject} with the specified property and value.
    * The value is interpretted according to {@link
    * #addProperty(JsonObjectBuilder, String, Object)}.
@@ -941,6 +892,49 @@ public class JsonUtils {
   }
 
   /**
+   * Converts the specified {@link JsonValue} to a JSON string.
+   *
+   * @param writer The {@link Writer} to write to.
+   *
+   * @param jsonValue The {@link JsonValue} describing the JSON.
+   *
+   * @return The specified {@link Writer}.
+   *
+   */
+  public static <T extends Writer> T toJsonText(T writer, JsonValue jsonValue)
+  {
+    return JsonUtils.toJsonText(writer, jsonValue, false);
+  }
+
+  /**
+   * Converts the specified {@link JsonValue} to a JSON string.
+   *
+   * @param jsonValue The {@link JsonValue} describing the JSON.
+   *
+   * @return The specified {@link JsonValue} converted to a JSON string.
+   */
+  public static String toJsonText(JsonValue jsonValue) {
+    return JsonUtils.toJsonText(jsonValue, false);
+  }
+
+  /**
+   * Converts the specified {@link JsonObjectBuilder} to a JSON string.
+   *
+   * @param writer The {@link Writer} to write to.
+   *
+   * @param builder The {@link JsonObjectBuilder} describing the object.
+   *
+   * @return The specified {@link Writer}.
+   *
+   */
+  public static <T extends Writer> T toJsonText(T                 writer,
+                                                JsonObjectBuilder builder)
+  {
+    return JsonUtils.toJsonText(writer, builder, false);
+  }
+
+
+  /**
    * Converts the specified {@link JsonObjectBuilder} to a JSON string.
    *
    * @param builder The {@link JsonObjectBuilder} describing the object.
@@ -948,7 +942,8 @@ public class JsonUtils {
    * @return The specified {@link JsonObjectBuilder} converted to a JSON string.
    */
   public static String toJsonText(JsonObjectBuilder builder) {
-    return JsonUtils.toJsonText(new StringWriter(), builder).toString();
+    return JsonUtils.toJsonText(
+        new StringWriter(), builder, false).toString();
   }
 
   /**
@@ -963,8 +958,131 @@ public class JsonUtils {
   public static <T extends Writer> T toJsonText(T                 writer,
                                                 JsonArrayBuilder  builder)
   {
+    return JsonUtils.toJsonText(writer, builder, false);
+  }
+
+  /**
+   * Converts the specified {@link JsonArrayBuilder} to a JSON string.
+   *
+   * @param builder The {@link JsonArrayBuilder} describing the object.
+   *
+   * @return The specified {@link JsonArrayBuilder} converted to a JSON string.
+   */
+  public static String toJsonText(JsonArrayBuilder builder) {
+    return JsonUtils.toJsonText(
+        new StringWriter(), builder, false).toString();
+  }
+
+  /**
+   * Converts the specified {@link JsonValue} to a JSON string.
+   *
+   * @param writer The {@link Writer} to write to.
+   *
+   * @param jsonValue The {@link JsonValue} describing the JSON.
+   *
+   * @param prettyPrint Whether or not to pretty-print the JSON text.
+   *
+   * @return The specified {@link Writer}.
+   *
+   */
+  public static <T extends Writer> T toJsonText(T         writer,
+                                                JsonValue jsonValue,
+                                                boolean   prettyPrint)
+  {
     Objects.requireNonNull(writer, "Writer cannot be null");
-    JsonWriter jsonWriter = Json.createWriter(writer);
+
+    JsonWriter jsonWriter = (prettyPrint)
+        ? PRETTY_WRITER_FACTORY.createWriter(writer)
+        : Json.createWriter(writer);
+
+    if (jsonValue != null) {
+      jsonWriter.write(jsonValue);
+    } else {
+      jsonWriter.write(JsonValue.NULL);
+    }
+
+    return writer;
+  }
+
+  /**
+   * Converts the specified {@link JsonValue} to a JSON string.
+   *
+   * @param jsonValue The {@link JsonValue} describing the JSON.
+   *
+   * @param prettyPrint Whether or not to pretty-print the JSON text.
+   *
+   * @return The specified {@link JsonValue} converted to a JSON string.
+   */
+  public static String toJsonText(JsonValue jsonValue, boolean prettyPrint) {
+    return JsonUtils.toJsonText(
+        new StringWriter(), jsonValue, prettyPrint).toString();
+  }
+
+  /**
+   * Converts the specified {@link JsonObjectBuilder} to a JSON string.
+   *
+   * @param writer The {@link Writer} to write to.
+   *
+   * @param builder The {@link JsonObjectBuilder} describing the object.
+   *
+   * @param prettyPrint Whether or not to pretty-print the JSON text.
+   *
+   * @return The specified {@link Writer}.
+   *
+   */
+  public static <T extends Writer> T toJsonText(T                 writer,
+                                                JsonObjectBuilder builder,
+                                                boolean           prettyPrint)
+  {
+    Objects.requireNonNull(writer, "Writer cannot be null");
+
+    JsonWriter jsonWriter = (prettyPrint)
+        ? PRETTY_WRITER_FACTORY.createWriter(writer)
+        : Json.createWriter(writer);
+
+    JsonObject jsonObject = builder.build();
+
+    jsonWriter.writeObject(jsonObject);
+
+    return writer;
+  }
+
+  /**
+   * Converts the specified {@link JsonObjectBuilder} to a JSON string.
+   *
+   * @param builder The {@link JsonObjectBuilder} describing the object.
+   *
+   * @param prettyPrint Whether or not to pretty-print the JSON text.
+   *
+   * @return The specified {@link JsonObjectBuilder} converted to a JSON string.
+   */
+  public static String toJsonText(JsonObjectBuilder builder,
+                                  boolean           prettyPrint)
+  {
+    return JsonUtils.toJsonText(
+        new StringWriter(), builder, prettyPrint).toString();
+  }
+
+  /**
+   * Converts the specified {@link JsonArrayBuilder} to a JSON string.
+   *
+   * @param writer The {@link Writer} to write to.
+   *
+   * @param builder The {@link JsonArrayBuilder} describing the object.
+   *
+   * @param prettyPrint Whether or not to pretty-print the JSON text.
+   *
+   * @return The specified {@link Writer}
+   */
+  public static <T extends Writer> T toJsonText(T                 writer,
+                                                JsonArrayBuilder  builder,
+                                                boolean           prettyPrint)
+  {
+    Objects.requireNonNull(writer, "Writer cannot be null");
+
+    JsonWriter jsonWriter = (prettyPrint)
+        ? PRETTY_WRITER_FACTORY.createWriter(writer)
+        : Json.createWriter(writer);
 
     JsonArray jsonArray = builder.build();
 
@@ -978,10 +1096,15 @@ public class JsonUtils {
    *
    * @param builder The {@link JsonArrayBuilder} describing the object.
    *
+   * @param prettyPrint Whether or not to pretty-print the JSON text.
+   *
    * @return The specified {@link JsonArrayBuilder} converted to a JSON string.
    */
-  public static String toJsonText(JsonArrayBuilder builder) {
-    return JsonUtils.toJsonText(new StringWriter(), builder).toString();
+  public static String toJsonText(JsonArrayBuilder builder,
+                                  boolean          prettyPrint)
+  {
+    return JsonUtils.toJsonText(
+        new StringWriter(), builder, prettyPrint).toString();
   }
 
   /**
