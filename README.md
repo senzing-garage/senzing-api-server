@@ -25,8 +25,9 @@ documents the available API methods, their parameters and the response formats.
     1. [Configuration](#configuration)
     1. [Volumes](#volumes)
     1. [Docker network](#docker-network)
-    1. [External database](#external-database)
     1. [Docker user](#docker-user)
+    1. [External database](#external-database)
+    1. [Database support](#database-support)
     1. [Run docker container](#run-docker-container)
     1. [Test docker container](#test-docker-container)
 1. [Develop](#develop)
@@ -36,6 +37,14 @@ documents the available API methods, their parameters and the response formats.
 1. [Examples](#examples)
 1. [Errors](#errors)
 1. [References](#references)
+
+### Legend
+
+1. :thinking: - A "thinker" icon means that a little extra thinking may be required.
+   Perhaps you'll need to make some choices.
+   Perhaps it's an optional step.
+1. :pencil2: - A "pencil" icon means that the instructions may need modification before performing.
+1. :warning: - A "warning" icon means that something tricky is happening, so pay attention.
 
 ## Demonstrate using Command Line
 
@@ -162,15 +171,15 @@ for version compatibility and usage information.*
 Other command-line options may be useful to you as well.  Execute
 
 ```console
-java -jar target/senzing-api-server-1.7.8.jar -help
+java -jar target/senzing-api-server-1.7.10.jar -help
 ```
 
 to obtain a help message describing all available options.
 For example:
 
 ```console
-$ java -jar target/senzing-api-server-1.7.8.jar -help
-java -jar senzing-api-server-1.7.8.jar <options>
+$ java -jar target/senzing-api-server-1.7.10.jar -help
+java -jar senzing-api-server-1.7.10.jar <options>
 
 <options> includes:
 
@@ -278,7 +287,7 @@ This repository assumes a working knowledge of:
 ### Initialize Senzing
 
 1. If Senzing has not been initialized, visit
-   [HOWTO - Initialize Senzing](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/initialize-senzing.md).
+   "[How to initialize Senzing with Docker](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/initialize-senzing-with-docker.md)".
 
 ### Configuration
 
@@ -296,30 +305,35 @@ Configuration values specified by environment variable or command line parameter
 
 ### Volumes
 
-:thinking: The output of
-[HOWTO - Initialize Senzing](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/initialize-senzing.md)
-placed files in different directories.
-Identify each output directory.
-
-1. :pencil2: **Option #1**
-   To mimic an actual RPM installation,
-   identify directories for RPM output in this manner:
-
-    ```console
-    export SENZING_DATA_VERSION_DIR=/opt/senzing/data/1.0.0
-    export SENZING_ETC_DIR=/etc/opt/senzing
-    export SENZING_G2_DIR=/opt/senzing/g2
-    export SENZING_VAR_DIR=/var/opt/senzing
-    ```
-
-1. :pencil2: **Option #2**
-   If Senzing directories were put in alternative directories,
-   set environment variables to reflect where the directories were placed.
+1. :pencil2: Specify the directory containing the Senzing installation.
+   Use the same `SENZING_VOLUME` value used when performing
+   "[How to initialize Senzing with Docker](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/initialize-senzing-with-docker.md)".
    Example:
 
     ```console
     export SENZING_VOLUME=/opt/my-senzing
+    ```
 
+    1. Here's a simple test to see if `SENZING_VOLUME` is correct.
+       The following commands should return file contents.
+       Example:
+
+        ```console
+        cat ${SENZING_VOLUME}/g2/g2BuildVersion.json
+        cat ${SENZING_VOLUME}/data/1.0.0/libpostal/data_version
+        ```
+
+    1. :warning:
+       **macOS** - [File sharing](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/share-directories-with-docker.md#macos)
+       must be enabled for `SENZING_VOLUME`.
+    1. :warning:
+       **Windows** - [File sharing](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/share-directories-with-docker.md#windows)
+       must be enabled for `SENZING_VOLUME`.
+
+1. Identify the `data_version`, `etc`, `g2`, and `var` directories.
+   Example:
+
+    ```console
     export SENZING_DATA_VERSION_DIR=${SENZING_VOLUME}/data/1.0.0
     export SENZING_ETC_DIR=${SENZING_VOLUME}/etc
     export SENZING_G2_DIR=${SENZING_VOLUME}/g2
@@ -352,9 +366,37 @@ Identify each output directory.
     export SENZING_NETWORK_PARAMETER="--net ${SENZING_NETWORK}"
     ```
 
+### Docker user
+
+:thinking: **Optional:**  The docker container runs as "USER 1001".
+Use if a different userid (UID) is required.
+
+1. :pencil2: Manually identify user.
+   User "0" is root.
+   Example:
+
+    ```console
+    export SENZING_RUNAS_USER="0"
+    ```
+
+   Another option, use current user.
+   Example:
+
+    ```console
+    export SENZING_RUNAS_USER=$(id -u)
+    ```
+
+1. Construct parameter for `docker run`.
+   Example:
+
+    ```console
+    export SENZING_RUNAS_USER_PARAMETER="--user ${SENZING_RUNAS_USER}"
+    ```
+
 ### External database
 
 :thinking: **Optional:**  Use if storing data in an external database.
+If not specified, the internal SQLite database will be used.
 
 1. :pencil2: Specify database.
    Example:
@@ -382,44 +424,17 @@ Identify each output directory.
     export SENZING_DATABASE_URL_PARAMETER="--env SENZING_DATABASE_URL=${SENZING_DATABASE_URL}"
     ```
 
-### Init container
+### Database support
 
-1. Initialize volumes and database.
-   This docker container is a job that runs to completion and exits.
-   Example:
+:thinking: **Optional:**  Some database need additional support.
+For other databases, these steps may be skipped.
 
-    ```console
-    sudo docker run \
-      ${SENZING_DATABASE_URL_PARAMETER} \
-      ${SENZING_NETWORK_PARAMETER} \
-      --rm \
-      --user 0 \
-      --volume ${SENZING_DATA_VERSION_DIR}:/opt/senzing/data \
-      --volume ${SENZING_ETC_DIR}:/etc/opt/senzing \
-      --volume ${SENZING_G2_DIR}:/opt/senzing/g2 \
-      --volume ${SENZING_VAR_DIR}:/var/opt/senzing \
-      senzing/init-container
-    ```
-
-### Docker user
-
-:thinking: **Optional:**  The docker container runs as "USER 1001".
-Use if a different userid is required.
-
-1. :pencil2: Identify user.
-   User "0" is root.
-   Example:
-
-    ```console
-    export SENZING_RUNAS_USER="0"
-    ```
-
-1. Construct parameter for `docker run`.
-   Example:
-
-    ```console
-    export SENZING_RUNAS_USER_PARAMETER="--user ${SENZING_RUNAS_USER}"
-    ```
+1. **Db2:** See
+   [Support Db2](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/support-db2.md)
+   instructions to set `SENZING_OPT_IBM_DIR_PARAMETER`.
+1. **MS SQL:** See
+   [Support MS SQL](https://github.com/Senzing/knowledge-base/blob/master/HOWTO/support-mssql.md)
+   instructions to set `SENZING_OPT_MICROSOFT_DIR_PARAMETER`.
 
 ### Run docker container
 
@@ -435,9 +450,6 @@ Use if a different userid is required.
 
     ```console
     sudo docker run \
-      ${SENZING_RUNAS_USER_PARAMETER} \
-      ${SENZING_DATABASE_URL_PARAMETER} \
-      ${SENZING_NETWORK_PARAMETER} \
       --interactive \
       --publish ${SENZING_API_SERVICE_PORT}:8250 \
       --rm \
@@ -446,6 +458,11 @@ Use if a different userid is required.
       --volume ${SENZING_ETC_DIR}:/etc/opt/senzing \
       --volume ${SENZING_G2_DIR}:/opt/senzing/g2 \
       --volume ${SENZING_VAR_DIR}:/var/opt/senzing \
+      ${SENZING_RUNAS_USER_PARAMETER} \
+      ${SENZING_DATABASE_URL_PARAMETER} \
+      ${SENZING_NETWORK_PARAMETER} \
+      ${SENZING_OPT_IBM_DIR_PARAMETER} \
+      ${SENZING_OPT_MICROSOFT_DIR_PARAMETER} \
       senzing/senzing-api-server \
         -allowedOrigins "*" \
         -bindAddr all \

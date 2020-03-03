@@ -19,6 +19,8 @@ GIT_VERSION_LONG := $(shell git describe --always --tags --long --dirty)
 
 # Docker.
 
+BASE_IMAGE ?= senzing/senzing-base:1.4.0
+BASE_BUILDER_IMAGE ?= senzing/base-image-debian:1.0.1
 DOCKER_IMAGE_PACKAGE := $(GIT_REPOSITORY_NAME)-package:$(GIT_VERSION)
 DOCKER_IMAGE_TAG ?= $(GIT_REPOSITORY_NAME):$(GIT_VERSION)
 DOCKER_IMAGE_NAME := senzing/senzing-api-server
@@ -89,6 +91,8 @@ docker-build: docker-rmi-for-build
 	mkdir -p $(TARGET)
 	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
 	docker build \
+		--build-arg BASE_IMAGE=$(BASE_IMAGE) \
+		--build-arg BASE_BUILDER_IMAGE=$(BASE_BUILDER_IMAGE) \
 		--build-arg SENZING_G2_JAR_RELATIVE_PATHNAME=$(TARGET)/g2.jar \
 		--build-arg SENZING_G2_JAR_VERSION=$(SENZING_G2_JAR_VERSION) \
 		--tag $(DOCKER_IMAGE_NAME) \
