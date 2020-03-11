@@ -29,7 +29,7 @@ public class TemporaryDataCacheTest {
   /**
    * The test file size.
    */
-  private static final int TEST_FILE_COUNT = 5;
+  private static final int TEST_FILE_COUNT = 3;
 
   @BeforeAll
   public void setup() throws IOException {
@@ -41,7 +41,7 @@ public class TemporaryDataCacheTest {
     for (int index = 0; index < TEST_FILE_COUNT; index++) {
       File testFile = File.createTempFile("test-file-", ".dat");
       this.testFiles.add(testFile);
-      int fileSize = (int) Math.pow(32.0, (double) index);
+      int fileSize = (int) Math.pow(24.0, (double) (index*2)*1);
 
       try (FileOutputStream     fos = new FileOutputStream(testFile);
            BufferedOutputStream bos = new BufferedOutputStream(fos, 8192))
@@ -79,9 +79,9 @@ public class TemporaryDataCacheTest {
     {
       TemporaryDataCache tdc = new TemporaryDataCache(fis);
       try (InputStream          is  = tdc.getInputStream();
-           BufferedInputStream  bis = new BufferedInputStream(is);
+           BufferedInputStream  bis = new BufferedInputStream(is, 8192);
            FileOutputStream     fos = new FileOutputStream(tempFile);
-           BufferedOutputStream bos = new BufferedOutputStream(fos))
+           BufferedOutputStream bos = new BufferedOutputStream(fos, 8192))
       {
         for (int byteRead = bis.read(); byteRead >= 0; byteRead = bis.read()) {
           bos.write(byteRead);
@@ -292,7 +292,7 @@ public class TemporaryDataCacheTest {
         tdc.delete();
       }
 
-      if (appended) {
+      if (!appended) {
         fail("Never transitioned to 'appending' state.");
       }
 

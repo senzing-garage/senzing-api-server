@@ -662,6 +662,7 @@ public class RecordReader {
    */
   private class CsvRecordProvider implements RecordProvider {
     private Iterator<CSVRecord> recordIter;
+    private JsonObject previousRecord = null;
 
     public CsvRecordProvider(Reader reader) {
       CSVFormat csvFormat = CSVFormat.DEFAULT
@@ -700,11 +701,17 @@ public class RecordReader {
 
         JsonObject jsonObj = Json.createObjectBuilder(map).build();
 
-        return owner.augmentRecord(jsonObj);
+        JsonObject result = owner.augmentRecord(jsonObj);
+
+        this.previousRecord = result;
+
+        return result;
 
       } catch (RuntimeException e) {
+        System.err.println("PREVIOUS RECORD: " + JsonUtils.toJsonText(this.previousRecord));
         throw e;
       } catch (Exception e) {
+        System.err.println("PREVIOUS RECORD: " + JsonUtils.toJsonText(this.previousRecord));
         throw new RuntimeException(e);
       }
     }

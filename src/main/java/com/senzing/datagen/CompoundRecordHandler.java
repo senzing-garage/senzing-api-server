@@ -1,5 +1,6 @@
 package com.senzing.datagen;
 
+import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import java.util.*;
@@ -44,8 +45,9 @@ public class CompoundRecordHandler implements RecordHandler {
       throw new IllegalStateException(
           "The RecordHandler has already been closed.");
     }
+    JsonObject record = recordBuilder.build();
     for (RecordHandler handler: this.delegates) {
-      handler.handle(recordBuilder);
+      handler.handle(Json.createObjectBuilder(record));
     }
   }
 

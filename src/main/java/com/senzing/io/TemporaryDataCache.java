@@ -349,12 +349,15 @@ public class TemporaryDataCache {
             file.deleteOnExit();
 
             for (readByte = bis.read();
-                 readByte >= 0 && (writeCount < maxWrite) && !owner.isDeleted();
+                 readByte >= 0 && !owner.isDeleted();
                  readByte = bis.read())
             {
               readCount++;
               gs.write(readByte);
               writeCount++;
+
+              // avoid readiing a byte that we won't write
+              if (writeCount >= maxWrite) break;
             }
             gs.flush();
             gs.finish();
@@ -580,18 +583,23 @@ public class TemporaryDataCache {
       TemporaryDataCache owner = TemporaryDataCache.this;
 
       if (this.closed) {
-        throw new IOException("Cannot skip: stream already closed.");
+        throw new IOException("Cannot read: stream already closed.");
       }
 
       // check for EOF
-      if (this.eof) return -1;
+      if (this.eof) {
+        return -1;
+      }
 
+      String prefix = "" + System.identityHashCode(this) + ": ";
       // check if the current file has bytes left to read
       if (this.currentFilePart == null
           || ((this.currentFilePart.length - this.currentOffset) <= 0L))
       {
         // advance the file if the current one is exhausted
-        if (this.currentFilePart != null) this.advanceFile();
+        if (this.currentFilePart != null) {
+          this.advanceFile();
+        }
 
         // ensure the current file is set
         while (this.currentFilePart == null) {
@@ -606,8 +614,8 @@ public class TemporaryDataCache {
             } else if (owner.isAppending()) {
               // data is still be appended -- so wait for it
               try {
+                long start = System.currentTimeMillis();
                 owner.fileParts.wait(5000L);
-
               } catch (InterruptedException e) {
                 throw new IOException(
                     "Interrupted while waiting for an available file.", e);
@@ -630,6 +638,7 @@ public class TemporaryDataCache {
                 + this.currentFilePart.length + " ]");
       }
       this.currentOffset++;
+
       return byteRead;
     }
   }

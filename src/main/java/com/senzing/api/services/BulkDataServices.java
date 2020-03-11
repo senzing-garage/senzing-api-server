@@ -371,7 +371,6 @@ public class BulkDataServices {
       SseEventSink                sseEventSink,
       Sse                         sse)
   {
-    System.out.println("MEDIA TYPE: " + mediaType);
     OutboundSseEvent.Builder eventBuilder
         = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
     int eventId = 0;
@@ -395,7 +394,6 @@ public class BulkDataServices {
         // if format is null then RecordReader will auto-detect
         RecordReader recordReader = new RecordReader(bulkDataSet.format, br);
         bulkDataSet.format = recordReader.getFormat();
-        System.out.println("DETECTED RECORD FORMAT: " + bulkDataSet.format);
         dataAnalysis.setMediaType(bulkDataSet.format.getMediaType());
 
         for (JsonObject record = recordReader.readRecord();
@@ -507,7 +505,7 @@ public class BulkDataServices {
     entityTypeMap.put(null, entityType);
     entityTypeMap.put("", entityType);
 
-
+    int resultCount = 0;
     try {
       BulkDataSet bulkDataSet = new BulkDataSet(mediaType, dataInputStream);
 
@@ -566,6 +564,7 @@ public class BulkDataServices {
                                                     record,
                                                     loadId);
             } finally {
+              if (asyncResult != null) resultCount++;
               this.trackLoadResult(asyncResult, bulkLoadResult);
               timerPool.add(subTimers);
             }
@@ -598,6 +597,7 @@ public class BulkDataServices {
 
         // close out any in-flight loads from the asynchronous pool
         List<AsyncResult<EngineResult>> results = asyncPool.close();
+        resultCount += results.size();
         for (AsyncResult<EngineResult> asyncResult : results) {
           this.trackLoadResult(asyncResult, bulkLoadResult);
         }

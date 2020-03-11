@@ -166,6 +166,40 @@ public class ResponseValidators {
                                     long            beforeTimestamp,
                                     long            afterTimestamp)
   {
+    validateBasics(testInfo,
+                   response,
+                   expectedResponseCode,
+                   expectedHttpMethod,
+                   selfLink,
+                   beforeTimestamp,
+                   afterTimestamp,
+                  1);
+  }
+
+  /**
+   * Validates the basic response fields for the specified {@link
+   * SzBasicResponse} using the specified self link, timestamp from before
+   * calling the service function and timestamp from after calling the
+   * service function.
+   *
+   * @param testInfo Additional test information to be logged with failures.
+   * @param response The {@link SzBasicResponse} to validate.
+   * @param expectedResponseCode The expected HTTP responsec code.
+   * @param expectedHttpMethod The {@link SzHttpMethod} that was used.
+   * @param selfLink The self link to be expected.
+   * @param beforeTimestamp The timestamp from just before calling the service.
+   * @param afterTimestamp The timestamp from just after calling the service.
+   * @param serverConcurrency The concurrency for the server.
+   */
+  public static void validateBasics(String          testInfo,
+                                    SzBasicResponse response,
+                                    int             expectedResponseCode,
+                                    SzHttpMethod    expectedHttpMethod,
+                                    String          selfLink,
+                                    long            beforeTimestamp,
+                                    long            afterTimestamp,
+                                    int             serverConcurrency)
+  {
     String suffix = (testInfo != null && testInfo.trim().length() > 0)
         ? " ( " + testInfo + " )" : "";
 
@@ -189,7 +223,7 @@ public class ResponseValidators {
     Map<String, Long> timings = meta.getTimings();
 
     // determine max duration
-    long maxDuration = (afterTimestamp - beforeTimestamp);
+    long maxDuration = (afterTimestamp - beforeTimestamp) * serverConcurrency;
 
     timings.entrySet().forEach(entry -> {
       long duration = entry.getValue();

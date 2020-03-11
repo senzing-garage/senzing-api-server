@@ -137,7 +137,7 @@ public class AsyncWorkerPool<T> {
       }
 
       // check if closed
-      if (worker == null && this.isClosed()) {
+      if (worker == null || this.isClosed()) {
         throw new IllegalStateException(
             "Pool closed while attempting to execute a task.");
       }
@@ -321,14 +321,14 @@ public class AsyncWorkerPool<T> {
             // record any failure for the task
             result = new AsyncResult<>(null, e);
           }
-        }
 
-        // update worker fields to clear the task and store the result
-        synchronized (this) {
-          this.currentTask = null;
-          this.previousResult = result;
-          // make sure to notify when done
-          this.notifyAll();
+          // update worker fields to clear the task and store the result
+          synchronized (this) {
+            this.currentTask = null;
+            this.previousResult = result;
+            // make sure to notify when done
+            this.notifyAll();
+          }
         }
 
         // return this instance to the pool

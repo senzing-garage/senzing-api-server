@@ -151,6 +151,19 @@ public class SzBulkDataAnalysis {
   }
 
   /**
+   * Increments the number of records in the bulk data set and returns
+   * the new record count.
+   *
+   * @param increment The number of records to increment by.
+   *
+   * @return The incremented record count.
+   */
+  private int incrementRecordCount(int increment) {
+    this.recordCount += increment;
+    return this.recordCount;
+  }
+
+  /**
    * Gets the number of records in the bulk data set that have a
    * <tt>"RECORD_ID"</tt> property.
    *
@@ -181,6 +194,20 @@ public class SzBulkDataAnalysis {
    */
   private int incrementRecordsWithRecordIdCount() {
     return ++this.recordIdCount;
+  }
+
+  /**
+   * Increments the number of records in the bulk data set that have a
+   * <tt>"RECORD_ID"</tt> property and returns the new count.
+   *
+   * @param increment The number of records to increment by.
+   *
+   * @return The newly incremented count of records in the bulk data set that
+   *         have a <tt>"RECORD_ID"</tt> property.
+   */
+  private int incrementRecordsWithRecordIdCount(int increment) {
+    this.recordIdCount += increment;
+    return this.recordIdCount;
   }
 
   /**
@@ -217,6 +244,19 @@ public class SzBulkDataAnalysis {
   }
 
   /**
+   * Increments the number of records in the bulk data set that have a
+   * <tt>"DATA_SOURCE"</tt> property and returns the new count.
+   *
+   * @param increment The number of records to increment by.
+   * @return The newly incremented count of records in the bulk data set that
+   *         have a <tt>"DATA_SOURCE"</tt> property.
+   */
+  private int incrementRecordsWithDataSourceCount(int increment) {
+    this.dataSourceCount += increment;
+    return this.dataSourceCount;
+  }
+
+  /**
    * Gets the number of records in the bulk data set that have a
    * <tt>"ENTITY_TYPE"</tt> property.
    *
@@ -247,6 +287,20 @@ public class SzBulkDataAnalysis {
    */
   private int incrementRecordsWithEntityTypeCount() {
     return ++this.entityTypeCount;
+  }
+
+  /**
+   * Increments the number of records in the bulk data set that have a
+   * <tt>"ENTITY_TYPE"</tt> property and returns the new count.
+   *
+   * @param increment The number of records to increment by.
+   *
+   * @return The newly incremented count of records in the bulk data set that
+   *         have a <tt>"ENTITY_TYPE"</tt> property.
+   */
+  private int incrementRecordsWithEntityTypeCount(int increment) {
+    this.entityTypeCount += increment;
+    return this.entityTypeCount;
   }
 
   /**
@@ -385,25 +439,41 @@ public class SzBulkDataAnalysis {
    */
   public void trackRecord(String dataSource, String entityType, String recordId)
   {
-    // check if data source is empty string and if so, normalize it to null
-    if (dataSource != null && dataSource.trim().length() == 0) {
-      dataSource = null;
+    this.trackRecords(1, dataSource, entityType, (recordId != null));
+  }
+
+  /**
+   * Utility method for tracking a record that has been analyzed with the
+   * specified data source, entity type and record ID (any of which may be
+   * <tt>null</tt> to indicate if they are absent in the record).
+   *
+   * @param recordCount The number of records being tracked.
+   * @param dataSource The data source for the record, or <tt>null</tt> if it
+   *                   does not have a <tt>"DATA_SOURCE"</tt> property.
+   * @param entityType The entity type for the record, or <tt>null</tt> if it
+   *                   does not have a <tt>"ENTITY_TYPE"</tt> property.
+   * @param withRecordId <tt>true</tt> if the records being tracked have record
+   *                     ID's, and <tt>false</tt> if they do not.
+   */
+  public void trackRecords(int      recordCount,
+                           String   dataSource,
+                           String   entityType,
+                           boolean  withRecordId)
+  {
+    if (recordCount < 0) {
+      throw new IllegalArgumentException(
+          "The record count cannot be negative: " + recordCount);
     }
+    if (recordCount == 0) return;
 
     // check if entity type is empty string and if so, normalize it to null
     if (entityType != null && entityType.trim().length() == 0) {
       entityType = null;
     }
 
-    // get the analysis for that data source
-    SzDataSourceRecordAnalysis dsrcAnalysis
-        = this.analysisByDataSource.get(dataSource);
-
-    // check if it does not yet exist
-    if (dsrcAnalysis == null) {
-      // if not, create it and store it for later
-      dsrcAnalysis = new SzDataSourceRecordAnalysis(dataSource);
-      this.analysisByDataSource.put(dataSource, dsrcAnalysis);
+    // check if data source is empty string and if so, normalize it to null
+    if (dataSource != null && dataSource.trim().length() == 0) {
+      dataSource = null;
     }
 
     // get the analysis for that entity type
@@ -417,23 +487,37 @@ public class SzBulkDataAnalysis {
       this.analysisByEntityType.put(entityType, etypeAnalysis);
     }
 
-    // increment the global count, data-source count and entity type count
-    dsrcAnalysis.incrementRecordCount();
-    etypeAnalysis.incrementRecordCount();
-    this.incrementRecordCount();
+    // get the analysis for that data source
+    SzDataSourceRecordAnalysis dsrcAnalysis
+        = this.analysisByDataSource.get(dataSource);
 
-    if (recordId != null) {
-      dsrcAnalysis.incrementRecordsWithRecordIdCount();
-      etypeAnalysis.incrementRecordsWithRecordIdCount();
-      this.incrementRecordsWithRecordIdCount();
+    // check if it does not yet exist
+    if (dsrcAnalysis == null) {
+      // if not, create it and store it for later
+      dsrcAnalysis = new SzDataSourceRecordAnalysis(dataSource);
+      this.analysisByDataSource.put(dataSource, dsrcAnalysis);
+    }
+
+    // increment the global count, data-source count and entity type count
+    dsrcAnalysis.incrementRecordCount(recordCount);
+    etypeAnalysis.incrementRecordCount(recordCount);
+    this.incrementRecordCount(recordCount);
+
+    if (withRecordId) {
+      dsrcAnalysis.incrementRecordsWithRecordIdCount(recordCount);
+      etypeAnalysis.incrementRecordsWithRecordIdCount(recordCount);
+      this.incrementRecordsWithRecordIdCount(recordCount);
     }
 
     if (dataSource != null) {
-      this.incrementRecordsWithDataSourceCount();
+      this.incrementRecordsWithDataSourceCount(recordCount);
+      etypeAnalysis.incrementRecordsWithDataSourceCount(recordCount);
     }
     if (entityType != null) {
-      this.incrementRecordsWithEntityTypeCount();
+      this.incrementRecordsWithEntityTypeCount(recordCount);
+      dsrcAnalysis.incrementRecordsWithEntityTypeCount(recordCount);
     }
     if (this.status == NOT_STARTED) this.status = IN_PROGRESS;
   }
+
 }

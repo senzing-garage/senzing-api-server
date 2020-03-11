@@ -302,7 +302,7 @@ public class IOUtilities {
         byte2 = bis2.read();
         if (byte1 != byte2) return true;
 
-      } while (byte1 != -1);
+      } while (byte1 != -1 && byte2 != -1);
 
       // if we get here then they are identical
       return false;

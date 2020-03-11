@@ -20,6 +20,7 @@ import com.senzing.util.AccessToken;
 import com.senzing.util.JsonUtils;
 
 import javax.json.*;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
 import static com.senzing.io.IOUtilities.readTextFileAsString;
@@ -405,6 +406,7 @@ public abstract class AbstractServiceTest {
         throw new IllegalStateException(
             formatError("G2Engine.exportConfig()", engineApi));
       }
+
       JsonObject configJson = JsonUtils.parseJsonObject(sb.toString());
 
       Result<Long> result = new Result<>();
@@ -462,11 +464,9 @@ public abstract class AbstractServiceTest {
     }
     int returnCode = configMgrApi.setDefaultConfigID(this.initialConfigId);
     if (returnCode != 0) {
-      if (returnCode != 0) {
-        throw new IllegalStateException(
-            formatError("G2ConfigMgr.setDefaultConfigID()",
-                        configMgrApi));
-      }
+      throw new IllegalStateException(
+          formatError("G2ConfigMgr.setDefaultConfigID()",
+                      configMgrApi));
     }
     Boolean result = this.server.ensureConfigCurrent();
     if (result == null) {
@@ -720,6 +720,15 @@ public abstract class AbstractServiceTest {
    */
   protected void prepareRepository() {
     // do nothing
+  }
+
+  /**
+   * Purges the repository via the {@link SzApiServer}. This reinitializes and
+   * recreates the worker thread pool.
+   *
+   */
+  protected void livePurgeRepository() {
+    this.server.purgeRepository();
   }
 
   /**
@@ -1076,6 +1085,44 @@ public abstract class AbstractServiceTest {
   }
 
   /**
+   * Creates a proxy {@link UriInfo} to simulate a {@link UriInfo} when directly
+   * calling the API services functions.
+   *
+   * @param selfLink The simulated request URI.
+   * @param queryParams The {@link MultivaluedMap} describing the query params.
+   *
+   * @return The proxied {@link UriInfo} object using the specified URI.
+   */
+  protected UriInfo newProxyUriInfo(String                        selfLink,
+                                    MultivaluedMap<String,String> queryParams)
+  {
+    try {
+      final URI uri = new URI(selfLink);
+
+      InvocationHandler handler = (p, m, a) -> {
+        if (m.getName().equals("getRequestUri")) {
+          return uri;
+        }
+        if (m.getName().equals("getQueryParameters")) {
+          return queryParams;
+        }
+        throw new UnsupportedOperationException(
+            "Operation not implemented on proxy UriInfo");
+      };
+
+      ClassLoader loader = this.getClass().getClassLoader();
+      Class[] classes = {UriInfo.class};
+
+      return (UriInfo) Proxy.newProxyInstance(loader, classes, handler);
+
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
    * Invoke an operation on the currently running API server over HTTP.
    *
    * @param httpMethod    The HTTP method to use.
@@ -1234,6 +1281,39 @@ public abstract class AbstractServiceTest {
       byte[] bodyContent,
       Class<T> responseClass)
   {
+    ByteArrayInputStream bodyStream = new ByteArrayInputStream(bodyContent);
+    Long contentLength = new Long(bodyContent.length);
+    return this.invokeServerViaHttp(httpMethod,
+                                    uri,
+                                    queryParams,
+                                    contentType,
+                                    contentLength,
+                                    bodyStream,
+                                    responseClass);
+  }
+
+  /**
+   * Invoke an operation on the currently running API server over HTTP.
+   *
+   * @param httpMethod    The HTTP method to use.
+   * @param uri           The relative or absolute URI (optionally including query params)
+   * @param queryParams   The optional map of query parameters.
+   * @param contentType   The content type for the body.
+   * @param contentLength The optional content length.
+   * @param bodyStream    The raw body content data.
+   * @param responseClass The class of the response.
+   * @param <T>           The response type which must extend {@link SzBasicResponse}
+   * @return
+   */
+  protected <T extends SzBasicResponse> T invokeServerViaHttp(
+      SzHttpMethod httpMethod,
+      String uri,
+      Map<String, ?> queryParams,
+      String contentType,
+      Long contentLength,
+      InputStream bodyStream,
+      Class<T> responseClass)
+  {
     ObjectMapper objectMapper = new ObjectMapper();
     try {
       if (!uri.toLowerCase().startsWith("http://")) {
@@ -1273,14 +1353,19 @@ public abstract class AbstractServiceTest {
       conn.setRequestMethod(httpMethod.toString());
       conn.setRequestProperty("Accept", "application/json");
       conn.setRequestProperty("Accept-Charset", "utf-8");
-      if (bodyContent != null) {
-        int length = bodyContent.length;
-        conn.addRequestProperty("Content-Length", "" + length);
-        conn.addRequestProperty("Content-Type",
-                                "application/json; charset=utf-8");
+      if (bodyStream != null) {
+        if (contentLength != null) {
+          conn.addRequestProperty("Content-Length", "" + contentLength);
+        }
+        conn.addRequestProperty("Content-Type", contentType);
         conn.setDoOutput(true);
-        OutputStream os = conn.getOutputStream();
-        os.write(bodyContent);
+        OutputStream os = new BufferedOutputStream(conn.getOutputStream(),
+                                                   8192);
+        for (int byteRead = bodyStream.read();
+             byteRead >= 0;
+             byteRead = bodyStream.read()) {
+          os.write(byteRead);
+        }
         os.flush();
       }
 
@@ -1300,7 +1385,8 @@ public abstract class AbstractServiceTest {
       try {
         result = objectMapper.readValue(responseJson, responseClass);
       } catch (Exception e) {
-        System.out.println("DESERIALIZING RESPONSE JSON: ");
+        System.out.println("DESERIALIZING RESPONSE JSON TO "
+                               + responseClass.getSimpleName() + ": ");
         System.out.println(responseJson);
         System.out.println();
         throw e;

@@ -226,11 +226,11 @@ public class SzBulkLoadResult extends SzBaseBulkLoadResult {
     list.sort((r1, r2) -> {
       int diff = compareCounts(r1, r2);
       if (diff == 0) {
-        String ds1 = r1.getEntityType();
-        String ds2 = r2.getEntityType();
-        if (ds1 == null) return -1;
-        if (ds2 == null) return 1;
-        return ds1.compareTo(ds2);
+        String et1 = r1.getEntityType();
+        String et2 = r2.getEntityType();
+        if (et1 == null) return -1;
+        if (et2 == null) return 1;
+        return et1.compareTo(et2);
       } else {
         return diff;
       }
@@ -271,6 +271,42 @@ public class SzBulkLoadResult extends SzBaseBulkLoadResult {
     this.resultsByDataSource.clear();
     for (SzDataSourceBulkLoadResult loadResult : resultList) {
       this.resultsByDataSource.put(loadResult.getDataSource(), loadResult);
+    }
+  }
+
+  /**
+   * Set the bulk load results by data source for this instance.  This will
+   * reset the top-level counts according to what is discovered in the specified
+   * collection of {@link SzDataSourceBulkLoadResult} instances.
+   *
+   * @param resultList The {@link Collection} of
+   *                   {@link SzDataSourceBulkLoadResult} instances.
+   */
+  private void setResultsByEntityType(
+      Collection<SzEntityTypeBulkLoadResult> resultList) {
+    // count the records
+    int recordCount = resultList.stream()
+        .mapToInt(SzEntityTypeBulkLoadResult::getRecordCount).sum();
+    this.setRecordCount(recordCount);
+
+    // count the records that have been loaded
+    int loadedCount = resultList.stream()
+        .filter(a -> a.getEntityType() != null)
+        .mapToInt(SzEntityTypeBulkLoadResult::getLoadedRecordCount)
+        .sum();
+    this.setLoadedRecordCount(loadedCount);
+
+    // count the records that failed to load
+    int failedCount = resultList.stream()
+        .filter(a -> a.getEntityType() != null)
+        .mapToInt(SzEntityTypeBulkLoadResult::getFailedRecordCount)
+        .sum();
+    this.setFailedRecordCount(failedCount);
+
+    // clear the current analysis map and repopulate it
+    this.resultsByEntityType.clear();
+    for (SzEntityTypeBulkLoadResult loadResult : resultList) {
+      this.resultsByEntityType.put(loadResult.getEntityType(), loadResult);
     }
   }
 

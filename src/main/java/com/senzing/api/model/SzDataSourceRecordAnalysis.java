@@ -22,6 +22,12 @@ public class SzDataSourceRecordAnalysis {
   private int recordIdCount;
 
   /**
+   * The number of records with the associated data source that have an
+   * <tt>"ENTITY_TYPE"</tt> specified.
+   */
+  private int entityTypeCount;
+
+  /**
    * Default constructor that constructs with a <tt>null</tt> data source.
    */
   public SzDataSourceRecordAnalysis() {
@@ -36,9 +42,10 @@ public class SzDataSourceRecordAnalysis {
    *                   no data source.
    */
   public SzDataSourceRecordAnalysis(String dataSource) {
-    this.dataSource     = dataSource;
-    this.recordCount    = 0;
-    this.recordIdCount  = 0;
+    this.dataSource       = dataSource;
+    this.recordCount      = 0;
+    this.recordIdCount    = 0;
+    this.entityTypeCount  = 0;
   }
 
   /**
@@ -72,9 +79,24 @@ public class SzDataSourceRecordAnalysis {
   /**
    * Increments the number of records that have the associated data source
    * and returns the new count.
+   *
+   * @return The new count after incrementing.
    */
   long incrementRecordCount() {
     return ++this.recordCount;
+  }
+
+  /**
+   * Increments the number of records that have the associated data source
+   * and returns the new count.
+   *
+   * @param increment The number of records to increment by.
+   *
+   * @return The new count after incrementing.
+   */
+  long incrementRecordCount(int increment) {
+    this.recordCount += increment;
+    return this.recordCount;
   }
 
   /**
@@ -102,9 +124,69 @@ public class SzDataSourceRecordAnalysis {
   /**
    * Increments the number of records that have the associated data source
    * and also have a <tt>"RECORD_ID"</tt> and returns the new count.
+   *
+   * @return The new count after incrementing.
    */
   int incrementRecordsWithRecordIdCount() {
     return ++this.recordIdCount;
+  }
+
+  /**
+   * Increments the number of records that have the associated data source
+   * and also have a <tt>"RECORD_ID"</tt> and returns the new count.
+   *
+   * @param increment The number of records to increment by.
+   *
+   * @return The new count after incrementing.
+   */
+  int incrementRecordsWithRecordIdCount(int increment) {
+    this.recordIdCount += increment;
+    return this.recordIdCount;
+  }
+
+  /**
+   * Gets the number of records that have the associated data source and also
+   * have an <tt>"ENTITY_TYPE"</tt>.
+   *
+   * @return The number of records that have the associated data source and
+   *         also have an <tt>"ENTITY_TYPE"</tt>.
+   */
+  public int getRecordsWithEntityTypeCount() {
+    return this.entityTypeCount;
+  }
+
+  /**
+   * Sets the number of records that have the associated data source and also
+   * have an <tt>"ENTITY_TYPE"</tt>.
+   *
+   * @param entityTypeCount The number of records that have the associated data
+   *                        source and also have an <tt>"ENTITY_TYPE"</tt>.
+   */
+  void setRecordsWithEntityTypeCount(int entityTypeCount) {
+    this.entityTypeCount = entityTypeCount;
+  }
+
+  /**
+   * Increments the number of records that have the associated data source
+   * and also have an <tt>"ENTITY_TYPE"</tt> and returns the new count.
+   *
+   * @return The new count after incrementing.
+   */
+  int incrementRecordsWithEntityTypeCount() {
+    return ++this.entityTypeCount;
+  }
+
+  /**
+   * Increments the number of records that have the associated data source
+   * and also have an <tt>"ENTITY_TYPE"</tt> and returns the new count.
+   *
+   * @param increment The number of records to increment by.
+   *
+   * @return The new count after incrementing.
+   */
+  int incrementRecordsWithEntityTypeCount(int increment) {
+    this.entityTypeCount += increment;
+    return this.entityTypeCount;
   }
 
   @Override
@@ -113,6 +195,7 @@ public class SzDataSourceRecordAnalysis {
         "dataSource='" + dataSource + '\'' +
         ", recordCount=" + recordCount +
         ", recordIdCount=" + recordIdCount +
+        ", entityTypeCount=" + entityTypeCount +
         '}';
   }
 }

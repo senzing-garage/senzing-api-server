@@ -9,6 +9,9 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.senzing.api.BuildInfo;
 import com.senzing.nativeapi.NativeApiFactory;
@@ -331,6 +334,12 @@ public class SzApiServer implements SzApiProvider {
    * Flag indicating if the server has been shutdown.
    */
   private boolean completed = false;
+
+  /**
+   * The read-write lock to use to prevent simultaneous request handling and
+   * purging.
+   */
+  private final ReadWriteLock purgeLock = new ReentrantReadWriteLock();
 
   /**
    * Returns the base URL for this instance.
@@ -1662,6 +1671,29 @@ public class SzApiServer implements SzApiProvider {
   }
 
   /**
+   * Purges the repository and recreates the worker thread pool.
+   *
+   * This should only be done when the API server has no pending requests.
+   *
+   */
+  public synchronized void purgeRepository() {
+    this.purgeLock.writeLock().lock();
+    try {
+      G2Engine engine = this.getEngineApi();
+      int returnCode = engine.purgeRepository();
+      if (returnCode != 0) {
+        throw new IllegalStateException(
+            formatError("G2Engine.purgeRepository()", engineApi));
+      }
+      this.workerThreadPool
+          = new WorkerThreadPool(this.getClass().getName(), this.concurrency);
+
+    } finally {
+      this.purgeLock.writeLock().unlock();
+    }
+  }
+
+  /**
    * Returns the configuration auto-refresh period to use.
    *
    * @return The configuration auto-refresh period to use.
@@ -1994,6 +2026,7 @@ public class SzApiServer implements SzApiProvider {
   public <T, E extends Exception> T executeInThread(Task<T, E> task)
     throws E
   {
+    this.purgeLock.readLock().lock();
     try {
       return this.workerThreadPool.execute(task);
 
@@ -2007,6 +2040,9 @@ public class SzApiServer implements SzApiProvider {
     } catch (Exception e) {
       e.printStackTrace();
       throw e;
+
+    } finally {
+      this.purgeLock.readLock().unlock();
     }
   }
 
@@ -2099,73 +2135,79 @@ public class SzApiServer implements SzApiProvider {
    *         error occurred in attempting to ensure it is current.
    */
   Boolean ensureConfigCurrent(boolean pauseWorkers) {
-    // if not capable of reinitialization then return alse
-    if (this.configMgrApi == null) return false;
-
-    Long defaultConfigId = null;
+    this.purgeLock.readLock().lock();
     try {
-      defaultConfigId = this.getNewConfigurationID();
-    } catch (IllegalStateException e) {
-      // if we get an exception then return null
-      return null;
-    }
-    if (defaultConfigId == null) return false;
+      // if not capable of reinitialization then return alse
+      if (this.configMgrApi == null) return false;
 
-    this.echo("Detected configuration change.");
-    AccessToken pauseToken = null;
-
-    // we can pause all workers before reinitializing or just let the underlying
-    // G2Engine API handle the mutual exclusion issues
-    if (pauseWorkers) {
-      this.echo("Pausing API server....");
-      pauseToken = this.workerThreadPool.pause();
-    }
-
-    int returnCode;
-    G2ConfigMgr configMgrApi = this.getConfigMgrApi();
-    // once we get here we just need to reinitialize
-    synchronized (configMgrApi) {
+      Long defaultConfigId = null;
       try {
-        if (pauseWorkers) {
-          this.echo("Paused API server.");
-        }
+        defaultConfigId = this.getNewConfigurationID();
+      } catch (IllegalStateException e) {
+        // if we get an exception then return null
+        return null;
+      }
+      if (defaultConfigId == null) return false;
 
-        // double-check on the configuration ID
+      this.echo("Detected configuration change.");
+      AccessToken pauseToken = null;
+
+      // we can pause all workers before reinitializing or just let the underlying
+      // G2Engine API handle the mutual exclusion issues
+      if (pauseWorkers) {
+        this.echo("Pausing API server....");
+        pauseToken = this.workerThreadPool.pause();
+      }
+
+      int returnCode;
+      G2ConfigMgr configMgrApi = this.getConfigMgrApi();
+      // once we get here we just need to reinitialize
+      synchronized (configMgrApi) {
         try {
-          defaultConfigId = this.getNewConfigurationID();
-        } catch (IllegalStateException e) {
-          return null;
-        }
+          if (pauseWorkers) {
+            this.echo("Paused API server.");
+          }
 
-        // check if the default config ID has already been updated
-        if (defaultConfigId == null) {
-          this.echo("API Server Engine API already reinitialized.");
+          // double-check on the configuration ID
+          try {
+            defaultConfigId = this.getNewConfigurationID();
+          } catch (IllegalStateException e) {
+            return null;
+          }
+
+          // check if the default config ID has already been updated
+          if (defaultConfigId == null) {
+            this.echo("API Server Engine API already reinitialized.");
+            return true;
+          }
+          this.echo("Reinitializing with config: " + defaultConfigId);
+
+          // reinitialize with the default config ID
+          returnCode = this.engineApi.reinitV2(defaultConfigId);
+          if (returnCode != 0) {
+            String errorMsg = formatError(
+                "G2Engine.reinitV2", this.engineApi);
+            System.err.println("Failed to reinitialize with config ID ("
+                                   + defaultConfigId + "): " + errorMsg);
+            return null;
+          }
+
+          // reinitialize the cached configuration data
+          this.initializeConfigData();
+
+          // return true to indicate we reinitialized
           return true;
-        }
-        this.echo("Reinitializing with config: " + defaultConfigId);
 
-        // reinitialize with the default config ID
-        returnCode = this.engineApi.reinitV2(defaultConfigId);
-        if (returnCode != 0) {
-          String errorMsg = formatError(
-              "G2Engine.reinitV2", this.engineApi);
-          System.err.println("Failed to reinitialize with config ID ("
-                                 + defaultConfigId + "): " + errorMsg);
-          return null;
-        }
-
-        // reinitialize the cached configuration data
-        this.initializeConfigData();
-
-        // return true to indicate we reinitialized
-        return true;
-
-      } finally {
-        if (pauseWorkers) {
-          this.workerThreadPool.resume(pauseToken);
-          this.echo("Resumed API server.");
+        } finally {
+          if (pauseWorkers) {
+            this.workerThreadPool.resume(pauseToken);
+            this.echo("Resumed API server.");
+          }
         }
       }
+
+    } finally {
+      this.purgeLock.readLock().unlock();
     }
   }
 
