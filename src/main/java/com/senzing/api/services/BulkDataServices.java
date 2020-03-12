@@ -206,7 +206,7 @@ public class BulkDataServices {
       @QueryParam("dataSource") String dataSource,
       @QueryParam("entityType") String entityType,
       @QueryParam("loadId") String loadId,
-      @DefaultValue("-1") @QueryParam("maxFailures") int maxFailures,
+      @DefaultValue("0") @QueryParam("maxFailures") int maxFailures,
       @HeaderParam("Content-Type") MediaType mediaType,
       @FormDataParam("data") InputStream dataInputStream,
       @FormDataParam("data") FormDataContentDisposition fileMetaData,
@@ -247,7 +247,7 @@ public class BulkDataServices {
       @QueryParam("dataSource") String dataSource,
       @QueryParam("entityType") String entityType,
       @QueryParam("loadId") String loadId,
-      @DefaultValue("-1") @QueryParam("maxFailures") int maxFailures,
+      @DefaultValue("0") @QueryParam("maxFailures") int maxFailures,
       @HeaderParam("Content-Type") MediaType mediaType,
       InputStream dataInputStream,
       @Context UriInfo uriInfo)
@@ -284,7 +284,7 @@ public class BulkDataServices {
       @QueryParam("dataSource") String dataSource,
       @QueryParam("entityType") String entityType,
       @QueryParam("loadId") String loadId,
-      @DefaultValue("-1") @QueryParam("maxFailures") int maxFailures,
+      @DefaultValue("0") @QueryParam("maxFailures") int maxFailures,
       @HeaderParam("Content-Type") MediaType mediaType,
       @FormDataParam("data") InputStream dataInputStream,
       @FormDataParam("data") FormDataContentDisposition fileMetaData,
@@ -330,7 +330,7 @@ public class BulkDataServices {
       @QueryParam("dataSource") String dataSource,
       @QueryParam("entityType") String entityType,
       @QueryParam("loadId") String loadId,
-      @DefaultValue("-1") @QueryParam("maxFailures") int maxFailures,
+      @DefaultValue("0") @QueryParam("maxFailures") int maxFailures,
       @HeaderParam("Content-Type") MediaType mediaType,
       InputStream dataInputStream,
       @Context UriInfo uriInfo,
@@ -422,6 +422,7 @@ public class BulkDataServices {
       }
 
     } catch (IOException e) {
+      e.printStackTrace();
       dataAnalysis.setStatus(ABORTED);
 
       SzBulkDataAnalysisResponse response = new SzBulkDataAnalysisResponse(
@@ -505,7 +506,6 @@ public class BulkDataServices {
     entityTypeMap.put(null, entityType);
     entityTypeMap.put("", entityType);
 
-    int resultCount = 0;
     try {
       BulkDataSet bulkDataSet = new BulkDataSet(mediaType, dataInputStream);
 
@@ -542,10 +542,38 @@ public class BulkDataServices {
         bulkLoadResult.setCharacterEncoding(charset);
         bulkLoadResult.setMediaType(bulkDataSet.format.getMediaType());
 
+        boolean           concurrent       = false;
+        boolean           done             = false;
+        List<JsonObject>  first1000Records = new LinkedList<>();
+
         // loop through the records and handle each record
-        for (JsonObject record = recordReader.readRecord();
-             (record != null);
-             record = recordReader.readRecord()) {
+        while (!done) {
+          JsonObject record = null;
+          if (concurrent && first1000Records.size() > 0) {
+            // get the first record from the buffer of up to 1000 records
+            record = first1000Records.remove(0);
+          } else {
+            record = recordReader.readRecord();
+          }
+
+          // check if the record is null
+          if (record == null) {
+            done = true;
+            continue;
+          }
+
+          // peel off the first 1000 records to see if we have less than 1000
+          if (!concurrent && first1000Records.size() <= 1000) {
+            // add the record to the first-1000 cache
+            first1000Records.add(record);
+
+            // check if we have more than 1000 records
+            if (first1000Records.size() > 1000) concurrent = true;
+
+            // continue for now
+            continue;
+          }
+
           // check if we have a data source and entity type
           String resolvedDS = JsonUtils.getString(record, "DATA_SOURCE");
           String resolvedET = JsonUtils.getString(record, "ENTITY_TYPE");
@@ -564,7 +592,6 @@ public class BulkDataServices {
                                                     record,
                                                     loadId);
             } finally {
-              if (asyncResult != null) resultCount++;
               this.trackLoadResult(asyncResult, bulkLoadResult);
               timerPool.add(subTimers);
             }
@@ -572,9 +599,9 @@ public class BulkDataServices {
 
           // count the number of failures
           int failedCount = bulkLoadResult.getFailedRecordCount()
-                          + bulkLoadResult.getIncompleteRecordCount();
+              + bulkLoadResult.getIncompleteRecordCount();
 
-          if (maxFailures >= 0 && failedCount > maxFailures) {
+          if (maxFailures > 0 && failedCount >= maxFailures) {
             bulkLoadResult.setStatus(ABORTED);
             break;
           }
@@ -595,9 +622,18 @@ public class BulkDataServices {
           }
         }
 
+        // check if we have less than 1000 records
+        if (first1000Records.size() > 0) {
+          this.processRecords(provider,
+                              timers,
+                              first1000Records,
+                              loadId,
+                              bulkLoadResult,
+                              maxFailures);
+        }
+
         // close out any in-flight loads from the asynchronous pool
         List<AsyncResult<EngineResult>> results = asyncPool.close();
-        resultCount += results.size();
         for (AsyncResult<EngineResult> asyncResult : results) {
           this.trackLoadResult(asyncResult, bulkLoadResult);
         }
@@ -668,24 +704,13 @@ public class BulkDataServices {
         enteringQueue(timers);
         return provider.executeInThread(() -> {
           exitingQueue(timers);
-          int returnCode;
-          if (recordId != null) {
-            callingNativeAPI(timers, "engine", "addRecord");
-            returnCode = engineApi.addRecord(dataSource,
-                                             recordId,
-                                             recordJSON,
-                                             loadId);
-            calledNativeAPI(timers, "engine", "addRecord");
+          int returnCode = this.addRecord(engineApi,
+                                          dataSource,
+                                          recordId,
+                                          recordJSON,
+                                          loadId,
+                                          timers);
 
-          } else {
-            callingNativeAPI(timers, "engine",
-                             "addRecordWithReturnedRecordID");
-            StringBuffer sb = new StringBuffer();
-            returnCode = engineApi.addRecordWithReturnedRecordID(
-                dataSource, sb, recordJSON, loadId);
-            calledNativeAPI(timers, "engine",
-                            "addRecordWithReturnedRecordID");
-          }
           return new EngineResult(
               dataSource, entityType, timers, returnCode, engineApi);
         });
@@ -701,6 +726,97 @@ public class BulkDataServices {
   }
 
   /**
+   * Asynchronously process a record using the specified {@link SzApiProvider}
+   * and {@link AsyncWorkerPool}.  The returned {@link AsyncResult} is from
+   * a previously executed task on the same thread or <tt>null</tt> if the
+   * worker thread employed has not previously executed a task.
+   */
+  private void processRecords(
+      SzApiProvider     provider,
+      Timers            timers,
+      List<JsonObject>  records,
+      String            loadId,
+      SzBulkLoadResult  bulkLoadResult,
+      int               maxFailures)
+  {
+    G2Engine engineApi = provider.getEngineApi();
+    // otherwise try to load the record
+    enteringQueue(timers);
+    provider.executeInThread(() -> {
+      exitingQueue(timers);
+      for (JsonObject record : records) {
+
+        String dataSource = JsonUtils.getString(record, "DATA_SOURCE");
+        String entityType = JsonUtils.getString(record, "ENTITY_TYPE");
+        String recordId   = JsonUtils.getString(record, "RECORD_ID");
+        String recordJSON = JsonUtils.toJsonText(record);
+
+        // check if we have a data source and entity type
+        if (dataSource == null || dataSource.trim().length() == 0
+            || entityType == null || entityType.trim().length() == 0) {
+          bulkLoadResult.trackIncompleteRecord(dataSource, entityType);
+
+        } else {
+          int returnCode = this.addRecord(engineApi,
+                                          dataSource,
+                                          recordId,
+                                          recordJSON,
+                                          loadId,
+                                          timers);
+
+          EngineResult engineResult = new EngineResult(
+              dataSource, entityType, timers, returnCode, engineApi);
+
+          this.trackLoadResult(engineResult, bulkLoadResult);
+        }
+
+        // count the number of failures
+        int failedCount = bulkLoadResult.getFailedRecordCount()
+            + bulkLoadResult.getIncompleteRecordCount();
+
+        if (maxFailures > 0 && failedCount >= maxFailures) {
+          bulkLoadResult.setStatus(ABORTED);
+          break;
+        }
+      }
+
+      // return null
+      return null;
+    });
+  }
+
+  /**
+   * Adds the record either with or without a record ID and tracks the timing.
+   */
+  private int addRecord(G2Engine    engineApi,
+                        String      dataSource,
+                        String      recordId,
+                        String      recordJSON,
+                        String      loadId,
+                        Timers      timers)
+  {
+    int returnCode;
+    if (recordId != null) {
+      callingNativeAPI(timers, "engine", "addRecord");
+      returnCode = engineApi.addRecord(dataSource,
+                                       recordId,
+                                       recordJSON,
+                                       loadId);
+      calledNativeAPI(timers, "engine", "addRecord");
+
+    } else {
+      callingNativeAPI(timers, "engine",
+                       "addRecordWithReturnedRecordID");
+      StringBuffer sb = new StringBuffer();
+      returnCode = engineApi.addRecordWithReturnedRecordID(
+          dataSource, sb, recordJSON, loadId);
+      calledNativeAPI(timers, "engine",
+                      "addRecordWithReturnedRecordID");
+    }
+    return returnCode;
+  }
+
+  /**
    * Tracks the asynchronous record load result in the {@link SzBulkLoadResult}.
    */
   private void trackLoadResult(AsyncResult<EngineResult> asyncResult,
@@ -708,23 +824,11 @@ public class BulkDataServices {
   {
     // check the result
     if (asyncResult != null) {
+      EngineResult engineResult = null;
       try {
-        // get the value from the async result
-        EngineResult engineResult = asyncResult.getValue();
+        // get the value from the async result (may throw an exception)
+        engineResult = asyncResult.getValue();
 
-        // check if the add failed or succeeded
-        if (engineResult.isFailed()) {
-          // adding the record failed, record the failure
-          bulkLoadResult.trackFailedRecord(
-              engineResult.dataSource,
-              engineResult.entityType,
-              engineResult.errorCode,
-              engineResult.errorMsg);
-        } else {
-          // adding the record succeeded, record the loaded record
-          bulkLoadResult.trackLoadedRecord(engineResult.dataSource,
-                                           engineResult.entityType);
-        }
       } catch (Exception e) {
         // an exception was thrown in trying to get the result
         String      jsonText  = e.getMessage();
@@ -736,6 +840,32 @@ public class BulkDataServices {
         bulkLoadResult.trackFailedRecord(
             failDataSource, failEntityType, new SzError(cause.getMessage()));
       }
+
+      // track the result
+      if (engineResult != null) {
+        this.trackLoadResult(engineResult, bulkLoadResult);
+      }
+    }
+  }
+
+  /**
+   * Tracks the asynchronous record load result in the {@link SzBulkLoadResult}.
+   */
+  private void trackLoadResult(EngineResult       engineResult,
+                               SzBulkLoadResult   bulkLoadResult)
+  {
+    // check if the add failed or succeeded
+    if (engineResult.isFailed()) {
+      // adding the record failed, record the failure
+      bulkLoadResult.trackFailedRecord(
+          engineResult.dataSource,
+          engineResult.entityType,
+          engineResult.errorCode,
+          engineResult.errorMsg);
+    } else {
+      // adding the record succeeded, record the loaded record
+      bulkLoadResult.trackLoadedRecord(engineResult.dataSource,
+                                       engineResult.entityType);
     }
   }
 

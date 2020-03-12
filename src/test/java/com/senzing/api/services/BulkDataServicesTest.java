@@ -3,9 +3,7 @@ package com.senzing.api.services;
 import com.senzing.api.model.*;
 import com.senzing.datagen.*;
 import com.senzing.repomgr.RepositoryManager;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -27,6 +25,7 @@ import static com.senzing.api.model.SzHttpMethod.POST;
 import static com.senzing.api.services.ResponseValidators.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static org.junit.jupiter.api.Assertions.*;
+import static com.senzing.api.model.SzBulkDataStatus.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class BulkDataServicesTest extends AbstractServiceTest {
@@ -453,7 +452,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
             entityType = null;
           }
 
-          int recordCount = Math.max(500, ((iteration + 1) * 2000) % 2500);
+          int recordCount = (dataSourceList.size() == 1) ? 500
+              : Math.max(500, ((iteration + 1) * 2000) % 2500);
 
           Map<FeatureType, Set<UsageType>> featureGenMap
               = featureGenMaps.get(recordType);
@@ -735,9 +735,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                              response,
                              POST,
                              uriText,
+                             COMPLETED,
                              mediaType,
                              bulkDataFile,
                              analysis,
+                             analysis.getRecordCount(),
                              allDataSourceMap,
                              allEntityTypeMap,
                              null,
@@ -792,15 +794,215 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                              response,
                              POST,
                              uriText,
+                             COMPLETED,
                              mediaType,
                              bulkDataFile,
                              analysis,
+                             analysis.getRecordCount(),
                              allDataSourceMap,
                              allEntityTypeMap,
                              null,
                              null,
                              before,
                              after);
+
+      } catch (Exception e) {
+        System.err.println("********** FAILED TEST: " + testInfo);
+        e.printStackTrace();
+        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  private List<Arguments> getMaxFailureArgs() {
+    try {
+      File[] tempFiles = {
+          File.createTempFile("failures-test", ".jsonl"),
+          File.createTempFile("failures-test", ".jsonl"),
+          File.createTempFile("failures-test", ".jsonl")
+      };
+
+      List<RecordHandler> handlers = new ArrayList<>(tempFiles.length);
+      for (File tempFile : tempFiles) {
+        FileOutputStream      fos     = new FileOutputStream(tempFile);
+        BufferedOutputStream  bos     = new BufferedOutputStream(fos);
+        OutputStreamWriter    osw     = new OutputStreamWriter(bos, UTF_8);
+        RecordHandler         handler = new JsonLinesRecordHandler(osw);
+        handlers.add(handler);
+      }
+
+      Map<FeatureType, Set<UsageType>> featureGenMap = featureGenMap(PERSON);
+      Map<FeatureType, FeatureDensity> featDensityMap = featureDensityMap();
+
+      // the first handler gets exactly 1000 records (max single thread load)
+      this.dataGenerator.generateRecords(handlers.get(0),
+                                         PERSON,
+                                         978,
+                                         true,
+                                         CUSTOMERS_DATA_SOURCE,
+                                         PERSON_ENTITY_TYPE,
+                                         featureGenMap,
+                                         featDensityMap,
+                                         true,
+                                         true);
+
+      // the second will have 1001 records when finished (concurrent load)
+      this.dataGenerator.generateRecords(handlers.get(1),
+                                         PERSON,
+                                         979,
+                                         true,
+                                         CUSTOMERS_DATA_SOURCE,
+                                         PERSON_ENTITY_TYPE,
+                                         featureGenMap,
+                                         featDensityMap,
+                                         true,
+                                         true);
+
+      // now add the 12 bad records mixed in with 10 good ones (this is all the
+      // third handler gets)
+      try (RecordHandler handler = new CompoundRecordHandler(handlers)) {
+        this.dataGenerator.generateRecords(handler,
+                                           PERSON,
+                                           2,
+                                           true,
+                                           CUSTOMER_DATA_SOURCE,
+                                           GENERIC_ENTITY_TYPE,
+                                           featureGenMap,
+                                           featDensityMap,
+                                           true,
+                                           true);
+
+        this.dataGenerator.generateRecords(handler,
+                                           PERSON,
+                                           10,
+                                           true,
+                                           CUSTOMERS_DATA_SOURCE,
+                                           PERSON_ENTITY_TYPE,
+                                           featureGenMap,
+                                           featDensityMap,
+                                           true,
+                                           true);
+
+        this.dataGenerator.generateRecords(handler,
+                                           PERSON,
+                                           10,
+                                           true,
+                                           CUSTOMER_DATA_SOURCE,
+                                           PERSON_ENTITY_TYPE,
+                                           featureGenMap,
+                                           featDensityMap,
+                                           true,
+                                           true);
+      }
+
+      List<Arguments> result = new LinkedList<>();
+
+      Map<String, Integer> entityTypeFailures12 = new LinkedHashMap<>();
+      entityTypeFailures12.put(GENERIC_ENTITY_TYPE, 2);
+      entityTypeFailures12.put(PERSON_ENTITY_TYPE, 10);
+
+      Map<String, Integer> entityTypeFailures5 = new LinkedHashMap<>();
+      entityTypeFailures12.put(GENERIC_ENTITY_TYPE, 2);
+      entityTypeFailures12.put(PERSON_ENTITY_TYPE, 3);
+
+      for (int index = 0; index < tempFiles.length; index++) {
+        File tempFile = tempFiles[index];
+        int recordCount = (index == 2) ? 22 : (1000 + index);
+        result.add(Arguments.of(
+            recordCount,
+            null,
+            COMPLETED,
+            Collections.singletonMap(CUSTOMER_DATA_SOURCE, 12),
+            entityTypeFailures12,
+            tempFile));
+
+        result.add(Arguments.of(
+            recordCount,
+            -1,
+            COMPLETED,
+            Collections.singletonMap(CUSTOMER_DATA_SOURCE, 12),
+            entityTypeFailures12,
+            tempFile));
+
+        result.add(Arguments.of(
+            recordCount,
+            5,
+            ABORTED,
+            Collections.singletonMap(CUSTOMER_DATA_SOURCE, 5),
+            entityTypeFailures5,
+            tempFile));
+      }
+      return result;
+
+    } catch (RuntimeException e) {
+      e.printStackTrace();
+      throw e;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
+  }
+
+  @ParameterizedTest
+  @MethodSource("getMaxFailureArgs")
+  public void testMaxFailuresOnLoad(
+      int                   recordCount,
+      Integer               maxFailures,
+      SzBulkDataStatus      expectedStatus,
+      Map<String, Integer>  failuresByDataSource,
+      Map<String, Integer>  failuresByEntityType,
+      File                  dataFile)
+  {
+    this.performTest(() -> {
+      this.livePurgeRepository();
+
+      String testInfo = "recordCount=[ " + recordCount + " ], maxFailures=[ "
+          + maxFailures + " ], status=[ "
+          + expectedStatus + " ], failuresByDataSource=[ "
+          + failuresByDataSource + " ], failuresByEntityType=[ "
+          + failuresByEntityType + " ], dataFile=[ " + dataFile + " ]";
+
+      String uriText = this.formatServerUri("bulk-data/load");
+
+      MultivaluedMap queryParams = new MultivaluedHashMap();
+      if (maxFailures != null) {
+        queryParams.add("maxFailures", String.valueOf(maxFailures));
+      }
+      UriInfo uriInfo = this.newProxyUriInfo(uriText, queryParams);
+
+      SzBulkLoadResponse response = null;
+      try (InputStream is = new FileInputStream(dataFile);
+           BufferedInputStream bis = new BufferedInputStream(is)) {
+        long before = System.currentTimeMillis();
+        response = this.bulkDataServices.loadBulkRecordsViaForm(
+            null,
+            null,
+            null,
+            maxFailures == null ? -1 : maxFailures,
+            MediaType.valueOf("text/plain"),
+            bis,
+            null,
+            uriInfo);
+
+        response.concludeTimers();
+        long after = System.currentTimeMillis();
+
+        this.validateLoadResponse(testInfo,
+                                  response,
+                                  POST,
+                                  uriText,
+                                  expectedStatus,
+                                  MediaType.valueOf("text/plain"),
+                                  dataFile,
+                                  null,
+                                  recordCount,
+                                  null,
+                                  null,
+                                  failuresByDataSource,
+                                  failuresByEntityType,
+                                  before,
+                                  after);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
@@ -951,9 +1153,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                     SzBulkLoadResponse         response,
                                     SzHttpMethod               httpMethod,
                                     String                     selfLink,
+                                    SzBulkDataStatus           expectedStatus,
                                     MediaType                  mediaType,
                                     File                       bulkDataFile,
                                     SzBulkDataAnalysis         analysis,
+                                    Integer                    totalRecordCount,
                                     Map<String, String>        dataSourceMap,
                                     Map<String, String>        entityTypeMap,
                                     Map<String, Integer>       failuresBySource,
@@ -976,14 +1180,22 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
     assertNotNull(actual, "Response result is null: " + testInfo);
 
-    assertEquals(analysis.getCharacterEncoding(), actual.getCharacterEncoding(),
-                 "Character encoding in result not as expected: " + testInfo);
+    if (analysis != null) {
+      assertEquals(analysis.getCharacterEncoding(), actual.getCharacterEncoding(),
+                   "Character encoding in result not as expected: " + testInfo);
 
-    assertEquals(analysis.getMediaType(), actual.getMediaType(),
-                 "Media type in result not as expected: " + testInfo);
+      assertEquals(analysis.getMediaType(), actual.getMediaType(),
+                   "Media type in result not as expected: " + testInfo);
 
-    assertEquals(analysis.getRecordCount(), actual.getRecordCount(),
-                 "Unexpected number of total records: " + testInfo);
+      assertEquals(analysis.getRecordCount(), totalRecordCount,
+                   "Unexpected number of total records: " + testInfo);
+    }
+
+    if (expectedStatus != null) {
+      assertEquals(
+          expectedStatus, actual.getStatus(),
+          "Unexpected status for bulk load result: " + testInfo);
+    }
 
     // determine how many failures are expected
     int expectedFailures = 0;
@@ -993,16 +1205,40 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       }
     }
 
-    if (expectedFailures != actual.getFailedRecordCount()) {
-      System.out.println("----------------------------------");
-      System.out.println("RECORD COUNT: " + analysis.getRecordCount());
+    int concurrency         = this.getServerConcurrency();
+    int minExpectedFailures = expectedFailures;
+    int maxExpectedFailures = totalRecordCount <= 1000
+        ? expectedFailures : (expectedFailures + concurrency - 1);
+
+    if (maxExpectedFailures < actual.getFailedRecordCount()) {
+      if (analysis != null) {
+        System.out.println("----------------------------------");
+        System.out.println("RECORD COUNT: " + analysis.getRecordCount());
+      }
       for (SzBulkLoadError error : actual.getTopErrors()) {
         System.out.println(error);
         System.out.println();
       }
     }
-    assertEquals(expectedFailures, actual.getFailedRecordCount(),
-                 "Unexpected number of failed records: " + testInfo);
+
+    if (minExpectedFailures == maxExpectedFailures) {
+      assertEquals(expectedFailures, actual.getFailedRecordCount(),
+                   "Unexpected number of failed records: " + testInfo);
+    } else {
+      assertTrue(
+          minExpectedFailures <= actual.getFailedRecordCount(),
+          "Actual number of failures (" + actual.getFailedRecordCount()
+              + ") is fewer than expected (" + minExpectedFailures + "): "
+              + testInfo);
+      assertTrue(
+          maxExpectedFailures >= actual.getFailedRecordCount(),
+          "Actual number of failures (" + actual.getFailedRecordCount()
+              + ") is more than expected (" + maxExpectedFailures + "): "
+              + testInfo);
+    }
+
+    // check if nothing more to validate
+    if (analysis == null) return;
 
     // get the analyses for missing data source and missing entity type
     SzDataSourceRecordAnalysis missingSourceAnalysis = null;
@@ -1038,7 +1274,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                      + testInfo);
 
     // now determine how many records should have loaded
-    int expectLoaded = analysis.getRecordCount() - expectedFailures
+    int expectLoaded = totalRecordCount - expectedFailures
         - incompleteCount;
 
     assertEquals(expectLoaded, actual.getLoadedRecordCount(),
