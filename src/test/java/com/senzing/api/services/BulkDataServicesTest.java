@@ -835,7 +835,43 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       Map<FeatureType, Set<UsageType>> featureGenMap = featureGenMap(PERSON);
       Map<FeatureType, FeatureDensity> featDensityMap = featureDensityMap();
 
-      // the first handler gets exactly 1000 records (max single thread load)
+      // add 12 bad records mixed in with 10 good ones
+      RecordHandler handler = new CompoundRecordHandler(handlers);
+      this.dataGenerator.generateRecords(handler,
+                                         PERSON,
+                                         2,
+                                         true,
+                                         CUSTOMER_DATA_SOURCE,
+                                         GENERIC_ENTITY_TYPE,
+                                         featureGenMap,
+                                         featDensityMap,
+                                         true,
+                                         true);
+
+      this.dataGenerator.generateRecords(handler,
+                                         PERSON,
+                                         10,
+                                         true,
+                                         CUSTOMERS_DATA_SOURCE,
+                                         PERSON_ENTITY_TYPE,
+                                         featureGenMap,
+                                         featDensityMap,
+                                         true,
+                                         true);
+
+      this.dataGenerator.generateRecords(handler,
+                                         PERSON,
+                                         10,
+                                         true,
+                                         CUSTOMER_DATA_SOURCE,
+                                         PERSON_ENTITY_TYPE,
+                                         featureGenMap,
+                                         featDensityMap,
+                                         true,
+                                         true);
+
+      // the first handler gets 978 additional good records to make an even 1000
+      // (this is the maximum that should be handled in a single thread)
       this.dataGenerator.generateRecords(handlers.get(0),
                                          PERSON,
                                          978,
@@ -847,7 +883,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                          true,
                                          true);
 
-      // the second will have 1001 records when finished (concurrent load)
+      // the second handler gets 979 additional good records to make for 1001
+      // (this is the minimum to trigger concurrent handling)
       this.dataGenerator.generateRecords(handlers.get(1),
                                          PERSON,
                                          979,
@@ -859,43 +896,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                          true,
                                          true);
 
-      // now add the 12 bad records mixed in with 10 good ones (this is all the
-      // third handler gets)
-      try (RecordHandler handler = new CompoundRecordHandler(handlers)) {
-        this.dataGenerator.generateRecords(handler,
-                                           PERSON,
-                                           2,
-                                           true,
-                                           CUSTOMER_DATA_SOURCE,
-                                           GENERIC_ENTITY_TYPE,
-                                           featureGenMap,
-                                           featDensityMap,
-                                           true,
-                                           true);
-
-        this.dataGenerator.generateRecords(handler,
-                                           PERSON,
-                                           10,
-                                           true,
-                                           CUSTOMERS_DATA_SOURCE,
-                                           PERSON_ENTITY_TYPE,
-                                           featureGenMap,
-                                           featDensityMap,
-                                           true,
-                                           true);
-
-        this.dataGenerator.generateRecords(handler,
-                                           PERSON,
-                                           10,
-                                           true,
-                                           CUSTOMER_DATA_SOURCE,
-                                           PERSON_ENTITY_TYPE,
-                                           featureGenMap,
-                                           featDensityMap,
-                                           true,
-                                           true);
-      }
-
       List<Arguments> result = new LinkedList<>();
 
       Map<String, Integer> entityTypeFailures12 = new LinkedHashMap<>();
@@ -903,8 +903,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       entityTypeFailures12.put(PERSON_ENTITY_TYPE, 10);
 
       Map<String, Integer> entityTypeFailures5 = new LinkedHashMap<>();
-      entityTypeFailures12.put(GENERIC_ENTITY_TYPE, 2);
-      entityTypeFailures12.put(PERSON_ENTITY_TYPE, 3);
+      entityTypeFailures5.put(GENERIC_ENTITY_TYPE, 2);
+      entityTypeFailures5.put(PERSON_ENTITY_TYPE, 3);
 
       for (int index = 0; index < tempFiles.length; index++) {
         File tempFile = tempFiles[index];
