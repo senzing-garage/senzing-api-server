@@ -1,11 +1,8 @@
 name: Cron Schedule 3 hr Test Java API Server Build on Debian
 
 on:
-#  schedule:
-#    - cron: '0 */3 * * *'
-  push:
-    branches-ignore:
-      - master
+  schedule:
+    - cron: '0 */3 * * *'
 
 
 jobs:
@@ -34,8 +31,6 @@ jobs:
       - name: Get Senzing G2 Engine Version
         id: g2_engine_version
         run: echo ::set-output name=senzing_g2_version::$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
-      - name: Print environment
-        run: printenv
       - name: Copy /opt/senzing to Runner working directory
         id: copy_senzing_wrk_dir
         run: |
@@ -53,7 +48,7 @@ jobs:
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
         uses: Senzing/git-action-jira-issue-creation@1.1.0
-#        if: failure()
+        if: failure()
         env:
           JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
