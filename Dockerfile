@@ -1,7 +1,9 @@
+ARG BASE_IMAGE=senzing/senzing-base:1.4.0
+ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.1
 # -----------------------------------------------------------------------------
 # Stage: builder
 # -----------------------------------------------------------------------------
-FROM debian:buster as builder
+FROM ${BASE_BUILDER_IMAGE} as builder
 
 # Set Shell to use for RUN commands in builder step
 
@@ -11,25 +13,10 @@ LABEL Name="senzing/senzing-api-server-builder" \
       Maintainer="support@senzing.com" \
       Version="1.0.0"
 
-# Install packages via apt.
+# Build arguments.
 
-RUN echo "deb http://ftp.us.debian.org/debian sid main" >> /etc/apt/sources.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-        apt-transport-https \
-        software-properties-common \
-        git \
-        openjdk-8-jdk \
-        gnupg2 \
-        jq \
-        make \
-        sudo \
-        wget
-
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-      maven \
- && rm -rf /var/lib/apt/lists/*
+ARG SENZING_G2_JAR_RELATIVE_PATHNAME=unknown
+ARG SENZING_G2_JAR_VERSION=unknown
 
 # Set environment variables.
 
@@ -38,42 +25,59 @@ ENV SENZING_G2_DIR=${SENZING_ROOT}/g2
 ENV PYTHONPATH=${SENZING_ROOT}/g2/python
 ENV LD_LIBRARY_PATH=${SENZING_ROOT}/g2/lib:${SENZING_ROOT}/g2/lib/debian
 
-# Set environment variables.
+# Copy Repo files to Builder step.
 
-ENV SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA
-
-# Add Senzing Files
-
-RUN wget https://senzing-production-apt.s3.amazonaws.com/senzingrepo_1.0.0-1_amd64.deb \
-    && apt-get -y install ./senzingrepo_1.0.0-1_amd64.deb \
-    && apt-get -y update \
-    && rm -rf senzingrepo_1.0.0-1_amd64.deb \
-    && apt-get -y install \
-        senzingapi
-
-# Clone Senzing API Server repository.
-
-WORKDIR /
-RUN git clone https://github.com/Senzing/senzing-api-server.git
+COPY . /senzing-api-server
 
 WORKDIR /senzing-api-server
+# Run the "make" command to create the artifacts.
 
 RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
  && make \
-     SENZING_G2_JAR_VERSION=$(cat ${SENZING_G2_DIR}/g2BuildVersion.json | jq --raw-output '.VERSION') \
+     SENZING_G2_JAR_PATHNAME=/senzing-api-server/${SENZING_G2_JAR_RELATIVE_PATHNAME} \
+     SENZING_G2_JAR_VERSION=${SENZING_G2_JAR_VERSION} \
      package \
- && mkdir -p /app \
- && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_JAR_VERSION}.jar "/app/senzing-api-server.jar"
+ && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_JAR_VERSION}.jar "/senzing-api-server.jar"
 
-# Create project
-RUN python3 /opt/senzing/g2/python/G2CreateProject.py /app/senzing
-RUN /bin/bash -c "source /app/senzing/setupEnv;  echo y | python3 /app/senzing/python/G2SetupConfig.py"
-RUN python3 /app/senzing/python/G2Loader.py -P
-RUN chown -R 1001 /app
+# -----------------------------------------------------------------------------
+# Stage: Final
+# -----------------------------------------------------------------------------
+FROM ${BASE_IMAGE}
+
+ENV REFRESHED_AT=2020-01-29
+
+LABEL Name="senzing/senzing-api-server" \
+      Maintainer="support@senzing.com" \
+      Version="1.7.10"
+
+HEALTHCHECK CMD ["/app/healthcheck.sh"]
+
+# Run as "root" for system installation.
+
+USER root
+
+# Install packages via apt.
+
+RUN apt update \
+ && apt -y install \
+      software-properties-common \
+ && rm -rf /var/lib/apt/lists/*
+
+# Install Java-8 - To be removed after Senzing API server supports Java 11
+# Once fixed, add "default-jdk" to "apt install ..."
+
+RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add - \
+ && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
+ && apt update \
+ && apt -y install adoptopenjdk-8-hotspot
 
 # Service exposed on port 8080.
 
 EXPOSE 8080
+
+# Copy files from builder step.
+
+COPY --from=builder "/senzing-api-server.jar" "/app/senzing-api-server.jar"
 
 # Make non-root container.
 
