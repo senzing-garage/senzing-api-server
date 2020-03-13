@@ -56,6 +56,7 @@ jobs:
           JIRA_ISSUE_DESCRIPTION: |
             OS: senzing/base-image-debian:1.0.1
             Senzing RPM version: ${{ steps.g2_engine_version.outputs.senzing_g2_version }}
+            DEB URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
             The commit SHA is: ${{ github.sha }}
             The build failed its maven unit test cases using the staging DEB package.
             See build.log attach to this issue for more details
