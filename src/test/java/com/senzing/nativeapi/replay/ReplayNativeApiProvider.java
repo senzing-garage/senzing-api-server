@@ -363,6 +363,11 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   private boolean cacheStale = false;
 
   /**
+   * Flag indicating if we are forcing recording of cache.
+   */
+  private boolean forceRecord;
+
+  /**
    * Default constructor.
    */
   public ReplayNativeApiProvider() {
@@ -382,12 +387,15 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
                                  CACHE_DIR_PREFIX + G2_NATIVE_VERSION);
 
         // check if forcing creation of the cache
-        boolean forceCreate = Boolean.TRUE.toString().toLowerCase().equals(
+        this.forceRecord = Boolean.TRUE.toString().toLowerCase().equals(
             System.getProperty("com.senzing.api.test.replay.record"));
+
+        // check if running all tests or specific tests
+        boolean runningAllTests = System.getProperty("test") == null;
 
         // if the cache exists and we are forcing creation, then delete the
         // cache file
-        if (forceCreate && this.cacheDir.exists()) {
+        if (this.forceRecord && runningAllTests && this.cacheDir.exists()) {
           try {
             IOUtilities.recursiveDeleteDirectory(this.cacheDir);
           } catch (IOException e) {
@@ -692,6 +700,15 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     // check if there is a cache to extract
     File cacheZip = this.getTestCacheZip();
     File cacheDir = this.getTestCacheDir();
+
+    // check if forcing re-recording
+    if (this.forceRecord) {
+      if (cacheZip.exists()) cacheZip.delete();
+
+      if (cacheDir.exists()) {
+        recursiveDeleteDirectory(cacheDir);
+      }
+    }
 
     // if there is no cache, try unzipping the existing cache
     if (cacheZip.exists() && !cacheDir.exists()) {
@@ -1235,30 +1252,57 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       }
 
       // hash the parameter values
-      Set<Method> methods = IRRELEVANT_METHODS_MAP.get(apiClass);
-      if (methods == null || !methods.contains(apiMethod)) {
-        for (Object paramValue: parameters) {
-          if (paramValue == null) {
-            md5.update(ZEROES);
-            md5.update(ZEROES);
+      if (apiClass.equals(G2Engine.class)
+          && apiMethod.getName().startsWith("addRecord")) {
+        // special case for "addMethod" since it is called concurrently
+        String jsonText = (String) parameters.get(2);
+        JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
 
-          } else if ((paramValue instanceof Number)
-              || (paramValue instanceof String)
-              || (paramValue instanceof Boolean))
-          {
-            md5.update(paramValue.toString().getBytes(UTF_8));
-            md5.update(ZEROES);
+        String dataSource = JsonUtils.getString(jsonObject, "DATA_SOURCE");
+        String entityType = JsonUtils.getString(jsonObject, "ENTITY_TYPE");
 
-          } else if ((paramValue instanceof StringBuffer)
-              || (paramValue instanceof StringBuilder)
-              || (paramValue instanceof Result))
-          {
-            md5.update(paramValue.getClass().getName().getBytes(UTF_8));
-            md5.update(ZEROES);
+        // add the data source to the hash
+        if (dataSource != null) {
+          md5.update(dataSource.toString().getBytes(UTF_8));
+        } else {
+          md5.update(ZEROES);
+        }
+        md5.update(ZEROES);
 
-          } else {
-            throw new IllegalStateException(
-                "Unsupported parameter value type: " + paramValue.getClass());
+        // add the entity type to the hash
+        if (entityType != null) {
+          md5.update(entityType.toString().getBytes(UTF_8));
+        } else {
+          md5.update(ZEROES);
+        }
+        md5.update(ZEROES);
+
+      } else {
+        Set<Method> methods = IRRELEVANT_METHODS_MAP.get(apiClass);
+        if (methods == null || !methods.contains(apiMethod)) {
+          for (Object paramValue: parameters) {
+            if (paramValue == null) {
+              md5.update(ZEROES);
+              md5.update(ZEROES);
+
+            } else if ((paramValue instanceof Number)
+                || (paramValue instanceof String)
+                || (paramValue instanceof Boolean))
+            {
+              md5.update(paramValue.toString().getBytes(UTF_8));
+              md5.update(ZEROES);
+
+            } else if ((paramValue instanceof StringBuffer)
+                || (paramValue instanceof StringBuilder)
+                || (paramValue instanceof Result))
+            {
+              md5.update(paramValue.getClass().getName().getBytes(UTF_8));
+              md5.update(ZEROES);
+
+            } else {
+              throw new IllegalStateException(
+                  "Unsupported parameter value type: " + paramValue.getClass());
+            }
           }
         }
       }
@@ -1310,7 +1354,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
    */
   public File getTestCacheZip() {
     String  simpleClassName = this.currentTestClass.getSimpleName();
-    String  cacheFileName   = simpleClassName + "-cache" + ".zip";
+    String  cacheFileName   = simpleClassName + "-cache.zip";
     File    result          = new File(this.cacheDir, cacheFileName);
     return result;
   }
