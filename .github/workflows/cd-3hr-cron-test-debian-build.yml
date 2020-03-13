@@ -31,6 +31,8 @@ jobs:
       - name: Install Senzing Api Without Sqlite Dependency
         id: install_senzing_api
         run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb >> build.log 2>&1
+      - name: Get Senzing G2 Engine Version
+        run: echo ::set-env name=SENZING_G2_VERSION::$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
       - name: Copy /opt/senzing to Runner working directory
         id: copy_senzing_wrk_dir
         run: |
@@ -54,7 +56,7 @@ jobs:
           JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
           JIRA_ISSUE_ATTACHMENT: build.log
           JIRA_ISSUE_DESCRIPTION: "The commit SHA is: _${{ github.sha }}_. The build failed its maven unit test cases using the staging DEB package. See build.log attach to this issue for more details"
-          JIRA_ISSUE_SUMMARY: "Senzing API server Debian build failed on GitHub SHA ${{ github.sha }}"
+          JIRA_ISSUE_SUMMARY: "Senzing API server Debian build failed using G2 Version ${SENZING_G2_VERSION}"
           JIRA_ISSUE_TYPE: Task
           JIRA_PROJECT: PBF
           JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
