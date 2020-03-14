@@ -50,11 +50,11 @@ documents the available API methods, their parameters and the response formats.
 
 ### Dependencies
 
-To build the Senzing REST API Server you will need Apache Maven (recommend version 3.5.4 or later)
-as well as Java 1.8.x (recommend version 1.8.0_171 or later).
+To build the Senzing REST API Server you will need Apache Maven (recommend version 3.6.1 or later)
+as well as OpenJDK version 11.0.x (recommend version 11.0.6+10 or later).
 
 You will also need the Senzing `g2.jar` file installed in your Maven repository.
-The Senzing REST API Server requires version 1.10.x or later of the Senzing API and Senzing App.
+The Senzing REST API Server requires version 1.13.x or later of the Senzing API and Senzing App.
 In order to install `g2.jar` you must:
 
 1. Locate your
@@ -74,9 +74,9 @@ In order to install `g2.jar` you must:
         ```console
         {
             "PLATFORM": "Linux",
-            "VERSION": "1.12.0",
-            "BUILD_VERSION": "1.12.0.19284",
-            "BUILD_NUMBER": "2019_10_11__15_46"
+            "VERSION": "1.14.20060",
+            "API_VERSION": "1.14.3",
+            "BUILD_NUMBER": "2020_02_29__02_00"
         }
         ```
 
@@ -87,7 +87,7 @@ In order to install `g2.jar` you must:
 
         ```console
         export SENZING_G2_DIR=/opt/senzing/g2
-        export SENZING_G2_JAR_VERSION=1.12.0
+        export SENZING_G2_JAR_VERSION=1.14.3
 
         mvn install:install-file \
             -Dfile=${SENZING_G2_DIR}/lib/g2.jar \
@@ -101,7 +101,7 @@ In order to install `g2.jar` you must:
 
         ```console
         set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
-        set SENZING_G2_JAR_VERSION=1.12.0
+        set SENZING_G2_JAR_VERSION=1.14.3
 
         mvn install:install-file \
             -Dfile="%SENZING_G2_DIR%\lib\g2.jar" \
@@ -160,28 +160,20 @@ reinitialization of the configuration when it changes (i.e.: when the default
 configuration changes) and you will be responsible for keeping the configuration
 in sync across multiple processes that may be using it.
 
-***NOTE:*** *In lieu of using `java -jar` directly and the `-iniFile` option to
-specify your entity repository, you can use the
-[Senzing App Integration Scripts](./app-scripts/README.md) to start the
-Senzing REST API Server using an entity repository from the
-[Senzing app](https://senzing.com/#download).  The scripts are provided in the
-`app-scripts` sub-directory.  See the [associated README.md file](./app-scripts/README.md)
-for version compatibility and usage information.*
-
 Other command-line options may be useful to you as well.  Execute
 
 ```console
-java -jar target/senzing-api-server-1.7.10.jar -help
+java -jar target/senzing-api-server-1.8.0.jar -help
 ```
 
 to obtain a help message describing all available options.
 For example:
 
 ```console
-$ java -jar target/senzing-api-server-1.7.10.jar -help
-java -jar senzing-api-server-1.7.10.jar <options>
+$ java -jar target/senzing-api-server-1.8.0.jar -help
+java -jar senzing-api-server-1.8.0.jar <options>
 
-<options> includes:
+<options> includes: 
 
 [ Standard Options ]
 
@@ -194,6 +186,17 @@ java -jar senzing-api-server-1.7.10.jar <options>
         Should be the first and only option if provided.
         Causes the version of the G2 REST API Server to be displayed.
         NOTE: If this option is provided, the server will not start.
+
+   -readOnly
+        Disables functions that would modify the entity repository data, causing
+        those functions to return a 403 Forbidden response.  NOTE: this option
+        will not only disable loading data to the entity repository, but will
+        also disable modifications to the configuration even if the -enableAdmin
+        option is provided.
+
+   -enableAdmin
+        Enables administrative functions via the API server.  If not specified
+        then administrative functions will return a 403 Forbidden response.
 
    -httpPort <port-number>
         Sets the port for HTTP communication.  Defaults to 2080.
@@ -208,7 +211,7 @@ java -jar senzing-api-server-1.7.10.jar <options>
         There is no default value.
 
    -concurrency <thread-count>
-        Sets the number of threads available for executing
+        Sets the number of threads available for executing 
         Senzing API functions (i.e.: the number of engine threads).
         If not specified, then this defaults to 8.
 
@@ -217,7 +220,6 @@ java -jar senzing-api-server-1.7.10.jar <options>
 
    -iniFile <ini-file-path>
         The path to the Senzing INI file to with which to initialize.
-        *** DEPRECATED: Use -initFile, -initEnvVar or -initJson instead.
 
    -initFile <json-init-file>
         The path to the file containing the JSON text to use for Senzing
@@ -235,13 +237,31 @@ java -jar senzing-api-server-1.7.10.jar <options>
         then it may be visible to other users via process monitoring.
 
    -configId <config-id>
-        Use with the -initFile, -initEnvVar or -initJson options to
-        force a specific configuration ID to use for initialization.
-        NOTE: This will disable the auto-detection of config changes
+        Use with the -iniFile, -initFile, -initEnvVar or -initJson options
+        to force a specific configuration ID to use for initialization.
+
+   -autoRefreshPeriod <positive-integer-seconds|0|negative-integer>
+        If leveraging the default configuration stored in the database,
+        this is used to specify how often the API server should background
+        check that the current active config is the same as the current
+        default config, and if different reinitialize with the current
+        default config.  If zero is specified, then the auto-refresh
+        is disabled and it will only occur when a requested configuration
+        element is not found in the current active config.  Specifying
+        a negative integer is allowed but is used to enable a check and 
+        conditional refresh only when manually requested (programmatically).
+        NOTE: This is option ignored if auto-refresh is disabled because
+        the config was specified via the G2CONFIGFILE init option or if 
+        -configId has been specified to lock to a specific configuration.
 
    -verbose If specified then initialize in verbose mode.
 
-   -monitorFile [filePath]
+   -quiet If specified then the API server reduces the number of messages
+          provided as feedback to standard output.  This applies only to
+          messages generated by the API server and not by the underlying 
+          API which can be quite prolific if -verbose is provided.
+
+   -monitorFile [file-path]
         Specifies a file whose timestamp is monitored to determine
         when to shutdown.
 
@@ -253,6 +273,7 @@ java -jar senzing-api-server-1.7.10.jar <options>
         is specified by itself then a help message on configuration manager
         options will be displayed.
         NOTE: If this option is provided, the server will not start.
+
 ```
 
 If you wanted to run the server on port 8080 and bind to all
