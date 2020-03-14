@@ -623,7 +623,8 @@ public class BulkDataServices {
         }
 
         // check if we have less than 1000 records
-        if (first1000Records.size() > 0) {
+        if (first1000Records.size()>0 && bulkLoadResult.getStatus()!=ABORTED)
+        {
           this.processRecords(provider,
                               timers,
                               first1000Records,
