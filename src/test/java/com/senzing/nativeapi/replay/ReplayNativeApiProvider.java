@@ -591,6 +591,8 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     private String        parametersHash;
     private List          parameters;
     private List          results;
+    private Object        lastResult = null;
+    private Set<Long>     threadIdSet = new LinkedHashSet<>();
   }
 
   /**
@@ -1330,6 +1332,84 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     }
   }
 
+
+  /**
+   * Produces the hash info for the invocation.
+   *
+   * @param apiClass The API class the method is called on.
+   * @param apiMethod The API method that was called.
+   * @param parameters The list of parameter values.
+   * @param stackTrace The stack trace for the call.
+   */
+  private String invocationHashInfo(Class                    apiClass,
+                                    Method                   apiMethod,
+                                    List                     parameters,
+                                    List<StackTraceElement>  stackTrace)
+  {
+    StringBuilder sb = new StringBuilder();
+
+    sb.append("apiClass=[ " + apiClass.getName() + " ]");
+    sb.append(", methodName=[ " + apiMethod.getName() + " ]");
+    sb.append(", paramTypes=[ ");
+    // hash the parameter types
+    Class[] paramTypes = apiMethod.getParameterTypes();
+    String prefix = "";
+    for (Class paramType: paramTypes) {
+      sb.append(prefix).append(paramType.getName());
+      prefix = ", ";
+    }
+    sb.append(" ]");
+
+    // hash the parameter values
+    if (apiClass.equals(G2Engine.class)
+        && apiMethod.getName().startsWith("addRecord")) {
+
+      // special case for "addMethod" since it is called concurrently
+      String jsonText = (String) parameters.get(2);
+      JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
+
+      String dataSource = JsonUtils.getString(jsonObject, "DATA_SOURCE");
+      String entityType = JsonUtils.getString(jsonObject, "ENTITY_TYPE");
+
+      sb.append(", dataSource=[ ").append(dataSource).append(" ]");
+      sb.append(", entityType=[ ").append(entityType).append(" ]");
+
+    } else {
+      Set<Method> methods = IRRELEVANT_METHODS_MAP.get(apiClass);
+      if (methods == null || !methods.contains(apiMethod)) {
+        sb.append(", parameters=[ ");
+        prefix = "";
+        for (Object paramValue: parameters) {
+          if ((paramValue instanceof StringBuffer)
+              || (paramValue instanceof StringBuilder)
+              || (paramValue instanceof Result))
+          {
+            sb.append(paramValue.getClass().getName());
+          } else {
+            sb.append(prefix).append(paramValue);
+          }
+          prefix = ", ";
+        }
+        sb.append(" ]");
+      }
+    }
+
+    sb.append(", stackTrace=[ ");
+    int stackIndex = 0;
+    for (StackTraceElement stackFrame : stackTrace) {
+      String stackClass = stackFrame.getClassName();
+      if (stackClass.startsWith(PACKAGE_PREFIX)) continue;
+      if (!stackClass.startsWith(SENZING_PACKAGE_PREFIX)) continue;
+      if (stackClass.contains("$Proxy")) stackClass = apiClass.getName();
+      sb.append("\n    " + (stackIndex++) + ": " + stackClass);
+      String stackMethod = stackFrame.getMethodName();
+      sb.append("." + stackMethod);
+    }
+    sb.append("\n]");
+
+    return sb.toString();
+  }
+
   /**
    * Gets the cache file for the current test class.
    */
@@ -1540,7 +1620,30 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
                     + ") -- manually remove cache: "
                     + provider.getTestCacheDir());
           }
-          Object resultsItem = cache.results.remove(0);
+          // track the thread ID
+          long threadid = Thread.currentThread().getId();
+          cache.threadIdSet.add(threadid);
+
+          // get the results item
+          Object resultsItem;
+          if (cache.results.size() > 0) {
+            resultsItem = cache.results.remove(0);
+            cache.lastResult = resultsItem;
+          } else {
+            // repeat the last result to handle multi-threaded timing
+            if (cache.threadIdSet.size() == 1) {
+              // only one thread is involved -- we should not get here
+              String hashInfo = provider.invocationHashInfo(this.apiInterface,
+                                                            method,
+                                                            parameters,
+                                                            stackTrace);
+              throw new IllegalStateException(
+                  "Invocation ran out of results in single-threaded "
+                      + "environment: " + hashInfo);
+            }
+            resultsItem = cache.lastResult;
+          }
+
           Map<String, Object> results = null;
           if (resultsItem instanceof String) {
             results = provider.loadResults(resultsItem.toString());
