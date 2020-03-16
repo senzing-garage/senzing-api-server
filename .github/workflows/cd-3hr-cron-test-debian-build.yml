@@ -4,6 +4,7 @@ on:
   schedule:
     - cron: '0 */3 * * *'
 
+
 jobs:
   cronBuildSenzingJavaApiServer:
     runs-on: ubuntu-latest
@@ -14,24 +15,27 @@ jobs:
         env:
           SENZING_REPO_URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
         run: |
-          wget ${SENZING_REPO_URL} >> output.log 2>&1
-          sudo apt-get -y install ./${SENZING_REPO_URL##*/} >> output.log 2>&1
-          rm -rf senzingrepo_1.0.0-1_amd64.deb >> output.log 2>&1
-          sudo apt-get update -y >> output.log 2>&1
-          sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/ >> output.log 2>&1
-          sudo apt-get download -o=dir::cache=${HOME} senzingapi senzingdata-v1 >> output.log 2>&1
-          sudo chown runner /home/runner/work/senzing-api-server/senzing-api-server/ >> output.log 2>&1
+          wget ${SENZING_REPO_URL} >> build.log 2>&1
+          sudo apt-get -y install ./${SENZING_REPO_URL##*/} >> build.log 2>&1
+          rm -rf senzingrepo_1.0.0-1_amd64.deb >> build.log 2>&1
+          sudo apt-get update -y >> build.log 2>&1
+          sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/ >> build.log 2>&1
+          sudo apt-get download -o=dir::cache=${HOME} senzingapi senzingdata-v1 >> build.log 2>&1
+          sudo chown runner /home/runner/work/senzing-api-server/senzing-api-server/ >> build.log 2>&1
       - name: Install Senzing Data Without Sqlite Dependency
         id: install_senzing_data
-        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb >> output.log 2>&1
+        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb >> build.log 2>&1
       - name: Install Senzing Api Without Sqlite Dependency
         id: install_senzing_api
-        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb >> output.log 2>&1
+        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb >> build.log 2>&1
+      - name: Get Senzing G2 Engine Version
+        id: g2_engine_version
+        run: echo ::set-output name=senzing_g2_version::$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
       - name: Copy /opt/senzing to Runner working directory
         id: copy_senzing_wrk_dir
         run: |
-          sudo mkdir -p ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib >> output.log 2>&1
-          sudo mv /opt/senzing/g2/lib/g2.jar ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar >> output.log 2>&1
+          sudo mkdir -p ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib >> build.log 2>&1
+          sudo mv /opt/senzing/g2/lib/g2.jar ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar >> build.log 2>&1
       - name: Build Java API Server
         id: build_java_api_server
         run: |
@@ -40,21 +44,26 @@ jobs:
             BASE_IMAGE="senzing/senzing-base:1.4.0" \
             SENZING_G2_JAR_PATHNAME=${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar \
             SENZING_G2_JAR_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION') \
-            docker-build >> build_failure.log 2>&1
-            cat build_failure.log >> output.log 2>&1
+            docker-build >> build.log 2>&1
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
+        uses: Senzing/git-action-jira-issue-creation@1.1.0
         if: failure()
-        run: |
-          docker run --rm \
-            --env JIRA_ISSUE_DESCRIPTION="The commit SHA is: _${{ github.sha }}_." \
-            --env JIRA_API_TOKEN=${{ secrets.JIRA_SECRET }} \
-            --env JIRA_USERNAME=${{ secrets.JIRA_USERNAME }} \
-            --env JIRA_ACCOUNT_URL=${{ secrets.JIRA_ACCOUNT_URL }} \
-            --env JIRA_PROJECT=PBF \
-            --env JIRA_ISSUE_TYPE=Task \
-            --env JIRA_ISSUE_SUMMARY="Senzing API server Debian build failed on GitHub SHA ${{ github.sha }}" \
-            senzing/git-action-jira-issue-creation:1.0.0
+        env:
+          JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
+          JIRA_ISSUE_ATTACHMENT: build.log
+          JIRA_ISSUE_DESCRIPTION: |
+            OS: senzing/base-image-debian:1.0.1
+            Senzing RPM version: ${{ steps.g2_engine_version.outputs.senzing_g2_version }}
+            DEB URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
+            The commit SHA is: ${{ github.sha }}
+            The build failed its maven unit test cases using the staging DEB package.
+            See build.log attach to this issue for more details
+          JIRA_ISSUE_SUMMARY: Senzing API server failed to build on commit sha ${{ github.sha }} using G2 Version ${{ steps.g2_engine_version.outputs.senzing_g2_version }}
+          JIRA_ISSUE_TYPE: Task
+          JIRA_PROJECT: PBF
+          JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
       - name: Slack Notification
         id: slack_notification
         uses: Senzing/git-action-slack-notification@1.0.0
@@ -80,5 +89,5 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: workflow_log
-          path: output.log
+          path: build.log
 
