@@ -919,7 +919,7 @@ public abstract class AbstractServiceTest {
       String      initJsonText  = readTextFileAsString(initJsonFile, "UTF-8");
       JsonObject  initJson      = JsonUtils.parseJsonObject(initJsonText);
 
-      System.err.println("Initializing with initialization file: "
+      System.out.println("Initializing with initialization file: "
                          + initJsonFile);
 
       SzApiServerOptions options = new SzApiServerOptions(initJson);
