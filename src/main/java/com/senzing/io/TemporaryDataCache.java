@@ -102,6 +102,11 @@ public class TemporaryDataCache {
   private SecretKeySpec keySpec;
 
   /**
+   * The failure (if any) that occurred during consumption.
+   */
+  private Exception failure = null;
+
+  /**
    * Constructs an instance that stores its temporary files in the system
    * temporary directory using the default file name prefix.
    *
@@ -222,7 +227,7 @@ public class TemporaryDataCache {
    */
   public boolean isAppending() {
     synchronized (this.fileParts) {
-      return this.consumerThread.isAlive();
+      return this.consumerThread.isAlive() && this.consumerThread.isAppending();
     }
   }
 
@@ -238,6 +243,24 @@ public class TemporaryDataCache {
       synchronized (this.fileParts) {
         this.fileParts.wait(2000L);
       }
+    }
+  }
+
+  /**
+   * Sets the failure for this instance if one occurs.
+   */
+  private void setFailure(Exception e) {
+    synchronized (this.fileParts) {
+      this.failure = e;
+    }
+  }
+
+  /**
+   * Checks if a failure has occurred and if so, throws an exception.
+   */
+  private void checkFailure() throws RuntimeException {
+    synchronized (this.fileParts) {
+      if (this.failure != null) throw new RuntimeException(this.failure);
     }
   }
 
@@ -307,12 +330,25 @@ public class TemporaryDataCache {
     private InputStream sourceStream;
 
     /**
+     * Flag indicating if still appending.
+     */
+    private boolean appending = true;
+
+    /**
      * Constructs with the specified source stream.
      *
      * @param sourceStream The source {@link InputStream} to read from.
      */
     public ConsumerThread(InputStream sourceStream) {
       this.sourceStream = sourceStream;
+      this.appending = true;
+    }
+
+    /**
+     * Checks if still appending.
+     */
+    public synchronized boolean isAppending() {
+      return this.appending;
     }
 
     /**
@@ -320,16 +356,15 @@ public class TemporaryDataCache {
      * file parts.
      */
     public void run() {
-      try {
-        TemporaryDataCache owner = TemporaryDataCache.this;
+      TemporaryDataCache owner = TemporaryDataCache.this;
 
-        final int gzSize = FLUSH_THRESHOLD + 8192;
-        final boolean syncFlsh = SYNC_FLUSH;
-        final int maxWrite = CACHE_FILE_SIZE;
+      final int gzSize = FLUSH_THRESHOLD + 8192;
+      final boolean syncFlsh = SYNC_FLUSH;
+      final int maxWrite = CACHE_FILE_SIZE;
 
-        BufferedInputStream bis = new BufferedInputStream(this.sourceStream,
-                                                          8192);
+      InputStream is = this.sourceStream;
 
+      try (InputStream bis = new BufferedInputStream(is,8192)) {
         File    directory     = owner.directory;
         String  baseFileName  = owner.baseFileName;
         File    file          = new File(directory, baseFileName + "-0.dat");
@@ -378,6 +413,11 @@ public class TemporaryDataCache {
               owner.fileParts.notifyAll();
             }
           }
+          if (readByte < 0) {
+            synchronized (this) {
+              this.appending = false;
+            }
+          }
 
           String fileName = file.toString();
           String oldSuffix = "-" + partIndex + ".dat";
@@ -390,8 +430,10 @@ public class TemporaryDataCache {
         } while (readByte >= 0 && !owner.isDeleted());
 
       } catch (RuntimeException e) {
+        owner.setFailure(e);
         throw e;
       } catch (Exception e) {
+        owner.setFailure(e);
         throw new RuntimeException(e);
       }
     }
@@ -477,6 +519,7 @@ public class TemporaryDataCache {
 
     public long skip(long n) throws IOException {
       TemporaryDataCache owner = TemporaryDataCache.this;
+      owner.checkFailure();
       if (this.closed) {
         throw new IOException("Cannot skip: stream already closed.");
       }
@@ -581,6 +624,8 @@ public class TemporaryDataCache {
 
     public int read() throws IOException {
       TemporaryDataCache owner = TemporaryDataCache.this;
+
+      owner.checkFailure();
 
       if (this.closed) {
         throw new IOException("Cannot read: stream already closed.");
