@@ -18,6 +18,19 @@ import static java.nio.file.FileVisitResult.*;
  * Static I/O utility functions.
  */
 public class IOUtilities {
+  /**
+   * Constant for the name of the UTF-8 character encoding.
+   */
+  public static final String UTF_8 = "UTF-8";
+
+  /**
+   * Constant for the UTF-8 {@link Charset}.
+   */
+  public static final Charset UTF_8_CHARSET = Charset.forName(UTF_8);
+
+  /**
+   * Private default constructor.
+   */
   private IOUtilities() {
     // do nothing
   }
@@ -104,10 +117,6 @@ public class IOUtilities {
     if (matches.length == 0) return null;
     CharsetMatch bestMatch = null;
     for (CharsetMatch match : matches) {
-      System.out.println(
-          "POSSIBLE CHARACTER ENCODING / CONFIDENCE "
-              + match.getName() + " / " + match.getConfidence());
-
       // get the first match as the best candidate
       if (bestMatch == null) {
         bestMatch = match;
@@ -293,10 +302,156 @@ public class IOUtilities {
         byte2 = bis2.read();
         if (byte1 != byte2) return true;
 
-      } while (byte1 != -1);
+      } while (byte1 != -1 && byte2 != -1);
 
       // if we get here then they are identical
       return false;
+    }
+  }
+
+  /**
+   * Creates the specified file if it does not exist, otherwise it updates
+   * the modified time for the specified file.
+   *
+   * @param file The {@link File} to be touched.
+   *
+   * @return The last modified time of the file in milliseconds.
+   *
+   * @throws IOException If a failure occurs.
+   */
+  public static long touchFile(File file) throws IOException {
+    if (file.exists()) {
+      file.setLastModified(System.currentTimeMillis());
+    } else {
+      file.createNewFile();
+    }
+    return file.lastModified();
+  }
+
+  /**
+   * Wraps the specified {@link InputStream} in one that will <b>not</b>
+   * close the underlying {@link InputStream} when {@link InputStream#close()}
+   * is called.  This means you must keep a reference to the original input
+   * stream so that you can close it when appropriate.
+   *
+   * @param inputStream The backing input stream to wrap.
+   *
+   * @return The {@link InputStream} that is backed by the specified {@link
+   *         InputStream}, but will not close the backing {@link InputStream}
+   *         when closed.
+   */
+  public static InputStream nonClosingWrapper(InputStream inputStream) {
+    return new NonClosingInputStream(inputStream);
+  }
+
+  /**
+   * Wraps the specified {@link OutputStream} in one that will <b>not</b>
+   * close the underlying {@link OutputStream} when {@link OutputStream#close()}
+   * is called -- it will instead call {@link OutputStream#flush()}  This means
+   * you must keep a reference to the original output stream so that you can
+   * close it when appropriate.
+   *
+   * @param outputStream The backing output stream to wrap.
+   *
+   * @return The {@link OutputStream} that is backed by the specified {@link
+   *         OutputStream}, but will not close the backing {@link OutputStream}
+   *         when closed.
+   */
+  public static OutputStream nonClosingWrapper(OutputStream outputStream) {
+    return new NonClosingOutputStream(outputStream);
+  }
+
+  /**
+   * Wraps the specified {@link Reader} in one that will <b>not</b>
+   * close the underlying {@link Reader} when {@link Reader#close()}
+   * is called.  This means you must keep a reference to the original reader
+   * so that you can close it when appropriate.
+   *
+   * @param reader The backing reader to wrap.
+   *
+   * @return The {@link Reader} that is backed by the specified {@link
+   *         Reader}, but will not close the backing {@link Reader}
+   *         when closed.
+   */
+  public static Reader nonClosingWrapper(Reader reader) {
+    return new NonClosingReader(reader);
+  }
+
+  /**
+   * Wraps the specified {@link Writer} in one that will <b>not</b>
+   * close the underlying {@link Writer} when {@link Writer#close()}
+   * is called -- it will instead call {@link Writer#flush()}  This means
+   * you must keep a reference to the original output stream so that you can
+   * close it when appropriate.
+   *
+   * @param writer The backing output stream to wrap.
+   *
+   * @return The {@link Writer} that is backed by the specified {@link
+   *         Writer}, but will not close the backing {@link Writer}
+   *         when closed.
+   */
+  public static Writer nonClosingWriter(Writer writer) {
+    return new NonClosingWriter(writer);
+  }
+
+  /**
+   * Extends {@link FilterInputStream} to prevent closing of the backing stream.
+   */
+  private static class NonClosingInputStream extends FilterInputStream {
+    private NonClosingInputStream(InputStream backingStream) {
+      super(backingStream);
+    }
+
+    public void close() {
+      // do nothing
+    }
+  }
+
+  /**
+   * Extends {@link FilterOutputStream} to prevent closing of the backing
+   * stream.
+   */
+  private static class NonClosingOutputStream extends FilterOutputStream {
+    private NonClosingOutputStream(OutputStream backingStream) {
+      super(backingStream);
+    }
+
+    public void close() {
+      try {
+        this.out.flush();
+      } catch (IOException ignore) {
+        // do nothing
+      }
+    }
+  }
+
+  /**
+   * Extends {@link FilterReader} to prevent closing of the backing reader.
+   */
+  private static class NonClosingReader extends FilterReader {
+    private NonClosingReader(Reader backingReader) {
+      super(backingReader);
+    }
+
+    public void close() {
+      // do nothing
+    }
+  }
+
+  /**
+   * Extends {@link FilterWriter} to prevent closing of the backing writer.
+   */
+  private static class NonClosingWriter extends FilterWriter {
+    private NonClosingWriter(Writer backingWriter) {
+      super(backingWriter);
+    }
+
+    public void close() {
+      try {
+        this.out.flush();
+      } catch (IOException ignore) {
+        // do nothing
+      }
     }
   }
 }

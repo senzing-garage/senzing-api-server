@@ -1,5 +1,7 @@
 package com.senzing.cmdline;
 
+import com.senzing.configmgr.ConfigurationManager;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
@@ -11,6 +13,59 @@ import static com.senzing.util.LoggingUtilities.*;
  *
  */
 public class CommandLineUtilities {
+  /**
+   * The JAR file name containing this class.
+   */
+  public static final String JAR_FILE_NAME;
+
+  /**
+   * The base URL of the JAR file containing this class.
+   */
+  public static final String JAR_BASE_URL;
+
+  /**
+   * The URL path to the JAR file containing this class.
+   */
+  public static final String PATH_TO_JAR;
+
+  static {
+    String jarBaseUrl   = null;
+    String jarFileName  = null;
+    String pathToJar    = null;
+
+    try {
+      Class<CommandLineUtilities> cls = CommandLineUtilities.class;
+
+      String url = cls.getResource(
+          cls.getSimpleName() + ".class").toString();
+
+      if (url.indexOf(".jar") >= 0) {
+        int index = url.lastIndexOf(
+            cls.getName().replace(".", "/") + ".class");
+        jarBaseUrl = url.substring(0, index);
+
+        index = jarBaseUrl.lastIndexOf("!");
+        if (index >= 0) {
+          url = url.substring(0, index);
+          index = url.lastIndexOf("/");
+
+          if (index >= 0) {
+            jarFileName = url.substring(index + 1);
+          }
+
+          url       = url.substring(0, index);
+          index     = url.indexOf("/");
+          pathToJar = url.substring(index);
+        }
+      }
+
+    } finally {
+      JAR_BASE_URL  = jarBaseUrl;
+      JAR_FILE_NAME = jarFileName;
+      PATH_TO_JAR   = pathToJar;
+    }
+  }
+
   /**
    * Private default constructor.
    */

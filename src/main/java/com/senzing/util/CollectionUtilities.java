@@ -86,4 +86,36 @@ public class CollectionUtilities {
     }
     return Collections.unmodifiableMap(map);
   }
+
+  /**
+   * Utility method for creating a {@link List} to use in validation.
+   *
+   * @param elements The zero or more elements in the list.
+   *
+   * @return The {@link Set} of elements.
+   */
+  public static <T> List<T> list(T... elements) {
+    List<T> list = new ArrayList<>(elements.length);
+    for (T element : elements) {
+      list.add(element);
+    }
+    return list;
+  }
+
+  /**
+   * Utility method for creating a {@link Set} to use in validation.
+   *
+   * @param elements The zero or more elements in the set.
+   *
+   * @return The {@link Set} of elements.
+   */
+  public static <T> Set<T> set(T... elements) {
+    Set<T> set = new LinkedHashSet<>();
+    for (T element : elements) {
+      set.add(element);
+    }
+    return set;
+  }
+
+
 }

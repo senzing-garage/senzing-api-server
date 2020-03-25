@@ -1,15 +1,13 @@
 package com.senzing.api.services;
 
 import com.senzing.api.model.*;
+import com.senzing.g2.engine.G2ConfigMgr;
 import com.senzing.g2.engine.G2Fallible;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
 
 import javax.json.*;
-import javax.ws.rs.BadRequestException;
-import javax.ws.rs.ForbiddenException;
-import javax.ws.rs.InternalServerErrorException;
-import javax.ws.rs.NotFoundException;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -646,4 +644,94 @@ public class ServicesUtil {
   static void exitingQueue(Timers timers) {
     if (timers != null) timers.pause("enqueued");
   }
+
+  static void obtainingLock(Timers timers, String lockName) {
+    if (timers != null) timers.start("locking",
+                                     "locking: " + lockName);
+  }
+
+  static void obtainedLock(Timers timers, String lockName) {
+    if (timers != null) timers.pause("locking",
+                                     "locking: " + lockName);
+  }
+
+  /**
+   * Ensures that loading of records is allowed and if not throws a
+   * {@link ForbiddenException}.
+   *
+   * @param provider The {@link SzApiProvider} to check for read-only mode.
+   * @param method The {@link HttpMethod} used.
+   * @param uriInfo The {@link UriInfo} for the request path.
+   * @param timers The {@link Timers} being used by the request handler.
+   *
+   * @throws ForbiddenException If the specified {@link SzApiProvider} is in
+   *                            read-only mode.
+   */
+  public static void ensureLoadingIsAllowed(SzApiProvider provider,
+                                            SzHttpMethod  method,
+                                            UriInfo       uriInfo,
+                                            Timers        timers)
+      throws ForbiddenException
+  {
+    if (provider.isReadOnly()) {
+      throw newForbiddenException(
+          method, uriInfo, timers,
+          "Loading data is not allowed if Senzing API Server started "
+              + "in read-only mode");
+    }
+  }
+
+  /**
+   * Ensures that changing the configuration is allowed and if not throws a
+   * {@link ForbiddenException}.
+   *
+   * @param provider The {@link SzApiProvider} to check for read-only mode and
+   *                 admin mode.
+   * @param method The {@link HttpMethod} used.
+   * @param uriInfo The {@link UriInfo} for the request path.
+   * @param timers The {@link Timers} being used by the request handler.
+   *
+   * @throws ForbiddenException If the specified {@link SzApiProvider} is in
+   *                            read-only mode.
+   */
+  public static void ensureConfigChangesAllowed(SzApiProvider provider,
+                                                SzHttpMethod  method,
+                                                UriInfo       uriInfo,
+                                                Timers        timers)
+      throws ForbiddenException
+  {
+    if (!provider.isAdminEnabled()) {
+      throw newForbiddenException(
+          method, uriInfo, timers,
+          "Configuration changes are not allowed if Senzing API Server is not "
+              + "started with admin functions enabled.");
+    }
+    if (provider.isReadOnly()) {
+      throw newForbiddenException(
+          method, uriInfo, timers,
+          "Configuration changes are not allowed if Senzing API Server started "
+              + "in read-only mode");
+    }
+    G2ConfigMgr configMgrApi = provider.getConfigMgrApi();
+    if (configMgrApi == null) {
+      throw newForbiddenException(
+          method, uriInfo, timers,
+          "Configuration changes are not allowed if Senzing API Server is "
+              + "using a static configuration specified by the G2CONFIGFILE "
+              + "initialization parameter or if the server is locked to a "
+              + "specific configuration ID in the database.");
+    }
+  }
+
+  /**
+   * Formats a test-info string using the URI text and the body content.
+   * @param uriText
+   * @param bodyContent
+   * @return The formatted string.
+   */
+  public static String formatTestInfo(String uriText, String bodyContent)
+  {
+    return "uriText=[ " + uriText + " ], bodyContent=[ " + bodyContent + " ]";
+  }
+
 }

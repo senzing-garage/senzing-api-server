@@ -89,6 +89,21 @@ class G2EngineRetryHandler implements InvocationHandler {
                         int.class, StringBuffer.class, StringBuffer.class);
       addMethodIfExists(unsupportedSet,"processWithInfo",
                         String.class, int.class, StringBuffer.class);
+      addMethodIfExists(unsupportedSet, "whyEntityByRecordID",
+                        String.class, String.class, StringBuffer.class);
+      addMethodIfExists(unsupportedSet, "whyEntityByRecordIDV2",
+                        String.class, String.class,
+                        int.class, StringBuffer.class);
+      addMethodIfExists(unsupportedSet, "whyEntityByEntityID",
+                        long.class, StringBuffer.class);
+      addMethodIfExists(unsupportedSet, "whyEntityByEntityIDV2",
+                        long.class, int.class, StringBuffer.class);
+      addMethodIfExists(unsupportedSet, "whyRecords",
+                        String.class, String.class, String.class,
+                        String.class, StringBuffer.class);
+      addMethodIfExists(unsupportedSet, "whyRecordsV2",
+                        String.class, String.class, String.class,
+                        String.class, int.class, StringBuffer.class);
 
       directSet.add(cls.getMethod("primeEngine"));
       directSet.add(cls.getMethod("purgeRepository"));

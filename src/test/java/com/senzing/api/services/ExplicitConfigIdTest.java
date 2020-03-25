@@ -20,6 +20,7 @@ import static com.senzing.api.model.SzHttpMethod.*;
 import static com.senzing.util.LoggingUtilities.formatError;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
+import static com.senzing.api.services.ResponseValidators.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class ExplicitConfigIdTest extends AutoReinitializeTest
@@ -32,7 +33,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
    */
   protected void initializeServerOptions(SzApiServerOptions options) {
     super.initializeServerOptions(options);
-    if (NATIVE_API_AVAILABLE) {
+    if (this.checkNativeApiAvailable()) {
       Result<Long> result = new Result<>();
       int returnCode = this.configMgrApi.getDefaultConfigID(result);
       if (returnCode != 0) {
@@ -51,12 +52,8 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
 
       this.addDataSource(newDataSource);
 
-      // now sleep for 1 second longer than the config refresh period
-      try {
-        Thread.sleep(SzApiServer.CONFIG_REFRESH_PERIOD + 1000L);
-      } catch (InterruptedException ignore) {
-        fail("Interrupted while sleeping and waiting for config refresh.");
-      }
+      // now request a config refresh check
+      this.requestConfigRefreshCheck();
 
       // now retry the request to get the data sources
       long before = System.currentTimeMillis();
@@ -66,11 +63,13 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
       long after = System.currentTimeMillis();
 
       synchronized (this.expectedDataSources) {
-        this.validateDataSourcesResponse(response,
-                                         before,
-                                         after,
-                                         null,
-                                         INITIAL_DATA_SOURCES);
+        validateDataSourcesResponse(response,
+                                    GET,
+                                    uriText,
+                                    before,
+                                    after,
+                                    false,
+                                    INITIAL_DATA_SOURCES);
       }
     });
   }
@@ -83,12 +82,8 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
 
       this.addDataSource(newDataSource);
 
-      // now sleep for 1 second longer than the config refresh period
-      try {
-        Thread.sleep(SzApiServer.CONFIG_REFRESH_PERIOD + 1000L);
-      } catch (InterruptedException ignore) {
-        fail("Interrupted while sleeping and waiting for config refresh.");
-      }
+      // now request a config refresh check
+      this.requestConfigRefreshCheck();
 
       long before = System.currentTimeMillis();
       SzConfigResponse response
@@ -97,11 +92,11 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
       long after = System.currentTimeMillis();
 
       synchronized (this.expectedDataSources) {
-        this.validateConfigResponse(response,
-                                    uriText,
-                                    before,
-                                    after,
-                                    INITIAL_DATA_SOURCES);
+        validateConfigResponse(response,
+                               uriText,
+                               before,
+                               after,
+                               INITIAL_DATA_SOURCES.keySet());
       }
     });
   }
@@ -138,7 +133,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
         response.concludeTimers();
         long after = System.currentTimeMillis();
 
-        this.validateBasics(
+        validateBasics(
             response, 404, POST, uriText, before, after);
       }
     });
@@ -177,7 +172,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
         response.concludeTimers();
         long after = System.currentTimeMillis();
 
-        this.validateBasics(
+        validateBasics(
             response, 404, PUT, uriText, before, after);
       }
     });

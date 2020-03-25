@@ -1,7 +1,5 @@
 package com.senzing.api;
 
-import com.senzing.util.OperatingSystemFamily;
-
 import java.io.*;
 
 import static com.senzing.util.OperatingSystemFamily.*;

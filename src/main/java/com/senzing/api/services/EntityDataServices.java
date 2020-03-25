@@ -639,9 +639,10 @@ public class EntityDataServices {
         || errorCode == RECORD_NOT_FOUND_CODE
         || errorCode == ENTITY_ID_NOT_FOUND_CODE)
     {
-      return newNotFoundException(GET, uriInfo, timers, engineApi);
+      return newNotFoundException(httpMethod, uriInfo, timers, engineApi);
     }
-    return newInternalServerErrorException(GET, uriInfo, timers, engineApi);
+    return newInternalServerErrorException(
+        httpMethod, uriInfo, timers, engineApi);
   }
 
   /**
@@ -683,7 +684,7 @@ public class EntityDataServices {
       List<SzMatchedRecord> records = related.getRecords();
 
       // summarize the records
-      List<SzRecordSummary> summaries
+      List<SzDataSourceRecordSummary> summaries
           = SzResolvedEntity.summarizeRecords(records);
 
       // set the features and "data" fields
@@ -844,32 +845,6 @@ public class EntityDataServices {
                                                 uriInfo,
                                                 timers,
                                                 e.getMessage());
-    }
-  }
-
-  /**
-   * Ensures that loading of records is allowed and if not throws an
-   * {@link ForbiddenException}.
-   *
-   * @param provider The {@link SzApiProvider} to check for read-only mode.
-   * @param method The {@link HttpMethod} used.
-   * @param uriInfo The {@link UriInfo} for the request path.
-   * @param timers The {@link Timers} being used by the request handler.
-   *
-   * @throws ForbiddenException If the specified {@link SzApiProvider} is in
-   *                            read-only mode.
-   */
-  private static void ensureLoadingIsAllowed(SzApiProvider provider,
-                                             SzHttpMethod  method,
-                                             UriInfo       uriInfo,
-                                             Timers        timers)
-    throws ForbiddenException
-  {
-    if (provider.isReadOnly()) {
-      throw newForbiddenException(
-          method, uriInfo, timers,
-          "Loading data is not allowed if Senzing API Server started "
-           + "in read-only mode");
     }
   }
 

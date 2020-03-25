@@ -31,11 +31,11 @@ public class WorkerThreadPool {
   /**
    * Constructs with the specified number of threads in the pool.
    *
-   * @param count The number of threads to create in the pool.
+   * @param size The number of threads to create in the pool.
    */
-  public WorkerThreadPool(int count)
+  public WorkerThreadPool(int size)
   {
-    this("WorkerThread", count);
+    this("WorkerThread", size);
   }
 
   /**
@@ -45,9 +45,9 @@ public class WorkerThreadPool {
    * @param baseName The base name to use as a prefix when naming the
    *                 worker threads in the pool.
    *
-   * @param count The number of worker threads to create.
+   * @param size The number of worker threads to create.
    */
-  public WorkerThreadPool(String baseName, int count)
+  public WorkerThreadPool(String baseName, int size)
   {
     this.available    = new LinkedList<>();
     this.allThreads   = new LinkedList<>();
@@ -58,14 +58,24 @@ public class WorkerThreadPool {
       baseName = baseName.substring(0, baseName.length() - 1);
     }
 
-    for (int index = 0; index < count; index++) {
+    int identityHashCode = System.identityHashCode(this);
+    for (int index = 0; index < size; index++) {
       WorkerThread wt = new WorkerThread();
-      wt.setName(baseName + "-" + index);
+      wt.setName(baseName + "-" + identityHashCode + "-" + index);
       this.available.add(wt);
       this.allThreads.add(wt);
       wt.start();
     }
     this.allThreads = Collections.unmodifiableList(this.allThreads);
+  }
+
+  /**
+   * Returns the size of the worker thread pool.
+   *
+   * @return The size of the worker thread pool.
+   */
+  public int size() {
+    return this.allThreads.size();
   }
 
   /**

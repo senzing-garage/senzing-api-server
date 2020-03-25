@@ -1,5 +1,5 @@
 ARG BASE_IMAGE=senzing/senzing-base:1.4.0
-ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.1
+ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.3
 # -----------------------------------------------------------------------------
 # Stage: builder
 # -----------------------------------------------------------------------------

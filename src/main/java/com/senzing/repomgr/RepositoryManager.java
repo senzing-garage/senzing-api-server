@@ -1,15 +1,16 @@
 package com.senzing.repomgr;
 
+import com.senzing.api.model.SzDataSource;
+import com.senzing.api.model.SzEntityType;
+import com.senzing.io.IOUtilities;
+import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.cmdline.CommandLineUtilities;
 import com.senzing.g2.engine.*;
+import com.senzing.nativeapi.InstallLocations;
+import com.senzing.io.RecordReader;
 import com.senzing.util.JsonUtils;
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 
 import javax.json.*;
-import javax.json.stream.JsonParser;
-import javax.json.stream.JsonParserFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,6 +22,7 @@ import static java.nio.file.StandardCopyOption.*;
 import static com.senzing.io.IOUtilities.*;
 import static com.senzing.cmdline.CommandLineUtilities.*;
 import static com.senzing.repomgr.RepositoryManagerOption.*;
+import static com.senzing.io.RecordReader.Format.*;
 
 public class RepositoryManager {
   private static final File INSTALL_DIR;
@@ -57,288 +59,29 @@ public class RepositoryManager {
   }
 
   static {
-    File installDir   = null;
-    File configDir    = null;
-    File resourceDir  = null;
-    File supportDir   = null;
-    File templatesDir = null;
-    try {
-      String defaultInstallPath;
-      String defaultConfigPath = null;
+    InstallLocations locations = InstallLocations.findLocations();
 
-      switch (RUNTIME_OS_FAMILY) {
-        case WINDOWS:
-          defaultInstallPath = "C:\\Program Files\\Senzing\\g2";
-          break;
-        case MAC_OS:
-          defaultInstallPath = "/Applications/Senzing.app/Contents/Resources/app/g2";
-          break;
-        case UNIX:
-          defaultInstallPath = "/opt/senzing/g2";
-          defaultConfigPath = "/etc/opt/senzing";
-          break;
-        default:
-          throw new ExceptionInInitializerError(
-              "Unrecognized Operating System: " + RUNTIME_OS_FAMILY);
-      }
-
-      // check for senzing system properties
-      String installPath  = System.getProperty("senzing.install.dir");
-      String configPath   = System.getProperty("senzing.config.dir");
-      String resourcePath = System.getProperty("senzing.resource.dir");
-
-      // check the senzing directory
-      installDir = new File(installPath == null ? defaultInstallPath : installPath);
-      if (!installDir.exists()) {
-        System.err.println("Could not find Senzing installation directory:");
-        System.err.println("     " + installDir);
-        System.err.println();
-        if (installPath != null) {
-          System.err.println(
-              "Check the -Dsenzing.install.dir=[path] command line option.");
-        } else {
-          System.err.println(
-              "Use the -Dsenzing.install.dir=[path] command line option to "
-              + "specify a path");
-        }
-
-        throw new ExceptionInInitializerError(
-            "Could not find Senzing installation directory: " + installDir);
-      }
-
-      // normalize the senzing directory
-      String dirName = installDir.getName();
-      if (installDir.isDirectory()
-          && !dirName.equalsIgnoreCase("g2")) {
-        if (RUNTIME_OS_FAMILY == MAC_OS) {
-          // for macOS be tolerant of Senzing.app or the electron app dir
-          if (dirName.equalsIgnoreCase("Senzing.app")) {
-            File contents = new File(installDir, "Contents");
-            File resources = new File(contents, "Resources");
-            installDir = new File(resources, "app");
-            dirName = installDir.getName();
-          }
-          if (dirName.equalsIgnoreCase("app")) {
-            installDir = new File(installDir, "g2");
-          }
-        } else if (dirName.equalsIgnoreCase("senzing")) {
-          // for windows or linux allow the "Senzing" dir as well
-          installDir = new File(installDir, "g2");
-        }
-      }
-
-      if (!installDir.isDirectory()) {
-        System.err.println("Senzing installation directory appears invalid:");
-        System.err.println("     " + installDir);
-        System.err.println();
-        if (installPath != null) {
-          System.err.println(
-              "Check the -Dsenzing.install.dir=[path] command line option.");
-        } else {
-          System.err.println(
-              "Use the -Dsenzing.install.dir=[path] command line option to "
-                  + "specify a path");
-        }
-
-        throw new ExceptionInInitializerError(
-            "Invalid Senzing installation directory: " + installDir);
-      }
-
-      String supportPath = System.getProperty("senzing.support.dir");
-      if (supportPath == null || supportPath.trim().length() == 0) {
-        // try to determine the support path
-        File installParent = installDir.getParentFile();
-        File dataRoot = new File(installParent, "data");
-        if (dataRoot.exists() && dataRoot.isDirectory()) {
-          File versionFile = new File(installDir, "g2BuildVersion.json");
-          String dataVersion = null;
-          if (versionFile.exists()) {
-            String text = readTextFileAsString(versionFile, "UTF-8");
-            JsonObject jsonObject = JsonUtils.parseJsonObject(text);
-            dataVersion = JsonUtils.getString(jsonObject, "DATA_VERSION");
-          }
-
-          // check if data version was not found
-          if (dataVersion == null) {
-            // look to see if we only have one data version installed
-            File[] versionDirs = dataRoot.listFiles( f -> {
-              return f.getName().matches("\\d+\\.\\d+\\.\\d+");
-            });
-            if (versionDirs.length == 1) {
-              // use the single data version found
-              dataVersion = versionDirs[0].getName();
-            } else {
-              System.err.println(
-                  "Could not infer support directory.  Multiple data "
-                  + "directory versions at: ");
-              System.err.println("     " + dataRoot);
-              throw new ExceptionInInitializerError(
-                  "Count not infer support directory.  Multiple data "
-                  + "directory versions found at: " + dataRoot);
-            }
-          }
-
-          // use the path for the version number requested
-          supportDir = new File(dataRoot, dataVersion.trim());
-
-        } else {
-          // use the default path
-          supportDir = new File(installDir, "data");
-        }
-      } else {
-        // use the specified explicit path
-        supportDir = new File(supportPath);
-      }
-
-      System.out.println("SUPPORT DIR: " + supportDir);
-      if (!supportDir.exists()) {
-        System.err.println("The support directory does not exist:");
-        System.err.println("         " + supportDir);
-        if (supportPath != null) {
-          System.err.println(
-              "Check the -Dsenzing.support.dir=[path] command line option.");
-        } else {
-          System.err.println(
-              "Use the -Dsenzing.support.dir=[path] command line option to "
-                  + "specify a path");
-        }
-
-        throw new ExceptionInInitializerError(
-            "The support directory does not exist: " + supportDir);
-      }
-
-      if (!supportDir.isDirectory()) {
-        System.err.println("The support directory is invalid:");
-        System.err.println("         " + supportDir);
-        if (supportPath != null) {
-          System.err.println(
-              "Check the -Dsenzing.support.dir=[path] command line option.");
-        } else {
-          System.err.println(
-              "Use the -Dsenzing.support.dir=[path] command line option to "
-              + "specify a path");
-        }
-        throw new ExceptionInInitializerError(
-            "The support directory is invalid: " + supportDir);
-
-      }
-
-      // check the config path
-      if (configPath != null) {
-        configDir = new File(configPath);
-      }
-      if (configDir == null && defaultConfigPath != null) {
-        configDir = new File(defaultConfigPath);
-      }
-      if (configPath != null && !configDir.exists()) {
-        System.err.println(
-            "The -Dsenzing.config.dir=[path] option specifies a path that does not exist:");
-        System.err.println(
-            "         " + configPath);
-
-        throw new ExceptionInInitializerError(
-            "Explicit config path does not exist: " + configPath);
-      }
-      if (configDir != null && configDir.exists()) {
-        if (!configDir.isDirectory()) {
-          System.err.println(
-              "The -Dsenzing.config.dir=[path] option specifies a file, not a directory:");
-          System.err.println(
-              "         " + configPath);
-
-          throw new ExceptionInInitializerError(
-              "Explicit config path is not directory: " + configPath);
-        }
-
-        String[] requiredFiles = { "cfgVariant.json" };
-        List<String> missingFiles = new ArrayList<>(requiredFiles.length);
-
-        for (String fileName : requiredFiles) {
-          File configFile   = new File(configDir, fileName);
-          File supportFile  = new File(supportDir, fileName);
-          if (!configFile.exists() && !supportFile.exists()) {
-            missingFiles.add(fileName);
-          }
-        }
-        if (missingFiles.size() > 0 && configPath != null) {
-          System.err.println(
-              "The -Dsenzing.config.dir=[path] option specifies an invalid config directory:");
-          for (String missing : missingFiles) {
-            System.err.println(
-                "         " + missing + " was not found");
-          }
-          throw new ExceptionInInitializerError(
-              "Explicit config path missing required files: " + missingFiles);
-        }
-      }
-
-      // now determine the resource path
-      resourceDir = (resourcePath == null) ? null : new File(resourcePath);
-      if (resourceDir == null) {
-        resourceDir = new File(installDir, "resources");
-      }
-      if (resourceDir != null && resourceDir.exists()
-          && resourceDir.isDirectory())
-      {
-        templatesDir = new File(resourceDir, "templates");
-      }
-
-      if (resourcePath != null) {
-        if (!resourceDir.exists()) {
-          System.err.println(
-              "The -Dsenzing.resource.dir=[path] option specifies a path that does not exist:");
-          System.err.println(
-              "         " + resourcePath);
-
-          throw new ExceptionInInitializerError(
-              "Explicit resource path does not exist: " + resourcePath);
-        }
-
-        if (!resourceDir.isDirectory()
-            || !templatesDir.exists()
-            || !templatesDir.isDirectory())
-        {
-          System.err.println(
-              "The -Dsenzing.resource.dir=[path] option specifies an invalid "
-                  + "resource directory:");
-          System.err.println("         " + resourcePath);
-
-          throw new ExceptionInInitializerError(
-              "Explicit resource path is not valid: " + resourcePath);
-        }
-
-      } else if (!resourceDir.exists() || !resourceDir.isDirectory()
-                 || !templatesDir.exists() || !templatesDir.isDirectory())
-      {
-        resourceDir   = null;
-        templatesDir  = null;
-      }
-
-    } catch (Exception e) {
-      e.printStackTrace();
-
-    } finally {
-      INSTALL_DIR   = installDir;
-      CONFIG_DIR    = configDir;
-      SUPPORT_DIR   = supportDir;
-      RESOURCE_DIR  = resourceDir;
-      TEMPLATES_DIR = templatesDir;
+    if (locations != null) {
+      INSTALL_DIR   = locations.getInstallDirectory();
+      CONFIG_DIR    = locations.getConfigDirectory();
+      SUPPORT_DIR   = locations.getSupportDirectory();
+      RESOURCE_DIR  = locations.getResourceDirectory();
+      TEMPLATES_DIR = locations.getTemplatesDirectory();
+    } else {
+      INSTALL_DIR   = null;
+      CONFIG_DIR    = null;
+      SUPPORT_DIR   = null;
+      RESOURCE_DIR  = null;
+      TEMPLATES_DIR = null;
     }
 
     G2Engine    engineApi     = null;
     G2Config    configApi     = null;
     G2ConfigMgr configMgrApi  = null;
     try {
-      Class engineApiClass
-          = Class.forName("com.senzing.g2.engine.G2JNI");
-      Class configApiClass
-          = Class.forName("com.senzing.g2.engine.G2ConfigJNI");
-      Class configMgrApiClass
-          = Class.forName("com.senzing.g2.engine.G2ConfigMgrJNI");
-
-      engineApi     = (G2Engine) (engineApiClass.newInstance());
-      configApi     = (G2Config) (configApiClass.newInstance());
-      configMgrApi  = (G2ConfigMgr) (configMgrApiClass.newInstance());
+      engineApi     = NativeApiFactory.createEngineApi();
+      configApi     = NativeApiFactory.createConfigApi();
+      configMgrApi  = NativeApiFactory.createConfigMgrApi();
 
     } catch (Exception e) {
       File libPath = new File(INSTALL_DIR, "lib");
@@ -415,6 +158,35 @@ public class RepositoryManager {
     } finally {
       JAR_BASE_URL  = jarBaseUrl;
       JAR_FILE_NAME = jarFileName;
+    }
+  }
+
+  /**
+   * Describes a repository configuration.
+   *
+   */
+  public static class Configuration {
+    private long configId;
+    private JsonObject configJson;
+    public Configuration(long configId, JsonObject configJson) {
+      this.configId   = configId;
+      this.configJson = configJson;
+    }
+
+    /**
+     * Returns the configuration ID.
+     * @return The configuration ID.
+     */
+    public long getConfigId() {
+      return this.configId;
+    }
+
+    /**
+     * Returns the configuration JSON as a {@link JsonObject}.
+     * @return The {@link JsonObject} describing the configuration.
+     */
+    public JsonObject getConfigJson() {
+      return this.configJson;
     }
   }
 
@@ -687,17 +459,18 @@ public class RepositoryManager {
       System.exit(0);
     }
 
-    File repository = (File) options.get(RepositoryManagerOption.REPOSITORY);
-    String dataSource = (String) options.get(RepositoryManagerOption.DATA_SOURCE);
-    Boolean verbose = (Boolean) options.get(RepositoryManagerOption.VERBOSE);
+    File repository = (File) options.get(REPOSITORY);
+    String dataSource = (String) options.get(DATA_SOURCE);
+    String entityType = (String) options.get(ENTITY_TYPE);
+    Boolean verbose = (Boolean) options.get(VERBOSE);
     if (verbose == null) verbose = Boolean.FALSE;
 
     try {
       // check if we are creating a repo
-      if (options.containsKey(RepositoryManagerOption.CREATE_REPO)) {
-        File directory = (File) options.get(RepositoryManagerOption.CREATE_REPO);
+      if (options.containsKey(CREATE_REPO)) {
+        File directory = (File) options.get(CREATE_REPO);
         createRepo(directory);
-      } else if (options.containsKey(RepositoryManagerOption.PURGE_REPO)) {
+      } else if (options.containsKey(PURGE_REPO)) {
         try {
           purgeRepo(repository, verbose);
         } finally {
@@ -707,7 +480,7 @@ public class RepositoryManager {
       } else if (options.containsKey(RepositoryManagerOption.LOAD_FILE)) {
         File sourceFile = (File) options.get(RepositoryManagerOption.LOAD_FILE);
         try {
-          loadFile(repository, verbose, sourceFile, dataSource);
+          loadFile(repository, verbose, sourceFile, dataSource, entityType);
         } finally {
           destroyApis();
         }
@@ -715,7 +488,7 @@ public class RepositoryManager {
       } else if (options.containsKey(RepositoryManagerOption.ADD_RECORD)) {
         String jsonRecord = (String) options.get(RepositoryManagerOption.ADD_RECORD);
         try {
-          addRecord(repository, verbose, jsonRecord, dataSource);
+          addRecord(repository, verbose, jsonRecord, dataSource, entityType);
         } finally {
           destroyApis();
         }
@@ -738,17 +511,28 @@ public class RepositoryManager {
    * Creates a new Senzing SQLite repository from the default repository data.
    *
    * @param directory The directory at which to create the repository.
+   *
+   * @return The {@link Configuration} describing the initial configuration.
    */
-  public static void createRepo(File directory) {
-    createRepo(directory, false);
+  public static Configuration createRepo(File directory) {
+    return createRepo(directory, false);
   }
 
   /**
    * Creates a new Senzing SQLite repository from the default repository data.
    *
    * @param directory The directory at which to create the repository.
+   *
+   * @return The {@link Configuration} describing the initial configuration.
    */
-  public static void createRepo(File directory, boolean silent) {
+  public static Configuration createRepo(File directory, boolean silent) {
+    JsonObject resultConfig = null;
+    Long resultConfigId = null;
+    try {
+      directory = directory.getCanonicalFile();
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     if (directory.exists()) {
       if (!directory.isDirectory()) {
         throw new IllegalArgumentException(
@@ -791,12 +575,17 @@ public class RepositoryManager {
         templateDB = new File(SUPPORT_DIR, "G2C.db");
       }
 
-      System.out.println("TEMPLATE DB PATH: " + templateDB);
-
-      copyFile(templateDB, new File(directory, "G2C.db"));
-      copyFile(templateDB, new File(directory, "G2_RES.db"));
-      copyFile(templateDB, new File(directory, "G2_LIB_FEAT.db"));
-
+      if (templateDB.exists()) {
+        // copy the file
+        copyFile(templateDB, new File(directory, "G2C.db"));
+        copyFile(templateDB, new File(directory, "G2_RES.db"));
+        copyFile(templateDB, new File(directory, "G2_LIB_FEAT.db"));
+      } else {
+        // handle running in mock replay mode (no installation)
+        touchFile(new File(directory, "G2C.db"));
+        touchFile(new File(directory, "G2_RES.db"));
+        touchFile(new File(directory, "G2_LIB_FEAT.db"));
+      }
       File licensePath    = new File(directory, "g2.lic");
 
       String fileSep = System.getProperty("file.separator");
@@ -805,7 +594,9 @@ public class RepositoryManager {
       File jsonInitFile = new File(directory, "g2-init.json");
       JsonObjectBuilder builder = Json.createObjectBuilder();
       JsonObjectBuilder subBuilder = Json.createObjectBuilder();
-      subBuilder.add("SUPPORTPATH", SUPPORT_DIR.toString());
+      if (SUPPORT_DIR != null) {
+        subBuilder.add("SUPPORTPATH", SUPPORT_DIR.toString());
+      }
       if (RESOURCE_DIR != null) {
         subBuilder.add("RESOURCEPATH", RESOURCE_DIR.toString());
       }
@@ -867,8 +658,12 @@ public class RepositoryManager {
         }
         CONFIG_API.close(configId);
 
+        String configJsonText = sb.toString();
+
+        resultConfig = JsonUtils.parseJsonObject(configJsonText);
+
         Result<Long> result = new Result<>();
-        returnCode = CONFIG_MGR_API.addConfig(sb.toString(),
+        returnCode = CONFIG_MGR_API.addConfig(configJsonText,
                                               "Initial Config",
                                               result);
         if (returnCode != 0) {
@@ -876,7 +671,9 @@ public class RepositoryManager {
                                 CONFIG_MGR_API);
           throw new IllegalStateException(msg);
         }
-        returnCode = CONFIG_MGR_API.setDefaultConfigID(result.getValue());
+
+        resultConfigId = result.getValue();
+        returnCode = CONFIG_MGR_API.setDefaultConfigID(resultConfigId);
         if (returnCode != 0) {
           String msg = logError("G2ConfigMgr.setDefaultConfigID()",
                                 CONFIG_MGR_API);
@@ -896,6 +693,7 @@ public class RepositoryManager {
       deleteRecursively(directory);
       throw new RuntimeException(e);
     }
+    return new Configuration(resultConfigId, resultConfig);
   }
 
   private static void copyFile(File source, File target)
@@ -1024,7 +822,19 @@ public class RepositoryManager {
     }
   }
 
-  private static Set<String> getDataSources(Result<Long> configId) {
+  private static Set<String> getEntityTypes() {
+    Result<Long> configId = new Result<>();
+    try {
+      return getEntityTypes(configId);
+
+    } finally {
+      if (configId.getValue() != null) {
+        CONFIG_API.close(configId.getValue());
+      }
+    }
+  }
+
+  private static Long loadActiveConfig() {
     StringBuffer sb = new StringBuffer();
     int returnCode = ENGINE_API.exportConfig(sb);
     if (returnCode != 0) {
@@ -1032,15 +842,32 @@ public class RepositoryManager {
       return null;
     }
     long handle = CONFIG_API.load(sb.toString());
+    if (handle < 0L) {
+      logError("G2Config.load()", CONFIG_API);
+      return null;
+    }
+    return handle;
+  }
+
+  private static Set<String> getDataSources(Result<Long> configId) {
+    Long handle = loadActiveConfig();
+    if (handle == null) return null;
     configId.setValue(handle);
     return getDataSources(handle);
   }
 
+  private static Set<String> getEntityTypes(Result<Long> configId) {
+    Long handle = loadActiveConfig();
+    if (handle == null) return null;
+    configId.setValue(handle);
+    return getEntityTypes(handle);
+  }
+
   private static Set<String> getDataSources(long configId) {
     StringBuffer sb = new StringBuffer();
-    int returnCode = CONFIG_API.listDataSources(configId, sb);
+    int returnCode = CONFIG_API.listDataSourcesV2(configId, sb);
     if (returnCode != 0) {
-      logError("G2Config.listDataSources()", CONFIG_API);
+      logError("G2Config.listDataSourcesV2()", CONFIG_API);
       return null;
     }
 
@@ -1048,9 +875,29 @@ public class RepositoryManager {
 
     // parse the raw data
     JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
-    JsonArray jsonArray = jsonObject.getJsonArray("DSRC_CODE");
-    for (JsonString jsonString : jsonArray.getValuesAs(JsonString.class)) {
-      existingSet.add(jsonString.getString());
+    JsonArray jsonArray = jsonObject.getJsonArray("DATA_SOURCES");
+    for (JsonObject dataSource : jsonArray.getValuesAs(JsonObject.class)) {
+      existingSet.add(JsonUtils.getString(dataSource, "DSRC_CODE"));
+    }
+
+    return existingSet;
+  }
+
+  private static Set<String> getEntityTypes(long configId) {
+    StringBuffer sb = new StringBuffer();
+    int returnCode = CONFIG_API.listEntityTypesV2(configId, sb);
+    if (returnCode != 0) {
+      logError("G2Config.listEntityTypesV2()", CONFIG_API);
+      return null;
+    }
+
+    Set<String> existingSet = new LinkedHashSet<>();
+
+    // parse the raw data
+    JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
+    JsonArray jsonArray = jsonObject.getJsonArray("ENTITY_TYPES");
+    for (JsonObject entityType : jsonArray.getValuesAs(JsonObject.class)) {
+      existingSet.add(JsonUtils.getString(entityType, "ETYPE_CODE"));
     }
 
     return existingSet;
@@ -1103,22 +950,28 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source for all the records.  NOTE: if the records in the file do
-   * not have a defined DATA_SOURCE then the specified data source is required.
+   * the data source and/or entity type for all the records.  NOTE: if the
+   * records in the file do not have a defined DATA_SOURCE then the specified
+   * data source is required.  If the records do not have a defined
+   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
+   * <tt>"GENERIC"</tt> is used.
    *
    * @param repository The directory for the repository.
    * @param sourceFile The source file to load (JSON or CSV).
    * @param dataSource The data source to use for loading the records.
+   * @param entityType The entity type to use for loading the records.
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
    */
-  public static boolean loadFile(File             repository,
-                                 File             sourceFile,
-                                 String           dataSource)
+  public static boolean loadFile(File   repository,
+                                 File   sourceFile,
+                                 String dataSource,
+                                 String entityType)
   {
     return loadFile(repository,
                     false,
                     sourceFile,
                     dataSource,
+                    entityType,
                     null,
                     null,
                     false);
@@ -1126,25 +979,31 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source for all the records.  NOTE: if the records in the file do
-   * not have a defined DATA_SOURCE then the specified data source is required.
+   * the data source and/or entity type for all the records.  NOTE: if the
+   * records in the file do not have a defined DATA_SOURCE then the specified
+   * data source is required.  If the records do not have a defined
+   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
+   * <tt>"GENERIC"</tt> is used.
    *
    * @param repository The directory for the repository.
    * @param sourceFile The source file to load (JSON or CSV).
    * @param dataSource The data source to use for loading the records.
+   * @param entityType The entity type to use for loading the records.
    * @param silent <tt>true</tt> if no feedback should be given to the user
    *               upon completion, otherwise <tt>false</tt>
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
    */
-  public static boolean loadFile(File             repository,
-                                 File             sourceFile,
-                                 String           dataSource,
-                                 boolean          silent)
+  public static boolean loadFile(File     repository,
+                                 File     sourceFile,
+                                 String   dataSource,
+                                 String   entityType,
+                                 boolean  silent)
   {
     return loadFile(repository,
                     false,
                     sourceFile,
                     dataSource,
+                    entityType,
                     null,
                     null,
                     silent);
@@ -1152,12 +1011,16 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source for all the records.  NOTE: if the records in the file do
-   * not have a defined DATA_SOURCE then the specified data source is required.
+   * the data source and/or entity type for all the records.  NOTE: if the
+   * records in the file do not have a defined DATA_SOURCE then the specified
+   * data source is required.  If the records do not have a defined
+   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
+   * <tt>"GENERIC"</tt> is used.
    *
    * @param repository The directory for the repository.
    * @param sourceFile The source file to load (JSON or CSV).
    * @param dataSource The data source to use for loading the records.
+   * @param entityType The entity type to use for loading the records.
    * @param loadedCount The output parameter for the number successfully loaded.
    * @param failedCount The output parameter for the number that failed to load.
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
@@ -1165,6 +1028,7 @@ public class RepositoryManager {
   public static boolean loadFile(File             repository,
                                  File             sourceFile,
                                  String           dataSource,
+                                 String           entityType,
                                  Result<Integer>  loadedCount,
                                  Result<Integer>  failedCount)
   {
@@ -1172,6 +1036,7 @@ public class RepositoryManager {
                     false,
                     sourceFile,
                     dataSource,
+                    entityType,
                     loadedCount,
                     failedCount,
                     false);
@@ -1179,12 +1044,16 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source for all the records.  NOTE: if the records in the file do
-   * not have a defined DATA_SOURCE then the specified data source is required.
+   * the data source and/or entity type for all the records.  NOTE: if the
+   * records in the file do not have a defined DATA_SOURCE then the specified
+   * data source is required.  If the records do not have a defined
+   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
+   * <tt>"GENERIC"</tt> is used.
    *
    * @param repository The directory for the repository.
    * @param sourceFile The source file to load (JSON or CSV).
    * @param dataSource The data source to use for loading the records.
+   * @param entityType The entity type to use for loading the records.
    * @param loadedCount The output parameter for the number successfully loaded.
    * @param failedCount The output parameter for the number that failed to load.
    * @param silent <tt>true</tt> if no feedback should be given to the user
@@ -1194,6 +1063,7 @@ public class RepositoryManager {
   public static boolean loadFile(File             repository,
                                  File             sourceFile,
                                  String           dataSource,
+                                 String           entityType,
                                  Result<Integer>  loadedCount,
                                  Result<Integer>  failedCount,
                                  boolean          silent)
@@ -1202,6 +1072,7 @@ public class RepositoryManager {
                     false,
                     sourceFile,
                     dataSource,
+                    entityType,
                     loadedCount,
                     failedCount,
                     silent);
@@ -1209,26 +1080,32 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source for all the records.  NOTE: if the records in the file do
-   * not have a defined DATA_SOURCE then the specified data source is required.
+   * the data source and/or entity type for all the records.  NOTE: if the
+   * records in the file do not have a defined DATA_SOURCE then the specified
+   * data source is required.  If the records do not have a defined
+   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
+   * <tt>"GENERIC"</tt> is used.
    *
    * @param repository The directory for the repository.
    * @param verbose <tt>true</tt> for verbose API logging, otherwise
    *                <tt>false</tt>
    * @param sourceFile The source file to load (JSON or CSV).
    * @param dataSource The data source to use for loading the records.
+   * @param entityType The entity type to use for loading the records.
    *
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
    */
-  public static boolean loadFile(File             repository,
-                                 boolean          verbose,
-                                 File             sourceFile,
-                                 String           dataSource)
+  public static boolean loadFile(File     repository,
+                                 boolean  verbose,
+                                 File     sourceFile,
+                                 String   dataSource,
+                                 String   entityType)
   {
     return loadFile(repository,
                     verbose,
                     sourceFile,
                     dataSource,
+                    entityType,
                     null,
                     null,
                     false);
@@ -1236,29 +1113,35 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source for all the records.  NOTE: if the records in the file do
-   * not have a defined DATA_SOURCE then the specified data source is required.
+   * the data source and/or entity type for all the records.  NOTE: if the
+   * records in the file do not have a defined DATA_SOURCE then the specified
+   * data source is required.  If the records do not have a defined
+   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
+   * <tt>"GENERIC"</tt> is used.
    *
    * @param repository The directory for the repository.
    * @param verbose <tt>true</tt> for verbose API logging, otherwise
    *                <tt>false</tt>
    * @param sourceFile The source file to load (JSON or CSV).
    * @param dataSource The data source to use for loading the records.
+   * @param entityType The entity type to use for loading the records.
    * @param silent <tt>true</tt> if no feedback should be given to the user
    *               upon completion, otherwise <tt>false</tt>
    *
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
    */
-  public static boolean loadFile(File             repository,
-                                 boolean          verbose,
-                                 File             sourceFile,
-                                 String           dataSource,
-                                 boolean          silent)
+  public static boolean loadFile(File     repository,
+                                 boolean  verbose,
+                                 File     sourceFile,
+                                 String   dataSource,
+                                 String   entityType,
+                                 boolean  silent)
   {
     return loadFile(repository,
                     verbose,
                     sourceFile,
                     dataSource,
+                    entityType,
                     null,
                     null,
                     silent);
@@ -1266,14 +1149,18 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source for all the records.  NOTE: if the records in the file do
-   * not have a defined DATA_SOURCE then the specified data source is required.
+   * the data source and/or entity type for all the records.  NOTE: if the
+   * records in the file do not have a defined DATA_SOURCE then the specified
+   * data source is required.  If the records do not have a defined
+   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
+   * <tt>"GENERIC"</tt> is used.
    *
    * @param repository The directory for the repository.
    * @param verbose <tt>true</tt> for verbose API logging, otherwise
    *                <tt>false</tt>
    * @param sourceFile The source file to load (JSON or CSV).
    * @param dataSource The data source to use for loading the records.
+   * @param entityType The entity type to use for loading the records.
    * @param loadedCount The output parameter for the number successfully loaded.
    * @param failedCount The output parameter for the number that failed to load.
    *
@@ -1283,6 +1170,7 @@ public class RepositoryManager {
                                  boolean          verbose,
                                  File             sourceFile,
                                  String           dataSource,
+                                 String           entityType,
                                  Result<Integer>  loadedCount,
                                  Result<Integer>  failedCount)
   {
@@ -1290,6 +1178,7 @@ public class RepositoryManager {
                     verbose,
                     sourceFile,
                     dataSource,
+                    entityType,
                     loadedCount,
                     failedCount,
                     false);
@@ -1297,8 +1186,11 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source for all the records.  NOTE: if the records in the file do
-   * not have a defined DATA_SOURCE then the specified data source is required.
+   * the data source and/or entity type for all the records.  NOTE: if the
+   * records in the file do not have a defined DATA_SOURCE then the specified
+   * data source is required.  If the records do not have a defined
+   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
+   * <tt>"GENERIC"</tt> is used.
    *
    * @param repository The directory for the repository.
    * @param verbose <tt>true</tt> for verbose API logging, otherwise
@@ -1314,6 +1206,7 @@ public class RepositoryManager {
                                  boolean          verbose,
                                  File             sourceFile,
                                  String           dataSource,
+                                 String           entityType,
                                  Result<Integer>  loadedCount,
                                  Result<Integer>  failedCount,
                                  boolean          silent)
@@ -1330,8 +1223,9 @@ public class RepositoryManager {
     final Integer ZERO = 0;
     if (loadedCount != null) loadedCount.setValue(ZERO);
     if (failedCount != null) failedCount.setValue(ZERO);
-
     if (dataSource != null) dataSource = dataSource.toUpperCase();
+    if (entityType != null) entityType = entityType.toUpperCase();
+    else entityType = "GENERIC";
 
     Set<String> dataSources = getDataSources();
     // check if the data source is configured
@@ -1340,14 +1234,24 @@ public class RepositoryManager {
       dataSources.add(dataSource);
     }
 
-    RecordProvider provider = null;
+    Set<String> entityTypes = getEntityTypes();
+    // check if the entity type is configured
+    if (entityType != null && !entityTypes.contains(entityType)) {
+      if (!addEntityType(repository, entityType, verbose)) return false;
+      entityTypes.add(entityType);
+    }
+    if (!entityTypes.contains("GENERIC")) {
+      System.err.println("WARNING: The GENERIC entity type is not configured");
+    }
+
+    RecordReader recordReader = null;
     // check the file type
     if (normalizedFileName.endsWith(".JSON")) {
-      provider = provideJsonRecords(sourceFile, dataSource);
+      recordReader = provideJsonRecords(sourceFile, dataSource, entityType);
     } else if (normalizedFileName.endsWith(".CSV")) {
-      provider = provideCsvRecords(sourceFile, dataSource);
+      recordReader = provideCsvRecords(sourceFile, dataSource, entityType);
     }
-    if (provider == null) {
+    if (recordReader == null) {
       return false;
     }
 
@@ -1358,9 +1262,9 @@ public class RepositoryManager {
     int failedInterval = 100;
     PrintStream printStream = System.err;
     try {
-      for (JsonObject record = provider.getNextRecord();
+      for (JsonObject record = recordReader.readRecord();
            (record != null);
-           record = provider.getNextRecord())
+           record = recordReader.readRecord())
       {
         String recordId = JsonUtils.getString(record, "RECORD_ID");
         String recordSource = JsonUtils.getString(record, "DATA_SOURCE");
@@ -1368,13 +1272,23 @@ public class RepositoryManager {
           System.err.println();
           System.err.println(
               "If records in the file do not have a DATA_SOURCE then "
-                  + RepositoryManagerOption.DATA_SOURCE.getCommandLineFlag() + " is required.");
+                  + RepositoryManagerOption.DATA_SOURCE.getCommandLineFlag()
+                  + " is required.");
           return false;
         }
 
         if (!dataSources.contains(recordSource)) {
           if (!addDataSource(repository, recordSource, verbose)) return false;
           dataSources.add(recordSource);
+        }
+
+        // check for entity type and default to GENERIC if not found
+        String recordEntityType = JsonUtils.getString(record, "ENTITY_TYPE");
+        if (entityType == null || entityType.trim().length() == 0) {
+          JsonObjectBuilder builder = Json.createObjectBuilder(record);
+          builder.remove("ENTITY_TYPE");
+          builder.add("ENTITY_TYPE", "GENERIC");
+          record = builder.build();
         }
 
         StringBuffer sb = new StringBuffer();
@@ -1504,213 +1418,49 @@ public class RepositoryManager {
                                        boolean  verbose)
   {
     // add the data source and reinitialize
-    boolean success = configSources(repository,
-                                    Collections.singleton(dataSource),
-                                    verbose);
-    if (!success) return false;
+    Configuration config = configSources(repository,
+                                         Collections.singleton(dataSource),
+                                         verbose);
+    if (config == null) return false;
     destroyApis();
     initApis(repository, verbose);
     return true;
   }
 
-  private interface RecordProvider {
-    JsonObject getNextRecord();
-  }
-
-  private static JsonObject augmentRecord(JsonObject   record,
-                                          String       dataSource,
-                                          File         sourceFile)
+  private static boolean addEntityType(File     repository,
+                                       String   entityType,
+                                       boolean  verbose)
   {
-    if (record == null) return null;
-    JsonObjectBuilder job = Json.createObjectBuilder(record);
-    if (dataSource != null) {
-      if (record.containsKey("DATA_SOURCE")) {
-        job.remove("DATA_SOURCE");
-      }
-      if (record.containsKey("ENTITY_TYPE")) {
-        job.remove("ENTITY_TYPE");
-      }
-      job.add("DATA_SOURCE", dataSource);
-      job.add("ENTITY_TYPE", dataSource);
-    }
-    job.add("SOURCE_ID", sourceFile.toString());
-    return job.build();
+    // add the data source and reinitialize
+    Configuration config = configEntityTypes(repository,
+                                             Collections.singleton(entityType),
+                                             verbose);
+    if (config == null) return false;
+    destroyApis();
+    initApis(repository, verbose);
+    return true;
   }
 
-  private static class JsonArrayRecordProvider implements RecordProvider {
-    private Iterator<JsonObject> recordIter;
-    private String dataSource;
-    private File sourceFile;
-
-    public JsonArrayRecordProvider(File sourceFile, String dataSource) {
-      this.sourceFile = sourceFile;
-      JsonParserFactory jpf = Json.createParserFactory(Collections.emptyMap());
-      try {
-        FileInputStream    fis = new FileInputStream(sourceFile);
-        InputStreamReader  isr = new InputStreamReader(fis, "UTF-8");
-        BufferedReader     br  = new BufferedReader(isr);
-
-        JsonParser jp = jpf.createParser(br);
-        jp.next();
-        this.recordIter = jp.getArrayStream()
-            .map(jv -> (JsonObject) jv).iterator();
-
-        this.dataSource = dataSource;
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    public JsonObject getNextRecord() {
-      if (this.recordIter.hasNext()) {
-        return augmentRecord(this.recordIter.next(), this.dataSource, this.sourceFile);
-      } else {
-        return null;
-      }
-    }
-  }
-
-  private static class JsonRecordProvider implements RecordProvider {
-    private BufferedReader reader;
-    private String dataSource;
-    private File sourceFile;
-
-    public JsonRecordProvider(File sourceFile, String dataSource) {
-      this.sourceFile = sourceFile;
-      JsonParserFactory jpf = Json.createParserFactory(Collections.emptyMap());
-      try {
-        FileInputStream    fis = new FileInputStream(sourceFile);
-        InputStreamReader  isr = new InputStreamReader(fis, "UTF-8");
-        this.reader = new BufferedReader(isr);
-        this.dataSource = dataSource;
-
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    public JsonObject getNextRecord() {
-      try {
-        JsonObject record = null;
-        while (this.reader != null && record == null) {
-          // read the next line and check for EOF
-          String line = this.reader.readLine();
-          if (line == null) {
-            this.reader.close();
-            this.reader = null;
-            continue;
-          }
-
-          // trim the line of extra whitespace
-          line = line.trim();
-
-          // check for blank lines and skip them
-          if (line.length() == 0) continue;
-
-          // check if the line begins with a "#" for a comment lines
-          if (line.startsWith("#")) continue;
-
-          // check if the line does NOT start with "{"
-          if (!line.startsWith("{")) {
-            throw new IllegalStateException(
-                "Line does not appear to be JSON record: " + line);
-          }
-
-          // parse the line
-          record = JsonUtils.parseJsonObject(line);
-        }
-
-        return augmentRecord(record, this.dataSource, this.sourceFile);
-
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-  }
-
-  private static class CsvRecordProvider implements RecordProvider {
-    private Iterator<CSVRecord> recordIter;
-    private String dataSource;
-    private File sourceFile;
-
-    public CsvRecordProvider(File sourceFile, String dataSource) {
-      this.dataSource = dataSource;
-      this.sourceFile = sourceFile;
-      CSVFormat csvFormat = CSVFormat.DEFAULT
-          .withFirstRecordAsHeader().withIgnoreEmptyLines(true).withTrim(true);
-
-      try {
-        final String       enc = "UTF-8";
-        FileInputStream    fis = new FileInputStream(sourceFile);
-        InputStreamReader  isr = new InputStreamReader(fis, enc);
-        BufferedReader     br  = new BufferedReader(bomSkippingReader(isr, enc));
-
-        CSVParser parser = new CSVParser(br, csvFormat);
-        Map<String, Integer> headerMap = parser.getHeaderMap();
-        Set<String> headers = new HashSet<>();
-        headerMap.keySet().forEach(h -> {
-          headers.add(h.toUpperCase());
-        });
-        if (dataSource == null && !headers.contains("DATA_SOURCE")) {
-          throw new IllegalStateException(
-              "The " + RepositoryManagerOption.DATA_SOURCE.getCommandLineFlag() + " option is "
-              + "required if DATA_SOURCE missing from CSV");
-        }
-        this.recordIter = parser.iterator();
-
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-
-    }
-    public JsonObject getNextRecord() {
-      try {
-        if (!this.recordIter.hasNext()) return null;
-        CSVRecord record = this.recordIter.next();
-        Map<String,String> recordMap = record.toMap();
-        Iterator<Map.Entry<String,String>> entryIter
-            = recordMap.entrySet().iterator();
-        while (entryIter.hasNext()) {
-          Map.Entry<String,String> entry = entryIter.next();
-          String value = entry.getValue();
-          if (value == null || value.trim().length() == 0) {
-            entryIter.remove();
-          }
-        }
-        if (this.dataSource != null) {
-          recordMap.put("DATA_SOURCE", this.dataSource);
-          recordMap.put("ENTITY_TYPE", this.dataSource);
-        }
-        recordMap.put("SOURCE_ID", this.sourceFile.toString());
-
-        Map<String,Object> map = (Map) recordMap;
-        return Json.createObjectBuilder(map).build();
-
-      } catch (RuntimeException e) {
-        throw e;
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-  }
-
-  private static RecordProvider provideJsonRecords(File    sourceFile,
-                                                   String  dataSource)
+  private static RecordReader provideJsonRecords(File    sourceFile,
+                                                 String  dataSource,
+                                                 String  entityType)
   {
+    RecordReader recordReader = null;
     // check if we have a real JSON array
-    boolean array = false;
-    try (FileInputStream    fis = new FileInputStream(sourceFile);
-         InputStreamReader  isr = new InputStreamReader(fis, "UTF-8");
-         BufferedReader     br  = new BufferedReader(isr))
-    {
-      for (int nextChar = br.read(); nextChar >= 0; nextChar = br.read()) {
-        if (!Character.isWhitespace((char) nextChar)) {
-          if (((char) nextChar) == '[') {
-            array = true;
-          }
-          break;
-        }
+    try {
+      FileInputStream    fis = new FileInputStream(sourceFile);
+      InputStreamReader  isr = new InputStreamReader(fis, "UTF-8");
+      BufferedReader     br  = new BufferedReader(isr);
+
+      recordReader = new RecordReader(br, dataSource, entityType);
+
+      RecordReader.Format format = recordReader.getFormat();
+      if (format != JSON && format != JSON_LINES) {
+        System.err.println();
+        System.err.println(
+            "JSON file does not contain JSON or JSON-lines formatted records");
+        System.err.println();
+        return null;
       }
 
     } catch (IOException e) {
@@ -1721,85 +1471,117 @@ public class RepositoryManager {
       return null;
     }
 
-    if (array) {
-      return new JsonArrayRecordProvider(sourceFile, dataSource);
-
-    } else {
-      return new JsonRecordProvider(sourceFile, dataSource);
-    }
+    // return the record reader
+    return recordReader;
   }
 
-  private static RecordProvider provideCsvRecords(File   sourceFile,
-                                                  String dataSource)
+  private static RecordReader provideCsvRecords(File   sourceFile,
+                                                String dataSource,
+                                                String entityType)
   {
-    return new CsvRecordProvider(sourceFile, dataSource);
+    RecordReader recordReader = null;
+    // check if we have a real JSON array
+    try {
+      FileInputStream    fis = new FileInputStream(sourceFile);
+      InputStreamReader  isr = new InputStreamReader(fis, "UTF-8");
+      BufferedReader     br  = new BufferedReader(isr);
+
+      recordReader = new RecordReader(CSV, br, dataSource, entityType);
+
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.err.println();
+      System.err.println("Failed to read file: " + sourceFile);
+      System.err.println();
+      return null;
+    }
+
+    // return the record reader
+    return recordReader;
   }
 
   /**
    * Loads a single JSON record to the repository -- optionally setting
-   * the data source for the record.  NOTE: if the specified record does not
-   * have a DATA_SOURCE property then the specified data source is required.
+   * the data source and entity type for the record.  NOTE: if the specified
+   * record does not have a DATA_SOURCE property then the specified data source
+   * is required.  If the record does not have a defined ENTITY_TYPE and the
+   * specified entity type is <tt>null</tt> then <tt>"GENERIC"</tt> is used.
    *
    * @param repository The directory for the repository.
    * @param jsonRecord The JSON record to load.
-   * @param dataSource The data source to use for loading the records.
-   *
+   * @param dataSource The data source to use for loading the record.
+   * @param entityType The entity type to use for loading the record.
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
    */
-  public static boolean addRecord(File   repository,
-                                  String jsonRecord,
-                                  String dataSource)
+  public static boolean addRecord(File    repository,
+                                  String  jsonRecord,
+                                  String  dataSource,
+                                  String  entityType)
   {
-    return addRecord(repository, false, jsonRecord, dataSource, false);
+    return addRecord(
+        repository, false, jsonRecord, dataSource, entityType, false);
   }
 
   /**
    * Loads a single JSON record to the repository -- optionally setting
-   * the data source for the record.  NOTE: if the specified record does not
-   * have a DATA_SOURCE property then the specified data source is required.
+   * the data source and entity type for the record.  NOTE: if the specified
+   * record does not have a DATA_SOURCE property then the specified data source
+   * is required.  If the record does not have a defined ENTITY_TYPE and the
+   * specified entity type is <tt>null</tt> then <tt>"GENERIC"</tt> is used.
    *
    * @param repository The directory for the repository.
    * @param jsonRecord The JSON record to load.
-   * @param dataSource The data source to use for loading the records.
+   * @param dataSource The data source to use for loading the record.
+   * @param entityType The entity type to use for loading the record.
    *
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
    */
   public static boolean addRecord(File    repository,
                                   boolean verbose,
                                   String  jsonRecord,
-                                  String  dataSource)
+                                  String  dataSource,
+                                  String  entityType)
   {
-    return addRecord(repository, verbose, jsonRecord, dataSource, false);
+    return addRecord(
+        repository, verbose, jsonRecord, dataSource, entityType, false);
   }
 
   /**
    * Loads a single JSON record to the repository -- optionally setting
-   * the data source for the record.  NOTE: if the specified record does not
-   * have a DATA_SOURCE property then the specified data source is required.
+   * the data source and entity type for the record.  NOTE: if the specified
+   * record does not have a DATA_SOURCE property then the specified data source
+   * is required.  If the record does not have a defined ENTITY_TYPE and the
+   * specified entity type is <tt>null</tt> then <tt>"GENERIC"</tt> is used.
    *
    * @param repository The directory for the repository.
    * @param jsonRecord The JSON record to load.
-   * @param dataSource The data source to use for loading the records.
+   * @param dataSource The data source to use for loading the record.
+   * @param entityType The entity type to use for loading the record.
    *
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
    */
   public static boolean addRecord(File    repository,
                                   String  jsonRecord,
                                   String  dataSource,
+                                  String  entityType,
                                   boolean silent)
   {
-    return addRecord(repository, false, jsonRecord, dataSource, silent);
+    return addRecord(
+        repository, false, jsonRecord, dataSource, entityType, silent);
   }
 
 
   /**
    * Loads a single JSON record to the repository -- optionally setting
-   * the data source for the record.  NOTE: if the specified record does not
-   * have a DATA_SOURCE property then the specified data source is required.
+   * the data source and entity type for the record.  NOTE: if the specified
+   * record does not have a DATA_SOURCE property then the specified data source
+   * is required.  If the record does not have a defined ENTITY_TYPE and the
+   * specified entity type is <tt>null</tt> then <tt>"GENERIC"</tt> is used.
    *
    * @param repository The directory for the repository.
    * @param jsonRecord The JSON record to load.
-   * @param dataSource The data source to use for loading the records.
+   * @param dataSource The data source to use for loading the record.
+   * @param entityType The entity type to use for loading the record.
    * @param verbose <tt>true</tt> for verbose API logging, otherwise
    *                <tt>false</tt>
    *
@@ -1809,11 +1591,13 @@ public class RepositoryManager {
                                   boolean  verbose,
                                   String   jsonRecord,
                                   String   dataSource,
+                                  String   entityType,
                                   boolean  silent)
   {
     initApis(repository, verbose);
 
     Set<String> dataSources = getDataSources();
+    Set<String> entityTypes = getEntityTypes();
     JsonObject jsonObject = JsonUtils.parseJsonObject(jsonRecord);
     if (dataSource == null) {
       dataSource = JsonUtils.getString(jsonObject, "DATA_SOURCE");
@@ -1831,6 +1615,20 @@ public class RepositoryManager {
       if (!addDataSource(repository, dataSource, verbose)) return false;
       dataSources.add(dataSource);
     }
+
+    if (entityType == null) {
+      entityType = JsonUtils.getString(jsonObject, "ENTITY_TYPE");
+    }
+    if (entityType == null) {
+      entityType = "GENERIC";
+    } else {
+      entityType = entityType.toUpperCase();
+    }
+    if (!entityTypes.contains(entityType)) {
+      if (!addEntityType(repository, entityType, verbose)) return false;
+      entityTypes.add(entityType);
+    }
+
     String recordId = JsonUtils.getString(jsonObject, "RECORD_ID");
     StringBuffer sb = new StringBuffer();
     String loadId = (new Date()).toString();
@@ -1842,8 +1640,8 @@ public class RepositoryManager {
                                                    jsonRecord,
                                                    loadId);
     if (returnCode != 0) {
-      logError("G2Engine.addRecord()"
-                   + ((recordId == null) ? "WithReturnedRecordId" : ""),
+      logError("G2Engine.addRecord"
+                   + ((recordId == null) ? "WithReturnedRecordId()" : "()"),
                ENGINE_API);
       return false;
     }
@@ -1865,12 +1663,13 @@ public class RepositoryManager {
    * if not already configured.
    *
    * @param repository The directory for the repository.
-   * @param dataSources The {@link List} of data source names.
+   * @param dataSources The {@link Set} of data source codes.
    *
-   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
    */
-  public static boolean configSources(File         repository,
-                                      Set<String>  dataSources)
+  public static Configuration configSources(File         repository,
+                                            Set<String>  dataSources)
   {
     return configSources(repository, dataSources, false);
   }
@@ -1880,15 +1679,16 @@ public class RepositoryManager {
    * if not already configured.
    *
    * @param repository The directory for the repository.
-   * @param dataSources The {@link List} of data source names.
+   * @param dataSources The {@link Set} of data source codes.
    * @param verbose <tt>true</tt> for verbose API logging, otherwise
    *                <tt>false</tt>
    *
-   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
    */
-  public static boolean configSources(File         repository,
-                                      boolean      verbose,
-                                      Set<String>  dataSources)
+  public static Configuration configSources(File         repository,
+                                            boolean      verbose,
+                                            Set<String>  dataSources)
   {
     return configSources(repository, verbose, dataSources, false);
   }
@@ -1898,15 +1698,16 @@ public class RepositoryManager {
    * if not already configured.
    *
    * @param repository The directory for the repository.
-   * @param dataSources The {@link List} of data source names.
+   * @param dataSources The {@link Set} of data source codes.
    * @param silent <tt>true</tt> if no feedback should be given to the user
    *               upon completion, otherwise <tt>false</tt>
    *
-   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
    */
-  public static boolean configSources(File         repository,
-                                      Set<String>  dataSources,
-                                      boolean      silent)
+  public static Configuration configSources(File         repository,
+                                            Set<String>  dataSources,
+                                            boolean      silent)
   {
     return configSources(repository, false, dataSources, silent);
   }
@@ -1918,18 +1719,22 @@ public class RepositoryManager {
    * @param repository The directory for the repository.
    * @param verbose <tt>true</tt> for verbose API logging, otherwise
    *                <tt>false</tt>
-   * @param dataSources The {@link List} of data source names.
+   * @param dataSources The {@link Set} of data source codes.
    * @param silent <tt>true</tt> if no feedback should be given to the user
    *               upon completion, otherwise <tt>false</tt>
    *
-   * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
    */
-  public static boolean configSources(File         repository,
-                                      boolean      verbose,
-                                      Set<String>  dataSources,
-                                      boolean      silent)
+  public static Configuration configSources(File         repository,
+                                            boolean      verbose,
+                                            Set<String>  dataSources,
+                                            boolean      silent)
   {
     initApis(repository, verbose);
+    Long        resultConfigId  = null;
+    JsonObject  resultConfig    = null;
+
     Result<Long> configId = new Result<>();
     int returnCode = 0;
     try {
@@ -1938,58 +1743,36 @@ public class RepositoryManager {
       Map<String, Boolean> dataSourceActions = new LinkedHashMap<>();
       Set<String> addedDataSources = new LinkedHashSet<>();
       int addedCount = 0;
-      for (String dataSource : dataSources) {
-        if (existingSet.contains(dataSource)) {
-          dataSourceActions.put(dataSource, false);
+      for (String dataSourceCode : dataSources) {
+        if (existingSet.contains(dataSourceCode)) {
+          dataSourceActions.put(dataSourceCode, false);
           continue;
         }
-        returnCode = CONFIG_API.addDataSource(configId.getValue(), dataSource);
+        StringBuffer sb = new StringBuffer();
+        SzDataSource dataSource = new SzDataSource(dataSourceCode);
+        returnCode = CONFIG_API.addDataSourceV2(
+            configId.getValue(), dataSource.toNativeJson(), sb);
         if (returnCode != 0) {
-          logError("G2Config.addDataSource()", CONFIG_API);
-          return false;
+          logError("G2Config.addDataSourceV2()", CONFIG_API);
+          return null;
         }
-        dataSourceActions.put(dataSource, true);
-        addedDataSources.add(dataSource);
+        dataSourceActions.put(dataSourceCode, true);
+        addedDataSources.add(dataSourceCode);
         addedCount++;
       }
 
       if (addedCount > 0) {
-        // write the modified config to a string buffer
-        StringBuffer sb = new StringBuffer();
-        returnCode = CONFIG_API.save(configId.getValue(), sb);
-        if (returnCode != 0) {
-          logError("G2Config.save()", CONFIG_API);
-          return false;
-        }
+        String comment = buildAddedComment(
+            "Added data sources: ", addedDataSources);
 
-        String comment;
-        if (addedCount == 1) {
-          comment = "Added data source: " + addedDataSources.iterator().next();
-        } else {
-          StringBuilder commentSB = new StringBuilder();
-          commentSB.append("Added data sources: ");
-          Iterator<String> iter = addedDataSources.iterator();
-          String prefix = "";
-          while (iter.hasNext()) {
-            String dataSource = iter.next();
-            commentSB.append(prefix).append(dataSource);
-            prefix = iter.hasNext() ? ", " : " and ";
-          }
-          comment = commentSB.toString();
-        }
+        Result<Long> configIdResult = new Result<>();
+        resultConfig = addConfigAndSetDefault(
+            configId.getValue(), comment, configIdResult);
 
-        Result<Long> result = new Result<>();
-        returnCode = CONFIG_MGR_API.addConfig(sb.toString(), comment, result);
-        if (returnCode != 0) {
-          logError("G2ConfigMgr.addConfig()", CONFIG_MGR_API);
-          return false;
-        }
+        if (resultConfig == null) return null;
 
-        returnCode = CONFIG_MGR_API.setDefaultConfigID(result.getValue());
-        if (returnCode != 0) {
-          logError("G2ConfigMgr.setDefaultConfigID()", CONFIG_MGR_API);
-          return false;
-        }
+        // get the result config and its ID for the result
+        resultConfigId  = configIdResult.getValue();
       }
 
       if (!silent) {
@@ -2016,7 +1799,242 @@ public class RepositoryManager {
       }
     }
 
-    return true;
+    // check if the result config ID is not set (usually means that all the
+    // data sources to be added already existed)
+    if (resultConfigId == null) {
+      return getDefaultConfig();
+    }
+
+    return new Configuration(resultConfigId, resultConfig);
+  }
+
+  /**
+   * Configures the specified entity types for the specified repository
+   * if not already configured.
+   *
+   * @param repository The directory for the repository.
+   * @param entityTypes The {@link Set} of entity type codes.
+   *
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
+   */
+  public static Configuration configEntityTypes(File         repository,
+                                                Set<String>  entityTypes)
+  {
+    return configSources(repository, entityTypes, false);
+  }
+
+  /**
+   * Configures the specified entity types for the specified repository
+   * if not already configured.
+   *
+   * @param repository The directory for the repository.
+   * @param verbose <tt>true</tt> for verbose API logging, otherwise
+   *                <tt>false</tt>
+   * @param entityTypes The {@link Set} of entity type codes.
+   *
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
+   */
+  public static Configuration configEntityTypes(File         repository,
+                                                boolean      verbose,
+                                                Set<String>  entityTypes)
+  {
+    return configEntityTypes(repository, verbose, entityTypes, false);
+  }
+
+  /**
+   * Configures the specified entity types for the specified repository
+   * if not already configured.
+   *
+   * @param repository The directory for the repository.
+   * @param entityTypes The {@link Set} of entity type codes.
+   * @param silent <tt>true</tt> if no feedback should be given to the user
+   *               upon completion, otherwise <tt>false</tt>
+   *
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
+   */
+  public static Configuration configEntityTypes(File         repository,
+                                                Set<String>  entityTypes,
+                                                boolean      silent)
+  {
+    return configEntityTypes(repository, false, entityTypes, silent);
+  }
+
+  /**
+   * Configures the specified entity types for the specified repository
+   * if not already configured.
+   *
+   * @param repository The directory for the repository.
+   * @param verbose <tt>true</tt> for verbose API logging, otherwise
+   *                <tt>false</tt>
+   * @param entityTypes The {@link Set} of entity type codes.
+   * @param silent <tt>true</tt> if no feedback should be given to the user
+   *               upon completion, otherwise <tt>false</tt>
+   *
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
+   */
+  public static Configuration configEntityTypes(File         repository,
+                                                boolean      verbose,
+                                                Set<String>  entityTypes,
+                                                boolean      silent)
+  {
+    initApis(repository, verbose);
+    Long        resultConfigId  = null;
+    JsonObject  resultConfig    = null;
+
+    Result<Long> configId = new Result<>();
+    int returnCode = 0;
+    try {
+      Set<String> existingSet = getEntityTypes(configId);
+
+      Map<String, Boolean> entityTypeActions = new LinkedHashMap<>();
+      Set<String> addedEntityTypes = new LinkedHashSet<>();
+      int addedCount = 0;
+      for (String entityTypeCode : entityTypes) {
+        if (existingSet.contains(entityTypeCode)) {
+          entityTypeActions.put(entityTypeCode, false);
+          continue;
+        }
+        StringBuffer sb = new StringBuffer();
+        SzEntityType entityType = new SzEntityType(
+            entityTypeCode, null, "ACTOR");
+        returnCode = CONFIG_API.addEntityTypeV2(
+            configId.getValue(), entityType.toNativeJson(), sb);
+        if (returnCode != 0) {
+          logError("G2Config.addEntityTypeV2()", CONFIG_API);
+          return null;
+        }
+        entityTypeActions.put(entityTypeCode, true);
+        addedEntityTypes.add(entityTypeCode);
+        addedCount++;
+      }
+
+      if (addedCount > 0) {
+        String comment = buildAddedComment(
+            "Added entity types: ", addedEntityTypes);
+
+        Result<Long> configIdResult = new Result<>();
+        resultConfig = addConfigAndSetDefault(
+            configId.getValue(), comment, configIdResult);
+
+        if (resultConfig == null) return null;
+
+        // get the result config and its ID for the result
+        resultConfigId  = configIdResult.getValue();
+      }
+
+      if (!silent) {
+        System.out.println();
+        System.out.println("Ensured specified entity types are configured.");
+        System.out.println("     Repository   : " + repository);
+        System.out.println("     Entity Types : ");
+        entityTypeActions.entrySet().forEach(entry -> {
+          System.out.println(
+              "          - " + entry.getKey()
+                  + " (" + ((entry.getValue()) ? "added" : "preconfigured") + ")");
+        });
+        System.out.println();
+      }
+
+      if (addedCount > 0) {
+        destroyApis();
+        initApis(repository, verbose);
+      }
+
+    } finally {
+      if (configId.getValue() != null) {
+        CONFIG_API.close(configId.getValue());
+      }
+    }
+
+    // check if the result config ID is not set (usually means that all the
+    // entity types to be added already existed)
+    if (resultConfigId == null) {
+      return getDefaultConfig();
+    }
+
+    return new Configuration(resultConfigId, resultConfig);
+  }
+
+  /**
+   * Builds a comment for adding config objects.
+   */
+  private static String buildAddedComment(String prefix, Set<String> addedSet) {
+    String comment;
+    if (addedSet.size() == 1) {
+      comment = prefix + addedSet.iterator().next();
+    } else {
+      StringBuilder commentSB = new StringBuilder();
+      commentSB.append(prefix);
+      Iterator<String> iter = addedSet.iterator();
+      String sep = "";
+      while (iter.hasNext()) {
+        String entityTypeCode = iter.next();
+        commentSB.append(sep).append(entityTypeCode);
+        sep = iter.hasNext() ? ", " : " and ";
+      }
+      comment = commentSB.toString();
+    }
+    return comment;
+  }
+
+  /**
+   * Adds the config associated witht he specified handle using the specified
+   * comment and returns the {@link JsonObject} for the config along with
+   * setting the config's ID in the specified result parameter.
+   */
+  private static JsonObject addConfigAndSetDefault(
+      long configHandle, String comment, Result<Long> resultConfig)
+  {
+    // write the modified config to a string buffer
+    StringBuffer sb = new StringBuffer();
+    int returnCode = CONFIG_API.save(configHandle, sb);
+    if (returnCode != 0) {
+      logError("G2Config.save()", CONFIG_API);
+      return null;
+    }
+
+    Result<Long> result = new Result<>();
+    String configJsonText = sb.toString();
+    returnCode = CONFIG_MGR_API.addConfig(configJsonText, comment, result);
+    if (returnCode != 0) {
+      logError("G2ConfigMgr.addConfig()", CONFIG_MGR_API);
+      return null;
+    }
+
+    returnCode = CONFIG_MGR_API.setDefaultConfigID(result.getValue());
+    if (returnCode != 0) {
+      logError("G2ConfigMgr.setDefaultConfigID()", CONFIG_MGR_API);
+      return null;
+    }
+
+    // get the result config and its ID for the result
+    resultConfig.setValue(result.getValue());
+    return JsonUtils.parseJsonObject(configJsonText);
+  }
+
+  /**
+   * Gets the {@link JsonObject} describing the current default config as well
+   * as setting the default config's ID in the specified result parameter.
+   */
+  private static Configuration getDefaultConfig() {
+    Result<Long> result = new Result<>();
+    int returnCode = CONFIG_MGR_API.getDefaultConfigID(result);
+    if (returnCode != 0) {
+      logError("G2ConfigMgr.getDefaultConfigID()", CONFIG_MGR_API);
+      return null;
+    }
+    StringBuffer sb = new StringBuffer();
+    returnCode = CONFIG_MGR_API.getConfig(result.getValue(), sb);
+    if (returnCode != 0) {
+      logError("G2ConfigMgr.getConfig()", CONFIG_MGR_API);
+      return null;
+    }
+    JsonObject config = JsonUtils.parseJsonObject(sb.toString());
+    return new Configuration(result.getValue(), config);
   }
 
 }

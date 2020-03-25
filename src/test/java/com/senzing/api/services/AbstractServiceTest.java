@@ -10,28 +10,23 @@ import java.util.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senzing.api.model.*;
+import com.senzing.nativeapi.NativeApiFactory;
+import com.senzing.nativeapi.replay.ReplayNativeApiProvider;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
-import com.senzing.g2.engine.G2Engine;
-import com.senzing.g2.engine.G2JNI;
+import com.senzing.g2.engine.*;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.AccessToken;
 import com.senzing.util.JsonUtils;
 
-import javax.json.Json;
-import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
+import javax.json.*;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
-import static com.senzing.api.BuildInfo.MAVEN_VERSION;
-import static com.senzing.api.BuildInfo.REST_API_VERSION;
-import static com.senzing.api.model.SzFeatureInclusion.NONE;
-import static com.senzing.api.model.SzFeatureInclusion.REPRESENTATIVE;
-import static com.senzing.api.model.SzHttpMethod.*;
 import static com.senzing.io.IOUtilities.readTextFileAsString;
-import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.*;
+import static com.senzing.util.LoggingUtilities.*;
+import static com.senzing.repomgr.RepositoryManager.*;
 
 /**
  * Provides an abstract base class for services tests that will create a
@@ -40,19 +35,30 @@ import static org.junit.jupiter.api.Assumptions.*;
  */
 public abstract class AbstractServiceTest {
   /**
+   * The entity type code for the GENERIC entity type.
+   */
+  public static final String GENERIC_ENTITY_TYPE = "GENERIC";
+
+  /**
+   * The replay provider to use.
+   */
+  private static final ReplayNativeApiProvider REPLAY_PROVIDER
+      = new ReplayNativeApiProvider();
+
+  /**
    * Whether or not the Senzing native API is available and the G2 native
    * library could be loaded.
    */
-  protected static final boolean NATIVE_API_AVAILABLE;
+  private static final boolean NATIVE_API_AVAILABLE;
 
   /**
    * Message to display when the Senzing API is not available and the tests
    * are being skipped.
    */
-  protected static final String NATIVE_API_UNAVAILABLE_MESSAGE;
+  private static final String NATIVE_API_UNAVAILABLE_MESSAGE;
 
   static {
-    G2Engine engineApi = null;
+    G2Product productApi = null;
     StringWriter sw = new StringWriter();
     try {
       PrintWriter pw = new PrintWriter(sw);
@@ -63,15 +69,23 @@ public abstract class AbstractServiceTest {
       pw.println();
 
       try {
-        engineApi = new G2JNI();
+        productApi = new G2ProductJNI();
       } catch (Throwable ignore) {
         // do nothing
       }
+
+      NativeApiFactory.installProvider(REPLAY_PROVIDER);
+
     } finally {
-      NATIVE_API_AVAILABLE = (engineApi != null);
+      NATIVE_API_AVAILABLE = (productApi != null);
       NATIVE_API_UNAVAILABLE_MESSAGE = sw.toString();
     }
   }
+
+  /**
+   * The time of the last progress log.
+   */
+  private long progressLogTimestamp = -1L;
 
   /**
    * The API Server being used to run the tests.
@@ -107,6 +121,65 @@ public abstract class AbstractServiceTest {
    * The number of tests that succeeded for this instance.
    */
   private int successCount = 0;
+
+  /**
+   * The default configuration ID.
+   */
+  private Long bootstrapConfigId = null;
+
+  /**
+   * The default configuration ID.
+   */
+  private Long initialConfigId = null;
+
+  /**
+   * The map of default data sources.
+   */
+  private Map<String, SzDataSource> defaultDataSources = Collections.emptyMap();
+
+  /**
+   * The map of default entity types.
+   */
+  private Map<String, SzEntityType> defaultEntityTypes = Collections.emptyMap();
+
+  /**
+   * THe map of default entity classes.
+   */
+  private Map<String, SzEntityClass> defaultEntityClasses
+      = Collections.emptyMap();
+
+  /**
+   * The map of default attribute types.
+   */
+  private Map<String, SzAttributeType> defaultAttributeTypes
+      = Collections.emptyMap();
+
+  /**
+   * The map of the initial data sources (after the repository is prepared).
+   */
+  private Map<String, SzDataSource> initialDataSources = Collections.emptyMap();
+
+  /**
+   * The map of initial entity types (after the repository is prepared).
+   */
+  private Map<String, SzEntityType> initialEntityTypes = Collections.emptyMap();
+
+  /**
+   * The map of initial entity classes (after the repository is prepared).
+   */
+  private Map<String, SzEntityClass> initialEntityClasses
+      = Collections.emptyMap();
+
+  /**
+   * The map of initial attribute types (after the repository is prepared).
+   */
+  private Map<String, SzAttributeType> initialAttributeTypes
+      = Collections.emptyMap();
+
+  /**
+   * The access token to deregister the current test suite.
+   */
+  private AccessToken replayTestToken = null;
 
   /**
    * Creates a temp repository directory.
@@ -175,6 +248,34 @@ public abstract class AbstractServiceTest {
   }
 
   /**
+   * Signals the beginning of the current test suite.
+   *
+   * @return <tt>true</tt> if replaying previous results and <tt>false</tt>
+   *         if using the live API.
+   */
+  protected boolean beginTests() {
+    this.replayTestToken = REPLAY_PROVIDER.beginTests(this.getClass());
+    return REPLAY_PROVIDER.isReplaying();
+  }
+
+  /**
+   * Signals the end of the current test suite.
+   */
+  protected void endTests() {
+    REPLAY_PROVIDER.endTests(this.replayTestToken);
+    this.replayTestToken = null;
+    if (this.getFailureCount() > 0 && REPLAY_PROVIDER.isCacheStale()) {
+      System.out.println();
+      System.out.println("**********************");
+      System.out.println("** WARNING: DEPENDENCIES HAVE CHANGED");
+      System.out.println("** CACHED TEST RESULTS MAY BE INVALID");
+      System.out.println("** " + REPLAY_PROVIDER.getTestCacheZip());
+      System.out.println("**********************");
+      System.out.println();
+    }
+  }
+
+  /**
    * Creates an absolute URI for the relative URI provided.  For example, if
    * <tt>"license"</tt> was passed as the parameter then
    * <tt>"http://localhost:[port]/license"</tt> will be returned where
@@ -205,8 +306,19 @@ public abstract class AbstractServiceTest {
    * <tt>false</tt>
    */
   protected boolean assumeNativeApiAvailable() {
-    assumeTrue(NATIVE_API_AVAILABLE, NATIVE_API_UNAVAILABLE_MESSAGE);
-    return NATIVE_API_AVAILABLE;
+    assumeTrue(checkNativeApiAvailable(), NATIVE_API_UNAVAILABLE_MESSAGE);
+    return checkNativeApiAvailable();
+  }
+
+  /**
+   * Checks if the native API is directly available or is being replayed from
+   * a cache.
+   *
+   * @return <tt>true</tt> if the native API functions can be called, otherwise
+   *         <tt>false</tt>.
+   */
+  protected boolean checkNativeApiAvailable() {
+    return NATIVE_API_AVAILABLE || REPLAY_PROVIDER.isReplaying();
   }
 
   /**
@@ -215,20 +327,27 @@ public abstract class AbstractServiceTest {
    * initialize and start the Senzing API Server.
    */
   protected void initializeTestEnvironment() {
-    if (!NATIVE_API_AVAILABLE) return;
+    if (!NATIVE_API_AVAILABLE && !REPLAY_PROVIDER.isReplaying()) return;
     String moduleName = this.getModuleName("RepoMgr (create)");
     RepositoryManager.setThreadModuleName(moduleName);
     boolean concluded = false;
     try {
-      RepositoryManager.createRepo(this.getRepositoryDirectory(), true);
+      Configuration config = RepositoryManager.createRepo(
+          this.getRepositoryDirectory(), true);
       this.repoCreated = true;
+
+      this.processDefaultConfig(config);
 
       this.prepareRepository();
 
       RepositoryManager.conclude();
       concluded = true;
 
+      // initialize the server
       this.initializeServer();
+
+      // process the post-initialization config
+      this.processInitialConfig();
 
     } catch (RuntimeException e) {
       e.printStackTrace();
@@ -243,6 +362,298 @@ public abstract class AbstractServiceTest {
        if (!concluded) RepositoryManager.conclude();
        RepositoryManager.clearThreadModuleName();
     }
+  }
+
+  /**
+   * Process the default config.
+   */
+  private void processDefaultConfig(Configuration config) {
+    this.defaultDataSources     = new LinkedHashMap<>();
+    this.defaultEntityTypes     = new LinkedHashMap<>();
+    this.defaultEntityClasses   = new LinkedHashMap<>();
+    this.defaultAttributeTypes  = new LinkedHashMap<>();
+    this.processConfig(config.getConfigJson(),
+                       this.defaultDataSources,
+                       this.defaultEntityClasses,
+                       this.defaultEntityTypes,
+                       this.defaultAttributeTypes);
+
+    this.defaultDataSources
+        = Collections.unmodifiableMap(this.defaultDataSources);
+
+    this.defaultEntityClasses
+        = Collections.unmodifiableMap(this.defaultEntityClasses);
+
+    this.defaultEntityTypes
+        = Collections.unmodifiableMap(this.defaultEntityTypes);
+
+    this.defaultAttributeTypes
+        = Collections.unmodifiableMap(this.defaultAttributeTypes);
+
+    this.bootstrapConfigId = config.getConfigId();
+  }
+
+  /**
+   * Processes the initial configuration after the server starts up.
+   *
+   */
+  private void processInitialConfig() {
+    G2Engine engineApi = this.server.getEngineApi();
+    Configuration config = this.server.executeInThread(() -> {
+      StringBuffer sb = new StringBuffer();
+      int returnCode = engineApi.exportConfig(sb);
+      if (returnCode != 0) {
+        throw new IllegalStateException(
+            formatError("G2Engine.exportConfig()", engineApi));
+      }
+
+      JsonObject configJson = JsonUtils.parseJsonObject(sb.toString());
+
+      Result<Long> result = new Result<>();
+      returnCode = engineApi.getActiveConfigID(result);
+      if (returnCode != 0) {
+        throw new IllegalStateException(
+            formatError("G2Engine.getActiveConfigID()", engineApi));
+      }
+      return new Configuration(result.getValue(), configJson);
+    });
+
+    this.initialDataSources     = new LinkedHashMap<>();
+    this.initialEntityClasses   = new LinkedHashMap<>();
+    this.initialEntityTypes     = new LinkedHashMap<>();
+    this.initialAttributeTypes  = new LinkedHashMap<>();
+
+    this.processConfig(config.getConfigJson(),
+                       this.initialDataSources,
+                       this.initialEntityClasses,
+                       this.initialEntityTypes,
+                       this.initialAttributeTypes);
+
+    this.initialDataSources
+        = Collections.unmodifiableMap(this.initialDataSources);
+    this.initialEntityClasses
+        = Collections.unmodifiableMap(this.initialEntityClasses);
+    this.initialEntityTypes
+        = Collections.unmodifiableMap(this.initialEntityTypes);
+    this.initialAttributeTypes
+        = Collections.unmodifiableMap(this.initialAttributeTypes);
+
+    this.initialConfigId = config.getConfigId();
+
+    // fire the post initialization callback
+    this.doPostServerInitialization(this.server,
+                                    config.getConfigId(),
+                                    config.getConfigJson());
+  }
+
+  /**
+   * Sets the default configuration to the initial configuration ID and
+   * then ensures the configuration is current.
+   *
+   */
+  protected void revertToInitialConfig() {
+    if (this.initialConfigId == null) {
+      throw new IllegalStateException(
+          "Cannot revert to the initial config before initialization.");
+    }
+    G2ConfigMgr configMgrApi = this.server.getConfigMgrApi();
+    if (configMgrApi == null) {
+      throw new IllegalStateException(
+          "Cannot revert the configuration if the server is pinned to a "
+          + "specific configuration ID.");
+    }
+    int returnCode = configMgrApi.setDefaultConfigID(this.initialConfigId);
+    if (returnCode != 0) {
+      throw new IllegalStateException(
+          formatError("G2ConfigMgr.setDefaultConfigID()",
+                      configMgrApi));
+    }
+    Boolean result = this.server.ensureConfigCurrent();
+    if (result == null) {
+      throw new IllegalStateException(
+          "Unable to revert the configuration due to an error.");
+    }
+  }
+
+  /**
+   * Process the specified config and puts the data sources, entity classes
+   * and entity types in the specified maps.
+   */
+  private void processConfig(JsonObject                   config,
+                             Map<String, SzDataSource>    dataSourceMap,
+                             Map<String, SzEntityClass>   entityClassMap,
+                             Map<String, SzEntityType>    entityTypeMap,
+                             Map<String, SzAttributeType> attributeTypeMap)
+  {
+    Map<Integer, SzEntityClass> entityClassesById = new LinkedHashMap<>();
+    config = config.getJsonObject("G2_CONFIG");
+
+    if (dataSourceMap != null) {
+      // get the data sources
+      JsonArray jsonArray = config.getJsonArray("CFG_DSRC");
+      for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
+        String  dataSourceCode  = jsonObject.getString("DSRC_CODE");
+        int     dataSourceId    = jsonObject.getInt("DSRC_ID");
+        SzDataSource dataSource = new SzDataSource(dataSourceCode, dataSourceId);
+        dataSourceMap.put(dataSource.getDataSourceCode(), dataSource);
+      }
+    }
+
+    if (entityClassMap != null) {
+      // get the entity classes
+      JsonArray jsonArray = config.getJsonArray("CFG_ECLASS");
+      for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
+        String  eclassCode  = jsonObject.getString("ECLASS_CODE");
+        Integer eclassId    = jsonObject.getInt("ECLASS_ID");
+        String  resolve     = jsonObject.getString("RESOLVE");
+        SzEntityClass entityClass = new SzEntityClass(
+            eclassCode, eclassId, "YES".equalsIgnoreCase(resolve));
+
+        entityClassMap.put(
+            entityClass.getEntityClassCode(), entityClass);
+        entityClassesById.put(entityClass.getEntityClassId(), entityClass);
+      }
+    }
+
+    if (entityClassMap != null && entityTypeMap != null) {
+      // get the entity types
+      JsonArray jsonArray = config.getJsonArray("CFG_ETYPE");
+      for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
+        String  etypeCode = jsonObject.getString("ETYPE_CODE");
+        Integer etypeId   = jsonObject.getInt("ETYPE_ID");
+        Integer eclassId  = jsonObject.getInt("ECLASS_ID");
+        SzEntityClass entityClass = entityClassesById.get(eclassId);
+        SzEntityType entityType = new SzEntityType(
+            etypeCode, etypeId, entityClass.getEntityClassCode());
+        entityTypeMap.put(entityType.getEntityTypeCode(), entityType);
+      }
+    }
+
+    if (attributeTypeMap != null) {
+      JsonArray jsonArray = config.getJsonArray("CFG_ATTR");
+      for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
+        SzAttributeType attributeType
+            = SzAttributeType.parseAttributeType(null, jsonObject);
+        attributeTypeMap.put(attributeType.getAttributeCode(), attributeType);
+      }
+    }
+  }
+
+  /**
+   * Return the unmodifiable {@link Map} of {@link String} data source code
+   * keys to {@link SzDataSource} values describing the data sources
+   * included in the default base template configuration.
+   *
+   * @return The unmodifiable {@link Map} of default data sources.
+   */
+  protected Map<String, SzDataSource> getDefaultDataSources() {
+    return this.defaultDataSources;
+  }
+
+  /**
+   * Return the unmodifiable {@link Map} of {@link String} entity type code
+   * keys to {@link SzEntityType} values describing the entity types
+   * included in the default base template configuration.
+   *
+   * @return The unmodifiable {@link Map} of default entity types.
+   */
+  protected Map<String, SzEntityType> getDefaultEntityTypes() {
+    return this.defaultEntityTypes;
+  }
+
+  /**
+   * Return the unmodifiable {@link Map} of {@link String} entity class code
+   * keys to {@link SzEntityClass} values describing the entity classes
+   * included in the default base template configuration.
+   *
+   * @return The unmodifiable {@link Map} of default entity classes.
+   */
+  protected Map<String, SzEntityClass> getDefaultEntityClasses() {
+    return this.defaultEntityClasses;
+  }
+
+  /**
+   * Return the unmodifiable {@link Map} of {@link String} attribute tyoe code
+   * keys to {@link SzAttributeType} values describing the attribute types
+   * included in the default base template configuration.
+   *
+   * @return The unmodifiable {@link Map} of default attribute types.
+   */
+  protected Map<String, SzAttributeType> getDefaultAttributeTypes() {
+    return this.defaultAttributeTypes;
+  }
+
+  /**
+   * Gets the unmodifiable {@link Map} of {@link String} data source code
+   * keys to {@link SzDataSource} values describing the data sources that
+   * were configured when the server was first initialized (after the
+   * repository has been prepared).
+   *
+   * @return The unmodifiable {@link Map} of {@link String} data source code
+   *         keys to {@link SzDataSource} values describing the initial data
+   *         sources.
+   */
+  protected Map<String, SzDataSource> getInitialDataSources() {
+    return this.initialDataSources;
+  }
+
+  /**
+   * Gets the unmodifiable {@link Map} of {@link String} entity type code
+   * keys to {@link SzEntityType} values describing the entity types that
+   * were configured when the server was first initialized (after the
+   * repository has been prepared).
+   *
+   * @return The unmodifiable {@link Map} of {@link String} entity type code
+   *         keys to {@link SzEntityType} values describing the initial entity
+   *         types.
+   */
+  protected Map<String, SzEntityType> getInitialEntityTypes() {
+    return this.initialEntityTypes;
+  }
+
+  /**
+   * Gets the unmodifiable {@link Map} of {@link String} entity class code
+   * keys to {@link SzEntityClass} values describing the entity classes that
+   * were configured when the server was first initialized (after the
+   * repository has been prepared).
+   *
+   * @return The unmodifiable {@link Map} of {@link String} entity class code
+   *         keys to {@link SzEntityClass} values describing the initial entity
+   *         classes.
+   */
+  protected Map<String, SzEntityClass> getInitialEntityClasses() {
+    return this.initialEntityClasses;
+  }
+
+  /**
+   * Gets the unmodifiable {@link Map} of {@link String} attribute type code
+   * keys to {@link SzAttributeType} values describing the attribute types that
+   * were configured when the server was first initialized (after the
+   * repository has been prepared).
+   *
+   * @return The unmodifiable {@link Map} of {@link String} attribute type code
+   *         keys to {@link SzAttributeType} values describing the initial
+   *         attribute types.
+   */
+  protected Map<String, SzAttributeType> getInitialAttributeTypes() {
+    return this.initialAttributeTypes;
+  }
+
+  /**
+   * Called after the API Server is first started (not on reinitialization) to
+   * handle any test suite initialization that requires the use of the server
+   * or the initial configuration.
+   *
+   * @param provider The {@link SzApiProvider}.
+   * @param initialConfigId The initial configuration ID.
+   * @param initialConfig The {@link JsonObject} describing the inital
+   *                      configuration.
+   */
+  protected void doPostServerInitialization(SzApiProvider provider,
+                                            long          initialConfigId,
+                                            JsonObject    initialConfig)
+  {
+    // do nothing
   }
 
   /**
@@ -287,7 +698,7 @@ public abstract class AbstractServiceTest {
       }
     }
     // for good measure
-    if (NATIVE_API_AVAILABLE) {
+    if (NATIVE_API_AVAILABLE || REPLAY_PROVIDER.isReplaying()) {
       RepositoryManager.conclude();
     }
   }
@@ -309,6 +720,15 @@ public abstract class AbstractServiceTest {
    */
   protected void prepareRepository() {
     // do nothing
+  }
+
+  /**
+   * Purges the repository via the {@link SzApiServer}. This reinitializes and
+   * recreates the worker thread pool.
+   *
+   */
+  protected void livePurgeRepository() {
+    this.server.purgeRepository();
   }
 
   /**
@@ -344,6 +764,16 @@ public abstract class AbstractServiceTest {
     } else {
       RepositoryManager.conclude();
     }
+  }
+
+  /**
+   * Prompts the reinitializer thread to ensure the config is current if the
+   * server has a reinitializer thread running.  This does nothing if there is
+   * no reinitializer thread.
+   */
+  protected void requestConfigRefreshCheck() {
+    if (this.server == null) return;
+    this.server.requestConfigRefreshCheck();
   }
 
   /**
@@ -436,13 +866,25 @@ public abstract class AbstractServiceTest {
 
   /**
    * Checks whether or not the server should be initialized in verbose mode.
-   * By default this <tt>true</tt>.  Override to set to <tt>false</tt>.
+   * By default this is <tt>true</tt>.  Override to set to <tt>false</tt>.
    *
    * @return <tt>true</tt> if the server should be initialized in verbose mode,
    * otherwise <tt>false</tt>.
    */
   protected boolean isVerbose() {
     return false;
+  }
+
+  /**
+   * Checks whether or not the server should reduce the number of messges sent
+   * as feedback to standard output.  By default this is <tt>true</tt> for
+   * auto tests.  Override to set to <tt>false</tt>.
+   *
+   * @return <tt>true</tt> if the server should be initialized in verbose mode,
+   * otherwise <tt>false</tt>.
+   */
+  protected boolean isQuiet() {
+    return true;
   }
 
   /**
@@ -457,6 +899,8 @@ public abstract class AbstractServiceTest {
     options.setConcurrency(this.getServerConcurrency());
     options.setModuleName(this.getModuleName("Test API Server"));
     options.setVerbose(this.isVerbose());
+    options.setQuiet(this.isQuiet());
+    options.setAutoRefreshPeriod(-1L); // refresh on demand for auto-tests
   }
 
   /**
@@ -475,7 +919,7 @@ public abstract class AbstractServiceTest {
       String      initJsonText  = readTextFileAsString(initJsonFile, "UTF-8");
       JsonObject  initJson      = JsonUtils.parseJsonObject(initJsonText);
 
-      System.err.println("Initializing with initialization file: "
+      System.out.println("Initializing with initialization file: "
                          + initJsonFile);
 
       SzApiServerOptions options = new SzApiServerOptions(initJson);
@@ -497,7 +941,9 @@ public abstract class AbstractServiceTest {
    * @return The new failure count.
    */
   protected int incrementFailureCount() {
-    return ++this.failureCount;
+    this.failureCount++;
+    this.conditionallyLogCounts(false);
+    return this.failureCount;
   }
 
   /**
@@ -505,7 +951,38 @@ public abstract class AbstractServiceTest {
    * @return The new success count.
    */
   protected int incrementSuccessCount() {
-    return ++this.successCount;
+    this.successCount++;
+    this.conditionallyLogCounts(false);
+    return this.successCount;
+  }
+
+  /**
+   * Conditionally logs the progress of the tests.
+   *
+   * @param complete <tt>true</tt> if tests are complete for this class,
+   *                 otherwise <tt>false</tt>.
+   */
+  protected void conditionallyLogCounts(boolean complete) {
+    int successCount = this.getSuccessCount();
+    int failureCount = this.getFailureCount();
+
+    long now = System.currentTimeMillis();
+    long lapse = (this.progressLogTimestamp > 0L)
+        ? (now - this.progressLogTimestamp) : 0L;
+
+    if (complete || (lapse > 30000L)) {
+      System.out.println(this.getClass().getSimpleName()
+                         + (complete ? " Complete: " : " Progress: ")
+                         + successCount + " (succeeded) / " + failureCount
+                         + " (failed)");
+      this.progressLogTimestamp = now;
+    }
+    if (complete) {
+      System.out.println();
+    }
+    if (this.progressLogTimestamp < 0L) {
+      this.progressLogTimestamp = now;
+    }
   }
 
   /**
@@ -608,243 +1085,40 @@ public abstract class AbstractServiceTest {
   }
 
   /**
-   * Validates the basic response fields for the specified {@link
-   * SzBasicResponse} using the specified self link, timestamp from before
-   * calling the service function and timestamp from after calling the
-   * service function.
+   * Creates a proxy {@link UriInfo} to simulate a {@link UriInfo} when directly
+   * calling the API services functions.
    *
-   * @param response        The {@link SzBasicResponse} to validate.
-   * @param selfLink        The self link to be expected.
-   * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp  The timestamp from just after calling the service.
-   */
-  protected void validateBasics(SzBasicResponse response,
-                                String selfLink,
-                                long beforeTimestamp,
-                                long afterTimestamp) {
-    this.validateBasics(
-        null, response, GET, selfLink, beforeTimestamp, afterTimestamp);
-  }
-
-  /**
-   * Validates the basic response fields for the specified {@link
-   * SzBasicResponse} using the specified self link, timestamp from before
-   * calling the service function and timestamp from after calling the
-   * service function.
+   * @param selfLink The simulated request URI.
+   * @param queryParams The {@link MultivaluedMap} describing the query params.
    *
-   * @param testInfo        Additional test information to be logged with failures.
-   * @param response        The {@link SzBasicResponse} to validate.
-   * @param selfLink        The self link to be expected.
-   * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp  The timestamp from just after calling the service.
+   * @return The proxied {@link UriInfo} object using the specified URI.
    */
-  protected void validateBasics(String testInfo,
-                                SzBasicResponse response,
-                                String selfLink,
-                                long beforeTimestamp,
-                                long afterTimestamp) {
-    this.validateBasics(
-        testInfo, response, GET, selfLink, beforeTimestamp, afterTimestamp);
-  }
-
-  /**
-   * Validates the basic response fields for the specified {@link
-   * SzBasicResponse} using the specified self link, timestamp from before
-   * calling the service function and timestamp from after calling the
-   * service function.
-   *
-   * @param response           The {@link SzBasicResponse} to validate.
-   * @param expectedHttpMethod The {@link SzHttpMethod} that was used.
-   * @param selfLink           The self link to be expected.
-   * @param beforeTimestamp    The timestamp from just before calling the service.
-   * @param afterTimestamp     The timestamp from just after calling the service.
-   */
-  protected void validateBasics(SzBasicResponse response,
-                                SzHttpMethod expectedHttpMethod,
-                                String selfLink,
-                                long beforeTimestamp,
-                                long afterTimestamp)
+  protected UriInfo newProxyUriInfo(String                        selfLink,
+                                    MultivaluedMap<String,String> queryParams)
   {
-    this.validateBasics(null,
-                        response,
-                        expectedHttpMethod,
-                        selfLink,
-                        beforeTimestamp,
-                        afterTimestamp);
-  }
+    try {
+      final URI uri = new URI(selfLink);
 
-  /**
-   * Validates the basic response fields for the specified {@link
-   * SzBasicResponse} using the specified self link, timestamp from before
-   * calling the service function and timestamp from after calling the
-   * service function.
-   *
-   * @param response The {@link SzBasicResponse} to validate.
-   * @param expectedResponseCode The expected HTTP response code.
-   * @param expectedHttpMethod The {@link SzHttpMethod} that was used.
-   * @param selfLink The self link to be expected.
-   * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp The timestamp from just after calling the service.
-   */
-  protected void validateBasics(SzBasicResponse response,
-                                int expectedResponseCode,
-                                SzHttpMethod expectedHttpMethod,
-                                String selfLink,
-                                long beforeTimestamp,
-                                long afterTimestamp)
-  {
-    this.validateBasics(null,
-                        response,
-                        expectedResponseCode,
-                        expectedHttpMethod,
-                        selfLink,
-                        beforeTimestamp,
-                        afterTimestamp);
-  }
+      InvocationHandler handler = (p, m, a) -> {
+        if (m.getName().equals("getRequestUri")) {
+          return uri;
+        }
+        if (m.getName().equals("getQueryParameters")) {
+          return queryParams;
+        }
+        throw new UnsupportedOperationException(
+            "Operation not implemented on proxy UriInfo");
+      };
 
-  /**
-   * Validates the basic response fields for the specified {@link
-   * SzBasicResponse} using the specified self link, timestamp from before
-   * calling the service function and timestamp from after calling the
-   * service function.
-   *
-   * @param testInfo           Additional test information to be logged with failures.
-   * @param response           The {@link SzBasicResponse} to validate.
-   * @param expectedHttpMethod The {@link SzHttpMethod} that was used.
-   * @param selfLink           The self link to be expected.
-   * @param beforeTimestamp    The timestamp from just before calling the service.
-   * @param afterTimestamp     The timestamp from just after calling the service.
-   */
-  protected void validateBasics(String          testInfo,
-                                SzBasicResponse response,
-                                SzHttpMethod    expectedHttpMethod,
-                                String          selfLink,
-                                long            beforeTimestamp,
-                                long            afterTimestamp)
-  {
-    this.validateBasics(testInfo,
-                        response,
-                        200,
-                        expectedHttpMethod,
-                        selfLink,
-                        beforeTimestamp,
-                        afterTimestamp);
-  }
+      ClassLoader loader = this.getClass().getClassLoader();
+      Class[] classes = {UriInfo.class};
 
-  /**
-   * Validates the basic response fields for the specified {@link
-   * SzBasicResponse} using the specified self link, timestamp from before
-   * calling the service function and timestamp from after calling the
-   * service function.
-   *
-   * @param testInfo Additional test information to be logged with failures.
-   * @param response The {@link SzBasicResponse} to validate.
-   * @param expectedResponseCode The expected HTTP responsec code.
-   * @param expectedHttpMethod The {@link SzHttpMethod} that was used.
-   * @param selfLink The self link to be expected.
-   * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp The timestamp from just after calling the service.
-   */
-  protected void validateBasics(String          testInfo,
-                                SzBasicResponse response,
-                                int             expectedResponseCode,
-                                SzHttpMethod    expectedHttpMethod,
-                                String          selfLink,
-                                long            beforeTimestamp,
-                                long            afterTimestamp)
-  {
-    String suffix = (testInfo != null && testInfo.trim().length() > 0)
-        ? " ( " + testInfo + " )" : "";
+      return (UriInfo) Proxy.newProxyInstance(loader, classes, handler);
 
-    SzLinks links = response.getLinks();
-    SzMeta meta = response.getMeta();
-    assertEquals(selfLink, links.getSelf(), "Unexpected self link" + suffix);
-    assertEquals(expectedHttpMethod, meta.getHttpMethod(),
-                 "Unexpected HTTP method" + suffix);
-    assertEquals(expectedResponseCode, meta.getHttpStatusCode(), "Unexpected HTTP status code" + suffix);
-    assertEquals(MAVEN_VERSION, meta.getVersion(), "Unexpected server version" + suffix);
-    assertEquals(REST_API_VERSION, meta.getRestApiVersion(), "Unexpected REST API version" + suffix);
-    assertNotNull(meta.getTimestamp(), "Timestamp unexpectedly null" + suffix);
-    long now = meta.getTimestamp().getTime();
-
-    // check the timestamp
-    if (now < beforeTimestamp || now > afterTimestamp) {
-      fail("Timestamp (" + new Date(now) + ") should be between "
-               + new Date(beforeTimestamp) + " and "
-               + new Date(afterTimestamp) + suffix);
-    }
-    Map<String, Long> timings = meta.getTimings();
-
-    // determine max duration
-    long maxDuration = (afterTimestamp - beforeTimestamp);
-
-    timings.entrySet().forEach(entry -> {
-      long duration = entry.getValue();
-      if (duration > maxDuration) {
-        fail("Timing value too large: " + entry.getKey() + " = "
-                 + duration + "ms VS " + maxDuration + "ms" + suffix);
-      }
-    });
-  }
-
-  /**
-   * Validates the basic response fields for the specified {@link
-   * SzResponseWithRawData} using the specified self link, timestamp from before
-   * calling the service function, timestamp from after calling the
-   * service function, and flag indicating if raw data should be expected.
-   *
-   * @param response        The {@link SzBasicResponse} to validate.
-   * @param selfLink        The self link to be expected.
-   * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp  The timestamp from just after calling the service.
-   * @param expectRawData   <tt>true</tt> if raw data should be expected,
-   *                        otherwise <tt>false</tt>
-   */
-  protected void validateBasics(SzResponseWithRawData response,
-                                String                selfLink,
-                                long                  beforeTimestamp,
-                                long                  afterTimestamp,
-                                boolean               expectRawData)
-  {
-    this.validateBasics(null,
-                        response,
-                        selfLink,
-                        beforeTimestamp,
-                        afterTimestamp,
-                        expectRawData);
-  }
-
-  /**
-   * Validates the basic response fields for the specified {@link
-   * SzResponseWithRawData} using the specified self link, timestamp from before
-   * calling the service function, timestamp from after calling the
-   * service function, and flag indicating if raw data should be expected.
-   *
-   * @param testInfo        Additional test information to be logged with failures.
-   * @param response        The {@link SzBasicResponse} to validate.
-   * @param selfLink        The self link to be expected.
-   * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp  The timestamp from just after calling the service.
-   * @param expectRawData   <tt>true</tt> if raw data should be expected,
-   *                        otherwise <tt>false</tt>
-   */
-  protected void validateBasics(String                testInfo,
-                                SzResponseWithRawData response,
-                                String                selfLink,
-                                long                  beforeTimestamp,
-                                long                  afterTimestamp,
-                                boolean               expectRawData)
-  {
-    String suffix = (testInfo != null && testInfo.trim().length() > 0)
-        ? " ( " + testInfo + " )" : "";
-
-    this.validateBasics(testInfo, response, selfLink, beforeTimestamp, afterTimestamp);
-
-    Object rawData = response.getRawData();
-    if (expectRawData) {
-      assertNotNull(rawData, "Raw data unexpectedly non-null" + suffix);
-    } else {
-      assertNull(rawData, "Raw data unexpectedly null" + suffix);
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -881,7 +1155,8 @@ public abstract class AbstractServiceTest {
       String uri,
       Map<String, ?> queryParams,
       Object bodyContent,
-      Class<T> responseClass) {
+      Class<T> responseClass)
+  {
     ObjectMapper objectMapper = new ObjectMapper();
     try {
       if (!uri.toLowerCase().startsWith("http://")) {
@@ -943,7 +1218,8 @@ public abstract class AbstractServiceTest {
       }
 
       int responseCode = conn.getResponseCode();
-      InputStream is = (responseCode >= 200 && responseCode < 300)
+      boolean errorResponse = (responseCode < 200 || responseCode >= 300);
+      InputStream is = (!errorResponse)
           ? conn.getInputStream() : conn.getErrorStream();
       InputStreamReader isr = new InputStreamReader(is, "UTF-8");
       BufferedReader br = new BufferedReader(isr);
@@ -954,7 +1230,27 @@ public abstract class AbstractServiceTest {
 
       String responseJson = sb.toString();
 
-      return objectMapper.readValue(responseJson, responseClass);
+      T result = null;
+      try {
+        result = objectMapper.readValue(responseJson, responseClass);
+
+      } catch (Exception e) {
+        // check if we have an unexpected error response
+        if (errorResponse && !responseClass.equals(SzErrorResponse.class)) {
+          System.err.println("UNEXPECTED ERROR RESPONSE: ");
+          System.err.println(responseJson);
+          System.err.println();
+          throw new IllegalStateException(
+              "UNEXPECTED ERROR RESPONSE: " + responseJson);
+        }
+
+        // log the deserialization exception
+        System.err.println("DESERIALIZING RESPONSE JSON: ");
+        System.err.println(responseJson);
+        System.err.println();
+        throw e;
+      }
+      return result;
 
     } catch (RuntimeException e) {
       e.printStackTrace();
@@ -966,202 +1262,143 @@ public abstract class AbstractServiceTest {
   }
 
   /**
-   * Validates the raw data and ensures the expected JSON property keys are
-   * present and that no unexpected keys are present.
+   * Invoke an operation on the currently running API server over HTTP.
    *
-   * @param rawData      The raw data to validate.
-   * @param expectedKeys The zero or more expected property keys.
+   * @param httpMethod    The HTTP method to use.
+   * @param uri           The relative or absolute URI (optionally including query params)
+   * @param queryParams   The optional map of query parameters.
+   * @param contentType   The content type for the body.
+   * @param bodyContent   The raw body content data.
+   * @param responseClass The class of the response.
+   * @param <T>           The response type which must extend {@link SzBasicResponse}
+   * @return
    */
-  protected void validateRawDataMap(Object rawData, String... expectedKeys) {
-    this.validateRawDataMap(null,
-                            rawData,
-                            true,
-                            expectedKeys);
+  protected <T extends SzBasicResponse> T invokeServerViaHttp(
+      SzHttpMethod httpMethod,
+      String uri,
+      Map<String, ?> queryParams,
+      String contentType,
+      byte[] bodyContent,
+      Class<T> responseClass)
+  {
+    ByteArrayInputStream bodyStream = new ByteArrayInputStream(bodyContent);
+    Long contentLength = new Long(bodyContent.length);
+    return this.invokeServerViaHttp(httpMethod,
+                                    uri,
+                                    queryParams,
+                                    contentType,
+                                    contentLength,
+                                    bodyStream,
+                                    responseClass);
   }
 
   /**
-   * Validates the raw data and ensures the expected JSON property keys are
-   * present and that no unexpected keys are present.
+   * Invoke an operation on the currently running API server over HTTP.
    *
-   * @param testInfo     Additional test information to be logged with failures.
-   * @param rawData      The raw data to validate.
-   * @param expectedKeys The zero or more expected property keys.
+   * @param httpMethod    The HTTP method to use.
+   * @param uri           The relative or absolute URI (optionally including query params)
+   * @param queryParams   The optional map of query parameters.
+   * @param contentType   The content type for the body.
+   * @param contentLength The optional content length.
+   * @param bodyStream    The raw body content data.
+   * @param responseClass The class of the response.
+   * @param <T>           The response type which must extend {@link SzBasicResponse}
+   * @return
    */
-  protected void validateRawDataMap(String    testInfo,
-                                    Object    rawData,
-                                    String... expectedKeys)
+  protected <T extends SzBasicResponse> T invokeServerViaHttp(
+      SzHttpMethod httpMethod,
+      String uri,
+      Map<String, ?> queryParams,
+      String contentType,
+      Long contentLength,
+      InputStream bodyStream,
+      Class<T> responseClass)
   {
-    this.validateRawDataMap(testInfo, rawData, true, expectedKeys);
-  }
-
-  /**
-   * Validates the raw data and ensures the expected JSON property keys are
-   * present and that, optionally, no unexpected keys are present.
-   *
-   * @param rawData      The raw data to validate.
-   * @param strict       Whether or not property keys other than those specified are
-   *                     allowed to be present.
-   * @param expectedKeys The zero or more expected property keys -- these are
-   *                     either a minimum or exact set depending on the
-   *                     <tt>strict</tt> parameter.
-   */
-  protected void validateRawDataMap(Object    rawData,
-                                    boolean   strict,
-                                    String... expectedKeys)
-  {
-    this.validateRawDataMap(null, rawData, strict, expectedKeys);
-  }
-
-  /**
-   * Validates the raw data and ensures the expected JSON property keys are
-   * present and that, optionally, no unexpected keys are present.
-   *
-   *
-   * @param testInfo     Additional test information to be logged with failures.
-   * @param rawData      The raw data to validate.
-   * @param strict       Whether or not property keys other than those specified are
-   *                     allowed to be present.
-   * @param expectedKeys The zero or more expected property keys -- these are
-   *                     either a minimum or exact set depending on the
-   *                     <tt>strict</tt> parameter.
-   */
-  protected void validateRawDataMap(String    testInfo,
-                                    Object    rawData,
-                                    boolean   strict,
-                                    String... expectedKeys)
-  {
-    String suffix = (testInfo != null && testInfo.trim().length() > 0)
-        ? " ( " + testInfo + " )" : "";
-
-    if (rawData == null) {
-      fail("Expected raw data but got null value" + suffix);
-    }
-
-    if (!(rawData instanceof Map)) {
-      fail("Raw data is not a JSON object: " + rawData + suffix);
-    }
-
-    Map<String, Object> map = (Map<String, Object>) rawData;
-    Set<String> expectedKeySet = new HashSet<>();
-    Set<String> actualKeySet = map.keySet();
-    for (String key : expectedKeys) {
-      expectedKeySet.add(key);
-      if (!actualKeySet.contains(key)) {
-        fail("JSON property missing from raw data: " + key + " / " + map
-             + suffix);
+    ObjectMapper objectMapper = new ObjectMapper();
+    try {
+      if (!uri.toLowerCase().startsWith("http://")) {
+        uri = this.formatServerUri(uri);
       }
-    }
-    if (strict && expectedKeySet.size() != actualKeySet.size()) {
-      Set<String> extraKeySet = new HashSet<>(actualKeySet);
-      extraKeySet.removeAll(expectedKeySet);
-      fail("Unexpected JSON properties in raw data: " + extraKeySet + suffix);
-    }
+      if (queryParams != null && queryParams.size() > 0) {
+        String initialPrefix = uri.contains("?") ? "&" : "?";
 
-  }
-
-
-  /**
-   * Validates the raw data and ensures it is a collection of objects and the
-   * expected JSON property keys are present in the array objects and that no
-   * unexpected keys are present.
-   *
-   * @param rawData      The raw data to validate.
-   * @param expectedKeys The zero or more expected property keys.
-   */
-  protected void validateRawDataMapArray(Object rawData, String... expectedKeys)
-  {
-    this.validateRawDataMapArray(null, rawData, true, expectedKeys);
-  }
-
-  /**
-   * Validates the raw data and ensures it is a collection of objects and the
-   * expected JSON property keys are present in the array objects and that no
-   * unexpected keys are present.
-   *
-   * @param testInfo     Additional test information to be logged with failures.
-   * @param rawData      The raw data to validate.
-   * @param expectedKeys The zero or more expected property keys.
-   */
-  protected void validateRawDataMapArray(String     testInfo,
-                                         Object     rawData,
-                                         String...  expectedKeys)
-  {
-    this.validateRawDataMapArray(testInfo, rawData, true, expectedKeys);
-  }
-
-  /**
-   * Validates the raw data and ensures it is a collection of objects and the
-   * expected JSON property keys are present in the array objects and that,
-   * optionally, no unexpected keys are present.
-   *
-   * @param rawData      The raw data to validate.
-   * @param strict       Whether or not property keys other than those specified are
-   *                     allowed to be present.
-   * @param expectedKeys The zero or more expected property keys for the array
-   *                     objects -- these are either a minimum or exact set
-   *                     depending on the <tt>strict</tt> parameter.
-   */
-  protected void validateRawDataMapArray(Object     rawData,
-                                         boolean    strict,
-                                         String...  expectedKeys)
-  {
-    this.validateRawDataMapArray(null, rawData, strict, expectedKeys);
-  }
-
-  /**
-   * Validates the raw data and ensures it is a collection of objects and the
-   * expected JSON property keys are present in the array objects and that,
-   * optionally, no unexpected keys are present.
-   *
-   * @param testInfo     Additional test information to be logged with failures.
-   * @param rawData      The raw data to validate.
-   * @param strict       Whether or not property keys other than those specified are
-   *                     allowed to be present.
-   * @param expectedKeys The zero or more expected property keys for the array
-   *                     objects -- these are either a minimum or exact set
-   *                     depending on the <tt>strict</tt> parameter.
-   */
-  protected void validateRawDataMapArray(String     testInfo,
-                                         Object     rawData,
-                                         boolean    strict,
-                                         String...  expectedKeys)
-  {
-    String suffix = (testInfo != null && testInfo.trim().length() > 0)
-        ? " ( " + testInfo + " )" : "";
-
-    if (rawData == null) {
-      fail("Expected raw data but got null value" + suffix);
-    }
-
-    if (!(rawData instanceof Collection)) {
-      fail("Raw data is not a JSON array: " + rawData + suffix);
-    }
-
-    Collection<Object> collection = (Collection<Object>) rawData;
-    Set<String> expectedKeySet = new HashSet<>();
-    for (String key : expectedKeys) {
-      expectedKeySet.add(key);
-    }
-
-    for (Object obj : collection) {
-      if (!(obj instanceof Map)) {
-        fail("Raw data is not a JSON array of JSON objects: " + rawData + suffix);
+        StringBuilder sb = new StringBuilder();
+        queryParams.entrySet().forEach(entry -> {
+          String key = entry.getKey();
+          Object value = entry.getValue();
+          Collection values = null;
+          if (value instanceof Collection) {
+            values = (Collection) value;
+          } else {
+            values = Collections.singletonList(value);
+          }
+          try {
+            key = URLEncoder.encode(key, "UTF-8");
+            for (Object val : values) {
+              if (val == null) return;
+              String textValue = val.toString();
+              textValue = URLEncoder.encode(textValue, "UTF-8");
+              sb.append((sb.length() == 0) ? initialPrefix : "&");
+              sb.append(key).append("=").append(textValue);
+            }
+          } catch (UnsupportedEncodingException cannotHappen) {
+            throw new RuntimeException(cannotHappen);
+          }
+        });
+        uri = uri + sb.toString();
       }
 
-      Map<String, Object> map = (Map<String, Object>) obj;
-
-      Set<String> actualKeySet = map.keySet();
-      for (String key : expectedKeySet) {
-        if (!actualKeySet.contains(key)) {
-          fail("JSON property missing from raw data array element: "
-                   + key + " / " + map + suffix);
+      URL url = new URL(uri);
+      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+      conn.setRequestMethod(httpMethod.toString());
+      conn.setRequestProperty("Accept", "application/json");
+      conn.setRequestProperty("Accept-Charset", "utf-8");
+      if (bodyStream != null) {
+        if (contentLength != null) {
+          conn.addRequestProperty("Content-Length", "" + contentLength);
         }
+        conn.addRequestProperty("Content-Type", contentType);
+        conn.setDoOutput(true);
+        OutputStream os = new BufferedOutputStream(conn.getOutputStream(),
+                                                   8192);
+        for (int byteRead = bodyStream.read();
+             byteRead >= 0;
+             byteRead = bodyStream.read()) {
+          os.write(byteRead);
+        }
+        os.flush();
       }
-      if (strict && expectedKeySet.size() != actualKeySet.size()) {
-        Set<String> extraKeySet = new HashSet<>(actualKeySet);
-        extraKeySet.removeAll(expectedKeySet);
-        fail("Unexpected JSON properties in raw data: " + extraKeySet + suffix);
+
+      int responseCode = conn.getResponseCode();
+      InputStream is = (responseCode >= 200 && responseCode < 300)
+          ? conn.getInputStream() : conn.getErrorStream();
+      InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+      BufferedReader br = new BufferedReader(isr);
+      StringBuilder sb = new StringBuilder();
+      for (int nextChar = br.read(); nextChar >= 0; nextChar = br.read()) {
+        sb.append((char) nextChar);
       }
+
+      String responseJson = sb.toString();
+
+      T result = null;
+      try {
+        result = objectMapper.readValue(responseJson, responseClass);
+      } catch (Exception e) {
+        System.out.println("DESERIALIZING RESPONSE JSON TO "
+                               + responseClass.getSimpleName() + ": ");
+        System.out.println(responseJson);
+        System.out.println();
+        throw e;
+      }
+      return result;
+
+    } catch (RuntimeException e) {
+      e.printStackTrace();
+      throw e;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
     }
   }
 
@@ -1351,329 +1588,6 @@ public abstract class AbstractServiceTest {
   }
 
   /**
-   * Compares two collections to ensure they have the same elements.
-   *
-   */
-  protected void assertSameElements(Collection expected,
-                                    Collection actual,
-                                    String     description)
-  {
-    if (expected != null) {
-      expected = upperCase(expected);
-      actual   = upperCase(actual);
-      assertNotNull(actual, "Unexpected null " + description);
-      if (!actual.containsAll(expected)) {
-        Set missing = new HashSet(expected);
-        missing.removeAll(actual);
-        fail("Missing one or more expected " + description + ".  missing=[ "
-             + missing + " ], actual=[ " + actual + " ]");
-      }
-      if (!expected.containsAll(actual)) {
-        Set extras = new HashSet(actual);
-        extras.removeAll(expected);
-        fail("One or more extra " + description + ".  extras=[ "
-             + extras + " ], actual=[ " + actual + " ]");
-      }
-    }
-  }
-
-  /**
-   * Converts the {@link String} elements in the specified {@link Collection}
-   * to upper case and returns a {@link Set} contianing all values.
-   *
-   * @param c The {@link Collection} to process.
-   *
-   * @return The {@link Set} containing the same elements with the {@link
-   *         String} elements converted to upper case.
-   */
-  protected static Set upperCase(Collection c) {
-    Set set = new LinkedHashSet();
-    for (Object obj : c) {
-      if (obj instanceof String) {
-        obj = ((String) obj).toUpperCase();
-      }
-      set.add(obj);
-    }
-    return set;
-  }
-
-  /**
-   * Utility method for creating a {@link Set} to use in validation.
-   *
-   * @param elements The zero or more elements in the set.
-   *
-   * @return The {@link Set} of elements.
-   */
-  protected static <T> Set<T> set(T... elements) {
-    Set<T> set = new LinkedHashSet<>();
-    for (T element : elements) {
-      set.add(element);
-    }
-    return set;
-  }
-
-  /**
-   * Utility method for creating a {@link List} to use in validation.
-   *
-   * @param elements The zero or more elements in the list.
-   *
-   * @return The {@link Set} of elements.
-   */
-  protected static <T> List<T> list(T... elements) {
-    List<T> list = new ArrayList<>(elements.length);
-    for (T element : elements) {
-      list.add(element);
-    }
-    return list;
-  }
-
-  /**
-   * Validates an entity
-   */
-  protected void validateEntity(
-      String                              testInfo,
-      SzResolvedEntity                    entity,
-      List<SzRelatedEntity>               relatedEntities,
-      Boolean                             forceMinimal,
-      SzFeatureInclusion                  featureMode,
-      Integer                             expectedRecordCount,
-      Set<SzRecordId>                     expectedRecordIds,
-      Boolean                             relatedSuppressed,
-      Integer                             relatedEntityCount,
-      Boolean                             relatedPartial,
-      Map<String,Integer>                 expectedFeatureCounts,
-      Map<String,Set<String>>             primaryFeatureValues,
-      Map<String,Set<String>>             duplicateFeatureValues,
-      Map<SzAttributeClass, Set<String>>  expectedDataValues,
-      Set<String>                         expectedOtherDataValues)
-  {
-    if (expectedRecordCount != null) {
-      assertEquals(expectedRecordCount, entity.getRecords().size(),
-                   "Unexpected number of records: " + testInfo);
-    }
-    if (expectedRecordIds != null) {
-      // get the records and convert to record ID set
-      Set<SzRecordId> actualRecordIds = new HashSet<>();
-      List<SzMatchedRecord> matchedRecords = entity.getRecords();
-      for (SzMatchedRecord record : matchedRecords) {
-        SzRecordId recordId = new SzRecordId(record.getDataSource(),
-                                             record.getRecordId());
-        actualRecordIds.add(recordId);
-      }
-      this.assertSameElements(expectedRecordIds, actualRecordIds,
-                              "Unexpected record IDs: " + testInfo);
-    }
-
-    // check the features
-    if (forceMinimal != null && forceMinimal) {
-      assertEquals(0, entity.getFeatures().size(),
-                   "Features included in minimal results: " + testInfo
-                       + " / " + entity.getFeatures());
-    } else if (featureMode != null && featureMode == NONE) {
-      assertEquals(
-          0, entity.getFeatures().size(),
-          "Features included despite NONE feature mode: " + testInfo
-              + " / " + entity.getFeatures());
-
-    } else {
-      assertNotEquals(0, entity.getFeatures().size(),
-                      "Features not present for entity: " + testInfo);
-
-      // validate representative feature mode
-      if (featureMode == REPRESENTATIVE) {
-        entity.getFeatures().entrySet().forEach(entry -> {
-          String                featureKey    = entry.getKey();
-          List<SzEntityFeature> featureValues = entry.getValue();
-          featureValues.forEach(featureValue -> {
-            if (featureValue.getDuplicateValues().size() != 0) {
-              fail("Duplicate feature values present for " + featureKey
-                       + " feature despite REPRESENTATIVE feature mode: "
-                       + testInfo + " / " + featureValue);
-            }
-          });
-        });
-      }
-
-      // validate the feature counts (if any)
-      if (expectedFeatureCounts != null) {
-        expectedFeatureCounts.entrySet().forEach(entry -> {
-          String featureKey = entry.getKey();
-          int expectedCount = entry.getValue();
-          List<SzEntityFeature> featureValues
-              = entity.getFeatures().get(featureKey);
-          assertEquals(expectedCount, featureValues.size(),
-                       "Unexpected feature count for " + featureKey
-                           + " feature: " + testInfo + " / " + featureValues);
-        });
-      }
-
-      // validate the feature values (if any)
-      if (primaryFeatureValues != null) {
-        primaryFeatureValues.entrySet().forEach(entry -> {
-          String      featureKey    = entry.getKey();
-          Set<String> primaryValues = entry.getValue();
-
-          List<SzEntityFeature> featureValues
-              = entity.getFeatures().get(featureKey);
-
-          primaryValues.forEach(primaryValue -> {
-            boolean found = false;
-            for (SzEntityFeature featureValue : featureValues) {
-              if (primaryValue.equalsIgnoreCase(featureValue.getPrimaryValue())) {
-                found = true;
-                break;
-              }
-            }
-            if (!found) {
-              fail("Could not find \"" + primaryValue + "\" among the "
-                       + featureKey + " primary feature values: " + testInfo
-                       + " / " + featureValues);
-            }
-          });
-        });
-      }
-      if (duplicateFeatureValues != null && (featureMode != REPRESENTATIVE)) {
-        duplicateFeatureValues.entrySet().forEach(entry -> {
-          String      featureKey      = entry.getKey();
-          Set<String> duplicateValues = entry.getValue();
-
-          List<SzEntityFeature> featureValues
-              = entity.getFeatures().get(featureKey);
-
-          duplicateValues.forEach(expectedDuplicate -> {
-            boolean found = false;
-            for (SzEntityFeature featureValue : featureValues) {
-              for (String duplicateValue : featureValue.getDuplicateValues()) {
-                if (expectedDuplicate.equalsIgnoreCase(duplicateValue)) {
-                  found = true;
-                  break;
-                }
-              }
-            }
-            if (!found) {
-              fail("Could not find \"" + expectedDuplicate + "\" among the "
-                       + featureKey + " duplicate feature values: " + testInfo
-                       + " / " + featureValues);
-            }
-          });
-        });
-      }
-
-      // validate the features versus the data elements
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
-      entity.getFeatures().entrySet().forEach(entry -> {
-        String featureKey = entry.getKey();
-        List<SzEntityFeature> featureValues = entry.getValue();
-
-        SzAttributeClass attrClass = SzAttributeClass.parseAttributeClass(
-            provider.getAttributeClassForFeature(featureKey));
-
-        List<String> dataSet = this.getDataElements(entity, attrClass);
-        if (dataSet == null) return;
-
-        for (SzEntityFeature feature : featureValues) {
-          String featureValue = feature.getPrimaryValue().trim().toUpperCase();
-          boolean found = false;
-          for (String dataValue : dataSet) {
-            if (dataValue.toUpperCase().indexOf(featureValue) >= 0) {
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            fail(featureKey + " feature value (" + featureValue
-                     + ") not found in " + attrClass + " data values: "
-                     + dataSet + " (" + testInfo + ")");
-          }
-        }
-      });
-    }
-
-    // check if related entities are provided to validate
-    if (relatedEntities != null) {
-      if (relatedSuppressed == null || !relatedSuppressed) {
-        // check if verifying the number of related entities
-        if (relatedEntityCount != null) {
-          assertEquals(relatedEntityCount, relatedEntities.size(),
-                       "Unexpected number of related entities: "
-                           + testInfo);
-        }
-
-        // check if verifying if related entities are partial
-        if (relatedPartial != null || (forceMinimal != null && forceMinimal)) {
-          boolean partial = ((relatedPartial != null && relatedPartial)
-              || (forceMinimal != null && forceMinimal)
-              || (featureMode == NONE));
-
-          for (SzRelatedEntity related : relatedEntities) {
-            if (related.isPartial() != partial) {
-              if (partial) {
-                fail("Entity " + entity.getEntityId() + " has a complete "
-                         + "related entity (" + related.getEntityId()
-                         + ") where partial entities were expected: " + testInfo);
-              } else {
-                fail("Entity " + entity.getEntityId() + " has a partial "
-                         + "related entity (" + related.getEntityId()
-                         + ") where complete entities were expected: " + testInfo);
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (expectedDataValues != null
-        && (forceMinimal == null || !forceMinimal)
-        && (featureMode == null || featureMode != NONE))
-    {
-      expectedDataValues.entrySet().forEach(entry -> {
-        SzAttributeClass attrClass      = entry.getKey();
-        Set<String>      expectedValues = entry.getValue();
-        List<String>     actualValues   = this.getDataElements(entity, attrClass);
-        this.assertSameElements(expectedValues,
-                                actualValues,
-                                attrClass.toString() + " (" + testInfo + ")");
-      });
-    }
-    if (expectedOtherDataValues != null
-        && (forceMinimal == null || !forceMinimal) )
-    {
-      List<String> actualValues = entity.getOtherData();
-      this.assertSameElements(expectedOtherDataValues, actualValues,
-                              "OTHER DATA (" + testInfo + ")");
-    }
-  }
-
-  /**
-   * Gets the data elements from the specified entity for the given attribute
-   * class.
-   *
-   * @param entity The entity to get the data from.
-   * @param attrClass The attribute class identifying the type of data
-   * @return The {@link List} of data elements.
-   */
-  protected List<String> getDataElements(SzResolvedEntity  entity,
-                                         SzAttributeClass  attrClass)
-  {
-    switch (attrClass) {
-      case NAME:
-        return entity.getNameData();
-      case CHARACTERISTIC:
-        return entity.getAttributeData();
-      case PHONE:
-        return entity.getPhoneData();
-      case IDENTIFIER:
-        return entity.getIdentifierData();
-      case ADDRESS:
-        return entity.getAddressData();
-      case RELATIONSHIP:
-        return entity.getRelationshipData();
-      default:
-        return null;
-    }
-  }
-
-  /**
    * Returns the contents of the JSON init file as a {@link String}.
    *
    * @return The contents of the JSON init file as a {@link String}.
@@ -1690,629 +1604,9 @@ public abstract class AbstractServiceTest {
     }
   }
 
-  /**
-   * Validates an {@link SzDataSourcesResponse} instance.
-   *
-   * @param response The response to validate.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
-   * @param expectRawData Whether or not to expect raw data.
-   * @param expectedDataSources The expected data sources.
-   */
-  protected void validateDataSourcesResponse(
-      SzDataSourcesResponse   response,
-      long                    beforeTimestamp,
-      long                    afterTimestamp,
-      Boolean                 expectRawData,
-      Set<String>             expectedDataSources)
+  protected String formatTestInfo(String uriText, String bodyContent)
   {
-    String selfLink = this.formatServerUri("data-sources");
-    if (expectRawData != null) {
-      selfLink += "?withRaw=" + expectRawData;
-    } else {
-      expectRawData = false;
-    }
-
-    this.validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, expectRawData);
-
-    SzDataSourcesResponse.Data data = response.getData();
-
-    assertNotNull(data, "Response data is null");
-
-    Set<String> sources = data.getDataSources();
-
-    assertNotNull(sources, "Data sources set is null");
-
-    assertEquals(expectedDataSources, sources,
-                 "Unexpected or missing data sources in set");
-
-    if (expectRawData) {
-      this.validateRawDataMap(response.getRawData(), "DSRC_CODE");
-    }
-  }
-
-  /**
-   * Validates an {@link SzAttributeTypesResponse} instance.
-   *
-   * @param response The response to validate.
-   * @param selfLink The expected meta data self link.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
-   * @param expectRawData Whether or not to expect raw data.
-   * @param expectedAttrTypeCodes The expected attribute type codes.
-   */
-  protected void validateAttributeTypesResponse(
-      SzAttributeTypesResponse  response,
-      String                    selfLink,
-      long                      beforeTimestamp,
-      long                      afterTimestamp,
-      Boolean                   expectRawData,
-      Set<String>               expectedAttrTypeCodes)
-  {
-    selfLink = this.formatServerUri(selfLink);
-    if (expectRawData == null) {
-      expectRawData = false;
-    }
-
-    this.validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, expectRawData);
-
-    SzAttributeTypesResponse.Data data = response.getData();
-
-    assertNotNull(data, "Response data is null");
-
-    List<SzAttributeType> attrTypes = data.getAttributeTypes();
-
-    assertNotNull(attrTypes, "List of attribute types is null");
-
-    Map<String, SzAttributeType> map = new LinkedHashMap<>();
-    for (SzAttributeType attrType : attrTypes) {
-      map.put(attrType.getAttributeCode(), attrType);
-    }
-
-    assertEquals(expectedAttrTypeCodes, map.keySet(),
-                 "Unexpected or missing attribute types");
-
-    if (expectRawData) {
-      this.validateRawDataMapArray(response.getRawData(),
-                                   false,
-                                   "DEFAULT_VALUE",
-                                   "ATTR_CODE",
-                                   "FELEM_REQ",
-                                   "ATTR_CLASS",
-                                   "INTERNAL",
-                                   "ATTR_ID",
-                                   "FTYPE_CODE",
-                                   "FELEM_CODE",
-                                   "ADVANCED");
-    }
-  }
-
-  /**
-   /**
-   * Validates an {@link SzAttributeTypeResponse} instance.
-   *
-   * @param response The response to validate.
-   * @param attributeCode The requested attribute code.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
-   * @param expectRawData Whether or not to expect raw data.
-   */
-  protected void validateAttributeTypeResponse(
-      SzAttributeTypeResponse response,
-      String                  attributeCode,
-      long                    beforeTimestamp,
-      long                    afterTimestamp,
-      Boolean                 expectRawData)
-  {
-    String selfLink = this.formatServerUri(
-        "attribute-types/" + attributeCode);
-    if (expectRawData != null) {
-      selfLink += "?withRaw=" + expectRawData;
-    } else {
-      expectRawData = false;
-    }
-
-    this.validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, expectRawData);
-
-    SzAttributeTypeResponse.Data data = response.getData();
-
-    assertNotNull(data, "Response data is null");
-
-    SzAttributeType attrType = data.getAttributeType();
-
-    assertNotNull(attrType, "Attribute Type is null");
-
-    assertEquals(attributeCode, attrType.getAttributeCode(),
-                 "Unexpected attribute type code");
-
-    if (expectRawData) {
-      this.validateRawDataMap(response.getRawData(),
-                              "DEFAULT_VALUE",
-                              "ATTR_CODE",
-                              "FELEM_REQ",
-                              "ATTR_CLASS",
-                              "INTERNAL",
-                              "ATTR_ID",
-                              "FTYPE_CODE",
-                              "FELEM_CODE",
-                              "ADVANCED");
-    }
-  }
-
-  /**
-   * Validates an {@link SzConfigResponse} instance.
-   *
-   * @param response The response to validate.
-   * @param selfLink The expected meta data self link.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
-   * @param expectedDataSources The expected data sources.
-   */
-  protected void validateConfigResponse(
-      SzConfigResponse        response,
-      String                  selfLink,
-      long                    beforeTimestamp,
-      long                    afterTimestamp,
-      Set<String>             expectedDataSources)
-  {
-    selfLink = this.formatServerUri(selfLink);
-
-    this.validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, true);
-
-    Object rawData = response.getRawData();
-
-    this.validateRawDataMap(rawData, true, "G2_CONFIG");
-
-    Object g2Config = ((Map) rawData).get("G2_CONFIG");
-
-    this.validateRawDataMap(g2Config,
-                            false,
-                            "CFG_ATTR",
-                            "CFG_FELEM",
-                            "CFG_DSRC");
-
-    Object cfgDsrc = ((Map) g2Config).get("CFG_DSRC");
-
-    this.validateRawDataMapArray(cfgDsrc,
-                                 false,
-                                 "DSRC_ID",
-                                 "DSRC_DESC",
-                                 "DSRC_CODE");
-
-    Set<String> actualDataSources = new LinkedHashSet<>();
-    for (Object dsrc : ((Collection) cfgDsrc)) {
-      Map dsrcMap = (Map) dsrc;
-      String dsrcCode = (String) dsrcMap.get("DSRC_CODE");
-      actualDataSources.add(dsrcCode);
-    }
-
-    assertEquals(expectedDataSources, actualDataSources,
-                 "Unexpected set of data sources in config.");
-  }
-
-  /**
-   * Validates an {@link SzRecordResponse} instance.
-   *
-   * @param response The response to validate.
-   * @param dataSourceCode The data source code for the requested record.
-   * @param expectedRecordId The record ID for the requested record.
-   * @param expectedNameData The expected name data or <tt>null</tt> if not
-   *                         validating the name data.
-   * @param expectedAddressData The expected address data or <tt>null</tt> if
-   *                            not validating the address data.
-   * @param expectedPhoneData The expected phone data or <tt>null</tt> if not
-   *                          validating the phone data.
-   * @param expectedIdentifierData The expected identifier data or <tt>null</tt>
-   *                               if not validating the identifier data.
-   * @param expectedAttributeData The expected attribute data or <tt>null</tt>
-   *                              if not validating the attribute data.
-   * @param expectedOtherData The expected other data or <tt>null</tt>
-   *                          if not validating the other data.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
-   * @param expectRawData Whether or not to expect raw data.
-   */
-  protected void validateRecordResponse(SzRecordResponse response,
-                                        String dataSourceCode,
-                                        String expectedRecordId,
-                                        Set<String> expectedNameData,
-                                        Set<String> expectedAddressData,
-                                        Set<String> expectedPhoneData,
-                                        Set<String> expectedIdentifierData,
-                                        Set<String> expectedAttributeData,
-                                        Set<String> expectedRelationshipData,
-                                        Set<String> expectedOtherData,
-                                        long beforeTimestamp,
-                                        long afterTimestamp,
-                                        Boolean expectRawData)
-  {
-    String selfLink = this.formatServerUri(
-        "data-sources/" + dataSourceCode
-            + "/records/" + expectedRecordId);
-    if (expectRawData != null) {
-      selfLink += "?withRaw=" + expectRawData;
-    } else {
-      expectRawData = false;
-    }
-
-    this.validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp);
-
-    SzEntityRecord record = response.getData();
-
-    assertNotNull(record, "Response data is null");
-
-    String dataSource = record.getDataSource();
-    assertNotNull(dataSource, "Data source is null");
-    assertEquals(dataSourceCode, dataSource, "Unexpected data source value");
-
-    String recordId = record.getRecordId();
-    assertNotNull(recordId, "Record ID is null");
-    assertEquals(expectedRecordId, recordId, "Unexpected record ID value");
-
-    this.assertSameElements(
-        expectedNameData, record.getNameData(), "names");
-    this.assertSameElements(
-        expectedAddressData, record.getAddressData(), "addresses");
-    this.assertSameElements(
-        expectedPhoneData, record.getPhoneData(), "phone numbers");
-    this.assertSameElements(
-        expectedIdentifierData, record.getIdentifierData(), "identifiers");
-    this.assertSameElements(
-        expectedAttributeData, record.getAttributeData(), "attributes");
-    this.assertSameElements(
-        expectedRelationshipData, record.getRelationshipData(), "relationships");
-    this.assertSameElements(
-        expectedOtherData, record.getOtherData(), "other");
-
-    if (expectRawData) {
-      this.validateRawDataMap(response.getRawData(),
-                              false,
-                              "JSON_DATA",
-                              "NAME_DATA",
-                              "ATTRIBUTE_DATA",
-                              "IDENTIFIER_DATA",
-                              "ADDRESS_DATA",
-                              "PHONE_DATA",
-                              "RELATIONSHIP_DATA",
-                              "ENTITY_DATA",
-                              "OTHER_DATA",
-                              "DATA_SOURCE",
-                              "RECORD_ID");
-    }
-
-  }
-
-  /**
-   * Validates an {@link SzEntityResponse} instance.
-   *
-   * @param testInfo The test information describing the test.
-   * @param response The response to validate.
-   * @param selfLink The expected meta data self link.
-   * @param withRaw <tt>true</tt> if requested with raw data, <tt>false</tt>
-   *                if requested without raw data and <tt>null</tt> if this is
-   *                not being validated.
-   * @param withRelated <tt>true</tt> if requested with first-degree relations,
-   *                    <tt>false</tt> if requested without them and
-   *                    <tt>null</tt> if this aspect is not being validated.
-   * @param forceMinimal <tt>true</tt> if requested with minimal data,
-   *                     <tt>false</tt> if requested with standard data and
-   *                     <tt>null</tt> if this aspect is not being validated.
-   * @param featureMode The {@link SzFeatureInclusion} requested or
-   *                    <tt>null</tt> if this is not being validated.
-   * @param expectedRecordCount The number of expected records for the entity,
-   *                            or <tt>null</tt> if this is not being validated.
-   * @param expectedRecordIds The expected record IDs for the entity to have or
-   *                          <tt>null</tt> if this is not being validated.
-   * @param relatedEntityCount The expected number of related entities or
-   *                           <tt>null</tt> if this is not being validated.
-   * @param expectedFeatureCounts The expected number of features by feature
-   *                              type, or <tt>null</tt> if this is not being
-   *                              validated.
-   * @param primaryFeatureValues The expected primary feature values by feature
-   *                             type, or <tt>null</tt> if this is not being
-   *                             validated.
-   * @param duplicateFeatureValues The expected duplicate fature values by
-   *                               feature type, or <tt>null</tt> if this is not
-   *                               being validated.
-   * @param expectedDataValues The expected data values by attribute class, or
-   *                           <tt>null</tt> if this is not being validated.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
-   */
-  protected void validateEntityResponse(
-      String                              testInfo,
-      SzEntityResponse                    response,
-      String                              selfLink,
-      Boolean                             withRaw,
-      Boolean                             withRelated,
-      Boolean                             forceMinimal,
-      SzFeatureInclusion                  featureMode,
-      Integer                             expectedRecordCount,
-      Set<SzRecordId>                     expectedRecordIds,
-      Integer                             relatedEntityCount,
-      Map<String,Integer>                 expectedFeatureCounts,
-      Map<String,Set<String>>             primaryFeatureValues,
-      Map<String,Set<String>>             duplicateFeatureValues,
-      Map<SzAttributeClass, Set<String>>  expectedDataValues,
-      Set<String>                         expectedOtherDataValues,
-      long                                beforeTimestamp,
-      long                                afterTimestamp)
-  {
-    selfLink = this.formatServerUri(selfLink);
-
-    this.validateBasics(
-        testInfo, response, selfLink, beforeTimestamp, afterTimestamp);
-
-    SzEntityData entityData = response.getData();
-
-    assertNotNull(entityData, "Response data is null: " + testInfo);
-
-    SzResolvedEntity resolvedEntity = entityData.getResolvedEntity();
-
-    assertNotNull(resolvedEntity, "Resolved entity is null: " + testInfo);
-
-    List<SzRelatedEntity> relatedEntities = entityData.getRelatedEntities();
-
-    assertNotNull(relatedEntities,
-                  "Related entities list is null: " + testInfo);
-
-    this.validateEntity(testInfo,
-                        resolvedEntity,
-                        relatedEntities,
-                        forceMinimal,
-                        featureMode,
-                        expectedRecordCount,
-                        expectedRecordIds,
-                        false,
-                        relatedEntityCount,
-                        (withRelated == null || !withRelated),
-                        expectedFeatureCounts,
-                        primaryFeatureValues,
-                        duplicateFeatureValues,
-                        expectedDataValues,
-                        expectedOtherDataValues);
-
-    if (withRaw != null && withRaw) {
-      if (withRelated != null && withRelated
-          && (forceMinimal == null || !forceMinimal))
-      {
-        this.validateRawDataMap(testInfo,
-                                response.getRawData(),
-                                true,
-                                "ENTITY_PATHS", "ENTITIES");
-
-        Object entities = ((Map) response.getRawData()).get("ENTITIES");
-        this.validateRawDataMapArray(testInfo,
-                                     entities,
-                                     false,
-                                     "RESOLVED_ENTITY",
-                                     "RELATED_ENTITIES");
-
-
-        if (featureMode == NONE || (forceMinimal != null && forceMinimal)) {
-          for (Object entity : ((Collection) entities)) {
-            this.validateRawDataMap(testInfo,
-                                    ((Map) entity).get("RESOLVED_ENTITY"),
-                                    false,
-                                    "ENTITY_ID",
-                                    "RECORDS");
-          }
-
-        } else {
-          for (Object entity : ((Collection) entities)) {
-            this.validateRawDataMap(testInfo,
-                                    ((Map) entity).get("RESOLVED_ENTITY"),
-                                    false,
-                                    "ENTITY_ID",
-                                    "FEATURES",
-                                    "RECORD_SUMMARY",
-                                    "RECORDS");
-          }
-        }
-
-
-      } else {
-        this.validateRawDataMap(testInfo,
-                                response.getRawData(),
-                                false,
-                                "RESOLVED_ENTITY",
-                                "RELATED_ENTITIES");
-
-        Object entity = ((Map) response.getRawData()).get("RESOLVED_ENTITY");
-        if (featureMode == NONE || (forceMinimal != null && forceMinimal)) {
-          this.validateRawDataMap(testInfo,
-                                  entity,
-                                  false,
-                                  "ENTITY_ID",
-                                  "RECORDS");
-
-        } else {
-          this.validateRawDataMap(testInfo,
-                                  entity,
-                                  false,
-                                  "ENTITY_ID",
-                                  "FEATURES",
-                                  "RECORD_SUMMARY",
-                                  "RECORDS");
-        }
-      }
-    }
-  }
-
-  /**
-   * Validate an {@link SzAttributeSearchResponse} instance.
-   *
-   * @param testInfo The test information describing the test.
-   * @param response The response to validate.
-   * @param selfLink The expected meta data self link.
-   * @param expectedCount The number of expected matching entities for the
-   *                      search, or <tt>null</tt> if this is not being
-   *                      validated.
-   * @param withRelationships <tt>true</tt> if requested with relationship
-   *                          information should be included with the entity
-   *                          results, <tt>false</tt> if the relationship
-   *                          information should be excluded and <tt>null</tt>
-   *                          if this aspect is not being validated.
-   * @param forceMinimal <tt>true</tt> if requested with minimal data,
-   *                     <tt>false</tt> if requested with standard data and
-   *                     <tt>null</tt> if this aspect is not being validated.
-   * @param featureInclusion The {@link SzFeatureInclusion} requested or
-   *                         <tt>null</tt> if this is not being validated.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
-   * @param expectRawData Whether or not to expect raw data.
-   */
-  protected void validateSearchResponse(String testInfo,
-                                        SzAttributeSearchResponse response,
-                                        String selfLink,
-                                        Integer expectedCount,
-                                        Boolean withRelationships,
-                                        Boolean forceMinimal,
-                                        SzFeatureInclusion featureInclusion,
-                                        long beforeTimestamp,
-                                        long afterTimestamp,
-                                        Boolean expectRawData)
-  {
-    selfLink = this.formatServerUri(selfLink);
-    if (expectRawData == null) {
-      expectRawData = false;
-    }
-
-    this.validateBasics(
-        testInfo, response, selfLink, beforeTimestamp, afterTimestamp);
-
-    SzAttributeSearchResponse.Data data = response.getData();
-
-    assertNotNull(data, "Response data is null: " + testInfo);
-
-    List<SzAttributeSearchResult> results = data.getSearchResults();
-
-    assertNotNull(results, "Result list is null: " + testInfo);
-
-    if (expectedCount != null) {
-      assertEquals(expectedCount, results.size(),
-                   "Unexpected number of results: " + testInfo);
-    }
-
-    for (SzAttributeSearchResult result : results) {
-
-      this.validateEntity(testInfo,
-                          result,
-                          result.getRelatedEntities(),
-                          forceMinimal,
-                          featureInclusion,
-                          null,
-                          null,
-                          (withRelationships == null || !withRelationships),
-                          null,
-                          true,
-                          null,
-                          null,
-                          null,
-                          null,
-                          null);
-    }
-
-    if (expectRawData) {
-      this.validateRawDataMap(testInfo,
-                              response.getRawData(),
-                              false,
-                              "RESOLVED_ENTITIES");
-
-      Object entities = ((Map) response.getRawData()).get("RESOLVED_ENTITIES");
-      this.validateRawDataMapArray(testInfo,
-                                   entities,
-                                   false,
-                                   "MATCH_INFO", "ENTITY");
-      for (Object obj : ((Collection) entities)) {
-        Object matchInfo = ((Map) obj).get("MATCH_INFO");
-        this.validateRawDataMap(testInfo,
-                                matchInfo,
-                                false,
-                                "MATCH_LEVEL",
-                                "MATCH_KEY",
-                                "MATCH_SCORE",
-                                "ERRULE_CODE",
-                                "REF_SCORE",
-                                "FEATURE_SCORES");
-        Object entity = ((Map) obj).get("ENTITY");
-        Object resolvedEntity = ((Map) entity).get("RESOLVED_ENTITY");
-        if (featureInclusion == NONE || (forceMinimal != null && forceMinimal)) {
-          this.validateRawDataMap(testInfo,
-                                  resolvedEntity,
-                                  false,
-                                  "ENTITY_ID",
-                                  "RECORDS");
-
-        } else {
-          this.validateRawDataMap(testInfo,
-                                  resolvedEntity,
-                                  false,
-                                  "ENTITY_ID",
-                                  "FEATURES",
-                                  "RECORD_SUMMARY",
-                                  "RECORDS");
-
-        }
-      }
-
-    }
-  }
-
-
-  /**
-   * Validates an {@Link SzLoadRecordResponse} instance.
-   *
-   * @param response The response to validate.
-   * @param httpMethod The HTTP method used to load the record.
-   * @param dataSourceCode The data source code fo the loaded record.
-   * @param expectedRecordId The record ID of the loaded record.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
-   */
-  protected void validateLoadRecordResponse(
-      SzLoadRecordResponse  response,
-      SzHttpMethod          httpMethod,
-      String                dataSourceCode,
-      String                expectedRecordId,
-      long                  beforeTimestamp,
-      long                  afterTimestamp)
-  {
-    String selfLink = this.formatServerUri(
-        "data-sources/" + dataSourceCode + "/records");
-
-    if (expectedRecordId != null) {
-      selfLink += ("/" + expectedRecordId);
-    }
-
-    this.validateBasics(
-        response, httpMethod, selfLink, beforeTimestamp, afterTimestamp);
-
-    SzLoadRecordResponse.Data data = response.getData();
-
-    assertNotNull(data, "Response data is null");
-
-    String recordId = data.getRecordId();
-
-    assertNotNull(recordId, "Record ID is null");
-
-    if (expectedRecordId != null) {
-      assertEquals(expectedRecordId, recordId,
-                   "Unexpected record ID value");
-    }
+    return "uriText=[ " + uriText + " ], bodyContent=[ " + bodyContent + " ]";
   }
 
 }

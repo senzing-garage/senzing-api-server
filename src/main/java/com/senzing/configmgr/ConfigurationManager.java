@@ -1,7 +1,9 @@
 package com.senzing.configmgr;
 
+import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.cmdline.CommandLineUtilities;
 import com.senzing.g2.engine.*;
+import com.senzing.nativeapi.InstallLocations;
 import com.senzing.io.IOUtilities;
 import com.senzing.util.JsonUtils;
 
@@ -14,7 +16,6 @@ import java.util.*;
 
 import static com.senzing.io.IOUtilities.readTextFileAsString;
 import static com.senzing.util.LoggingUtilities.*;
-import static com.senzing.util.OperatingSystemFamily.MAC_OS;
 import static com.senzing.util.OperatingSystemFamily.RUNTIME_OS_FAMILY;
 import static com.senzing.configmgr.ConfigurationManagerOption.*;
 import static com.senzing.cmdline.CommandLineUtilities.*;
@@ -23,7 +24,11 @@ import static com.senzing.cmdline.CommandLineUtilities.*;
  * Utlity class for managing the Senzing configurations.
  */
 public class ConfigurationManager {
-  private static final File SENZING_DIR;
+  private static final InstallLocations INSTALL_LOCATIONS
+      = InstallLocations.findLocations();
+
+  private static final File INSTALL_DIR = (INSTALL_LOCATIONS == null)
+      ? null : INSTALL_LOCATIONS.getInstallDirectory();
 
   private static final G2ConfigMgr CONFIG_MGR_API;
 
@@ -32,102 +37,12 @@ public class ConfigurationManager {
   private static final int CONFIG_NOT_FOUND_ERROR_CODE = 7221;
 
   static {
-    File senzingDir = null;
-    try {
-      String defaultDir;
-      switch (RUNTIME_OS_FAMILY) {
-        case WINDOWS:
-          defaultDir = "C:\\Program Files\\Senzing\\g2";
-          break;
-        case MAC_OS:
-          defaultDir = "/Applications/Senzing.app/Contents/Resources/app/g2";
-          break;
-        case UNIX:
-          defaultDir = "/opt/senzing/g2";
-          break;
-        default:
-          throw new ExceptionInInitializerError(
-              "Unrecognized Operating System: " + RUNTIME_OS_FAMILY);
-      }
-
-      // check environment for SENZING_DIR
-      String envVariable = "SENZING_DIR";
-      String senzingPath = System.getenv(envVariable);
-      if (senzingPath == null) {
-        // check environment for SENZING_ROOT
-        envVariable = "SENZING_ROOT";
-        senzingPath = System.getenv(envVariable);
-      }
-      if (senzingPath == null) {
-        envVariable = null;
-        senzingPath = defaultDir;
-      }
-
-      // check the senzing directory
-      senzingDir = new File(senzingPath);
-      if (!senzingDir.exists()) {
-        System.err.println("Could not find Senzing installation directory:");
-        System.err.println("     " + senzingPath);
-        System.err.println();
-        if (envVariable != null) {
-          System.err.println(
-              "Check the " + envVariable + " environment variable");
-        }
-
-        throw new ExceptionInInitializerError(
-            "Could not find Senzing installation directory: " + senzingPath);
-      }
-
-      // normalize the senzing directory
-      String dirName = senzingDir.getName();
-      if (senzingDir.isDirectory()
-          && !dirName.equalsIgnoreCase("g2")) {
-        if (RUNTIME_OS_FAMILY == MAC_OS) {
-          // for macOS be tolerant of Senzing.app or the electron app dir
-          if (dirName.equalsIgnoreCase("Senzing.app")) {
-            File contents = new File(senzingDir, "Contents");
-            File resources = new File(contents, "Resources");
-            senzingDir = new File(resources, "app");
-            dirName = senzingDir.getName();
-          }
-          if (dirName.equalsIgnoreCase("app")) {
-            senzingDir = new File(senzingDir, "g2");
-          }
-        } else if (dirName.equalsIgnoreCase("senzing")) {
-          // for windows or linux allow the "Senzing" dir as well
-          senzingDir = new File(senzingDir, "g2");
-        }
-      }
-
-      if (!senzingDir.isDirectory()
-          || (!(new File(senzingDir, "data")).exists())
-          || (!(new File(senzingDir, "data")).isDirectory())) {
-        System.err.println("Senzing installation directory appears invalid:");
-        System.err.println("     " + senzingPath);
-        System.err.println();
-        if (envVariable != null) {
-          System.err.println(
-              "Check the " + envVariable + " environment variable");
-        }
-
-        throw new ExceptionInInitializerError(
-            "Could not find Senzing installation directory: " + senzingPath);
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      SENZING_DIR = senzingDir;
-    }
-
     G2ConfigMgr configMgrApi  = null;
     try {
-      Class configMgrApiClass
-          = Class.forName("com.senzing.g2.engine.G2ConfigMgrJNI");
-
-      configMgrApi = (G2ConfigMgr) (configMgrApiClass.newInstance());
+      configMgrApi = NativeApiFactory.createConfigMgrApi();
 
     } catch (Exception e) {
-      File libPath = new File(SENZING_DIR, "lib");
+      File libPath = new File(INSTALL_DIR, "lib");
       e.printStackTrace();
       System.err.println();
       switch (RUNTIME_OS_FAMILY) {
@@ -284,7 +199,7 @@ public class ConfigurationManager {
                 throw new IllegalArgumentException(
                     multilineFormat(
                         "Initialization JSON is not valid JSON: ",
-                        initJson));
+                        initJson), e);
               }
 
             case CONFIG_ID:
@@ -956,6 +871,7 @@ public class ConfigurationManager {
       // get the JSON text and parse it to be sure it parses as JSON
       String      jsonText  = sb.toString();
       JsonObject  configObj = JsonUtils.parseJsonObject(jsonText);
+      jsonText = JsonUtils.toJsonText(configObj, true);
 
       // write the text to the specified file
       if (outputFile != null) {

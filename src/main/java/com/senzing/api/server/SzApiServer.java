@@ -9,8 +9,12 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.senzing.api.BuildInfo;
+import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.api.services.SzApiProvider;
 import com.senzing.api.model.SzLicenseInfo;
 import com.senzing.cmdline.CommandLineUtilities;
@@ -69,8 +73,12 @@ public class SzApiServer implements SzApiProvider {
    * The number of milliseconds to wait in between checking for changes in the
    * configuration and automatically refreshing the configuration.
    */
-  public static final long CONFIG_REFRESH_PERIOD = 10000;
+  public static final long DEFAULT_CONFIG_REFRESH_PERIOD = 10000;
 
+  /**
+   * The number of milliseconds to provide advance warning of an expiring
+   * license.
+   */
   private static final long EXPIRATION_WARNING_PERIOD
       = 1000L * 60L * 60L * 24L * 30L;
 
@@ -213,6 +221,16 @@ public class SzApiServer implements SzApiProvider {
   private Set<String> dataSources;
 
   /**
+   * The set of configured entity classes.
+   */
+  private Set<String> entityClasses;
+
+  /**
+   * The set of configured entity types.
+   */
+  private Set<String> entityTypes;
+
+  /**
    * The {@link Map} of FTYPE_CODE values to ATTR_CLASS values from the config.
    */
   private Map<String, String> featureToAttrClassMap;
@@ -243,6 +261,12 @@ public class SzApiServer implements SzApiProvider {
   private boolean verbose;
 
   /**
+   * Whether or not the API server should reduce the number of feedback
+   * messages it sends to standard out.
+   */
+  private boolean quiet;
+
+  /**
    * The INI {@link File} for initializing the API.
    */
   private File iniFile;
@@ -259,6 +283,12 @@ public class SzApiServer implements SzApiProvider {
   private Long configId = null;
 
   /**
+   * The period for checking and automatically refreshing the active
+   * configuration if necessary.
+   */
+  private Long autoRefreshPeriod = null;
+
+  /**
    * Indicates where the config resides.
    */
   private ConfigType configType;
@@ -267,6 +297,11 @@ public class SzApiServer implements SzApiProvider {
    * Indicates if only read operations should be allowed.
    */
   private boolean readOnly;
+
+  /**
+   * Indicates if admin operations are enabled.
+   */
+  private boolean adminEnabled;
 
   /**
    * CORS Access-Control-Allow-Origin for all endpoints on the server.
@@ -299,6 +334,12 @@ public class SzApiServer implements SzApiProvider {
    * Flag indicating if the server has been shutdown.
    */
   private boolean completed = false;
+
+  /**
+   * The read-write lock to use to prevent simultaneous request handling and
+   * purging.
+   */
+  private final ReadWriteLock purgeLock = new ReentrantReadWriteLock();
 
   /**
    * Returns the base URL for this instance.
@@ -384,6 +425,19 @@ public class SzApiServer implements SzApiProvider {
   }
 
   /**
+   * Returns the initialized {@link G2ConfigMgr} API interface, or <tt>null</tt>
+   * if the configuration is not automatically being picked up as the current
+   * default configuration.
+   *
+   * @return The {@link G2ConfigMgr} API interface, or <tt>null</tt> if the
+   *         configuration is not automatically being picked up as the current
+   *         default configuration.
+   */
+  public G2ConfigMgr getConfigMgrApi() {
+    return this.configMgrApi;
+  }
+
+  /**
    * Checks whether or not only read operations are being allowed.
    *
    * @return <tt>true</tt> if only read operations are allowed, and
@@ -392,6 +446,28 @@ public class SzApiServer implements SzApiProvider {
   public boolean isReadOnly() {
     this.assertNotShutdown();
     return this.readOnly;
+  }
+
+  /**
+   * Checks whether or not admin operations are enabled.
+   *
+   * @return <tt>true</tt> if admin operations are enabled, and
+   *         <tt>false</tt> if admin operations are disabled.
+   */
+  public boolean isAdminEnabled() {
+    this.assertNotShutdown();
+    return this.adminEnabled;
+  }
+
+  /**
+   * Returns the number of worker threads initialized to do work against
+   * the Senzing repository.
+   *
+   * @return The number of worker threads initialized to do work against
+   *         the Senzing repository.
+   */
+  public int getConcurrency() {
+    return this.workerThreadPool.size();
   }
 
   /**
@@ -406,10 +482,14 @@ public class SzApiServer implements SzApiProvider {
    * @param attrCodeMap  The {@link Map} of attribute code to attribute classes
    *                     to populate.
    */
-  private static void evaluateConfig(JsonObject  config,
-                                     Set<String> dataSources,
-                                     Map<String, String> ftypeCodeMap,
-                                     Map<String, String> attrCodeMap) {
+  private static void evaluateConfig(JsonObject           config,
+                                     Set<String>          dataSources,
+                                     Set<String>          entityClasses,
+                                     Set<String>          entityTypes,
+                                     Map<String, String>  ftypeCodeMap,
+                                     Map<String, String>  attrCodeMap)
+  {
+    // get the data sources from the config
     JsonValue jsonValue = config.getValue("/G2_CONFIG/CFG_DSRC");
     JsonArray jsonArray = jsonValue.asJsonArray();
 
@@ -419,6 +499,27 @@ public class SzApiServer implements SzApiProvider {
       dataSources.add(dsrcCode);
     }
 
+    // get the entity classes from the config
+    jsonValue = config.getValue("/G2_CONFIG/CFG_ECLASS");
+    jsonArray = jsonValue.asJsonArray();
+
+    for (JsonValue value : jsonArray) {
+      JsonObject entityClass = value.asJsonObject();
+      String classCode = entityClass.getString("ECLASS_CODE").toUpperCase();
+      entityClasses.add(classCode);
+    }
+
+    // get the entity types from the config
+    jsonValue = config.getValue("/G2_CONFIG/CFG_ETYPE");
+    jsonArray = jsonValue.asJsonArray();
+
+    for (JsonValue value : jsonArray) {
+      JsonObject entityType = value.asJsonObject();
+      String typeCode = entityType.getString("ETYPE_CODE").toUpperCase();
+      entityTypes.add(typeCode);
+    }
+
+    // get the attribute types from the config
     jsonValue = config.getValue("/G2_CONFIG/CFG_ATTR");
     jsonArray = jsonValue.asJsonArray();
 
@@ -466,6 +567,48 @@ public class SzApiServer implements SzApiProvider {
         }
       }
       return this.dataSources;
+    }
+  }
+
+  /**
+   * Returns the unmodifiable {@link Set} of configured entity class codes.
+   *
+   * @param expectedEntityClasses The zero or more entity class codes that the
+   *                              caller expects to exist.
+   *
+   * @return The unmodifiable {@link Set} of configured entity class codes.
+   */
+  public Set<String> getEntityClasses(String... expectedEntityClasses) {
+    synchronized (this.reinitMonitor) {
+      this.assertNotShutdown();
+      for (String entityClass : expectedEntityClasses) {
+        if (! this.entityClasses.contains(entityClass)) {
+          this.ensureConfigCurrent(false);
+          break;
+        }
+      }
+      return this.entityClasses;
+    }
+  }
+
+  /**
+   * Returns the unmodifiable {@link Set} of configured entity type codes.
+   *
+   * @param expectedEntityTypes The zero or more entity type codes that the
+   *                            caller expects to exist.
+   *
+   * @return The unmodifiable {@link Set} of configured entity type codes.
+   */
+  public Set<String> getEntityTypes(String... expectedEntityTypes) {
+    synchronized (this.reinitMonitor) {
+      this.assertNotShutdown();
+      for (String entityType : expectedEntityTypes) {
+        if (! this.entityTypes.contains(entityType)) {
+          this.ensureConfigCurrent(false);
+          break;
+        }
+      }
+      return this.entityTypes;
     }
   }
 
@@ -682,10 +825,20 @@ public class SzApiServer implements SzApiProvider {
                     + " must be an integer: " + params.get(0));
               }
 
-            case READ_ONLY:
-              return Boolean.TRUE;
+            case AUTO_REFRESH_PERIOD:
+              try {
+                return Long.parseLong(params.get(0));
+              } catch (Exception e) {
+                throw new IllegalArgumentException(
+                    "The specified refresh period for "
+                    + option.getCommandLineFlag() + " must be an integer: "
+                    + params.get(0));
+              }
 
+            case READ_ONLY:
+            case ENABLE_ADMIN:
             case VERBOSE:
+            case QUIET:
               return Boolean.TRUE;
 
             case MODULE_NAME:
@@ -708,7 +861,7 @@ public class SzApiServer implements SzApiProvider {
    */
   private static String getVersionString() {
     // use G2Product API without "init()" for now
-    G2Product productApi = new G2ProductJNI();
+    G2Product productApi = NativeApiFactory.createProductApi();
     return JAR_FILE_NAME + " version " + BuildInfo.MAVEN_VERSION
            + "(Senzing API version " + productApi.version() + ")";
   }
@@ -738,9 +891,20 @@ public class SzApiServer implements SzApiProvider {
         "        Causes the version of the G2 REST API Server to be displayed.",
         "        NOTE: If this option is provided, the server will not start.",
         "",
+        "   -readOnly",
+        "        Disables functions that would modify the entity repository data, causing",
+        "        those functions to return a 403 Forbidden response.  NOTE: this option",
+        "        will not only disable loading data to the entity repository, but will",
+        "        also disable modifications to the configuration even if the -enableAdmin",
+        "        option is provided.",
+        "",
+        "   -enableAdmin",
+        "        Enables administrative functions via the API server.  If not specified",
+        "        then administrative functions will return a 403 Forbidden response.",
+        "",
         "   -httpPort <port-number>",
         "        Sets the port for HTTP communication.  Defaults to "
-                   + DEFAULT_PORT + ".",
+            + DEFAULT_PORT + ".",
         "        Specify 0 for a randomly selected port number.",
         "",
         "   -bindAddr <ip-address|loopback|all>",
@@ -763,7 +927,6 @@ public class SzApiServer implements SzApiProvider {
         "",
         "   -iniFile <ini-file-path>",
         "        The path to the Senzing INI file to with which to initialize.",
-        "        *** DEPRECATED: Use -initFile, -initEnvVar or -initJson instead.",
         "",
         "   -initFile <json-init-file>",
         "        The path to the file containing the JSON text to use for Senzing",
@@ -781,13 +944,31 @@ public class SzApiServer implements SzApiProvider {
         "        then it may be visible to other users via process monitoring.",
         "",
         "   -configId <config-id>",
-        "        Use with the -initFile, -initEnvVar or -initJson options to ",
-        "        force a specific configuration ID to use for initialization.",
-        "        NOTE: This will disable the auto-detection of config changes",
+        "        Use with the -iniFile, -initFile, -initEnvVar or -initJson options",
+        "        to force a specific configuration ID to use for initialization.",
+        "",
+        "   -autoRefreshPeriod <positive-integer-seconds|0|negative-integer>",
+        "        If leveraging the default configuration stored in the database,",
+        "        this is used to specify how often the API server should background",
+        "        check that the current active config is the same as the current",
+        "        default config, and if different reinitialize with the current",
+        "        default config.  If zero is specified, then the auto-refresh",
+        "        is disabled and it will only occur when a requested configuration",
+        "        element is not found in the current active config.  Specifying",
+        "        a negative integer is allowed but is used to enable a check and ",
+        "        conditional refresh only when manually requested (programmatically).",
+        "        NOTE: This is option ignored if auto-refresh is disabled because",
+        "        the config was specified via the G2CONFIGFILE init option or if ",
+        "        -configId has been specified to lock to a specific configuration.",
         "",
         "   -verbose If specified then initialize in verbose mode.",
         "",
-        "   -monitorFile [filePath]",
+        "   -quiet If specified then the API server reduces the number of messages",
+        "          provided as feedback to standard output.  This applies only to",
+        "          messages generated by the API server and not by the underlying ",
+        "          API which can be quite prolific if -verbose is provided.",
+        "",
+        "   -monitorFile [file-path]",
         "        Specifies a file whose timestamp is monitored to determine",
         "        when to shutdown.",
         "",
@@ -804,6 +985,11 @@ public class SzApiServer implements SzApiProvider {
     sw.flush();
 
     return sw.toString();
+  }
+
+  private void echo(String message) {
+    if (this.quiet) return;
+    System.out.println(message);
   }
 
   /**
@@ -1173,27 +1359,42 @@ public class SzApiServer implements SzApiProvider {
     if (options.containsKey(SzApiServerOption.HTTP_PORT)) {
       this.httpPort = (Integer) options.get(SzApiServerOption.HTTP_PORT);
     }
+
     this.ipAddr = InetAddress.getLoopbackAddress();
     if (options.containsKey(SzApiServerOption.BIND_ADDRESS)) {
       this.ipAddr = (InetAddress) options.get(SzApiServerOption.BIND_ADDRESS);
     }
+
     this.concurrency = DEFAULT_CONCURRENCY;
     if (options.containsKey(SzApiServerOption.CONCURRENCY)) {
       this.concurrency = (Integer) options.get(SzApiServerOption.CONCURRENCY);
     }
+
     this.moduleName = DEFAULT_MODULE_NAME;
     if (options.containsKey(SzApiServerOption.MODULE_NAME)) {
       this.moduleName = (String) options.get(SzApiServerOption.MODULE_NAME);
     }
+
     this.verbose = false;
     if (options.containsKey(SzApiServerOption.VERBOSE)) {
       this.verbose = (Boolean) options.get(SzApiServerOption.VERBOSE);
     }
+
+    this.quiet = false;
+    if (options.containsKey(SzApiServerOption.QUIET)) {
+      this.quiet = (Boolean) options.get(SzApiServerOption.QUIET);
+    }
+
     this.readOnly = false;
     if (options.containsKey(SzApiServerOption.READ_ONLY)) {
       this.readOnly = (Boolean) options.get(SzApiServerOption.READ_ONLY);
     }
-    
+
+    this.adminEnabled = false;
+    if (options.containsKey(SzApiServerOption.ENABLE_ADMIN)) {
+      this.adminEnabled = (Boolean) options.get(SzApiServerOption.ENABLE_ADMIN);
+    }
+
     // determine the init JSON
     this.initJson = (JsonObject) options.get(SzApiServerOption.INIT_FILE);
     if (this.initJson == null) {
@@ -1288,6 +1489,32 @@ public class SzApiServer implements SzApiProvider {
       System.err.println(msg);
       throw new IllegalStateException(msg);
       
+    } else if (this.configType == ConfigType.FILE_PATH && this.configId != null) {
+      File configPath = extractIniConfigPath(this.initJson);
+      StringWriter sw = new StringWriter();
+      PrintWriter pw = new PrintWriter(sw);
+      pw.println();
+      pw.println("**** ABORTING ****");
+      pw.println("Ambiguous configuration.  Cannot specify the -configId option if the");
+      pw.println("G2CONFIGFILE property was specified in the INI file:");
+      pw.println("--> -configId " + configId);
+      pw.println("--> G2CONFIGFILE=" + configPath);
+      pw.println();
+      pw.println("It is recommended to not use the G2CONFIGFILE property and move the ");
+      pw.println("configuration to the repository.");
+      pw.println();
+      pw.println("Having the configuration in the repository has several advantages:");
+      pw.println("   - The configuration can be centrally managed");
+      pw.println("   - All instances of the Senzing API Server can use the same configuration");
+      pw.println("   - The Senzing API Server can detect changes and automatically reinitialize.");
+      pw.println();
+      pw.flush();
+      // we have INI specified from file and database
+      String msg = sw.toString();
+
+      System.err.println(msg);
+      throw new IllegalStateException(msg);
+
     } else if (this.configType == ConfigType.FILE_PATH) {
       File configPath = extractIniConfigPath(this.initJson);
       StringWriter sw = new StringWriter();
@@ -1310,6 +1537,11 @@ public class SzApiServer implements SzApiProvider {
       System.err.println(msg);
     }
 
+    this.autoRefreshPeriod = (Long) options.get(SzApiServerOption.AUTO_REFRESH_PERIOD);
+    if (this.autoRefreshPeriod != null) {
+      this.autoRefreshPeriod *= 1000;
+    }
+
     this.allowedOrigins = (String) options.get(SzApiServerOption.ALLOWED_ORIGINS);
 
     this.baseUrl = "http://" + ipAddr.getHostAddress() + ":" + httpPort + "/";
@@ -1319,14 +1551,19 @@ public class SzApiServer implements SzApiProvider {
     this.workerThreadPool
         = new WorkerThreadPool(this.getClass().getName(), this.concurrency);
 
-    System.out.println(
-        "Created Senzing engine thread pool with " + this.concurrency
-        + " thread(s).");
+    this.echo("Created Senzing engine thread pool with " + this.concurrency
+              + " thread(s).");
 
     if (this.configMgrApi != null) {
-      this.reinitializer = new Reinitializer(this.configMgrApi,
-                                             this.engineApi,
-                                             this);
+      // check if the auto refresh period is null
+      if (this.autoRefreshPeriod == null) {
+        this.autoRefreshPeriod = DEFAULT_CONFIG_REFRESH_PERIOD;
+      }
+      if (!this.autoRefreshPeriod.equals(0)) {
+        this.reinitializer = new Reinitializer(this.configMgrApi,
+                                               this.engineApi,
+                                               this);
+      }
     }
 
     this.initializeConfigData();
@@ -1402,13 +1639,13 @@ public class SzApiServer implements SzApiProvider {
     Thread thread = new Thread(() -> {
       try {
         if (this.fileMonitor != null) {
-          System.out.println("********************************************** ");
-          System.out.println("    MONITORING FILE FOR SHUTDOWN SIGNAL");
-          System.out.println("********************************************** ");
+          this.echo("********************************************** ");
+          this.echo("    MONITORING FILE FOR SHUTDOWN SIGNAL");
+          this.echo("********************************************** ");
           this.fileMonitor.join();
-          System.out.println("********************************************** ");
-          System.out.println("    RECEIVED SHUTDOWN SIGNAL");
-          System.out.println("********************************************** ");
+          this.echo("********************************************** ");
+          this.echo("    RECEIVED SHUTDOWN SIGNAL");
+          this.echo("********************************************** ");
           try {
             if (this.reinitializer != null) this.reinitializer.complete();
             context.stop();
@@ -1431,6 +1668,40 @@ public class SzApiServer implements SzApiProvider {
       }
     });
     thread.start();
+  }
+
+  /**
+   * Purges the repository and recreates the worker thread pool.
+   *
+   * This should only be done when the API server has no pending requests.
+   *
+   */
+  public synchronized void purgeRepository() {
+    this.purgeLock.writeLock().lock();
+    try {
+      G2Engine engine = this.getEngineApi();
+      int returnCode = engine.purgeRepository();
+      if (returnCode != 0) {
+        throw new IllegalStateException(
+            formatError("G2Engine.purgeRepository()", engineApi));
+      }
+      this.workerThreadPool
+          = new WorkerThreadPool(this.getClass().getName(), this.concurrency);
+
+    } finally {
+      this.purgeLock.writeLock().unlock();
+    }
+  }
+
+  /**
+   * Returns the configuration auto-refresh period to use.
+   *
+   * @return The configuration auto-refresh period to use.
+   *
+   */
+  public long getConfigAutoRefreshPeriod() {
+    return ((this.autoRefreshPeriod == null)
+            ? DEFAULT_CONFIG_REFRESH_PERIOD : this.autoRefreshPeriod);
   }
 
   /**
@@ -1519,7 +1790,7 @@ public class SzApiServer implements SzApiProvider {
     String initJsonText = JsonUtils.toJsonText(initJson);
 
     boolean configInRepo = false;
-    G2ConfigMgr configMgr = new G2ConfigMgrJNI();
+    G2ConfigMgr configMgr = NativeApiFactory.createConfigMgrApi();
     int returnCode = configMgr.initV2(moduleName, initJsonText, false);
     if (returnCode != 0) {
       String msg = multilineFormat(
@@ -1571,7 +1842,7 @@ public class SzApiServer implements SzApiProvider {
         throw new RuntimeException(e);
       }
     }
-    this.productApi = new G2ProductJNI();
+    this.productApi = NativeApiFactory.createProductApi();
     int initResult = 0;
     if (this.configType.isManaged()) {
       initResult = this.productApi.initV2(
@@ -1588,7 +1859,7 @@ public class SzApiServer implements SzApiProvider {
           this.productApi.getLastException()));
     }
 
-    this.configApi = new G2ConfigJNI();
+    this.configApi = NativeApiFactory.createConfigApi();
     if (this.configType.isManaged()) {
       initResult = this.configApi.initV2(
           this.moduleName, initJsonText, this.verbose);
@@ -1604,7 +1875,7 @@ public class SzApiServer implements SzApiProvider {
     }
 
     // init the engine API
-    this.engineApi = new G2JNI();
+    this.engineApi = NativeApiFactory.createEngineApi();
 
     if (this.configType.isManaged() && this.configId != null) {
       // config ID is hard coded and config is in the repository
@@ -1631,7 +1902,7 @@ public class SzApiServer implements SzApiProvider {
 
     // initialize the config manager API
     if (this.configType.isManaged() && this.configId == null) {
-      this.configMgrApi = new G2ConfigMgrJNI();
+      this.configMgrApi = NativeApiFactory.createConfigMgrApi();
       initResult = this.configMgrApi.initV2(this.moduleName, initJsonText, this.verbose);
 
       if (initResult < 0) {
@@ -1755,6 +2026,7 @@ public class SzApiServer implements SzApiProvider {
   public <T, E extends Exception> T executeInThread(Task<T, E> task)
     throws E
   {
+    this.purgeLock.readLock().lock();
     try {
       return this.workerThreadPool.execute(task);
 
@@ -1768,6 +2040,9 @@ public class SzApiServer implements SzApiProvider {
     } catch (Exception e) {
       e.printStackTrace();
       throw e;
+
+    } finally {
+      this.purgeLock.readLock().unlock();
     }
   }
 
@@ -1822,6 +2097,33 @@ public class SzApiServer implements SzApiProvider {
   }
 
   /**
+   * Prompts the reinitializer thread to check the config is current and
+   * refresh it.  This is primarily used for testing the reinitializer thread.
+   * This will wait until the request completes before returning.  If there is
+   * no reinitializer thread then this method has no effect.
+   *
+   * <b>NOTE:</b> This differs from {@link #ensureConfigCurrent()} in that it
+   * performs the task through the reinitializer thread if it exists and does
+   * nothing if there is no reinitializer thread.
+   */
+  public void requestConfigRefreshCheck() {
+    if (this.reinitializer == null) return;
+    this.reinitializer.requestRefresh();
+  }
+
+  /**
+   * Checks if the engine's active config is stale and if so reinitializes
+   * with the new configuration.
+   *
+   * @return <tt>true</tt> if the configuration was updated, <tt>false</tt> if
+   *         the configuration was already current and <tt>null</tt> if an
+   *         error occurred in attempting to ensure it is current.
+   */
+  public Boolean ensureConfigCurrent() {
+    return this.ensureConfigCurrent(false);
+  }
+
+  /**
    * Checks if the engine's active config is stale and if so reinitializes
    * with the new configuration.
    *
@@ -1833,8 +2135,93 @@ public class SzApiServer implements SzApiProvider {
    *         error occurred in attempting to ensure it is current.
    */
   Boolean ensureConfigCurrent(boolean pauseWorkers) {
-    // if not capable of reinitialization then return alse
-    if (this.configMgrApi == null) return false;
+    this.purgeLock.readLock().lock();
+    try {
+      // if not capable of reinitialization then return alse
+      if (this.configMgrApi == null) return false;
+
+      Long defaultConfigId = null;
+      try {
+        defaultConfigId = this.getNewConfigurationID();
+      } catch (IllegalStateException e) {
+        // if we get an exception then return null
+        return null;
+      }
+      if (defaultConfigId == null) return false;
+
+      this.echo("Detected configuration change.");
+      AccessToken pauseToken = null;
+
+      // we can pause all workers before reinitializing or just let the underlying
+      // G2Engine API handle the mutual exclusion issues
+      if (pauseWorkers) {
+        this.echo("Pausing API server....");
+        pauseToken = this.workerThreadPool.pause();
+      }
+
+      int returnCode;
+      G2ConfigMgr configMgrApi = this.getConfigMgrApi();
+      // once we get here we just need to reinitialize
+      synchronized (configMgrApi) {
+        try {
+          if (pauseWorkers) {
+            this.echo("Paused API server.");
+          }
+
+          // double-check on the configuration ID
+          try {
+            defaultConfigId = this.getNewConfigurationID();
+          } catch (IllegalStateException e) {
+            return null;
+          }
+
+          // check if the default config ID has already been updated
+          if (defaultConfigId == null) {
+            this.echo("API Server Engine API already reinitialized.");
+            return true;
+          }
+          this.echo("Reinitializing with config: " + defaultConfigId);
+
+          // reinitialize with the default config ID
+          returnCode = this.engineApi.reinitV2(defaultConfigId);
+          if (returnCode != 0) {
+            String errorMsg = formatError(
+                "G2Engine.reinitV2", this.engineApi);
+            System.err.println("Failed to reinitialize with config ID ("
+                                   + defaultConfigId + "): " + errorMsg);
+            return null;
+          }
+
+          // reinitialize the cached configuration data
+          this.initializeConfigData();
+
+          // return true to indicate we reinitialized
+          return true;
+
+        } finally {
+          if (pauseWorkers) {
+            this.workerThreadPool.resume(pauseToken);
+            this.echo("Resumed API server.");
+          }
+        }
+      }
+
+    } finally {
+      this.purgeLock.readLock().unlock();
+    }
+  }
+
+  /**
+   * Returns the new configuration ID if the configuration ID has changed,
+   * otherwise returns <tt>null</tt>.
+   *
+   * @return The new configuration ID if the configuration ID has changed,
+   *         otherwise returns <tt>null</tt>.
+   *
+   * @throws IllegalStateException If an engine failure occurs.
+   */
+  private Long getNewConfigurationID() throws IllegalStateException {
+    G2ConfigMgr configMgrApi = this.getConfigMgrApi();
 
     // get the active configuration ID
     Result<Long> result = new Result<>();
@@ -1845,65 +2232,34 @@ public class SzApiServer implements SzApiProvider {
       String errorMsg = formatError(
           "G2Engine.getActiveConfigID", this.engineApi);
       System.err.println("Failed to get active config ID: " + errorMsg);
-      return null;
+      throw new IllegalStateException(errorMsg);
     }
 
     // extract the active config ID
     long activeConfigId = result.getValue();
 
-    // get the default configuration ID
-    returnCode = this.configMgrApi.getDefaultConfigID(result);
+    // synchronize since G2ConfigMgr API is not thread-safe
+    synchronized (configMgrApi) {
+      // get the default configuration ID
+      returnCode = configMgrApi.getDefaultConfigID(result);
 
-    // check the return code
-    if (returnCode != 0) {
-      String errorMsg = formatError(
-          "G2ConfigMgr.getDefaultConfigID", this.configMgrApi);
-      System.err.println("Failed to get default config ID: " + errorMsg);
-      return null;
+      // check the return code
+      if (returnCode != 0) {
+        String errorMsg = formatError(
+            "G2ConfigMgr.getDefaultConfigID", configMgrApi);
+        System.err.println("Failed to get default config ID: " + errorMsg);
+        throw new IllegalStateException(errorMsg);
+      }
     }
 
     // extract the default config ID
     long defaultConfigId = result.getValue();
 
     // check if they differ
-    if (activeConfigId == defaultConfigId) return false;
+    if (activeConfigId == defaultConfigId) return null;
 
-    System.out.println("Detected configuration change.");
-    AccessToken pauseToken = null;
-    if (pauseWorkers) {
-      System.out.println("Pausing API server....");
-      pauseToken = this.workerThreadPool.pause();
-    }
-    synchronized (this.reinitMonitor) {
-      try {
-        if (pauseWorkers) {
-          System.out.println("Paused API server.");
-        }
-        System.out.println("Reinitializing with config: " + defaultConfigId);
-
-        // reinitialize with the default config ID
-        returnCode = this.engineApi.reinitV2(defaultConfigId);
-        if (returnCode != 0) {
-          String errorMsg = formatError(
-              "G2Engine.reinitV2", this.engineApi);
-          System.err.println("Failed to reinitialize with config ID ("
-                                 + defaultConfigId + "): " + errorMsg);
-          return null;
-        }
-
-        // reinitialize the cached configuration data
-        this.initializeConfigData();
-
-        // return true to indicate we reinitialized
-        return true;
-
-      } finally {
-        if (pauseWorkers) {
-          this.workerThreadPool.resume(pauseToken);
-          System.out.println("Resumed API server.");
-        }
-      }
-    }
+    // return the new default config ID
+    return defaultConfigId;
   }
 
   /**
@@ -1917,13 +2273,22 @@ public class SzApiServer implements SzApiProvider {
 
       JsonObject config = JsonUtils.parseJsonObject(sb.toString());
 
-      Set<String>         dataSourceSet = new LinkedHashSet<>();
-      Map<String,String>  ftypeCodeMap  = new LinkedHashMap<>();
-      Map<String,String>  attrCodeMap   = new LinkedHashMap<>();
+      Set<String>         dataSourceSet   = new LinkedHashSet<>();
+      Set<String>         entityClassSet  = new LinkedHashSet<>();
+      Set<String>         entityTypeSet   = new LinkedHashSet<>();
+      Map<String,String>  ftypeCodeMap    = new LinkedHashMap<>();
+      Map<String,String>  attrCodeMap     = new LinkedHashMap<>();
 
-      this.evaluateConfig(config, dataSourceSet, ftypeCodeMap, attrCodeMap);
+      this.evaluateConfig(config,
+                          dataSourceSet,
+                          entityClassSet,
+                          entityTypeSet,
+                          ftypeCodeMap,
+                          attrCodeMap);
 
       this.dataSources            = Collections.unmodifiableSet(dataSourceSet);
+      this.entityClasses          = Collections.unmodifiableSet(entityClassSet);
+      this.entityTypes            = Collections.unmodifiableSet(entityTypeSet);
       this.featureToAttrClassMap  = Collections.unmodifiableMap(ftypeCodeMap);
       this.attrCodeToAttrClassMap = Collections.unmodifiableMap(attrCodeMap);
     }

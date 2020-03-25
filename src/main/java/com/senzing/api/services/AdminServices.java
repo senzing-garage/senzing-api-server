@@ -8,7 +8,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
 import com.senzing.api.model.*;
+import com.senzing.g2.engine.G2ConfigMgr;
+import com.senzing.g2.engine.G2Engine;
 import com.senzing.g2.engine.G2Product;
+import com.senzing.g2.engine.Result;
 import com.senzing.util.Timers;
 
 import java.io.StringReader;
@@ -39,9 +42,8 @@ public class AdminServices {
   @Path("license")
   public SzLicenseResponse license(
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
-      @Context                                      UriInfo uriInfo)
-    throws WebApplicationException
-  {
+      @Context UriInfo uriInfo)
+      throws WebApplicationException {
     Timers timers = newTimers();
     SzApiProvider provider = SzApiProvider.Factory.getProvider();
 
@@ -88,9 +90,8 @@ public class AdminServices {
   @Path("version")
   public SzVersionResponse version(
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
-      @Context                                      UriInfo uriInfo)
-      throws WebApplicationException
-  {
+      @Context UriInfo uriInfo)
+      throws WebApplicationException {
     Timers timers = newTimers();
     SzApiProvider provider = SzApiProvider.Factory.getProvider();
 
@@ -130,4 +131,56 @@ public class AdminServices {
     }
   }
 
+  /**
+   * Provides license information, optionally with raw data.
+   */
+  @GET
+  @Path("server-info")
+  public SzServerInfoResponse getServerInfo(@Context UriInfo uriInfo)
+      throws WebApplicationException {
+    Timers timers = newTimers();
+    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+
+    G2ConfigMgr configMgrApi = provider.getConfigMgrApi();
+    G2Engine engineApi = provider.getEngineApi();
+
+    try {
+      enteringQueue(timers);
+      long activeConfigId = provider.executeInThread(() -> {
+        exitingQueue(timers);
+        Result<Long> result = new Result<>();
+
+        callingNativeAPI(timers, "engine", "getActiveConfigID");
+        long returnCode = engineApi.getActiveConfigID(result);
+        if (returnCode != 0) {
+          throw newInternalServerErrorException(
+              GET, uriInfo, timers, engineApi);
+        }
+        calledNativeAPI(timers, "engine", "getActiveConfigID");
+
+        return result.getValue();
+      });
+
+      SzServerInfo serverInfo = new SzServerInfo();
+      serverInfo.setConcurrency(provider.getConcurrency());
+      serverInfo.setDynamicConfig(configMgrApi != null);
+      serverInfo.setReadOnly(provider.isReadOnly());
+      serverInfo.setAdminEnabled(provider.isAdminEnabled());
+      serverInfo.setActiveConfigId(activeConfigId);
+
+      return new SzServerInfoResponse(
+          GET, 200, uriInfo, timers, serverInfo);
+
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw newInternalServerErrorException(GET, uriInfo, timers, e);
+    }
+  }
 }

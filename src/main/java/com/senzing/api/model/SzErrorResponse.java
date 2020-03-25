@@ -4,6 +4,7 @@ import com.senzing.g2.engine.G2Fallible;
 import com.senzing.util.Timers;
 
 import javax.ws.rs.core.UriInfo;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -298,5 +299,14 @@ public class SzErrorResponse extends SzBasicResponse {
    */
   public List<SzError> getErrors() {
     return Collections.unmodifiableList(this.errors);
+  }
+
+  /**
+   * Private method to set the errors during JSON deserialization.
+   *
+   * @param errors The {@link List} of {@link SzError} instances.
+   */
+  private void setErrors(List<SzError> errors) {
+    this.errors = (errors == null) ? null : new ArrayList<>(errors);
   }
 }
