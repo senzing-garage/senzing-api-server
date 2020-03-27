@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2020-03-27
+
+### Changed in 1.8.0
+
+- Now supports and requires OpenJDK 11.0.x (Java 8 no longer supported)
+- Now requires Apache Maven 3.6.1 or later
+- Adds config modification functions (data sources, entity types, etc...)
+- Adds `-enableAdmin` command-line option to enable adding data sources and
+  entity types (if not provided then `403 Forbidden` responses)
+- Adds bulk data analyze and load functions
+- Adds new testing cache mechanism to replay native API calls without using the
+  native API and even run auto tests without having it installed.
+- Includes cached native API results for building with v1.13.4 through v1.13.8
+  as well as v1.14.1 through v1.14.7
+
 ## [1.7.10] - 2020-01-29
 
 ### Changed in 1.7.10
