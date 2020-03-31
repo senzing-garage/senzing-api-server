@@ -43,7 +43,7 @@ public class TemporaryDataCacheTest {
       File testFile = File.createTempFile("test-file-", ".dat");
       this.testFiles.add(testFile);
       exponent = index + Math.max(0, index - 1);
-      int fileSize = (int) Math.pow(28.0, (double) exponent);
+      int fileSize = (int) Math.pow(25.0, (double) exponent);
 
       try (FileOutputStream     fos = new FileOutputStream(testFile);
            BufferedOutputStream bos = new BufferedOutputStream(fos, 8192))
