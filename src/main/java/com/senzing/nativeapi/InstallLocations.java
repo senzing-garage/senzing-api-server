@@ -133,7 +133,33 @@ public class InstallLocations {
       // check for senzing system properties
       String installPath  = System.getProperty("senzing.install.dir");
       String configPath   = System.getProperty("senzing.config.dir");
+      String supportPath = System.getProperty("senzing.support.dir");
       String resourcePath = System.getProperty("senzing.resource.dir");
+
+      // try environment variables if system properties don't work
+      if (installPath == null || installPath.trim().length() == 0) {
+        installPath = System.getenv("SENZING_G2_DIR");
+      }
+      if (configPath == null || configPath.trim().length() == 0) {
+        configPath = System.getenv("SENZING_ETC_DIR");
+      }
+      if (supportPath == null || supportPath.trim().length() == 0) {
+        supportPath = System.getenv("SENZING_DATA_DIR");
+      }
+
+      // normalize empty strings as null
+      if (installPath != null && installPath.trim().length() == 0) {
+        installPath = null;
+      }
+      if (configPath != null && configPath.trim().length() == 0) {
+        configPath = null;
+      }
+      if (supportPath != null && supportPath.trim().length() == 0) {
+        supportPath = null;
+      }
+      if (resourcePath != null && resourcePath.trim().length() == 0) {
+        resourcePath = null;
+      }
 
       // check the senzing directory
       installDir = new File(installPath == null ? defaultInstallPath : installPath);
@@ -190,7 +216,6 @@ public class InstallLocations {
         return null;
       }
 
-      String supportPath = System.getProperty("senzing.support.dir");
       if (supportPath == null || supportPath.trim().length() == 0) {
         // try to determine the support path
         File installParent = installDir.getParentFile();
@@ -204,33 +229,56 @@ public class InstallLocations {
             dataVersion = JsonUtils.getString(jsonObject, "DATA_VERSION");
           }
 
+          // try the data version directory
+          supportDir = (dataVersion == null)
+              ? null : new File(dataRoot, dataVersion.trim());
+
           // check if data version was not found
-          if (dataVersion == null) {
+          if (supportDir == null || !supportDir.exists()) {
             // look to see if we only have one data version installed
             File[] versionDirs = dataRoot.listFiles( f -> {
               return f.getName().matches("\\d+\\.\\d+\\.\\d+");
             });
-            if (versionDirs.length == 1) {
+            if (versionDirs.length == 1 && supportDir == null) {
               // use the single data version found
-              dataVersion = versionDirs[0].getName();
-            } else {
+              supportDir = versionDirs[0];
+
+            } else if (versionDirs.length > 1) {
               System.err.println(
                   "Could not infer support directory.  Multiple data "
                       + "directory versions at: ");
               System.err.println("     " + dataRoot);
+              if (supportDir != null) {
+                System.err.println();
+                System.err.println("Expected to find: " + supportDir);
+              }
               throw new InvalidInstallationException(
-                  "Count not infer support directory.  Multiple data "
-                      + "directory versions found at: " + dataRoot);
+                  ((supportDir == null)
+                     ? "Could not infer support directory."
+                     : "Could not find support directory (" + supportDir + ").")
+                   + "  Multiple data directory versions found at: "
+                   + dataRoot);
+            } else {
+              // no version directories were found, maybe the data root is
+              // the actual support directory (mapped in a docker image)
+              File[] ibmFiles = dataRoot.listFiles(f -> {
+                return f.getName().toLowerCase().endsWith(".ibm");
+              });
+              File libPostalDir = new File(dataRoot, "libpostal");
+
+              // require the .ibm files and libpostal to exist
+              if (ibmFiles.length > 0 && libPostalDir.exists()) {
+                supportDir = dataRoot;
+              }
             }
           }
 
-          // use the path for the version number requested
-          supportDir = new File(dataRoot, dataVersion.trim());
-
-        } else {
+        }
+        if (supportDir == null) {
           // use the default path
           supportDir = new File(installDir, "data");
         }
+
       } else {
         // use the specified explicit path
         supportDir = new File(supportPath);
@@ -275,6 +323,7 @@ public class InstallLocations {
       }
       if (configDir == null && defaultConfigPath != null) {
         configDir = new File(defaultConfigPath);
+        if (!configDir.exists()) configDir = null;
       }
       if (configPath != null && !configDir.exists()) {
         System.err.println(
