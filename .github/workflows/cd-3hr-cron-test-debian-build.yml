@@ -87,7 +87,7 @@ jobs:
             DEB URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
             Branch Name: ${{ steps.repo_info_vars.outputs.branch_name }}
             The commit SHA is: ${{ github.sha }}
-            Log URL: https://github.com/Senzing/senzing-api-server/commit/${{ github.sha }}/checks/${{ steps.repo_info_vars.outputs.run_id }}/logs
+            Log URL: https://github.com/Senzing/senzing-api-server/suites/${{ steps.repo_info_vars.outputs.run_id }}/logs
           SLACK_USERNAME: senzing-api-server
           SLACK_WEBHOOK: ${{ secrets.SLACK_NOTIFICATION }}
           GITHUB_ACTOR: ${{ github.actor }}
