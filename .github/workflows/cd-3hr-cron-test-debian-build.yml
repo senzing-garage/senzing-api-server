@@ -90,7 +90,7 @@ jobs:
           GITHUB_WORKFLOW: ${{ github.workflow }}
       - name: Persisting log
         id: persisting_log
-        if: failure()
+#        if: failure()
         uses: actions/upload-artifact@v1
         with:
           name: workflow_log
