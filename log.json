@@ -97,6 +97,103 @@
         }
       ],
       "check_run_url": "https://api.github.com/repos/Senzing/senzing-api-server/check-runs/561029487"
+    },
+    {
+      "id": 561029487,
+      "run_id": 70760323,
+      "run_url": "https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/70760323",
+      "node_id": "MDg6Q2hlY2tSdW41NjEwMjk0ODc=",
+      "head_sha": "45e679c9f3af86381594d87b8eae0fd8a2e1f5fb",
+      "url": "https://api.github.com/repos/Senzing/senzing-api-server/actions/jobs/561029487",
+      "html_url": "https://github.com/Senzing/senzing-api-server/runs/561029487",
+      "status": "in_progress",
+      "conclusion": null,
+      "started_at": "2020-04-04T21:29:59Z",
+      "completed_at": null,
+      "name": "cronBuildSenzingJavaApiServer",
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2020-04-04T21:29:59.000Z",
+          "completed_at": "2020-04-04T21:30:01.000Z"
+        },
+        {
+          "name": "Pull senzing/git-action-jira-issue-creation:1.1.0",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2020-04-04T21:30:01.000Z",
+          "completed_at": "2020-04-04T21:30:05.000Z"
+        },
+        {
+          "name": "Pull senzing/git-action-slack-notification:1.0.0",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2020-04-04T21:30:05.000Z",
+          "completed_at": "2020-04-04T21:30:06.000Z"
+        },
+        {
+          "name": "Run actions/checkout@v1",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2020-04-04T21:30:06.000Z",
+          "completed_at": "2020-04-04T21:30:12.000Z"
+        },
+        {
+          "name": "Capture environment variables",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2020-04-04T21:30:12.000Z",
+          "completed_at": "2020-04-04T21:30:12.000Z"
+        },
+        {
+          "name": "Get Senzing G2 Engine Version",
+          "status": "in_progress",
+          "conclusion": null,
+          "number": 6,
+          "started_at": "2020-04-04T21:30:12.000Z",
+          "completed_at": null
+        },
+        {
+          "name": "Generate log file",
+          "status": "queued",
+          "conclusion": null,
+          "number": 7,
+          "started_at": null,
+          "completed_at": null
+        },
+        {
+          "name": "Create Jira Issue on Build Failure",
+          "status": "queued",
+          "conclusion": null,
+          "number": 8,
+          "started_at": null,
+          "completed_at": null
+        },
+        {
+          "name": "Slack Notification",
+          "status": "queued",
+          "conclusion": null,
+          "number": 9,
+          "started_at": null,
+          "completed_at": null
+        },
+        {
+          "name": "Persisting log",
+          "status": "queued",
+          "conclusion": null,
+          "number": 10,
+          "started_at": null,
+          "completed_at": null
+        }
+      ],
+      "check_run_url": "https://api.github.com/repos/Senzing/senzing-api-server/check-runs/561029487"
     }
   ]
 }

@@ -30,3 +30,10 @@ exit
 cd /root/
 cat log.json | jq --raw-output '.jobs | .[0] | .url'
 exit
+cd /roo
+cd /root
+cat log.json | jq --raw-output '.jobs | .[0] | .url'
+cat log.json | jq --raw-output '.jobs | .[1] | .url'
+cat log.json | jq --raw-output '.jobs | .[] | .url'
+cat log.json | jq --raw-output '.jobs | .[0] | .status'
+exit
