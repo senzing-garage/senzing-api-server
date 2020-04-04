@@ -104,6 +104,7 @@ jobs:
 #          name: workflow_log
 #          path: build.log
   logCheck:
+    needs: cronBuildSenzingJavaApiServer
     runs-on: ubuntu-latest
     steps:
       - name: Generate log file
