@@ -56,7 +56,7 @@ jobs:
       - name: Generate log file
         run: |
           curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} \
-            "https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ steps.repo_info_vars.outputs.run_id }}/logs"
+            "https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ steps.repo_info_vars.outputs.run_id }}"
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
         uses: Senzing/git-action-jira-issue-creation@1.1.0
