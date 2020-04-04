@@ -24,3 +24,6 @@ cd /root/
 cat log.json | jq --raw-output '.jobs | .[0] | .run_id'
 cat log.json | jq --raw-output '.jobs | .[0] | .id'
 exit
+cd /root/
+cat log.json | jq --raw-output '.jobs | .[0] | .run_url'
+exit
