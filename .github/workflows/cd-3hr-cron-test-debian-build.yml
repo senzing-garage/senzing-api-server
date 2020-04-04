@@ -55,6 +55,7 @@ jobs:
         id: build_job_info
         run: |
           curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_job_info.json https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ github.run_id }}/jobs
+          cat build_job_info.json | jq --raw-output '.jobs | .[0] | .url
           echo ::set-output name=status::$(cat build_job_info.json | jq --raw-output '.jobs | .[0] | .status)
           echo ::set-output name=log_url::$(cat build_job_info.json | jq --raw-output '.jobs | .[0] | .url)
           echo ::set-output name=g2_version::$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
