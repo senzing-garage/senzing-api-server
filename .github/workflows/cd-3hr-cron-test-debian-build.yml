@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Capture environment variables
-        run: printenv >> build.txt 2>&1
+        run: printenv
 #      - name: Download Senzing Deb Package Onto Runner
 #        id: download_senzing_deb
 #        env:
@@ -56,12 +56,9 @@ jobs:
       - name: Generate log file
         run: |
           URL="https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ github.run_id }}/jobs"
-          echo ${URL}
-          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} ${URL}
-          run_id=$(curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} ${URL} | jq --raw-output '.jobs | .[0] | .id')
-          echo ${run_id}
-          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} https://api.github.com/repos/Senzing/senzing-api-server/actions/jobs/${run_id}
-          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} https://api.github.com/repos/Senzing/senzing-api-server/jobs/${run_id}/logs
+          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} ${URL} | jq --raw-output '.jobs | .[0] | .url' >> build.txt 2>&1
+          #curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} https://api.github.com/repos/Senzing/senzing-api-server/actions/jobs/${run_id}
+          #curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} https://api.github.com/repos/Senzing/senzing-api-server/jobs/${run_id}/logs
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
         uses: Senzing/git-action-jira-issue-creation@1.1.0
@@ -122,6 +119,6 @@ jobs:
           name: workflow_log
       - name: Generate log file
         run: |
-          URL="https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ github.run_id }}/jobs"
+          URL=$(cat workflow_log/build.txt)
           echo ${URL}
           curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} ${URL}
