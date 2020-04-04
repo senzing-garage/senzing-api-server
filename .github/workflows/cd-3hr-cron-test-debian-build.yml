@@ -109,4 +109,4 @@ jobs:
       - name: Generate log file
         run: |
           curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} \
-            "https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ jobs.cronBuildSenzingJavaApiServer.steps.repo_info_vars.outputs.run_id }}/logs"
+            "https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ job.cronBuildSenzingJavaApiServer.steps.repo_info_vars.outputs.run_id }}/logs"
