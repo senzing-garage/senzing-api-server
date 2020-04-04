@@ -53,6 +53,8 @@ jobs:
 #            SENZING_G2_JAR_PATHNAME=${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar \
 #            SENZING_G2_JAR_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION') \
 #            docker-build >> build.txt 2>&1
+      - name: Save Runner ID
+        run: echo ${GITHUB_RUN_ID} >> build.txt 2>&1
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
         uses: Senzing/git-action-jira-issue-creation@1.1.0
@@ -96,18 +98,22 @@ jobs:
           GITHUB_ACTION: ${{ github.action }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_WORKFLOW: ${{ github.workflow }}
-#      - name: Persisting log
-#        id: persisting_log
+      - name: Persisting log
+        id: persisting_log
 #        if: failure()
-#        uses: actions/upload-artifact@v1
-#        with:
-#          name: workflow_log
-#          path: build.log
+        uses: actions/upload-artifact@v1
+        with:
+          name: workflow_log
+          path: build.txt
   logCheck:
     needs: cronBuildSenzingJavaApiServer
     runs-on: ubuntu-latest
     steps:
+      - name: Get Artifact
+        uses: actions/download-artifact@v1
+        with:
+          name: workflow_log
       - name: Generate log file
         run: |
           curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} \
-            "https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ job.cronBuildSenzingJavaApiServer.steps.repo_info_vars.outputs.run_id }}/logs"
+            "https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/$(cat workflow_log/build.txt)/logs"
