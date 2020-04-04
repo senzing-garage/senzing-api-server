@@ -62,7 +62,7 @@ jobs:
       - name: Generate log file
         run: |
           echo ${{ steps.build_job_info.outputs.log_url }}
-          curl -v -L -u -o build_logs.txt runner:${{ secrets.GITHUB_TOKEN }} ${{ steps.build_job_info.outputs.log_url }}/logs
+          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_logs.txt ${{ steps.build_job_info.outputs.log_url }}/logs
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
         uses: Senzing/git-action-jira-issue-creation@1.1.0
