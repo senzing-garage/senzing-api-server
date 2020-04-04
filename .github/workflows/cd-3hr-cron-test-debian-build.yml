@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Capture environment variables
-        run: printenv >> build.log 2>&1
+        run: printenv
 #      - name: Download Senzing Deb Package Onto Runner
 #        id: download_senzing_deb
 #        env:
@@ -38,6 +38,7 @@ jobs:
         run: |
           echo ::set-output name=g2_version::$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
           echo ::set-output name=branch_name::${GITHUB_REF##*/}
+          echo ::set-output name=run_id::${GITHUB_RUN_ID}
 #      - name: Copy /opt/senzing to Runner working directory
 #        id: copy_senzing_wrk_dir
 #        run: |
@@ -75,14 +76,18 @@ jobs:
       - name: Slack Notification
         id: slack_notification
         uses: Senzing/git-action-slack-notification@1.0.0
-        if: failure()
+#        if: failure()
         env:
           SLACK_CHANNEL: ci-cd-dev
           SLACK_COLOR: '#3278BD'
           SLACK_TITLE: 'Failed to build Debian version on GitHub Commit SHA ${{ github.sha }}'
           SLACK_MESSAGE: |
-            Failed to build on GitHub Commit SHA ${{ github.sha }}
-            Git Issue URL: ${{ steps.create_jira_issue.outputs.jira_issue_url }}
+            OS: senzing/base-image-debian:1.0.1
+            Senzing RPM version: ${{ steps.repo_info_vars.outputs.g2_version }}
+            DEB URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
+            Branch Name: ${{ steps.repo_info_vars.outputs.branch_name }}
+            The commit SHA is: ${{ github.sha }}
+            Log URL: https://github.com/Senzing/senzing-api-server/commit/${{ github.sha }}/checks/${{ steps.repo_info_vars.outputs.run_id }}/logs
           SLACK_USERNAME: senzing-api-server
           SLACK_WEBHOOK: ${{ secrets.SLACK_NOTIFICATION }}
           GITHUB_ACTOR: ${{ github.actor }}
@@ -91,11 +96,10 @@ jobs:
           GITHUB_ACTION: ${{ github.action }}
           GITHUB_EVENT_NAME: ${{ github.event_name }}
           GITHUB_WORKFLOW: ${{ github.workflow }}
-      - name: Persisting log
-        id: persisting_log
+#      - name: Persisting log
+#        id: persisting_log
 #        if: failure()
-        uses: actions/upload-artifact@v1
-        with:
-          name: workflow_log
-          path: build.log
-
+#        uses: actions/upload-artifact@v1
+#        with:
+#          name: workflow_log
+#          path: build.log
