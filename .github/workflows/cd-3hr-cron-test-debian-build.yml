@@ -33,9 +33,11 @@ jobs:
 #      - name: Install Senzing Api Without Sqlite Dependency
 #        id: install_senzing_api
 #        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb >> build.log 2>&1
-#      - name: Get Senzing G2 Engine Version
-#        id: g2_engine_version
-#        run: echo ::set-output name=senzing_g2_version::$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
+      - name: Get Senzing G2 Engine Version
+        id: repo_info_vars
+        run: |
+          echo ::set-output name=g2_version::$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
+          echo ::set-output name=branch_name::$(${GITHUB_REF##*/})
 #      - name: Copy /opt/senzing to Runner working directory
 #        id: copy_senzing_wrk_dir
 #        run: |
@@ -60,8 +62,9 @@ jobs:
           JIRA_ISSUE_ATTACHMENT: build.log
           JIRA_ISSUE_DESCRIPTION: |
             OS: senzing/base-image-debian:1.0.1
-            Senzing RPM version: ${{ steps.g2_engine_version.outputs.senzing_g2_version }}
+            Senzing RPM version: ${{ steps.repo_info_vars.outputs.g2_version }}
             DEB URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
+            Branch Name: ${{ steps.repo_info_vars.outputs.branch_name }}
             The commit SHA is: ${{ github.sha }}
             The build failed its maven unit test cases using the staging DEB package.
             See build.log attach to this issue for more details
