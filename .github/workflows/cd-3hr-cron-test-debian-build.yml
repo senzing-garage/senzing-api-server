@@ -115,6 +115,6 @@ jobs:
           name: workflow_log
       - name: Generate log file
         run: |
-          URL="https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/$(cat workflow_log/build.txt)/logs"
+          URL="https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ github.run_number }}/logs"
           echo ${URL}
           curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} ${URL}
