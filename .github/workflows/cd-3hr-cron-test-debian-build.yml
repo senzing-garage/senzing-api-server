@@ -58,6 +58,7 @@ jobs:
           URL="https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ github.run_id }}/jobs"
           echo ${URL}
           run_id=$(curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} ${URL} | jq --raw-output '.jobs | .[0] | .run_id')
+          echo ${run_id}
           curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${run_id}/logs
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue

@@ -19,3 +19,4 @@ cat log.json | jq --raw-output '.jobs'
 cat log.json | jq --raw-output '.jobs | .[0]'
 cat log.json | jq --raw-output '.jobs | .[0] | .run_id'
 exit
+exit
