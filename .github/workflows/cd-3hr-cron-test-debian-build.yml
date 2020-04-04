@@ -55,11 +55,8 @@ jobs:
 #            docker-build >> build.log 2>&1
       - name: Generate log file
         run: |
-          curl -o build_logs.zip \
-            --request GET \
-            --url https://api.github.com/repos/Senzing/senzing-api-server/actions/jobs/${{ steps.repo_info_vars.outputs.run_id }}/logs \
-            --header 'authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-            --header 'content-type: application/json'
+          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_logs.zip
+            --url https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ steps.repo_info_vars.outputs.run_id }}/logs
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
         uses: Senzing/git-action-jira-issue-creation@1.1.0
