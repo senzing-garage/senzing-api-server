@@ -15,38 +15,38 @@ jobs:
       - uses: actions/checkout@v1
       - name: Capture environment variables
         run: printenv
-#      - name: Download Senzing Deb Package Onto Runner
-#        id: download_senzing_deb
-#        env:
-#          SENZING_REPO_URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
-#        run: |
-#          wget ${SENZING_REPO_URL} >> build.log 2>&1
-#          sudo apt-get -y install ./${SENZING_REPO_URL##*/} >> build.log 2>&1
-#          rm -rf senzingrepo_1.0.0-1_amd64.deb >> build.log 2>&1
-#          sudo apt-get update -y >> build.log 2>&1
-#          sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/ >> build.log 2>&1
-#          sudo apt-get download -o=dir::cache=${HOME} senzingapi senzingdata-v1 >> build.log 2>&1
-#          sudo chown runner /home/runner/work/senzing-api-server/senzing-api-server/ >> build.log 2>&1
-#      - name: Install Senzing Data Without Sqlite Dependency
-#        id: install_senzing_data
-#        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb >> build.log 2>&1
-#      - name: Install Senzing Api Without Sqlite Dependency
-#        id: install_senzing_api
-#        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb >> build.log 2>&1
-#      - name: Copy /opt/senzing to Runner working directory
-#        id: copy_senzing_wrk_dir
-#        run: |
-#          sudo mkdir -p ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib >> build.log 2>&1
-#          sudo mv /opt/senzing/g2/lib/g2.jar ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar >> build.log 2>&1
-#      - name: Build Java API Server
-#        id: build_java_api_server
-#        run: |
-#          make \
-#            BASE_BUILDER_IMAGE="senzing/base-image-debian:1.0.3" \
-#            BASE_IMAGE="senzing/senzing-base:1.4.0" \
-#            SENZING_G2_JAR_PATHNAME=${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar \
-#            SENZING_G2_JAR_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION') \
-#            docker-build >> build.txt 2>&1
+      - name: Download Senzing Deb Package Onto Runner
+        id: download_senzing_deb
+        env:
+          SENZING_REPO_URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
+        run: |
+          wget ${SENZING_REPO_URL}
+          sudo apt-get -y install ./${SENZING_REPO_URL##*/}
+          rm -rf senzingrepo_1.0.0-1_amd64.deb
+          sudo apt-get update -y
+          sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/
+          sudo apt-get download -o=dir::cache=${HOME} senzingapi senzingdata-v1
+          sudo chown runner /home/runner/work/senzing-api-server/senzing-api-server/
+      - name: Install Senzing Data Without Sqlite Dependency
+        id: install_senzing_data
+        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb
+      - name: Install Senzing Api Without Sqlite Dependency
+        id: install_senzing_api
+        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb
+      - name: Copy /opt/senzing to Runner working directory
+        id: copy_senzing_wrk_dir
+        run: |
+          sudo mkdir -p ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib >> build.log 2>&1
+          sudo mv /opt/senzing/g2/lib/g2.jar ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar >> build.log 2>&1
+      - name: Build Java API Server
+        id: build_java_api_server
+        run: |
+          make \
+            BASE_BUILDER_IMAGE="senzing/base-image-debian:1.0.3" \
+            BASE_IMAGE="senzing/senzing-base:1.4.0" \
+            SENZING_G2_JAR_PATHNAME=${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar \
+            SENZING_G2_JAR_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION') \
+            docker-build
   logCheck:
     needs: cronBuildSenzingJavaApiServer
     runs-on: ubuntu-latest
@@ -54,9 +54,9 @@ jobs:
       - name: Get Build Job Info
         id: build_job_info
         run: |
-          output_json=$(curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_job_info.json https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ github.run_id }}/jobs)
-          echo ::set-output name=status::$(echo ${output_json} | jq --raw-output '.jobs | .[0] | .status')
-          echo ::set-output name=log_url::$(echo ${output_json} | jq --raw-output '.jobs | .[0] | .url')
+          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_job_info.json https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ github.run_id }}/jobs
+          echo ::set-output name=status::$(cat build_job_info.json | jq --raw-output '.jobs | .[0] | .status')
+          echo ::set-output name=log_url::$(cat build_job_info.json | jq --raw-output '.jobs | .[0] | .url')
           echo ::set-output name=g2_version::$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
           echo ::set-output name=branch_name::${GITHUB_REF##*/}
       - name: Generate log file
