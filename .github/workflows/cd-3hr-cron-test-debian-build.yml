@@ -60,7 +60,9 @@ jobs:
           echo ::set-output name=g2_version::$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
           echo ::set-output name=branch_name::${GITHUB_REF##*/}
       - name: Generate log file
-        run: curl -v -L -u -o build_logs.txt runner:${{ secrets.GITHUB_TOKEN }} ${{ steps.build_job_info.outputs.log_url }}/logs
+        run: |
+          echo ${{ steps.build_job_info.outputs.log_url }}
+          curl -v -L -u -o build_logs.txt runner:${{ secrets.GITHUB_TOKEN }} ${{ steps.build_job_info.outputs.log_url }}/logs
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
         uses: Senzing/git-action-jira-issue-creation@1.1.0
