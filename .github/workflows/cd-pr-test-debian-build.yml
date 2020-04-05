@@ -113,7 +113,7 @@ jobs:
           name: workflow_log
           path: job_info.json
       - name: Persisting log
-        id: persisting_log
+        id: persisting_log_2
         if: always()
         uses: actions/upload-artifact@v1
         with:
