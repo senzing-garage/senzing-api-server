@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Capture environment variables
-        run: printenvd
+        run: printenv
       - name: Download Senzing Deb Package Onto Runner
         id: download_senzing_deb
         env:
@@ -37,7 +37,7 @@ jobs:
         if: always()
         id: build_info
         run: |
-          #g2_verion=$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
+          g2_verion=$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
           branch_name=${GITHUB_REF##*/}
           echo '{"g2_version":"'${g2_version}'","branch_name":"'${branch_name}'"}' >> build_info.json 2>&1
       - name: Copy /opt/senzing to Runner working directory
@@ -111,7 +111,7 @@ jobs:
         env:
           SLACK_CHANNEL: ci-cd-dev
           SLACK_COLOR: '#3278BD'
-          SLACK_TITLE: 'Failed to build Debian version on GitHub Commit SHA ${{ github.sha }}'
+          SLACK_TITLE: Senzing API server failed to build on commit sha ${{ github.sha }} using G2 Version ${{ steps.job_info.outputs.g2_version }}
           SLACK_MESSAGE: |
             OS: senzing/base-image-debian:1.0.1
             Senzing RPM version: ${{ steps.job_info.outputs.g2_version }}
