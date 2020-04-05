@@ -39,7 +39,7 @@ jobs:
         run: |
           g2_verion=$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
           branch_name=${GITHUB_REF##*/}
-          echo '{"g2_version":"'${g2_version}'","branch_name":"'${branch_name}'", "run_id":"'${GITHUB_RUN_ID'"}' >> build_info.json 2>&1
+          echo '{"g2_version":"'${g2_version}'","branch_name":"'${branch_name}'", "run_id":"'${GITHUB_RUN_ID}'"}' >> build_info.json 2>&1
       - name: Copy /opt/senzing to Runner working directory
         id: copy_senzing_wrk_dir
         run: |
