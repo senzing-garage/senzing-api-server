@@ -39,21 +39,21 @@ jobs:
         run: |
           g2_verion=$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
           branch_name=${GITHUB_REF##*/}
-          echo '{"g2_version":"'${g2_version}'","branch_name":"'${branch_name}'"}' >> build_info.json 2>&1
+          echo '{"g2_version":"'${g2_version}'","branch_name":"'${branch_name}'", "run_id":"'${GITHUB_RUN_ID'"}' >> build_info.json 2>&1
       - name: Copy /opt/senzing to Runner working directory
         id: copy_senzing_wrk_dir
         run: |
           sudo mkdir -p ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib
           sudo mv /opt/senzing/g2/lib/g2.jar ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar
-      - name: Build Java API Server
-        id: build_java_api_server
-        run: |
-          make \
-            BASE_BUILDER_IMAGE="senzing/base-image-debian:1.0.3" \
-            BASE_IMAGE="senzing/senzing-base:1.4.0" \
-            SENZING_G2_JAR_PATHNAME=${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar \
-            SENZING_G2_JAR_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION') \
-            docker-build
+#      - name: Build Java API Server
+#        id: build_java_api_server
+#        run: |
+#          make \
+#            BASE_BUILDER_IMAGE="senzing/base-image-debian:1.0.3" \
+#            BASE_IMAGE="senzing/senzing-base:1.4.0" \
+#            SENZING_G2_JAR_PATHNAME=${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar \
+#            SENZING_G2_JAR_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION') \
+#            docker-build
       - name: Persisting Variables
         id: persisting_log
         if: always()
@@ -73,7 +73,7 @@ jobs:
       - name: Set Variables With Build Info
         id: job_info
         run: |
-          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o job_info.json https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ github.run_id }}/jobs
+          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o job_info.json https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/$(cat build_info/build_info.json | jq --raw-output '.run_id')/jobs
           echo ::set-output name=log_url::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .html_url')
           echo ::set-output name=status::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .conclusion')
           echo ::set-output name=g2_version::$(cat build_info/build_info.json | jq --raw-output '.g2_version')
@@ -110,4 +110,4 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: workflow_log
-          path: job_info.json
+          path: build_logs.txt
