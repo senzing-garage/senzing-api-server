@@ -45,15 +45,15 @@ jobs:
         run: |
           sudo mkdir -p ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib
           sudo mpv /opt/senzing/g2/lib/g2.jar ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar
-#      - name: Build Java API Server
-#        id: build_java_api_server
-#        run: |
-#          make \
-#            BASE_BUILDER_IMAGE="senzing/base-image-debian:1.0.3" \
-#            BASE_IMAGE="senzing/senzing-base:1.4.0" \
-#            SENZING_G2_JAR_PATHNAME=${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar \
-#            SENZING_G2_JAR_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION') \
-#            docker-build
+      - name: Build Java API Server
+        id: build_java_api_server
+        run: |
+          make \
+            BASE_BUILDER_IMAGE="senzing/base-image-debian:1.0.3" \
+            BASE_IMAGE="senzing/senzing-base:1.4.0" \
+            SENZING_G2_JAR_PATHNAME=${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar \
+            SENZING_G2_JAR_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION') \
+            docker-build
       - name: Persisting Variables
         id: persisting_log
         if: always()
@@ -106,13 +106,6 @@ jobs:
           GITHUB_WORKFLOW: ${{ github.workflow }}
       - name: Persisting log
         id: persisting_log
-        if: always()
-        uses: actions/upload-artifact@v1
-        with:
-          name: workflow_log
-          path: job_info.json
-      - name: Persisting log
-        id: persisting_log_2
         if: always()
         uses: actions/upload-artifact@v1
         with:
