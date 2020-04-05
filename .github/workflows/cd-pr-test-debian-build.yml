@@ -74,15 +74,13 @@ jobs:
         id: job_info
         run: |
           curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o job_info.json https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ github.run_id }}/jobs
-          echo ::set-output name=log_url::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .html_url')
+          echo ::set-output name=log_url::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .url')
+          echo ::set-output name=html_url::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .html_url')
           echo ::set-output name=status::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .conclusion')
           echo ::set-output name=g2_version::$(cat build_info/build_info.json | jq --raw-output '.g2_version')
           echo ::set-output name=branch_name::$(cat build_info/build_info.json | jq --raw-output '.branch_name')
       - name: Generate log file
-        run: |
-          URL=${{ steps.job_info.outputs.log_url }}/logs
-          echo ${URL}
-          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_logs.txt ${URL}
+        run: curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_logs.txt ${{ steps.job_info.outputs.log_url }}/logs
       - name: Slack Notification
         id: slack_notification
         uses: Senzing/git-action-slack-notification@1.0.0
@@ -97,7 +95,7 @@ jobs:
             DEB URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
             Branch Name: ${{ steps.job_info.outputs.branch_name }}
             The commit SHA is: ${{ github.sha }}
-            Git Actions Log URL: ${{ steps.job_info.outputs.log_url }}
+            Git Actions Log URL: ${{ steps.job_info.outputs.html_url }}
           SLACK_USERNAME: senzing-api-server
           SLACK_WEBHOOK: ${{ secrets.SLACK_NOTIFICATION }}
           GITHUB_ACTOR: ${{ github.actor }}
