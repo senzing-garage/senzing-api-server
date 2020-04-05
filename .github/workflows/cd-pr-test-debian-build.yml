@@ -78,6 +78,9 @@ jobs:
           echo ::set-output name=status::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .conclusion')
           echo ::set-output name=g2_version::$(cat build_info/build_info.json | jq --raw-output '.g2_version')
           echo ::set-output name=branch_name::$(cat build_info/build_info.json | jq --raw-output '.branch_name')
+      - name: Generate log file
+        run: |
+          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_logs.txt ${{ steps.job_info.outputs.log_url }}/logs
       - name: Slack Notification
         id: slack_notification
         uses: Senzing/git-action-slack-notification@1.0.0
