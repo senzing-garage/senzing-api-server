@@ -73,14 +73,15 @@ jobs:
       - name: Set Variables With Build Info
         id: job_info
         run: |
-          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o job_info.json https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/$(cat build_info/build_info.json | jq --raw-output '.run_id')/jobs
+          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o job_info.json https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ github.run_id }}/jobs
           echo ::set-output name=log_url::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .html_url')
           echo ::set-output name=status::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .conclusion')
           echo ::set-output name=g2_version::$(cat build_info/build_info.json | jq --raw-output '.g2_version')
           echo ::set-output name=branch_name::$(cat build_info/build_info.json | jq --raw-output '.branch_name')
       - name: Generate log file
         run: |
-          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_logs.txt ${{ steps.job_info.outputs.log_url }}/logs
+          URL=${{ steps.job_info.outputs.log_url }}/logs
+          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_logs.txt ${URL}
       - name: Slack Notification
         id: slack_notification
         uses: Senzing/git-action-slack-notification@1.0.0
@@ -111,3 +112,10 @@ jobs:
         with:
           name: workflow_log
           path: job_info.json
+      - name: Persisting log
+        id: persisting_log
+        if: always()
+        uses: actions/upload-artifact@v1
+        with:
+          name: workflow_log
+          path: build_logs.txt
