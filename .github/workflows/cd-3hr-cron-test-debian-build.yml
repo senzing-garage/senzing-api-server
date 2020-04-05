@@ -26,10 +26,10 @@ jobs:
           sudo chown runner /home/runner/work/senzing-api-server/senzing-api-server/
       - name: Install Senzing Data Without Sqlite Dependency
         id: install_senzing_data
-        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb
+        run: sudo SENZING_ACCEPT_EULA=${{ secrets.SENZING_ACCEPT_EULA }} dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb
       - name: Install Senzing Api Without Sqlite Dependency
         id: install_senzing_api
-        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb
+        run: sudo SENZING_ACCEPT_EULA=${{ secrets.SENZING_ACCEPT_EULA }} dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb
       - name: Get Build Informaiton
         if: always()
         id: build_info
