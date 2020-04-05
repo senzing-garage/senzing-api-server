@@ -66,7 +66,7 @@ jobs:
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
         uses: Senzing/git-action-jira-issue-creation@1.1.0
-        #if: failure()
+        if: contains(steps.build_job_info.outputs.status, 'Fail')
         env:
           JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
@@ -89,7 +89,7 @@ jobs:
       - name: Slack Notification
         id: slack_notification
         uses: Senzing/git-action-slack-notification@1.0.0
-        #        if: failure()
+        if: contains(steps.build_job_info.outputs.status, 'Fail')
         env:
           SLACK_CHANNEL: ci-cd-dev
           SLACK_COLOR: '#3278BD'
