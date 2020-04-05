@@ -2,7 +2,7 @@ name: Cron Schedule 3 hr Test Java API Server Build on Debian
 
 on:
   push:
-    branches: 
+    branches:
       - issue-145.bryan-nice
 #  schedule:
 #    - cron: '0 */3 * * *'
@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Capture environment variables
-        run: printenv
+        run: printenvd
       - name: Download Senzing Deb Package Onto Runner
         id: download_senzing_deb
         env:

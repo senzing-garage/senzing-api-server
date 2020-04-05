@@ -70,3 +70,72 @@ jobs:
         with:
           name: workflow_log
           path: build.log
+  logCheck:
+    needs: cronBuildSenzingJavaApiServer
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Build Job Info
+        id: build_job_info
+        run: |
+          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_job_info.json https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ github.run_id }}/jobs
+          echo ::set-output name=status::$(cat build_job_info.json | jq --raw-output '.jobs | .[0] | .status')
+          echo ::set-output name=log_url::$(cat build_job_info.json | jq --raw-output '.jobs | .[0] | .url')
+          echo ::set-output name=g2_version::$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
+          echo ::set-output name=branch_name::${GITHUB_REF##*/}
+      - name: Generate log file
+        run: |
+          echo ${{ steps.build_job_info.outputs.log_url }}
+          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_logs.txt ${{ steps.build_job_info.outputs.log_url }}/logs
+      - name: Create Jira Issue on Build Failure
+        id: create_jira_issue
+        uses: Senzing/git-action-jira-issue-creation@1.1.0
+        if: contains(steps.build_job_info.outputs.status, 'Fail')
+        env:
+          JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
+          JIRA_ISSUE_ATTACHMENT: build_logs.txt
+          JIRA_ISSUE_DESCRIPTION: |
+            OS: senzing/base-image-debian:1.0.1
+            Senzing RPM version: ${{ steps.build_job_info.outputs.g2_version }}
+            DEB URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
+            Branch Name: ${{ steps.build_job_info.outputs.branch_name }}
+            The commit SHA is: ${{ github.sha }}
+            The build failed its maven unit test cases using the staging DEB package.
+            See build.log attach to this issue for more details
+          JIRA_ISSUE_SUMMARY: Senzing API server failed to build on commit sha ${{ github.sha }} using G2 Version ${{ steps.build_job_info.outputs.g2_version }}
+          JIRA_ISSUE_TYPE: Task
+          JIRA_PROJECT: PBF
+          JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
+      - name: Fix malformed url
+        id: fix_malformed_url
+        run: echo ::set-output name=jira_issue_url::$(echo ${{ steps.create_jira_issue.outputs.jira_issue_url }} | sed -e 's/netbrowse/net\/browse/g')
+      - name: Slack Notification
+        id: slack_notification
+        uses: Senzing/git-action-slack-notification@1.0.0
+        if: contains(steps.build_job_info.outputs.status, 'Fail')
+        env:
+          SLACK_CHANNEL: ci-cd-dev
+          SLACK_COLOR: '#3278BD'
+          SLACK_TITLE: 'Failed to build Debian version on GitHub Commit SHA ${{ github.sha }}'
+          SLACK_MESSAGE: |
+            OS: senzing/base-image-debian:1.0.1
+            Senzing RPM version: ${{ steps.build_job_info.outputs.g2_version }}
+            DEB URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
+            Branch Name: ${{ steps.repo_info_vars.outputs.branch_name }}
+            The commit SHA is: ${{ github.sha }}
+            Jira Issue URL: ${{ steps.fix_malformed_url.outputs.jira_issue_url }}
+          SLACK_USERNAME: senzing-api-server
+          SLACK_WEBHOOK: ${{ secrets.SLACK_NOTIFICATION }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_REF: ${{ github.ref }}
+          GITHUB_ACTION: ${{ github.action }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          GITHUB_WORKFLOW: ${{ github.workflow }}
+      - name: Persisting log
+        id: persisting_log
+        if: always()
+        uses: actions/upload-artifact@v1
+        with:
+          name: workflow_log
+          path: build_logs.txt
