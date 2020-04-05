@@ -81,6 +81,7 @@ jobs:
       - name: Generate log file
         run: |
           URL=${{ steps.job_info.outputs.log_url }}/logs
+          echo ${URL}
           curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_logs.txt ${URL}
       - name: Slack Notification
         id: slack_notification
