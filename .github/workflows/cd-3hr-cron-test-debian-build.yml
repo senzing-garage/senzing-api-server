@@ -49,6 +49,7 @@ jobs:
             docker-build
   logCheck:
     needs: cronBuildSenzingJavaApiServer
+    if: always()
     runs-on: ubuntu-latest
     steps:
       - name: Get Build Job Info
