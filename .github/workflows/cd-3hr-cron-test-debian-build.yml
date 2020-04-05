@@ -1,11 +1,8 @@
 name: Cron Schedule 3 hr Test Java API Server Build on Debian
 
 on:
-  push:
-    branches:
-      - issue-145.bryan-nice
-#  schedule:
-#    - cron: '0 */3 * * *'
+  schedule:
+    - cron: '0 */3 * * *'
 
 
 jobs:
