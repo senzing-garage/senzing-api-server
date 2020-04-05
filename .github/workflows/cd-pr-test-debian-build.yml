@@ -44,7 +44,7 @@ jobs:
         id: copy_senzing_wrk_dir
         run: |
           sudo mkdir -p ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib
-          sudo mpv /opt/senzing/g2/lib/g2.jar ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar
+          sudo mv /opt/senzing/g2/lib/g2.jar ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar
       - name: Build Java API Server
         id: build_java_api_server
         run: |
