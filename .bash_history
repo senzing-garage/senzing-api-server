@@ -39,3 +39,9 @@ cat log.json | jq --raw-output '.jobs | .[0] | .status'
 exit
 echo https://senzing.atlassian.netbrowse/PBF-74 | sed -e 's/netbrowse/net\/browse/g'
 exit
+cat build_info.json | jq --raw-output '.jobs | .[0] | .status'
+cd /root/
+cat build_info.json | jq --raw-output '.jobs | .[0] | .branch_name'
+cat build_info.json | jq --raw-output '.jobs | .branch_name'
+cat build_info.json | jq --raw-output '.branch_name'
+exit

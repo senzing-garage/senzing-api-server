@@ -76,8 +76,8 @@ jobs:
           curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o job_info.json https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ github.run_id }}/jobs
           echo ::set-output name=status::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .conclusion')
           echo ::set-output name=log_url::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .url')
-          echo ::set-output name=g2_version::$(cat build_info.json | jq --raw-output '.g2_version')
-          echo ::set-output name=branch_name::$(cat build_info.json | jq --raw-output '.branch_name')
+          echo ::set-output name=g2_version::$(cat build_info/build_info.json | jq --raw-output '.g2_version')
+          echo ::set-output name=branch_name::$(cat build_info/build_info.json | jq --raw-output '.branch_name')
       - name: Generate log file
         run: |
           curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_logs.txt ${{ steps.job_info.outputs.log_url }}/logs
