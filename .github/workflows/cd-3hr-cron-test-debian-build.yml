@@ -10,32 +10,38 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
+      - name: Capture environment variables
+        run: printenv
       - name: Download Senzing Deb Package Onto Runner
         id: download_senzing_deb
         env:
           SENZING_REPO_URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
         run: |
-          wget ${SENZING_REPO_URL} >> build.log 2>&1
-          sudo apt-get -y install ./${SENZING_REPO_URL##*/} >> build.log 2>&1
-          rm -rf senzingrepo_1.0.0-1_amd64.deb >> build.log 2>&1
-          sudo apt-get update -y >> build.log 2>&1
-          sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/ >> build.log 2>&1
-          sudo apt-get download -o=dir::cache=${HOME} senzingapi senzingdata-v1 >> build.log 2>&1
-          sudo chown runner /home/runner/work/senzing-api-server/senzing-api-server/ >> build.log 2>&1
+          wget ${SENZING_REPO_URL}
+          sudo apt-get -y install ./${SENZING_REPO_URL##*/}
+          rm -rf senzingrepo_1.0.0-1_amd64.deb
+          sudo apt-get update -y
+          sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/
+          sudo apt-get download -o=dir::cache=${HOME} senzingapi senzingdata-v1
+          sudo chown runner /home/runner/work/senzing-api-server/senzing-api-server/
       - name: Install Senzing Data Without Sqlite Dependency
         id: install_senzing_data
-        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb >> build.log 2>&1
+        run: sudo SENZING_ACCEPT_EULA=${{ secrets.SENZING_ACCEPT_EULA }} dpkg -i --ignore-depends=sqlite3,sqlite *senzingdata*deb
       - name: Install Senzing Api Without Sqlite Dependency
         id: install_senzing_api
-        run: sudo SENZING_ACCEPT_EULA=I_ACCEPT_THE_SENZING_EULA dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb >> build.log 2>&1
-      - name: Get Senzing G2 Engine Version
-        id: g2_engine_version
-        run: echo ::set-output name=senzing_g2_version::$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
+        run: sudo SENZING_ACCEPT_EULA=${{ secrets.SENZING_ACCEPT_EULA }} dpkg -i --ignore-depends=sqlite3,sqlite *senzingapi*deb
+      - name: Get Build Informaiton
+        if: always()
+        id: build_info
+        run: |
+          g2_verion=$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
+          branch_name=${GITHUB_REF##*/}
+          echo '{"g2_version":"'${g2_version}'","branch_name":"'${branch_name}'"}' >> build_info.json 2>&1
       - name: Copy /opt/senzing to Runner working directory
         id: copy_senzing_wrk_dir
         run: |
-          sudo mkdir -p ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib >> build.log 2>&1
-          sudo mv /opt/senzing/g2/lib/g2.jar ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar >> build.log 2>&1
+          sudo mkdir -p ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib
+          sudo mv /opt/senzing/g2/lib/g2.jar ${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar
       - name: Build Java API Server
         id: build_java_api_server
         run: |
@@ -44,37 +50,72 @@ jobs:
             BASE_IMAGE="senzing/senzing-base:1.4.0" \
             SENZING_G2_JAR_PATHNAME=${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar \
             SENZING_G2_JAR_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION') \
-            docker-build >> build.log 2>&1
+            docker-build
+      - name: Persisting Variables
+        id: persisting_log
+        if: always()
+        uses: actions/upload-artifact@v1
+        with:
+          name: build_info
+          path: build_info.json
+  logCronBuildSenzingJavaApiServer:
+    needs: cronBuildSenzingJavaApiServer
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get Build Job Info From FIle
+        uses: actions/download-artifact@v1
+        with:
+          name: build_info
+      - name: Set Variables With Build Info
+        id: job_info
+        run: |
+          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o job_info.json https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ github.run_id }}/jobs
+          echo ::set-output name=status::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .conclusion')
+          echo ::set-output name=log_url::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .url')
+          echo ::set-output name=g2_version::$(cat build_info/build_info.json | jq --raw-output '.g2_version')
+          echo ::set-output name=branch_name::$(cat build_info/build_info.json | jq --raw-output '.branch_name')
+      - name: Generate log file
+        run: |
+          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_logs.txt ${{ steps.job_info.outputs.log_url }}/logs
       - name: Create Jira Issue on Build Failure
         id: create_jira_issue
         uses: Senzing/git-action-jira-issue-creation@1.1.0
-        if: failure()
+        if: contains(steps.job_info.outputs.status, 'failure')
         env:
           JIRA_ACCOUNT_URL: ${{ secrets.JIRA_ACCOUNT_URL }}
           JIRA_API_TOKEN: ${{ secrets.JIRA_SECRET }}
-          JIRA_ISSUE_ATTACHMENT: build.log
+          JIRA_ISSUE_ATTACHMENT: build_logs.txt
           JIRA_ISSUE_DESCRIPTION: |
             OS: senzing/base-image-debian:1.0.1
-            Senzing RPM version: ${{ steps.g2_engine_version.outputs.senzing_g2_version }}
+            Senzing RPM version: ${{ steps.job_info.outputs.g2_version }}
             DEB URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
+            Branch Name: ${{ steps.job_info.outputs.branch_name }}
             The commit SHA is: ${{ github.sha }}
             The build failed its maven unit test cases using the staging DEB package.
-            See build.log attach to this issue for more details
-          JIRA_ISSUE_SUMMARY: Senzing API server failed to build on commit sha ${{ github.sha }} using G2 Version ${{ steps.g2_engine_version.outputs.senzing_g2_version }}
+            See build_logs.txt attach to this issue for more details
+          JIRA_ISSUE_SUMMARY: Senzing API server failed to build on commit sha ${{ github.sha }} using G2 Version ${{ steps.job_info.outputs.g2_version }}
           JIRA_ISSUE_TYPE: Task
           JIRA_PROJECT: PBF
           JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
+      - name: Fix malformed url
+        id: fix_malformed_url
+        run: echo ::set-output name=jira_issue_url::$(echo ${{ steps.create_jira_issue.outputs.jira_issue_url }} | sed -e 's/netbrowse/net\/browse/g')
       - name: Slack Notification
         id: slack_notification
         uses: Senzing/git-action-slack-notification@1.0.0
-        if: failure()
+        if: contains(steps.job_info.outputs.status, 'failure')
         env:
           SLACK_CHANNEL: ci-cd-dev
           SLACK_COLOR: '#3278BD'
-          SLACK_TITLE: 'Failed to build Debian version on GitHub Commit SHA ${{ github.sha }}'
+          SLACK_TITLE: Senzing API server failed to build on commit sha ${{ github.sha }} using G2 Version ${{ steps.job_info.outputs.g2_version }}
           SLACK_MESSAGE: |
-            Failed to build on GitHub Commit SHA ${{ github.sha }}
-            Git Issue URL: ${{ steps.create_jira_issue.outputs.jira_issue_url }}
+            OS: senzing/base-image-debian:1.0.1
+            Senzing RPM version: ${{ steps.job_info.outputs.g2_version }}
+            DEB URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
+            Branch Name: ${{ steps.job_info.outputs.branch_name }}
+            The commit SHA is: ${{ github.sha }}
+            Jira Issue URL: ${{ steps.fix_malformed_url.outputs.jira_issue_url }}
           SLACK_USERNAME: senzing-api-server
           SLACK_WEBHOOK: ${{ secrets.SLACK_NOTIFICATION }}
           GITHUB_ACTOR: ${{ github.actor }}
@@ -85,9 +126,8 @@ jobs:
           GITHUB_WORKFLOW: ${{ github.workflow }}
       - name: Persisting log
         id: persisting_log
-        if: failure()
+        if: always()
         uses: actions/upload-artifact@v1
         with:
           name: workflow_log
-          path: build.log
-
+          path: build_logs.txt
