@@ -134,4 +134,4 @@ jobs:
         uses: actions/upload-artifact@v1
         with:
           name: workflow_log
-          path: build_logs.txt
+          path: job_info.json
