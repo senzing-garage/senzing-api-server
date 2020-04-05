@@ -37,3 +37,5 @@ cat log.json | jq --raw-output '.jobs | .[1] | .url'
 cat log.json | jq --raw-output '.jobs | .[] | .url'
 cat log.json | jq --raw-output '.jobs | .[0] | .status'
 exit
+echo https://senzing.atlassian.netbrowse/PBF-74 | sed -e 's/netbrowse/net\/browse/g'
+exit

@@ -83,6 +83,9 @@ jobs:
           JIRA_ISSUE_TYPE: Task
           JIRA_PROJECT: PBF
           JIRA_USERNAME: ${{ secrets.JIRA_USERNAME }}
+      - name: Fix malformed url
+        id: fix_malformed_url
+        run: echo ::set-output name=jira_issue_url::$(echo ${{ steps.create_jira_issue.outputs.jira_issue_url }} | sed -e 's/netbrowse/net\/browse/g')
       - name: Slack Notification
         id: slack_notification
         uses: Senzing/git-action-slack-notification@1.0.0
@@ -97,7 +100,7 @@ jobs:
             DEB URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
             Branch Name: ${{ steps.repo_info_vars.outputs.branch_name }}
             The commit SHA is: ${{ github.sha }}
-            Jira Issue URL: ${{ steps.create_jira_issue.outputs.jira_issue_url }}
+            Jira Issue URL: ${{ steps.fix_malformed_url.outputs.jira_issue_url }}
           SLACK_USERNAME: senzing-api-server
           SLACK_WEBHOOK: ${{ secrets.SLACK_NOTIFICATION }}
           GITHUB_ACTOR: ${{ github.actor }}
