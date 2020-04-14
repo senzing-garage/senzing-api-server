@@ -746,6 +746,13 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       boolean refresh = Boolean.TRUE.toString().toLowerCase().equals(
           System.getProperty("com.senzing.api.test.replay.refresh"));
 
+      // check if always reporting stale
+      boolean verbose = Boolean.TRUE.toString().toLowerCase().equals(
+          System.getProperty("com.senzing.api.test.replay.verbose"));
+
+      if (this.cacheStale && verbose) {
+        System.out.println("***** CACHE IS STALE: " + cacheZip);
+      }
       if (this.cacheStale && refresh) {
         this.cacheStale = false;
         if (cacheDir.exists()) {

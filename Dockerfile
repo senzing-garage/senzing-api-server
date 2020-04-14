@@ -1,11 +1,13 @@
 ARG BASE_IMAGE=senzing/senzing-base:1.4.0
-ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.2
+ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.3
+
 # -----------------------------------------------------------------------------
 # Stage: builder
 # -----------------------------------------------------------------------------
+
 FROM ${BASE_BUILDER_IMAGE} as builder
 
-# Set Shell to use for RUN commands in builder step
+# Set Shell to use for RUN commands in builder step.
 
 ENV REFRESHED_AT=2019-11-13
 
@@ -29,8 +31,9 @@ ENV LD_LIBRARY_PATH=${SENZING_ROOT}/g2/lib:${SENZING_ROOT}/g2/lib/debian
 
 COPY . /senzing-api-server
 
-WORKDIR /senzing-api-server
 # Run the "make" command to create the artifacts.
+
+WORKDIR /senzing-api-server
 
 RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
  && make \
@@ -42,13 +45,14 @@ RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=pro
 # -----------------------------------------------------------------------------
 # Stage: Final
 # -----------------------------------------------------------------------------
+
 FROM ${BASE_IMAGE}
 
 ENV REFRESHED_AT=2020-01-29
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
-      Version="1.7.10"
+      Version="1.8.1"
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
 
@@ -63,13 +67,13 @@ RUN apt update \
       software-properties-common \
  && rm -rf /var/lib/apt/lists/*
 
-# Install Java-8 - To be removed after Senzing API server supports Java 11
-# Once fixed, add "default-jdk" to "apt install ..."
+# Install Java-11.
 
 RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add - \
  && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
  && apt update \
- && apt -y install adoptopenjdk-8-hotspot
+ && apt install -y adoptopenjdk-11-hotspot \
+ && rm -rf /var/lib/apt/lists/*
 
 # Service exposed on port 8080.
 

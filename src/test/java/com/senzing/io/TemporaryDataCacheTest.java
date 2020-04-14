@@ -29,7 +29,7 @@ public class TemporaryDataCacheTest {
   /**
    * The test file size.
    */
-  private static final int TEST_FILE_COUNT = 3;
+  private static final int TEST_FILE_COUNT = 4;
 
   @BeforeAll
   public void setup() throws IOException {
@@ -38,10 +38,12 @@ public class TemporaryDataCacheTest {
     char[] characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
     Random random = new Random(System.currentTimeMillis());
 
+    int exponent = 0;
     for (int index = 0; index < TEST_FILE_COUNT; index++) {
       File testFile = File.createTempFile("test-file-", ".dat");
       this.testFiles.add(testFile);
-      int fileSize = (int) Math.pow(24.0, (double) (index*2)*1);
+      exponent = index + Math.max(0, index - 1);
+      int fileSize = (int) Math.pow(25.0, (double) exponent);
 
       try (FileOutputStream     fos = new FileOutputStream(testFile);
            BufferedOutputStream bos = new BufferedOutputStream(fos, 8192))
@@ -75,8 +77,8 @@ public class TemporaryDataCacheTest {
   @MethodSource("getTestFiles")
   public void verifyContentAccurate(File file) throws IOException {
     File tempFile = File.createTempFile("test-file-", ".dat");
-    try (FileInputStream fis = new FileInputStream(file))
-    {
+    FileInputStream fis = new FileInputStream(file);
+    try {
       TemporaryDataCache tdc = new TemporaryDataCache(fis);
       try (InputStream          is  = tdc.getInputStream();
            BufferedInputStream  bis = new BufferedInputStream(is, 8192);
@@ -118,8 +120,8 @@ public class TemporaryDataCacheTest {
     int     preCount      = tempDir.listFiles().length;
     int     maxCount      = 0;
 
-    try (FileInputStream fis = new FileInputStream(inputFile))
-    {
+    FileInputStream fis = new FileInputStream(inputFile);
+    try {
       TemporaryDataCache tdc = new TemporaryDataCache(fis, tempDir);
 
       assertEquals(tempDir, tdc.getDirectory(),
@@ -172,8 +174,8 @@ public class TemporaryDataCacheTest {
     int     preCount      = tempDir.listFiles().length;
     int     maxCount      = 0;
 
-    try (FileInputStream fis = new FileInputStream(inputFile))
-    {
+    FileInputStream fis = new FileInputStream(inputFile);
+    try {
       TemporaryDataCache tdc
           = new TemporaryDataCache(fis, tempDir, "TempDataCache-");
 
@@ -225,8 +227,8 @@ public class TemporaryDataCacheTest {
     int     preCount      = tempDir.listFiles().length;
     int     maxCount      = 0;
 
-    try (FileInputStream fis = new FileInputStream(inputFile))
-    {
+    FileInputStream fis = new FileInputStream(inputFile);
+    try {
       TemporaryDataCache tdc
           = new TemporaryDataCache(fis, tempDir, "TempDataCache-");
 
@@ -274,15 +276,16 @@ public class TemporaryDataCacheTest {
 
   @Test
   public void testAppending() throws IOException {
-    File    inputFile     = this.testFiles.get(this.testFiles.size() - 1);
-    try (FileInputStream fis = new FileInputStream(inputFile))
-    {
+    File inputFile = this.testFiles.get(this.testFiles.size() - 1);
+    FileInputStream fis = new FileInputStream(inputFile);
+    try {
       TemporaryDataCache tdc = new TemporaryDataCache(fis);
       boolean appended = false;
       try (InputStream          is  = tdc.getInputStream();
            BufferedInputStream  bis = new BufferedInputStream(is))
       {
-        for (int byteRead = bis.read(); byteRead >= 0; byteRead = bis.read()) {
+        for (int byteRead = bis.read(); byteRead >= 0; byteRead = bis.read())
+        {
           if (!appended) appended = tdc.isAppending();
         }
 
@@ -309,8 +312,8 @@ public class TemporaryDataCacheTest {
   public void testRepeatedRead() throws IOException {
     File inputFile = this.testFiles.get(0);
     int fileSize = (int) inputFile.length();
-    try (FileInputStream fis = new FileInputStream(inputFile))
-    {
+    FileInputStream fis = new FileInputStream(inputFile);
+    try {
       TemporaryDataCache tdc = new TemporaryDataCache(fis);
 
       ByteArrayOutputStream baos1 = new ByteArrayOutputStream(fileSize);
@@ -355,8 +358,8 @@ public class TemporaryDataCacheTest {
   public void testRepeatedReadWithConsume() throws IOException {
     File inputFile = this.testFiles.get(0);
     int fileSize = (int) inputFile.length();
-    try (FileInputStream fis = new FileInputStream(inputFile))
-    {
+    FileInputStream fis = new FileInputStream(inputFile);
+    try {
       TemporaryDataCache tdc = new TemporaryDataCache(fis);
 
       ByteArrayOutputStream baos1 = new ByteArrayOutputStream(fileSize);
@@ -399,10 +402,9 @@ public class TemporaryDataCacheTest {
   public void testDeleted() throws IOException {
     File  inputFile = this.testFiles.get(this.testFiles.size() - 1);
     int   fileSize  = (int) inputFile.length();
-    try (FileInputStream fis = new FileInputStream(inputFile))
-    {
+    FileInputStream fis = new FileInputStream(inputFile);
+    try {
       TemporaryDataCache tdc = new TemporaryDataCache(fis);
-      boolean deleted = false;
       int readCount = 0;
       try (InputStream          is  = tdc.getInputStream();
            BufferedInputStream  bis = new BufferedInputStream(is))
