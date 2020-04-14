@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.senzing.util.JsonUtils;
+
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.*;
@@ -144,7 +146,8 @@ public class SzEntityData {
     SzResolvedEntity resolvedEntity
         = SzResolvedEntity.parseResolvedEntity(null, resEntObj, mapper);
 
-    JsonArray relatedArray = jsonObject.getJsonArray("RELATED_ENTITIES");
+    JsonArray relatedArray
+        = JsonUtils.getJsonArray(jsonObject,"RELATED_ENTITIES");
 
     List<SzRelatedEntity> relatedEntities
         = SzRelatedEntity.parseRelatedEntityList(null,

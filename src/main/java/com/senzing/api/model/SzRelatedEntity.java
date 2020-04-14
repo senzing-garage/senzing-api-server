@@ -94,8 +94,11 @@ public class SzRelatedEntity extends SzBaseRelatedEntity {
       Function<String,String> featureToAttrClassMapper)
   {
     if (list == null) {
-      list = new ArrayList<>(jsonArray.size());
+      list = new ArrayList<>(jsonArray == null ? 0 : jsonArray.size());
     }
+
+    if (jsonArray == null) return list;
+
     for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
       list.add(parseRelatedEntity(null,
                                   jsonObject,

@@ -40,6 +40,8 @@ public class EntityGraphServices {
       @QueryParam("s")                                            List<String>        sourcesParam,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
+      @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
       @Context                                                    UriInfo             uriInfo)
   {
@@ -148,8 +150,12 @@ public class EntityGraphServices {
     final String encodedSources = (withSources == null)
         ? null : nativeJsonEncodeDataSources(withSources);
 
-    final int flags = getFlags(forceMinimal, featureMode)
-                    | (forbidAvoided ? 0 : G2_FIND_PATH_PREFER_EXCLUDE);
+    final int flags = (forbidAvoided ? 0 : G2_FIND_PATH_PREFER_EXCLUDE)
+                    | getFlags(forceMinimal,
+                               featureMode,
+                               withFeatureStats,
+                               withDerivedFeatures,
+                               true);
 
     try {
       enteringQueue(timers);
@@ -306,6 +312,8 @@ public class EntityGraphServices {
       @DefaultValue("1000")   @QueryParam("maxEntities")          int                 maxEntities,
       @DefaultValue("false")  @QueryParam("forceMinimal")         boolean             forceMinimal,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
+      @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
       @DefaultValue("false")  @QueryParam("withRaw")              boolean             withRaw,
       @Context                                                    UriInfo             uriInfo)
   {
@@ -371,8 +379,11 @@ public class EntityGraphServices {
     final String encodedEntityIds = (entities == null)
         ? null : nativeJsonEncodeEntityIds(entities);
 
-    final int flags = getFlags(forceMinimal, featureMode);
-
+    final int flags = getFlags(forceMinimal,
+                               featureMode,
+                               withFeatureStats,
+                               withDerivedFeatures,
+                               true);
     try {
       enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {

@@ -16,6 +16,7 @@ import java.util.*;
 import static com.senzing.api.model.SzHttpMethod.*;
 import static com.senzing.api.model.SzFeatureInclusion.*;
 import static com.senzing.api.services.ServicesUtil.*;
+import static com.senzing.g2.engine.G2Engine.*;
 
 /**
  * Provides entity data related API services.
@@ -41,7 +42,7 @@ public class EntityDataServices {
 
     try {
       SzApiProvider provider = SzApiProvider.Factory.getProvider();
-      dataSourceCode = dataSourceCode.toUpperCase();
+      dataSourceCode = dataSourceCode.trim().toUpperCase();
       ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
 
       final String dataSource = dataSourceCode;
@@ -113,7 +114,7 @@ public class EntityDataServices {
     try {
       SzApiProvider provider = SzApiProvider.Factory.getProvider();
       ensureLoadingIsAllowed(provider, PUT, uriInfo, timers);
-      dataSourceCode = dataSourceCode.toUpperCase();
+      dataSourceCode = dataSourceCode.trim().toUpperCase();
 
       final String dataSource = dataSourceCode;
 
@@ -189,7 +190,7 @@ public class EntityDataServices {
 
     try {
       SzApiProvider provider = SzApiProvider.Factory.getProvider();
-      dataSourceCode = dataSourceCode.toUpperCase();
+      dataSourceCode = dataSourceCode.trim().toUpperCase();
 
       StringBuffer sb = new StringBuffer();
 
@@ -258,13 +259,15 @@ public class EntityDataServices {
       @DefaultValue("false") @QueryParam("withRelated")           boolean             withRelated,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
+      @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
       @Context                                                    UriInfo             uriInfo)
   {
     Timers timers = newTimers();
 
     try {
       SzApiProvider provider = SzApiProvider.Factory.getProvider();
-      dataSourceCode = dataSourceCode.toUpperCase();
+      dataSourceCode = dataSourceCode.trim().toUpperCase();
 
       final String dataSource = dataSourceCode;
 
@@ -272,7 +275,11 @@ public class EntityDataServices {
 
       SzEntityData entityData = null;
 
-      int flags = getFlags(forceMinimal, featureMode);
+      int flags = getFlags(forceMinimal,
+                           featureMode,
+                           withFeatureStats,
+                           withDerivedFeatures,
+                           true);
 
       String rawData = null;
 
@@ -393,6 +400,8 @@ public class EntityDataServices {
       @DefaultValue("false") @QueryParam("withRelated")           boolean             withRelated,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
+      @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
       @Context                                                    UriInfo             uriInfo)
   {
     Timers timers = newTimers();
@@ -406,7 +415,11 @@ public class EntityDataServices {
 
       String rawData = null;
 
-      int flags = getFlags(forceMinimal, featureMode);
+      int flags = getFlags(forceMinimal,
+                           featureMode,
+                           withFeatureStats,
+                           withDerivedFeatures,
+                           true);
 
       // check if we want 1-degree relations as well -- if so we need to
       // find the network instead of a simple lookup
@@ -509,6 +522,8 @@ public class EntityDataServices {
       @QueryParam("attrs")                                        String              attrs,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
+      @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
       @DefaultValue("true") @QueryParam("withRelationships")      boolean             withRelationships,
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
       @Context                                                    UriInfo             uriInfo)
@@ -564,7 +579,11 @@ public class EntityDataServices {
 
       StringBuffer sb = new StringBuffer();
 
-      int flags = getFlags(forceMinimal, featureMode, withRelationships);
+      int flags = getFlags(forceMinimal,
+                           featureMode,
+                           withFeatureStats,
+                           withDerivedFeatures,
+                           withRelationships);
 
       final String json = attrs;
       enteringQueue(timers);
@@ -574,9 +593,9 @@ public class EntityDataServices {
         // get the engine API
         G2Engine engineApi = provider.getEngineApi();
 
-        callingNativeAPI(timers, "engine", "searchByAttribtuesV2");
+        callingNativeAPI(timers, "engine", "searchBy AttributesV2");
         int result = engineApi.searchByAttributesV2(json, flags, sb);
-        calledNativeAPI(timers, "engine", "searchByAttribtuesV2");
+        calledNativeAPI(timers, "engine", "searchByAttributesV2");
         if (result != 0) {
           throw newInternalServerErrorException(GET, uriInfo, timers, engineApi);
         }

@@ -4,14 +4,14 @@
   <groupId>com.senzing</groupId>
   <artifactId>senzing-api-server</artifactId>
   <packaging>jar</packaging>
-  <version>1.8.0</version>
+  <version>1.8.1</version>
   <name>senzing-api-server</name>
   <url>http://maven.apache.org</url>
   <dependencies>
     <dependency>
      <groupId>com.senzing</groupId>
      <artifactId>g2</artifactId>
-       <version>[1.13.0-SNAPSHOT,2.0.0-SNAPSHOT)</version>
+       <version>[1.14.0-SNAPSHOT,2.0.0-SNAPSHOT)</version>
     </dependency>
     <dependency>
      <groupId>org.xerial</groupId>
