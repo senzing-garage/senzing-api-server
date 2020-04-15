@@ -6,18 +6,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.2] - 2020-04-15
+
+### Changed in 1.8.2
+
+- Added WHY operations
+  - GET /data-sources/{dataSourceCode}/records/{recordId}/entity/why
+  - GET /entities/{entityId}/why
+  - GET /why/records
+- Added support for the "withFeatureStatistics" and "withDerivedFeatures"
+  parameters across the following endpoints:
+  - GET /data-sources/{dataSourceCode}/records/{recordId}/entity
+  - GET /data-sources/{dataSourceCode}/records/{recordId}/entity/why
+  - GET /entities/{entityId
+  - GET /entities/{entityId}/why
+  - GET /why/records
+  - GET /entity-paths
+  - GET /entity-networks
+- Added the "featureDetails" property to entity results to support obtaining
+  the feature ID as well as the feature statistics (if requested).
+
 ## [1.8.1] - 2020-03-30
 
 ### Changed in 1.8.1
 
 - Supports environment variables for Senzing install locations
-    - SENZING_G2_DIR
-    - SENZING_DATA_DIR
-    - SENZING_ETC_DIR
+  - SENZING_G2_DIR
+  - SENZING_DATA_DIR
+  - SENZING_ETC_DIR
 - Supports default to `/opt/senzing/data` as the support directory if the
   versioned sub-directory is not found and the base directory contains expected
   files.
-- Shortens the test time for TemporaryDataCacheTest 
+- Shortens the test time for TemporaryDataCacheTest
 
 ## [1.8.0] - 2020-03-27
 

@@ -3,8 +3,11 @@ package com.senzing.api.model;
 import com.senzing.util.JsonUtils;
 
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -24,7 +27,7 @@ public class SzRecordId implements SzEntityIdentifier {
   /**
    * Default constructor.
    */
-  public SzRecordId() {
+  private SzRecordId() {
     this.dataSourceCode = null;
     this.recordId = null;
   }
@@ -54,7 +57,7 @@ public class SzRecordId implements SzEntityIdentifier {
    *
    * @param dataSourceCode The data source code for the record.
    */
-  public void setDataSourceCode(String dataSourceCode) {
+  private void setDataSourceCode(String dataSourceCode) {
     this.dataSourceCode = dataSourceCode.toUpperCase().trim();
   }
 
@@ -72,7 +75,7 @@ public class SzRecordId implements SzEntityIdentifier {
    *
    * @param recordId The record ID identifying the record.
    */
-  public void setRecordId(String recordId) {
+  private void setRecordId(String recordId) {
     this.recordId = recordId;
   }
 
@@ -163,9 +166,15 @@ public class SzRecordId implements SzEntityIdentifier {
     if (src == null) {
       src = JsonUtils.getString(jsonObject, "dataSourceCode");
     }
+    if (src == null) {
+      src = JsonUtils.getString(jsonObject, "DATA_SOURCE");
+    }
     String id = JsonUtils.getString(jsonObject, "id");
     if (id == null) {
       id = JsonUtils.getString(jsonObject, "recordId");
+    }
+    if (id == null) {
+      id = JsonUtils.getString(jsonObject, "RECORD_ID");
     }
     if (src == null || id == null) {
       throw new IllegalArgumentException(
@@ -173,5 +182,66 @@ public class SzRecordId implements SzEntityIdentifier {
           + src + " ], id=[ " + id + " ], jsonObject=[ " + jsonObject + " ]");
     }
     return new SzRecordId(src, id);
+  }
+
+  /**
+   * Parses the {@link SzRecordId} from a {@link JsonObject} describing JSON
+   * for the Senzing native API format for record ID to create a new instance.
+   *
+   * @param jsonObject The {@link JsonObject} to parse.
+   *
+   * @return The {@link SzRecordId} that was created.
+   */
+  public static SzRecordId parseRecordId(JsonObject jsonObject) {
+    String src  = JsonUtils.getString(jsonObject, "DATA_SOURCE");
+    String id   = JsonUtils.getString(jsonObject, "RECORD_ID");
+
+    if (src == null || id == null) {
+      throw new IllegalArgumentException(
+          "The specified JsonObject does not have the required fields.  src=[ "
+          + src + " ], id=[ " + id + " ], jsonObject=[ " + jsonObject + " ]");
+    }
+    return new SzRecordId(src, id);
+  }
+
+  /**
+   * Parses and populates a {@link List} of {@link SzRecordId} instances from
+   * a {@link JsonArray} of {@link JsonObject} instances describing JSON
+   * for the Senzing native API format for record ID to create new instances.
+   *
+   * @param jsonArray The {@link JsonArray} to parse.
+   *
+   * @return The {@link List} of {@link SzRecordId} instances that were
+   *         populated.
+   */
+  public static List<SzRecordId> parseRecordIdList(JsonArray jsonArray) {
+    return parseRecordIdList(null, jsonArray);
+  }
+
+  /**
+   * Parses and populates a {@link List} of {@link SzRecordId} instances from
+   * a {@link JsonArray} of {@link JsonObject} instances describing JSON
+   * for the Senzing native API format for record ID to create new instances.
+   *
+   * @param list The {@link List} to populate or <tt>null</tt> if a new {@link
+   *             List} should be created.
+   *
+   * @param jsonArray The {@link JsonArray} to parse.
+   *
+   * @return The {@link List} of {@link SzRecordId} instances that were
+   *         populated.
+   */
+  public static List<SzRecordId> parseRecordIdList(List<SzRecordId> list,
+                                                   JsonArray        jsonArray)
+  {
+    if (list == null) {
+      list = new ArrayList<>(jsonArray.size());
+    }
+
+    for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
+      list.add(parseRecordId(jsonObject));
+    }
+
+    return list;
   }
 }

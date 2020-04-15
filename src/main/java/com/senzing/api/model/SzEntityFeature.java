@@ -10,6 +10,11 @@ import java.util.*;
  */
 public class SzEntityFeature {
   /**
+   * The internal ID of the primary feature value.
+   */
+  private Long primaryId;
+
+  /**
    * The primary value for the feature.
    */
   private String primaryValue;
@@ -20,17 +25,43 @@ public class SzEntityFeature {
   private String usageType;
 
   /**
-   * The list of duplicate values.
+   * The set of duplicate values.
    */
-  private List<String> duplicateValues;
+  private Set<String> duplicateValues;
+
+  /**
+   * The {@link List} of {@link SzEntityFeatureDetail} instances describing
+   * the details of each of the clustered feature values for this feature.
+   */
+  private List<SzEntityFeatureDetail> featureDetails;
 
   /**
    * Default constructor.
    */
   public SzEntityFeature() {
+    this.primaryId        = null;
     this.primaryValue     = null;
     this.usageType        = null;
-    this.duplicateValues  = new LinkedList<>();
+    this.duplicateValues  = new LinkedHashSet<>();
+    this.featureDetails   = new LinkedList<>();
+  }
+
+  /**
+   * Gets the internal ID for the primary feature value.
+   *
+   * @return The internal ID for the primary feature value.
+   */
+  public Long getPrimaryId() {
+    return this.primaryId;
+  }
+
+  /**
+   * Sets the internal ID for the primary feature value.
+   *
+   * @param primaryId The internal ID for the primary feature value.
+   */
+  public void setPrimaryId(Long primaryId) {
+    this.primaryId = primaryId;
   }
 
   /**
@@ -70,12 +101,14 @@ public class SzEntityFeature {
   }
 
   /**
-   * Returns the list of duplicate values for the entity.
+   * Returns the <b>unmodifiable</b> {@link Set} of duplicate values for the
+   * entity.
    *
-   * @return The list of duplicate values for the entity.
+   * @return The <b>unmodifiable</b> {@link Set} of duplicate values for the
+   *         entity.
    */
-  public List<String> getDuplicateValues() {
-    return Collections.unmodifiableList(this.duplicateValues);
+  public Set<String> getDuplicateValues() {
+    return Collections.unmodifiableSet(this.duplicateValues);
   }
 
   /**
@@ -83,7 +116,7 @@ public class SzEntityFeature {
    *
    * @param duplicateValues The list of duplicate values.
    */
-  public void setDuplicateValues(List<String> duplicateValues) {
+  public void setDuplicateValues(Collection<String> duplicateValues) {
     this.duplicateValues.clear();
     if (duplicateValues != null) {
       this.duplicateValues.addAll(duplicateValues);
@@ -98,6 +131,45 @@ public class SzEntityFeature {
   public void addDuplicateValue(String value)
   {
     this.duplicateValues.add(value);
+  }
+
+  /**
+   * Gets the <b>unmodifiable</b> {@link List} of {@link SzEntityFeatureDetail}
+   * instances describing the details of each of the clustered feature values
+   * for this feature.
+   *
+   * @return The <b>unmodifiable</b> {@link List} of {@link
+   *         SzEntityFeatureDetail} instances describing the details of each of
+   *         the clustered feature values for this feature.
+   */
+  public List<SzEntityFeatureDetail> getFeatureDetails() {
+    return Collections.unmodifiableList(this.featureDetails);
+  }
+
+  /**
+   * Sets the {@link List} of {@link SzEntityFeatureDetail} instances describing
+   * the details of each of the clustered feature values for this feature.
+   *
+   * @param details The {@link Collection} of {@linkSzEntityFeatureDetail}
+   *                instances describing the details of each of the clustered
+   *                feature values for this feature.
+   */
+  public void setFeatureDetails(Collection<SzEntityFeatureDetail> details) {
+    this.featureDetails.clear();
+    if (details != null) {
+      this.featureDetails.addAll(details);
+    }
+  }
+
+  /**
+   * Adds the specified {@link SzEntityFeatureDetail} instance to the {@link
+   * List} of feature details.
+   *
+   * @param featureDetail The {@link SzEntityFeatureDetail} instance to add to
+   *                      the list of feature details.
+   */
+  public void addFeatureDetail(SzEntityFeatureDetail featureDetail) {
+    this.featureDetails.add(featureDetail);
   }
 
   /**
@@ -150,17 +222,22 @@ public class SzEntityFeature {
     long   libFeatId   = jsonObject.getJsonNumber("LIB_FEAT_ID").longValue();
     String usageType   = jsonObject.getString("UTYPE_CODE", null);
 
+    feature.setPrimaryId(libFeatId);
     feature.setPrimaryValue(featureDesc);
     feature.setUsageType(usageType);
 
     JsonArray featureValues = jsonObject.getJsonArray("FEAT_DESC_VALUES");
 
-    for (JsonValue value : featureValues) {
-      JsonObject valueObj = value.asJsonObject();
-      long valueId = valueObj.getJsonNumber("LIB_FEAT_ID").longValue();
-      if (valueId == libFeatId) continue;
-      String desc = valueObj.getString("FEAT_DESC");
-      feature.addDuplicateValue(desc);
+    List<SzEntityFeatureDetail> details
+        = SzEntityFeatureDetail.parseEntityFeatureDetailList(
+            null, featureValues);
+
+    for (SzEntityFeatureDetail detail: details) {
+      long valueId = detail.getInternalId();
+      if (valueId != libFeatId) {
+        feature.addDuplicateValue(detail.getFeatureValue());
+      }
+      feature.addFeatureDetail(detail);
     }
 
     return feature;
@@ -169,7 +246,8 @@ public class SzEntityFeature {
   @Override
   public String toString() {
     return "SzEntityFeature{" +
-        "primaryValue='" + primaryValue + '\'' +
+        "primaryId=" + primaryId +
+        ", primaryValue='" + primaryValue + '\'' +
         ", usageType='" + usageType + '\'' +
         ", duplicateValues=" + duplicateValues +
         '}';

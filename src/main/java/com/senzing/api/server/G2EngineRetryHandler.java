@@ -89,21 +89,6 @@ class G2EngineRetryHandler implements InvocationHandler {
                         int.class, StringBuffer.class, StringBuffer.class);
       addMethodIfExists(unsupportedSet,"processWithInfo",
                         String.class, int.class, StringBuffer.class);
-      addMethodIfExists(unsupportedSet, "whyEntityByRecordID",
-                        String.class, String.class, StringBuffer.class);
-      addMethodIfExists(unsupportedSet, "whyEntityByRecordIDV2",
-                        String.class, String.class,
-                        int.class, StringBuffer.class);
-      addMethodIfExists(unsupportedSet, "whyEntityByEntityID",
-                        long.class, StringBuffer.class);
-      addMethodIfExists(unsupportedSet, "whyEntityByEntityIDV2",
-                        long.class, int.class, StringBuffer.class);
-      addMethodIfExists(unsupportedSet, "whyRecords",
-                        String.class, String.class, String.class,
-                        String.class, StringBuffer.class);
-      addMethodIfExists(unsupportedSet, "whyRecordsV2",
-                        String.class, String.class, String.class,
-                        String.class, int.class, StringBuffer.class);
 
       directSet.add(cls.getMethod("primeEngine"));
       directSet.add(cls.getMethod("purgeRepository"));
@@ -209,6 +194,23 @@ class G2EngineRetryHandler implements InvocationHandler {
       retrySet.add(cls.getMethod("process", String.class));
       retrySet.add(cls.getMethod(
           "process", String.class, StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "whyEntityByRecordID", String.class, String.class,
+          StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "whyEntityByRecordIDV2",String.class, String.class, int.class,
+          StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "whyEntityByEntityID", long.class, StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "whyEntityByEntityIDV2", long.class, int.class,
+          StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "whyRecords",String.class, String.class,
+          String.class, String.class, StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "whyRecordsV2", String.class, String.class, String.class,
+          String.class, int.class, StringBuffer.class));
 
       // check what we did not catch
       Method[] methods = cls.getMethods();

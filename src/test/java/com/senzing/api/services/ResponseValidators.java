@@ -619,6 +619,8 @@ public class ResponseValidators {
       List<SzRelatedEntity>               relatedEntities,
       Boolean                             forceMinimal,
       SzFeatureInclusion                  featureMode,
+      boolean                             withFeatureStats,
+      boolean                             withDerivedFeatures,
       Integer                             expectedRecordCount,
       Set<SzRecordId>                     expectedRecordIds,
       Boolean                             relatedSuppressed,
@@ -662,6 +664,28 @@ public class ResponseValidators {
       assertNotEquals(0, entity.getFeatures().size(),
                       "Features not present for entity: " + testInfo);
 
+      Set<String> featureKeys = entity.getFeatures().keySet();
+      if (withDerivedFeatures) {
+        if (featureKeys.contains("NAME") && !featureKeys.contains("NAME_KEY")) {
+          fail("Missing NAME_KEY, but found NAME with derived features "
+                   + "requested: " + testInfo + " / " + featureKeys);
+        }
+        if (featureKeys.contains("ADDRESS")
+            && !featureKeys.contains("ADDR_KEY"))
+        {
+          fail("Missing ADDR_KEY, but found ADDRESS with derived features "
+                   + "requested: " + testInfo + " / " + featureKeys);
+        }
+      } else {
+        if (featureKeys.contains("NAME_KEY")) {
+          fail("Found NAME_KEY with derived features suppressed: "
+                   + testInfo + " / " + featureKeys);
+        }
+        if (featureKeys.contains("ADDR_KEY")) {
+          fail("Found ADDR_KEY with derived features suppressed: "
+                   + testInfo + " / " + featureKeys);
+        }
+      }
       // validate representative feature mode
       if (featureMode == REPRESENTATIVE) {
         entity.getFeatures().entrySet().forEach(entry -> {
@@ -676,6 +700,26 @@ public class ResponseValidators {
           });
         });
       }
+
+      // check if statistics are present
+      entity.getFeatures().entrySet().forEach(entry -> {
+        String                featureKey    = entry.getKey();
+        List<SzEntityFeature> featureValues = entry.getValue();
+        featureValues.forEach(featureValue -> {
+          List<SzEntityFeatureDetail> list = featureValue.getFeatureDetails();
+          for (SzEntityFeatureDetail detail: list) {
+            if (withFeatureStats) {
+              assertNotNull(detail.getStatistics(),
+                            "Expected feature statistics: " + testInfo
+                                + " / " + detail);
+            } else {
+              assertNull(detail.getStatistics(),
+                         "Unexpected feature statistics: " + testInfo
+                         + " / " + detail);
+            }
+          }
+        });
+      });
 
       // validate the feature counts (if any)
       if (expectedFeatureCounts != null) {
@@ -750,6 +794,15 @@ public class ResponseValidators {
 
         SzAttributeClass attrClass = SzAttributeClass.parseAttributeClass(
             provider.getAttributeClassForFeature(featureKey));
+
+        if (attrClass == null) {
+          // skip this feature if working with derived features
+          if (withDerivedFeatures) return;
+
+          // otherwise fail
+          fail("Unrecognized feature key (" + featureKey + "): " + testInfo
+               + " / " + entity.getFeatures());
+        }
 
         List<String> dataSet = getDataElements(entity, attrClass);
         if (dataSet == null) return;
@@ -1546,6 +1599,10 @@ public class ResponseValidators {
    *                     <tt>null</tt> if this aspect is not being validated.
    * @param featureMode The {@link SzFeatureInclusion} requested or
    *                    <tt>null</tt> if this is not being validated.
+   * @param withFeatureStats <tt>true</tt> if request with feature statistics,
+   *                         otherwise <tt>false</tt>.
+   * @param withDerivedFeatures <tt>true</tt> if request with derived features,
+   *                            otherwise <tt>false</tt>.
    * @param expectedRecordCount The number of expected records for the entity,
    *                            or <tt>null</tt> if this is not being validated.
    * @param expectedRecordIds The expected record IDs for the entity to have or
@@ -1576,6 +1633,8 @@ public class ResponseValidators {
       Boolean                             withRelated,
       Boolean                             forceMinimal,
       SzFeatureInclusion                  featureMode,
+      boolean                             withFeatureStats,
+      boolean                             withDerivedFeatures,
       Integer                             expectedRecordCount,
       Set<SzRecordId>                     expectedRecordIds,
       Integer                             relatedEntityCount,
@@ -1612,6 +1671,8 @@ public class ResponseValidators {
                    relatedEntities,
                    forceMinimal,
                    featureMode,
+                   withFeatureStats,
+                   withDerivedFeatures,
                    expectedRecordCount,
                    expectedRecordIds,
                    false,
@@ -1709,6 +1770,10 @@ public class ResponseValidators {
    *                     <tt>null</tt> if this aspect is not being validated.
    * @param featureInclusion The {@link SzFeatureInclusion} requested or
    *                         <tt>null</tt> if this is not being validated.
+   * @param withFeatureStats <tt>true</tt> if request with feature statistics,
+   *                         otherwise <tt>false</tt>.
+   * @param withDerivedFeatures <tt>true</tt> if request with derived features,
+   *                            otherwise <tt>false</tt>.
    * @param beforeTimestamp The timestamp before executing the request.
    * @param afterTimestamp The timestamp after executing the request and
    *                       concluding timers on the response.
@@ -1723,6 +1788,8 @@ public class ResponseValidators {
       Boolean                   withRelationships,
       Boolean                   forceMinimal,
       SzFeatureInclusion        featureInclusion,
+      boolean                   withFeatureStats,
+      boolean                   withDerivedFeatures,
       long                      beforeTimestamp,
       long                      afterTimestamp,
       Boolean                   expectRawData)
@@ -1754,6 +1821,8 @@ public class ResponseValidators {
                           result.getRelatedEntities(),
                           forceMinimal,
                           featureInclusion,
+                          withFeatureStats,
+                          withDerivedFeatures,
                           null,
                           null,
                           (withRelationships == null || !withRelationships),

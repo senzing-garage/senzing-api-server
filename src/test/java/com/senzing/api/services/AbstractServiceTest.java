@@ -23,7 +23,7 @@ import javax.json.*;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
-import static com.senzing.io.IOUtilities.readTextFileAsString;
+import static com.senzing.io.IOUtilities.*;
 import static org.junit.jupiter.api.Assumptions.*;
 import static com.senzing.util.LoggingUtilities.*;
 import static com.senzing.repomgr.RepositoryManager.*;
@@ -1029,6 +1029,19 @@ public abstract class AbstractServiceTest {
     try {
       testFunction.run();
       success = true;
+
+    } catch (Error|RuntimeException e) {
+      if ("true".equals(System.getProperty("com.senzing.api.test.fastFail"))) {
+        e.printStackTrace();
+        System.err.flush();
+        try {
+          Thread.sleep(5000L);
+        } catch (InterruptedException ignore) {
+          // do nothing
+        }
+        System.exit(1);
+      }
+      throw e;
     } finally {
       if (!success) this.incrementFailureCount();
       else this.incrementSuccessCount();
@@ -1608,5 +1621,44 @@ public abstract class AbstractServiceTest {
   {
     return "uriText=[ " + uriText + " ], bodyContent=[ " + bodyContent + " ]";
   }
+
+  /**
+   * Generats option combos for the specified variants.
+   *
+   * @param variants
+   */
+  protected static List<List> generateCombinations(List... variants) {
+    // determine the total number of combinations
+    int comboCount = 1;
+    for (List v : variants) {
+      comboCount *= v.size();
+    }
+
+    // determine the intervals for each variant
+    List<Integer> intervals = new ArrayList<>(variants.length);
+    for (int index = 0; index < variants.length; index++) {
+      int intervalCount = 1;
+      for (int index2 = index+1; index2 < variants.length; index2++) {
+        intervalCount *= variants[index2].size();
+      }
+      intervals.add(intervalCount);
+    }
+
+    ArrayList<List> optionCombos = new ArrayList<>(comboCount);
+    for (int comboIndex = 0; comboIndex < comboCount; comboIndex++) {
+      List optionCombo = new ArrayList<>(variants.length);
+
+      for (int index = 0; index < variants.length; index++) {
+        int interval = intervals.get(index);
+        int valueIndex = (comboIndex / interval) % variants[index].size();
+        optionCombo.add(variants[index].get(valueIndex));
+      }
+
+      optionCombos.add(optionCombo);
+    }
+
+    return optionCombos;
+  }
+
 
 }

@@ -519,21 +519,9 @@ public class ServicesUtil {
    * @param featureMode The {@link SzFeatureInclusion} describing how features
    *                    are retrieved.
    *
-   * @return The flags to use given the parameters.
-   */
-  static int getFlags(boolean             forceMinimal,
-                      SzFeatureInclusion  featureMode)
-  {
-    return getFlags(forceMinimal, featureMode, true);
-  }
-
-  /**
-   * Gets the flags to use given the specified parameters.
+   * @param withFeatureStats Whether or not feature stats should be included.
    *
-   * @param forceMinimal Whether or not minimal format is forced.
-   *
-   * @param featureMode The {@link SzFeatureInclusion} describing how features
-   *                    are retrieved.
+   * @param withDerivedFeatures Whether or not to include derived features.
    *
    * @param withRelationships Whether or not to include relationships.
    *
@@ -541,17 +529,35 @@ public class ServicesUtil {
    */
   static int getFlags(boolean             forceMinimal,
                       SzFeatureInclusion  featureMode,
+                      boolean             withFeatureStats,
+                      boolean             withDerivedFeatures,
                       boolean             withRelationships)
   {
     int flags = withRelationships
         ? G2_ENTITY_INCLUDE_ALL_RELATIONS
         : G2_ENTITY_INCLUDE_NO_RELATIONS;
+
     if (forceMinimal) {
+      // minimal format, not much else to do
       flags |= G2_ENTITY_MINIMAL_FORMAT;
+
     } else if (featureMode == NONE) {
+      // no features requested
       flags |= G2_ENTITY_INCLUDE_NO_FEATURES;
+
     } else {
+      // get represenative features
       flags |= G2_ENTITY_INCLUDE_REPRESENTATIVE_FEATURES;
+
+      // check if feature stats are requested
+      if (withFeatureStats) {
+        flags |= G2_ENTITY_SHOW_FEATURES_STATS;
+      }
+
+      // check if derived features are requested
+      if (withDerivedFeatures) {
+        flags |= G2_ENTITY_SHOW_FEATURES_EXPRESSED;
+      }
     }
     return flags;
   }
