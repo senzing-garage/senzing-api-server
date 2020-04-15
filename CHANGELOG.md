@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.8.1] - 2020-03-30
+## [1.8.2] - 2020-04-15
 
 ### Changed in 1.8.2
 
@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - GET /entity-networks
 - Added the "featureDetails" property to entity results to support obtaining
   the feature ID as well as the feature statistics (if requested).
+
+## [1.8.1] - 2020-03-30
 
 ### Changed in 1.8.1
 
