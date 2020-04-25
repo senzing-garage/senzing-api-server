@@ -38,8 +38,7 @@ jobs:
         id: build_info
         run: |
           g2_verion=$(apt list senzingapi | grep installed | grep -Po "\d{1,}\.\d{1,}\.\d{1,}-\d{1,}")
-          branch_name=${GITHUB_REF##*/}
-          echo '{"g2_version":"'${g2_version}'","branch_name":"'${branch_name}'", "run_id":"'${GITHUB_RUN_ID}'"}' >> build_info.json 2>&1
+          echo '{"g2_version":"'${g2_version}'"}' >> build_info.json 2>&1
       - name: Copy /opt/senzing to Runner working directory
         id: copy_senzing_wrk_dir
         run: |
@@ -73,12 +72,12 @@ jobs:
       - name: Set Variables With Build Info
         id: job_info
         run: |
-          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o job_info.json https://api.github.com/repos/Senzing/senzing-api-server/actions/runs/${{ github.run_id }}/jobs
+          curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o job_info.json https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/runs/${{ github.run_id }}/jobs
           echo ::set-output name=log_url::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .url')
           echo ::set-output name=html_url::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .html_url')
           echo ::set-output name=status::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .conclusion')
           echo ::set-output name=g2_version::$(cat build_info/build_info.json | jq --raw-output '.g2_version')
-          echo ::set-output name=branch_name::$(cat build_info/build_info.json | jq --raw-output '.branch_name')
+          echo ::set-output name=branch_name::$(echo ${GITHUB_REF##*/})
       - name: Generate log file
         run: curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_logs.txt ${{ steps.job_info.outputs.log_url }}/logs
       - name: Slack Notification
