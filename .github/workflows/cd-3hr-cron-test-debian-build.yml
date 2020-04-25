@@ -106,7 +106,7 @@ jobs:
         uses: Senzing/git-action-slack-notification@1.0.0
         if: contains(steps.job_info.outputs.status, 'failure')
         env:
-          SLACK_CHANNEL: ci-cd-dev
+          SLACK_CHANNEL: production-build-failures
           SLACK_COLOR: '#3278BD'
           SLACK_TITLE: Senzing API server failed to build on commit sha ${{ github.sha }} using G2 Version ${{ steps.job_info.outputs.g2_version }}
           SLACK_MESSAGE: |
