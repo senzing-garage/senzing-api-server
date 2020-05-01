@@ -1372,12 +1372,12 @@ public class ConfigServicesReadTest extends AbstractServiceTest
 
   @Test public void getCurrentConfigTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("config/current");
+      String  uriText = this.formatServerUri("configs/active");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       long before = System.currentTimeMillis();
       SzConfigResponse response
-          = this.configServices.getCurrentConfig(uriInfo);
+          = this.configServices.getActiveConfig(uriInfo);
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
@@ -1391,7 +1391,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
 
   @Test public void getCurrentConfigViaHttpTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("config/current");
+      String  uriText = this.formatServerUri("configs/active");
       long    before  = System.currentTimeMillis();
       SzConfigResponse response
           = this.invokeServerViaHttp(GET, uriText, SzConfigResponse.class);
@@ -1408,12 +1408,12 @@ public class ConfigServicesReadTest extends AbstractServiceTest
 
   @Test public void getDefaultConfigTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("config/default");
+      String  uriText = this.formatServerUri("configs/template");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       long before = System.currentTimeMillis();
       SzConfigResponse response
-          = this.configServices.getDefaultConfig(uriInfo);
+          = this.configServices.getTemplateConfig(uriInfo);
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
@@ -1427,7 +1427,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
 
   @Test public void getDefaultConfigViaHttpTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("config/default");
+      String  uriText = this.formatServerUri("configs/template");
       long    before  = System.currentTimeMillis();
       SzConfigResponse response
           = this.invokeServerViaHttp(GET, uriText, SzConfigResponse.class);

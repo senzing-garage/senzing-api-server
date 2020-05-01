@@ -74,7 +74,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
     });
   }
 
-  @Test public void getCurrentConfigTest() {
+  @Test public void getActiveConfigTest() {
     this.performTest(() -> {
       final String newDataSource = "PHOO";
       String  uriText = this.formatServerUri("config/current");
@@ -87,7 +87,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
 
       long before = System.currentTimeMillis();
       SzConfigResponse response
-          = this.configServices.getCurrentConfig(uriInfo);
+          = this.configServices.getActiveConfig(uriInfo);
       response.concludeTimers();
       long after = System.currentTimeMillis();
 

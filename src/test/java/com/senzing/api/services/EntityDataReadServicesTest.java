@@ -24,9 +24,10 @@ import static com.senzing.api.model.SzAttributeClass.*;
 import static com.senzing.util.CollectionUtilities.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
-import static com.senzing.api.model.SzFeatureInclusion.*;
+import static com.senzing.api.model.SzFeatureMode.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static com.senzing.api.services.ResponseValidators.*;
+import static com.senzing.api.model.SzRelationshipMode.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class EntityDataReadServicesTest extends AbstractServiceTest {
@@ -507,7 +508,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         recordId.getDataSourceCode(),
         recordId.getRecordId(),
         false,
-        false,
+        SzRelationshipMode.NONE,
         true,
         WITH_DUPLICATES,
         false,
@@ -971,18 +972,23 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     List<Arguments> result = new LinkedList<>();
 
     Boolean[] booleanVariants = {null, true, false};
-    List<SzFeatureInclusion> featureModes = new LinkedList<>();
+    List<SzFeatureMode> featureModes = new LinkedList<>();
     featureModes.add(null);
-    for (SzFeatureInclusion featureMode : SzFeatureInclusion.values()) {
+    for (SzFeatureMode featureMode : SzFeatureMode.values()) {
       featureModes.add(featureMode);
+    }
+    List<SzRelationshipMode> relationshipModes = new LinkedList<>();
+    relationshipModes.add(null);
+    for (SzRelationshipMode mode : SzRelationshipMode.values()) {
+      relationshipModes.add(mode);
     }
     baseArgs.forEach(baseArgList -> {
       for (Boolean withRaw : booleanVariants) {
         for (Boolean forceMinimal : booleanVariants) {
-          for (Boolean withRelated : booleanVariants) {
+          for (SzRelationshipMode withRelated : relationshipModes) {
             for (Boolean withFeatureStats : booleanVariants) {
               for (Boolean withDerivedFeatures : booleanVariants) {
-                for (SzFeatureInclusion featureMode : featureModes) {
+                for (SzFeatureMode featureMode : featureModes) {
                   Object[] argArray = baseArgList.toArray();
 
                   argArray[1] = withRaw;
@@ -1006,13 +1012,13 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   private StringBuilder buildEntityQueryString(
-      StringBuilder      sb,
-      Boolean            withRaw,
-      Boolean            withRelated,
-      Boolean            forceMinimal,
-      SzFeatureInclusion featureMode,
-      Boolean            withFeatureStats,
-      Boolean            withDerivedFeatures)
+      StringBuilder       sb,
+      Boolean             withRaw,
+      SzRelationshipMode  withRelated,
+      Boolean             forceMinimal,
+      SzFeatureMode       featureMode,
+      Boolean             withFeatureStats,
+      Boolean             withDerivedFeatures)
   {
     String prefix = "?";
     if (forceMinimal != null) {
@@ -1047,9 +1053,9 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   public void getEntityByRecordIdTest(
       SzRecordId                          keyRecordId,
       Boolean                             withRaw,
-      Boolean                             withRelated,
+      SzRelationshipMode                  withRelated,
       Boolean                             forceMinimal,
-      SzFeatureInclusion                  featureMode,
+      SzFeatureMode                       featureMode,
       Boolean                             withFeatureStats,
       Boolean                             withDerivedFeatures,
       Integer                             expectedRecordCount,
@@ -1090,7 +1096,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           keyRecordId.getDataSourceCode(),
           keyRecordId.getRecordId(),
           (withRaw != null ? withRaw : false),
-          (withRelated != null ? withRelated : false),
+          (withRelated != null ? withRelated : PARTIAL),
           (forceMinimal != null ? forceMinimal : false),
           (featureMode != null ? featureMode : WITH_DUPLICATES),
           (withFeatureStats != null ? withFeatureStats : false),
@@ -1129,9 +1135,9 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   public void getEntityByRecordIdTestViaHttp(
       SzRecordId                          keyRecordId,
       Boolean                             withRaw,
-      Boolean                             withRelated,
+      SzRelationshipMode                  withRelated,
       Boolean                             forceMinimal,
-      SzFeatureInclusion                  featureMode,
+      SzFeatureMode                       featureMode,
       Boolean                             withFeatureStats,
       Boolean                             withDerivedFeatures,
       Integer                             expectedRecordCount,
@@ -1214,7 +1220,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
             PASSENGERS,
             badRecordId,
             false,
-            false,
+            PARTIAL,
             false,
             WITH_DUPLICATES,
             false,
@@ -1255,7 +1261,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
             PASSENGERS,
             badRecordId,
             false,
-            false,
+            PARTIAL,
             false,
             WITH_DUPLICATES,
             false,
@@ -1326,9 +1332,9 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   public void getEntityByEntityIdTest(
       SzRecordId                          keyRecordId,
       Boolean                             withRaw,
-      Boolean                             withRelated,
+      SzRelationshipMode                  withRelated,
       Boolean                             forceMinimal,
-      SzFeatureInclusion                  featureMode,
+      SzFeatureMode                       featureMode,
       Boolean                             withFeatureStats,
       Boolean                             withDerivedFeatures,
       Integer                             expectedRecordCount,
@@ -1369,7 +1375,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       SzEntityResponse response = this.entityDataServices.getEntityByEntityId(
           entityId,
           (withRaw != null ? withRaw : false),
-          (withRelated != null ? withRelated : false),
+          (withRelated == null ? PARTIAL : withRelated),
           (forceMinimal != null ? forceMinimal : false),
           (featureMode != null ? featureMode : WITH_DUPLICATES),
           (withFeatureStats != null ? withFeatureStats : false),
@@ -1408,9 +1414,9 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   public void getEntityByEntityIdTestViaHttp(
       SzRecordId                          keyRecordId,
       Boolean                             withRaw,
-      Boolean                             withRelated,
+      SzRelationshipMode                  withRelated,
       Boolean                             forceMinimal,
-      SzFeatureInclusion                  featureMode,
+      SzFeatureMode                       featureMode,
       Boolean                             withFeatureStats,
       Boolean                             withDerivedFeatures,
       Integer                             expectedRecordCount,
@@ -1491,7 +1497,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         this.entityDataServices.getEntityByEntityId(
             badEntityId,
             false,
-            false,
+            SzRelationshipMode.NONE,
             false,
             WITH_DUPLICATES,
             false,
@@ -1599,11 +1605,13 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     List<Arguments> list = new LinkedList<>();
 
     Boolean[] booleanVariants = {null, true, false};
-    List<SzFeatureInclusion> featureModes = new LinkedList<>();
+    List<SzFeatureMode> featureModes = new LinkedList<>();
     featureModes.add(null);
-    for (SzFeatureInclusion featureMode : SzFeatureInclusion.values()) {
+    for (SzFeatureMode featureMode : SzFeatureMode.values()) {
       featureModes.add(featureMode);
     }
+    boolean[] trueFalse = { true, false };
+
     searchCountMap.entrySet().forEach(entry -> {
       Map<String, Set<String>> criteria = entry.getKey();
       Integer resultCount = entry.getValue();
@@ -1611,7 +1619,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       for (Boolean withRaw : booleanVariants) {
         for (Boolean forceMinimal : booleanVariants) {
           for (Boolean withRelationships : booleanVariants) {
-            for (SzFeatureInclusion featureMode : featureModes) {
+            for (SzFeatureMode featureMode : featureModes) {
               for (Boolean withFeatureStats: booleanVariants) {
                 for (Boolean withDerivedFeatures : booleanVariants) {
                   list.add(arguments(criteria,
@@ -1635,14 +1643,14 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("searchParameters")
-  public void searchByJsonAttrsTest(Map<String, Set<String>> criteria,
-                                    Integer expectedCount,
-                                    Boolean forceMinimal,
-                                    SzFeatureInclusion featureMode,
-                                    Boolean withFeatureStats,
-                                    Boolean withDerivedFeatures,
-                                    Boolean withRelationships,
-                                    Boolean withRaw)
+  public void searchByJsonAttrsTest(Map<String, Set<String>>  criteria,
+                                    Integer                   expectedCount,
+                                    Boolean                   forceMinimal,
+                                    SzFeatureMode             featureMode,
+                                    Boolean                   withFeatureStats,
+                                    Boolean                   withDerivedFeatures,
+                                    Boolean                   withRelationships,
+                                    Boolean                   withRaw)
   {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
@@ -1657,6 +1665,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       criteria.entrySet().forEach(entry -> {
         String key = entry.getKey();
         Set<String> values = entry.getValue();
+        if (values.size() == 0) return;
         if (values.size() == 1) {
           job.add(key, values.iterator().next());
         } else {
@@ -1697,6 +1706,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       SzAttributeSearchResponse response
           = this.entityDataServices.searchByAttributes(
           attrs,
+          null,
           (forceMinimal != null ? forceMinimal : false),
           (featureMode != null ? featureMode : WITH_DUPLICATES),
           (withFeatureStats != null ? withFeatureStats : false),
@@ -1732,7 +1742,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       Map<String, Set<String>>  criteria,
       Integer                   expectedCount,
       Boolean                   forceMinimal,
-      SzFeatureInclusion        featureMode,
+      SzFeatureMode             featureMode,
       Boolean                   withFeatureStats,
       Boolean                   withDerivedFeatures,
       Boolean                   withRelationships,
@@ -1751,6 +1761,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       criteria.entrySet().forEach(entry -> {
         String key = entry.getKey();
         Set<String> values = entry.getValue();
+        if (values.size() == 0) return;
         if (values.size() == 1) {
           job.add(key, values.iterator().next());
         } else {
@@ -1812,11 +1823,104 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("searchParameters")
+  public void searchByParamAttrsTest(
+      Map<String, Set<String>>  criteria,
+      Integer                   expectedCount,
+      Boolean                   forceMinimal,
+      SzFeatureMode             featureMode,
+      Boolean                   withFeatureStats,
+      Boolean                   withDerivedFeatures,
+      Boolean                   withRelationships,
+      Boolean                   withRaw)
+  {
+    this.performTest(() -> {
+      String testInfo = "criteria=[ " + criteria
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withFeatureStats=[ " + withFeatureStats
+          + " ], withDerivedFeatures=[ " + withDerivedFeatures
+          + " ], withRelationships=[ " + withRelationships
+          + " ], withRaw=[ " + withRaw + " ]";
+
+      StringBuffer sb = new StringBuffer();
+      List<String> attrList = new LinkedList<>();
+      criteria.entrySet().forEach(entry -> {
+        String key = entry.getKey();
+        Set<String> values = entry.getValue();
+        for (String value : values) {
+          attrList.add(key + ":" + value);
+          String encodedVal = urlEncode(key + ":" + value);
+          sb.append("&attr=").append(encodedVal);
+        }
+      });
+
+      sb.setCharAt(0, '?');
+
+      if (forceMinimal != null) {
+        sb.append("&forceMinimal=").append(forceMinimal);
+      }
+      if (featureMode != null) {
+        sb.append("&featureMode=").append(featureMode);
+      }
+      if (withFeatureStats != null) {
+        sb.append("&withFeatureStats=").append(withFeatureStats);
+      }
+      if (withDerivedFeatures != null) {
+        sb.append("&withDerivedFeatures=").append(withDerivedFeatures);
+      }
+      if (withRelationships != null) {
+        sb.append("&withRelationships=").append(withRelationships);
+      }
+      if (withRaw != null) {
+        sb.append("&withRaw=").append(withRaw);
+      }
+
+      String uriText = this.formatServerUri(
+          "entities" + sb.toString());
+
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      long before = System.currentTimeMillis();
+      SzAttributeSearchResponse response
+          = this.entityDataServices.searchByAttributes(
+          null,
+          attrList,
+          (forceMinimal != null ? forceMinimal : false),
+          (featureMode != null ? featureMode : WITH_DUPLICATES),
+          (withFeatureStats != null ? withFeatureStats : false),
+          (withDerivedFeatures != null ? withDerivedFeatures : false),
+          (withRelationships != null ? withRelationships : true),
+          (withRaw != null ? withRaw : false),
+          uriInfo);
+
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      validateSearchResponse(
+          testInfo,
+          response,
+          GET,
+          uriText,
+          expectedCount,
+          withRelationships,
+          forceMinimal,
+          featureMode,
+          withFeatureStats == null ? false : withFeatureStats,
+          withDerivedFeatures == null ? false : withDerivedFeatures,
+          before,
+          after,
+          withRaw);
+
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("searchParameters")
   public void searchByParamAttrsTestViaHttp(
       Map<String, Set<String>>  criteria,
       Integer                   expectedCount,
       Boolean                   forceMinimal,
-      SzFeatureInclusion        featureMode,
+      SzFeatureMode             featureMode,
       Boolean                   withFeatureStats,
       Boolean                   withDerivedFeatures,
       Boolean                   withRelationships,
@@ -1835,12 +1939,12 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       criteria.entrySet().forEach(entry -> {
         String key = entry.getKey();
         Set<String> values = entry.getValue();
-        String encodedKey = urlEncode(key);
         for (String value : values) {
-          String encodedVal = urlEncode(value);
-          sb.append("&attr_").append(encodedKey).append("=").append(encodedVal);
+          String encodedVal = urlEncode(key + ":" + value);
+          sb.append("&attr=").append(encodedVal);
         }
       });
+
       // replace the "&" with a "?" at the start
       sb.setCharAt(0, '?');
       if (forceMinimal != null) {

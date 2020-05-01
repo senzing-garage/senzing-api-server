@@ -21,6 +21,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 
+import static com.senzing.api.services.ServicesUtil.newBadRequestException;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -46,10 +47,6 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
   static {
     List<String> list = new ArrayList<>();
     list.add("ACTOR");
-    list.add("OBJECT");
-    list.add("LOCATION");
-    list.add("EVENT");
-    list.add("TRAN");
     ALL_ENTITY_CLASSES_LIST = Collections.unmodifiableList(list);
   }
   private ConfigServices configServices;
@@ -533,7 +530,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
         {
           String code = null;
           for (SzEntityType value: values) {
-            if (code != null && code.equals(value.getEntityClassCode())) {
+            if (code != null && !code.equals(value.getEntityClassCode())) {
               throw new IllegalStateException(
                   "Cannot format as a quoted text array and have different "
                   + "entity class codes: " + values);
@@ -1258,8 +1255,12 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     });
   }
 
-  @ParameterizedTest
-  @MethodSource("getPostEntityClassesParameters")
+
+  //---------------------------------------------------------------------
+  // TODO(bcaceres) -- remove this code when entity classes other than
+  // ACTOR are supported
+  //@ParameterizedTest
+  //@MethodSource("getPostEntityClassesParameters")
   public void postEntityClassesTest(int                     queryClassCount,
                                     EntityClassBodyVariant  bodyClassVariant,
                                     int                     overlapCount,
@@ -1335,8 +1336,11 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     });
   }
 
-  @ParameterizedTest
-  @MethodSource("getPostEntityClassesParameters")
+  //---------------------------------------------------------------------
+  // TODO(bcaceres) -- remove this code when entity classes other than
+  // ACTOR are supported
+  //@ParameterizedTest
+  //@MethodSource("getPostEntityClassesParameters")
   public void postEntityClassesTestViaHttp(
       int                     queryClassCount,
       EntityClassBodyVariant  bodyClassVariant,
@@ -1776,7 +1780,9 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     });
   }
 
-  @Test
+  // TODO(bcaceres): Renable this test when entity classes other than ACTOR
+  // are supported by the product.
+  //@Test
   public void postEntityTypesForWrongClassTest()
   {
     this.performTest(() -> {
@@ -1817,7 +1823,9 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     });
   }
 
-  @Test
+  // TODO(bcaceres): Renable this test when entity classes other than ACTOR
+  // are supported by the product.
+  //@Test
   public void postEntityTypesForWrongClassTestViaHttp() {
     this.performTest(() -> {
       this.revertToInitialConfig();
@@ -1859,7 +1867,9 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     });
   }
 
-  @Test
+  // TODO(bcaceres): Renable this test when entity classes other than ACTOR
+  // are supported by the product.
+  //@Test
   public void postEntityTypesForInvalidClassTest()
   {
     this.performTest(() -> {
@@ -1903,7 +1913,9 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     });
   }
 
-  @Test
+  // TODO(bcaceres): Renable this test when entity classes other than ACTOR
+  // are supported by the product.
+  //@Test
   public void postEntityTypesForInvalidClassTestViaHttp() {
     this.performTest(() -> {
       this.revertToInitialConfig();

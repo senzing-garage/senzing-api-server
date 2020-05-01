@@ -23,6 +23,7 @@ import javax.json.*;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
+import static com.senzing.api.services.ServicesUtil.newBadRequestException;
 import static com.senzing.io.IOUtilities.*;
 import static org.junit.jupiter.api.Assumptions.*;
 import static com.senzing.util.LoggingUtilities.*;
@@ -504,6 +505,15 @@ public abstract class AbstractServiceTest {
       JsonArray jsonArray = config.getJsonArray("CFG_ECLASS");
       for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
         String  eclassCode  = jsonObject.getString("ECLASS_CODE");
+
+        //---------------------------------------------------------------------
+        // check the entity class code to ensure it is ACTOR
+        // TODO(bcaceres) -- remove this code when entity classes other than
+        // ACTOR are supported ** OR ** when the API server no longer supports
+        // product versions that ship with alternate entity classes
+        if (!eclassCode.equals("ACTOR")) continue; // skip this one
+        //---------------------------------------------------------------------
+
         Integer eclassId    = jsonObject.getInt("ECLASS_ID");
         String  resolve     = jsonObject.getString("RESOLVE");
         SzEntityClass entityClass = new SzEntityClass(

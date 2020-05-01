@@ -15,8 +15,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.*;
 
-import static com.senzing.api.model.SzFeatureInclusion.NONE;
-import static com.senzing.api.model.SzFeatureInclusion.WITH_DUPLICATES;
+import static com.senzing.api.model.SzFeatureMode.NONE;
+import static com.senzing.api.model.SzFeatureMode.WITH_DUPLICATES;
 import static com.senzing.api.model.SzHttpMethod.GET;
 import static com.senzing.api.services.ResponseValidators.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -204,7 +204,7 @@ public class WhyServicesTest extends AbstractServiceTest {
         recordId.getDataSourceCode(),
         recordId.getRecordId(),
         false,
-        false,
+        SzRelationshipMode.NONE,
         true,
         WITH_DUPLICATES,
         false,
@@ -222,9 +222,9 @@ public class WhyServicesTest extends AbstractServiceTest {
     Boolean[] booleanVariants = {null, true, false};
     List<Boolean> booleanVariantList = Arrays.asList(booleanVariants);
 
-    List<SzFeatureInclusion> featureModes = new LinkedList<>();
+    List<SzFeatureMode> featureModes = new LinkedList<>();
     featureModes.add(null);
-    for (SzFeatureInclusion featureMode : SzFeatureInclusion.values()) {
+    for (SzFeatureMode featureMode : SzFeatureMode.values()) {
       featureModes.add(featureMode);
     }
 
@@ -253,9 +253,9 @@ public class WhyServicesTest extends AbstractServiceTest {
     Boolean[] booleanVariants = {null, true, false};
     List<Boolean> booleanVariantList = Arrays.asList(booleanVariants);
 
-    List<SzFeatureInclusion> featureModes = new LinkedList<>();
+    List<SzFeatureMode> featureModes = new LinkedList<>();
     featureModes.add(null);
-    for (SzFeatureInclusion featureMode : SzFeatureInclusion.values()) {
+    for (SzFeatureMode featureMode : SzFeatureMode.values()) {
       featureModes.add(featureMode);
     }
 
@@ -292,7 +292,7 @@ public class WhyServicesTest extends AbstractServiceTest {
   private StringBuilder buildWhyEntityQueryString(
       StringBuilder         sb,
       Boolean               forceMinimal,
-      SzFeatureInclusion    featureMode,
+      SzFeatureMode featureMode,
       Boolean               withFeatureStats,
       Boolean               withDerivedFeatures,
       Boolean               withRelationships,
@@ -331,7 +331,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       SzRecordId            recordId1,
       SzRecordId            recordId2,
       Boolean               forceMinimal,
-      SzFeatureInclusion    featureMode,
+      SzFeatureMode featureMode,
       Boolean               withFeatureStats,
       Boolean               withDerivedFeatures,
       Boolean               withRelationships,
@@ -379,7 +379,7 @@ public class WhyServicesTest extends AbstractServiceTest {
   @MethodSource("getWhyEntityParameters")
   public void whyEntityByRecordIdTest(SzRecordId          recordId,
                                       Boolean             forceMinimal,
-                                      SzFeatureInclusion  featureMode,
+                                      SzFeatureMode featureMode,
                                       Boolean             withFeatureStats,
                                       Boolean             withDerivedFeatures,
                                       Boolean             withRelationships,
@@ -449,7 +449,7 @@ public class WhyServicesTest extends AbstractServiceTest {
   public void whyEntityByRecordIdTestViaHttp(
       SzRecordId          recordId,
       Boolean             forceMinimal,
-      SzFeatureInclusion  featureMode,
+      SzFeatureMode featureMode,
       Boolean             withFeatureStats,
       Boolean             withDerivedFeatures,
       Boolean             withRelationships,
@@ -507,7 +507,7 @@ public class WhyServicesTest extends AbstractServiceTest {
   @MethodSource("getWhyEntityParameters")
   public void whyEntityByEntityIdTest(SzRecordId          recordId,
                                       Boolean             forceMinimal,
-                                      SzFeatureInclusion  featureMode,
+                                      SzFeatureMode featureMode,
                                       Boolean             withFeatureStats,
                                       Boolean             withDerivedFeatures,
                                       Boolean             withRelationships,
@@ -578,7 +578,7 @@ public class WhyServicesTest extends AbstractServiceTest {
   public void whyEntityByEntityIdTestViaHttp(
       SzRecordId          recordId,
       Boolean             forceMinimal,
-      SzFeatureInclusion  featureMode,
+      SzFeatureMode featureMode,
       Boolean             withFeatureStats,
       Boolean             withDerivedFeatures,
       Boolean             withRelationships,
@@ -641,7 +641,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       SzRecordId                          recordId,
       Long                                entityId,
       boolean                             forceMinimal,
-      SzFeatureInclusion                  featureMode,
+      SzFeatureMode featureMode,
       boolean                             withFeatureStats,
       boolean                             withDerivedFeatures,
       boolean                             withRelationships,
@@ -817,7 +817,7 @@ public class WhyServicesTest extends AbstractServiceTest {
   public void whyRecordsTest(SzRecordId         recordId1,
                              SzRecordId         recordId2,
                              Boolean            forceMinimal,
-                             SzFeatureInclusion featureMode,
+                             SzFeatureMode featureMode,
                              Boolean            withFeatureStats,
                              Boolean            withDerivedFeatures,
                              Boolean            withRelationships,
@@ -891,7 +891,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       SzRecordId          recordId1,
       SzRecordId          recordId2,
       Boolean             forceMinimal,
-      SzFeatureInclusion  featureMode,
+      SzFeatureMode featureMode,
       Boolean             withFeatureStats,
       Boolean             withDerivedFeatures,
       Boolean             withRelationships,
@@ -954,7 +954,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       SzRecordId                          recordId1,
       SzRecordId                          recordId2,
       boolean                             forceMinimal,
-      SzFeatureInclusion                  featureMode,
+      SzFeatureMode featureMode,
       boolean                             withFeatureStats,
       boolean                             withDerivedFeatures,
       boolean                             withRelationships,

@@ -17,8 +17,8 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.*;
 
-import static com.senzing.api.model.SzFeatureInclusion.NONE;
-import static com.senzing.api.model.SzFeatureInclusion.WITH_DUPLICATES;
+import static com.senzing.api.model.SzFeatureMode.NONE;
+import static com.senzing.api.model.SzFeatureMode.WITH_DUPLICATES;
 import static com.senzing.api.model.SzHttpMethod.GET;
 import static com.senzing.util.CollectionUtilities.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,7 +31,7 @@ import static com.senzing.api.services.ResponseValidators.*;
 @TestInstance(Lifecycle.PER_CLASS)
 public class EntityGraphServicesTest extends AbstractServiceTest {
   private static final int DEFAULT_PATH_DEGREES = 3;
-  private static final int DEFAULT_NETWORK_DEGREES = 5;
+  private static final int DEFAULT_NETWORK_DEGREES = 3;
   private static final int DEFAULT_BUILD_OUT = 1;
   private static final int DEFAULT_MAX_ENTITIES = 1000;
 
@@ -193,7 +193,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
         recordId.getDataSourceCode(),
         recordId.getRecordId(),
         false,
-        false,
+        SzRelationshipMode.NONE,
         true,
         WITH_DUPLICATES,
         false,
@@ -343,9 +343,9 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
     Boolean[] booleanVariants = {null, true, false};
     List<Boolean> booleanVariantList = Arrays.asList(booleanVariants);
 
-    List<SzFeatureInclusion> featureModes = new LinkedList<>();
+    List<SzFeatureMode> featureModes = new LinkedList<>();
     featureModes.add(null);
-    for (SzFeatureInclusion featureMode : SzFeatureInclusion.values()) {
+    for (SzFeatureMode featureMode : SzFeatureMode.values()) {
       featureModes.add(featureMode);
     }
     List<List> optionCombos = generateCombinations(
@@ -387,7 +387,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean               forbidAvoided,
       List<String>          sourcesParam,
       Boolean               forceMinimal,
-      SzFeatureInclusion    featureMode,
+      SzFeatureMode featureMode,
       Boolean               withFeatureStats,
       Boolean               withDerivedFeatures,
       Boolean               withRaw)
@@ -519,7 +519,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                     Boolean                 forbidAvoided,
                                     List<String>            sourcesParam,
                                     Boolean                 forceMinimal,
-                                    SzFeatureInclusion      featureMode,
+                                    SzFeatureMode featureMode,
                                     Boolean                 withFeatureStats,
                                     Boolean                 withDerivedFeatures,
                                     Boolean                 withRaw,
@@ -627,7 +627,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                 forbidAvoided,
       List<String>            sourcesParam,
       Boolean                 forceMinimal,
-      SzFeatureInclusion      featureMode,
+      SzFeatureMode featureMode,
       Boolean                 withFeatureStats,
       Boolean                 withDerivedFeatures,
       Boolean                 withRaw,
@@ -720,7 +720,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                     Boolean                 forbidAvoided,
                                     List<String>            sourcesParam,
                                     Boolean                 forceMinimal,
-                                    SzFeatureInclusion      featureMode,
+                                    SzFeatureMode featureMode,
                                     Boolean                 withFeatureStats,
                                     Boolean                 withDerivedFeatures,
                                     Boolean                 withRaw,
@@ -828,7 +828,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                 forbidAvoided,
       List<String>            sourcesParam,
       Boolean                 forceMinimal,
-      SzFeatureInclusion      featureMode,
+      SzFeatureMode featureMode,
       Boolean                 withFeatureStats,
       Boolean                 withDerivedFeatures,
       Boolean                 withRaw,
@@ -924,7 +924,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                             forbidAvoided,
       List<String>                        sourcesParam,
       Boolean                             forceMinimal,
-      SzFeatureInclusion                  featureMode,
+      SzFeatureMode featureMode,
       boolean                             withFeatureStats,
       boolean                             withDerivedFeatures,
       Boolean                             withRaw,
@@ -1273,9 +1273,9 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
     Boolean[] booleanVariants = {null, true, false};
     List<Boolean> booleanVariantList = Arrays.asList(booleanVariants);
 
-    List<SzFeatureInclusion> featureModes = new LinkedList<>();
+    List<SzFeatureMode> featureModes = new LinkedList<>();
     featureModes.add(null);
-    for (SzFeatureInclusion featureMode : SzFeatureInclusion.values()) {
+    for (SzFeatureMode featureMode : SzFeatureMode.values()) {
       featureModes.add(featureMode);
     }
 
@@ -1320,7 +1320,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Integer               buildOut,
       Integer               maxEntities,
       Boolean               forceMinimal,
-      SzFeatureInclusion    featureMode,
+      SzFeatureMode featureMode,
       Boolean               withFeatureStats,
       Boolean               withDerivedFeatures,
       Boolean               withRaw)
@@ -1378,7 +1378,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Integer                  buildOut,
       Integer                  maxEntities,
       Boolean                  forceMinimal,
-      SzFeatureInclusion       featureMode,
+      SzFeatureMode featureMode,
       Boolean                  withFeatureStats,
       Boolean                  withDerivedFeatures,
       Boolean                  withRaw,
@@ -1473,7 +1473,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Integer                  buildOut,
       Integer                  maxEntities,
       Boolean                  forceMinimal,
-      SzFeatureInclusion       featureMode,
+      SzFeatureMode featureMode,
       Boolean                  withFeatureStats,
       Boolean                  withDerivedFeatures,
       Boolean                  withRaw,
@@ -1555,7 +1555,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Integer                  buildOut,
       Integer                  maxEntities,
       Boolean                  forceMinimal,
-      SzFeatureInclusion       featureMode,
+      SzFeatureMode featureMode,
       Boolean                  withFeatureStats,
       Boolean                  withDerivedFeatures,
       Boolean                  withRaw,
@@ -1650,7 +1650,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Integer                  buildOut,
       Integer                  maxEntities,
       Boolean                  forceMinimal,
-      SzFeatureInclusion       featureMode,
+      SzFeatureMode featureMode,
       Boolean                  withFeatureStats,
       Boolean                  withDerivedFeatures,
       Boolean                  withRaw,
@@ -1734,7 +1734,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Integer                             buildOut,
       Integer                             maxEntities,
       Boolean                             forceMinimal,
-      SzFeatureInclusion                  featureMode,
+      SzFeatureMode featureMode,
       boolean                             withFeatureStats,
       boolean                             withDerivedFeatures,
       Boolean                             withRaw,

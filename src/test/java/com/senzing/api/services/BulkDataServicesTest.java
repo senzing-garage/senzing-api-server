@@ -8,6 +8,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
@@ -246,6 +249,9 @@ public class BulkDataServicesTest extends AbstractServiceTest {
           entityTypeMap.put(entityType, ENTITY_TYPE_MAP.get(entityType));
         }
       }
+
+      testInfo = testInfo + ", dataSourceMap=[ " + dataSourceMap
+          + " ], entityTypeMap=[ " + entityTypeMap + " ]";
 
       if (evenOdd) {
         result.add(Arguments.of(
@@ -640,34 +646,93 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         sb.append(prefix).append("maxFailures=").append(maxFailures);
         prefix = "&";
       }
+
       if (dataSourceMap != null) {
-        String[] prefixArr = { prefix };
+        String[]          prefixArr   = { prefix };
+        boolean[]         jsonFlag    = { true };
+        boolean[]         overlapFlag = { true };
+        JsonObjectBuilder builder   = Json.createObjectBuilder();
         dataSourceMap.entrySet().forEach(entry -> {
+          String  key   = entry.getKey();
+          String  value = entry.getValue();
+          if (jsonFlag[0] || overlapFlag[0]) {
+            builder.add(key, value);
+
+          } else {
+            String mapping = ":" + key + ":" + value;
+            try {
+              sb.append(prefixArr[0]).append("mapDataSource=").append(
+                  URLEncoder.encode(mapping, UTF_8));
+              prefixArr[0] = "&";
+            } catch (UnsupportedEncodingException cannotHappen) {
+              throw new IllegalStateException("UTF-8 encoding not supported");
+            }
+            overlapFlag[0] = !overlapFlag[0];
+          }
+          jsonFlag[0] = !jsonFlag[0];
+        });
+        JsonObject jsonObject = builder.build();
+        if (jsonObject.size() > 0) {
+          String mapDataSources = jsonObject.toString();
           try {
-            sb.append(prefixArr[0]).append("dataSource_").append(
-                URLEncoder.encode(entry.getKey(), UTF_8)).append("=").append(
-                    URLEncoder.encode(entry.getValue(), UTF_8));
+            sb.append(prefixArr[0]).append("mapDataSources=").append(
+                URLEncoder.encode(mapDataSources, UTF_8));
+
+            prefixArr[0] = "&";
+
           } catch (UnsupportedEncodingException cannotHappen) {
             throw new IllegalStateException("UTF-8 encoding not supported");
           }
-          prefixArr[0] = "&";
-        });
+        }
+
+        // update the prefix
+        prefix = prefixArr[0];
       }
+
       if (entityTypeMap != null) {
-        String[] prefixArr = { prefix };
+        String[]          prefixArr   = { prefix };
+        boolean[]         jsonFlag    = { true };
+        boolean[]         overlapFlag = { true };
+        JsonObjectBuilder builder   = Json.createObjectBuilder();
         entityTypeMap.entrySet().forEach(entry -> {
+          String  key   = entry.getKey();
+          String  value = entry.getValue();
+          if (jsonFlag[0] || overlapFlag[0]) {
+            builder.add(key, value);
+
+          } else {
+            String mapping = ":" + key + ":" + value;
+            try {
+              sb.append(prefixArr[0]).append("mapEntityType=").append(
+                  URLEncoder.encode(mapping, UTF_8));
+              prefixArr[0] = "&";
+            } catch (UnsupportedEncodingException cannotHappen) {
+              throw new IllegalStateException("UTF-8 encoding not supported");
+            }
+            overlapFlag[0] = !overlapFlag[0];
+          }
+          jsonFlag[0] = !jsonFlag[0];
+        });
+        JsonObject jsonObject = builder.build();
+        if (jsonObject.size() > 0) {
+          String mapEntityTypes = jsonObject.toString();
           try {
-            sb.append(prefixArr[0]).append("entityType_").append(
-                URLEncoder.encode(entry.getKey(), UTF_8)).append("=").append(
-                URLEncoder.encode(entry.getValue(), UTF_8));
+            sb.append(prefixArr[0]).append("mapEntityTypes=").append(
+                URLEncoder.encode(mapEntityTypes, UTF_8));
+
+            prefixArr[0] = "&";
+
           } catch (UnsupportedEncodingException cannotHappen) {
             throw new IllegalStateException("UTF-8 encoding not supported");
           }
-          prefixArr[0] = "&";
-        });
+        }
+
+        // update the prefix
+        prefix = prefixArr[0];
       }
+
       if (progressPeriod != null) {
-        sb.append("progressPeriod=").append(progressPeriod);
+        sb.append(prefix).append("progressPeriod=").append(progressPeriod);
       }
 
       return sb.toString();
@@ -692,19 +757,61 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       String  uriText = this.formatServerUri("bulk-data/load");
 
-      MultivaluedMap queryParams = new MultivaluedHashMap();
-      queryParams.add("dataSource", CONTACTS_DATA_SOURCE);
-      queryParams.add("entityType", GENERIC_ENTITY_TYPE);
+      MultivaluedMap  queryParams       = new MultivaluedHashMap();
+      String          mapDataSources    = null;
+      String          mapEntityTypes    = null;
+      List<String>    mapDataSourceList = new LinkedList<>();
+      List<String>    mapEntityTypeList = new LinkedList<>();
       if (dataSourceMap != null) {
+        boolean[]         jsonFlag    = { true };
+        boolean[]         overlapFlag = { true };
+        JsonObjectBuilder builder   = Json.createObjectBuilder();
         dataSourceMap.entrySet().forEach(entry -> {
-          queryParams.add("dataSource_" + entry.getKey(), entry.getValue());
+          String  key   = entry.getKey();
+          String  value = entry.getValue();
+          if (jsonFlag[0] || overlapFlag[0]) {
+            builder.add(key, value);
+
+          } else {
+            String mapping = ":" + key + ":" + value;
+            mapDataSourceList.add(mapping);
+            queryParams.add("mapDataSource", mapping);
+            overlapFlag[0] = !overlapFlag[0];
+          }
+          jsonFlag[0] = !jsonFlag[0];
         });
+        JsonObject jsonObject = builder.build();
+        if (jsonObject.size() > 0) {
+          mapDataSources = jsonObject.toString();
+          queryParams.add("mapDataSources", mapDataSources);
+        }
       }
+
       if (entityTypeMap != null) {
+        boolean[]         jsonFlag    = { true };
+        boolean[]         overlapFlag = { true };
+        JsonObjectBuilder builder   = Json.createObjectBuilder();
         entityTypeMap.entrySet().forEach(entry -> {
-          queryParams.add("entityType_" + entry.getKey(), entry.getValue());
+          String  key   = entry.getKey();
+          String  value = entry.getValue();
+          if (jsonFlag[0] || overlapFlag[0]) {
+            builder.add(key, value);
+
+          } else {
+            String mapping = ":" + key + ":" + value;
+            mapEntityTypeList.add(mapping);
+            queryParams.add("mapEntityType", mapping);
+            overlapFlag[0] = !overlapFlag[0];
+          }
+          jsonFlag[0] = !jsonFlag[0];
         });
+        JsonObject jsonObject = builder.build();
+        if (jsonObject.size() > 0) {
+          mapEntityTypes = jsonObject.toString();
+          queryParams.add("mapEntityTypes", mapDataSources);
+        }
       }
+
       UriInfo uriInfo = this.newProxyUriInfo(uriText, queryParams);
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
@@ -712,7 +819,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         SzBulkLoadResponse response
             = this.bulkDataServices.loadBulkRecordsViaForm(
                 CONTACTS_DATA_SOURCE,
+                mapDataSources,
+                mapDataSourceList,
                 GENERIC_ENTITY_TYPE,
+                mapEntityTypes,
+                mapEntityTypeList,
                 null,
                 0,
                 mediaType,
@@ -721,7 +832,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                 uriInfo);
         response.concludeTimers();
         long after = System.currentTimeMillis();
-
 
         Map<String,String> allDataSourceMap = new LinkedHashMap<>();
         allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
@@ -976,6 +1086,10 @@ public class BulkDataServicesTest extends AbstractServiceTest {
            BufferedInputStream bis = new BufferedInputStream(is)) {
         long before = System.currentTimeMillis();
         response = this.bulkDataServices.loadBulkRecordsViaForm(
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,

@@ -1,5 +1,7 @@
 package com.senzing.text;
 
+import com.senzing.api.model.SzRecordId;
+
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -113,5 +115,4 @@ public class TextUtilities {
     }
     return sb.toString();
   }
-
 }
