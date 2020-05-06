@@ -1246,11 +1246,11 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
     baseArgs.addAll(networkArgs(
         set(ABC123), 1, 0, null,
-        1, list(list(ABC123)), set(ABC123)));
+        0, list(), set(ABC123)));
 
     baseArgs.addAll(networkArgs(
         set(ABC123), 1, 1, null,
-        1, list(list(ABC123)), set(ABC123,DEF456,MNO345)));
+        0, list(), set(ABC123,DEF456,MNO345)));
 
     baseArgs.addAll(networkArgs(
         set(ABC123,JKL456), 1, 0, null,
@@ -1746,6 +1746,16 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
   {
     selfLink = this.formatServerUri(selfLink);
 
+    // determine how many entities were requested
+    Set<SzEntityIdentifier> entityIdentifiers = new LinkedHashSet<>();
+    if (entityParam != null) {
+      entityIdentifiers.addAll(entityParam.getIdentifiers());
+    }
+    if (entityList != null) {
+      entityIdentifiers.addAll(entityList.getIdentifiers());
+    }
+    int entityCount = entityIdentifiers.size();
+
     validateBasics(testInfo,
                    response,
                    httpMethod,
@@ -1761,6 +1771,18 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
     List<SzEntityPath> entityPaths = networkData.getEntityPaths();
 
     assertNotNull(entityPaths, "Entity path list is null: " + testInfo);
+
+    // remove the self-paths when only a single entity is requested
+    if (entityCount == 1) {
+      List<SzEntityPath> list = new ArrayList<>(entityPaths.size());
+      for (SzEntityPath path : entityPaths) {
+        if (path.getStartEntityId() == path.getEndEntityId()) {
+          continue;
+        }
+        list.add(path);
+      }
+      entityPaths = list;
+    }
 
     List<SzEntityData> entities = networkData.getEntities();
 
@@ -1840,6 +1862,9 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       entityMap.put(resolvedEntity.getEntityId(), resolvedEntity);
     });
 
+    // augment the path entity IDs for single entities with no path to others
+    if (entityParamIds != null) pathEntityIds.addAll(entityParamIds);
+    if (entityListIds != null) pathEntityIds.addAll(entityListIds);
     if (maxEntities != null
         && entityMap.size() > Math.max(maxEntities,pathEntityIds.size()))
     {

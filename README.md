@@ -163,15 +163,15 @@ in sync across multiple processes that may be using it.
 Other command-line options may be useful to you as well.  Execute
 
 ```console
-java -jar target/senzing-api-server-1.8.3.jar -help
+java -jar target/senzing-api-server-1.8.4.jar -help
 ```
 
 to obtain a help message describing all available options.
 For example:
 
 ```console
-$ java -jar target/senzing-api-server-1.8.3.jar -help
-java -jar senzing-api-server-1.8.3.jar <options>
+$ java -jar target/senzing-api-server-1.8.4.jar -help
+java -jar senzing-api-server-1.8.4.jar <options>
 
 <options> includes:
 
