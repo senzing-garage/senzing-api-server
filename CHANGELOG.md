@@ -6,6 +6,110 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2020-04-28
+
+### Changed in 2.0.0
+
+- Modified to build with forthcoming version 2.x of Senzing product
+
+- Updated REST API Version to v2.0.0
+
+- Renamed `com.senzing.api.model.SzFeatureInclusion` to
+  `com.senzing.api.model.SzFeatureMode`
+
+- Added `com.senzing.api.model.SzRelationshipMode` with values of `NONE`,
+  `PARTIAL` and `FULL`.
+
+- In `com.senzing.io.RecordReader` a `null` value in the `dataSourceMap` and
+  `entityTypeMap` is now used as the general overriding data source or entity
+  type, respectively, while the value mapped to empty-string is used to assign
+  a data source or entity type (respectively) to a record that is missing a
+  value for that field.
+
+- Potentially Backward-Compatibility Breaking Changes by Java class and
+  API Endpoint:
+  - `com.senzing.api.services.ConfigServices`
+    - `GET /entity-classes`
+    - `GET /entity-classes/{entityClassCode}`
+    - `POST /entity-types`
+    - `POST /entity-classes/{entityClassCode}/entity-types`
+    - `GET /entity-classes/{entityClassCode}/entity-types/{entityTypeCode}`
+      - Removed support for any entity class other than ACTOR as it was
+        discovered that the underlying product does not properly support entity
+        resolution when using entity classes other than ACTOR and it may not for
+        some time. This will change if and when additional entity classes are
+        supported.
+
+    - `POST /entity-classes`
+      - Removed this operation as it was discovered that the underlying product
+        does not fully properly support entity resolution when using entity
+        classes other than ACTOR and it may not for some time.  This will change
+        if and when additional entity classes are supported.
+
+    - `GET /config/current`
+      - Renamed to `GET /configs/active` since “current” is ambiguous with
+        regards to the “currently active config” versus the configuration
+        managers currently configured “default config”.
+
+    - `GET /config/default`
+      - Renamed to `GET /configs/template` since “default” is ambiguous with the
+        configuration managers “default config” setting.
+
+  - `com.senzing.api.services.EntityDataServices`
+    - `GET /entities/{entityId}`
+    - `GET /data-sources/{dataSourceCode}/records/{recordId}/entity`
+      - The `withRelated` parameter is no longer a `boolean` value that accepts
+        `true` or `false`.  It now accepts an enumerated value of
+         type `com.senzing.api.model.SzRelationshipMode` with values of `NONE`,
+        `PARTIAL` or `FULL`.
+
+    - `GET /entities`
+      - Removed the `attr_[PROPERTY_NAME]` parameters and replaced with the
+        multi-valued `attr` parameter so that this parameter could better be
+        documented in the Open API Spec and examples provided via Swagger
+        Editor.
+
+    - `POST /data-sources/{dataSourceCode}/records/`
+    - `PUT /data-sources/{dataSourceCode}/records/{recordId}`
+      - Modified to default `ENTITY_TYPE` to `GENERIC` if `ENTITY_TYPE` not
+        found in record.
+
+  - `com.senzing.api.services.EntityGraphServices`
+    - `GET /entity-networks`
+      - Changed the default value for `maxDegrees` parameter from 5 to 3
+
+  - `com.senzing.api.services.BulkDataServices`
+    - `POST /bulk-data/load`
+      - Added the single-valued `mapDataSources` parameter which accepts
+        URL-encoded JSON to map the original data sources to target data
+        sources.
+      - Replaced the `dataSource_[DATA_SOURCE_CODE]` parameters with the
+        multi-valued `mapDataSource` parameter so that this parameter
+        could better be documented in Open API Spec and examples provided via
+        Swagger Editor.
+      - Added the single-valued `mapEntityTypes` parameter which accepts
+        URL-encoded JSON to map the original entity types to target entity
+        types.
+      - Replaced the `entityType_[ENTITY_TYPE_CODE]` parameters with the
+        multi-valued `mapEntityType` parameter so that this parameter could
+        better be documented in Open API Spec and examples provided via
+        Swagger Editor.
+      - Modified to default `ENTITY_TYPE` to `GENERIC` if `ENTITY_TYPE` not
+        found in record.
+
+- Other Changes by Java class and API Endpoint:
+  - `com.senzing.api.services.AdminServices`
+    - `GET /license`
+      - Added the previously undocumented (but always-supported) the “withRaw”
+        parameter.
+
+    - `GET /version`
+      - Added the previously undocumented (but always-supported) the “withRaw”
+        parameter.
+
+- Included pre-recorded mock data from integration tests for versions 1.14.1
+  through 1.14.8 as well as 1.15.0 through 1.15.1.
+
 ## [1.8.2] - 2020-04-15
 
 ### Changed in 1.8.2

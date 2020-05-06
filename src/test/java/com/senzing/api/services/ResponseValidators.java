@@ -1824,22 +1824,22 @@ public class ResponseValidators {
     for (SzAttributeSearchResult result : results) {
 
       validateEntity(testInfo,
-                          result,
-                          result.getRelatedEntities(),
-                          forceMinimal,
-                          featureInclusion,
-                          withFeatureStats,
-                          withDerivedFeatures,
-                          null,
-                          null,
-                          (withRelationships == null || !withRelationships),
-                          null,
-                          true,
-                          null,
-                          null,
-                          null,
-                          null,
-                          null);
+                     result,
+                     result.getRelatedEntities(),
+                     forceMinimal,
+                     featureInclusion,
+                     withFeatureStats,
+                     withDerivedFeatures,
+                     null,
+                     null,
+                     (withRelationships == null || !withRelationships),
+                     null,
+                     true,
+                     null,
+                     null,
+                     null,
+                     null,
+                     null);
     }
 
     if (expectRawData) {
