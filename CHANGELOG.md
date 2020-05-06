@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2020-04-28
+## [2.0.0] - 2020-05-08
 
 ### Changed in 2.0.0
 
@@ -109,6 +109,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Included pre-recorded mock data from integration tests for versions 1.14.1
   through 1.14.8 as well as 1.15.0 through 1.15.1.
+
+## [1.8.4] - 2020-05-07
+
+### Fixed in 1.8.4
+
+- Updated EntityGraphServicesTest to account for bug fix in Senzing 1.15.2
+- Updated test runs to include additional product versions
+
+## [1.8.3] - 2020-04-24
+
+### Fixed in 1.8.3
+
+- .dockterignore was causing the `-dirty` suffix to be added to docker build versions.
 
 ## [1.8.2] - 2020-04-15
 

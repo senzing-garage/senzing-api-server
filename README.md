@@ -279,7 +279,6 @@ $ java -jar target/senzing-api-server-2.0.0.jar -help
           is specified by itself then a help message on configuration manager
           options will be displayed.
           NOTE: If this option is provided, the server will not start.
-
 ```
 
 If you wanted to run the server on port 8080 and bind to all
