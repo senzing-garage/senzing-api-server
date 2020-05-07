@@ -11,6 +11,7 @@ import com.senzing.util.Timers;
 import javax.json.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import java.util.*;
@@ -239,6 +240,26 @@ public class ConfigServices {
             GET, uriInfo, timers, engineApi, configApi);
       });
 
+      //---------------------------------------------------------------------
+      // strip out any entity classes other than ACTOR
+      // TODO(bcaceres) -- remove this code when entity classes other than
+      // ACTOR are supported ** OR ** when the API server no longer supports
+      // product versions that ship with alternate entity classes
+      JsonObjectBuilder job = Json.createObjectBuilder();
+      JsonArrayBuilder  jab = Json.createArrayBuilder();
+      JsonObject  jsonObject    = JsonUtils.parseJsonObject(rawData);
+      JsonArray   entityClasses = jsonObject.getJsonArray("ENTITY_CLASSES");
+      for (JsonObject entityClass : entityClasses.getValuesAs(JsonObject.class))
+      {
+        if (entityClass.getString("ECLASS_CODE").equals("ACTOR")) {
+          jab.add(Json.createObjectBuilder(entityClass));
+          break;
+        }
+      }
+      job.add("ENTITY_CLASSES", jab);
+      rawData = JsonUtils.toJsonText(job);
+      //---------------------------------------------------------------------
+
       return this.buildEntityClassesResponse(
           GET, uriInfo, timers, rawData, withRaw);
 
@@ -269,6 +290,18 @@ public class ConfigServices {
       // get the engine API and the config API
       G2Engine engineApi = provider.getEngineApi();
       G2Config configApi = provider.getConfigApi();
+
+      //---------------------------------------------------------------------
+      // check the entity class code to ensure it is ACTOR
+      // TODO(bcaceres) -- remove this code when entity classes other than
+      // ACTOR are supported ** OR ** when the API server no longer supports
+      // product versions that ship with alternate entity classes
+      if (!entityClassCode.trim().toUpperCase().equals("ACTOR")) {
+        throw newNotFoundException(
+            GET, uriInfo, timers,
+            "The entity class code was not recognized: " + entityClassCode);
+      }
+      //---------------------------------------------------------------------
 
       enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {
@@ -438,6 +471,20 @@ public class ConfigServices {
       G2Engine engineApi = provider.getEngineApi();
       G2Config configApi = provider.getConfigApi();
 
+      //---------------------------------------------------------------------
+      // check the entity class code to ensure it is ACTOR
+      // TODO(bcaceres) -- remove this code when entity classes other than
+      // ACTOR are supported ** OR ** when the API server no longer supports
+      // product versions that ship with alternate entity classes
+      if (entityClass != null
+          && !entityClass.trim().toUpperCase().equals("ACTOR"))
+      {
+        throw newNotFoundException(
+            GET, uriInfo, timers,
+            "The entity class code was not recognized: " + entityClass);
+      }
+      //---------------------------------------------------------------------
+
       enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {
         exitingQueue(timers);
@@ -516,6 +563,18 @@ public class ConfigServices {
   {
     Timers timers = newTimers();
     SzApiProvider provider = SzApiProvider.Factory.getProvider();
+
+    //---------------------------------------------------------------------
+    // check the entity class code to ensure it is ACTOR
+    // TODO(bcaceres) -- remove this code when entity classes other than
+    // ACTOR are supported ** OR ** when the API server no longer supports
+    // product versions that ship with alternate entity classes
+    if (!entityClassCode.trim().toUpperCase().equals("ACTOR")) {
+      throw newNotFoundException(
+          GET, uriInfo, timers,
+          "The entity class code was not recognized: " + entityClassCode);
+    }
+    //---------------------------------------------------------------------
 
     try {
       // get the engine API and the config API
@@ -900,6 +959,19 @@ public class ConfigServices {
   {
     Timers timers = newTimers();
 
+    //---------------------------------------------------------------------
+    // TODO(bcaceres) -- remove this code when entity classes other than
+    // ACTOR are supported
+    boolean methodNotAllowed = true;
+    if (methodNotAllowed) {
+      throw newNotAllowedException(
+          GET, uriInfo, timers,
+          "Adding new entity classes has been disabled in version 2.0 of the "
+          + "API Server.  The only configured and supported entity class at "
+          + "this time is ACTOR.");
+    }
+    //---------------------------------------------------------------------
+
     SzApiProvider provider = SzApiProvider.Factory.getProvider();
     ensureConfigChangesAllowed(provider, POST, uriInfo, timers);
 
@@ -1143,7 +1215,7 @@ public class ConfigServices {
   @POST
   @Path("entity-types")
   public SzEntityTypesResponse addEntityTypes(
-      @QueryParam("entityClass") String entityClassCode,
+      @DefaultValue("ACTOR") @QueryParam("entityClass") String entityClassCode,
       @QueryParam("entityType") List<String> entityTypeCodes,
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
       @Context UriInfo uriInfo,
@@ -1784,8 +1856,8 @@ public class ConfigServices {
   }
 
   @GET
-  @Path("config/current")
-  public SzConfigResponse getCurrentConfig(@Context UriInfo uriInfo)
+  @Path("configs/active")
+  public SzConfigResponse getActiveConfig(@Context UriInfo uriInfo)
   {
     Timers timers = newTimers();
     SzApiProvider provider = SzApiProvider.Factory.getProvider();
@@ -1831,8 +1903,8 @@ public class ConfigServices {
   }
 
   @GET
-  @Path("config/default")
-  public SzConfigResponse getDefaultConfig(@Context UriInfo uriInfo)
+  @Path("configs/template")
+  public SzConfigResponse getTemplateConfig(@Context UriInfo uriInfo)
   {
     Timers timers = newTimers();
     SzApiProvider provider = SzApiProvider.Factory.getProvider();
@@ -1960,6 +2032,18 @@ public class ConfigServices {
     // normalize the entity class
     entityClassCode = entityClassCode.trim().toUpperCase();
 
+    //---------------------------------------------------------------------
+    // check the entity class code to ensure it is ACTOR
+    // TODO(bcaceres) -- remove this code when entity classes other than
+    // ACTOR are supported ** OR ** when the API server no longer supports
+    // product versions that ship with alternate entity classes
+    if (!entityClassCode.equals("ACTOR")) {
+      throw newNotFoundException(
+          httpMethod, uriInfo, timers,
+          "The entity class code was not recognized: " + entityClassCode);
+    }
+    //---------------------------------------------------------------------
+
     // check that the entity class exists
     SzApiProvider provider = SzApiProvider.Factory.getProvider();
     Set<String> entityClasses = provider.getEntityClasses(entityClassCode);
@@ -1993,6 +2077,18 @@ public class ConfigServices {
 
     // normalize the entity class
     entityClassCode = entityClassCode.trim().toUpperCase();
+
+    //---------------------------------------------------------------------
+    // check the entity class code to ensure it is ACTOR
+    // TODO(bcaceres) -- remove this code when entity classes other than
+    // ACTOR are supported ** OR ** when the API server no longer supports
+    // product versions that ship with alternate entity classes
+    if (!entityClassCode.equals("ACTOR")) {
+      throw newBadRequestException(
+          httpMethod, uriInfo, timers,
+          "The entity class code was not recognized: " + entityClassCode);
+    }
+    //---------------------------------------------------------------------
 
     // check that the entity class exists
     SzApiProvider provider = SzApiProvider.Factory.getProvider();

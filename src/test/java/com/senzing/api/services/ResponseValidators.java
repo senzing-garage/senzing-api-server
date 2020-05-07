@@ -11,8 +11,9 @@ import java.util.*;
 
 import static com.senzing.api.BuildInfo.MAVEN_VERSION;
 import static com.senzing.api.BuildInfo.REST_API_VERSION;
-import static com.senzing.api.model.SzFeatureInclusion.NONE;
-import static com.senzing.api.model.SzFeatureInclusion.REPRESENTATIVE;
+import static com.senzing.api.model.SzFeatureMode.NONE;
+import static com.senzing.api.model.SzFeatureMode.REPRESENTATIVE;
+import static com.senzing.api.model.SzRelationshipMode.*;
 import static com.senzing.api.model.SzHttpMethod.GET;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -618,7 +619,7 @@ public class ResponseValidators {
       SzResolvedEntity                    entity,
       List<SzRelatedEntity>               relatedEntities,
       Boolean                             forceMinimal,
-      SzFeatureInclusion                  featureMode,
+      SzFeatureMode                       featureMode,
       boolean                             withFeatureStats,
       boolean                             withDerivedFeatures,
       Integer                             expectedRecordCount,
@@ -1591,13 +1592,12 @@ public class ResponseValidators {
    * @param withRaw <tt>true</tt> if requested with raw data, <tt>false</tt>
    *                if requested without raw data and <tt>null</tt> if this is
    *                not being validated.
-   * @param withRelated <tt>true</tt> if requested with first-degree relations,
-   *                    <tt>false</tt> if requested without them and
-   *                    <tt>null</tt> if this aspect is not being validated.
+   * @param withRelated The {@link SzRelationshipMode} value or <tt>null</tt>
+   *                    if this aspect is not being validated.
    * @param forceMinimal <tt>true</tt> if requested with minimal data,
    *                     <tt>false</tt> if requested with standard data and
    *                     <tt>null</tt> if this aspect is not being validated.
-   * @param featureMode The {@link SzFeatureInclusion} requested or
+   * @param featureMode The {@link SzFeatureMode} requested or
    *                    <tt>null</tt> if this is not being validated.
    * @param withFeatureStats <tt>true</tt> if request with feature statistics,
    *                         otherwise <tt>false</tt>.
@@ -1630,9 +1630,9 @@ public class ResponseValidators {
       SzHttpMethod                        httpMethod,
       String                              selfLink,
       Boolean                             withRaw,
-      Boolean                             withRelated,
+      SzRelationshipMode                  withRelated,
       Boolean                             forceMinimal,
-      SzFeatureInclusion                  featureMode,
+      SzFeatureMode                       featureMode,
       boolean                             withFeatureStats,
       boolean                             withDerivedFeatures,
       Integer                             expectedRecordCount,
@@ -1666,27 +1666,27 @@ public class ResponseValidators {
     assertNotNull(relatedEntities,
                   "Related entities list is null: " + testInfo);
 
-    validateEntity(testInfo,
-                   resolvedEntity,
-                   relatedEntities,
-                   forceMinimal,
-                   featureMode,
-                   withFeatureStats,
-                   withDerivedFeatures,
-                   expectedRecordCount,
-                   expectedRecordIds,
-                   false,
-                   relatedEntityCount,
-                   (withRelated == null || !withRelated),
-                   expectedFeatureCounts,
-                   primaryFeatureValues,
-                   duplicateFeatureValues,
-                   expectedDataValues,
-                   expectedOtherDataValues);
+    validateEntity(
+        testInfo,
+        resolvedEntity,
+        relatedEntities,
+        forceMinimal,
+        featureMode,
+        withFeatureStats,
+        withDerivedFeatures,
+        expectedRecordCount,
+        expectedRecordIds,
+        (withRelated == SzRelationshipMode.NONE),
+        (withRelated == SzRelationshipMode.NONE ? 0 : relatedEntityCount),
+        (withRelated != SzRelationshipMode.FULL),
+        expectedFeatureCounts,
+        primaryFeatureValues,
+        duplicateFeatureValues,
+        expectedDataValues,
+        expectedOtherDataValues);
 
     if (withRaw != null && withRaw) {
-      if (withRelated != null && withRelated
-          && (forceMinimal == null || !forceMinimal))
+      if ((withRelated == FULL) && (forceMinimal == null || !forceMinimal))
       {
         validateRawDataMap(testInfo,
                            response.getRawData(),
@@ -1724,11 +1724,18 @@ public class ResponseValidators {
 
 
       } else {
-        validateRawDataMap(testInfo,
-                           response.getRawData(),
-                           false,
-                           "RESOLVED_ENTITY",
-                           "RELATED_ENTITIES");
+        if (withRelated == PARTIAL) {
+          validateRawDataMap(testInfo,
+                             response.getRawData(),
+                             false,
+                             "RESOLVED_ENTITY",
+                             "RELATED_ENTITIES");
+        } else {
+          validateRawDataMap(testInfo,
+                             response.getRawData(),
+                             false,
+                             "RESOLVED_ENTITY");
+        }
 
         Object entity = ((Map) response.getRawData()).get("RESOLVED_ENTITY");
         if (featureMode == NONE || (forceMinimal != null && forceMinimal)) {
@@ -1768,7 +1775,7 @@ public class ResponseValidators {
    * @param forceMinimal <tt>true</tt> if requested with minimal data,
    *                     <tt>false</tt> if requested with standard data and
    *                     <tt>null</tt> if this aspect is not being validated.
-   * @param featureInclusion The {@link SzFeatureInclusion} requested or
+   * @param featureInclusion The {@link SzFeatureMode} requested or
    *                         <tt>null</tt> if this is not being validated.
    * @param withFeatureStats <tt>true</tt> if request with feature statistics,
    *                         otherwise <tt>false</tt>.
@@ -1787,7 +1794,7 @@ public class ResponseValidators {
       Integer                   expectedCount,
       Boolean                   withRelationships,
       Boolean                   forceMinimal,
-      SzFeatureInclusion        featureInclusion,
+      SzFeatureMode featureInclusion,
       boolean                   withFeatureStats,
       boolean                   withDerivedFeatures,
       long                      beforeTimestamp,
@@ -1817,22 +1824,22 @@ public class ResponseValidators {
     for (SzAttributeSearchResult result : results) {
 
       validateEntity(testInfo,
-                          result,
-                          result.getRelatedEntities(),
-                          forceMinimal,
-                          featureInclusion,
-                          withFeatureStats,
-                          withDerivedFeatures,
-                          null,
-                          null,
-                          (withRelationships == null || !withRelationships),
-                          null,
-                          true,
-                          null,
-                          null,
-                          null,
-                          null,
-                          null);
+                     result,
+                     result.getRelatedEntities(),
+                     forceMinimal,
+                     featureInclusion,
+                     withFeatureStats,
+                     withDerivedFeatures,
+                     null,
+                     null,
+                     (withRelationships == null || !withRelationships),
+                     null,
+                     true,
+                     null,
+                     null,
+                     null,
+                     null,
+                     null);
     }
 
     if (expectRawData) {

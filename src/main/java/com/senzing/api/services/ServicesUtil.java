@@ -15,7 +15,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.*;
 
-import static com.senzing.api.model.SzFeatureInclusion.*;
+import static com.senzing.api.model.SzFeatureMode.*;
 import static com.senzing.g2.engine.G2Engine.*;
 
 /**
@@ -156,6 +156,33 @@ public class ServicesUtil {
         new SzErrorResponse(
             httpMethod, 404, uriInfo, timers, errorMessage));
     return new NotFoundException(builder.build());
+  }
+
+  /**
+   * Creates a {@link NotAllowedException} and builds a response
+   * with an {@link SzErrorResponse} using the specified {@link UriInfo}.
+   *
+   * @param httpMethod The HTTP method for the request.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
+   * @param errorMessage The error message.
+   *
+   * @return The {@link InternalServerErrorException}
+   */
+  static NotAllowedException newNotAllowedException(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      Timers        timers,
+      String        errorMessage)
+  {
+    Response.ResponseBuilder builder = Response.status(405);
+    builder.entity(
+        new SzErrorResponse(
+            httpMethod, 405, uriInfo, timers, errorMessage));
+    return new NotAllowedException(builder.build());
   }
 
   /**
@@ -516,7 +543,7 @@ public class ServicesUtil {
    *
    * @param forceMinimal Whether or not minimal format is forced.
    *
-   * @param featureMode The {@link SzFeatureInclusion} describing how features
+   * @param featureMode The {@link SzFeatureMode} describing how features
    *                    are retrieved.
    *
    * @param withFeatureStats Whether or not feature stats should be included.
@@ -528,7 +555,7 @@ public class ServicesUtil {
    * @return The flags to use given the parameters.
    */
   static int getFlags(boolean             forceMinimal,
-                      SzFeatureInclusion  featureMode,
+                      SzFeatureMode featureMode,
                       boolean             withFeatureStats,
                       boolean             withDerivedFeatures,
                       boolean             withRelationships)
@@ -569,12 +596,12 @@ public class ServicesUtil {
    *
    * @param forceMinimal Whether or not minimal format is forced.
    *
-   * @param featureMode The {@link SzFeatureInclusion} describing how features
+   * @param featureMode The {@link SzFeatureMode} describing how features
    *                    are retrieved.
    */
   static void postProcessEntityData(SzEntityData        entityData,
                                     boolean             forceMinimal,
-                                    SzFeatureInclusion  featureMode)
+                                    SzFeatureMode featureMode)
   {
     // check if we need to strip out duplicate features
     if (featureMode == REPRESENTATIVE) {

@@ -7,7 +7,7 @@ import java.util.Properties;
 public class BuildInfo {
   public static final String MAVEN_VERSION;
 
-  public static final String REST_API_VERSION = "1.8.1";
+  public static final String REST_API_VERSION = "2.0.0";
 
   static {
     String resource = "/com/senzing/api/build-info.properties";

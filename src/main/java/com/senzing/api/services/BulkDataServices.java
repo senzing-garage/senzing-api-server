@@ -11,13 +11,10 @@ import com.senzing.util.Timers;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
+import javax.json.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.sse.OutboundSseEvent;
 import javax.ws.rs.sse.Sse;
@@ -204,7 +201,11 @@ public class BulkDataServices {
   @Path("/load")
   public SzBulkLoadResponse loadBulkRecordsViaForm(
       @QueryParam("dataSource") String dataSource,
+      @QueryParam("mapDataSources") String mapDataSources,
+      @QueryParam("mapDataSource") List<String> mapDataSourceList,
       @QueryParam("entityType") String entityType,
+      @QueryParam("mapEntityTypes") String mapEntityTypes,
+      @QueryParam("mapEntityType") List<String> mapEntityTypeList,
       @QueryParam("loadId") String loadId,
       @DefaultValue("0") @QueryParam("maxFailures") int maxFailures,
       @HeaderParam("Content-Type") MediaType mediaType,
@@ -214,7 +215,11 @@ public class BulkDataServices {
   {
     try {
       return this.loadBulkRecords(dataSource,
+                                  mapDataSources,
+                                  mapDataSourceList,
                                   entityType,
+                                  mapEntityTypes,
+                                  mapEntityTypeList,
                                   loadId,
                                   maxFailures,
                                   mediaType,
@@ -245,7 +250,11 @@ public class BulkDataServices {
       "application/x-jsonlines"})
   public SzBulkLoadResponse loadBulkRecordsDirect(
       @QueryParam("dataSource") String dataSource,
+      @QueryParam("mapDataSources") String mapDataSources,
+      @QueryParam("mapDataSource") List<String> mapDataSourceList,
       @QueryParam("entityType") String entityType,
+      @QueryParam("mapEntityTypes") String mapEntityTypes,
+      @QueryParam("mapEntityType") List<String> mapEntityTypeList,
       @QueryParam("loadId") String loadId,
       @DefaultValue("0") @QueryParam("maxFailures") int maxFailures,
       @HeaderParam("Content-Type") MediaType mediaType,
@@ -254,7 +263,11 @@ public class BulkDataServices {
   {
     try {
       return this.loadBulkRecords(dataSource,
+                                  mapDataSources,
+                                  mapDataSourceList,
                                   entityType,
+                                  mapEntityTypes,
+                                  mapEntityTypeList,
                                   loadId,
                                   maxFailures,
                                   mediaType,
@@ -282,7 +295,11 @@ public class BulkDataServices {
   @Produces("text/event-stream;qs=0.9")
   public void loadBulkRecordsViaForm(
       @QueryParam("dataSource") String dataSource,
+      @QueryParam("mapDataSources") String mapDataSources,
+      @QueryParam("mapDataSource") List<String> mapDataSourceList,
       @QueryParam("entityType") String entityType,
+      @QueryParam("mapEntityTypes") String mapEntityTypes,
+      @QueryParam("mapEntityType") List<String> mapEntityTypeList,
       @QueryParam("loadId") String loadId,
       @DefaultValue("0") @QueryParam("maxFailures") int maxFailures,
       @HeaderParam("Content-Type") MediaType mediaType,
@@ -296,7 +313,11 @@ public class BulkDataServices {
   {
     try {
       this.loadBulkRecords(dataSource,
+                           mapDataSources,
+                           mapDataSourceList,
                            entityType,
+                           mapEntityTypes,
+                           mapEntityTypeList,
                            loadId,
                            maxFailures,
                            mediaType,
@@ -328,7 +349,11 @@ public class BulkDataServices {
   @Produces("text/event-stream;qs=0.9")
   public void loadBulkRecordsDirect(
       @QueryParam("dataSource") String dataSource,
+      @QueryParam("mapDataSources") String mapDataSources,
+      @QueryParam("mapDataSource") List<String> mapDataSourceList,
       @QueryParam("entityType") String entityType,
+      @QueryParam("mapEntityTypes") String mapEntityTypes,
+      @QueryParam("mapEntityType") List<String> mapEntityTypeList,
       @QueryParam("loadId") String loadId,
       @DefaultValue("0") @QueryParam("maxFailures") int maxFailures,
       @HeaderParam("Content-Type") MediaType mediaType,
@@ -340,7 +365,11 @@ public class BulkDataServices {
   {
     try {
       this.loadBulkRecords(dataSource,
+                           mapDataSources,
+                           mapDataSourceList,
                            entityType,
+                           mapEntityTypes,
+                           mapEntityTypeList,
                            loadId,
                            maxFailures,
                            mediaType,
@@ -451,7 +480,11 @@ public class BulkDataServices {
    */
   private SzBulkLoadResponse loadBulkRecords(
       String                      dataSource,
+      String                      mapDataSources,
+      List<String>                mapDataSourceList,
       String                      entityType,
+      String                      mapEntityTypes,
+      List<String>                mapEntityTypeList,
       String                      explicitLoadId,
       int                         maxFailures,
       MediaType                   mediaType,
@@ -468,43 +501,54 @@ public class BulkDataServices {
 
     SzBulkLoadResult bulkLoadResult = new SzBulkLoadResult();
 
-    if (dataSource != null) {
-      dataSource = dataSource.trim().toUpperCase();
-    }
-
     Timers timers = newTimers();
     SzApiProvider provider = SzApiProvider.Factory.getProvider();
     ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
+
+    // normalize and validate the data source
+    if (dataSource != null) {
+      dataSource = dataSource.trim().toUpperCase();
+
+      if (!provider.getDataSources(dataSource).contains(dataSource)) {
+        throw newBadRequestException(
+            POST, uriInfo, timers,
+            "The value for the specified \"dataSource\" parameter is not a "
+            + "configured data source: " + dataSource);
+      }
+    }
+
+    // normalize and validate the entity type
+    if (entityType != null) {
+      entityType = entityType.trim().toUpperCase();
+
+      if (!provider.getEntityTypes(entityType).contains(entityType)) {
+        throw newBadRequestException(
+            POST, uriInfo, timers,
+            "The value for the specified \"entityType\" parameter is not a "
+            + "configured entity type: " + entityType);
+      }
+    }
+
+    // populate the entity type and data source maps
     Map<String, String> dataSourceMap = new HashMap<>();
     Map<String, String> entityTypeMap = new HashMap<>();
-    MultivaluedMap<String,String> params = uriInfo.getQueryParameters(true);
-    params.entrySet().forEach(e -> {
-      String key = e.getKey();
-      if (key == null) return; // skip this one
-      key = key.trim().toUpperCase();
-      if (key.startsWith("DATASOURCE_") && !key.equals("DATASOURCE_"))
-      {
-        String origDataSource = key.substring("DATASOURCE_".length());
-        List<String> values = e.getValue();
-        String newDataSource = values.get(0);
-        if (newDataSource == null) return; // skip this one
-        newDataSource = newDataSource.trim().toUpperCase();
-        dataSourceMap.put(origDataSource, newDataSource);
-      }
-      if (key.startsWith("ENTITYTYPE_") && !key.equals("ENTITYTYPE_"))
-      {
-        String origEntityType = key.substring("ENTITYTYPE_".length());
-        List<String> values = e.getValue();
-        String newEntityType = values.get(0);
-        if (newEntityType == null) return;
-        newEntityType = newEntityType.trim().toUpperCase();
-        entityTypeMap.put(origEntityType, newEntityType);
-      }
-    });
-    dataSourceMap.put(null, dataSource);
-    dataSourceMap.put("", dataSource);
-    entityTypeMap.put(null, entityType);
-    entityTypeMap.put("", entityType);
+
+    // by default we override missing entity types to GENERIC (though this may
+    // get overridden after processing the entity types)
+    entityTypeMap.put("", "GENERIC");
+
+    processDataSources(
+        dataSourceMap, mapDataSources, provider, timers, uriInfo);
+    processDataSources(
+        dataSourceMap, mapDataSourceList, provider, timers, uriInfo);
+    processEntityTypes(
+        entityTypeMap, mapEntityTypes, provider, timers, uriInfo);
+    processEntityTypes(
+        entityTypeMap, mapEntityTypeList, provider, timers, uriInfo);
+
+    // put the default overrides in the map with the null key
+    if (dataSource != null) dataSourceMap.put(null, dataSource);
+    if (entityType != null) entityTypeMap.put(null, entityType);
 
     try {
       BulkDataSet bulkDataSet = new BulkDataSet(mediaType, dataInputStream);
@@ -1057,6 +1101,158 @@ public class BulkDataServices {
       sseEventSink.close();
 
       return null;
+    }
+  }
+
+  private static void processDataSources(Map<String, String> dataSourceMap,
+                                         String              mapDataSources,
+                                         SzApiProvider       provider,
+                                         Timers              timers,
+                                         UriInfo             uriInfo)
+  {
+    // check if the mapDataSources parameter is provided
+    if (mapDataSources != null && mapDataSources.trim().length() > 0) {
+      try {
+        JsonObject jsonObject = JsonUtils.parseJsonObject(mapDataSources);
+        jsonObject.entrySet().forEach(entry -> {
+          String key = entry.getKey();
+          JsonValue value = entry.getValue();
+          if (value.getValueType() != JsonValue.ValueType.STRING) {
+            throw newBadRequestException(
+                POST, uriInfo, timers,
+                "At least one JSON property (\"" + key + "\") in the "
+                    + "\"mapDataSources\" parameter does NOT have a "
+                    + "String JSON value (" + JsonUtils.toJsonText(value)
+                    + "): " + mapDataSources);
+          }
+          String source = ((JsonString) value).getString().trim().toUpperCase();
+          if (!provider.getDataSources(source).contains(source)) {
+            throw newBadRequestException(
+                POST, uriInfo, timers,
+                "The data source mapping for \"" + key + "\" in the "
+                    + "\"mapDataSources\" parameter has a value (\"" + source
+                    + "\") that is not a configured data source: "
+                    + mapDataSources);
+          }
+          dataSourceMap.put(key, source);
+        });
+      } catch (Exception e) {
+        throw newBadRequestException(
+            POST, uriInfo, timers,
+            "The \"mapDataSources\" parameter is not a valid URL-encoded JSON "
+                + "of String property names and String data source code values: "
+                + mapDataSources);
+      }
+    }
+  }
+
+
+  private static void processDataSources(Map<String, String> dataSourceMap,
+                                         List<String>        mapDataSourceList,
+                                         SzApiProvider       provider,
+                                         Timers              timers,
+                                         UriInfo             uriInfo)
+  {
+    // check if the mapDataSources parameter is provided
+    if (mapDataSourceList != null && mapDataSourceList.size() > 0) {
+      for (String mapping : mapDataSourceList) {
+        char sep = mapping.charAt(0);
+        int index = mapping.indexOf(sep, 1);
+        if (index < 0 || index == mapping.length() - 1) {
+          throw newBadRequestException(
+              POST, uriInfo, timers,
+              "The specified data source mapping is not a valid "
+                  + "delimited string: " + mapping);
+        }
+        String source1 = mapping.substring(1, index).trim();
+        String source2 = mapping.substring(index + 1).trim().toUpperCase();
+
+        if (!provider.getDataSources(source2).contains(source2)) {
+          throw newBadRequestException(
+              POST, uriInfo, timers,
+              "The data source mapping for \"" + source1 + "\" in the "
+                  + "\"mapDataSource\" parameter has a value (\"" + source2
+                  + "\") that is not a configured data source: "
+                  + mapping);
+        }
+        dataSourceMap.put(source1, source2);
+      }
+    }
+  }
+
+  private static void processEntityTypes(Map<String, String> entityTypeMap,
+                                         String              mapEntityTypes,
+                                         SzApiProvider       provider,
+                                         Timers              timers,
+                                         UriInfo             uriInfo)
+  {
+    // check if the mapDataSources parameter is provided
+    if (mapEntityTypes != null && mapEntityTypes.trim().length() > 0) {
+      try {
+        JsonObject jsonObject = JsonUtils.parseJsonObject(mapEntityTypes);
+        jsonObject.entrySet().forEach(entry -> {
+          String key = entry.getKey();
+          JsonValue value = entry.getValue();
+          if (value.getValueType() != JsonValue.ValueType.STRING) {
+            throw newBadRequestException(
+                POST, uriInfo, timers,
+                "At least one JSON property (\"" + key + "\") in the "
+                    + "\"mapEntityTypes\" parameter does NOT have a "
+                    + "String JSON value (" + JsonUtils.toJsonText(value)
+                    + "): " + mapEntityTypes);
+          }
+          String etype = ((JsonString) value).getString().trim().toUpperCase();
+          if (!provider.getEntityTypes(etype).contains(etype)) {
+            throw newBadRequestException(
+                POST, uriInfo, timers,
+                "The entity type mapping for \"" + key + "\" in the "
+                    + "\"mapEntityTypes\" parameter has a value (\"" + etype
+                    + "\") that is not a configured entity type: "
+                    + mapEntityTypes);
+          }
+          entityTypeMap.put(key, etype);
+        });
+      } catch (Exception e) {
+        throw newBadRequestException(
+            POST, uriInfo, timers,
+            "The \"mapEntityTypes\" parameter is not a valid URL-encoded JSON "
+                + "of String property names and String entity type code values: "
+                + mapEntityTypes);
+      }
+    }
+  }
+
+
+  private static void processEntityTypes(Map<String, String> entityTypeMap,
+                                         List<String>        mapEntityTypeList,
+                                         SzApiProvider       provider,
+                                         Timers              timers,
+                                         UriInfo             uriInfo)
+  {
+    // check if the mapDataSources parameter is provided
+    if (mapEntityTypeList != null && mapEntityTypeList.size() > 0) {
+      for (String mapping : mapEntityTypeList) {
+        char sep = mapping.charAt(0);
+        int index = mapping.indexOf(sep, 1);
+        if (index < 0 || index == mapping.length() - 1) {
+          throw newBadRequestException(
+              POST, uriInfo, timers,
+              "The specified entity type mapping is not a valid "
+                  + "delimited string: " + mapping);
+        }
+        String etype1 = mapping.substring(1, index).trim();
+        String etype2 = mapping.substring(index + 1).trim().toUpperCase();
+
+        if (!provider.getEntityTypes(etype2).contains(etype2)) {
+          throw newBadRequestException(
+              POST, uriInfo, timers,
+              "The entity type mapping for \"" + etype1 + "\" in the "
+                  + "\"mapEntityType\" parameter has a value (\"" + etype2
+                  + "\") that is not a configured entity type: "
+                  + mapping);
+        }
+        entityTypeMap.put(etype1, etype2);
+      }
     }
   }
 }

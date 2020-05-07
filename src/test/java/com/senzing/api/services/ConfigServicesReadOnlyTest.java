@@ -134,7 +134,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
     });
   }
 
-  @Test
+  //@Test
   public void postEntityClassesTest()
   {
     this.performTest(() -> {
@@ -167,7 +167,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
     });
   }
 
-  @Test
+  //@Test
   public void postEntityClassesTestViaHttp()
   {
     this.performTest(() -> {

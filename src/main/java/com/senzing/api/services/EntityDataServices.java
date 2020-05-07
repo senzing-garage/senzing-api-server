@@ -8,15 +8,14 @@ import com.senzing.util.Timers;
 import javax.json.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
 import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.*;
-import static com.senzing.api.model.SzFeatureInclusion.*;
+import static com.senzing.api.model.SzFeatureMode.*;
+import static com.senzing.api.model.SzRelationshipMode.*;
 import static com.senzing.api.services.ServicesUtil.*;
-import static com.senzing.g2.engine.G2Engine.*;
 
 /**
  * Provides entity data related API services.
@@ -256,9 +255,9 @@ public class EntityDataServices {
       @PathParam("dataSourceCode")                                String              dataSourceCode,
       @PathParam("recordId")                                      String              recordId,
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
-      @DefaultValue("false") @QueryParam("withRelated")           boolean             withRelated,
+      @DefaultValue("PARTIAL") @QueryParam("withRelated")         SzRelationshipMode  withRelated,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
-      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
       @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
       @Context                                                    UriInfo             uriInfo)
@@ -279,13 +278,13 @@ public class EntityDataServices {
                            featureMode,
                            withFeatureStats,
                            withDerivedFeatures,
-                           true);
+                           (withRelated != SzRelationshipMode.NONE));
 
       String rawData = null;
 
       // check if we want 1-degree relations as well -- if so we need to
       // find the network instead of a simple lookup
-      if (withRelated && !forceMinimal) {
+      if (withRelated == FULL && !forceMinimal) {
         // build the record IDs JSON to find the network
         JsonObjectBuilder builder1 = Json.createObjectBuilder();
         JsonArrayBuilder builder2 = Json.createArrayBuilder();
@@ -338,8 +337,10 @@ public class EntityDataServices {
                 && record.getRecordId().equals(recordId)) {
               // found the entity ID for the record ID
               entityId = resolvedEntity.getEntityId();
+              break;
             }
           }
+          if (entityId != null) break;
         }
 
         // get the result entity data
@@ -397,9 +398,9 @@ public class EntityDataServices {
   public SzEntityResponse getEntityByEntityId(
       @PathParam("entityId")                                      long                entityId,
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
-      @DefaultValue("false") @QueryParam("withRelated")           boolean             withRelated,
+      @DefaultValue("PARTIAL") @QueryParam("withRelated")         SzRelationshipMode  withRelated,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
-      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode       featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
       @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
       @Context                                                    UriInfo             uriInfo)
@@ -419,11 +420,11 @@ public class EntityDataServices {
                            featureMode,
                            withFeatureStats,
                            withDerivedFeatures,
-                           true);
+                           (withRelated != SzRelationshipMode.NONE));
 
       // check if we want 1-degree relations as well -- if so we need to
       // find the network instead of a simple lookup
-      if (withRelated && !forceMinimal) {
+      if (withRelated == FULL && !forceMinimal) {
         // build the entity IDs JSON to find the network
         JsonObjectBuilder builder1 = Json.createObjectBuilder();
         JsonArrayBuilder builder2 = Json.createArrayBuilder();
@@ -520,8 +521,9 @@ public class EntityDataServices {
   @Path("entities")
   public SzAttributeSearchResponse searchByAttributes(
       @QueryParam("attrs")                                        String              attrs,
+      @QueryParam("attr")                                         List<String>        attrList,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
-      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode       featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
       @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
       @DefaultValue("true") @QueryParam("withRelationships")      boolean             withRelationships,
@@ -532,49 +534,79 @@ public class EntityDataServices {
     try {
       SzApiProvider provider = SzApiProvider.Factory.getProvider();
 
-      boolean[] logAttrs = { false };
-      // check if no attributes
-      if (attrs == null || attrs.trim().length() == 0) {
-        // look for the "attr_" parameters
-        MultivaluedMap<String,String> params= uriInfo.getQueryParameters(true);
-        JsonObjectBuilder objBuilder = Json.createObjectBuilder();
-        params.entrySet().forEach(e -> {
-          String key = e.getKey().trim();
-          if (!key.toLowerCase().startsWith("attr_")
-              || key.length() <= ("attr_").length())
-          {
-            // skip this key since it is not of the expected format
-            return;
-          }
-          String        jsonProp    = key.substring("attr_".length());
-          List<String>  values      = e.getValue();
-          String        firstValue  = values.get(0);
-          if (values.size() == 1) {
-            JsonUtils.add(objBuilder, jsonProp, firstValue);
-          } else if (values.size() > 1) {
-            logAttrs[0] = true;
-            JsonArrayBuilder jab = Json.createArrayBuilder();
-            for (String value : values) {
-              JsonObjectBuilder job = Json.createObjectBuilder();
-              JsonUtils.add(job, jsonProp, value);
-              jab.add(job);
-            }
-            objBuilder.add(jsonProp, jab);
-          }
-        });
-        JsonObject jsonObject = null;
+      JsonObject searchCriteria = null;
+      if (attrs != null && attrs.trim().length() > 0) {
         try {
-          jsonObject = objBuilder.build();
-        } catch (Exception ignore) {
-          // do nothing
-        }
-        if (jsonObject == null || jsonObject.size() == 0) {
+          searchCriteria = JsonUtils.parseJsonObject(attrs);
+        } catch (Exception e) {
           throw newBadRequestException(
               GET, uriInfo, timers,
-              "Parameter missing or empty: \"attrs\".  "
-              + "Search criteria attributes are required.");
+              "The search criteria specified via the \"attrs\" parameter "
+                  + "does not parse as valid JSON: " + attrs);
         }
-        attrs = JsonUtils.toJsonText(jsonObject);
+      } else if (attrList != null && attrList.size() > 0) {
+        Map<String, List<String>> attrMap = new LinkedHashMap<>();
+        JsonObjectBuilder objBuilder = Json.createObjectBuilder();
+        for (String attrParam : attrList) {
+          // check for the colon
+          int index = attrParam.indexOf(":");
+
+          // if not found that is a problem
+          if (index < 0) {
+            throw newBadRequestException(
+                GET, uriInfo, timers,
+                "The attr param value must be a colon-delimited string, "
+                    + "but no colon character was found: " + attrParam);
+          }
+          if (index == 0) {
+            throw newBadRequestException(
+                GET, uriInfo, timers,
+                "The attr param value must contain a property name followed by "
+                    + "a colon, but no property was provided before the colon: "
+                    + attrParam);
+          }
+
+          // get the property name
+          String propName = attrParam.substring(0, index);
+          String propValue = "";
+          if (index < attrParam.length() - 1) {
+            propValue = attrParam.substring(index + 1);
+          }
+
+          // store in the map
+          List<String> values = attrMap.get(propName);
+          if (values == null) {
+            values = new LinkedList<>();
+            attrMap.put(propName, values);
+          }
+          values.add(propValue);
+        }
+        attrMap.entrySet().forEach(entry -> {
+          String propName = entry.getKey();
+          List<String> propValues = entry.getValue();
+          if (propValues.size() == 1) {
+            // add the attribute to the object builder
+            objBuilder.add(propName, propValues.get(0));
+          } else {
+            JsonArrayBuilder jab = Json.createArrayBuilder();
+            for (String propValue : propValues) {
+              JsonObjectBuilder job = Json.createObjectBuilder();
+              job.add(propName, propValue);
+              jab.add(job);
+            }
+            objBuilder.add(propName + "_LIST", jab);
+          }
+        });
+        searchCriteria = objBuilder.build();
+      }
+
+      // check if we have no attributes at all
+      if (searchCriteria == null || searchCriteria.size() == 0) {
+        throw newBadRequestException(
+            GET, uriInfo, timers,
+            "At least one search criteria attribute must be provided via the "
+                + "\"attrs\" or \"attr\" parameter.  attrs=[ " + attrs
+                + " ], attrList=[ " + attrList + " ]");
       }
 
       StringBuffer sb = new StringBuffer();
@@ -585,7 +617,8 @@ public class EntityDataServices {
                            withDerivedFeatures,
                            withRelationships);
 
-      final String json = attrs;
+      final String searchJson = JsonUtils.toJsonText(searchCriteria);
+
       enteringQueue(timers);
       provider.executeInThread(() -> {
         exitingQueue(timers);
@@ -594,7 +627,7 @@ public class EntityDataServices {
         G2Engine engineApi = provider.getEngineApi();
 
         callingNativeAPI(timers, "engine", "searchBy AttributesV2");
-        int result = engineApi.searchByAttributesV2(json, flags, sb);
+        int result = engineApi.searchByAttributesV2(searchJson, flags, sb);
         calledNativeAPI(timers, "engine", "searchByAttributesV2");
         if (result != 0) {
           throw newInternalServerErrorException(GET, uriInfo, timers, engineApi);
@@ -606,14 +639,14 @@ public class EntityDataServices {
 
       JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
       JsonArray jsonResults = jsonObject.getValue(
-        "/RESOLVED_ENTITIES").asJsonArray();
+          "/RESOLVED_ENTITIES").asJsonArray();
 
       // parse the result
       List<SzAttributeSearchResult> list
           = SzAttributeSearchResult.parseSearchResultList(
-            null,
-              jsonResults,
-              (f) -> provider.getAttributeClassForFeature(f));
+          null,
+          jsonResults,
+          (f) -> provider.getAttributeClassForFeature(f));
 
 
       postProcessSearchResults(
@@ -672,8 +705,8 @@ public class EntityDataServices {
    * @return
    */
   private static SzEntityData getAugmentedEntityData(
-      long                    entityId,
-      Map<Long, SzEntityData> dataMap,
+      long                      entityId,
+      Map<Long, SzEntityData>   dataMap,
       SzApiProvider             provider)
   {
     // get the result entity data
@@ -875,7 +908,7 @@ public class EntityDataServices {
    *
    * @param forceMinimal Whether or not minimal format is forced.
    *
-   * @param featureMode The {@link SzFeatureInclusion} describing how features
+   * @param featureMode The {@link SzFeatureMode} describing how features
    *                    are retrieved.
    *
    * @param withRelationships Whether or not to include relationships.
@@ -883,7 +916,7 @@ public class EntityDataServices {
   private static void postProcessSearchResults(
       List<SzAttributeSearchResult>   searchResults,
       boolean                         forceMinimal,
-      SzFeatureInclusion              featureMode,
+      SzFeatureMode featureMode,
       boolean                         withRelationships)
   {
     // check if we need to strip out duplicate features
@@ -892,7 +925,7 @@ public class EntityDataServices {
     }
 
     // check if fields are going to be null if they would otherwise be set
-    if (featureMode == NONE || forceMinimal) {
+    if (featureMode == SzFeatureMode.NONE || forceMinimal) {
       setEntitiesPartial(searchResults);
     }
   }

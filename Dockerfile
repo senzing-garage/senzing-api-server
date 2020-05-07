@@ -9,7 +9,7 @@ FROM ${BASE_BUILDER_IMAGE} as builder
 
 # Set Shell to use for RUN commands in builder step.
 
-ENV REFRESHED_AT=2019-11-13
+ENV REFRESHED_AT=2020-04-24
 
 LABEL Name="senzing/senzing-api-server-builder" \
       Maintainer="support@senzing.com" \
@@ -48,11 +48,11 @@ RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=pro
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2020-01-29
+ENV REFRESHED_AT=2020-04-24
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
-      Version="1.8.2"
+      Version="1.8.3"
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
 
