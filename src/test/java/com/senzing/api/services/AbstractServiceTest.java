@@ -263,16 +263,21 @@ public abstract class AbstractServiceTest {
    * Signals the end of the current test suite.
    */
   protected void endTests() {
-    REPLAY_PROVIDER.endTests(this.replayTestToken);
-    this.replayTestToken = null;
-    if (this.getFailureCount() > 0 && REPLAY_PROVIDER.isCacheStale()) {
-      System.out.println();
-      System.out.println("**********************");
-      System.out.println("** WARNING: DEPENDENCIES HAVE CHANGED");
-      System.out.println("** CACHED TEST RESULTS MAY BE INVALID");
-      System.out.println("** " + REPLAY_PROVIDER.getTestCacheZip());
-      System.out.println("**********************");
-      System.out.println();
+    try {
+      REPLAY_PROVIDER.endTests(this.replayTestToken);
+      this.replayTestToken = null;
+      if (this.getFailureCount() > 0 && REPLAY_PROVIDER.isCacheStale()) {
+        System.out.println();
+        System.out.println("**********************");
+        System.out.println("** WARNING: DEPENDENCIES HAVE CHANGED");
+        System.out.println("** CACHED TEST RESULTS MAY BE INVALID");
+        System.out.println("** " + REPLAY_PROVIDER.getTestCacheZip());
+        System.out.println("**********************");
+        System.out.println();
+      }
+    } catch (RuntimeException e) {
+      e.printStackTrace();
+      throw e;
     }
   }
 
