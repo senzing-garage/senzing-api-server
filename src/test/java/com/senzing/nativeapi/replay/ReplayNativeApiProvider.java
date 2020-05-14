@@ -165,7 +165,9 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
    */
   private static final File RESOURCE_CACHE_DIR
       = new File(TEST_RESOURCE_DIR,
-                 PACKAGE_PREFIX.replaceAll("\\.", File.separator)
+                 PACKAGE_PREFIX.replaceAll(
+                     "\\.",
+                     File.separator.equals("\\") ? "\\\\" : File.separator)
                      + "cache");
 
   /**
