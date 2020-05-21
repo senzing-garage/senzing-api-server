@@ -40,20 +40,24 @@ public enum OperatingSystemFamily {
   public static final OperatingSystemFamily RUNTIME_OS_FAMILY;
 
   static {
-    OperatingSystemFamily osFamily = null;
+    try {
+      OperatingSystemFamily osFamily = null;
 
-    final String osName = System.getProperty("os.name");
-    String lowerOSName = osName.toLowerCase().trim();
-    if (lowerOSName.startsWith("windows")) {
-      osFamily = WINDOWS;
-    } else if (lowerOSName.startsWith("mac")
-        || lowerOSName.indexOf("darwin") >= 0)
-    {
-      osFamily = MAC_OS;
-    } else {
-      osFamily = UNIX;
+      final String osName = System.getProperty("os.name");
+      String lowerOSName = osName.toLowerCase().trim();
+      if (lowerOSName.startsWith("windows")) {
+        osFamily = WINDOWS;
+      } else if (lowerOSName.startsWith("mac")
+          || lowerOSName.indexOf("darwin") >= 0) {
+        osFamily = MAC_OS;
+      } else {
+        osFamily = UNIX;
+      }
+
+      RUNTIME_OS_FAMILY = osFamily;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
     }
-
-    RUNTIME_OS_FAMILY = osFamily;
   }
 }

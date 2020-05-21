@@ -123,7 +123,7 @@ public enum UsageType {
       UsageType[] usageTypes = UsageType.values();
       for (FeatureType featureType : FeatureType.values()) {
         List<UsageType> list = new ArrayList<>(usageTypes.length);
-        for (UsageType usageType: usageTypes) {
+        for (UsageType usageType : usageTypes) {
           if (usageType.appliesTo(featureType)) {
             list.add(usageType);
           }
@@ -134,7 +134,7 @@ public enum UsageType {
 
       for (RecordType recordType : RecordType.values()) {
         List<UsageType> list = new ArrayList<>(usageTypes.length);
-        for (UsageType usageType: usageTypes) {
+        for (UsageType usageType : usageTypes) {
           if (usageType.appliesTo(recordType)) {
             list.add(usageType);
           }
@@ -142,6 +142,10 @@ public enum UsageType {
         list = Collections.unmodifiableList(list);
         recordTypeMap.put(recordType, list);
       }
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
 
     } finally {
       FEATURE_TYPE_MAP = Collections.unmodifiableMap(featureTypeMap);

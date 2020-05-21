@@ -42,13 +42,19 @@ public enum SzAttributeNecessity {
   private static Map<String,SzAttributeNecessity> FELEM_REQ_MAP;
 
   static {
-    Map<String,SzAttributeNecessity> map = new HashMap<>();
-    map.put("YES",      REQUIRED);
-    map.put("NO",       OPTIONAL);
-    map.put("ANY",      SUFFICIENT);
-    map.put("DESIRED",  PREFERRED);
+    try {
+      Map<String,SzAttributeNecessity> map = new HashMap<>();
+      map.put("YES",      REQUIRED);
+      map.put("NO",       OPTIONAL);
+      map.put("ANY",      SUFFICIENT);
+      map.put("DESIRED",  PREFERRED);
 
-    FELEM_REQ_MAP = Collections.unmodifiableMap(map);
+      FELEM_REQ_MAP = Collections.unmodifiableMap(map);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
+    }
   }
 
   /**

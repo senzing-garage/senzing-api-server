@@ -230,83 +230,90 @@ public enum GeneratedAttributeType {
     Map<FeatureType, GeneratedAttributeType>    typeMap = new LinkedHashMap<>();
     Map<LookupKey, Set<GeneratedAttributeType>> partMap = new LinkedHashMap<>();
 
-    for (GeneratedAttributeType attrType : GeneratedAttributeType.values()) {
-      FeatureType         featType    = attrType.getFeatureType();
-      EnumSet<RecordType> recordTypes = attrType.getRecordTypes();
-      ValueType           valueType   = attrType.getValueType();
+    try {
+      for (GeneratedAttributeType attrType : GeneratedAttributeType.values()) {
+        FeatureType         featType    = attrType.getFeatureType();
+        EnumSet<RecordType> recordTypes = attrType.getRecordTypes();
+        ValueType           valueType   = attrType.getValueType();
 
-      // iterate over the record types
-      for (RecordType recordType : recordTypes) {
-        LookupKey key = new LookupKey(featType, recordType);
+        // iterate over the record types
+        for (RecordType recordType : recordTypes) {
+          LookupKey key = new LookupKey(featType, recordType);
 
-        // check if a full value or part value
-        switch (valueType) {
-          case FULL_VALUE:
-            if (fullMap.containsKey(key)) {
+          // check if a full value or part value
+          switch (valueType) {
+            case FULL_VALUE:
+              if (fullMap.containsKey(key)) {
+                throw new IllegalStateException(
+                    "Cannot have more than one FULL_VALUE instance for the same "
+                        + "feature type and record type.  featureType=[ " +
+                        featType + " ], recordType=[ " + recordType
+                        + " ], instance1=[ " + fullMap.get(key)
+                        + " ], instance2=[ " + attrType + " ]");
+              }
+              fullMap.put(key, attrType);
+              break;
+            case PART_VALUE:
+              Set<GeneratedAttributeType> set = partMap.get(key);
+              if (set == null) {
+                set = new LinkedHashSet<>();
+                partMap.put(key, set);
+              }
+              set.add(attrType);
+              break;
+
+            case USAGE_TYPE:
+              if (typeMap.containsKey(featType)
+                  && !typeMap.get(featType).equals(attrType))
+              {
+                throw new IllegalStateException(
+                    "Cannot have more than one USAGE_TYPE instance for the same "
+                        + "feature type.  featureType=[ " +
+                        featType + " ], instance1=[ " + typeMap.get(featType)
+                        + " ], instance2=[" + attrType + " ]");
+              }
+              typeMap.put(featType, attrType);
+              break;
+            default:
               throw new IllegalStateException(
-                  "Cannot have more than one FULL_VALUE instance for the same "
-                  + "feature type and record type.  featureType=[ " +
-                      featType + " ], recordType=[ " + recordType
-                      + " ], instance1=[ " + fullMap.get(key)
-                      + " ], instance2=[ " + attrType + " ]");
-            }
-            fullMap.put(key, attrType);
-            break;
-          case PART_VALUE:
-            Set<GeneratedAttributeType> set = partMap.get(key);
-            if (set == null) {
-              set = new LinkedHashSet<>();
-              partMap.put(key, set);
-            }
-            set.add(attrType);
-            break;
-
-          case USAGE_TYPE:
-            if (typeMap.containsKey(featType)
-                && !typeMap.get(featType).equals(attrType))
-            {
-              throw new IllegalStateException(
-                  "Cannot have more than one USAGE_TYPE instance for the same "
-                      + "feature type.  featureType=[ " +
-                      featType + " ], instance1=[ " + typeMap.get(featType)
-                      + " ], instance2=[" + attrType + " ]");
-            }
-            typeMap.put(featType, attrType);
-            break;
-          default:
-            throw new IllegalStateException(
-                "Unhandled ValueType.  valueType=[ " + valueType
-                + " ], attrType=[ " + attrType + " ]");
+                  "Unhandled ValueType.  valueType=[ " + valueType
+                      + " ], attrType=[ " + attrType + " ]");
+          }
         }
       }
+
+      // make the sets in the part map unmodifiable
+      Iterator<Map.Entry<LookupKey, Set<GeneratedAttributeType>>> iter
+          = partMap.entrySet().iterator();
+      while (iter.hasNext()) {
+        // get the next entry
+        Map.Entry<LookupKey,Set<GeneratedAttributeType>> entry = iter.next();
+
+        // get the set value
+        Set<GeneratedAttributeType> set = entry.getValue();
+
+        // make the set unmodifiable
+        set = Collections.unmodifiableSet(set);
+        entry.setValue(set);
+      }
+
+      // iterate over the entries in the full map
+      fullMap.entrySet().forEach(entry -> {
+        LookupKey key = entry.getKey();
+        if (partMap.containsKey(key)) return;
+        partMap.put(key, Collections.singleton(entry.getValue()));
+      });
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
+
+    } finally {
+      // set the lookup map
+      FULL_LOOKUP_MAP   = Collections.unmodifiableMap(fullMap);
+      PARTS_LOOKUP_MAP  = Collections.unmodifiableMap(partMap);
+      TYPE_LOOKUP_MAP   = Collections.unmodifiableMap(typeMap);
     }
-
-    // make the sets in the part map unmodifiable
-    Iterator<Map.Entry<LookupKey, Set<GeneratedAttributeType>>> iter
-        = partMap.entrySet().iterator();
-    while (iter.hasNext()) {
-      // get the next entry
-      Map.Entry<LookupKey,Set<GeneratedAttributeType>> entry = iter.next();
-
-      // get the set value
-      Set<GeneratedAttributeType> set = entry.getValue();
-
-      // make the set unmodifiable
-      set = Collections.unmodifiableSet(set);
-      entry.setValue(set);
-    }
-
-    // iterate over the entries in the full map
-    fullMap.entrySet().forEach(entry -> {
-      LookupKey key = entry.getKey();
-      if (partMap.containsKey(key)) return;
-      partMap.put(key, Collections.singleton(entry.getValue()));
-    });
-
-    // set the lookup map
-    FULL_LOOKUP_MAP   = Collections.unmodifiableMap(fullMap);
-    PARTS_LOOKUP_MAP  = Collections.unmodifiableMap(partMap);
-    TYPE_LOOKUP_MAP   = Collections.unmodifiableMap(typeMap);
   }
 
   /**

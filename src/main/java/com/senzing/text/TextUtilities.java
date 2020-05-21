@@ -39,25 +39,31 @@ public class TextUtilities {
   private static final List<Character> ALPHANUMERIC_CHARS;
 
   static {
-    int capacity = (MAX_CHAR - MIN_CHAR) + 1;
-    List<Character> printableChars  = new ArrayList<>(capacity);
-    List<Character> alphaChars      = new ArrayList<>(capacity);
-    List<Character> alphaNumChars   = new ArrayList<>(capacity);
+    try {
+      int capacity = (MAX_CHAR - MIN_CHAR) + 1;
+      List<Character> printableChars  = new ArrayList<>(capacity);
+      List<Character> alphaChars      = new ArrayList<>(capacity);
+      List<Character> alphaNumChars   = new ArrayList<>(capacity);
 
-    for (int index = MIN_CHAR; index <= MAX_CHAR; index++) {
-      Character c = (char) index;
-      printableChars.add(c);
-      if (Character.isAlphabetic(c)) {
-        alphaChars.add(c);
-        alphaNumChars.add(c);
-      } else if (Character.isDigit(c)) {
-        alphaNumChars.add(c);
+      for (int index = MIN_CHAR; index <= MAX_CHAR; index++) {
+        Character c = (char) index;
+        printableChars.add(c);
+        if (Character.isAlphabetic(c)) {
+          alphaChars.add(c);
+          alphaNumChars.add(c);
+        } else if (Character.isDigit(c)) {
+          alphaNumChars.add(c);
+        }
       }
-    }
 
-    PRINTABLE_CHARS     = Collections.unmodifiableList(printableChars);
-    ALPHA_CHARS         = Collections.unmodifiableList(alphaChars);
-    ALPHANUMERIC_CHARS  = Collections.unmodifiableList(alphaNumChars);
+      PRINTABLE_CHARS     = Collections.unmodifiableList(printableChars);
+      ALPHA_CHARS         = Collections.unmodifiableList(alphaChars);
+      ALPHANUMERIC_CHARS  = Collections.unmodifiableList(alphaNumChars);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
+    }
   }
 
   /**

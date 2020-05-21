@@ -22,6 +22,10 @@ public class BuildInfo {
       System.err.println("FAILED TO READ " + resource + " FILE");
       e.printStackTrace();
 
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
+
     } finally {
       MAVEN_VERSION = version;
     }

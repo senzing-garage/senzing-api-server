@@ -50,72 +50,84 @@ public class RepositoryManager {
   private static String engineInitializedWith = null;
 
   static {
-    Set<String> set = new LinkedHashSet<>();
-    set.add("G2Module.ini.template".toLowerCase());
-    set.add("G2Project.ini.template".toLowerCase());
-    set.add("G2C.db.template".toLowerCase());
-    set.add("g2config.json.template".toLowerCase());
-    EXCLUDED_TEMPLATE_FILES = Collections.unmodifiableSet(set);
+    try {
+      Set<String> set = new LinkedHashSet<>();
+      set.add("G2Module.ini.template".toLowerCase());
+      set.add("G2Project.ini.template".toLowerCase());
+      set.add("G2C.db.template".toLowerCase());
+      set.add("g2config.json.template".toLowerCase());
+      EXCLUDED_TEMPLATE_FILES = Collections.unmodifiableSet(set);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
+    }
   }
 
   static {
-    InstallLocations locations = InstallLocations.findLocations();
-
-    if (locations != null) {
-      INSTALL_DIR   = locations.getInstallDirectory();
-      CONFIG_DIR    = locations.getConfigDirectory();
-      SUPPORT_DIR   = locations.getSupportDirectory();
-      RESOURCE_DIR  = locations.getResourceDirectory();
-      TEMPLATES_DIR = locations.getTemplatesDirectory();
-    } else {
-      INSTALL_DIR   = null;
-      CONFIG_DIR    = null;
-      SUPPORT_DIR   = null;
-      RESOURCE_DIR  = null;
-      TEMPLATES_DIR = null;
-    }
-
-    G2Engine    engineApi     = null;
-    G2Config    configApi     = null;
-    G2ConfigMgr configMgrApi  = null;
     try {
-      engineApi     = NativeApiFactory.createEngineApi();
-      configApi     = NativeApiFactory.createConfigApi();
-      configMgrApi  = NativeApiFactory.createConfigMgrApi();
+      InstallLocations locations = InstallLocations.findLocations();
+
+      if (locations != null) {
+        INSTALL_DIR   = locations.getInstallDirectory();
+        CONFIG_DIR    = locations.getConfigDirectory();
+        SUPPORT_DIR   = locations.getSupportDirectory();
+        RESOURCE_DIR  = locations.getResourceDirectory();
+        TEMPLATES_DIR = locations.getTemplatesDirectory();
+      } else {
+        INSTALL_DIR   = null;
+        CONFIG_DIR    = null;
+        SUPPORT_DIR   = null;
+        RESOURCE_DIR  = null;
+        TEMPLATES_DIR = null;
+      }
+
+      G2Engine    engineApi     = null;
+      G2Config    configApi     = null;
+      G2ConfigMgr configMgrApi  = null;
+      try {
+        engineApi     = NativeApiFactory.createEngineApi();
+        configApi     = NativeApiFactory.createConfigApi();
+        configMgrApi  = NativeApiFactory.createConfigMgrApi();
+
+      } catch (Exception e) {
+        File libPath = new File(INSTALL_DIR, "lib");
+        e.printStackTrace();
+        System.err.println();
+        switch (RUNTIME_OS_FAMILY) {
+          case WINDOWS:
+            System.err.println("Failed to load native G2.dll library.");
+            System.err.println(
+                "Check PATH environment variable for " + libPath);
+            break;
+          case MAC_OS:
+            System.err.println("Failed to load native libG2.so library");
+            System.err.println(
+                "Check DYLD_LIBRARY_PATH environment variable for: ");
+            System.err.println("     - " + libPath);
+            System.err.println("     - " + (new File(libPath, "macos")));
+            break;
+          case UNIX:
+            System.err.println("Failed to load native libG2.so library");
+            System.err.println(
+                "Check LD_LIBRARY_PATH environment variable for: ");
+            System.err.println("     - " + libPath);
+            System.err.println("     - " + (new File(libPath, "debian")));
+            break;
+          default:
+            // do nothing
+        }
+        throw new ExceptionInInitializerError(e);
+
+      } finally {
+        ENGINE_API      = engineApi;
+        CONFIG_API      = configApi;
+        CONFIG_MGR_API  = configMgrApi;
+      }
 
     } catch (Exception e) {
-      File libPath = new File(INSTALL_DIR, "lib");
       e.printStackTrace();
-      System.err.println();
-      switch (RUNTIME_OS_FAMILY) {
-        case WINDOWS:
-          System.err.println("Failed to load native G2.dll library.");
-          System.err.println(
-              "Check PATH environment variable for " + libPath);
-          break;
-        case MAC_OS:
-          System.err.println("Failed to load native libG2.so library");
-          System.err.println(
-              "Check DYLD_LIBRARY_PATH environment variable for: ");
-          System.err.println("     - " + libPath);
-          System.err.println("     - " + (new File(libPath, "macos")));
-          break;
-        case UNIX:
-          System.err.println("Failed to load native libG2.so library");
-          System.err.println(
-              "Check LD_LIBRARY_PATH environment variable for: ");
-          System.err.println("     - " + libPath);
-          System.err.println("     - " + (new File(libPath, "debian")));
-          break;
-        default:
-          // do nothing
-      }
       throw new ExceptionInInitializerError(e);
-
-    } finally {
-      ENGINE_API      = engineApi;
-      CONFIG_API      = configApi;
-      CONFIG_MGR_API  = configMgrApi;
     }
   }
 
@@ -154,6 +166,10 @@ public class RepositoryManager {
           // PATH_TO_JAR = url.substring(index);
         }
       }
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
 
     } finally {
       JAR_BASE_URL  = jarBaseUrl;

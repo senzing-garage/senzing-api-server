@@ -167,19 +167,23 @@ public class DataGenerator {
 
     try {
       // get the given names (and related names)
-      givenNames      = readListData("given-names.txt");
-      surnames        = readData("surnames.txt");
-      bizPatterns     = readListData("biz-patterns.txt");
-      bizNames        = readListData("biz-names.txt");
-      orgPatterns     = readListData("org-patterns.txt");
-      emailDomains    = readData("email-domains.txt");
-      areaCodes       = readData("area-codes.txt");
-      cityPrefixes    = readData("city-prefixes.txt");
-      streetNames     = readData("street-names.txt");
-      bizUserNames    = readData("biz-users.txt");
-      orgUserNames    = readData("org-users.txt");
-      streetPrefixes  = readData("street-prefixes.txt");
-      streetSuffixes  = readData("street-suffixes.txt");
+      givenNames = readListData("given-names.txt");
+      surnames = readData("surnames.txt");
+      bizPatterns = readListData("biz-patterns.txt");
+      bizNames = readListData("biz-names.txt");
+      orgPatterns = readListData("org-patterns.txt");
+      emailDomains = readData("email-domains.txt");
+      areaCodes = readData("area-codes.txt");
+      cityPrefixes = readData("city-prefixes.txt");
+      streetNames = readData("street-names.txt");
+      bizUserNames = readData("biz-users.txt");
+      orgUserNames = readData("org-users.txt");
+      streetPrefixes = readData("street-prefixes.txt");
+      streetSuffixes = readData("street-suffixes.txt");
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
 
     } finally {
       GIVEN_NAMES         = Collections.unmodifiableList(givenNames);

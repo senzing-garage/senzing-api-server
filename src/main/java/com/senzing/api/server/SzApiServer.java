@@ -142,6 +142,10 @@ public class SzApiServer implements SzApiProvider {
           }
         }
       }
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
+
     } finally {
       JAR_BASE_URL      = jarBaseUrl;
       JAR_FILE_NAME     = jarFileName;
@@ -1587,16 +1591,6 @@ public class SzApiServer implements SzApiProvider {
     context.setResourceBase(url);
 
     RewriteHandler rewriteHandler = new RewriteHandler();
-    rewriteHandler.setRewritePathInfo(true);
-    rewriteHandler.setRewriteRequestURI(true);
-    RewriteRegexRule rewriteRule = null;
-    TerminatingRegexRule terminatingRule = null;
-    terminatingRule = new TerminatingRegexRule("/sz/api/(.*)");
-    rewriteHandler.addRule(terminatingRule);
-    rewriteRule = new RewriteRegexRule();
-    rewriteRule.setRegex("/sz/[^\\.]+$");
-    rewriteRule.setReplacement("/sz/");
-    rewriteHandler.addRule(rewriteRule);
 
     rewriteHandler.setHandler(context);
 

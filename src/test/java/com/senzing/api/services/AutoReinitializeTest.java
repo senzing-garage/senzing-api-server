@@ -64,6 +64,10 @@ public class AutoReinitializeTest extends AbstractServiceTest
       expectedSources.putAll(customSources);
       expectedSources = Collections.unmodifiableMap(expectedSources);
 
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
+
     } finally {
       DEFAULT_DATA_SOURCES  = defaultSources;
       CUSTOM_DATA_SOURCES   = customSources;

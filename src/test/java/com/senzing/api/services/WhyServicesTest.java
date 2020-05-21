@@ -71,6 +71,11 @@ public class WhyServicesTest extends AbstractServiceTest {
       recordIds.add(XYZ234);
       recordIds.add(GHI123);
       recordIds.add(JKL456);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
+
     } finally {
       RECORD_IDS = Collections.unmodifiableList(recordIds);
     }

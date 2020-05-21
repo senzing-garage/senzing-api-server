@@ -53,11 +53,17 @@ public class RecordReader {
      * Initializes the lookup.
      */
     static {
-      Map<String, Format> map = new LinkedHashMap<>();
-      for (Format format: Format.values()) {
-        map.put(format.getMediaType(), format);
+      try {
+        Map<String, Format> map = new LinkedHashMap<>();
+        for (Format format: Format.values()) {
+          map.put(format.getMediaType(), format);
+        }
+        MEDIA_TYPE_LOOKUP = Collections.unmodifiableMap(map);
+
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw new ExceptionInInitializerError(e);
       }
-      MEDIA_TYPE_LOOKUP = Collections.unmodifiableMap(map);
     }
 
     /**

@@ -244,8 +244,10 @@ class G2EngineRetryHandler implements InvocationHandler {
                   method.toString()));
         }
       }
-    } catch (NoSuchMethodException e) {
+    } catch (Exception e) {
+      e.printStackTrace();
       throw new ExceptionInInitializerError(e);
+
     } finally {
       UNSUPPORTED_METHODS = Collections.unmodifiableSet(unsupportedSet);
       DIRECT_METHODS = Collections.unmodifiableSet(directSet);

@@ -114,33 +114,39 @@ enum DataGeneratorOption
   }
 
   static {
-    Map<String, DataGeneratorOption> lookupMap = new LinkedHashMap<>();
-    for (DataGeneratorOption opt: values()) {
-      lookupMap.put(opt.getCommandLineFlag(), opt);
+    try {
+      Map<String, DataGeneratorOption> lookupMap = new LinkedHashMap<>();
+      for (DataGeneratorOption opt: values()) {
+        lookupMap.put(opt.getCommandLineFlag(), opt);
+      }
+      OPTIONS_BY_FLAG = Collections.unmodifiableMap(lookupMap);
+
+      Set<Set<DataGeneratorOption>> nodeps
+          = Collections.singleton(noneOf(DataGeneratorOption.class));
+
+      HELP.conflicts = complementOf(EnumSet.of(HELP));
+      HELP.dependencies = nodeps;
+
+      Set<Set<DataGeneratorOption>> outputFileDependencies
+          = new LinkedHashSet<>();
+      outputFileDependencies.add(EnumSet.of(CSV_FILE));
+      outputFileDependencies.add(EnumSet.of(JSON_FILE));
+      outputFileDependencies.add(EnumSet.of(JSON_LINES_FILE));
+      outputFileDependencies
+          = Collections.unmodifiableSet(outputFileDependencies);
+
+      OVERWRITE.dependencies = outputFileDependencies;
+      PRETTY_PRINT.dependencies = Collections.singleton(EnumSet.of(JSON_FILE));
+      ORGANIZATION_SOURCES.dependencies
+          = Collections.singleton(EnumSet.of(ORGANIZATION_COUNT));
+      BUSINESS_SOURCES.dependencies
+          = Collections.singleton(EnumSet.of(BUSINESS_COUNT));
+      PERSON_SOURCES.dependencies
+          = Collections.singleton(EnumSet.of(PERSON_COUNT));
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
     }
-    OPTIONS_BY_FLAG = Collections.unmodifiableMap(lookupMap);
-
-    Set<Set<DataGeneratorOption>> nodeps
-        = Collections.singleton(noneOf(DataGeneratorOption.class));
-
-    HELP.conflicts = complementOf(EnumSet.of(HELP));
-    HELP.dependencies = nodeps;
-
-    Set<Set<DataGeneratorOption>> outputFileDependencies
-        = new LinkedHashSet<>();
-    outputFileDependencies.add(EnumSet.of(CSV_FILE));
-    outputFileDependencies.add(EnumSet.of(JSON_FILE));
-    outputFileDependencies.add(EnumSet.of(JSON_LINES_FILE));
-    outputFileDependencies
-        = Collections.unmodifiableSet(outputFileDependencies);
-
-    OVERWRITE.dependencies = outputFileDependencies;
-    PRETTY_PRINT.dependencies = Collections.singleton(EnumSet.of(JSON_FILE));
-    ORGANIZATION_SOURCES.dependencies
-        = Collections.singleton(EnumSet.of(ORGANIZATION_COUNT));
-    BUSINESS_SOURCES.dependencies
-        = Collections.singleton(EnumSet.of(BUSINESS_COUNT));
-    PERSON_SOURCES.dependencies
-        = Collections.singleton(EnumSet.of(PERSON_COUNT));
   }
 }
