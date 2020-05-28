@@ -18,6 +18,7 @@ import static com.senzing.api.services.ResponseValidators.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class AdminServicesTest extends AbstractServiceTest {
+  public static final int TEST_LICENSE_RECORD_LIMIT = 10000;
   private AdminServices adminServices;
 
   @BeforeAll public void initializeEnvironment() {
@@ -77,7 +78,7 @@ public class AdminServicesTest extends AbstractServiceTest {
                               after,
                               null,
                               "EVAL",
-                              10000);
+                              TEST_LICENSE_RECORD_LIMIT);
     });
   }
 
@@ -97,7 +98,7 @@ public class AdminServicesTest extends AbstractServiceTest {
                               after,
                               null,
                               "EVAL",
-                              10000);
+                              TEST_LICENSE_RECORD_LIMIT);
     });
   }
 
@@ -117,7 +118,7 @@ public class AdminServicesTest extends AbstractServiceTest {
                               after,
                               false,
                               "EVAL",
-                              10000);
+                              TEST_LICENSE_RECORD_LIMIT);
 
     });
   }
@@ -137,7 +138,7 @@ public class AdminServicesTest extends AbstractServiceTest {
                               after,
                               false,
                               "EVAL",
-                              10000);
+                              TEST_LICENSE_RECORD_LIMIT);
     });
   }
 
@@ -157,7 +158,7 @@ public class AdminServicesTest extends AbstractServiceTest {
                               after,
                               true,
                               "EVAL",
-                              10000);
+                              TEST_LICENSE_RECORD_LIMIT);
     });
   }
 
@@ -176,7 +177,7 @@ public class AdminServicesTest extends AbstractServiceTest {
                               after,
                               true,
                               "EVAL",
-                              10000);
+                              TEST_LICENSE_RECORD_LIMIT);
     });
   }
 
