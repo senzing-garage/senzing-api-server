@@ -18,7 +18,7 @@ import static com.senzing.api.services.ResponseValidators.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class AdminServicesTest extends AbstractServiceTest {
-  public static final int TEST_LICENSE_RECORD_LIMIT = 10000;
+  public static final int TEST_LICENSE_RECORD_LIMIT = 100000;
   private AdminServices adminServices;
 
   @BeforeAll public void initializeEnvironment() {
