@@ -369,7 +369,7 @@ public class ResponseValidators {
    * @param rawData      The raw data to validate.
    * @param expectedKeys The zero or more expected property keys.
    */
-  public static void validateRawDataMap(Object rawData, String... expectedKeys) 
+  public static void validateRawDataMap(Object rawData, String... expectedKeys)
   {
     validateRawDataMap(null,
                             rawData,
@@ -466,7 +466,7 @@ public class ResponseValidators {
    * @param rawData      The raw data to validate.
    * @param expectedKeys The zero or more expected property keys.
    */
-  public static void validateRawDataMapArray(Object     rawData, 
+  public static void validateRawDataMapArray(Object     rawData,
                                              String...  expectedKeys)
   {
     validateRawDataMapArray(null, rawData, true, expectedKeys);
@@ -1950,11 +1950,11 @@ public class ResponseValidators {
 
     assertNotNull(licenseInfo, "License data is null");
 
-    assertEquals(10000,
+    assertEquals(expectedRecordLimit,
                  licenseInfo.getRecordLimit(),
                  "Record limit wrong");
 
-    assertEquals("EVAL",
+    assertEquals(expectedLicenseType,
                  licenseInfo.getLicenseType(),
                  "Unexpected license type");
 
