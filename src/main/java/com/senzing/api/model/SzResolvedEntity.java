@@ -41,7 +41,7 @@ public class SzResolvedEntity {
   /**
    * The list of attribute data strings.
    */
-  private List<String> attributeData;
+  private List<String> characteristicData;
 
   /**
    * The list of identifier data strings.
@@ -98,7 +98,7 @@ public class SzResolvedEntity {
     this.bestName             = null;
     this.recordSummaries      = new LinkedList<>();
     this.addressData          = new LinkedList<>();
-    this.attributeData        = new LinkedList<>();
+    this.characteristicData = new LinkedList<>();
     this.identifierData       = new LinkedList<>();
     this.nameData             = new LinkedList<>();
     this.phoneData            = new LinkedList<>();
@@ -298,20 +298,20 @@ public class SzResolvedEntity {
    *
    * @return The list of attribute data strings for the entity.
    */
-  public List<String> getAttributeData()
+  public List<String> getCharacteristicData()
   {
-    return Collections.unmodifiableList(this.attributeData);
+    return Collections.unmodifiableList(this.characteristicData);
   }
 
   /**
    * Sets the attribute data list for the entity.
    *
-   * @param attributeData The list of attribute data strings.
+   * @param characteristicData The list of attribute data strings.
    */
-  public void setAttributeData(List<String> attributeData) {
-    this.attributeData.clear();
-    if (attributeData != null) {
-      this.attributeData.addAll(attributeData);
+  public void setCharacteristicData(List<String> characteristicData) {
+    this.characteristicData.clear();
+    if (characteristicData != null) {
+      this.characteristicData.addAll(characteristicData);
     }
   }
 
@@ -323,7 +323,7 @@ public class SzResolvedEntity {
    */
   public void addAttributeData(String attributeData)
   {
-    this.attributeData.add(attributeData);
+    this.characteristicData.add(attributeData);
   }
 
   /**
@@ -533,7 +533,7 @@ public class SzResolvedEntity {
 
     // clear out the data lists
     this.addressData.clear();
-    this.attributeData.clear();
+    this.characteristicData.clear();
     this.identifierData.clear();
     this.nameData.clear();
     this.phoneData.clear();
@@ -910,7 +910,7 @@ public class SzResolvedEntity {
         ", bestName='" + bestName + '\'' +
         ", recordSummaries=" + recordSummaries +
         ", addressData=" + addressData +
-        ", attributeData=" + attributeData +
+        ", attributeData=" + characteristicData +
         ", identifierData=" + identifierData +
         ", nameData=" + nameData +
         ", phoneData=" + phoneData +
