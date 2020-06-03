@@ -1760,7 +1760,9 @@ public class ConfigServices {
           }
           jsonArray = jab.build();
         }
-        String rawData = JsonUtils.toJsonText(jsonArray);
+        JsonObjectBuilder job = Json.createObjectBuilder();
+        job.add("CFG_ATTR", jsonArray);
+        String rawData = JsonUtils.toJsonText(job.build());
         processedRawData(timers);
         response.setRawData(rawData);
       }
