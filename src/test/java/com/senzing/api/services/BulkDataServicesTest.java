@@ -95,47 +95,53 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   };
 
   static {
-    Map<String, String> dataSourceMap = new LinkedHashMap<>();
-    Map<String, String> entityTypeMap = new LinkedHashMap<>();
+    try {
+      Map<String, String> dataSourceMap = new LinkedHashMap<>();
+      Map<String, String> entityTypeMap = new LinkedHashMap<>();
 
-    dataSourceMap.put(CUSTOMER_DATA_SOURCE, CUSTOMERS_DATA_SOURCE);
-    dataSourceMap.put(SUBSCRIBER_DATA_SOURCE, SUBSCRIBERS_DATA_SOURCE);
-    dataSourceMap.put(EMPLOYEE_DATA_SOURCE, EMPLOYEES_DATA_SOURCE);
-    dataSourceMap.put(VENDOR_DATA_SOURCE, VENDORS_DATA_SOURCE);
-    dataSourceMap.put(PARTNER_DATA_SOURCE, PARTNERS_DATA_SOURCE);
-    dataSourceMap.put(STORE_DATA_SOURCE, STORES_DATA_SOURCE);
+      dataSourceMap.put(CUSTOMER_DATA_SOURCE, CUSTOMERS_DATA_SOURCE);
+      dataSourceMap.put(SUBSCRIBER_DATA_SOURCE, SUBSCRIBERS_DATA_SOURCE);
+      dataSourceMap.put(EMPLOYEE_DATA_SOURCE, EMPLOYEES_DATA_SOURCE);
+      dataSourceMap.put(VENDOR_DATA_SOURCE, VENDORS_DATA_SOURCE);
+      dataSourceMap.put(PARTNER_DATA_SOURCE, PARTNERS_DATA_SOURCE);
+      dataSourceMap.put(STORE_DATA_SOURCE, STORES_DATA_SOURCE);
 
-    entityTypeMap.put(CUSTOMER_ENTITY_TYPE, PERSON_ENTITY_TYPE);
-    entityTypeMap.put(EMPLOYEE_ENTITY_TYPE, PERSON_ENTITY_TYPE);
-    entityTypeMap.put(SUBSCRIBER_ENTITY_TYPE, PERSON_ENTITY_TYPE);
-    entityTypeMap.put(VENDOR_ENTITY_TYPE, ORGANIZATION_ENTITY_TYPE);
-    entityTypeMap.put(PARTNER_ENTITY_TYPE, ORGANIZATION_ENTITY_TYPE);
-    entityTypeMap.put(STORE_ENTITY_TYPE, ORGANIZATION_ENTITY_TYPE);
+      entityTypeMap.put(CUSTOMER_ENTITY_TYPE, PERSON_ENTITY_TYPE);
+      entityTypeMap.put(EMPLOYEE_ENTITY_TYPE, PERSON_ENTITY_TYPE);
+      entityTypeMap.put(SUBSCRIBER_ENTITY_TYPE, PERSON_ENTITY_TYPE);
+      entityTypeMap.put(VENDOR_ENTITY_TYPE, ORGANIZATION_ENTITY_TYPE);
+      entityTypeMap.put(PARTNER_ENTITY_TYPE, ORGANIZATION_ENTITY_TYPE);
+      entityTypeMap.put(STORE_ENTITY_TYPE, ORGANIZATION_ENTITY_TYPE);
 
-    DATA_SOURCE_MAP = Collections.unmodifiableMap(dataSourceMap);
-    ENTITY_TYPE_MAP = Collections.unmodifiableMap(entityTypeMap);
+      DATA_SOURCE_MAP = Collections.unmodifiableMap(dataSourceMap);
+      ENTITY_TYPE_MAP = Collections.unmodifiableMap(entityTypeMap);
 
-    Map<String, RecordType> sourceRecordTypeMap = new LinkedHashMap<>();
+      Map<String, RecordType> sourceRecordTypeMap = new LinkedHashMap<>();
 
-    sourceRecordTypeMap.put(CUSTOMER_DATA_SOURCE, PERSON);
-    sourceRecordTypeMap.put(EMPLOYEE_DATA_SOURCE, PERSON);
-    sourceRecordTypeMap.put(SUBSCRIBER_DATA_SOURCE, PERSON);
-    sourceRecordTypeMap.put(VENDOR_DATA_SOURCE, ORGANIZATION);
-    sourceRecordTypeMap.put(PARTNER_ENTITY_TYPE, ORGANIZATION);
-    sourceRecordTypeMap.put(STORE_ENTITY_TYPE, BUSINESS);
+      sourceRecordTypeMap.put(CUSTOMER_DATA_SOURCE, PERSON);
+      sourceRecordTypeMap.put(EMPLOYEE_DATA_SOURCE, PERSON);
+      sourceRecordTypeMap.put(SUBSCRIBER_DATA_SOURCE, PERSON);
+      sourceRecordTypeMap.put(VENDOR_DATA_SOURCE, ORGANIZATION);
+      sourceRecordTypeMap.put(PARTNER_ENTITY_TYPE, ORGANIZATION);
+      sourceRecordTypeMap.put(STORE_ENTITY_TYPE, BUSINESS);
 
-    SOURCE_RECORD_TYPE_MAP = Collections.unmodifiableMap(sourceRecordTypeMap);
+      SOURCE_RECORD_TYPE_MAP = Collections.unmodifiableMap(sourceRecordTypeMap);
 
-    Map<String, String> sourceEntityTypeMap = new LinkedHashMap<>();
+      Map<String, String> sourceEntityTypeMap = new LinkedHashMap<>();
 
-    sourceEntityTypeMap.put(CUSTOMER_DATA_SOURCE, CUSTOMER_ENTITY_TYPE);
-    sourceEntityTypeMap.put(EMPLOYEE_DATA_SOURCE, EMPLOYEE_ENTITY_TYPE);
-    sourceEntityTypeMap.put(SUBSCRIBER_DATA_SOURCE, SUBSCRIBER_ENTITY_TYPE);
-    sourceEntityTypeMap.put(VENDOR_DATA_SOURCE, VENDOR_ENTITY_TYPE);
-    sourceEntityTypeMap.put(PARTNER_ENTITY_TYPE, PARTNER_ENTITY_TYPE);
-    sourceEntityTypeMap.put(STORE_ENTITY_TYPE, STORE_ENTITY_TYPE);
+      sourceEntityTypeMap.put(CUSTOMER_DATA_SOURCE, CUSTOMER_ENTITY_TYPE);
+      sourceEntityTypeMap.put(EMPLOYEE_DATA_SOURCE, EMPLOYEE_ENTITY_TYPE);
+      sourceEntityTypeMap.put(SUBSCRIBER_DATA_SOURCE, SUBSCRIBER_ENTITY_TYPE);
+      sourceEntityTypeMap.put(VENDOR_DATA_SOURCE, VENDOR_ENTITY_TYPE);
+      sourceEntityTypeMap.put(PARTNER_ENTITY_TYPE, PARTNER_ENTITY_TYPE);
+      sourceEntityTypeMap.put(STORE_ENTITY_TYPE, STORE_ENTITY_TYPE);
 
-    SOURCE_ENTITY_TYPE_MAP = Collections.unmodifiableMap(sourceEntityTypeMap);
+      SOURCE_ENTITY_TYPE_MAP = Collections.unmodifiableMap(sourceEntityTypeMap);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
+    }
   }
 
   protected BulkDataServices bulkDataServices;
