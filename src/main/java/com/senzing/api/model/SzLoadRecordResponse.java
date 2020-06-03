@@ -8,7 +8,7 @@ import javax.ws.rs.core.UriInfo;
  * The response containing the record ID of the record that was loaded.
  *
  */
-public class SzLoadRecordResponse extends SzBasicResponse
+public class SzLoadRecordResponse extends SzResponseWithRawData
 {
   /**
    * The data for this instance.
