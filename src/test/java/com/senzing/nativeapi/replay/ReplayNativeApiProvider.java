@@ -2,6 +2,7 @@ package com.senzing.nativeapi.replay;
 
 import com.senzing.nativeapi.NativeApiProvider;
 import com.senzing.g2.engine.*;
+import com.senzing.g2.engine.internal.*;
 import com.senzing.io.IOUtilities;
 import com.senzing.util.AccessToken;
 import com.senzing.util.JsonUtils;
@@ -246,7 +247,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       map.put(G2Config.class, "com.senzing.g2.engine.G2ConfigJNI");
       map.put(G2ConfigMgr.class, "com.senzing.g2.engine.G2ConfigMgrJNI");
       map.put(G2Product.class, "com.senzing.g2.engine.G2ProductJNI");
-      map.put(G2Audit.class, "com.senzing.g2.engine.G2AuditJNI");
+      map.put(G2Audit.class, "com.senzing.g2.engine.internal.G2AuditJNI");
     } finally {
       API_IMPLEMENTATIONS = Collections.unmodifiableMap(map);
     }

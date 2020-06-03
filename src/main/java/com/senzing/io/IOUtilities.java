@@ -70,6 +70,28 @@ public class IOUtilities {
   }
 
   /**
+   * Reads text from the specified {@link Reader} until EOF is reached and
+   * returns a {@link String} representing the text that was read.  This
+   * function will close the specified {@link Reader} upon completion.
+   *
+   * @param reader The {@link Reader} whose contents should be read.
+   * @return The {@link String} representing the text from the {@link Reader}.
+   * @throws IOException If an I/O failure occurs.
+   */
+  public static String readFully(Reader reader) throws IOException
+  {
+    try (BufferedReader br = new BufferedReader(reader))
+    {
+      StringBuilder sb = new StringBuilder();
+      for (int nextChar = br.read(); nextChar >= 0; nextChar = br.read()) {
+        if (nextChar == 0) continue;
+        sb.append((char) nextChar);
+      }
+      return sb.toString();
+    }
+  }
+
+  /**
    * Reads data from the specified {@link InputStream} assuming the data
    * represents characters and attempts via several methods to guess the
    * character encoding of those characters.  If no character encoding can
