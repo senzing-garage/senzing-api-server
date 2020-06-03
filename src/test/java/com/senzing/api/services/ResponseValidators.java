@@ -896,7 +896,7 @@ public class ResponseValidators {
       case NAME:
         return entity.getNameData();
       case CHARACTERISTIC:
-        return entity.getAttributeData();
+        return entity.getCharacteristicData();
       case PHONE:
         return entity.getPhoneData();
       case IDENTIFIER:
@@ -1374,18 +1374,23 @@ public class ResponseValidators {
                      + " ], testInfo=[ " + testInfo + " ]");
 
     if (expectRawData) {
+      validateRawDataMap(
+          response.getRawData(), true, "CFG_ATTR");
+
+      Object attrs = ((Map) response.getRawData()).get("CFG_ATTR");
+
       validateRawDataMapArray(testInfo,
-                                   response.getRawData(),
-                                   false,
-                                   "DEFAULT_VALUE",
-                                   "ATTR_CODE",
-                                   "FELEM_REQ",
-                                   "ATTR_CLASS",
-                                   "INTERNAL",
-                                   "ATTR_ID",
-                                   "FTYPE_CODE",
-                                   "FELEM_CODE",
-                                   "ADVANCED");
+                              attrs,
+                              false,
+                              "DEFAULT_VALUE",
+                              "ATTR_CODE",
+                              "FELEM_REQ",
+                              "ATTR_CLASS",
+                              "INTERNAL",
+                              "ATTR_ID",
+                              "FTYPE_CODE",
+                              "FELEM_CODE",
+                              "ADVANCED");
     }
   }
 
@@ -1538,9 +1543,13 @@ public class ResponseValidators {
     validateBasics(
         response, httpMethod, selfLink, beforeTimestamp, afterTimestamp);
 
-    SzEntityRecord record = response.getData();
+    SzRecordResponse.Data data = response.getData();
 
-    assertNotNull(record, "Response data is null");
+    assertNotNull(data, "Response data is null");
+
+    SzEntityRecord record = data.getRecord();
+
+    assertNotNull(record, "Response record is null");
 
     String dataSource = record.getDataSource();
     assertNotNull(dataSource, "Data source is null");
