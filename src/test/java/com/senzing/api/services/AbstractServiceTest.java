@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.senzing.api.model.*;
 import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.nativeapi.replay.ReplayNativeApiProvider;
@@ -23,7 +24,6 @@ import javax.json.*;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
-import static com.senzing.api.services.ServicesUtil.newBadRequestException;
 import static com.senzing.io.IOUtilities.*;
 import static org.junit.jupiter.api.Assumptions.*;
 import static com.senzing.util.LoggingUtilities.*;
@@ -76,6 +76,10 @@ public abstract class AbstractServiceTest {
       }
 
       NativeApiFactory.installProvider(REPLAY_PROVIDER);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
 
     } finally {
       NATIVE_API_AVAILABLE = (productApi != null);
@@ -435,6 +439,7 @@ public abstract class AbstractServiceTest {
                        this.initialEntityTypes,
                        this.initialAttributeTypes);
 
+    // make the maps unmodifiable
     this.initialDataSources
         = Collections.unmodifiableMap(this.initialDataSources);
     this.initialEntityClasses
@@ -1675,5 +1680,110 @@ public abstract class AbstractServiceTest {
     return optionCombos;
   }
 
+  /**
+   * Converts the source object to JSON and then parses the JSON to the
+   * specified target class.
+   *
+   * @param source The source object to copy.
+   * @param targetClass The target class to parse the JSON as.
+   * @return The target object that was parsed.
+   */
+  public static <S, T> T jsonCopy(S source, Class<T> targetClass) {
+    String jsonText = null;
+    try {
+      ObjectMapper objectMapper = new ObjectMapper();
+      objectMapper.registerModule(new JodaModule());
+      StringWriter sw = new StringWriter();
+      objectMapper.writeValue(sw, source);
+      jsonText = sw.toString();
+      return objectMapper.readValue(jsonText, targetClass);
 
+    } catch (RuntimeException e) {
+      if (jsonText != null) System.out.println("JSON TEXT: " + jsonText);
+      throw e;
+    } catch (Exception e) {
+      if (jsonText != null) System.out.println("JSON TEXT: " + jsonText);
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Converts each source object in the specified {@link Collection} to JSON and
+   * then parses the JSON to the specified target class and populates the
+   * target collection.
+   *
+   * @param source The {@link Collection} of source objects to copy.
+   * @param targetClass The target class to parse the JSON as.
+   * @return The {@link Collection} containing target objects that were parsed.
+   */
+  public static <S, T, C extends Collection<T>> C jsonCopy(
+      Collection<S> source,
+      Class<T>      targetClass,
+      Class<C>      collectionClass)
+  {
+    try {
+      C target = collectionClass.newInstance();
+
+      source.forEach(s -> {
+        T t = jsonCopy(s, targetClass);
+        target.add(t);
+      });
+
+      return target;
+
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Converts each source object in the specified {@link Map} to JSON and
+   * then parses the JSON to the specified target class and populates the
+   * target {@link Map}.
+   *
+   * @param source The {@link Map} of source objects to copy.
+   * @param targetClass The target class to parse the JSON as.
+   * @return The {@link Map} containing the target objects that were parsed.
+   */
+  public static <S, T, K> Map<K, T> jsonCopy(
+      Map<K, S>     source,
+      Class<T>      targetClass)
+  {
+    try {
+      Map<K, T> target = new LinkedHashMap<K, T>();
+
+      source.entrySet().forEach(entry -> {
+        K key = entry.getKey();
+        S s   = entry.getValue();
+        T t   = jsonCopy(s, targetClass);
+        target.put(key, t);
+      });
+
+      return target;
+
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Parse JSON text as the specified target class.
+   * @param jsonText The JSON text to parse.
+   * @param targetClass The target class to parse to.
+   */
+  public static <T> T jsonParse(String jsonText, Class<T> targetClass) {
+    try {
+      ObjectMapper objectMapper = new ObjectMapper();
+      objectMapper.registerModule(new JodaModule());
+      return objectMapper.readValue(jsonText, targetClass);
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 }
