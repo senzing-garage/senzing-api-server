@@ -71,9 +71,6 @@ class G2EngineRetryHandler implements InvocationHandler {
 
       // handle unsupported methods that may not be in the version of g2.jar
       // that is installed in the build/runtime environment
-      addMethodIfExists(unsupportedSet,"addRecordWithInfo",
-                        String.class, String.class, String.class,
-                        String.class, int.class, StringBuffer.class);
       addMethodIfExists(unsupportedSet,"replaceRecordWithInfo",
                         String.class, String.class, String.class,
                         String.class, int.class, StringBuffer.class);
@@ -119,6 +116,9 @@ class G2EngineRetryHandler implements InvocationHandler {
       retrySet.add(cls.getMethod(
           "addRecordWithReturnedRecordID",
           String.class, StringBuffer.class, String.class, String.class));
+      retrySet.add(cls.getMethod(
+          "addRecordWithInfo",
+                String.class, String.class, String.class, String.class, int.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
           "deleteRecord", String.class, String.class, String.class));
       retrySet.add(cls.getMethod(
