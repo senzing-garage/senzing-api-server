@@ -1,11 +1,15 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.*;
 import java.util.function.Function;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 public class SzResolvedEntity {
   /**
@@ -135,8 +139,9 @@ public class SzResolvedEntity {
    *
    * @return The highest fidelity name for the entity.
    */
+  @JsonInclude(NON_NULL)
   public String getEntityName() {
-    return entityName;
+    return this.entityName;
   }
 
   /**
@@ -157,8 +162,9 @@ public class SzResolvedEntity {
    *
    * @return The best name for the entity.
    */
+  @JsonInclude(NON_NULL)
   public String getBestName() {
-    return bestName;
+    return this.bestName;
   }
 
   /**
@@ -179,6 +185,7 @@ public class SzResolvedEntity {
    * @return The list of {@link SzMatchedRecord} instances describing the records
    *         for the entity.
    */
+  @JsonInclude(NON_EMPTY)
   public List<SzMatchedRecord> getRecords() {
     return Collections.unmodifiableList(this.records);
   }
@@ -233,6 +240,7 @@ public class SzResolvedEntity {
    *
    * @return The list of {@link SzDataSourceRecordSummary} instances for the entity.
    */
+  @JsonInclude(NON_EMPTY)
   public List<SzDataSourceRecordSummary> getRecordSummaries() {
     return Collections.unmodifiableList(this.recordSummaries);
   }
@@ -266,8 +274,8 @@ public class SzResolvedEntity {
    *
    * @return The list of address data strings for the entity.
    */
-  public List<String> getAddressData()
-  {
+  @JsonInclude(NON_EMPTY)
+  public List<String> getAddressData() {
     return Collections.unmodifiableList(this.addressData);
   }
 
@@ -288,8 +296,7 @@ public class SzResolvedEntity {
    *
    * @param addressData The address data string to add to the address data list.
    */
-  public void addAddressData(String addressData)
-  {
+  public void addAddressData(String addressData) {
     this.addressData.add(addressData);
   }
 
@@ -298,8 +305,8 @@ public class SzResolvedEntity {
    *
    * @return The list of attribute data strings for the entity.
    */
-  public List<String> getCharacteristicData()
-  {
+  @JsonInclude(NON_EMPTY)
+  public List<String> getCharacteristicData() {
     return Collections.unmodifiableList(this.characteristicData);
   }
 
@@ -321,8 +328,7 @@ public class SzResolvedEntity {
    * @param attributeData The attribute data string to add to the address
    *                      data list.
    */
-  public void addAttributeData(String attributeData)
-  {
+  public void addCharacteristicData(String attributeData) {
     this.characteristicData.add(attributeData);
   }
 
@@ -331,8 +337,8 @@ public class SzResolvedEntity {
    *
    * @return The list of identifier data strings for the entity.
    */
-  public List<String> getIdentifierData()
-  {
+  @JsonInclude(NON_EMPTY)
+  public List<String> getIdentifierData() {
     return Collections.unmodifiableList(this.identifierData);
   }
 
@@ -354,8 +360,7 @@ public class SzResolvedEntity {
    * @param identifierData The identifier data string to add to the identifier
    *                       data list.
    */
-  public void addIdentifierData(String identifierData)
-  {
+  public void addIdentifierData(String identifierData) {
     this.identifierData.add(identifierData);
   }
 
@@ -364,6 +369,7 @@ public class SzResolvedEntity {
    *
    * @return The list of name data strings for the entity.
    */
+  @JsonInclude(NON_EMPTY)
   public List<String> getNameData() {
     return Collections.unmodifiableList(this.nameData);
   }
@@ -395,6 +401,7 @@ public class SzResolvedEntity {
    *
    * @return The list of phone data strings for the entity.
    */
+  @JsonInclude(NON_EMPTY)
   public List<String> getPhoneData() {
     return Collections.unmodifiableList(this.phoneData);
   }
@@ -426,6 +433,7 @@ public class SzResolvedEntity {
    *
    * @return The list of relationship data strings for the entity.
    */
+  @JsonInclude(NON_EMPTY)
   public List<String> getRelationshipData() {
     return Collections.unmodifiableList(this.relationshipData);
   }
@@ -458,6 +466,7 @@ public class SzResolvedEntity {
    *
    * @return The list of other data strings for the entity.
    */
+  @JsonInclude(NON_EMPTY)
   public List<String> getOtherData() {
     return Collections.unmodifiableList(this.otherData);
   }
@@ -492,6 +501,7 @@ public class SzResolvedEntity {
    *         names to {@link SzEntityFeature} instances describing those
    *         features.
    */
+  @JsonInclude(NON_EMPTY)
   public Map<String, List<SzEntityFeature>> getFeatures() {
     return Collections.unmodifiableMap(this.unmodifiableFeatures);
   }
@@ -546,7 +556,7 @@ public class SzResolvedEntity {
     });
 
     getDataFields("ATTRIBUTE", featureMap, mapper).forEach((attr) -> {
-      this.addAttributeData(attr);
+      this.addCharacteristicData(attr);
     });
 
     getDataFields("ADDRESS", featureMap, mapper).forEach((addr) -> {

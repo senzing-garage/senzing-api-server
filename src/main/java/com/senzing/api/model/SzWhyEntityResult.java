@@ -1,5 +1,6 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -7,6 +8,8 @@ import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 /**
  * Describes why an entity resolved.
@@ -38,8 +41,9 @@ public class SzWhyEntityResult {
    * @return The {@link SzWhyPerspective} identifying and describing the perspective
    *         for this why result.
    */
+  @JsonInclude(NON_NULL)
   public SzWhyPerspective getPerspective() {
-    return perspective;
+    return this.perspective;
   }
 
   /**
@@ -58,8 +62,9 @@ public class SzWhyEntityResult {
    *
    * @return The {@link SzMatchInfo} providing the details of the result.
    */
+  @JsonInclude(NON_NULL)
   public SzMatchInfo getMatchInfo() {
-    return matchInfo;
+    return this.matchInfo;
   }
 
   /**

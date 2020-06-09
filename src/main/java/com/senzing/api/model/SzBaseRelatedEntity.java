@@ -1,10 +1,13 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonObject;
 import java.util.Optional;
 import java.util.function.Function;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
   /**
@@ -62,6 +65,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @return The underlying match level from the entity resolution between the
    *         entities.
    */
+  @JsonInclude(NON_NULL)
   public Integer getMatchLevel() {
     return this.matchLevel;
   }
@@ -84,6 +88,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @return The underlying full name score from the entity resolution between
    *         the entities.
    */
+  @JsonInclude(NON_NULL)
   public Integer getFullNameScore() {
     return this.fullNameScore;
   }
@@ -106,6 +111,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @return The underlying match score from the entity resolution between
    *         the entities.
    */
+  @JsonInclude(NON_NULL)
   public Integer getMatchScore() {
     return this.matchScore;
   }
@@ -150,6 +156,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @return The underlying match key from the entity resolution between
    *         the entities.
    */
+  @JsonInclude(NON_NULL)
   public String getMatchKey() {
     return matchKey;
   }
@@ -172,6 +179,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @return The underlying resolution rule code from the entity resolution
    *         between the entities.
    */
+  @JsonInclude(NON_NULL)
   public String getResolutionRuleCode() {
     return resolutionRuleCode;
   }
@@ -192,8 +200,9 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * the entities.
    *
    * @return The underlying ref score from the entity resolution between
-   * the entities.
+   *         the entities.
    */
+  @JsonInclude(NON_NULL)
   public Integer getRefScore() {
     return this.refScore;
   }

@@ -208,7 +208,7 @@ public class AutoReinitializeTest extends AbstractServiceTest
       // now add the record -- this should succeed on retry
       long before = System.currentTimeMillis();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
-          newDataSource, null, uriInfo, jsonText);
+          newDataSource, null, false, false, uriInfo, jsonText);
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
@@ -246,7 +246,7 @@ public class AutoReinitializeTest extends AbstractServiceTest
       // now add the record -- this should succeed on retry
       long before = System.currentTimeMillis();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
-          newDataSource, recordId, null, uriInfo, jsonText);
+          newDataSource, recordId, null, false, false, uriInfo, jsonText);
       response.concludeTimers();
       long after = System.currentTimeMillis();
 

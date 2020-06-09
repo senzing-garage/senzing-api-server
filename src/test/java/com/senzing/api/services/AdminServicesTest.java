@@ -135,7 +135,7 @@ public class AdminServicesTest extends AbstractServiceTest {
                               after,
                               null,
                               "EVAL",
-                              10000);
+                              TEST_LICENSE_RECORD_LIMIT);
     });
   }
 
@@ -197,7 +197,7 @@ public class AdminServicesTest extends AbstractServiceTest {
                               after,
                               null,
                               "EVAL",
-                              10000);
+                              TEST_LICENSE_RECORD_LIMIT);
     });
   }
 
@@ -258,7 +258,7 @@ public class AdminServicesTest extends AbstractServiceTest {
                               after,
                               true,
                               "EVAL",
-                              10000);
+                              TEST_LICENSE_RECORD_LIMIT);
     });
   }
 

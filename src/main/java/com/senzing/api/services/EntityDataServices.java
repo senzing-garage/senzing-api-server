@@ -34,6 +34,8 @@ public class EntityDataServices {
   public SzLoadRecordResponse loadRecord(
       @PathParam("dataSourceCode")  String  dataSourceCode,
       @QueryParam("loadId")         String  loadId,
+      @QueryParam("withInfo")       boolean withInfo,
+      @QueryParam("withRaw")        boolean withRaw,
       @Context                      UriInfo uriInfo,
       String                                recordJsonData)
   {
@@ -53,7 +55,8 @@ public class EntityDataServices {
           uriInfo,
           timers,
           recordJsonData,
-          Collections.singletonMap("DATA_SOURCE", dataSource));
+          Collections.singletonMap("DATA_SOURCE", dataSource),
+          Collections.singletonMap("ENTITY_TYPE", "GENERIC"));
 
       checkDataSource(POST, uriInfo, timers, dataSource, provider);
 
@@ -106,6 +109,8 @@ public class EntityDataServices {
       @PathParam("dataSourceCode")  String  dataSourceCode,
       @PathParam("recordId")        String  recordId,
       @QueryParam("loadId")         String  loadId,
+      @QueryParam("withInfo")       boolean withInfo,
+      @QueryParam("withRaw")        boolean withRaw,
       @Context                      UriInfo uriInfo,
       String                                recordJsonData)
   {
@@ -119,15 +124,17 @@ public class EntityDataServices {
 
       final String normalizedLoadId = normalizeString(loadId);
 
-      Map<String,String> map = new HashMap<>();
-      map.put("DATA_SOURCE", dataSource);
-      map.put("RECORD_ID", recordId);
+      Map<String,String> map = Map.of("DATA_SOURCE", dataSource,
+                                      "RECORD_ID", recordId);
+
+      Map<String,String> defaultMap = Map.of("ENTITY_TYPE", "GENERIC");
 
       String recordText = ensureJsonFields(PUT,
                                            uriInfo,
                                            timers,
                                            recordJsonData,
-                                           map);
+                                           map,
+                                           defaultMap);
 
       Set<String> dataSources = provider.getDataSources(dataSource);
 
@@ -138,28 +145,48 @@ public class EntityDataServices {
       }
 
       enteringQueue(timers);
-      provider.executeInThread(() -> {
+      String rawInfo = provider.executeInThread(() -> {
         exitingQueue(timers);
 
         // get the engine API
         G2Engine engineApi = provider.getEngineApi();
 
-        callingNativeAPI(timers, "engine", "addRecord");
-        int result = engineApi.addRecord(dataSource,
-                                         recordId,
-                                         recordText,
-                                         normalizedLoadId);
-        calledNativeAPI(timers, "engine", "addRecord");
+        int result;
+        String rawData = null;
+        if (withInfo) {
+          StringBuffer sb = new StringBuffer();
+          callingNativeAPI(timers, "engine", "addRecordWithInfo");
+          result = engineApi.addRecordWithInfo(dataSource,
+                                               recordId,
+                                               recordText,
+                                               normalizedLoadId,
+                                               0,
+                                               sb);
+          calledNativeAPI(timers, "engine", "addRecordWithInfo");
+          rawData = sb.toString();
+        } else {
+          callingNativeAPI(timers, "engine", "addRecord");
+          result = engineApi.addRecord(dataSource,
+                                       recordId,
+                                       recordText,
+                                       normalizedLoadId);
+          calledNativeAPI(timers, "engine", "addRecord");
+        }
         if (result != 0) {
           throw newWebApplicationException(PUT, uriInfo, timers, engineApi);
         }
 
-        return recordId;
+        return rawData;
       });
 
       // construct the response
       SzLoadRecordResponse response = new SzLoadRecordResponse(
           PUT, 200, uriInfo, timers, recordId);
+
+      // check if we have info and raw data was requested
+      if (withRaw && withInfo) {
+        response.setRawData(rawInfo);
+      }
 
       // return the response
       return response;
@@ -203,7 +230,8 @@ public class EntityDataServices {
         G2Engine engineApi = provider.getEngineApi();
 
         callingNativeAPI(timers, "engine", "getRecord");
-        int result = engineApi.getRecord(dataSource, recordId, sb);
+        int result = engineApi.getRecordV2(
+            dataSource, recordId, DEFAULT_RECORD_FLAGS, sb);
         calledNativeAPI(timers, "engine", "getRecord");
 
         if (result != 0) {
@@ -855,7 +883,8 @@ public class EntityDataServices {
                                          UriInfo              uriInfo,
                                          Timers               timers,
                                          String               jsonText,
-                                         Map<String, String>  map)
+                                         Map<String, String>  map,
+                                         Map<String, String>  defaultMap)
   {
     try {
       JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
@@ -879,6 +908,23 @@ public class EntityDataServices {
           }
         } else {
           // we need to add the value for the key
+          jsonBuilder.add(key, val);
+        }
+      });
+
+      // iterate over the default values
+      defaultMap.entrySet().forEach(entry -> {
+        String key = entry.getKey();
+        String val = entry.getValue();
+
+        // get the value for the key
+        String jsonVal = JsonUtils.getString(jsonObject, key.toUpperCase());
+        if (jsonVal == null) {
+          jsonVal = JsonUtils.getString(jsonObject, key.toLowerCase());
+          if (jsonVal != null) key = key.toLowerCase();
+        }
+        if (jsonVal == null || jsonVal.trim().length() == 0) {
+          if (jsonObject.containsKey(key)) jsonBuilder.remove(key);
           jsonBuilder.add(key, val);
         }
       });

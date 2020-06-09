@@ -1568,7 +1568,7 @@ public class ResponseValidators {
     assertSameElements(
         expectedIdentifierData, record.getIdentifierData(), "identifiers");
     assertSameElements(
-        expectedAttributeData, record.getAttributeData(), "attributes");
+        expectedAttributeData, record.getCharacteristicData(), "characteristics");
     assertSameElements(
         expectedRelationshipData, record.getRelationshipData(), "relationships");
     assertSameElements(

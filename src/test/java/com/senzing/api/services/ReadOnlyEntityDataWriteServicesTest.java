@@ -53,7 +53,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       long before = System.currentTimeMillis();
       try {
         this.entityDataServices.loadRecord(
-            TEST_DATA_SOURCE, null, uriInfo, jsonText);
+            TEST_DATA_SOURCE, null, false, false, uriInfo, jsonText);
         fail("Did not get expected 403 ForbiddenException in read-only mode");
 
       } catch (ForbiddenException expected) {
@@ -107,7 +107,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       long before = System.currentTimeMillis();
       try {
         this.entityDataServices.loadRecord(
-            TEST_DATA_SOURCE, recordId, null, uriInfo, jsonText);
+            TEST_DATA_SOURCE, recordId, null, false, false, uriInfo, jsonText);
 
         fail("Did not get expected 403 ForbiddenException in read-only mode");
       } catch (ForbiddenException expected) {

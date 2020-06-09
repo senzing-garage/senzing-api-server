@@ -10,7 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed in 2.0.0
 
-- Modified to build with forthcoming version 2.x of Senzing product
+- Modified to build with version 2.x of Senzing product include use of new 
+  entity formatting flags.
 
 - Updated REST API Version to v2.0.0
 
@@ -25,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   type, respectively, while the value mapped to empty-string is used to assign
   a data source or entity type (respectively) to a record that is missing a
   value for that field.
+
+- In `com.senzing.api.model.SzResolvedEntity` the property `attributeData` was
+  renamed to `characteristicData` to match the OpenAPI Specification for the 
+  Senzing REST API.  **NOTE**: Client code that was written to look for 
+  `attributeData` must be modified or will find a missing property.
 
 - Potentially Backward-Compatibility Breaking Changes by Java class and
   API Endpoint:
@@ -56,18 +62,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         configuration managers “default config” setting.
 
   - `com.senzing.api.services.EntityDataServices`
+    - `GET /data-sources/{dataSourceCode}/records/{recordId}`
+      - The `data` property of `SzRecordResponse` was previously of type
+        `SzEntityRecord`.  However, the Open API specification for the Senzing
+         REST API had always documented it as an object with a single property
+         named `record` whose type was `SzEntityRecord` (an additional level of
+         indirection).  In order to conform with the specification and make it 
+         consistent with `SzEntityResponse`, the server has been modified with
+         class `SzRecordResponse` now having a `data` property with a `record`
+         sub-property.
+      - The `SzEntityRecord` in the response will exclude fields that are `null`
+         or empty arrays.
+
     - `GET /entities/{entityId}`
     - `GET /data-sources/{dataSourceCode}/records/{recordId}/entity`
       - The `withRelated` parameter is no longer a `boolean` value that accepts
         `true` or `false`.  It now accepts an enumerated value of
          type `com.senzing.api.model.SzRelationshipMode` with values of `NONE`,
         `PARTIAL` or `FULL`.
+      - The `SzResolvedEntity` and the contained `SzEntityRecord` instances in
+        the response will exclude fields that are `null` or empty arrays.
 
     - `GET /entities`
       - Removed the `attr_[PROPERTY_NAME]` parameters and replaced with the
         multi-valued `attr` parameter so that this parameter could better be
         documented in the Open API Spec and examples provided via Swagger
         Editor.
+      - The `SzAttributeSearchResult` instances and contained `SzRelatedEntity`
+        and `SzEntityRecord` instances in the response will exclude fields that
+        are `null` or empty arrays.
 
     - `POST /data-sources/{dataSourceCode}/records/`
     - `PUT /data-sources/{dataSourceCode}/records/{recordId}`
@@ -77,6 +100,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `com.senzing.api.services.EntityGraphServices`
     - `GET /entity-networks`
       - Changed the default value for `maxDegrees` parameter from 5 to 3
+      - The `SzResolvedEntity` instances and the contained `SzEntityRecord`
+        instances in the response will exclude fields that are `null` or empty
+        arrays.
+    - `GET /entity-paths`
+      - The `SzResolvedEntity` instances and the contained `SzEntityRecord`
+        instances in the response will exclude fields that are `null` or empty
+        arrays.
 
   - `com.senzing.api.services.BulkDataServices`
     - `POST /bulk-data/load`

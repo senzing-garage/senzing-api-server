@@ -1,6 +1,8 @@
 package com.senzing.api.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senzing.api.model.*;
+import com.senzing.g2.engine.G2Engine;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
 import org.junit.jupiter.api.AfterAll;
@@ -1103,6 +1105,26 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           (withDerivedFeatures != null ? withDerivedFeatures : false),
           uriInfo);
 
+      // TODO(barry): remove this extra code
+      int flags = ServicesUtil.getFlags(
+          (forceMinimal == null) ? false : forceMinimal,
+          (featureMode != null ? featureMode : WITH_DUPLICATES),
+          (withFeatureStats != null ? withFeatureStats : false),
+          (withDerivedFeatures != null ? withDerivedFeatures : false),
+          withRelated != SzRelationshipMode.NONE);
+
+      try {
+        ObjectMapper mapper = new ObjectMapper();
+        String rawJsonText = mapper.writeValueAsString(response.getRawData());
+        testInfo = testInfo + ", flags=[ " + flags + " ], featureFlag=[ "
+            + (flags & G2Engine.G2_ENTITY_INCLUDE_REPRESENTATIVE_FEATURES)
+            + " ], rawData=[ " + rawJsonText + " ], internalFeaturesFlag=[ "
+            + (flags & G2Engine.G2_ENTITY_OPTION_INCLUDE_INTERNAL_FEATURES)
+            + " ]";
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
@@ -1717,6 +1739,26 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
       response.concludeTimers();
       long after = System.currentTimeMillis();
+
+      // TODO(barry): remove this extra code
+      int flags = ServicesUtil.getFlags(
+          (forceMinimal == null) ? false : forceMinimal,
+          (featureMode != null ? featureMode : WITH_DUPLICATES),
+          (withFeatureStats != null ? withFeatureStats : false),
+          (withDerivedFeatures != null ? withDerivedFeatures : false),
+          (withRelationships != null ? withRelationships : false));
+
+      try {
+        ObjectMapper mapper = new ObjectMapper();
+        String rawJsonText = mapper.writeValueAsString(response.getRawData());
+        testInfo = testInfo + ", flags=[ " + flags + " ], featureFlag=[ "
+            + (flags & G2Engine.G2_ENTITY_INCLUDE_REPRESENTATIVE_FEATURES)
+            + " ], rawData=[ " + rawJsonText + " ], internalFeaturesFlag=[ "
+            + (flags & G2Engine.G2_ENTITY_OPTION_INCLUDE_INTERNAL_FEATURES)
+            + " ]";
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
 
       validateSearchResponse(
           testInfo,

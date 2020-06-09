@@ -2,6 +2,7 @@ package com.senzing.api.services;
 
 import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2ConfigMgr;
+import com.senzing.g2.engine.G2Engine;
 import com.senzing.g2.engine.G2Fallible;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
@@ -22,6 +23,14 @@ import static com.senzing.g2.engine.G2Engine.*;
  * Utility functions for services.
  */
 public class ServicesUtil {
+  /**
+   * Default flags for retrieving records.
+   */
+  public static final int DEFAULT_RECORD_FLAGS
+      = G2_ENTITY_INCLUDE_RECORD_FORMATTED_DATA
+      | G2_ENTITY_INCLUDE_RECORD_JSON_DATA
+      | G2_ENTITY_INCLUDE_RECORD_SUMMARY;
+
   /**
    * Creates an {@link InternalServerErrorException} and builds a response
    * with an {@link SzErrorResponse} using the specified {@link UriInfo}
@@ -555,35 +564,45 @@ public class ServicesUtil {
    * @return The flags to use given the parameters.
    */
   static int getFlags(boolean             forceMinimal,
-                      SzFeatureMode featureMode,
+                      SzFeatureMode       featureMode,
                       boolean             withFeatureStats,
                       boolean             withDerivedFeatures,
                       boolean             withRelationships)
   {
-    int flags = withRelationships
-        ? G2_ENTITY_INCLUDE_ALL_RELATIONS
-        : G2_ENTITY_INCLUDE_NO_RELATIONS;
+    int flags = G2_ENTITY_INCLUDE_RECORD_DATA
+              | G2_SEARCH_INCLUDE_FEATURE_SCORES; // for searches
 
+    // check for relationships
+    flags |= withRelationships ? G2_ENTITY_INCLUDE_ALL_RELATIONS : 0;
+
+    // check if forcing minimal format
     if (forceMinimal) {
       // minimal format, not much else to do
-      flags |= G2_ENTITY_MINIMAL_FORMAT;
+      return flags;
+    }
 
-    } else if (featureMode == NONE) {
-      // no features requested
-      flags |= G2_ENTITY_INCLUDE_NO_FEATURES;
+    // add the standard flags
+    flags |= (G2_ENTITY_INCLUDE_ENTITY_NAME | DEFAULT_RECORD_FLAGS);
 
-    } else {
+    // add the standard relationship flags
+    if (withRelationships) {
+      flags |= G2_ENTITY_INCLUDE_RELATED_ENTITY_NAME
+            | G2_ENTITY_INCLUDE_RELATED_RECORD_SUMMARY;
+    }
+
+    // add the feature flags
+    if (featureMode != NONE) {
       // get represenative features
       flags |= G2_ENTITY_INCLUDE_REPRESENTATIVE_FEATURES;
 
       // check if feature stats are requested
       if (withFeatureStats) {
-        flags |= G2_ENTITY_SHOW_FEATURES_STATS;
+        flags |= G2_ENTITY_OPTION_INCLUDE_FEATURE_STATS;
       }
 
       // check if derived features are requested
       if (withDerivedFeatures) {
-        flags |= G2_ENTITY_SHOW_FEATURES_EXPRESSED;
+        flags |= G2_ENTITY_OPTION_INCLUDE_INTERNAL_FEATURES;
       }
     }
     return flags;
@@ -631,7 +650,10 @@ public class ServicesUtil {
    */
   static void stripDuplicateFeatureValues(SzEntityData entityData) {
     stripDuplicateFeatureValues(entityData.getResolvedEntity());
-    entityData.getRelatedEntities().forEach(e->stripDuplicateFeatureValues(e));
+    List<SzRelatedEntity> relatedEntities = entityData.getRelatedEntities();
+    if (relatedEntities != null) {
+      relatedEntities.forEach(e -> stripDuplicateFeatureValues(e));
+    }
   }
 
   /**
@@ -640,9 +662,11 @@ public class ServicesUtil {
    */
   static void stripDuplicateFeatureValues(SzResolvedEntity entity) {
     Map<String, List<SzEntityFeature>> featureMap = entity.getFeatures();
-    featureMap.values().forEach(list -> {
-      list.forEach(f -> f.setDuplicateValues(null));
-    });
+    if (featureMap != null) {
+      featureMap.values().forEach(list -> {
+        list.forEach(f -> f.setDuplicateValues(null));
+      });
+    }
   }
 
 

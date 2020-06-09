@@ -1841,15 +1841,9 @@ public class SzApiServer implements SzApiProvider {
       }
     }
     this.productApi = NativeApiFactory.createProductApi();
-    int initResult = 0;
-    if (this.configType.isManaged()) {
-      initResult = this.productApi.initV2(
-          this.moduleName, initJsonText, this.verbose);
+    int initResult = this.productApi.initV2(
+        this.moduleName, initJsonText, this.verbose);
 
-    } else {
-      initResult = this.productApi.init(
-          this.moduleName, iniFilePath, this.verbose);
-    }
     if (initResult < 0) {
       throw new RuntimeException(buildErrorMessage(
           "Failed to initialize G2Product API.",
@@ -1858,13 +1852,8 @@ public class SzApiServer implements SzApiProvider {
     }
 
     this.configApi = NativeApiFactory.createConfigApi();
-    if (this.configType.isManaged()) {
-      initResult = this.configApi.initV2(
-          this.moduleName, initJsonText, this.verbose);
-    } else {
-      initResult = this.configApi.init(
-          this.moduleName, iniFilePath, this.verbose);
-    }
+    initResult = this.configApi.initV2(
+        this.moduleName, initJsonText, this.verbose);
     if (initResult < 0) {
       throw new RuntimeException(buildErrorMessage(
           "Failed to initialize G2Config API.",
@@ -1880,15 +1869,10 @@ public class SzApiServer implements SzApiProvider {
       initResult = this.engineApi.initWithConfigIDV2(
           this.moduleName, initJsonText, this.configId, this.verbose);
 
-    } else if (this.configType.isManaged()) {
+    } else {
       // config is in the repository
       initResult = this.engineApi.initV2(
           this.moduleName, initJsonText, this.verbose);
-
-    } else {
-      // config is on a file on disk
-      initResult = this.engineApi.init(
-          this.moduleName, iniFilePath, this.verbose);
     }
 
     if (initResult < 0) {

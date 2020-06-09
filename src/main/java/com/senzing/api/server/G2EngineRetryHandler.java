@@ -57,11 +57,6 @@ class G2EngineRetryHandler implements InvocationHandler {
     Set<Method> unsupportedSet  = new LinkedHashSet<>();
     try {
       unsupportedSet.add(cls.getMethod(
-          "init", String.class, String.class, boolean.class));
-      unsupportedSet.add(cls.getMethod(
-          "init",
-          String.class, String.class, boolean.class, Result.class));
-      unsupportedSet.add(cls.getMethod(
           "initV2", String.class, String.class, boolean.class));
       unsupportedSet.add(cls.getMethod(
           "initWithConfigIDV2",
@@ -96,7 +91,6 @@ class G2EngineRetryHandler implements InvocationHandler {
       directSet.add(cls.getMethod("getActiveConfigID", Result.class));
       directSet.add(cls.getMethod("getRepositoryLastModifiedTime", Result.class));
       directSet.add(cls.getMethod("exportJSONEntityReport", int.class));
-      directSet.add(cls.getMethod("exportCSVEntityReport", int.class));
       directSet.add(cls.getMethod(
           "exportCSVEntityReportV2", String.class, int.class));
       directSet.add(cls.getMethod("fetchNext", long.class));
@@ -211,6 +205,11 @@ class G2EngineRetryHandler implements InvocationHandler {
       retrySet.add(cls.getMethod(
           "whyRecordsV2", String.class, String.class, String.class,
           String.class, int.class, StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "whyEntities", long.class, long.class, StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "whyEntitiesV2", long.class, long.class, int.class,
+          StringBuffer.class));
 
       // check what we did not catch
       Method[] methods = cls.getMethods();

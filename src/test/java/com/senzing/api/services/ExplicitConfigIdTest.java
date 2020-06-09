@@ -124,7 +124,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
       long before = System.currentTimeMillis();
       try {
         this.entityDataServices.loadRecord(
-            newDataSource, null, uriInfo, jsonText);
+            newDataSource, null, false, false, uriInfo, jsonText);
         fail("Expected for data source \"" + newDataSource
                  + "\" to trigger a NotFoundException");
       } catch (NotFoundException expected) {
@@ -163,7 +163,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
       long before = System.currentTimeMillis();
       try {
         this.entityDataServices.loadRecord(
-            newDataSource, recordId, null, uriInfo, jsonText);
+            newDataSource, recordId, null, false, false, uriInfo, jsonText);
         fail("Expected for data source \"" + newDataSource
                  + "\" to trigger a NotFoundException");
       } catch (NotFoundException expected) {

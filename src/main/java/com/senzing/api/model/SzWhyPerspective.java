@@ -1,5 +1,6 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -8,6 +9,9 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.Collections;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 /**
  * Describes the perspective used in evaluating why an entity resolved or why
@@ -50,6 +54,7 @@ public class SzWhyPerspective {
    * @return The internal ID uniquely identifying this perspective from others
    * in the complete "why" response.
    */
+  @JsonInclude(NON_NULL)
   public Long getInternalId() {
     return this.internalId;
   }
@@ -70,6 +75,7 @@ public class SzWhyPerspective {
    *
    * @return The associated entity ID for the perspective.
    */
+  @JsonInclude(NON_NULL)
   public Long getEntityId() {
     return this.entityId;
   }
@@ -88,8 +94,9 @@ public class SzWhyPerspective {
    * identifying the focus records for this perspective.
    *
    * @return The <b>unmodifiable</b> {@link Set} of {@link SzRecordId}
-   * instances identifying the focus records for this perspective.
+   *         instances identifying the focus records for this perspective.
    */
+  @JsonInclude(NON_EMPTY)
   public Set<SzRecordId> getFocusRecords() {
     return Collections.unmodifiableSet(this.focusRecords);
   }

@@ -68,7 +68,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
 
       long before = System.currentTimeMillis();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
-          TEST_DATA_SOURCE, null, uriInfo, jsonText);
+          TEST_DATA_SOURCE, null, false, false, uriInfo, jsonText);
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
@@ -128,7 +128,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
 
       long before = System.currentTimeMillis();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
-          TEST_DATA_SOURCE, recordId, null, uriInfo, jsonText);
+          TEST_DATA_SOURCE, recordId, null, false, false, uriInfo, jsonText);
       response.concludeTimers();
       long after = System.currentTimeMillis();
 

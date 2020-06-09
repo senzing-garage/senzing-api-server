@@ -1,16 +1,17 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.Function;
 
 import static com.senzing.api.model.SzAttributeSearchResultType.*;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 
 public class SzAttributeSearchResult extends SzBaseRelatedEntity {
   /**
@@ -56,8 +57,9 @@ public class SzAttributeSearchResult extends SzBaseRelatedEntity {
    *
    * @return The {@link List} of {@linkplain SzRelatedEntity related entities}.
    */
+  @JsonInclude(NON_EMPTY)
   public List<SzRelatedEntity> getRelatedEntities() {
-    return relatedEntities;
+    return this.relatedEntities;
   }
 
   /**
