@@ -1,3 +1,4 @@
 [submodule "senzing-rest-api"]
 	path = senzing-rest-api
 	url = git@github.com:Senzing/senzing-rest-api.git
+        branch = caceres.version-2.0
