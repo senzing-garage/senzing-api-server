@@ -587,7 +587,8 @@ public class ServicesUtil {
     // add the standard relationship flags
     if (withRelationships) {
       flags |= G2_ENTITY_INCLUDE_RELATED_ENTITY_NAME
-            | G2_ENTITY_INCLUDE_RELATED_RECORD_SUMMARY;
+            | G2_ENTITY_INCLUDE_RELATED_RECORD_SUMMARY
+            | G2_ENTITY_INCLUDE_RELATED_MATCHING_INFO;
     }
 
     // add the feature flags
