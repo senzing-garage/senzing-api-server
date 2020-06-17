@@ -178,6 +178,36 @@ public class RepositoryManager {
   }
 
   /**
+   * Copies the config template files from the template directory to the
+   * specified configuration directory (creating the directory if necessary).
+   *
+   * @param templateDir The template directory to get the templates from.
+   * @param configDir The config directory to copy the files to.
+   * @throws IOException If an I/O failure occurs.
+   */
+  public static void copyConfigFiles(File   templateDir,
+                                     File   configDir)
+    throws IOException
+  {
+    if (templateDir != null) {
+      File[] templateFiles = templateDir.listFiles(
+          f -> !f.getName().endsWith(".template") && !f.isDirectory()
+              && (!EXCLUDED_TEMPLATE_FILES.contains(f.getName().toLowerCase())));
+
+      if (templateFiles.length > 0)
+      {
+        if (!configDir.exists()) {
+          configDir.mkdirs();
+        }
+        for (File templateFile : templateFiles) {
+          File targetFile = new File(configDir, templateFile.getName());
+          copyFile(templateFile, targetFile);
+        }
+      }
+    }
+  }
+
+  /**
    * Describes a repository configuration.
    *
    */
@@ -562,22 +592,8 @@ public class RepositoryManager {
     }
     try {
       directory.mkdirs();
-      File repoConfigDir = null;
-      if (TEMPLATES_DIR != null) {
-        File[] templateFiles = TEMPLATES_DIR.listFiles(
-            f -> !f.getName().endsWith(".template") && !f.isDirectory()
-             && (!EXCLUDED_TEMPLATE_FILES.contains(f.getName().toLowerCase())));
-
-        if (templateFiles.length > 0)
-        {
-          repoConfigDir = new File(directory, "etc");
-          repoConfigDir.mkdirs();
-          for (File templateFile : templateFiles) {
-            File targetFile = new File(repoConfigDir, templateFile.getName());
-            copyFile(templateFile, targetFile);
-          }
-        }
-      }
+      File repoConfigDir = new File(directory, "etc");
+      copyConfigFiles(TEMPLATES_DIR, repoConfigDir);
 
       // find the template DB file
       File templateDB = (TEMPLATES_DIR != null)
