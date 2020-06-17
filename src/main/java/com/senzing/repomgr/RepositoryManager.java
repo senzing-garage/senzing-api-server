@@ -52,10 +52,10 @@ public class RepositoryManager {
   static {
     try {
       Set<String> set = new LinkedHashSet<>();
-      set.add("G2Module.ini.template".toLowerCase());
-      set.add("G2Project.ini.template".toLowerCase());
-      set.add("G2C.db.template".toLowerCase());
-      set.add("g2config.json.template".toLowerCase());
+      set.add("G2Module.ini".toLowerCase());
+      set.add("G2Project.ini".toLowerCase());
+      set.add("G2C.db".toLowerCase());
+      set.add("g2config.json".toLowerCase());
       EXCLUDED_TEMPLATE_FILES = Collections.unmodifiableSet(set);
 
     } catch (Exception e) {
@@ -565,7 +565,7 @@ public class RepositoryManager {
       File repoConfigDir = null;
       if (TEMPLATES_DIR != null) {
         File[] templateFiles = TEMPLATES_DIR.listFiles(
-            f -> f.getName().endsWith(".template") && !f.isDirectory()
+            f -> !f.getName().endsWith(".template") && !f.isDirectory()
              && (!EXCLUDED_TEMPLATE_FILES.contains(f.getName().toLowerCase())));
 
         if (templateFiles.length > 0)
@@ -573,11 +573,7 @@ public class RepositoryManager {
           repoConfigDir = new File(directory, "etc");
           repoConfigDir.mkdirs();
           for (File templateFile : templateFiles) {
-            String  templateName  = templateFile.getName();
-            int     nameLength    = templateName.length();
-            int     targetLength  = nameLength - ".template".length();
-            String  targetName    = templateName.substring(0, targetLength);
-            File    targetFile    = new File(repoConfigDir, targetName);
+            File targetFile = new File(repoConfigDir, templateFile.getName());
             copyFile(templateFile, targetFile);
           }
         }
@@ -585,8 +581,8 @@ public class RepositoryManager {
 
       // find the template DB file
       File templateDB = (TEMPLATES_DIR != null)
-          ? new File(TEMPLATES_DIR, "G2C.db.template")
-          : new File(SUPPORT_DIR, "G2C.db.template");
+          ? new File(TEMPLATES_DIR, "G2C.db")
+          : new File(SUPPORT_DIR, "G2C.db");
       if (!templateDB.exists()) {
         templateDB = new File(SUPPORT_DIR, "G2C.db");
       }
