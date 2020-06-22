@@ -1,8 +1,12 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.Timers;
 
 import javax.ws.rs.core.UriInfo;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 /**
  * The response containing the record ID of the record that was loaded.
@@ -54,14 +58,20 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
    * @param timers The {@link Timers} object for the timings that were taken.
    *
    * @param recordId The record ID of the record that was loaded.
+   *
+   * @param info The {@link SzResolutionInfo} providing the information
+   *             associated with the resolution of the record.
    */
-  public SzLoadRecordResponse(SzHttpMethod httpMethod,
-                              int          httpStatusCode,
-                              String       selfLink,
-                              Timers       timers,
-                              String       recordId) {
+  public SzLoadRecordResponse(SzHttpMethod      httpMethod,
+                              int               httpStatusCode,
+                              String            selfLink,
+                              Timers            timers,
+                              String            recordId,
+                              SzResolutionInfo  info)
+  {
     super(httpMethod, httpStatusCode, selfLink, timers);
-    this.data.recordId = recordId;
+    this.data.recordId  = recordId;
+    this.data.info      = info;
   }
 
   /**
@@ -94,14 +104,20 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
    * @param uriInfo The {@link UriInfo} from the request.
    *
    * @param recordId The record ID of the record that was loaded.
+   *
+   * @param info The {@link SzResolutionInfo} providing the information
+   *             associated with the resolution of the record.
    */
-  public SzLoadRecordResponse(SzHttpMethod httpMethod,
-                              int          httpStatusCode,
-                              UriInfo      uriInfo,
-                              Timers       timers,
-                              String       recordId) {
+  public SzLoadRecordResponse(SzHttpMethod      httpMethod,
+                              int               httpStatusCode,
+                              UriInfo           uriInfo,
+                              Timers            timers,
+                              String            recordId,
+                              SzResolutionInfo  info)
+  {
     super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.data.recordId = recordId;
+    this.data.recordId  = recordId;
+    this.data.info      = info;
   }
 
   /**
@@ -118,9 +134,19 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
    *
    * @param recordId The record ID of the record.
    */
-  public void setRecordId(String recordId)
-  {
+  public void setRecordId(String recordId) {
     this.data.recordId = recordId;
+  }
+
+  /**
+   * Sets the @link SzResolutionInfo} providing the information associated
+   * with the resolution of the record.
+   *
+   * @param info The @link SzResolutionInfo} providing the information associated
+   *             with the resolution of the record.
+   */
+  public void setInfo(SzResolutionInfo info) {
+    this.data.info = info;
   }
 
   /**
@@ -133,10 +159,17 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
     private String recordId;
 
     /**
+     * The {@link SzResolutionInfo} providing the information associated with
+     * the resolution of the record.
+     */
+    private SzResolutionInfo info;
+
+    /**
      * Private default constructor.
      */
     private Data() {
-      // do nothing
+      this.recordId = null;
+      this.info     = null;
     }
 
     /**
@@ -144,8 +177,22 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
      *
      * @return The record ID of the record that was loaded.
      */
+    @JsonInclude(NON_NULL)
     public String getRecordId() {
       return this.recordId;
     }
+
+    /**
+     * Gets the {@link SzResolutionInfo} providing the information associated
+     * with the resolution of the record.
+     *
+     * @return The {@link SzResolutionInfo} providing the information
+     *         associated with the resolution of the record.
+     */
+    @JsonInclude(NON_NULL)
+    public SzResolutionInfo getInfo() {
+      return this.info;
+    }
+
   }
 }
