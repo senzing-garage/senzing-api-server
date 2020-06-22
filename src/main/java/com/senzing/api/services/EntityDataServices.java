@@ -63,18 +63,31 @@ public class EntityDataServices {
       StringBuffer sb = new StringBuffer();
 
       enteringQueue(timers);
-      String recordId = provider.executeInThread(() -> {
+      String text = provider.executeInThread(() -> {
         exitingQueue(timers);
 
         // get the engine API and the config API
         G2Engine engineApi = provider.getEngineApi();
 
-        callingNativeAPI(timers, "engine","addRecordWithReturnedRecordID");
-        int result = engineApi.addRecordWithReturnedRecordID(dataSource,
-                                                             sb,
-                                                             recordText,
-                                                             normalizedLoadId);
-        calledNativeAPI(timers, "engine","addRecordWithReturnedRecordID");
+        int result;
+        if (withInfo) {
+          callingNativeAPI(timers, "engine", "addRecordWithInfo");
+          result = engineApi.addRecordWithInfo(dataSource,
+                                               "", // empty record ID
+                                               recordText,
+                                               normalizedLoadId,
+                                               0,
+                                               sb);
+          calledNativeAPI(timers, "engine", "addRecordWithInfo");
+
+        } else {
+          callingNativeAPI(timers, "engine", "addRecordWithReturnedRecordID");
+          result = engineApi.addRecordWithReturnedRecordID(dataSource,
+                                                           sb,
+                                                           recordText,
+                                                           normalizedLoadId);
+          calledNativeAPI(timers, "engine", "addRecordWithReturnedRecordID");
+        }
 
         if (result != 0) {
           throw newWebApplicationException(POST, uriInfo, timers, engineApi);
@@ -83,9 +96,25 @@ public class EntityDataServices {
         return sb.toString().trim();
       });
 
+      String            recordId  = null;
+      SzResolutionInfo  info      = null;
+      String            rawData   = null;
+      if (withInfo) {
+        rawData = text;
+        JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
+        info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+        recordId = info.getRecordId();
+      } else {
+        recordId = text;
+      }
+
       // construct the response
       SzLoadRecordResponse response = new SzLoadRecordResponse(
-          POST, 200, uriInfo, timers, recordId);
+          POST, 200, uriInfo, timers, recordId, info);
+
+      if (withRaw && withInfo) {
+        response.setRawData(rawData);
+      }
 
       // return the response
       return response;
@@ -179,9 +208,15 @@ public class EntityDataServices {
         return rawData;
       });
 
+      SzResolutionInfo info = null;
+      if (rawInfo != null) {
+        JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
+        info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+      }
+
       // construct the response
       SzLoadRecordResponse response = new SzLoadRecordResponse(
-          PUT, 200, uriInfo, timers, recordId);
+          PUT, 200, uriInfo, timers, recordId, info);
 
       // check if we have info and raw data was requested
       if (withRaw && withInfo) {

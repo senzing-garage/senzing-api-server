@@ -10,7 +10,7 @@ import java.util.function.Function;
 import static com.senzing.api.model.SzRelationshipType.*;
 
 /**
- *
+ * Describes an entity related to the base entity.
  */
 public class SzRelatedEntity extends SzBaseRelatedEntity {
   /**

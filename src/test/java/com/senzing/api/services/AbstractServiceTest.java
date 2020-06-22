@@ -296,6 +296,22 @@ public abstract class AbstractServiceTest {
    * @return The absolute URI for localhost on the current port.
    */
   protected String formatServerUri(String relativeUri) {
+    return this.formatServerUri(relativeUri, null);
+  }
+
+  /**
+   * Creates an absolute URI for the relative URI provided.  For example, if
+   * <tt>"license"</tt> was passed as the parameter then
+   * <tt>"http://localhost:[port]/license"</tt> will be returned where
+   * <tt>"[port]"</tt> is the port number of the currently running server, if
+   * running, and is <tt>"2080"</tt> (the default port) if not running.
+   *
+   * @param basePath The relative URI to build the absolute URI from.
+   * @param queryParams The optional query parameters to append.
+   * @return The absolute URI for localhost on the current port.
+   */
+  protected String formatServerUri(String basePath, Map<String, ?> queryParams)
+  {
     StringBuilder sb = new StringBuilder();
     sb.append("http://localhost:");
     if (this.server != null) {
@@ -303,9 +319,44 @@ public abstract class AbstractServiceTest {
     } else {
       sb.append("2080");
     }
-    if (relativeUri.startsWith(sb.toString())) return relativeUri;
-    sb.append("/" + relativeUri);
+    if (basePath.startsWith(sb.toString())) {
+      sb.delete(0, sb.length());
+      sb.append(basePath);
+      return basePath;
+    } else {
+      sb.append("/" + basePath);
+    }
+
+    if (queryParams != null && queryParams.size() > 0) {
+      String initialPrefix = basePath.contains("?") ? "&" : "?";
+      int initialLength = sb.length();
+
+      queryParams.entrySet().forEach(entry -> {
+        String key = entry.getKey();
+        Object value = entry.getValue();
+        Collection values = null;
+        if (value instanceof Collection) {
+          values = (Collection) value;
+        } else {
+          values = Collections.singletonList(value);
+        }
+        try {
+          key = URLEncoder.encode(key, "UTF-8");
+          for (Object val : values) {
+            if (val == null) return;
+            String textValue = val.toString();
+            textValue = URLEncoder.encode(textValue, "UTF-8");
+            sb.append((sb.length() == initialLength) ? initialPrefix : "&");
+            sb.append(key).append("=").append(textValue);
+          }
+        } catch (UnsupportedEncodingException cannotHappen) {
+          throw new RuntimeException(cannotHappen);
+        }
+      });
+    }
+
     return sb.toString();
+
   }
 
   /**
@@ -1192,37 +1243,7 @@ public abstract class AbstractServiceTest {
   {
     ObjectMapper objectMapper = new ObjectMapper();
     try {
-      if (!uri.toLowerCase().startsWith("http://")) {
-        uri = this.formatServerUri(uri);
-      }
-      if (queryParams != null && queryParams.size() > 0) {
-        String initialPrefix = uri.contains("?") ? "&" : "?";
-
-        StringBuilder sb = new StringBuilder();
-        queryParams.entrySet().forEach(entry -> {
-          String key = entry.getKey();
-          Object value = entry.getValue();
-          Collection values = null;
-          if (value instanceof Collection) {
-            values = (Collection) value;
-          } else {
-            values = Collections.singletonList(value);
-          }
-          try {
-            key = URLEncoder.encode(key, "UTF-8");
-            for (Object val : values) {
-              if (val == null) return;
-              String textValue = val.toString();
-              textValue = URLEncoder.encode(textValue, "UTF-8");
-              sb.append((sb.length() == 0) ? initialPrefix : "&");
-              sb.append(key).append("=").append(textValue);
-            }
-          } catch (UnsupportedEncodingException cannotHappen) {
-            throw new RuntimeException(cannotHappen);
-          }
-        });
-        uri = uri + sb.toString();
-      }
+      uri = this.formatServerUri(uri, queryParams);
 
       String jsonContent = null;
       if (bodyContent != null) {

@@ -217,6 +217,11 @@ public class AutoReinitializeTest extends AbstractServiceTest
                                  uriText,
                                  newDataSource,
                                  null,
+                                 null,
+                                 null,
+                                 null,
+                                 null,
+                                 null,
                                  before,
                                  after);
     });
@@ -255,6 +260,11 @@ public class AutoReinitializeTest extends AbstractServiceTest
                                  uriText,
                                  newDataSource,
                                  recordId,
+                                 null,
+                                 null,
+                                 null,
+                                 null,
+                                 null,
                                  before,
                                  after);
     });

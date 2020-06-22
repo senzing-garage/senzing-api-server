@@ -764,7 +764,7 @@ public class RepositoryManager {
         returnCode = CONFIG_MGR_API.initV2(moduleName, initJsonText, verbose);
         if (returnCode != 0) {
           CONFIG_API.destroy();
-          logError("G2ConfigMgr.init()", CONFIG_MGR_API);
+          logError("G2ConfigMgr.initV2()", CONFIG_MGR_API);
           return;
         }
         baseInitializedWith = initializer;
@@ -1685,6 +1685,136 @@ public class RepositoryManager {
 
     return true;
   }
+
+  /**
+   * Updates the configuration to be the configuration in the specified {@link
+   * JsonObject}.
+   *
+   * @param repository The directory for the repository.
+   * @param configJson The {@link JsonObject} describing the configuration.
+   * @param comment The comment to associate with the config.
+   *
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
+   */
+  public static Configuration updateConfig(File       repository,
+                                           JsonObject configJson,
+                                           String     comment)
+  {
+    return updateConfig(repository, configJson, comment, false);
+  }
+
+  /**
+   * Updates the configuration to be the configuration in the specified {@link
+   * JsonObject}.
+   *
+   * @param repository The directory for the repository.
+   * @param verbose <tt>true</tt> for verbose API logging, otherwise
+   *                <tt>false</tt>
+   * @param configJson The {@link JsonObject} describing the configuration.
+   * @param comment The comment to associate with the config.
+   *
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
+   */
+  public static Configuration updateConfig(File       repository,
+                                           boolean    verbose,
+                                           JsonObject configJson,
+                                           String     comment)
+  {
+    return updateConfig(repository, verbose, configJson, comment, false);
+  }
+
+  /**
+   * Updates the configuration to be the configuration in the specified {@link
+   * JsonObject}.
+   *
+   * @param repository The directory for the repository.
+   * @param configJson The {@link JsonObject} describing the configuration.
+   * @param comment The comment to associate with the config.
+   * @param silent <tt>true</tt> if no feedback should be given to the user
+   *               upon completion, otherwise <tt>false</tt>
+   *
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
+   */
+  public static Configuration updateConfig(File       repository,
+                                           JsonObject configJson,
+                                           String     comment,
+                                           boolean    silent)
+  {
+    return updateConfig(repository, false, configJson, comment, silent);
+  }
+
+  /**
+   * Updates the configuration to be the configuration in the specified {@link
+   * JsonObject}.
+   *
+   * @param repository The directory for the repository.
+   * @param verbose <tt>true</tt> for verbose API logging, otherwise
+   *                <tt>false</tt>
+   * @param configJson The {@link JsonObject} describing the configuration.
+   * @param comment The comment to associate with the config.
+   * @param silent <tt>true</tt> if no feedback should be given to the user
+   *               upon completion, otherwise <tt>false</tt>
+   *
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
+   */
+  public static Configuration updateConfig(File         repository,
+                                           boolean      verbose,
+                                           JsonObject   configJson,
+                                           String       comment,
+                                           boolean      silent)
+  {
+    initApis(repository, verbose);
+    Long        resultConfigId  = null;
+    JsonObject  resultConfig    = null;
+
+    Result<Long> configId = new Result<>();
+    int returnCode = 0;
+    String configJsonText = JsonUtils.toJsonText(configJson);
+    Result<Long> result = new Result<>();
+    returnCode = CONFIG_MGR_API.addConfig(configJsonText, comment, result);
+    if (returnCode != 0) {
+      logError("G2ConfigMgr.addConfig()", CONFIG_MGR_API);
+      return null;
+    }
+    resultConfigId = result.getValue();
+    returnCode = CONFIG_MGR_API.setDefaultConfigID(resultConfigId);
+    if (returnCode != 0) {
+      logError("G2ConfigMgr.setDefaultConfigID()", CONFIG_MGR_API);
+      return null;
+    }
+
+    StringBuffer sb = new StringBuffer();
+    returnCode = CONFIG_MGR_API.getConfig(resultConfigId, sb);
+    if (returnCode != 0) {
+      logError("G2ConfigMgr.getConfig()", CONFIG_MGR_API);
+      return null;
+    }
+
+    // parse the configuration
+    resultConfig = JsonUtils.parseJsonObject(sb.toString());
+
+    if (!silent) {
+      System.out.println();
+      System.out.println("Added config and set as default: " + resultConfigId);
+      System.out.println();
+    }
+
+    destroyApis();
+    initApis(repository, verbose);
+
+    // check if the result config ID is not set (usually means that all the
+    // data sources to be added already existed)
+    if (resultConfigId == null) {
+      return getDefaultConfig();
+    }
+
+    return new Configuration(resultConfigId, resultConfig);
+  }
+
 
   /**
    * Configures the specified data sources for the specified repository
