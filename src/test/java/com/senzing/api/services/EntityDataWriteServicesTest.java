@@ -1,14 +1,9 @@
 package com.senzing.api.services;
 
-import com.senzing.api.model.SzErrorResponse;
-import com.senzing.api.model.SzLoadRecordResponse;
-import com.senzing.api.model.SzReevaluateResponse;
+import com.senzing.api.model.*;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -19,6 +14,7 @@ import javax.ws.rs.core.UriInfo;
 
 import java.util.*;
 
+import static com.senzing.api.model.SzFeatureMode.WITH_DUPLICATES;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static com.senzing.api.model.SzHttpMethod.*;
 import static com.senzing.api.services.ResponseValidators.*;
@@ -38,6 +34,10 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     this.beginTests();
     this.initializeTestEnvironment();
     this.entityDataServices = new EntityDataServices();
+  }
+
+  @BeforeEach public void preTestPurge() {
+    this.livePurgeRepository();
   }
 
   /**
@@ -704,8 +704,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
-  public void reevaluateRecordWithInfoTest(Boolean  withInfo,
-                                           Boolean  withRaw)
+  public void reevaluateRecordTest(Boolean withInfo, Boolean withRaw)
   {
     this.performTest(() -> {
       final String recordId1 = "ABC123";
@@ -853,8 +852,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
-  public void reevaluateRecordWithInfoTestViaHttp(Boolean withInfo,
-                                                  Boolean withRaw)
+  public void reevaluateRecordTestViaHttp(Boolean withInfo, Boolean withRaw)
   {
     this.performTest(() -> {
       final String recordId1 = "ABC123";
@@ -865,7 +863,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(
           "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/"
-          + recordId1, queryParams);
+              + recordId1, queryParams);
 
       Map recordBody = new HashMap();
       recordBody.put("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
@@ -919,7 +917,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
-          + recordId2, queryParams);
+              + recordId2, queryParams);
 
       recordBody = new HashMap();
       recordBody.put("NAME_FIRST", "Joe");
@@ -972,4 +970,305 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     });
   }
 
+  private Long getEntityIdForRecordId(SzRecordId recordId) {
+    String uriText = this.formatServerUri(
+        "data-sources/" + recordId.getDataSourceCode() + "/records/"
+            + recordId.getRecordId() + "/entity");
+    UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+    SzEntityResponse response = this.entityDataServices.getEntityByRecordId(
+        recordId.getDataSourceCode(),
+        recordId.getRecordId(),
+        false,
+        SzRelationshipMode.NONE,
+        true,
+        WITH_DUPLICATES,
+        false,
+        false,
+        uriInfo);
+
+    SzEntityData data = response.getData();
+
+    SzResolvedEntity entity = data.getResolvedEntity();
+
+    return entity.getEntityId();
+  }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void reevaluateEntityTest(Boolean withInfo, Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      final String recordId2 = "DEF456";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/"
+              + recordId1, queryParams);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      JsonObjectBuilder job = Json.createObjectBuilder();
+      job.add("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
+      job.add("RECORD_ID", recordId1);
+      job.add("NAME_FIRST", "James");
+      job.add("NAME_LAST", "Moriarty");
+      job.add("PHONE_NUMBER", "702-555-1212");
+      job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
+      JsonObject  jsonObject  = job.build();
+      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+
+      long before = System.currentTimeMillis();
+      SzLoadRecordResponse loadResponse = this.entityDataServices.loadRecord(
+          WATCHLIST_DATA_SOURCE,
+          recordId1,
+          null,
+          (withInfo != null ? withInfo : false),
+          (withRaw != null ? withRaw : false),
+          uriInfo,
+          jsonText);
+      loadResponse.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      validateLoadRecordResponse(loadResponse,
+                                 PUT,
+                                 uriText,
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      Long entityId1 = this.getEntityIdForRecordId(
+          new SzRecordId(WATCHLIST_DATA_SOURCE, recordId1));
+
+      queryParams.put("entityId", entityId1);
+      uriText = this.formatServerUri("reevaluate-entity", queryParams);
+      uriInfo = this.newProxyUriInfo(uriText);
+      queryParams.remove("entityId");
+
+      before = System.currentTimeMillis();
+      SzReevaluateResponse response = this.entityDataServices.reevaluateEntity(
+          entityId1,
+          (withInfo != null ? withInfo : false),
+          (withRaw != null ? withRaw : false),
+          uriInfo);
+      response.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateReevaluateResponse(response,
+                                 POST,
+                                 uriText,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      uriText = this.formatServerUri(
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
+              + recordId2, queryParams);
+      uriInfo = this.newProxyUriInfo(uriText);
+
+      job = Json.createObjectBuilder();
+      job.add("NAME_FIRST", "Joe");
+      job.add("NAME_LAST", "Schmoe");
+      job.add("PHONE_NUMBER", "702-555-1212");
+      job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
+      jsonObject  = job.build();
+      jsonText    = JsonUtils.toJsonText(jsonObject);
+
+      before = System.currentTimeMillis();
+      loadResponse = this.entityDataServices.loadRecord(
+          CUSTOMER_DATA_SOURCE,
+          recordId2,
+          null,
+          (withInfo != null ? withInfo : false),
+          (withRaw != null ? withRaw : false),
+          uriInfo,
+          jsonText);
+      response.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateLoadRecordResponse(loadResponse,
+                                 PUT,
+                                 uriText,
+                                 CUSTOMER_DATA_SOURCE,
+                                 recordId2,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 1,
+                                 Set.of(WATCHLIST_FLAG),
+                                 before,
+                                 after);
+
+      Long entityId2 = this.getEntityIdForRecordId(
+          new SzRecordId(CUSTOMER_DATA_SOURCE, recordId2));
+
+      queryParams.put("entityId", entityId2);
+      uriText = this.formatServerUri("reevaluate-entity", queryParams);
+      uriInfo = this.newProxyUriInfo(uriText);
+      queryParams.remove("entityId");
+
+      before = System.currentTimeMillis();
+      response = this.entityDataServices.reevaluateEntity(
+          entityId2,
+          (withInfo != null ? withInfo : false),
+          (withRaw != null ? withRaw : false),
+          uriInfo);
+      response.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateReevaluateResponse(response,
+                                 POST,
+                                 uriText,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 CUSTOMER_DATA_SOURCE,
+                                 recordId2,
+                                 1,
+                                 1,
+                                 Set.of(WATCHLIST_FLAG),
+                                 before,
+                                 after);
+
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void reevaluateEntityTestViaHttp(Boolean withInfo, Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      final String recordId2 = "DEF456";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/"
+              + recordId1, queryParams);
+
+      Map recordBody = new HashMap();
+      recordBody.put("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
+      recordBody.put("RECORD_ID", recordId1);
+      recordBody.put("NAME_FIRST", "James");
+      recordBody.put("NAME_LAST", "Moriarty");
+      recordBody.put("PHONE_NUMBER", "702-555-1212");
+      recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
+
+      long before = System.currentTimeMillis();
+      SzLoadRecordResponse loadResponse = this.invokeServerViaHttp(
+          PUT, uriText, null, recordBody, SzLoadRecordResponse.class);
+      loadResponse.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      validateLoadRecordResponse(loadResponse,
+                                 PUT,
+                                 uriText,
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      Long entityId1 = this.getEntityIdForRecordId(
+          new SzRecordId(WATCHLIST_DATA_SOURCE, recordId1));
+
+      queryParams.put("entityId", entityId1);
+      uriText = this.formatServerUri("reevaluate-entity", queryParams);
+      queryParams.remove("entityId");
+
+      before = System.currentTimeMillis();
+      SzReevaluateResponse response = this.invokeServerViaHttp(
+          POST, uriText, SzReevaluateResponse.class);
+      response.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateReevaluateResponse(response,
+                                 POST,
+                                 uriText,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      uriText = this.formatServerUri(
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
+              + recordId2, queryParams);
+
+      recordBody = new HashMap();
+      recordBody.put("NAME_FIRST", "Joe");
+      recordBody.put("NAME_LAST", "Schmoe");
+      recordBody.put("PHONE_NUMBER", "702-555-1212");
+      recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
+
+      before = System.currentTimeMillis();
+      loadResponse = this.invokeServerViaHttp(
+          PUT, uriText, null, recordBody, SzLoadRecordResponse.class);
+      loadResponse.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateLoadRecordResponse(loadResponse,
+                                 PUT,
+                                 uriText,
+                                 CUSTOMER_DATA_SOURCE,
+                                 recordId2,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 1,
+                                 Set.of(WATCHLIST_FLAG),
+                                 before,
+                                 after);
+
+      Long entityId2 = this.getEntityIdForRecordId(
+          new SzRecordId(CUSTOMER_DATA_SOURCE, recordId2));
+
+      queryParams.put("entityId", entityId2);
+      uriText = this.formatServerUri("reevaluate-entity", queryParams);
+      queryParams.remove("entityId");
+
+      before = System.currentTimeMillis();
+      response = this.invokeServerViaHttp(
+          POST, uriText, SzReevaluateResponse.class);
+      response.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateReevaluateResponse(response,
+                                 POST,
+                                 uriText,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 CUSTOMER_DATA_SOURCE,
+                                 recordId2,
+                                 1,
+                                 1,
+                                 Set.of(WATCHLIST_FLAG),
+                                 before,
+                                 after);
+
+    });
+  }
 }

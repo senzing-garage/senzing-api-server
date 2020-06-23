@@ -2,6 +2,8 @@ package com.senzing.api.services;
 
 import com.senzing.api.model.SzErrorResponse;
 import com.senzing.api.model.SzLoadRecordResponse;
+import com.senzing.api.model.SzRecordId;
+import com.senzing.api.model.SzReevaluateResponse;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
 import com.senzing.util.JsonUtils;
@@ -95,7 +97,7 @@ public class ReadOnlyEntityDataWriteServicesTest
 
 
   @ParameterizedTest
-  @MethodSource("addRecordWithInfoParams")
+  @MethodSource("withInfoParams")
   public void postRecordWithInfoTest(Boolean  withInfo,
                                      Boolean  withRaw)
   {
@@ -140,7 +142,7 @@ public class ReadOnlyEntityDataWriteServicesTest
   }
 
   @ParameterizedTest
-  @MethodSource("addRecordWithInfoParams")
+  @MethodSource("withInfoParams")
   public void postRecordWithInfoTestViaHttp(Boolean withInfo,
                                             Boolean withRaw)
   {
@@ -364,7 +366,7 @@ public class ReadOnlyEntityDataWriteServicesTest
   }
 
   @ParameterizedTest
-  @MethodSource("addRecordWithInfoParams")
+  @MethodSource("withInfoParams")
   public void putRecordWithInfoTest(Boolean  withInfo,
                                     Boolean  withRaw)
   {
@@ -412,7 +414,7 @@ public class ReadOnlyEntityDataWriteServicesTest
   }
 
   @ParameterizedTest
-  @MethodSource("addRecordWithInfoParams")
+  @MethodSource("withInfoParams")
   public void putRecordWithInfoTestViaHttp(Boolean withInfo,
                                            Boolean withRaw)
   {
@@ -446,6 +448,130 @@ public class ReadOnlyEntityDataWriteServicesTest
                      before,
                      after);
 
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void reevaluateRecordTest(Boolean withInfo, Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE
+              + "/records/" + recordId1 + "/reevaluate", queryParams);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      long before = System.currentTimeMillis();
+      try {
+        this.entityDataServices.reevaluateRecord(
+            WATCHLIST_DATA_SOURCE,
+            recordId1,
+            (withInfo != null ? withInfo : false),
+            (withRaw != null ? withRaw : false),
+            uriInfo);
+        fail("Did not get expected 403 ForbiddenException in read-only mode");
+
+      } catch (ForbiddenException expected) {
+        SzErrorResponse response
+            = (SzErrorResponse) expected.getResponse().getEntity();
+        response.concludeTimers();
+        long after = System.currentTimeMillis();
+        validateBasics(response, 403, POST, uriText, before, after);
+      }
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void reevaluateRecordTestViaHttp(Boolean withInfo, Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE
+              + "/records/" + recordId1 + "/reevaluate", queryParams);
+
+      long before = System.currentTimeMillis();
+      SzErrorResponse response = this.invokeServerViaHttp(
+          POST, uriText, SzErrorResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      validateBasics(response,
+                     403,
+                     POST,
+                     uriText,
+                     before,
+                     after);
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void reevaluateEntityTest(Boolean withInfo, Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+      queryParams.put("entityId", 100L);
+
+      String uriText = this.formatServerUri("reevaluate-entity", queryParams);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      long before = System.currentTimeMillis();
+      try {
+        this.entityDataServices.reevaluateEntity(
+            100L,
+            (withInfo != null ? withInfo : false),
+            (withRaw != null ? withRaw : false),
+            uriInfo);
+        fail("Did not get expected 403 ForbiddenException in read-only mode");
+
+      } catch (ForbiddenException expected) {
+        SzErrorResponse response
+            = (SzErrorResponse) expected.getResponse().getEntity();
+        response.concludeTimers();
+        long after = System.currentTimeMillis();
+        validateBasics(response, 403, POST, uriText, before, after);
+      }
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void reevaluateEntityTestViaHttp(Boolean withInfo, Boolean withRaw)
+  {
+    this.performTest(() -> {
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+      queryParams.put("entityId", 100L);
+
+      String uriText = this.formatServerUri("reevaluate-entity", queryParams);
+
+      long before = System.currentTimeMillis();
+      SzErrorResponse response = this.invokeServerViaHttp(
+          POST, uriText, SzErrorResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      validateBasics(response,
+                     403,
+                     POST,
+                     uriText,
+                     before,
+                     after);
     });
   }
 

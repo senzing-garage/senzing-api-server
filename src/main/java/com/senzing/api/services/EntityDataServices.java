@@ -828,6 +828,91 @@ public class EntityDataServices {
     }
   }
 
+  @POST
+  @Path("reevaluate-entity")
+  public SzReevaluateResponse reevaluateEntity(
+      @QueryParam("entityId")                         Long    entityId,
+      @QueryParam("withInfo") @DefaultValue("false")  boolean withInfo,
+      @QueryParam("withRaw")  @DefaultValue("false")  boolean withRaw,
+      @Context                                        UriInfo uriInfo)
+  {
+    Timers timers = newTimers();
+    try {
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
+
+      if (entityId == null) {
+        throw newBadRequestException(
+            POST, uriInfo, timers, "The entityId parameter is required.");
+      }
+
+      enteringQueue(timers);
+      String rawInfo = provider.executeInThread(() -> {
+        exitingQueue(timers);
+
+        // get the engine API
+        G2Engine engineApi = provider.getEngineApi();
+
+        int returnCode;
+        String rawData = null;
+        if (withInfo) {
+          StringBuffer sb = new StringBuffer();
+          if (withInfo)
+            callingNativeAPI(timers, "engine", "reevaluateEntityWithInfo");
+          returnCode = engineApi.reevaluateEntityWithInfo(entityId,0, sb);
+          calledNativeAPI(timers, "engine", "reevaluateEntityWithInfo");
+          rawData = sb.toString();
+        } else {
+          callingNativeAPI(timers, "engine", "reevaluateEntity");
+          returnCode = engineApi.reevaluateEntity(entityId,0);
+          calledNativeAPI(timers, "engine", "reevaluateEntity");
+        }
+
+        if (returnCode != 0) {
+          int errorCode = engineApi.getLastExceptionCode();
+          if (errorCode == ENTITY_ID_NOT_FOUND_CODE) {
+            throw newBadRequestException(
+                POST, uriInfo, timers, "The specified entityId was not found: "
+                    + entityId);
+          } else {
+            throw newWebApplicationException(POST, uriInfo, timers, engineApi);
+          }
+        }
+
+        return rawData;
+      });
+
+      SzResolutionInfo info = null;
+      if (rawInfo != null) {
+        info = SzResolutionInfo.parseResolutionInfo(
+            null, JsonUtils.parseJsonObject(rawInfo));
+      }
+
+      // construct the response
+      SzReevaluateResponse response = new SzReevaluateResponse(
+          POST, 200, uriInfo, timers, info);
+
+      // check if we have info and raw data was requested
+      if (withRaw && withInfo) {
+        response.setRawData(rawInfo);
+      }
+
+      // return the response
+      return response;
+
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw ServicesUtil.newInternalServerErrorException(POST, uriInfo, timers, e);
+    }
+  }
+
   private static WebApplicationException newWebApplicationException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,

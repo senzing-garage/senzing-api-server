@@ -72,8 +72,6 @@ class G2EngineRetryHandler implements InvocationHandler {
       addMethodIfExists(unsupportedSet,"deleteRecordWithInfo",
                         String.class, String.class, String.class,
                         int.class, StringBuffer.class);
-      addMethodIfExists(unsupportedSet,"reevaluateEntityWithInfo",
-                        long.class, int.class, StringBuffer.class);
       addMethodIfExists(unsupportedSet,"processRedoRecordWithInfo",
                         int.class, StringBuffer.class, StringBuffer.class);
       addMethodIfExists(unsupportedSet,"processWithInfo",
@@ -119,6 +117,9 @@ class G2EngineRetryHandler implements InvocationHandler {
           String.class, String.class, int.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
           "reevaluateEntity", long.class, int.class));
+      retrySet.add(cls.getMethod(
+          "reevaluateEntityWithInfo",
+          long.class, int.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
           "searchByAttributes", String.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
