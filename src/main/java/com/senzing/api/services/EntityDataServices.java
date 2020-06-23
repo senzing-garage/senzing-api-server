@@ -32,12 +32,12 @@ public class EntityDataServices {
   @POST
   @Path("data-sources/{dataSourceCode}/records")
   public SzLoadRecordResponse loadRecord(
-      @PathParam("dataSourceCode")  String  dataSourceCode,
-      @QueryParam("loadId")         String  loadId,
-      @QueryParam("withInfo")       boolean withInfo,
-      @QueryParam("withRaw")        boolean withRaw,
-      @Context                      UriInfo uriInfo,
-      String                                recordJsonData)
+      @PathParam("dataSourceCode")                    String  dataSourceCode,
+      @QueryParam("loadId")                           String  loadId,
+      @QueryParam("withInfo") @DefaultValue("false")  boolean withInfo,
+      @QueryParam("withRaw")  @DefaultValue("false")  boolean withRaw,
+      @Context                                        UriInfo uriInfo,
+      String                                                  recordJsonData)
   {
     Timers timers = newTimers();
 
@@ -135,13 +135,13 @@ public class EntityDataServices {
   @PUT
   @Path("data-sources/{dataSourceCode}/records/{recordId}")
   public SzLoadRecordResponse loadRecord(
-      @PathParam("dataSourceCode")  String  dataSourceCode,
-      @PathParam("recordId")        String  recordId,
-      @QueryParam("loadId")         String  loadId,
-      @QueryParam("withInfo")       boolean withInfo,
-      @QueryParam("withRaw")        boolean withRaw,
-      @Context                      UriInfo uriInfo,
-      String                                recordJsonData)
+      @PathParam("dataSourceCode")                    String  dataSourceCode,
+      @PathParam("recordId")                          String  recordId,
+      @QueryParam("loadId")                           String  loadId,
+      @QueryParam("withInfo") @DefaultValue("false")  boolean withInfo,
+      @QueryParam("withRaw")  @DefaultValue("false")  boolean withRaw,
+      @Context                                        UriInfo uriInfo,
+      String                                                  recordJsonData)
   {
     Timers timers = newTimers();
     try {
@@ -236,6 +236,91 @@ public class EntityDataServices {
     } catch (Exception e) {
       e.printStackTrace();
       throw ServicesUtil.newInternalServerErrorException(PUT, uriInfo, timers, e);
+    }
+  }
+
+  @POST
+  @Path("data-sources/{dataSourceCode}/records/{recordId}/reevaluate")
+  public SzReevaluateResponse reevaluateRecord(
+      @PathParam("dataSourceCode")                    String  dataSourceCode,
+      @PathParam("recordId")                          String  recordId,
+      @QueryParam("withInfo") @DefaultValue("false")  boolean withInfo,
+      @QueryParam("withRaw")  @DefaultValue("false")  boolean withRaw,
+      @Context                                        UriInfo uriInfo)
+  {
+    Timers timers = newTimers();
+    try {
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
+      dataSourceCode = dataSourceCode.trim().toUpperCase();
+
+      final String dataSource = dataSourceCode;
+
+      Set<String> dataSources = provider.getDataSources(dataSource);
+
+      if (!dataSources.contains(dataSource)) {
+        throw newNotFoundException(
+            POST, uriInfo, timers,
+            "The specified data source is not recognized: " + dataSource);
+      }
+
+      enteringQueue(timers);
+      String rawInfo = provider.executeInThread(() -> {
+        exitingQueue(timers);
+
+        // get the engine API
+        G2Engine engineApi = provider.getEngineApi();
+
+        int returnCode;
+        String rawData = null;
+        if (withInfo) {
+          StringBuffer sb = new StringBuffer();
+          if (withInfo)
+          callingNativeAPI(timers, "engine", "reevaluateRecordWithInfo");
+          returnCode = engineApi.reevaluateRecordWithInfo(
+              dataSource, recordId,0, sb);
+          calledNativeAPI(timers, "engine", "reevaluateRecordWithInfo");
+          rawData = sb.toString();
+        } else {
+          callingNativeAPI(timers, "engine", "reevaluateRecord");
+          returnCode = engineApi.reevaluateRecord(dataSource, recordId,0);
+          calledNativeAPI(timers, "engine", "reevaluateRecord");
+        }
+        if (returnCode != 0) {
+          throw newWebApplicationException(POST, uriInfo, timers, engineApi);
+        }
+
+        return rawData;
+      });
+
+      SzResolutionInfo info = null;
+      if (rawInfo != null) {
+        JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
+        info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+      }
+
+      // construct the response
+      SzReevaluateResponse response = new SzReevaluateResponse(
+          POST, 200, uriInfo, timers, info);
+
+      // check if we have info and raw data was requested
+      if (withRaw && withInfo) {
+        response.setRawData(rawInfo);
+      }
+
+      // return the response
+      return response;
+
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw ServicesUtil.newInternalServerErrorException(POST, uriInfo, timers, e);
     }
   }
 

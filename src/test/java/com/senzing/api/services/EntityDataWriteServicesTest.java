@@ -2,6 +2,7 @@ package com.senzing.api.services;
 
 import com.senzing.api.model.SzErrorResponse;
 import com.senzing.api.model.SzLoadRecordResponse;
+import com.senzing.api.model.SzReevaluateResponse;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
 import org.junit.jupiter.api.AfterAll;
@@ -157,7 +158,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     });
   }
 
-  protected List<Arguments> addRecordWithInfoParams() {
+  protected List<Arguments> withInfoParams() {
     List<Arguments> argumentsList = new LinkedList<>();
     Boolean[] booleans = { null, Boolean.TRUE, Boolean.FALSE };
     for (Boolean withInfo : booleans) {
@@ -169,7 +170,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
   }
 
   @ParameterizedTest
-  @MethodSource("addRecordWithInfoParams")
+  @MethodSource("withInfoParams")
   public void postRecordWithInfoTest(Boolean  withInfo,
                                      Boolean  withRaw)
   {
@@ -255,7 +256,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
   }
 
   @ParameterizedTest
-  @MethodSource("addRecordWithInfoParams")
+  @MethodSource("withInfoParams")
   public void postRecordWithInfoTestViaHttp(Boolean withInfo,
                                             Boolean withRaw)
   {
@@ -536,23 +537,25 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
   }
 
   @ParameterizedTest
-  @MethodSource("addRecordWithInfoParams")
+  @MethodSource("withInfoParams")
   public void putRecordWithInfoTest(Boolean  withInfo,
                                     Boolean  withRaw)
   {
     this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      final String recordId2 = "DEF456";
       Map<String, Object> queryParams = new LinkedHashMap<>();
       if (withInfo != null) queryParams.put("withInfo", withInfo);
       if (withRaw != null) queryParams.put("withRaw", withRaw);
 
       String uriText = this.formatServerUri(
-          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/ABC123",
-          queryParams);
+          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/"
+          + recordId1, queryParams);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       JsonObjectBuilder job = Json.createObjectBuilder();
       job.add("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
-      job.add("RECORD_ID", "ABC123");
+      job.add("RECORD_ID", recordId1);
       job.add("NAME_FIRST", "James");
       job.add("NAME_LAST", "Moriarty");
       job.add("PHONE_NUMBER", "702-555-1212");
@@ -563,7 +566,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       long before = System.currentTimeMillis();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
           WATCHLIST_DATA_SOURCE,
-          "ABC123",
+          recordId1,
           null,
           (withInfo != null ? withInfo : false),
           (withRaw != null ? withRaw : false),
@@ -576,7 +579,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  PUT,
                                  uriText,
                                  WATCHLIST_DATA_SOURCE,
-                                 "ABC123",
+                                 recordId1,
                                  (withInfo != null ? withInfo : false),
                                  (withRaw != null ? withRaw : false),
                                  1,
@@ -586,8 +589,8 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  after);
 
       uriText = this.formatServerUri(
-          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/DEF456",
-          queryParams);
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
+          + recordId2, queryParams);
       uriInfo = this.newProxyUriInfo(uriText);
 
       job = Json.createObjectBuilder();
@@ -601,7 +604,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       before = System.currentTimeMillis();
       response = this.entityDataServices.loadRecord(
           CUSTOMER_DATA_SOURCE,
-          "DEF456",
+          recordId2,
           null,
           (withInfo != null ? withInfo : false),
           (withRaw != null ? withRaw : false),
@@ -614,7 +617,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  PUT,
                                  uriText,
                                  CUSTOMER_DATA_SOURCE,
-                                 "DEF456",
+                                 recordId2,
                                  (withInfo != null ? withInfo : false),
                                  (withRaw != null ? withRaw : false),
                                  1,
@@ -626,22 +629,24 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
   }
 
   @ParameterizedTest
-  @MethodSource("addRecordWithInfoParams")
+  @MethodSource("withInfoParams")
   public void putRecordWithInfoTestViaHttp(Boolean withInfo,
                                            Boolean withRaw)
   {
     this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      final String recordId2 = "DEF456";
       Map<String, Object> queryParams = new LinkedHashMap<>();
       if (withInfo != null) queryParams.put("withInfo", withInfo);
       if (withRaw != null) queryParams.put("withRaw", withRaw);
 
       String uriText = this.formatServerUri(
-          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/ABC123",
-          queryParams);
+          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/"
+          + recordId1, queryParams);
 
       Map recordBody = new HashMap();
       recordBody.put("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
-      recordBody.put("RECORD_ID", "ABC123");
+      recordBody.put("RECORD_ID", recordId1);
       recordBody.put("NAME_FIRST", "James");
       recordBody.put("NAME_LAST", "Moriarty");
       recordBody.put("PHONE_NUMBER", "702-555-1212");
@@ -657,7 +662,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  PUT,
                                  uriText,
                                  WATCHLIST_DATA_SOURCE,
-                                 "ABC123",
+                                 recordId1,
                                  (withInfo != null ? withInfo : false),
                                  (withRaw != null ? withRaw : false),
                                  1,
@@ -667,8 +672,8 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  after);
 
       uriText = this.formatServerUri(
-          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/DEF456",
-          queryParams);
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
+          + recordId2, queryParams);
 
       recordBody = new HashMap();
       recordBody.put("NAME_FIRST", "Joe");
@@ -686,7 +691,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  PUT,
                                  uriText,
                                  CUSTOMER_DATA_SOURCE,
-                                 "DEF456",
+                                 recordId2,
                                  (withInfo != null ? withInfo : false),
                                  (withRaw != null ? withRaw : false),
                                  1,
@@ -694,6 +699,276 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  Set.of(WATCHLIST_FLAG),
                                  before,
                                  after);
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void reevaluateRecordWithInfoTest(Boolean  withInfo,
+                                           Boolean  withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      final String recordId2 = "DEF456";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/"
+              + recordId1, queryParams);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      JsonObjectBuilder job = Json.createObjectBuilder();
+      job.add("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
+      job.add("RECORD_ID", recordId1);
+      job.add("NAME_FIRST", "James");
+      job.add("NAME_LAST", "Moriarty");
+      job.add("PHONE_NUMBER", "702-555-1212");
+      job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
+      JsonObject  jsonObject  = job.build();
+      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+
+      long before = System.currentTimeMillis();
+      SzLoadRecordResponse loadResponse = this.entityDataServices.loadRecord(
+          WATCHLIST_DATA_SOURCE,
+          recordId1,
+          null,
+          (withInfo != null ? withInfo : false),
+          (withRaw != null ? withRaw : false),
+          uriInfo,
+          jsonText);
+      loadResponse.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      validateLoadRecordResponse(loadResponse,
+                                 PUT,
+                                 uriText,
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE
+              + "/records/" + recordId1 + "/reevaluate", queryParams);
+      uriInfo = this.newProxyUriInfo(uriText);
+
+      before = System.currentTimeMillis();
+      SzReevaluateResponse response = this.entityDataServices.reevaluateRecord(
+          WATCHLIST_DATA_SOURCE,
+          recordId1,
+          (withInfo != null ? withInfo : false),
+          (withRaw != null ? withRaw : false),
+          uriInfo);
+      response.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateReevaluateResponse(response,
+                                 POST,
+                                 uriText,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      uriText = this.formatServerUri(
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
+              + recordId2, queryParams);
+      uriInfo = this.newProxyUriInfo(uriText);
+
+      job = Json.createObjectBuilder();
+      job.add("NAME_FIRST", "Joe");
+      job.add("NAME_LAST", "Schmoe");
+      job.add("PHONE_NUMBER", "702-555-1212");
+      job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
+      jsonObject  = job.build();
+      jsonText    = JsonUtils.toJsonText(jsonObject);
+
+      before = System.currentTimeMillis();
+      loadResponse = this.entityDataServices.loadRecord(
+          CUSTOMER_DATA_SOURCE,
+          recordId2,
+          null,
+          (withInfo != null ? withInfo : false),
+          (withRaw != null ? withRaw : false),
+          uriInfo,
+          jsonText);
+      response.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateLoadRecordResponse(loadResponse,
+                                 PUT,
+                                 uriText,
+                                 CUSTOMER_DATA_SOURCE,
+                                 recordId2,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 1,
+                                 Set.of(WATCHLIST_FLAG),
+                                 before,
+                                 after);
+
+      uriText = this.formatServerUri(
+          "data-sources/" + CUSTOMER_DATA_SOURCE
+              + "/records/" + recordId2 + "/reevaluate", queryParams);
+      uriInfo = this.newProxyUriInfo(uriText);
+
+      before = System.currentTimeMillis();
+      response = this.entityDataServices.reevaluateRecord(
+          CUSTOMER_DATA_SOURCE,
+          recordId2,
+          (withInfo != null ? withInfo : false),
+          (withRaw != null ? withRaw : false),
+          uriInfo);
+      response.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateReevaluateResponse(response,
+                                 POST,
+                                 uriText,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 CUSTOMER_DATA_SOURCE,
+                                 recordId2,
+                                 1,
+                                 1,
+                                 Set.of(WATCHLIST_FLAG),
+                                 before,
+                                 after);
+
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void reevaluateRecordWithInfoTestViaHttp(Boolean withInfo,
+                                                  Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      final String recordId2 = "DEF456";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/"
+          + recordId1, queryParams);
+
+      Map recordBody = new HashMap();
+      recordBody.put("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
+      recordBody.put("RECORD_ID", recordId1);
+      recordBody.put("NAME_FIRST", "James");
+      recordBody.put("NAME_LAST", "Moriarty");
+      recordBody.put("PHONE_NUMBER", "702-555-1212");
+      recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
+
+      long before = System.currentTimeMillis();
+      SzLoadRecordResponse loadResponse = this.invokeServerViaHttp(
+          PUT, uriText, null, recordBody, SzLoadRecordResponse.class);
+      loadResponse.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      validateLoadRecordResponse(loadResponse,
+                                 PUT,
+                                 uriText,
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE
+              + "/records/" + recordId1 + "/reevaluate", queryParams);
+
+      before = System.currentTimeMillis();
+      SzReevaluateResponse response = this.invokeServerViaHttp(
+          POST, uriText, SzReevaluateResponse.class);
+      response.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateReevaluateResponse(response,
+                                 POST,
+                                 uriText,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      uriText = this.formatServerUri(
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
+          + recordId2, queryParams);
+
+      recordBody = new HashMap();
+      recordBody.put("NAME_FIRST", "Joe");
+      recordBody.put("NAME_LAST", "Schmoe");
+      recordBody.put("PHONE_NUMBER", "702-555-1212");
+      recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
+
+      before = System.currentTimeMillis();
+      loadResponse = this.invokeServerViaHttp(
+          PUT, uriText, null, recordBody, SzLoadRecordResponse.class);
+      loadResponse.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateLoadRecordResponse(loadResponse,
+                                 PUT,
+                                 uriText,
+                                 CUSTOMER_DATA_SOURCE,
+                                 recordId2,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 1,
+                                 Set.of(WATCHLIST_FLAG),
+                                 before,
+                                 after);
+
+      uriText = this.formatServerUri(
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
+              + recordId2 + "/reevaluate", queryParams);
+
+      before = System.currentTimeMillis();
+      response = this.invokeServerViaHttp(
+          POST, uriText, SzReevaluateResponse.class);
+      response.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateReevaluateResponse(response,
+                                 POST,
+                                 uriText,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 CUSTOMER_DATA_SOURCE,
+                                 recordId2,
+                                 1,
+                                 1,
+                                 Set.of(WATCHLIST_FLAG),
+                                 before,
+                                 after);
+
     });
   }
 
