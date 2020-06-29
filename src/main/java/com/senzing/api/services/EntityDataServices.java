@@ -407,7 +407,7 @@ public class EntityDataServices {
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
-      @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
+      @DefaultValue("false") @QueryParam("withInternalFeatures")   boolean             withInternalFeatures,
       @Context                                                    UriInfo             uriInfo)
   {
     Timers timers = newTimers();
@@ -425,7 +425,7 @@ public class EntityDataServices {
       int flags = getFlags(forceMinimal,
                            featureMode,
                            withFeatureStats,
-                           withDerivedFeatures,
+                           withInternalFeatures,
                            (withRelated != SzRelationshipMode.NONE));
 
       String rawData = null;
@@ -550,7 +550,7 @@ public class EntityDataServices {
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode       featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
-      @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
+      @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean             withInternalFeatures,
       @Context                                                    UriInfo             uriInfo)
   {
     Timers timers = newTimers();
@@ -567,7 +567,7 @@ public class EntityDataServices {
       int flags = getFlags(forceMinimal,
                            featureMode,
                            withFeatureStats,
-                           withDerivedFeatures,
+                           withInternalFeatures,
                            (withRelated != SzRelationshipMode.NONE));
 
       // check if we want 1-degree relations as well -- if so we need to
@@ -673,8 +673,8 @@ public class EntityDataServices {
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode       featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
-      @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
-      @DefaultValue("true") @QueryParam("withRelationships")      boolean             withRelationships,
+      @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean             withInternalFeatures,
+      @DefaultValue("false") @QueryParam("withRelationships")     boolean             withRelationships,
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
       @Context                                                    UriInfo             uriInfo)
   {
@@ -762,7 +762,7 @@ public class EntityDataServices {
       int flags = getFlags(forceMinimal,
                            featureMode,
                            withFeatureStats,
-                           withDerivedFeatures,
+                           withInternalFeatures,
                            withRelationships);
 
       final String searchJson = JsonUtils.toJsonText(searchCriteria);

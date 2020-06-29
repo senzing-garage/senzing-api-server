@@ -140,7 +140,9 @@ public class SzEntityRecord {
   public void setAddressData(List<String> addressData)
   {
     this.addressData.clear();
-    this.addressData.addAll(addressData);
+    if (addressData != null) {
+      this.addressData.addAll(addressData);
+    }
   }
 
   /**
@@ -171,7 +173,9 @@ public class SzEntityRecord {
   public void setCharacteristicData(List<String> characteristicData)
   {
     this.characteristicData.clear();
-    this.characteristicData.addAll(characteristicData);
+    if (characteristicData != null) {
+      this.characteristicData.addAll(characteristicData);
+    }
   }
 
   /**
@@ -203,7 +207,9 @@ public class SzEntityRecord {
   public void setIdentifierData(List<String> identifierData)
   {
     this.identifierData.clear();
-    this.identifierData.addAll(identifierData);
+    if (identifierData != null) {
+      this.identifierData.addAll(identifierData);
+    }
   }
 
   /**
@@ -234,7 +240,9 @@ public class SzEntityRecord {
    */
   public void setNameData(List<String> nameData) {
     this.nameData.clear();
-    this.nameData.addAll(nameData);
+    if (nameData != null) {
+      this.nameData.addAll(nameData);
+    }
   }
 
   /**
@@ -264,7 +272,9 @@ public class SzEntityRecord {
    */
   public void setPhoneData(List<String> phoneData) {
     this.phoneData.clear();
-    this.phoneData.addAll(phoneData);
+    if (phoneData != null) {
+      this.phoneData.addAll(phoneData);
+    }
   }
 
   /**
@@ -293,8 +303,10 @@ public class SzEntityRecord {
    * @param relationshipData The list of relationship data strings.
    */
    public void setRelationshipData(List<String> relationshipData) {
-   this.relationshipData.clear();
-   this.relationshipData.addAll(relationshipData);
+     this.relationshipData.clear();
+     if (relationshipData != null) {
+       this.relationshipData.addAll(relationshipData);
+     }
    }
 
    /**
@@ -325,7 +337,9 @@ public class SzEntityRecord {
    */
   public void setOtherData(List<String> otherData) {
     this.otherData.clear();
-    this.otherData.addAll(otherData);
+    if (otherData != null) {
+      this.otherData.addAll(otherData);
+    }
   }
 
   /**

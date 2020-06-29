@@ -19,6 +19,11 @@ public class SzRelatedEntity extends SzBaseRelatedEntity {
   private boolean disclosed;
 
   /**
+   * Whether or not the relationship is ambiguous.
+   */
+  private boolean ambiguous;
+
+  /**
    * The relationship type.
    */
   private SzRelationshipType relationType;
@@ -28,6 +33,7 @@ public class SzRelatedEntity extends SzBaseRelatedEntity {
    */
   public SzRelatedEntity() {
     this.disclosed    = false;
+    this.ambiguous    = false;
     this.relationType = null;
   }
 
@@ -49,6 +55,28 @@ public class SzRelatedEntity extends SzBaseRelatedEntity {
    */
   public void setDisclosed(boolean disclosed) {
     this.disclosed = disclosed;
+  }
+
+  /**
+   * Checks whether or not the relationship between the entities is an
+   * ambiguous possible match.
+   *
+   * @return <tt>true</tt> if the relationship is an ambiguous possible match,
+   *         or <tt>false</tt> if not disclosed.
+   */
+  public boolean isAmbiguous() {
+    return this.ambiguous;
+  }
+
+  /**
+   * Sets whether or not the relationship between the entities is an
+   * ambiguous possible match.
+   *
+   * @param ambiguous <tt>true</tt> if the relationship is an ambiguous
+   *                  possible match, or <tt>false</tt> if not disclosed.
+   */
+  public void setAmbiguous(boolean ambiguous) {
+    this.ambiguous = ambiguous;
   }
 
   /**
@@ -138,6 +166,11 @@ public class SzRelatedEntity extends SzBaseRelatedEntity {
       entity.setDisclosed(disclosed);
     }
 
+    if (jsonObject.containsKey("IS_AMBIGUOUS")) {
+      boolean ambiguous = jsonObject.getInt("IS_AMBIGUOUS") != 0;
+      entity.setAmbiguous(ambiguous);
+    }
+
     if (entity.getMatchLevel() != null) {
       if (entity.isDisclosed()) {
         entity.setRelationType(DISCLOSED_RELATION);
@@ -157,6 +190,7 @@ public class SzRelatedEntity extends SzBaseRelatedEntity {
     return "SzRelatedEntity{" +
         super.toString() +
         ", disclosed=" + disclosed +
+        ", ambiguous=" + ambiguous +
         ", relationType=" + relationType +
         '}';
   }
