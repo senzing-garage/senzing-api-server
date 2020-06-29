@@ -241,7 +241,7 @@ public class WhyServicesTest extends AbstractServiceTest {
         booleanVariantList,   // forceMinimal
         featureModes,         // featureMode
         booleanVariantList,   // withFeatureStats
-        booleanVariantList,   // withDerivedFeatures
+        booleanVariantList,   // withInternalFeatures
         booleanVariantList,   // withRelationships
         booleanVariantList);  // withRaw
 
@@ -281,7 +281,7 @@ public class WhyServicesTest extends AbstractServiceTest {
         booleanVariantList,         // forceMinimal
         featureModes,               // featureMode
         booleanVariantList,         // withFeatureStats
-        booleanVariantList,         // withDerivedFeatures
+        booleanVariantList,         // withInternalFeatures
         booleanVariantList,         // withRelationships
         booleanVariantList);        // withRaw
 
@@ -299,7 +299,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       Boolean               forceMinimal,
       SzFeatureMode featureMode,
       Boolean               withFeatureStats,
-      Boolean               withDerivedFeatures,
+      Boolean               withInternalFeatures,
       Boolean               withRelationships,
       Boolean               withRaw)
   {
@@ -316,9 +316,9 @@ public class WhyServicesTest extends AbstractServiceTest {
       sb.append(prefix).append("withFeatureStats=").append(withFeatureStats);
       prefix = "&";
     }
-    if (withDerivedFeatures != null) {
-      sb.append(prefix).append("withDerivedFeatures=")
-          .append(withDerivedFeatures);
+    if (withInternalFeatures != null) {
+      sb.append(prefix).append("withInternalFeatures=")
+          .append(withInternalFeatures);
       prefix = "&";
     }
     if (withRelationships != null) {
@@ -338,7 +338,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       Boolean               forceMinimal,
       SzFeatureMode featureMode,
       Boolean               withFeatureStats,
-      Boolean               withDerivedFeatures,
+      Boolean               withInternalFeatures,
       Boolean               withRelationships,
       Boolean               withRaw)
   {
@@ -367,8 +367,8 @@ public class WhyServicesTest extends AbstractServiceTest {
       if (withFeatureStats != null) {
         sb.append("&withFeatureStats=").append(withFeatureStats);
       }
-      if (withDerivedFeatures != null) {
-        sb.append("&withDerivedFeatures=").append(withDerivedFeatures);
+      if (withInternalFeatures != null) {
+        sb.append("&withInternalFeatures=").append(withInternalFeatures);
       }
       if (withRaw != null) {
         sb.append("&withRaw=").append(withRaw);
@@ -386,7 +386,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                       Boolean             forceMinimal,
                                       SzFeatureMode featureMode,
                                       Boolean             withFeatureStats,
-                                      Boolean             withDerivedFeatures,
+                                      Boolean             withInternalFeatures,
                                       Boolean             withRelationships,
                                       Boolean             withRaw)
   {
@@ -395,7 +395,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
-          + " ], withDerivedFeatures=[ " + withDerivedFeatures
+          + " ], withInternalFeatures=[ " + withInternalFeatures
           + " ], withRelationships=[ " + withRelationships
           + " ], withRaw=[ " + withRaw + " ]";
 
@@ -408,7 +408,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                 forceMinimal,
                                 featureMode,
                                 withFeatureStats,
-                                withDerivedFeatures,
+                                withInternalFeatures,
                                 withRelationships,
                                 withRaw);
 
@@ -423,7 +423,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (forceMinimal == null ? false : forceMinimal),
           (featureMode == null ? WITH_DUPLICATES : featureMode),
           (withFeatureStats == null ? true : withFeatureStats),
-          (withDerivedFeatures == null ? true : withDerivedFeatures),
+          (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           (withRaw == null ? false : withRaw),
           uriInfo);
@@ -441,7 +441,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (forceMinimal == null ? false : forceMinimal),
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
-          (withDerivedFeatures == null ? true : withDerivedFeatures),
+          (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
           before,
@@ -456,7 +456,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       Boolean             forceMinimal,
       SzFeatureMode featureMode,
       Boolean             withFeatureStats,
-      Boolean             withDerivedFeatures,
+      Boolean             withInternalFeatures,
       Boolean             withRelationships,
       Boolean             withRaw)
   {
@@ -465,7 +465,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
-          + " ], withDerivedFeatures=[ " + withDerivedFeatures
+          + " ], withInternalFeatures=[ " + withInternalFeatures
           + " ], withRelationships=[ " + withRelationships
           + " ], withRaw=[ " + withRaw + " ]";
 
@@ -478,7 +478,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                 forceMinimal,
                                 featureMode,
                                 withFeatureStats,
-                                withDerivedFeatures,
+                                withInternalFeatures,
                                 withRelationships,
                                 withRaw);
 
@@ -500,7 +500,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (forceMinimal == null ? false : forceMinimal),
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
-          (withDerivedFeatures == null ? true : withDerivedFeatures),
+          (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
           before,
@@ -514,7 +514,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                       Boolean             forceMinimal,
                                       SzFeatureMode featureMode,
                                       Boolean             withFeatureStats,
-                                      Boolean             withDerivedFeatures,
+                                      Boolean             withInternalFeatures,
                                       Boolean             withRelationships,
                                       Boolean             withRaw)
   {
@@ -526,7 +526,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
-          + " ], withDerivedFeatures=[ " + withDerivedFeatures
+          + " ], withInternalFeatures=[ " + withInternalFeatures
           + " ], withRelationships=[ " + withRelationships
           + " ], withRaw=[ " + withRaw + " ]";
 
@@ -537,7 +537,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                 forceMinimal,
                                 featureMode,
                                 withFeatureStats,
-                                withDerivedFeatures,
+                                withInternalFeatures,
                                 withRelationships,
                                 withRaw);
 
@@ -552,7 +552,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (forceMinimal == null ? false : forceMinimal),
           (featureMode == null ? WITH_DUPLICATES : featureMode),
           (withFeatureStats == null ? true : withFeatureStats),
-          (withDerivedFeatures == null ? true : withDerivedFeatures),
+          (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           (withRaw == null ? false : withRaw),
           uriInfo);
@@ -570,7 +570,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (forceMinimal == null ? false : forceMinimal),
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
-          (withDerivedFeatures == null ? true : withDerivedFeatures),
+          (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
           before,
@@ -585,7 +585,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       Boolean             forceMinimal,
       SzFeatureMode featureMode,
       Boolean             withFeatureStats,
-      Boolean             withDerivedFeatures,
+      Boolean             withInternalFeatures,
       Boolean             withRelationships,
       Boolean             withRaw)
   {
@@ -597,7 +597,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
-          + " ], withDerivedFeatures=[ " + withDerivedFeatures
+          + " ], withInternalFeatures=[ " + withInternalFeatures
           + " ], withRelationships=[ " + withRelationships
           + " ], withRaw=[ " + withRaw + " ]";
 
@@ -608,7 +608,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                 forceMinimal,
                                 featureMode,
                                 withFeatureStats,
-                                withDerivedFeatures,
+                                withInternalFeatures,
                                 withRelationships,
                                 withRaw);
 
@@ -630,7 +630,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (forceMinimal == null ? false : forceMinimal),
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
-          (withDerivedFeatures == null ? true : withDerivedFeatures),
+          (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
           before,
@@ -648,7 +648,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       boolean                             forceMinimal,
       SzFeatureMode featureMode,
       boolean                             withFeatureStats,
-      boolean                             withDerivedFeatures,
+      boolean                             withInternalFeatures,
       boolean                             withRelationships,
       Boolean                             withRaw,
       long                                beforeTimestamp,
@@ -753,7 +753,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                      forceMinimal,
                      featureMode,
                      withFeatureStats,
-                     withDerivedFeatures,
+                     withInternalFeatures,
                      null,
                      null,
                      !withRelationships,
@@ -824,7 +824,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                              Boolean            forceMinimal,
                              SzFeatureMode featureMode,
                              Boolean            withFeatureStats,
-                             Boolean            withDerivedFeatures,
+                             Boolean            withInternalFeatures,
                              Boolean            withRelationships,
                              Boolean            withRaw)
   {
@@ -834,7 +834,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
-          + " ], withDerivedFeatures=[ " + withDerivedFeatures
+          + " ], withInternalFeatures=[ " + withInternalFeatures
           + " ], withRelationships=[ " + withRelationships
           + " ], withRaw=[ " + withRaw + " ]";
 
@@ -847,7 +847,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                  forceMinimal,
                                  featureMode,
                                  withFeatureStats,
-                                 withDerivedFeatures,
+                                 withInternalFeatures,
                                  withRelationships,
                                  withRaw);
 
@@ -864,7 +864,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (forceMinimal == null ? false : forceMinimal),
           (featureMode == null ? WITH_DUPLICATES : featureMode),
           (withFeatureStats == null ? true : withFeatureStats),
-          (withDerivedFeatures == null ? true : withDerivedFeatures),
+          (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           (withRaw == null ? false : withRaw),
           uriInfo);
@@ -882,7 +882,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (forceMinimal == null ? false : forceMinimal),
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
-          (withDerivedFeatures == null ? true : withDerivedFeatures),
+          (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
           before,
@@ -898,7 +898,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       Boolean             forceMinimal,
       SzFeatureMode featureMode,
       Boolean             withFeatureStats,
-      Boolean             withDerivedFeatures,
+      Boolean             withInternalFeatures,
       Boolean             withRelationships,
       Boolean             withRaw)
   {
@@ -908,7 +908,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
-          + " ], withDerivedFeatures=[ " + withDerivedFeatures
+          + " ], withInternalFeatures=[ " + withInternalFeatures
           + " ], withRelationships=[ " + withRelationships
           + " ], withRaw=[ " + withRaw + " ]";
 
@@ -921,7 +921,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                  forceMinimal,
                                  featureMode,
                                  withFeatureStats,
-                                 withDerivedFeatures,
+                                 withInternalFeatures,
                                  withRelationships,
                                  withRaw);
 
@@ -943,7 +943,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (forceMinimal == null ? false : forceMinimal),
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
-          (withDerivedFeatures == null ? true : withDerivedFeatures),
+          (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
           before,
@@ -961,7 +961,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       boolean                             forceMinimal,
       SzFeatureMode featureMode,
       boolean                             withFeatureStats,
-      boolean                             withDerivedFeatures,
+      boolean                             withInternalFeatures,
       boolean                             withRelationships,
       Boolean                             withRaw,
       long                                beforeTimestamp,
@@ -1054,7 +1054,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                      forceMinimal,
                      featureMode,
                      withFeatureStats,
-                     withDerivedFeatures,
+                     withInternalFeatures,
                      null,
                      null,
                      !withRelationships,

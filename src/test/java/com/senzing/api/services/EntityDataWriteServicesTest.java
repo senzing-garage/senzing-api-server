@@ -803,7 +803,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           (withRaw != null ? withRaw : false),
           uriInfo,
           jsonText);
-      response.concludeTimers();
+      loadResponse.concludeTimers();
       after = System.currentTimeMillis();
 
       validateLoadRecordResponse(loadResponse,
@@ -1097,7 +1097,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           (withRaw != null ? withRaw : false),
           uriInfo,
           jsonText);
-      response.concludeTimers();
+      loadResponse.concludeTimers();
       after = System.currentTimeMillis();
 
       validateLoadRecordResponse(loadResponse,

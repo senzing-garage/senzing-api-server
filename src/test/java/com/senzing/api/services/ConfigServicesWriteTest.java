@@ -701,18 +701,6 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     this.nextEntityClassId  = 10001;
   }
 
-
-  private List<Arguments> getWithRawVariants() {
-    List<Arguments> result = new LinkedList<>();
-    Boolean[] booleanVariants = {null, true, false};
-    for (Boolean withRaw: booleanVariants) {
-      Object[] argArray = new Object[1];
-      argArray[0] = withRaw;
-      result.add(arguments(argArray));
-    }
-    return result;
-  }
-
   private SzDataSource nextDataSource(SpecifiedMode idMode) {
     Integer sourceId    = this.nextDataSourceId++;
     String  sourceCode  = "TEST_SOURCE_" + sourceId;

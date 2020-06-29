@@ -205,7 +205,10 @@ public class ResponseValidators {
 
     SzLinks links = response.getLinks();
     SzMeta meta = response.getMeta();
-    assertEquals(selfLink, links.getSelf(), "Unexpected self link" + suffix);
+
+    String expectedLink = selfLink.replaceAll("%20", "+");
+    String actualLink   = links.getSelf().replaceAll("%20", "+");
+    assertEquals(expectedLink, actualLink, "Unexpected self link" + suffix);
     assertEquals(expectedHttpMethod, meta.getHttpMethod(),
                  "Unexpected HTTP method" + suffix);
     assertEquals(expectedResponseCode, meta.getHttpStatusCode(), "Unexpected HTTP status code" + suffix);
@@ -620,7 +623,7 @@ public class ResponseValidators {
       Boolean                             forceMinimal,
       SzFeatureMode                       featureMode,
       boolean                             withFeatureStats,
-      boolean                             withDerivedFeatures,
+      boolean                             withInternalFeatures,
       Integer                             expectedRecordCount,
       Set<SzRecordId>                     expectedRecordIds,
       Boolean                             relatedSuppressed,
@@ -665,24 +668,24 @@ public class ResponseValidators {
                       "Features not present for entity: " + testInfo);
 
       Set<String> featureKeys = entity.getFeatures().keySet();
-      if (withDerivedFeatures) {
+      if (withInternalFeatures) {
         if (featureKeys.contains("NAME") && !featureKeys.contains("NAME_KEY")) {
-          fail("Missing NAME_KEY, but found NAME with derived features "
+          fail("Missing NAME_KEY, but found NAME with internal features "
                    + "requested: " + testInfo + " / " + featureKeys);
         }
         if (featureKeys.contains("ADDRESS")
             && !featureKeys.contains("ADDR_KEY"))
         {
-          fail("Missing ADDR_KEY, but found ADDRESS with derived features "
+          fail("Missing ADDR_KEY, but found ADDRESS with internal features "
                    + "requested: " + testInfo + " / " + featureKeys);
         }
       } else {
         if (featureKeys.contains("NAME_KEY")) {
-          fail("Found NAME_KEY with derived features suppressed: "
+          fail("Found NAME_KEY with internal features suppressed: "
                    + testInfo + " / " + featureKeys);
         }
         if (featureKeys.contains("ADDR_KEY")) {
-          fail("Found ADDR_KEY with derived features suppressed: "
+          fail("Found ADDR_KEY with internal features suppressed: "
                    + testInfo + " / " + featureKeys);
         }
       }
@@ -796,8 +799,8 @@ public class ResponseValidators {
             provider.getAttributeClassForFeature(featureKey));
 
         if (attrClass == null) {
-          // skip this feature if working with derived features
-          if (withDerivedFeatures) return;
+          // skip this feature if working with internal features
+          if (withInternalFeatures) return;
 
           // otherwise fail
           fail("Unrecognized feature key (" + featureKey + "): " + testInfo
@@ -1609,7 +1612,7 @@ public class ResponseValidators {
    *                    <tt>null</tt> if this is not being validated.
    * @param withFeatureStats <tt>true</tt> if request with feature statistics,
    *                         otherwise <tt>false</tt>.
-   * @param withDerivedFeatures <tt>true</tt> if request with derived features,
+   * @param withInternalFeatures <tt>true</tt> if request with internal features,
    *                            otherwise <tt>false</tt>.
    * @param expectedRecordCount The number of expected records for the entity,
    *                            or <tt>null</tt> if this is not being validated.
@@ -1642,7 +1645,7 @@ public class ResponseValidators {
       Boolean                             forceMinimal,
       SzFeatureMode                       featureMode,
       boolean                             withFeatureStats,
-      boolean                             withDerivedFeatures,
+      boolean                             withInternalFeatures,
       Integer                             expectedRecordCount,
       Set<SzRecordId>                     expectedRecordIds,
       Integer                             relatedEntityCount,
@@ -1681,7 +1684,7 @@ public class ResponseValidators {
         forceMinimal,
         featureMode,
         withFeatureStats,
-        withDerivedFeatures,
+        withInternalFeatures,
         expectedRecordCount,
         expectedRecordIds,
         (withRelated == SzRelationshipMode.NONE),
@@ -1777,9 +1780,8 @@ public class ResponseValidators {
    *                      validated.
    * @param withRelationships <tt>true</tt> if requested with relationship
    *                          information should be included with the entity
-   *                          results, <tt>false</tt> if the relationship
-   *                          information should be excluded and <tt>null</tt>
-   *                          if this aspect is not being validated.
+   *                          results, <tt>false</tt> or <tt>null</tt> if the
+   *                          relationship information should be excluded.
    * @param forceMinimal <tt>true</tt> if requested with minimal data,
    *                     <tt>false</tt> if requested with standard data and
    *                     <tt>null</tt> if this aspect is not being validated.
@@ -1787,7 +1789,7 @@ public class ResponseValidators {
    *                         <tt>null</tt> if this is not being validated.
    * @param withFeatureStats <tt>true</tt> if request with feature statistics,
    *                         otherwise <tt>false</tt>.
-   * @param withDerivedFeatures <tt>true</tt> if request with derived features,
+   * @param withInternalFeatures <tt>true</tt> if request with internal features,
    *                            otherwise <tt>false</tt>.
    * @param beforeTimestamp The timestamp before executing the request.
    * @param afterTimestamp The timestamp after executing the request and
@@ -1804,7 +1806,7 @@ public class ResponseValidators {
       Boolean                   forceMinimal,
       SzFeatureMode featureInclusion,
       boolean                   withFeatureStats,
-      boolean                   withDerivedFeatures,
+      boolean                   withInternalFeatures,
       long                      beforeTimestamp,
       long                      afterTimestamp,
       Boolean                   expectRawData)
@@ -1837,10 +1839,10 @@ public class ResponseValidators {
                      forceMinimal,
                      featureInclusion,
                      withFeatureStats,
-                     withDerivedFeatures,
+                     withInternalFeatures,
                      null,
                      null,
-                     (withRelationships == null || !withRelationships),
+                     (withRelationships == null ? false : withRelationships),
                      null,
                      true,
                      null,

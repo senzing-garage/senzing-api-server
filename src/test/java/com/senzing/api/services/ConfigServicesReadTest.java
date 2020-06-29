@@ -159,17 +159,6 @@ public class ConfigServicesReadTest extends AbstractServiceTest
     }
   }
 
-  private List<Arguments> getWithRawVariants() {
-    List<Arguments> result = new LinkedList<>();
-    Boolean[] booleanVariants = {null, true, false};
-    for (Boolean withRaw: booleanVariants) {
-      Object[] argArray = new Object[1];
-      argArray[0] = withRaw;
-      result.add(arguments(argArray));
-    }
-    return result;
-  }
-
   @ParameterizedTest
   @MethodSource("getWithRawVariants")
   public void getDataSourcesTest(Boolean withRaw) {

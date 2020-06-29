@@ -19,6 +19,7 @@ import com.senzing.g2.engine.*;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.AccessToken;
 import com.senzing.util.JsonUtils;
+import org.junit.jupiter.params.provider.Arguments;
 
 import javax.json.*;
 import javax.ws.rs.core.MultivaluedMap;
@@ -28,6 +29,7 @@ import static com.senzing.io.IOUtilities.*;
 import static org.junit.jupiter.api.Assumptions.*;
 import static com.senzing.util.LoggingUtilities.*;
 import static com.senzing.repomgr.RepositoryManager.*;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
  * Provides an abstract base class for services tests that will create a
@@ -1720,10 +1722,16 @@ public abstract class AbstractServiceTest {
       return objectMapper.readValue(jsonText, targetClass);
 
     } catch (RuntimeException e) {
-      if (jsonText != null) System.out.println("JSON TEXT: " + jsonText);
+      if (jsonText != null) {
+        System.err.println("JSON TEXT: " + jsonText);
+        e.printStackTrace();
+      }
       throw e;
     } catch (Exception e) {
-      if (jsonText != null) System.out.println("JSON TEXT: " + jsonText);
+      if (jsonText != null) {
+        System.err.println("JSON TEXT: " + jsonText);
+        e.printStackTrace();
+      }
       throw new RuntimeException(e);
     }
   }
@@ -1806,5 +1814,21 @@ public abstract class AbstractServiceTest {
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  /**
+   * Serves as a method source for a test method with a withRaw parameter.
+   *
+   * @return The list of arguments for the boolean withRaw options.
+   */
+  protected List<Arguments> getWithRawVariants() {
+    List<Arguments> result = new LinkedList<>();
+    Boolean[] booleanVariants = {null, true, false};
+    for (Boolean withRaw: booleanVariants) {
+      Object[] argArray = new Object[1];
+      argArray[0] = withRaw;
+      result.add(arguments(argArray));
+    }
+    return result;
   }
 }

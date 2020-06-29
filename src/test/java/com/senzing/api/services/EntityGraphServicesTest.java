@@ -286,7 +286,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                  null,  // forceMinimal (7)
                  null,  // featureMode (8)
                  null,  // withFeatureStats (9)
-                 null,  // withDerivedFeatures (10)
+                 null,  // withInternalFeatures (10)
                  null,  // withRaw (11)
                  expectedPathLength,
                  expectedPath));
@@ -352,7 +352,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
         booleanVariantList,   // forceMinimal
         featureModes,         // featureMode
         booleanVariantList,   // withFeatureStats
-        booleanVariantList,   // withDerivedFeatures
+        booleanVariantList,   // withInternalFeatures
         booleanVariantList);  // withRaw
 
     int count = Math.max(baseArgs.size(), optionCombos.size()) * 2;
@@ -389,7 +389,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean               forceMinimal,
       SzFeatureMode featureMode,
       Boolean               withFeatureStats,
-      Boolean               withDerivedFeatures,
+      Boolean               withInternalFeatures,
       Boolean               withRaw)
   {
     try {
@@ -428,8 +428,8 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       if (withFeatureStats != null) {
         sb.append("&withFeatureStats=").append(withFeatureStats);
       }
-      if (withDerivedFeatures != null) {
-        sb.append("&withDerivedFeatures=").append(withDerivedFeatures);
+      if (withInternalFeatures != null) {
+        sb.append("&withInternalFeatures=").append(withInternalFeatures);
       }
       if (withRaw != null) {
         sb.append("&withRaw=").append(withRaw);
@@ -521,7 +521,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                     Boolean                 forceMinimal,
                                     SzFeatureMode featureMode,
                                     Boolean                 withFeatureStats,
-                                    Boolean                 withDerivedFeatures,
+                                    Boolean                 withInternalFeatures,
                                     Boolean                 withRaw,
                                     Integer                 expectedPathLength,
                                     List<SzRecordId>        expectedPath)
@@ -537,7 +537,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
-          + " ], withDerivedFeatures=[ " + withDerivedFeatures
+          + " ], withInternalFeatures=[ " + withInternalFeatures
           + " ], withRaw=[ " + withRaw + " ]";
 
       SzEntityIdentifier fromIdentifer
@@ -566,7 +566,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                            forceMinimal,
                            featureMode,
                            withFeatureStats,
-                           withDerivedFeatures,
+                           withInternalFeatures,
                            withRaw);
 
       String uriText = this.formatServerUri(sb.toString());
@@ -585,7 +585,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           (forceMinimal == null ? false : forceMinimal),
           (featureMode == null ? WITH_DUPLICATES : featureMode),
           (withFeatureStats == null ? false : withFeatureStats),
-          (withDerivedFeatures == null ? false : withDerivedFeatures),
+          (withInternalFeatures == null ? false : withInternalFeatures),
           (withRaw == null ? false : withRaw),
           uriInfo);
 
@@ -607,7 +607,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           forceMinimal,
           featureMode,
           (withFeatureStats == null ? false : withFeatureStats),
-          (withDerivedFeatures == null ? false : withDerivedFeatures),
+          (withInternalFeatures == null ? false : withInternalFeatures),
           withRaw,
           expectedPathLength,
           expectedPath,
@@ -629,7 +629,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                 forceMinimal,
       SzFeatureMode featureMode,
       Boolean                 withFeatureStats,
-      Boolean                 withDerivedFeatures,
+      Boolean                 withInternalFeatures,
       Boolean                 withRaw,
       Integer                 expectedPathLength,
       List<SzRecordId>        expectedPath)
@@ -645,7 +645,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
-          + " ], withDerivedFeatures=[ " + withDerivedFeatures
+          + " ], withInternalFeatures=[ " + withInternalFeatures
           + " ], withRaw=[ " + withRaw + " ]";
 
       SzEntityIdentifier fromIdentifer
@@ -674,7 +674,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                            forceMinimal,
                            featureMode,
                            withFeatureStats,
-                           withDerivedFeatures,
+                           withInternalFeatures,
                            withRaw);
 
       String uriText = this.formatServerUri(sb.toString());
@@ -701,7 +701,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           forceMinimal,
           featureMode,
           (withFeatureStats == null ? false : withFeatureStats),
-          (withDerivedFeatures == null ? false : withDerivedFeatures),
+          (withInternalFeatures == null ? false : withInternalFeatures),
           withRaw,
           expectedPathLength,
           expectedPath,
@@ -722,7 +722,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                     Boolean                 forceMinimal,
                                     SzFeatureMode featureMode,
                                     Boolean                 withFeatureStats,
-                                    Boolean                 withDerivedFeatures,
+                                    Boolean                 withInternalFeatures,
                                     Boolean                 withRaw,
                                     Integer                 expectedPathLength,
                                     List<SzRecordId>        expectedPath)
@@ -738,7 +738,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
-          + " ], withDerivedFeatures=[ " + withDerivedFeatures
+          + " ], withInternalFeatures=[ " + withInternalFeatures
           + " ], withRaw=[ " + withRaw + " ]";
 
       SzEntityIdentifier fromIdentifer
@@ -767,7 +767,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                            forceMinimal,
                            featureMode,
                            withFeatureStats,
-                           withDerivedFeatures,
+                           withInternalFeatures,
                            withRaw);
 
       String uriText = this.formatServerUri(sb.toString());
@@ -786,7 +786,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           (forceMinimal == null ? false : forceMinimal),
           (featureMode == null ? WITH_DUPLICATES : featureMode),
           (withFeatureStats == null ? false : withFeatureStats),
-          (withDerivedFeatures == null ? false : withDerivedFeatures),
+          (withInternalFeatures == null ? false : withInternalFeatures),
           (withRaw == null ? false : withRaw),
           uriInfo);
 
@@ -808,7 +808,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           forceMinimal,
           featureMode,
           (withFeatureStats == null ? false : withFeatureStats),
-          (withDerivedFeatures == null ? false : withDerivedFeatures),
+          (withInternalFeatures == null ? false : withInternalFeatures),
           withRaw,
           expectedPathLength,
           expectedPath,
@@ -830,7 +830,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                 forceMinimal,
       SzFeatureMode featureMode,
       Boolean                 withFeatureStats,
-      Boolean                 withDerivedFeatures,
+      Boolean                 withInternalFeatures,
       Boolean                 withRaw,
       Integer                 expectedPathLength,
       List<SzRecordId>        expectedPath)
@@ -846,7 +846,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
-          + " ], withDerivedFeatures=[ " + withDerivedFeatures
+          + " ], withInternalFeatures=[ " + withInternalFeatures
           + " ], withRaw=[ " + withRaw + " ]";
 
       SzEntityIdentifier fromIdentifer
@@ -875,7 +875,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                            forceMinimal,
                            featureMode,
                            withFeatureStats,
-                           withDerivedFeatures,
+                           withInternalFeatures,
                            withRaw);
 
       String uriText = this.formatServerUri(sb.toString());
@@ -902,7 +902,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           forceMinimal,
           featureMode,
           (withFeatureStats == null ? false : withFeatureStats),
-          (withDerivedFeatures == null ? false : withDerivedFeatures),
+          (withInternalFeatures == null ? false : withInternalFeatures),
           withRaw,
           expectedPathLength,
           expectedPath,
@@ -926,7 +926,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                             forceMinimal,
       SzFeatureMode featureMode,
       boolean                             withFeatureStats,
-      boolean                             withDerivedFeatures,
+      boolean                             withInternalFeatures,
       Boolean                             withRaw,
       Integer                             expectedPathLength,
       List<SzRecordId>                    expectedPath,
@@ -1044,7 +1044,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                      forceMinimal,
                      featureMode,
                      withFeatureStats,
-                     withDerivedFeatures,
+                     withInternalFeatures,
                      null,
                      null,
                      false,
@@ -1227,7 +1227,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                      null,  // forceMinimal (5)
                      null,  // featureMode (6)
                      null,  // withFeatureStats (7)
-                     null,  // withDerivedFeatures (8)
+                     null,  // withInternalFeatures (8)
                      null,  // withRaw (9)
                      expectedPathCount,
                      expectedPaths,
@@ -1286,7 +1286,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
         booleanVariantList,   // forceMinimal
         featureModes,         // featureMode
         booleanVariantList,   // withFeatureStats
-        booleanVariantList,   // withDerivedFeatures
+        booleanVariantList,   // withInternalFeatures
         booleanVariantList);  // withRaw
 
     int count = Math.max(baseArgs.size(), optionCombos.size()) * 2;
@@ -1322,7 +1322,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean               forceMinimal,
       SzFeatureMode featureMode,
       Boolean               withFeatureStats,
-      Boolean               withDerivedFeatures,
+      Boolean               withInternalFeatures,
       Boolean               withRaw)
   {
     try {
@@ -1356,8 +1356,8 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       if (withFeatureStats != null) {
         sb.append("&withFeatureStats=").append(withFeatureStats);
       }
-      if (withDerivedFeatures != null) {
-        sb.append("&withDerivedFeatures=").append(withDerivedFeatures);
+      if (withInternalFeatures != null) {
+        sb.append("&withInternalFeatures=").append(withInternalFeatures);
       }
       if (withRaw != null) {
         sb.append("&withRaw=").append(withRaw);
@@ -1380,7 +1380,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                  forceMinimal,
       SzFeatureMode featureMode,
       Boolean                  withFeatureStats,
-      Boolean                  withDerivedFeatures,
+      Boolean                  withInternalFeatures,
       Boolean                  withRaw,
       Integer                  expectedPathCount,
       List<List<SzRecordId>>   expectedPaths,
@@ -1395,7 +1395,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
         + " ], forceMinimal=[ " + forceMinimal
         + " ], featureMode=[ " + featureMode
         + " ], withFeatureStats=[ " + withFeatureStats
-        + " ], withDerivedFeatures=[ " + withDerivedFeatures
+        + " ], withInternalFeatures=[ " + withInternalFeatures
         + " ], withRaw=[ " + withRaw + " ]";
 
       SzEntityIdentifiers entityParamIds
@@ -1416,7 +1416,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                               forceMinimal,
                               featureMode,
                               withFeatureStats,
-                              withDerivedFeatures,
+                              withInternalFeatures,
                               withRaw);
 
       String uriText = this.formatServerUri(sb.toString());
@@ -1434,7 +1434,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           (forceMinimal == null ? false : forceMinimal),
           (featureMode == null  ? WITH_DUPLICATES : featureMode),
           (withFeatureStats == null ? false : withFeatureStats),
-          (withDerivedFeatures == null ? false : withDerivedFeatures),
+          (withInternalFeatures == null ? false : withInternalFeatures),
           (withRaw == null      ? false : withRaw),
           uriInfo);
 
@@ -1454,7 +1454,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           forceMinimal,
           featureMode,
           (withFeatureStats == null) ? false : withFeatureStats,
-          (withDerivedFeatures == null) ? false : withDerivedFeatures,
+          (withInternalFeatures == null) ? false : withInternalFeatures,
           withRaw,
           expectedPathCount,
           expectedPaths,
@@ -1475,7 +1475,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                  forceMinimal,
       SzFeatureMode            featureMode,
       Boolean                  withFeatureStats,
-      Boolean                  withDerivedFeatures,
+      Boolean                  withInternalFeatures,
       Boolean                  withRaw,
       Integer                  expectedPathCount,
       List<List<SzRecordId>>   expectedPaths,
@@ -1490,7 +1490,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
-          + " ], withDerivedFeatures=[ " + withDerivedFeatures
+          + " ], withInternalFeatures=[ " + withInternalFeatures
           + " ], withRaw=[ " + withRaw + " ]";
 
       SzEntityIdentifiers entityParamIds
@@ -1511,7 +1511,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                               forceMinimal,
                               featureMode,
                               withFeatureStats,
-                              withDerivedFeatures,
+                              withInternalFeatures,
                               withRaw);
 
       String uriText = this.formatServerUri(sb.toString());
@@ -1536,7 +1536,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           forceMinimal,
           featureMode,
           (withFeatureStats == null) ? false : withFeatureStats,
-          (withDerivedFeatures == null) ? false : withDerivedFeatures,
+          (withInternalFeatures == null) ? false : withInternalFeatures,
           withRaw,
           expectedPathCount,
           expectedPaths,
@@ -1557,7 +1557,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                  forceMinimal,
       SzFeatureMode featureMode,
       Boolean                  withFeatureStats,
-      Boolean                  withDerivedFeatures,
+      Boolean                  withInternalFeatures,
       Boolean                  withRaw,
       Integer                  expectedPathCount,
       List<List<SzRecordId>>   expectedPaths,
@@ -1572,7 +1572,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
-          + " ], withDerivedFeatures=[ " + withDerivedFeatures
+          + " ], withInternalFeatures=[ " + withInternalFeatures
           + " ], withRaw=[ " + withRaw + " ]";
 
       SzEntityIdentifiers entityParamIds
@@ -1593,7 +1593,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                               forceMinimal,
                               featureMode,
                               withFeatureStats,
-                              withDerivedFeatures,
+                              withInternalFeatures,
                               withRaw);
 
       String uriText = this.formatServerUri(sb.toString());
@@ -1611,7 +1611,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           (forceMinimal == null ? false : forceMinimal),
           (featureMode == null  ? WITH_DUPLICATES : featureMode),
           (withFeatureStats == null ? false : withFeatureStats),
-          (withDerivedFeatures == null ? false : withDerivedFeatures),
+          (withInternalFeatures == null ? false : withInternalFeatures),
           (withRaw == null      ? false : withRaw),
           uriInfo);
 
@@ -1631,7 +1631,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           forceMinimal,
           featureMode,
           (withFeatureStats == null) ? false : withFeatureStats,
-          (withDerivedFeatures == null) ? false : withDerivedFeatures,
+          (withInternalFeatures == null) ? false : withInternalFeatures,
           withRaw,
           expectedPathCount,
           expectedPaths,
@@ -1652,7 +1652,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                  forceMinimal,
       SzFeatureMode            featureMode,
       Boolean                  withFeatureStats,
-      Boolean                  withDerivedFeatures,
+      Boolean                  withInternalFeatures,
       Boolean                  withRaw,
       Integer                  expectedPathCount,
       List<List<SzRecordId>>   expectedPaths,
@@ -1667,7 +1667,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
-          + " ], withDerivedFeatures=[ " + withDerivedFeatures
+          + " ], withInternalFeatures=[ " + withInternalFeatures
           + " ], withRaw=[ " + withRaw + " ]";
 
       SzEntityIdentifiers entityParamIds
@@ -1688,7 +1688,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                               forceMinimal,
                               featureMode,
                               withFeatureStats,
-                              withDerivedFeatures,
+                              withInternalFeatures,
                               withRaw);
 
       String uriText = this.formatServerUri(sb.toString());
@@ -1713,7 +1713,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           forceMinimal,
           featureMode,
           (withFeatureStats == null ? false : withFeatureStats),
-          (withDerivedFeatures == null ? false : withDerivedFeatures),
+          (withInternalFeatures == null ? false : withInternalFeatures),
           withRaw,
           expectedPathCount,
           expectedPaths,
@@ -1736,7 +1736,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                             forceMinimal,
       SzFeatureMode                       featureMode,
       boolean                             withFeatureStats,
-      boolean                             withDerivedFeatures,
+      boolean                             withInternalFeatures,
       Boolean                             withRaw,
       Integer                             expectedPathCount,
       List<List<SzRecordId>>              expectedPaths,
@@ -1937,7 +1937,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                      forceMinimal,
                      featureMode,
                      withFeatureStats,
-                     withDerivedFeatures,
+                     withInternalFeatures,
                      null,
                      null,
                      false,

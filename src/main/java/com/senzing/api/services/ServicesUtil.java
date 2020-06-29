@@ -557,7 +557,7 @@ public class ServicesUtil {
    *
    * @param withFeatureStats Whether or not feature stats should be included.
    *
-   * @param withDerivedFeatures Whether or not to include derived features.
+   * @param withInternalFeatures Whether or not to include internal features.
    *
    * @param withRelationships Whether or not to include relationships.
    *
@@ -566,7 +566,7 @@ public class ServicesUtil {
   static int getFlags(boolean             forceMinimal,
                       SzFeatureMode       featureMode,
                       boolean             withFeatureStats,
-                      boolean             withDerivedFeatures,
+                      boolean             withInternalFeatures,
                       boolean             withRelationships)
   {
     int flags = G2_ENTITY_INCLUDE_RECORD_DATA
@@ -601,8 +601,8 @@ public class ServicesUtil {
         flags |= G2_ENTITY_OPTION_INCLUDE_FEATURE_STATS;
       }
 
-      // check if derived features are requested
-      if (withDerivedFeatures) {
+      // check if internal features are requested
+      if (withInternalFeatures) {
         flags |= G2_ENTITY_OPTION_INCLUDE_INTERNAL_FEATURES;
       }
     }
