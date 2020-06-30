@@ -33,10 +33,11 @@ public class SzWhyPerspective {
   private Long entityId;
 
   /**
-   * The {@link Set} of {@link SzRecordId} instances identifying the effectively
-   * identical records that are being compared against the other records.
+   * The {@link Set} of {@link SzFocusRecordId} instances identifying the
+   * effectively identical records that are being compared against the other
+   * records.
    */
-  private Set<SzRecordId> focusRecords;
+  private Set<SzFocusRecordId> focusRecords;
 
   /**
    * Default constructor.
@@ -90,34 +91,35 @@ public class SzWhyPerspective {
   }
 
   /**
-   * Gets the <b>unmodifiable</b> {@link Set} of {@link SzRecordId} instances
-   * identifying the focus records for this perspective.
+   * Gets the <b>unmodifiable</b> {@link Set} of {@link SzFocusRecordId}
+   * instances identifying the focus records for this perspective.
    *
-   * @return The <b>unmodifiable</b> {@link Set} of {@link SzRecordId}
+   * @return The <b>unmodifiable</b> {@link Set} of {@link SzFocusRecordId}
    *         instances identifying the focus records for this perspective.
    */
   @JsonInclude(NON_EMPTY)
-  public Set<SzRecordId> getFocusRecords() {
+  public Set<SzFocusRecordId> getFocusRecords() {
     return Collections.unmodifiableSet(this.focusRecords);
   }
 
   /**
-   * Adds the specified {@link SzRecordId} to the {@link Set} of focus records.
+   * Adds the specified {@link SzFocusRecordId} to the {@link Set} of focus
+   * records.
    *
-   * @param focusRecord The {@link SzRecordId} to add to the focus records.
+   * @param focusRecord The {@link SzFocusRecordId} to add to the focus records.
    */
-  public void addFocusRecord(SzRecordId focusRecord) {
+  public void addFocusRecord(SzFocusRecordId focusRecord) {
     this.focusRecords.add(focusRecord);
   }
 
   /**
-   * Sets the {@link Set} of {@link SzRecordId} instances identifying the
+   * Sets the {@link Set} of {@link SzFocusRecordId} instances identifying the
    * focus records for this perspective.
    *
-   * @param focusRecords The {@link Set} of {@link SzRecordId} instances
+   * @param focusRecords The {@link Set} of {@link SzFocusRecordId} instances
    *                     identifying the focus records for this perspective.
    */
-  public void setFocusRecords(Collection<SzRecordId> focusRecords) {
+  public void setFocusRecords(Collection<SzFocusRecordId> focusRecords) {
     this.focusRecords.clear();
     if (focusRecords != null) this.focusRecords.addAll(focusRecords);
   }
@@ -155,7 +157,8 @@ public class SzWhyPerspective {
 
     JsonArray jsonArr = jsonObject.getJsonArray("FOCUS_RECORDS" + suffix);
 
-    Collection<SzRecordId> focusRecords = SzRecordId.parseRecordIdList(jsonArr);
+    Collection<SzFocusRecordId> focusRecords
+        = SzFocusRecordId.parseFocusRecordIdList(jsonArr);
 
     SzWhyPerspective perspective = new SzWhyPerspective();
 

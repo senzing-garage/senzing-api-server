@@ -2,7 +2,6 @@ package com.senzing.api.services;
 
 import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2ConfigMgr;
-import com.senzing.g2.engine.G2Engine;
 import com.senzing.g2.engine.G2Fallible;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;

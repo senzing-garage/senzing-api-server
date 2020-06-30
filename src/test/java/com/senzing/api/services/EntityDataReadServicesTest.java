@@ -262,7 +262,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   @Test
-  public void getRecordTestViaHttp() {
+  public void getRecordViaHttpTest() {
     this.performTest(() -> {
       final String dataSource = DEF456.getDataSourceCode();
       final String recordId = DEF456.getRecordId();
@@ -331,7 +331,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   @Test
-  public void getRecordWithRawTestViaHttp() {
+  public void getRecordWithRawViaHttpTest() {
     this.performTest(() -> {
       final String dataSource = JKL012.getDataSourceCode();
       final String recordId = JKL012.getRecordId();
@@ -401,7 +401,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   @Test
-  public void getRecordWithoutRawTestViaHttp() {
+  public void getRecordWithoutRawViaHttpTest() {
     this.performTest(() -> {
       final String dataSource = PQR678.getDataSourceCode();
       final String recordId = PQR678.getRecordId();
@@ -513,7 +513,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   @Test
-  public void getRelatedRecordTestViaHttp() {
+  public void getRelatedRecordViaHttpTest() {
     this.performTest(() -> {
       final String dataSource = CDE456.getDataSourceCode();
       final String recordId = CDE456.getRecordId();
@@ -1201,7 +1201,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getEntityParameters")
-  public void getEntityByRecordIdTestViaHttp(
+  public void getEntityByRecordIdViaHttpTest(
       SzRecordId                          keyRecordId,
       Boolean                             withRaw,
       SzRelationshipMode                  withRelated,
@@ -1446,7 +1446,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   @Test
-  public void getNotFoundEntityByBadRecordIdTestViaHttp()
+  public void getNotFoundEntityByBadRecordIdViaHttpTest()
   {
     this.performTest(() -> {
       final String badRecordId = "ABC123DEF456GHI789";
@@ -1468,7 +1468,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   @Test
-  public void getNotFoundEntityByBadDataSourceTestViaHttp()
+  public void getNotFoundEntityByBadDataSourceViaHttpTest()
   {
     this.performTest(() -> {
       final String badDataSource = "FOOBAR";
@@ -1574,7 +1574,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getEntityParameters")
-  public void getEntityByEntityIdTestViaHttp(
+  public void getEntityByEntityIdViaHttpTest(
       SzRecordId                          keyRecordId,
       Boolean                             withRaw,
       SzRelationshipMode                  withRelated,
@@ -1774,7 +1774,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   @Test
-  public void getNotFoundEntityByBadEntityIdTestViaHttp()
+  public void getNotFoundEntityByBadEntityIdViaHttpTest()
   {
     this.performTest(() -> {
       final long badEntityId = Long.MAX_VALUE;
@@ -2015,7 +2015,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("searchParameters")
-  public void searchByJsonAttrsTestViaHttp(
+  public void searchByJsonAttrsViaHttpTest(
       Map<String, Set<String>>  criteria,
       Integer                   expectedCount,
       Boolean                   forceMinimal,
@@ -2292,7 +2292,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("searchParameters")
-  public void searchByParamAttrsTestViaHttp(
+  public void searchByParamAttrsViaHttpTest(
       Map<String, Set<String>>  criteria,
       Integer                   expectedCount,
       Boolean                   forceMinimal,
