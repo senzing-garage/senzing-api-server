@@ -417,7 +417,8 @@ public class ConfigServicesReadTest extends AbstractServiceTest
             = this.configApi.getDataSource(badDataSourceCode, withRaw);
         fail("Expected failure, but got success for bad data source: "
                  + "dataSource=[ " + badDataSourceCode
-                 + " ], withRaw=[ " + withRaw + " ]");
+                 + " ], withRaw=[ " + withRaw + " ], response=[ "
+                 + clientResponse + " ]tail -");
 
       } catch (HttpStatusCodeException expected) {
         long after = System.currentTimeMillis();
