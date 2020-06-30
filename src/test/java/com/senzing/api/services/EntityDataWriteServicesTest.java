@@ -1,12 +1,15 @@
 package com.senzing.api.services;
 
 import com.senzing.api.model.*;
+import com.senzing.gen.api.invoker.ApiClient;
+import com.senzing.gen.api.services.EntityDataApi;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.web.client.HttpStatusCodeException;
 
 import javax.json.*;
 import javax.ws.rs.BadRequestException;
@@ -29,11 +32,15 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
   protected static final String WATCHLIST_FLAG = "WATCHLIST-THREAT";
 
   protected EntityDataServices entityDataServices;
+  protected EntityDataApi entityDataApi;
 
   @BeforeAll public void initializeEnvironment() {
     this.beginTests();
     this.initializeTestEnvironment();
     this.entityDataServices = new EntityDataServices();
+    ApiClient apiClient = new ApiClient();
+    apiClient.setBasePath(this.formatServerUri(""));
+    this.entityDataApi = new EntityDataApi(apiClient);
   }
 
   @BeforeEach public void preTestPurge() {
@@ -155,6 +162,70 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  Collections.emptySet(),
                                  before,
                                  after);
+    });
+  }
+
+  @Test public void postMismatchedDataSourceTest() {
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri(
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      JsonObjectBuilder job = Json.createObjectBuilder();
+      job.add("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
+      job.add("NAME_FIRST", "John");
+      job.add("NAME_LAST", "Doe");
+      job.add("PHONE_NUMBER", "818-555-1313");
+      job.add("ADDR_FULL", "100 Main Street, Los Angeles, CA 90012");
+      JsonObject  jsonObject  = job.build();
+      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+
+      long before = System.currentTimeMillis();
+      try {
+        this.entityDataServices.loadRecord(CUSTOMER_DATA_SOURCE,
+                                           null,
+                                           false,
+                                           false,
+                                           uriInfo,
+                                           jsonText);
+
+        fail("Expected BadRequestException for mismatched DATA_SOURCE");
+
+      } catch (BadRequestException expected) {
+        SzErrorResponse response
+            = (SzErrorResponse) expected.getResponse().getEntity();
+        response.concludeTimers();
+        long after = System.currentTimeMillis();
+        validateBasics(response, 400, POST, uriText, before, after);
+      }
+    });
+  }
+
+  @Test public void postMismatchedDataSourceTestViaHttp() {
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri(
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      Map recordBody = new HashMap();
+      recordBody.put("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
+      recordBody.put("NAME_FIRST", "Jane");
+      recordBody.put("NAME_LAST", "Doe");
+      recordBody.put("PHONE_NUMBER", "818-555-1212");
+      recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
+
+      long before = System.currentTimeMillis();
+      SzErrorResponse response = this.invokeServerViaHttp(
+          POST, uriText, null, recordBody, SzErrorResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      validateBasics(response,
+                     400,
+                     POST,
+                     uriText,
+                     before,
+                     after);
     });
   }
 
@@ -325,6 +396,83 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     });
   }
 
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void postRecordWithInfoViaJavaClientTest(Boolean withInfo,
+                                                  Boolean withRaw)
+  {
+    this.performTest(() -> {
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records",
+          queryParams);
+
+      Map recordBody = new HashMap();
+      recordBody.put("NAME_FIRST", "James");
+      recordBody.put("NAME_LAST", "Moriarty");
+      recordBody.put("PHONE_NUMBER", "702-555-1212");
+      recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
+
+      long before = System.currentTimeMillis();
+      com.senzing.gen.api.model.SzLoadRecordResponse clientResponse
+          = this.entityDataApi.addRecordWithReturnedRecordId(recordBody,
+                                                             WATCHLIST_DATA_SOURCE,
+                                                             null,
+                                                             withInfo,
+                                                             withRaw);
+      long after = System.currentTimeMillis();
+
+      SzLoadRecordResponse response = jsonCopy(clientResponse,
+                                               SzLoadRecordResponse.class);
+
+      validateLoadRecordResponse(response,
+                                 POST,
+                                 uriText,
+                                 WATCHLIST_DATA_SOURCE,
+                                 null,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      uriText = this.formatServerUri(
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records",
+          queryParams);
+
+      recordBody = new HashMap();
+      recordBody.put("NAME_FIRST", "Joe");
+      recordBody.put("NAME_LAST", "Schmoe");
+      recordBody.put("PHONE_NUMBER", "702-555-1212");
+      recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
+
+      before = System.currentTimeMillis();
+      clientResponse = this.entityDataApi.addRecordWithReturnedRecordId(
+          recordBody, CUSTOMER_DATA_SOURCE, null, withInfo, withRaw);
+      after = System.currentTimeMillis();
+
+      response = jsonCopy(clientResponse, SzLoadRecordResponse.class);
+
+      validateLoadRecordResponse(response,
+                                 POST,
+                                 uriText,
+                                 CUSTOMER_DATA_SOURCE,
+                                 null,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 1,
+                                 Set.of(WATCHLIST_FLAG),
+                                 before,
+                                 after);
+    });
+  }
+
   @Test public void putRecordTest() {
     this.performTest(() -> {
       final String recordId = "ABC123";
@@ -467,6 +615,56 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     });
   }
 
+  @Test public void putMismatchedRecordViaJavaClientTest() {
+    this.performTest(() -> {
+      final String recordId = "XYZ456";
+
+      String  uriText = this.formatServerUri(
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/" + recordId);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      Map recordBody = new HashMap();
+      recordBody.put("RECORD_ID", "DEF456");
+      recordBody.put("NAME_FIRST", "Jane");
+      recordBody.put("NAME_LAST", "Doe");
+      recordBody.put("PHONE_NUMBER", "818-555-1212");
+      recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
+
+      long before = System.currentTimeMillis();
+      try {
+        com.senzing.gen.api.model.SzLoadRecordResponse clientResponse
+            = this.entityDataApi.addRecord(recordBody,
+                                           CUSTOMER_DATA_SOURCE,
+                                           recordId,
+                                           null,
+                                           null,
+                                           null);
+
+        fail("Expected failure, but got success for mismatched record: "
+                 + "dataSource=[ " + CUSTOMER_DATA_SOURCE
+                 + " ], urlRecordId=[ " + recordId
+                 + " ], bodyRecordId=[ DEF456 ], response=[ "
+                 + clientResponse + " ]");
+
+      } catch (HttpStatusCodeException expected) {
+        long after = System.currentTimeMillis();
+        com.senzing.gen.api.model.SzErrorResponse clientResponse
+            = jsonParse(expected.getResponseBodyAsString(),
+                        com.senzing.gen.api.model.SzErrorResponse.class);
+
+        SzErrorResponse response = jsonCopy(clientResponse,
+                                            SzErrorResponse.class);
+
+        validateBasics(response,
+                       400,
+                       PUT,
+                       uriText,
+                       before,
+                       after);
+      }
+    });
+  }
+
   @Test public void putMismatchedDataSourceTest() {
     this.performTest(() -> {
       final String recordId = "ABC123";
@@ -533,6 +731,56 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                      uriText,
                      before,
                      after);
+    });
+  }
+
+  @Test public void putMismatchedDataSourceViaJavaClientTest() {
+    this.performTest(() -> {
+      final String recordId = "XYZ456";
+
+      String  uriText = this.formatServerUri(
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/" + recordId);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      Map recordBody = new HashMap();
+      recordBody.put("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
+      recordBody.put("NAME_FIRST", "Jane");
+      recordBody.put("NAME_LAST", "Doe");
+      recordBody.put("PHONE_NUMBER", "818-555-1212");
+      recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
+
+      long before = System.currentTimeMillis();
+      try {
+        com.senzing.gen.api.model.SzLoadRecordResponse clientResponse
+            = this.entityDataApi.addRecord(recordBody,
+                                           CUSTOMER_DATA_SOURCE,
+                                           recordId,
+                                           null,
+                                           null,
+                                           null);
+
+        fail("Expected failure, but got success for mismatched data source: "
+                 + "urlDataSource=[ " + CUSTOMER_DATA_SOURCE
+                 + " ], bodyDataSource=[ " + WATCHLIST_DATA_SOURCE
+                 + " ], response=[ "
+                 + clientResponse + " ]");
+
+      } catch (HttpStatusCodeException expected) {
+        long after = System.currentTimeMillis();
+        com.senzing.gen.api.model.SzErrorResponse clientResponse
+            = jsonParse(expected.getResponseBodyAsString(),
+                        com.senzing.gen.api.model.SzErrorResponse.class);
+
+        SzErrorResponse response = jsonCopy(clientResponse,
+                                            SzErrorResponse.class);
+
+        validateBasics(response,
+                       400,
+                       PUT,
+                       uriText,
+                       before,
+                       after);
+      }
     });
   }
 
@@ -686,6 +934,92 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           PUT, uriText, null, recordBody, SzLoadRecordResponse.class);
       response.concludeTimers();
       after = System.currentTimeMillis();
+
+      validateLoadRecordResponse(response,
+                                 PUT,
+                                 uriText,
+                                 CUSTOMER_DATA_SOURCE,
+                                 recordId2,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 1,
+                                 Set.of(WATCHLIST_FLAG),
+                                 before,
+                                 after);
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void putRecordWithInfoViaJavaClientTest(Boolean withInfo,
+                                                 Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      final String recordId2 = "DEF456";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/"
+              + recordId1, queryParams);
+
+      Map recordBody = new HashMap();
+      recordBody.put("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
+      recordBody.put("RECORD_ID", recordId1);
+      recordBody.put("NAME_FIRST", "James");
+      recordBody.put("NAME_LAST", "Moriarty");
+      recordBody.put("PHONE_NUMBER", "702-555-1212");
+      recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
+
+      long before = System.currentTimeMillis();
+      com.senzing.gen.api.model.SzLoadRecordResponse clientResponse
+          = this.entityDataApi.addRecord(recordBody,
+                                         WATCHLIST_DATA_SOURCE,
+                                         recordId1,
+                                         null,
+                                         withInfo,
+                                         withRaw);
+      long after = System.currentTimeMillis();
+
+      SzLoadRecordResponse response = jsonCopy(clientResponse,
+                                               SzLoadRecordResponse.class);
+
+      validateLoadRecordResponse(response,
+                                 PUT,
+                                 uriText,
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      uriText = this.formatServerUri(
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
+              + recordId2, queryParams);
+
+      recordBody = new HashMap();
+      recordBody.put("NAME_FIRST", "Joe");
+      recordBody.put("NAME_LAST", "Schmoe");
+      recordBody.put("PHONE_NUMBER", "702-555-1212");
+      recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
+
+      before = System.currentTimeMillis();
+      clientResponse = this.entityDataApi.addRecord(recordBody,
+                                                    CUSTOMER_DATA_SOURCE,
+                                                    recordId2,
+                                                    null,
+                                                    withInfo,
+                                                    withRaw);
+      after = System.currentTimeMillis();
+
+      response = jsonCopy(clientResponse, SzLoadRecordResponse.class);
 
       validateLoadRecordResponse(response,
                                  PUT,
@@ -953,6 +1287,147 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           POST, uriText, SzReevaluateResponse.class);
       response.concludeTimers();
       after = System.currentTimeMillis();
+
+      validateReevaluateResponse(response,
+                                 POST,
+                                 uriText,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 CUSTOMER_DATA_SOURCE,
+                                 recordId2,
+                                 1,
+                                 1,
+                                 Set.of(WATCHLIST_FLAG),
+                                 before,
+                                 after);
+
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void reevaluateRecordViaJavaClientTest(Boolean withInfo,
+                                                Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      final String recordId2 = "DEF456";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/"
+              + recordId1, queryParams);
+
+      Map recordBody = new HashMap();
+      recordBody.put("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
+      recordBody.put("RECORD_ID", recordId1);
+      recordBody.put("NAME_FIRST", "James");
+      recordBody.put("NAME_LAST", "Moriarty");
+      recordBody.put("PHONE_NUMBER", "702-555-1212");
+      recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
+
+      long before = System.currentTimeMillis();
+      com.senzing.gen.api.model.SzLoadRecordResponse clientLoadResponse
+          = this.entityDataApi.addRecord(recordBody,
+                                         WATCHLIST_DATA_SOURCE,
+                                         recordId1,
+                                         null,
+                                         withInfo,
+                                         withRaw);
+      long after = System.currentTimeMillis();
+
+      SzLoadRecordResponse loadResponse = jsonCopy(clientLoadResponse,
+                                                   SzLoadRecordResponse.class);
+
+      validateLoadRecordResponse(loadResponse,
+                                 PUT,
+                                 uriText,
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE
+              + "/records/" + recordId1 + "/reevaluate", queryParams);
+
+      before = System.currentTimeMillis();
+      com.senzing.gen.api.model.SzReevaluateResponse clientResponse
+          = this.entityDataApi.reevaluateRecord(WATCHLIST_DATA_SOURCE,
+                                                recordId1,
+                                                withInfo,
+                                                withRaw);
+      after = System.currentTimeMillis();
+
+      SzReevaluateResponse response = jsonCopy(clientResponse,
+                                               SzReevaluateResponse.class);
+
+      validateReevaluateResponse(response,
+                                 POST,
+                                 uriText,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      uriText = this.formatServerUri(
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
+              + recordId2, queryParams);
+
+      recordBody = new HashMap();
+      recordBody.put("NAME_FIRST", "Joe");
+      recordBody.put("NAME_LAST", "Schmoe");
+      recordBody.put("PHONE_NUMBER", "702-555-1212");
+      recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
+
+      before = System.currentTimeMillis();
+      clientLoadResponse = this.entityDataApi.addRecord(recordBody,
+                                                        CUSTOMER_DATA_SOURCE,
+                                                        recordId2,
+                                                        null,
+                                                        withInfo,
+                                                        withRaw);
+      after = System.currentTimeMillis();
+
+      loadResponse = jsonCopy(clientLoadResponse, SzLoadRecordResponse.class);
+
+      validateLoadRecordResponse(loadResponse,
+                                 PUT,
+                                 uriText,
+                                 CUSTOMER_DATA_SOURCE,
+                                 recordId2,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 1,
+                                 Set.of(WATCHLIST_FLAG),
+                                 before,
+                                 after);
+
+      uriText = this.formatServerUri(
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
+              + recordId2 + "/reevaluate", queryParams);
+
+      before = System.currentTimeMillis();
+      clientResponse = this.entityDataApi.reevaluateRecord(CUSTOMER_DATA_SOURCE,
+                                                           recordId2,
+                                                           withInfo,
+                                                           withRaw);
+      after = System.currentTimeMillis();
+
+      response = jsonCopy(clientResponse, SzReevaluateResponse.class);
 
       validateReevaluateResponse(response,
                                  POST,
@@ -1271,4 +1746,150 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
 
     });
   }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void reevaluateEntityViaJavaClientTest(Boolean withInfo,
+                                                Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      final String recordId2 = "DEF456";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/"
+              + recordId1, queryParams);
+
+      Map recordBody = new HashMap();
+      recordBody.put("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
+      recordBody.put("RECORD_ID", recordId1);
+      recordBody.put("NAME_FIRST", "James");
+      recordBody.put("NAME_LAST", "Moriarty");
+      recordBody.put("PHONE_NUMBER", "702-555-1212");
+      recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
+
+      long before = System.currentTimeMillis();
+      com.senzing.gen.api.model.SzLoadRecordResponse clientLoadResponse
+          = this.entityDataApi.addRecord(recordBody,
+                                         WATCHLIST_DATA_SOURCE,
+                                         recordId1,
+                                         null,
+                                         withInfo,
+                                         withRaw);
+      long after = System.currentTimeMillis();
+
+      SzLoadRecordResponse loadResponse =  jsonCopy(clientLoadResponse,
+                                                    SzLoadRecordResponse.class);
+
+      validateLoadRecordResponse(loadResponse,
+                                 PUT,
+                                 uriText,
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      Long entityId1 = this.getEntityIdForRecordId(
+          new SzRecordId(WATCHLIST_DATA_SOURCE, recordId1));
+
+      Map<String, Object> queryParams2 = new LinkedHashMap<>();
+      queryParams2.put("entityId", entityId1);
+      queryParams2.putAll(queryParams);
+      uriText = this.formatServerUri("reevaluate-entity", queryParams2);
+
+      before = System.currentTimeMillis();
+      com.senzing.gen.api.model.SzReevaluateResponse clientResponse
+          = this.entityDataApi.reevaluateEntity(entityId1, withInfo, withRaw);
+      after = System.currentTimeMillis();
+
+      SzReevaluateResponse response = jsonCopy(clientResponse,
+                                               SzReevaluateResponse.class);
+
+      validateReevaluateResponse(response,
+                                 POST,
+                                 uriText,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      uriText = this.formatServerUri(
+          "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
+              + recordId2, queryParams);
+
+      recordBody = new HashMap();
+      recordBody.put("NAME_FIRST", "Joe");
+      recordBody.put("NAME_LAST", "Schmoe");
+      recordBody.put("PHONE_NUMBER", "702-555-1212");
+      recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
+
+      before = System.currentTimeMillis();
+      clientLoadResponse = this.entityDataApi.addRecord(recordBody,
+                                                        CUSTOMER_DATA_SOURCE,
+                                                        recordId2,
+                                                        null,
+                                                        withInfo,
+                                                        withRaw);
+      after = System.currentTimeMillis();
+
+      loadResponse = jsonCopy(clientLoadResponse, SzLoadRecordResponse.class);
+
+      validateLoadRecordResponse(loadResponse,
+                                 PUT,
+                                 uriText,
+                                 CUSTOMER_DATA_SOURCE,
+                                 recordId2,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 1,
+                                 Set.of(WATCHLIST_FLAG),
+                                 before,
+                                 after);
+
+      Long entityId2 = this.getEntityIdForRecordId(
+          new SzRecordId(CUSTOMER_DATA_SOURCE, recordId2));
+
+      queryParams2.clear();
+      queryParams2.put("entityId", entityId2);
+      queryParams2.putAll(queryParams);
+      uriText = this.formatServerUri("reevaluate-entity", queryParams2);
+
+      before = System.currentTimeMillis();
+      clientResponse = this.entityDataApi.reevaluateEntity(entityId2,
+                                                           withInfo,
+                                                           withRaw);
+      after = System.currentTimeMillis();
+
+      response = jsonCopy(clientResponse, SzReevaluateResponse.class);
+
+      validateReevaluateResponse(response,
+                                 POST,
+                                 uriText,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 CUSTOMER_DATA_SOURCE,
+                                 recordId2,
+                                 1,
+                                 1,
+                                 Set.of(WATCHLIST_FLAG),
+                                 before,
+                                 after);
+
+    });
+  }
+
 }
