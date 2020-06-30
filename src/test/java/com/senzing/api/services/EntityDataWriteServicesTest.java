@@ -132,7 +132,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     });
   }
 
-  @Test public void postRecordTestViaHttp() {
+  @Test public void postRecordViaHttpTest() {
     this.performTest(() -> {
       String  uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records");
@@ -201,7 +201,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     });
   }
 
-  @Test public void postMismatchedDataSourceTestViaHttp() {
+  @Test public void postMismatchedDataSourceViaHttpTest() {
     this.performTest(() -> {
       String  uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records");
@@ -328,7 +328,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
-  public void postRecordWithInfoTestViaHttp(Boolean withInfo,
+  public void postRecordWithInfoViaHttpTest(Boolean withInfo,
                                             Boolean withRaw)
   {
     this.performTest(() -> {
@@ -510,7 +510,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     });
   }
 
-  @Test public void putRecordTestViaHttp() {
+  @Test public void putRecordViaHttpTest() {
     this.performTest(() -> {
       final String recordId = "XYZ456";
 
@@ -585,7 +585,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     });
   }
 
-  @Test public void putMismatchedRecordTestViaHttp() {
+  @Test public void putMismatchedRecordViaHttpTest() {
     this.performTest(() -> {
       final String recordId = "XYZ456";
 
@@ -704,7 +704,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     });
   }
 
-  @Test public void putMismatchedDataSourceTestViaHttp() {
+  @Test public void putMismatchedDataSourceViaHttpTest() {
     this.performTest(() -> {
       final String recordId = "XYZ456";
 
@@ -878,7 +878,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
-  public void putRecordWithInfoTestViaHttp(Boolean withInfo,
+  public void putRecordWithInfoViaHttpTest(Boolean withInfo,
                                            Boolean withRaw)
   {
     this.performTest(() -> {
@@ -1186,7 +1186,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
-  public void reevaluateRecordTestViaHttp(Boolean withInfo, Boolean withRaw)
+  public void reevaluateRecordViaHttpTest(Boolean withInfo, Boolean withRaw)
   {
     this.performTest(() -> {
       final String recordId1 = "ABC123";
@@ -1623,7 +1623,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
-  public void reevaluateEntityTestViaHttp(Boolean withInfo, Boolean withRaw)
+  public void reevaluateEntityViaHttpTest(Boolean withInfo, Boolean withRaw)
   {
     this.performTest(() -> {
       final String recordId1 = "ABC123";

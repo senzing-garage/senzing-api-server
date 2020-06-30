@@ -618,7 +618,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getEntityPathParameters")
-  public void getPathByRecordIdTestViaHttp(
+  public void getPathByRecordIdViaHttpTest(
       SzRecordId              fromRecordId,
       SzRecordId              toRecordId,
       Integer                 maxDegrees,
@@ -819,7 +819,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getEntityPathParameters")
-  public void getPathByEntityIdTestViaHttp(
+  public void getPathByEntityIdViaHttpTest(
       SzRecordId              fromRecordId,
       SzRecordId              toRecordId,
       Integer                 maxDegrees,
@@ -1466,7 +1466,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getEntityNetworkParameters")
-  public void getNetworkByRecordIdTestViaHttp(
+  public void getNetworkByRecordIdViaHttpTest(
       Collection<SzRecordId>   entityParam,
       Collection<SzRecordId>   entityList,
       Integer                  maxDegrees,
@@ -1643,7 +1643,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getEntityNetworkParameters")
-  public void getNetworkByEntityIdTestViaHttp(
+  public void getNetworkByEntityIdViaHttpTest(
       Collection<SzRecordId>   entityParam,
       Collection<SzRecordId>   entityList,
       Integer                  maxDegrees,

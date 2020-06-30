@@ -1,6 +1,8 @@
 package com.senzing.api.services;
 
 import com.senzing.api.model.*;
+import com.senzing.gen.api.invoker.ApiClient;
+import com.senzing.gen.api.services.EntityDataApi;
 import com.senzing.repomgr.RepositoryManager;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -82,6 +84,7 @@ public class WhyServicesTest extends AbstractServiceTest {
   }
   private WhyServices whyServices;
   private EntityDataServices entityDataServices;
+  private EntityDataApi entityDataApi;
 
   @BeforeAll
   public void initializeEnvironment() {
@@ -89,6 +92,9 @@ public class WhyServicesTest extends AbstractServiceTest {
     this.initializeTestEnvironment();
     this.whyServices = new WhyServices();
     this.entityDataServices = new EntityDataServices();
+    ApiClient apiClient = new ApiClient();
+    apiClient.setBasePath(this.formatServerUri(""));
+    this.entityDataApi = new EntityDataApi(apiClient);
   }
 
   /**
@@ -304,12 +310,8 @@ public class WhyServicesTest extends AbstractServiceTest {
       Boolean               withRaw)
   {
     String prefix = "?";
-    if (forceMinimal != null) {
-      sb.append(prefix).append("forceMinimal=").append(forceMinimal);
-      prefix = "&";
-    }
-    if (featureMode != null) {
-      sb.append(prefix).append("featureMode=").append(featureMode);
+    if (withRelationships != null) {
+      sb.append(prefix).append("withRelationships=").append(withRelationships);
       prefix = "&";
     }
     if (withFeatureStats != null) {
@@ -321,8 +323,12 @@ public class WhyServicesTest extends AbstractServiceTest {
           .append(withInternalFeatures);
       prefix = "&";
     }
-    if (withRelationships != null) {
-      sb.append(prefix).append("withRelationships=").append(withRelationships);
+    if (featureMode != null) {
+      sb.append(prefix).append("featureMode=").append(featureMode);
+      prefix = "&";
+    }
+    if (forceMinimal != null) {
+      sb.append(prefix).append("forceMinimal=").append(forceMinimal);
       prefix = "&";
     }
     if (withRaw != null) {
@@ -358,17 +364,17 @@ public class WhyServicesTest extends AbstractServiceTest {
       if (withRelationships != null) {
         sb.append("&withRelationships=").append(withRelationships);
       }
-      if (forceMinimal != null) {
-        sb.append("&forceMinimal=").append(forceMinimal);
-      }
-      if (featureMode != null) {
-        sb.append("&featureMode=").append(featureMode);
-      }
       if (withFeatureStats != null) {
         sb.append("&withFeatureStats=").append(withFeatureStats);
       }
       if (withInternalFeatures != null) {
         sb.append("&withInternalFeatures=").append(withInternalFeatures);
+      }
+      if (featureMode != null) {
+        sb.append("&featureMode=").append(featureMode);
+      }
+      if (forceMinimal != null) {
+        sb.append("&forceMinimal=").append(forceMinimal);
       }
       if (withRaw != null) {
         sb.append("&withRaw=").append(withRaw);
@@ -451,7 +457,7 @@ public class WhyServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getWhyEntityParameters")
-  public void whyEntityByRecordIdTestViaHttp(
+  public void whyEntityByRecordIdViaHttpTest(
       SzRecordId          recordId,
       Boolean             forceMinimal,
       SzFeatureMode featureMode,
@@ -489,6 +495,81 @@ public class WhyServicesTest extends AbstractServiceTest {
           GET, uriText, SzWhyEntityResponse.class);
       response.concludeTimers();
       long after = System.currentTimeMillis();
+
+      this.validateWhyEntityResponse(
+          testInfo,
+          response,
+          GET,
+          uriText,
+          recordId,
+          null,
+          (forceMinimal == null ? false : forceMinimal),
+          featureMode,
+          (withFeatureStats == null ? true : withFeatureStats),
+          (withInternalFeatures == null ? true : withInternalFeatures),
+          (withRelationships == null ? false : withRelationships),
+          withRaw,
+          before,
+          after);
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("getWhyEntityParameters")
+  public void whyEntityByRecordIdViaJavaClientTest(
+      SzRecordId          recordId,
+      Boolean             forceMinimal,
+      SzFeatureMode       featureMode,
+      Boolean             withFeatureStats,
+      Boolean             withInternalFeatures,
+      Boolean             withRelationships,
+      Boolean             withRaw)
+  {
+    this.performTest(() -> {
+      String testInfo = "recordId=[ " + recordId
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withFeatureStats=[ " + withFeatureStats
+          + " ], withInternalFeatures=[ " + withInternalFeatures
+          + " ], withRelationships=[ " + withRelationships
+          + " ], withRaw=[ " + withRaw + " ]";
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("data-sources/").append(urlEncode(recordId.getDataSourceCode()))
+          .append("/records/").append(urlEncode(recordId.getRecordId()))
+          .append("/entity/why");
+
+      buildWhyEntityQueryString(sb,
+                                forceMinimal,
+                                featureMode,
+                                withFeatureStats,
+                                withInternalFeatures,
+                                withRelationships,
+                                withRaw);
+
+      String uriText = this.formatServerUri(sb.toString());
+
+      com.senzing.gen.api.model.SzFeatureMode clientFeatureMode
+          = (featureMode == null)
+          ? null
+          : com.senzing.gen.api.model.SzFeatureMode.valueOf(
+          featureMode.toString());
+
+      long before = System.currentTimeMillis();
+      com.senzing.gen.api.model.SzWhyEntityResponse clientResponse
+          = this.entityDataApi.whyEntityByRecordID(
+          recordId.getDataSourceCode(),
+          recordId.getRecordId(),
+          withRelationships,
+          withFeatureStats,
+          withInternalFeatures,
+          clientFeatureMode,
+          forceMinimal,
+          withRaw);
+      long after = System.currentTimeMillis();
+
+      SzWhyEntityResponse response = jsonCopy(clientResponse,
+                                              SzWhyEntityResponse.class);
 
       this.validateWhyEntityResponse(
           testInfo,
@@ -580,7 +661,7 @@ public class WhyServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getWhyEntityParameters")
-  public void whyEntityByEntityIdTestViaHttp(
+  public void whyEntityByEntityIdViaHttpTest(
       SzRecordId          recordId,
       Boolean             forceMinimal,
       SzFeatureMode featureMode,
@@ -638,6 +719,81 @@ public class WhyServicesTest extends AbstractServiceTest {
     });
   }
 
+  @ParameterizedTest
+  @MethodSource("getWhyEntityParameters")
+  public void whyEntityByEntityIdTestViaJavaClient(
+      SzRecordId          recordId,
+      Boolean             forceMinimal,
+      SzFeatureMode       featureMode,
+      Boolean             withFeatureStats,
+      Boolean             withInternalFeatures,
+      Boolean             withRelationships,
+      Boolean             withRaw)
+  {
+    this.performTest(() -> {
+      long entityId = this.getEntityIdForRecordId(recordId);
+
+      String testInfo = "recordId=[ " + recordId
+          + " ], entityId=[ " + entityId
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withFeatureStats=[ " + withFeatureStats
+          + " ], withInternalFeatures=[ " + withInternalFeatures
+          + " ], withRelationships=[ " + withRelationships
+          + " ], withRaw=[ " + withRaw + " ]";
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("entities/").append(entityId).append("/why");
+
+      buildWhyEntityQueryString(sb,
+                                forceMinimal,
+                                featureMode,
+                                withFeatureStats,
+                                withInternalFeatures,
+                                withRelationships,
+                                withRaw);
+
+      String uriText = this.formatServerUri(sb.toString());
+
+      com.senzing.gen.api.model.SzFeatureMode clientFeatureMode
+          = (featureMode == null)
+          ? null
+          : com.senzing.gen.api.model.SzFeatureMode.valueOf(
+          featureMode.toString());
+
+      long before = System.currentTimeMillis();
+      com.senzing.gen.api.model.SzWhyEntityResponse clientResponse
+          = this.entityDataApi.whyEntityByEntityID(
+              entityId,
+              withRelationships,
+              withFeatureStats,
+              withInternalFeatures,
+              clientFeatureMode,
+              forceMinimal,
+              withRaw);
+      long after = System.currentTimeMillis();
+
+      SzWhyEntityResponse response = jsonCopy(clientResponse,
+                                              SzWhyEntityResponse.class);
+
+      this.validateWhyEntityResponse(
+          testInfo,
+          response,
+          GET,
+          uriText,
+          recordId,
+          null,
+          (forceMinimal == null ? false : forceMinimal),
+          featureMode,
+          (withFeatureStats == null ? true : withFeatureStats),
+          (withInternalFeatures == null ? true : withInternalFeatures),
+          (withRelationships == null ? false : withRelationships),
+          withRaw,
+          before,
+          after);
+    });
+  }
+
   public void validateWhyEntityResponse(
       String                              testInfo,
       SzWhyEntityResponse                 response,
@@ -670,7 +826,7 @@ public class WhyServicesTest extends AbstractServiceTest {
     assertNotNull(whyResults, "Why results list is null: " + testInfo);
     assertNotNull(entities, "Entities list is null: " + testInfo);
 
-    Set<SzRecordId> perspectiveIds = (recordId == null) ? null
+    Set<SzFocusRecordId> perspectiveIds = (recordId == null) ? null
         : new LinkedHashSet<>();
 
     for (SzWhyEntityResult result : whyResults) {
@@ -680,14 +836,18 @@ public class WhyServicesTest extends AbstractServiceTest {
                          + testInfo);
       }
       if (recordId != null) {
-        for (SzRecordId focusId : result.getPerspective().getFocusRecords()) {
+        for (SzFocusRecordId focusId : result.getPerspective().getFocusRecords())
+        {
           perspectiveIds.add(focusId);
         }
       }
     }
 
+    SzFocusRecordId focusRecordId = new SzFocusRecordId(
+        recordId.getDataSourceCode(), recordId.getRecordId());
+
     if (recordId != null) {
-      assertTrue(perspectiveIds.contains(recordId),
+      assertTrue(perspectiveIds.contains(focusRecordId),
                  "No perspective from requested record ID (" + recordId
                      + "): " + testInfo);
     }
@@ -822,7 +982,7 @@ public class WhyServicesTest extends AbstractServiceTest {
   public void whyRecordsTest(SzRecordId         recordId1,
                              SzRecordId         recordId2,
                              Boolean            forceMinimal,
-                             SzFeatureMode featureMode,
+                             SzFeatureMode      featureMode,
                              Boolean            withFeatureStats,
                              Boolean            withInternalFeatures,
                              Boolean            withRelationships,
@@ -892,11 +1052,11 @@ public class WhyServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getWhyRecordsParameters")
-  public void whyRecordsTestViaHttp(
+  public void whyRecordsViaHttpTest(
       SzRecordId          recordId1,
       SzRecordId          recordId2,
       Boolean             forceMinimal,
-      SzFeatureMode featureMode,
+      SzFeatureMode       featureMode,
       Boolean             withFeatureStats,
       Boolean             withInternalFeatures,
       Boolean             withRelationships,
@@ -951,6 +1111,84 @@ public class WhyServicesTest extends AbstractServiceTest {
     });
   }
 
+  @ParameterizedTest
+  @MethodSource("getWhyRecordsParameters")
+  public void whyRecordsTestViaJavaClient(
+      SzRecordId          recordId1,
+      SzRecordId          recordId2,
+      Boolean             forceMinimal,
+      SzFeatureMode       featureMode,
+      Boolean             withFeatureStats,
+      Boolean             withInternalFeatures,
+      Boolean             withRelationships,
+      Boolean             withRaw)
+  {
+    this.performTest(() -> {
+      String testInfo = "recordId1=[ " + recordId1
+          + " ], recordId2=[ " + recordId2
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withFeatureStats=[ " + withFeatureStats
+          + " ], withInternalFeatures=[ " + withInternalFeatures
+          + " ], withRelationships=[ " + withRelationships
+          + " ], withRaw=[ " + withRaw + " ]";
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("why/records");
+
+      buildWhyRecordsQueryString(sb,
+                                 recordId1,
+                                 recordId2,
+                                 forceMinimal,
+                                 featureMode,
+                                 withFeatureStats,
+                                 withInternalFeatures,
+                                 withRelationships,
+                                 withRaw);
+
+      String uriText = this.formatServerUri(sb.toString());
+
+      com.senzing.gen.api.model.SzFeatureMode clientFeatureMode
+          = (featureMode == null)
+          ? null
+          : com.senzing.gen.api.model.SzFeatureMode.valueOf(
+              featureMode.toString());
+
+      long before = System.currentTimeMillis();
+      com.senzing.gen.api.model.SzWhyRecordsResponse clientResponse
+          = this.entityDataApi.whyRecords(recordId1.getDataSourceCode(),
+                                          recordId1.getRecordId(),
+                                          recordId2.getDataSourceCode(),
+                                          recordId2.getRecordId(),
+                                          withRelationships,
+                                          withFeatureStats,
+                                          withInternalFeatures,
+                                          clientFeatureMode,
+                                          forceMinimal,
+                                          withRaw);
+      long after = System.currentTimeMillis();
+
+      SzWhyRecordsResponse response = jsonCopy(clientResponse,
+                                               SzWhyRecordsResponse.class);
+
+      this.validateWhyRecordsResponse(
+          testInfo,
+          response,
+          GET,
+          uriText,
+          recordId1,
+          recordId2,
+          (forceMinimal == null ? false : forceMinimal),
+          featureMode,
+          (withFeatureStats == null ? true : withFeatureStats),
+          (withInternalFeatures == null ? true : withInternalFeatures),
+          (withRelationships == null ? false : withRelationships),
+          withRaw,
+          before,
+          after);
+    });
+  }
+
   public void validateWhyRecordsResponse(
       String                              testInfo,
       SzWhyRecordsResponse                response,
@@ -959,7 +1197,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       SzRecordId                          recordId1,
       SzRecordId                          recordId2,
       boolean                             forceMinimal,
-      SzFeatureMode featureMode,
+      SzFeatureMode                       featureMode,
       boolean                             withFeatureStats,
       boolean                             withInternalFeatures,
       boolean                             withRelationships,
@@ -986,15 +1224,22 @@ public class WhyServicesTest extends AbstractServiceTest {
 
     Set<SzRecordId> perspectiveIds = new LinkedHashSet<>();
 
-    Set<SzRecordId> recordIds1 = whyResult.getPerspective1().getFocusRecords();
-    Set<SzRecordId> recordIds2 = whyResult.getPerspective2().getFocusRecords();
+    Set<SzFocusRecordId> recordIds1
+        = whyResult.getPerspective1().getFocusRecords();
+    Set<SzFocusRecordId> recordIds2
+        = whyResult.getPerspective2().getFocusRecords();
 
-    assertTrue(recordIds1.contains(recordId1),
+    SzFocusRecordId focusRecord1 = new SzFocusRecordId(
+        recordId1.getDataSourceCode(), recordId1.getRecordId());
+    SzFocusRecordId focusRecord2 = new SzFocusRecordId(
+        recordId2.getDataSourceCode(), recordId2.getRecordId());
+
+    assertTrue(recordIds1.contains(focusRecord1),
                "Perspective 1 focus records (" + recordIds1
                    + ") does not contain first record ID ("
                    + recordId1 + "): " + testInfo);
 
-    assertTrue(recordIds2.contains(recordId2),
+    assertTrue(recordIds2.contains(focusRecord2),
                "Perspective 2 focus records (" + recordIds2
                    + ") does not contain first record ID ("
                    + recordId2 + "): " + testInfo);

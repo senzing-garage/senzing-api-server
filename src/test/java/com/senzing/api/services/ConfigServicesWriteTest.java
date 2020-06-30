@@ -1166,7 +1166,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
 
   @ParameterizedTest
   @MethodSource("getPostDataSourcesParameters")
-  public void postDataSourcesTestViaHttp(
+  public void postDataSourcesViaHttpTest(
       int                   querySourceCount,
       DataSourceBodyVariant bodySourceVariant,
       int                   overlapCount,
@@ -1329,7 +1329,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
   // ACTOR are supported
   //@ParameterizedTest
   //@MethodSource("getPostEntityClassesParameters")
-  public void postEntityClassesTestViaHttp(
+  public void postEntityClassesViaHttpTest(
       int                     queryClassCount,
       EntityClassBodyVariant  bodyClassVariant,
       int                     overlapCount,
@@ -1501,7 +1501,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
 
   @ParameterizedTest
   @MethodSource("getPostEntityTypeParameters")
-  public void postEntityTypesTestViaHttp(int                    queryTypeCount,
+  public void postEntityTypesViaHttpTest(int                    queryTypeCount,
                                          EntityTypeBodyVariant  bodyTypeVariant,
                                          int                    overlapCount,
                                          boolean                queryClass,
@@ -1679,7 +1679,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
 
   @ParameterizedTest
   @MethodSource("getPostEntityTypeForClassParameters")
-  public void postEntityTypesForClassTestViaHttp(
+  public void postEntityTypesForClassViaHttpTest(
       int                    queryTypeCount,
       EntityTypeBodyVariant  bodyTypeVariant,
       int                    overlapCount,
@@ -1814,7 +1814,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
   // TODO(bcaceres): Renable this test when entity classes other than ACTOR
   // are supported by the product.
   //@Test
-  public void postEntityTypesForWrongClassTestViaHttp() {
+  public void postEntityTypesForWrongClassViaHttpTest() {
     this.performTest(() -> {
       this.revertToInitialConfig();
 
@@ -1904,7 +1904,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
   // TODO(bcaceres): Renable this test when entity classes other than ACTOR
   // are supported by the product.
   //@Test
-  public void postEntityTypesForInvalidClassTestViaHttp() {
+  public void postEntityTypesForInvalidClassViaHttpTest() {
     this.performTest(() -> {
       this.revertToInitialConfig();
 
