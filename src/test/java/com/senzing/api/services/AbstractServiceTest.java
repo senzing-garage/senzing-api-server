@@ -1214,10 +1214,10 @@ public abstract class AbstractServiceTest {
    * @param httpMethod    The HTTP method to use.
    * @param uri           The relative or absolute URI (optionally including query params)
    * @param responseClass The class of the response.
-   * @param <T>           The response type which must extend {@link SzBasicResponse}
+   * @param <T>           The response type.
    * @return
    */
-  protected <T extends SzBasicResponse> T invokeServerViaHttp(
+  protected <T> T invokeServerViaHttp(
       SzHttpMethod httpMethod,
       String uri,
       Class<T> responseClass) {
@@ -1233,10 +1233,10 @@ public abstract class AbstractServiceTest {
    * @param queryParams   The optional map of query parameters.
    * @param bodyContent   The object to be converted to JSON for body content.
    * @param responseClass The class of the response.
-   * @param <T>           The response type which must extend {@link SzBasicResponse}
+   * @param <T>           The response type.
    * @return
    */
-  protected <T extends SzBasicResponse> T invokeServerViaHttp(
+  protected <T> T invokeServerViaHttp(
       SzHttpMethod httpMethod,
       String uri,
       Map<String, ?> queryParams,
@@ -1244,6 +1244,7 @@ public abstract class AbstractServiceTest {
       Class<T> responseClass)
   {
     ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JodaModule());
     try {
       uri = this.formatServerUri(uri, queryParams);
 
@@ -1326,10 +1327,10 @@ public abstract class AbstractServiceTest {
    * @param contentType   The content type for the body.
    * @param bodyContent   The raw body content data.
    * @param responseClass The class of the response.
-   * @param <T>           The response type which must extend {@link SzBasicResponse}
+   * @param <T>           The response type.
    * @return
    */
-  protected <T extends SzBasicResponse> T invokeServerViaHttp(
+  protected <T> T invokeServerViaHttp(
       SzHttpMethod httpMethod,
       String uri,
       Map<String, ?> queryParams,
@@ -1358,10 +1359,10 @@ public abstract class AbstractServiceTest {
    * @param contentLength The optional content length.
    * @param bodyStream    The raw body content data.
    * @param responseClass The class of the response.
-   * @param <T>           The response type which must extend {@link SzBasicResponse}
+   * @param <T>           The response type.
    * @return
    */
-  protected <T extends SzBasicResponse> T invokeServerViaHttp(
+  protected <T> T invokeServerViaHttp(
       SzHttpMethod httpMethod,
       String uri,
       Map<String, ?> queryParams,
@@ -1371,6 +1372,7 @@ public abstract class AbstractServiceTest {
       Class<T> responseClass)
   {
     ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JodaModule());
     try {
       if (!uri.toLowerCase().startsWith("http://")) {
         uri = this.formatServerUri(uri);

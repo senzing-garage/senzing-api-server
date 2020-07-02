@@ -621,13 +621,55 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     });
   }
 
-  private String formatLoadURL(String               defaultDataSource,
-                               String               defaultEntityType,
-                               String               loadId,
-                               Integer              maxFailures,
-                               Map<String, String>  dataSourceMap,
-                               Map<String, String>  entityTypeMap,
-                               String               progressPeriod)
+  @ParameterizedTest
+  @MethodSource("getAnalyzeBulkRecordsParameters")
+  public void analyzeBulkRecordsViaFormJavaClientTest(
+      String              testInfo,
+      MediaType           mediaType,
+      File                bulkDataFile,
+      SzBulkDataAnalysis  expected)
+  {
+    this.performTest(() -> {
+      String uriText = this.formatServerUri("bulk-data/analyze");
+
+      try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
+        long before = System.currentTimeMillis();
+        com.senzing.gen.api.model.SzBulkDataAnalysisResponse clientResponse
+            = this.invokeServerViaHttp(
+            POST, uriText, null, mediaType.toString(),
+            bulkDataFile.length(), new FileInputStream(bulkDataFile),
+            com.senzing.gen.api.model.SzBulkDataAnalysisResponse.class);
+        long after = System.currentTimeMillis();
+
+        SzBulkDataAnalysisResponse response
+            = jsonCopy(clientResponse, SzBulkDataAnalysisResponse.class);
+
+        validateAnalyzeResponse(testInfo,
+                                response,
+                                POST,
+                                uriText,
+                                mediaType,
+                                bulkDataFile,
+                                expected,
+                                before,
+                                after);
+
+      } catch (Exception e) {
+        System.err.println("********** FAILED TEST: " + testInfo);
+        e.printStackTrace();
+        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  protected String formatLoadURL(String               defaultDataSource,
+                                 String               defaultEntityType,
+                                 String               loadId,
+                                 Integer              maxFailures,
+                                 Map<String, String>  dataSourceMap,
+                                 Map<String, String>  entityTypeMap,
+                                 String               progressPeriod)
   {
     try {
       StringBuilder sb = new StringBuilder();
@@ -905,6 +947,69 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         Map<String,String> allEntityTypeMap = new LinkedHashMap<>();
         allEntityTypeMap.put(null, GENERIC_ENTITY_TYPE);
         if (entityTypeMap != null) allEntityTypeMap.putAll(entityTypeMap);
+
+        validateLoadResponse(testInfo,
+                             response,
+                             POST,
+                             uriText,
+                             COMPLETED,
+                             mediaType,
+                             bulkDataFile,
+                             analysis,
+                             analysis.getRecordCount(),
+                             allDataSourceMap,
+                             allEntityTypeMap,
+                             null,
+                             null,
+                             before,
+                             after);
+
+      } catch (Exception e) {
+        System.err.println("********** FAILED TEST: " + testInfo);
+        e.printStackTrace();
+        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("getLoadBulkRecordsParameters")
+  public void loadBulkRecordsDirectJavaClientTest(
+      String              testInfo,
+      MediaType           mediaType,
+      File                bulkDataFile,
+      SzBulkDataAnalysis  analysis,
+      Map<String,String>  dataSourceMap,
+      Map<String,String>  entityTypeMap)
+  {
+    this.performTest(() -> {
+      this.livePurgeRepository();
+
+      String uriText = this.formatServerUri(formatLoadURL(
+          CONTACTS_DATA_SOURCE, GENERIC_ENTITY_TYPE, null, null,
+          dataSourceMap, entityTypeMap, null));
+
+      try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
+        long before = System.currentTimeMillis();
+        com.senzing.gen.api.model.SzBulkLoadResponse clientResponse
+            = this.invokeServerViaHttp(
+            POST, uriText, null, mediaType.toString(),
+            bulkDataFile.length(), new FileInputStream(bulkDataFile),
+            com.senzing.gen.api.model.SzBulkLoadResponse.class);
+
+        long after = System.currentTimeMillis();
+
+        Map<String,String> allDataSourceMap = new LinkedHashMap<>();
+        allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
+        if (dataSourceMap != null) allDataSourceMap.putAll(dataSourceMap);
+
+        Map<String,String> allEntityTypeMap = new LinkedHashMap<>();
+        allEntityTypeMap.put(null, GENERIC_ENTITY_TYPE);
+        if (entityTypeMap != null) allEntityTypeMap.putAll(entityTypeMap);
+
+        SzBulkLoadResponse response = jsonCopy(clientResponse,
+                                               SzBulkLoadResponse.class);
 
         validateLoadResponse(testInfo,
                              response,
