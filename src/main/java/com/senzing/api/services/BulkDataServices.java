@@ -230,6 +230,9 @@ public class BulkDataServices {
                                   null,
                                   null);
 
+    } catch (ForbiddenException e) {
+      throw e;
+
     } catch (RuntimeException e) {
       throw logOnceAndThrow(e);
 
@@ -277,6 +280,9 @@ public class BulkDataServices {
                                   null,
                                   null,
                                   null);
+
+    } catch (ForbiddenException e) {
+      throw e;
 
     } catch (RuntimeException e) {
       throw logOnceAndThrow(e);
@@ -327,6 +333,9 @@ public class BulkDataServices {
                            progressPeriod,
                            sseEventSink,
                            sse);
+
+    } catch (ForbiddenException e) {
+      throw e;
 
     } catch (RuntimeException e) {
       throw logOnceAndThrow(e);
@@ -379,6 +388,9 @@ public class BulkDataServices {
                            progressPeriod,
                            sseEventSink,
                            sse);
+
+    } catch (ForbiddenException e) {
+      throw e;
 
     } catch (RuntimeException e) {
       throw logOnceAndThrow(e);

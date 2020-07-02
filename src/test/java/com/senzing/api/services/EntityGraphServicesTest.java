@@ -1,6 +1,12 @@
 package com.senzing.api.services;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senzing.api.model.*;
+import com.senzing.gen.api.invoker.ApiClient;
+import com.senzing.gen.api.services.EntityDataApi;
+import com.senzing.gen.api.services.EntityGraphApi;
 import com.senzing.repomgr.RepositoryManager;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -66,6 +72,8 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
   private EntityGraphServices entityGraphServices;
   private EntityDataServices entityDataServices;
+  private EntityGraphApi entityGraphApi;
+  private EntityDataApi entityDataApi;
 
   @BeforeAll
   public void initializeEnvironment() {
@@ -73,6 +81,10 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
     this.initializeTestEnvironment();
     this.entityGraphServices  = new EntityGraphServices();
     this.entityDataServices   = new EntityDataServices();
+    ApiClient apiClient = new ApiClient();
+    apiClient.setBasePath(this.formatServerUri(""));
+    this.entityDataApi = new EntityDataApi(apiClient);
+    this.entityGraphApi = new EntityGraphApi(apiClient);
   }
 
   /**
@@ -419,9 +431,6 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           sb.append("&s=").append(URLEncoder.encode(value, "UTF-8"));
         }
       }
-      if (forceMinimal != null) {
-        sb.append("&forceMinimal=").append(forceMinimal);
-      }
       if (featureMode != null) {
         sb.append("&featureMode=").append(featureMode);
       }
@@ -430,6 +439,9 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       }
       if (withInternalFeatures != null) {
         sb.append("&withInternalFeatures=").append(withInternalFeatures);
+      }
+      if (forceMinimal != null) {
+        sb.append("&forceMinimal=").append(forceMinimal);
       }
       if (withRaw != null) {
         sb.append("&withRaw=").append(withRaw);
@@ -519,7 +531,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                     Boolean                 forbidAvoided,
                                     List<String>            sourcesParam,
                                     Boolean                 forceMinimal,
-                                    SzFeatureMode featureMode,
+                                    SzFeatureMode           featureMode,
                                     Boolean                 withFeatureStats,
                                     Boolean                 withInternalFeatures,
                                     Boolean                 withRaw,
@@ -627,7 +639,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                 forbidAvoided,
       List<String>            sourcesParam,
       Boolean                 forceMinimal,
-      SzFeatureMode featureMode,
+      SzFeatureMode           featureMode,
       Boolean                 withFeatureStats,
       Boolean                 withInternalFeatures,
       Boolean                 withRaw,
@@ -712,6 +724,132 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getEntityPathParameters")
+  public void getPathByRecordIdViaJavaClient(
+      SzRecordId              fromRecordId,
+      SzRecordId              toRecordId,
+      Integer                 maxDegrees,
+      Collection<SzRecordId>  avoidParam,
+      Collection<SzRecordId>  avoidList,
+      Boolean                 forbidAvoided,
+      List<String>            sourcesParam,
+      Boolean                 forceMinimal,
+      SzFeatureMode           featureMode,
+      Boolean                 withFeatureStats,
+      Boolean                 withInternalFeatures,
+      Boolean                 withRaw,
+      Integer                 expectedPathLength,
+      List<SzRecordId>        expectedPath)
+  {
+    this.performTest(() -> {
+      String testInfo = "fromRecord=[ " + fromRecordId
+          + " ], toRecord=[ " + toRecordId
+          + " ], maxDegrees=[ " + maxDegrees
+          + " ], avoidParam=[ " + avoidParam
+          + " ], avoidList=[ " + avoidList
+          + " ], forbidAvoided=[ " + forbidAvoided
+          + " ], sources=[ " + sourcesParam
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withFeatureStats=[ " + withFeatureStats
+          + " ], withInternalFeatures=[ " + withInternalFeatures
+          + " ], withRaw=[ " + withRaw + " ]";
+
+      SzEntityIdentifier fromIdentifer
+          = this.normalizeIdentifier(fromRecordId,false);
+
+      SzEntityIdentifier toIdentifier
+          = this.normalizeIdentifier(toRecordId,false);
+
+      SzEntityIdentifiers avoidParamIds
+          = this.normalizeIdentifiers(avoidParam,false);
+
+      SzEntityIdentifiers avoidListIds
+          = this.normalizeIdentifiers(avoidList,false);
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("entity-paths");
+
+      buildPathQueryString(sb,
+                           fromIdentifer,
+                           toIdentifier,
+                           maxDegrees,
+                           avoidParamIds,
+                           avoidListIds,
+                           forbidAvoided,
+                           sourcesParam,
+                           forceMinimal,
+                           featureMode,
+                           withFeatureStats,
+                           withInternalFeatures,
+                           withRaw);
+
+      String uriText = this.formatServerUri(sb.toString());
+
+      com.senzing.gen.api.model.SzFeatureMode clientFeatureMode
+          = (featureMode == null)
+          ? null
+          : com.senzing.gen.api.model.SzFeatureMode.valueOf(
+          featureMode.toString());
+
+      List<com.senzing.gen.api.model.SzEntityIdentifier> clientAvoidIds
+          = this.toClientIdList(avoidParam, false);
+
+      com.senzing.gen.api.model.SzEntityIdentifiers clientAvoidList
+          = this.toClientIds(avoidList,  false);
+
+      com.senzing.gen.api.model.SzEntityIdentifier clientFrom
+          = this.toClientId(fromRecordId, false);
+
+      com.senzing.gen.api.model.SzEntityIdentifier clientTo
+          = this.toClientId(toRecordId, false);
+
+      long before = System.currentTimeMillis();
+
+      com.senzing.gen.api.model.SzEntityPathResponse clientResponse
+          = this.entityGraphApi.findEntityPath(clientFrom,
+                                               clientTo,
+                                               maxDegrees,
+                                               clientAvoidIds,
+                                               clientAvoidList,
+                                               forbidAvoided,
+                                               sourcesParam,
+                                               clientFeatureMode,
+                                               withFeatureStats,
+                                               withInternalFeatures,
+                                               forceMinimal,
+                                               withRaw);
+      long after = System.currentTimeMillis();
+
+      SzEntityPathResponse response
+          = jsonCopy(clientResponse, SzEntityPathResponse.class);
+
+      this.validateEntityPathResponse(
+          testInfo,
+          response,
+          GET,
+          uriText,
+          fromIdentifer,
+          toIdentifier,
+          (maxDegrees != null ? maxDegrees : DEFAULT_PATH_DEGREES),
+          avoidParamIds,
+          avoidListIds,
+          forbidAvoided,
+          sourcesParam,
+          forceMinimal,
+          featureMode,
+          (withFeatureStats == null ? false : withFeatureStats),
+          (withInternalFeatures == null ? false : withInternalFeatures),
+          withRaw,
+          expectedPathLength,
+          expectedPath,
+          before,
+          after);
+    });
+  }
+
+
+  @ParameterizedTest
+  @MethodSource("getEntityPathParameters")
   public void getPathByEntityIdTest(SzRecordId              fromRecordId,
                                     SzRecordId              toRecordId,
                                     Integer                 maxDegrees,
@@ -720,7 +858,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                     Boolean                 forbidAvoided,
                                     List<String>            sourcesParam,
                                     Boolean                 forceMinimal,
-                                    SzFeatureMode featureMode,
+                                    SzFeatureMode           featureMode,
                                     Boolean                 withFeatureStats,
                                     Boolean                 withInternalFeatures,
                                     Boolean                 withRaw,
@@ -910,6 +1048,133 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           after);
     });
   }
+
+
+  @ParameterizedTest
+  @MethodSource("getEntityPathParameters")
+  public void getPathByEntityIdViaJavaClientTest(
+      SzRecordId              fromRecordId,
+      SzRecordId              toRecordId,
+      Integer                 maxDegrees,
+      Collection<SzRecordId>  avoidParam,
+      Collection<SzRecordId>  avoidList,
+      Boolean                 forbidAvoided,
+      List<String>            sourcesParam,
+      Boolean                 forceMinimal,
+      SzFeatureMode           featureMode,
+      Boolean                 withFeatureStats,
+      Boolean                 withInternalFeatures,
+      Boolean                 withRaw,
+      Integer                 expectedPathLength,
+      List<SzRecordId>        expectedPath)
+  {
+    this.performTest(() -> {
+      String testInfo = "fromRecord=[ " + fromRecordId
+          + " ], toRecord=[ " + toRecordId
+          + " ], maxDegrees=[ " + maxDegrees
+          + " ], avoidParam=[ " + avoidParam
+          + " ], avoidList=[ " + avoidList
+          + " ], forbidAvoided=[ " + forbidAvoided
+          + " ], sources=[ " + sourcesParam
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withFeatureStats=[ " + withFeatureStats
+          + " ], withInternalFeatures=[ " + withInternalFeatures
+          + " ], withRaw=[ " + withRaw + " ]";
+
+      SzEntityIdentifier fromIdentifer
+          = this.normalizeIdentifier(fromRecordId,true);
+
+      SzEntityIdentifier toIdentifier
+          = this.normalizeIdentifier(toRecordId,true);
+
+      SzEntityIdentifiers avoidParamIds
+          = this.normalizeIdentifiers(avoidParam,true);
+
+      SzEntityIdentifiers avoidListIds
+          = this.normalizeIdentifiers(avoidList,true);
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("entity-paths");
+
+      buildPathQueryString(sb,
+                           fromIdentifer,
+                           toIdentifier,
+                           maxDegrees,
+                           avoidParamIds,
+                           avoidListIds,
+                           forbidAvoided,
+                           sourcesParam,
+                           forceMinimal,
+                           featureMode,
+                           withFeatureStats,
+                           withInternalFeatures,
+                           withRaw);
+
+      com.senzing.gen.api.model.SzFeatureMode clientFeatureMode
+          = (featureMode == null)
+          ? null
+          : com.senzing.gen.api.model.SzFeatureMode.valueOf(
+          featureMode.toString());
+
+      String uriText = this.formatServerUri(sb.toString());
+      List<com.senzing.gen.api.model.SzEntityIdentifier> clientAvoidIds
+          = this.toClientIdList(avoidParam, true);
+
+      com.senzing.gen.api.model.SzEntityIdentifiers clientAvoidList
+          = this.toClientIds(avoidList,  true);
+
+      com.senzing.gen.api.model.SzEntityIdentifier clientFrom
+          = this.toClientId(fromRecordId, true);
+
+      com.senzing.gen.api.model.SzEntityIdentifier clientTo
+          = this.toClientId(toRecordId, true);
+
+      long before = System.currentTimeMillis();
+
+      com.senzing.gen.api.model.SzEntityPathResponse clientResponse
+          = this.entityGraphApi.findEntityPath(clientFrom,
+                                               clientTo,
+                                               maxDegrees,
+                                               clientAvoidIds,
+                                               clientAvoidList,
+                                               forbidAvoided,
+                                               sourcesParam,
+                                               clientFeatureMode,
+                                               withFeatureStats,
+                                               withInternalFeatures,
+                                               forceMinimal,
+                                               withRaw);
+      long after = System.currentTimeMillis();
+
+      SzEntityPathResponse response
+          = jsonCopy(clientResponse, SzEntityPathResponse.class);
+
+      this.validateEntityPathResponse(
+          testInfo,
+          response,
+          GET,
+          uriText,
+          fromIdentifer,
+          toIdentifier,
+          (maxDegrees != null ? maxDegrees : DEFAULT_PATH_DEGREES),
+          avoidParamIds,
+          avoidListIds,
+          forbidAvoided,
+          sourcesParam,
+          forceMinimal,
+          featureMode,
+          (withFeatureStats == null ? false : withFeatureStats),
+          (withInternalFeatures == null ? false : withInternalFeatures),
+          withRaw,
+          expectedPathLength,
+          expectedPath,
+          before,
+          after);
+    });
+  }
+
+
 
   public void validateEntityPathResponse(
       String                              testInfo,
@@ -1347,9 +1612,6 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       if (maxEntities != null) {
         sb.append("&maxEntities=").append(maxEntities);
       }
-      if (forceMinimal != null) {
-        sb.append("&forceMinimal=").append(forceMinimal);
-      }
       if (featureMode != null) {
         sb.append("&featureMode=").append(featureMode);
       }
@@ -1358,6 +1620,9 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       }
       if (withInternalFeatures != null) {
         sb.append("&withInternalFeatures=").append(withInternalFeatures);
+      }
+      if (forceMinimal != null) {
+        sb.append("&forceMinimal=").append(forceMinimal);
       }
       if (withRaw != null) {
         sb.append("&withRaw=").append(withRaw);
@@ -1546,6 +1811,288 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
     });
   }
 
+  protected static class ClientRecordId
+      extends com.senzing.gen.api.model.SzEntityIdentifier
+  {
+    private com.senzing.gen.api.model.SzRecordId recordId;
+
+    public ClientRecordId(com.senzing.gen.api.model.SzRecordId recordId)
+    {
+      this.recordId = recordId;
+    }
+
+    public ClientRecordId(SzRecordId recordId) {
+      this.recordId = new com.senzing.gen.api.model.SzRecordId();
+      this.recordId.setId(recordId.getRecordId());
+      this.recordId.setSrc(recordId.getDataSourceCode());
+    }
+
+    @JsonValue
+    public com.senzing.gen.api.model.SzRecordId getValue() {
+      return this.recordId;
+    }
+
+    public String toString() {
+      try {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(this.recordId);
+
+      } catch (JsonProcessingException exception) {
+        throw new RuntimeException(exception);
+      }
+    }
+  }
+
+  protected static class ClientRecordIds
+      extends com.senzing.gen.api.model.SzEntityIdentifiers
+  {
+    private List<com.senzing.gen.api.model.SzRecordId> recordIds;
+
+    public ClientRecordIds(List<com.senzing.gen.api.model.SzRecordId> recordIds)
+    {
+      this.recordIds = recordIds;
+    }
+
+    @JsonValue
+    public List<com.senzing.gen.api.model.SzRecordId> getValue() {
+      return this.recordIds;
+    }
+
+    public String toString() {
+      try {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(this.recordIds);
+
+      } catch (JsonProcessingException exception) {
+        throw new RuntimeException(exception);
+      }
+    }
+  }
+
+  protected static class ClientEntityIds
+      extends com.senzing.gen.api.model.SzEntityIdentifiers
+  {
+    private List<Long> entityIds;
+
+    public ClientEntityIds(List<Long> entityIds) {
+      this.entityIds = entityIds;
+    }
+
+    @JsonValue
+    public List<Long> getValue() {
+      return this.entityIds;
+    }
+
+    public String toString() {
+      try {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(this.entityIds);
+
+      } catch (JsonProcessingException exception) {
+        throw new RuntimeException(exception);
+      }
+    }
+  }
+
+  protected static class ClientEntityId
+      extends com.senzing.gen.api.model.SzEntityIdentifier
+  {
+    private Long entityId;
+
+    public ClientEntityId(Long entityId) {
+      this.entityId = entityId;
+    }
+
+    public ClientEntityId(SzEntityId entityId) {
+      this.entityId = entityId.getValue();
+    }
+
+    @JsonValue
+    public Long getValue() {
+      return this.entityId;
+    }
+
+    public String toString() {
+      try {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(this.entityId);
+
+      } catch (JsonProcessingException exception) {
+        throw new RuntimeException(exception);
+      }
+    }
+  }
+
+  protected com.senzing.gen.api.model.SzEntityIdentifier toClientId(
+      SzRecordId recordId, boolean asEntityId)
+  {
+    if (recordId == null) return null;
+    SzEntityIdentifier id = this.normalizeIdentifier(recordId, asEntityId);
+
+    Class<? extends com.senzing.gen.api.model.SzEntityIdentifier> target;
+
+    if (asEntityId) {
+      SzEntityId entityId = (SzEntityId) id;
+      return new ClientEntityId(entityId);
+    } else {
+      return new ClientRecordId(recordId);
+    }
+  }
+
+  protected com.senzing.gen.api.model.SzEntityIdentifiers toClientIds(
+      Collection<SzRecordId> recordIds, boolean asEntityId)
+  {
+    if (recordIds == null) return null;
+    SzEntityIdentifiers ids = this.normalizeIdentifiers(recordIds, asEntityId);
+
+    if (asEntityId) {
+      List<Long> entityIds = new ArrayList<>(ids.getCount());
+      for (SzEntityIdentifier id: ids.getIdentifiers()) {
+        entityIds.add(((SzEntityId) id).getValue());
+      }
+      return new ClientEntityIds(entityIds);
+    } else {
+      List<com.senzing.gen.api.model.SzRecordId> clientIds
+          = new ArrayList<>(ids.getCount());
+      for (SzEntityIdentifier id: ids.getIdentifiers()) {
+        clientIds.add(((ClientRecordId)
+            this.toClientId((SzRecordId) id, false)).getValue());
+      }
+      return new ClientRecordIds(clientIds);
+    }
+  }
+
+  protected List<com.senzing.gen.api.model.SzEntityIdentifier>
+    toClientIdList(Collection<SzRecordId> recordIds, boolean asEntityId)
+  {
+    if (recordIds == null) return null;
+    SzEntityIdentifiers ids = this.normalizeIdentifiers(recordIds, asEntityId);
+
+    if (asEntityId) {
+      List<com.senzing.gen.api.model.SzEntityIdentifier> entityIds = new ArrayList<>(ids.getCount());
+      for (SzEntityIdentifier id: ids.getIdentifiers()) {
+        entityIds.add(new ClientEntityId(((SzEntityId) id).getValue()));
+      }
+      return entityIds;
+
+    } else {
+      List<com.senzing.gen.api.model.SzEntityIdentifier> clientIds
+          = new ArrayList<>(ids.getCount());
+      for (SzEntityIdentifier id: ids.getIdentifiers()) {
+        ClientRecordId clientId = (ClientRecordId)
+            this.toClientId((SzRecordId) id, false);
+        clientIds.add(clientId);
+      }
+      return clientIds;
+    }
+  }
+
+  @ParameterizedTest
+  @MethodSource("getEntityNetworkParameters")
+  public void getNetworkByRecordIdViaJavaClientTest(
+      Collection<SzRecordId>   entityParam,
+      Collection<SzRecordId>   entityList,
+      Integer                  maxDegrees,
+      Integer                  buildOut,
+      Integer                  maxEntities,
+      Boolean                  forceMinimal,
+      SzFeatureMode            featureMode,
+      Boolean                  withFeatureStats,
+      Boolean                  withInternalFeatures,
+      Boolean                  withRaw,
+      Integer                  expectedPathCount,
+      List<List<SzRecordId>>   expectedPaths,
+      Set<SzRecordId>          expectedEntities)
+  {
+    this.performTest(() -> {
+      String testInfo = "entityParam=[ " + entityParam
+          + " ], entityList=[ " + entityList
+          + " ], maxDegrees=[ " + maxDegrees
+          + " ], buildOut=[ " + buildOut
+          + " ], maxEntities=[ " + maxEntities
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withFeatureStats=[ " + withFeatureStats
+          + " ], withInternalFeatures=[ " + withInternalFeatures
+          + " ], withRaw=[ " + withRaw + " ]";
+
+      SzEntityIdentifiers entityParamIds
+          = this.normalizeIdentifiers(entityParam,false);
+
+      SzEntityIdentifiers entityListIds
+          = this.normalizeIdentifiers(entityList,false);
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("entity-networks");
+
+      buildNetworkQueryString(sb,
+                              entityParamIds,
+                              entityListIds,
+                              maxDegrees,
+                              buildOut,
+                              maxEntities,
+                              forceMinimal,
+                              featureMode,
+                              withFeatureStats,
+                              withInternalFeatures,
+                              withRaw);
+
+      String uriText = this.formatServerUri(sb.toString());
+
+      com.senzing.gen.api.model.SzFeatureMode clientFeatureMode
+          = (featureMode == null)
+          ? null
+          : com.senzing.gen.api.model.SzFeatureMode.valueOf(
+          featureMode.toString());
+
+      List<com.senzing.gen.api.model.SzEntityIdentifier> clientParamIds
+          = this.toClientIdList(entityParam, false);
+
+      com.senzing.gen.api.model.SzEntityIdentifiers clientEntityList
+          = this.toClientIds(entityList, false);
+
+      long before = System.currentTimeMillis();
+
+      com.senzing.gen.api.model.SzEntityNetworkResponse clientResponse
+        = this.entityGraphApi.findEntityNetwork(clientParamIds,
+                                                clientEntityList,
+                                                maxDegrees,
+                                                buildOut,
+                                                maxEntities,
+                                                clientFeatureMode,
+                                                withFeatureStats,
+                                                withInternalFeatures,
+                                                forceMinimal,
+                                                withRaw);
+
+      long after = System.currentTimeMillis();
+
+      SzEntityNetworkResponse response
+          = jsonCopy(clientResponse, SzEntityNetworkResponse.class);
+
+      this.validateEntityNetworkResponse(
+          testInfo,
+          response,
+          GET,
+          uriText,
+          entityParamIds,
+          entityListIds,
+          (maxDegrees != null) ? maxDegrees : DEFAULT_NETWORK_DEGREES,
+          (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
+          (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
+          forceMinimal,
+          featureMode,
+          (withFeatureStats == null) ? false : withFeatureStats,
+          (withInternalFeatures == null) ? false : withInternalFeatures,
+          withRaw,
+          expectedPathCount,
+          expectedPaths,
+          expectedEntities,
+          before,
+          after);
+    });
+  }
+
   @ParameterizedTest
   @MethodSource("getEntityNetworkParameters")
   public void getNetworkByEntityIdTest(
@@ -1699,6 +2246,112 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           GET, uriText, SzEntityNetworkResponse.class);
       response.concludeTimers();
       long after = System.currentTimeMillis();
+
+      this.validateEntityNetworkResponse(
+          testInfo,
+          response,
+          GET,
+          uriText,
+          entityParamIds,
+          entityListIds,
+          (maxDegrees != null) ? maxDegrees : DEFAULT_NETWORK_DEGREES,
+          (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
+          (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
+          forceMinimal,
+          featureMode,
+          (withFeatureStats == null ? false : withFeatureStats),
+          (withInternalFeatures == null ? false : withInternalFeatures),
+          withRaw,
+          expectedPathCount,
+          expectedPaths,
+          expectedEntities,
+          before,
+          after);
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("getEntityNetworkParameters")
+  public void getNetworkByEntityIdViaJavaClientTest(
+      Collection<SzRecordId>   entityParam,
+      Collection<SzRecordId>   entityList,
+      Integer                  maxDegrees,
+      Integer                  buildOut,
+      Integer                  maxEntities,
+      Boolean                  forceMinimal,
+      SzFeatureMode            featureMode,
+      Boolean                  withFeatureStats,
+      Boolean                  withInternalFeatures,
+      Boolean                  withRaw,
+      Integer                  expectedPathCount,
+      List<List<SzRecordId>>   expectedPaths,
+      Set<SzRecordId>          expectedEntities)
+  {
+    this.performTest(() -> {
+      String testInfo = "entityParam=[ " + entityParam
+          + " ], entityList=[ " + entityList
+          + " ], maxDegrees=[ " + maxDegrees
+          + " ], buildOut=[ " + buildOut
+          + " ], maxEntities=[ " + maxEntities
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], featureMode=[ " + featureMode
+          + " ], withFeatureStats=[ " + withFeatureStats
+          + " ], withInternalFeatures=[ " + withInternalFeatures
+          + " ], withRaw=[ " + withRaw + " ]";
+
+      SzEntityIdentifiers entityParamIds
+          = this.normalizeIdentifiers(entityParam,true);
+
+      SzEntityIdentifiers entityListIds
+          = this.normalizeIdentifiers(entityList,true);
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("entity-networks");
+
+      buildNetworkQueryString(sb,
+                              entityParamIds,
+                              entityListIds,
+                              maxDegrees,
+                              buildOut,
+                              maxEntities,
+                              forceMinimal,
+                              featureMode,
+                              withFeatureStats,
+                              withInternalFeatures,
+                              withRaw);
+
+      String uriText = this.formatServerUri(sb.toString());
+
+      com.senzing.gen.api.model.SzFeatureMode clientFeatureMode
+          = (featureMode == null)
+          ? null
+          : com.senzing.gen.api.model.SzFeatureMode.valueOf(
+          featureMode.toString());
+
+      List<com.senzing.gen.api.model.SzEntityIdentifier> clientParamIds
+          = this.toClientIdList(entityParam, true);
+
+      com.senzing.gen.api.model.SzEntityIdentifiers clientEntityList
+          = this.toClientIds(entityList, true);
+
+      long before = System.currentTimeMillis();
+
+      com.senzing.gen.api.model.SzEntityNetworkResponse clientResponse
+          = this.entityGraphApi.findEntityNetwork(clientParamIds,
+                                                  clientEntityList,
+                                                  maxDegrees,
+                                                  buildOut,
+                                                  maxEntities,
+                                                  clientFeatureMode,
+                                                  withFeatureStats,
+                                                  withInternalFeatures,
+                                                  forceMinimal,
+                                                  withRaw);
+
+      long after = System.currentTimeMillis();
+
+      SzEntityNetworkResponse response
+          = jsonCopy(clientResponse, SzEntityNetworkResponse.class);
 
       this.validateEntityNetworkResponse(
           testInfo,
