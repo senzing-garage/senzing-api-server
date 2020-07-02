@@ -239,6 +239,110 @@ public class EntityDataServices {
     }
   }
 
+  @DELETE
+  @Path("data-sources/{dataSourceCode}/records/{recordId}")
+  public SzDeleteRecordResponse deleteRecord(
+      @PathParam("dataSourceCode")                    String  dataSourceCode,
+      @PathParam("recordId")                          String  recordId,
+      @QueryParam("loadId")                           String  loadId,
+      @QueryParam("withInfo") @DefaultValue("false")  boolean withInfo,
+      @QueryParam("withRaw")  @DefaultValue("false")  boolean withRaw,
+      @Context                                        UriInfo uriInfo)
+  {
+    Timers timers = newTimers();
+    try {
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      ensureLoadingIsAllowed(provider, DELETE, uriInfo, timers);
+      dataSourceCode = dataSourceCode.trim().toUpperCase();
+
+      final String dataSource = dataSourceCode;
+
+      Set<String> dataSources = provider.getDataSources(dataSource);
+
+      if (!dataSources.contains(dataSource)) {
+        throw newNotFoundException(
+            DELETE, uriInfo, timers,
+            "The specified data source is not recognized: " + dataSource);
+      }
+
+      final String normalizedLoadId = normalizeString(loadId);
+
+      enteringQueue(timers);
+      String rawInfo = provider.executeInThread(() -> {
+        exitingQueue(timers);
+
+        // get the engine API
+        G2Engine engineApi = provider.getEngineApi();
+
+        int returnCode;
+        String rawData = null;
+        if (withInfo) {
+          StringBuffer sb = new StringBuffer();
+          if (withInfo)
+            callingNativeAPI(timers, "engine", "deleteRecordWithInfo");
+          returnCode = engineApi.deleteRecordWithInfo(
+              dataSource, recordId, normalizedLoadId,0, sb);
+          calledNativeAPI(timers, "engine", "reevaluateRecordWithInfo");
+          rawData = sb.toString();
+        } else {
+          callingNativeAPI(timers, "engine", "deleteRecord");
+          returnCode = engineApi.deleteRecord(
+              dataSource, recordId, normalizedLoadId);
+          calledNativeAPI(timers, "engine", "deleteRecord");
+        }
+        if (returnCode != 0) {
+          int errorCode = engineApi.getLastExceptionCode();
+          // if the record was not found, that is okay -- treat as idempotent,
+          // but note that "info" will differ when deleting a not-found record
+          if (errorCode == RECORD_NOT_FOUND_CODE) {
+            return null;
+          }
+          // otherwise throw a server error
+          throw newInternalServerErrorException(
+              DELETE, uriInfo, timers, engineApi);
+        }
+
+        return rawData;
+      });
+
+      SzResolutionInfo info = null;
+      if (rawInfo != null) {
+        JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
+        info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+        if ((normalizeString(info.getDataSource()) == null)
+            && (normalizeString(info.getRecordId()) == null)
+            && (info.getAffectedEntities().size() == 0)
+            && (info.getFlaggedEntities().size() == 0)) {
+          info = null;
+        }
+      }
+
+      // construct the response
+      SzDeleteRecordResponse response = new SzDeleteRecordResponse(
+          DELETE, 200, uriInfo, timers, info);
+
+      // check if we have info and raw data was requested
+      if (withRaw && withInfo) {
+        response.setRawData(rawInfo);
+      }
+
+      // return the response
+      return response;
+
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw ServicesUtil.newInternalServerErrorException(
+          DELETE, uriInfo, timers, e);
+    }
+  }
+
   @POST
   @Path("data-sources/{dataSourceCode}/records/{recordId}/reevaluate")
   public SzReevaluateResponse reevaluateRecord(

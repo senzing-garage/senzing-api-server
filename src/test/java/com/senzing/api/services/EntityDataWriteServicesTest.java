@@ -1445,6 +1445,294 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     });
   }
 
+  //----------------------
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void deleteRecordTest(Boolean withInfo, Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      final String recordId2 = "DEF456";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/"
+              + recordId1, queryParams);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      JsonObjectBuilder job = Json.createObjectBuilder();
+      job.add("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
+      job.add("RECORD_ID", recordId1);
+      job.add("NAME_FIRST", "James");
+      job.add("NAME_LAST", "Moriarty");
+      job.add("PHONE_NUMBER", "702-555-1212");
+      job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
+      JsonObject  jsonObject  = job.build();
+      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+
+      long before = System.currentTimeMillis();
+      SzLoadRecordResponse loadResponse = this.entityDataServices.loadRecord(
+          WATCHLIST_DATA_SOURCE,
+          recordId1,
+          null,
+          (withInfo != null ? withInfo : false),
+          (withRaw != null ? withRaw : false),
+          uriInfo,
+          jsonText);
+      loadResponse.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      validateLoadRecordResponse(loadResponse,
+                                 PUT,
+                                 uriText,
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      before = System.currentTimeMillis();
+      SzDeleteRecordResponse response = this.entityDataServices.deleteRecord(
+          WATCHLIST_DATA_SOURCE,
+          recordId1,
+          null,
+          (withInfo != null ? withInfo : false),
+          (withRaw != null ? withRaw : false),
+          uriInfo);
+      response.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateDeleteRecordResponse(response,
+                                   DELETE,
+                                   uriText,
+                                   (withInfo != null ? withInfo : false),
+                                   (withRaw != null ? withRaw : false),
+                                   WATCHLIST_DATA_SOURCE,
+                                   recordId1,
+                                   1,
+                                   0,
+                                   Collections.emptySet(),
+                                   before,
+                                   after);
+
+      // try a second delete (prove idempotence)
+      before = System.currentTimeMillis();
+      response = this.entityDataServices.deleteRecord(
+          WATCHLIST_DATA_SOURCE,
+          recordId1,
+          null,
+          (withInfo != null ? withInfo : false),
+          (withRaw != null ? withRaw : false),
+          uriInfo);
+      response.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateDeleteRecordResponse(response,
+                                   DELETE,
+                                   uriText,
+                                   false, // second delete, set false
+                                   (withRaw != null ? withRaw : false),
+                                   WATCHLIST_DATA_SOURCE,
+                                   recordId1,
+                                   1,
+                                   0,
+                                   Collections.emptySet(),
+                                   before,
+                                   after);
+
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void deleteRecordViaHttpTest(Boolean withInfo, Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      final String recordId2 = "DEF456";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/"
+              + recordId1, queryParams);
+
+      Map recordBody = new HashMap();
+      recordBody.put("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
+      recordBody.put("RECORD_ID", recordId1);
+      recordBody.put("NAME_FIRST", "James");
+      recordBody.put("NAME_LAST", "Moriarty");
+      recordBody.put("PHONE_NUMBER", "702-555-1212");
+      recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
+
+      long before = System.currentTimeMillis();
+      SzLoadRecordResponse loadResponse = this.invokeServerViaHttp(
+          PUT, uriText, null, recordBody, SzLoadRecordResponse.class);
+      loadResponse.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      validateLoadRecordResponse(loadResponse,
+                                 PUT,
+                                 uriText,
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      before = System.currentTimeMillis();
+      SzDeleteRecordResponse response = this.invokeServerViaHttp(
+          DELETE, uriText, SzDeleteRecordResponse.class);
+      response.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateDeleteRecordResponse(response,
+                                   DELETE,
+                                   uriText,
+                                   (withInfo != null ? withInfo : false),
+                                   (withRaw != null ? withRaw : false),
+                                   WATCHLIST_DATA_SOURCE,
+                                   recordId1,
+                                   1,
+                                   0,
+                                   Collections.emptySet(),
+                                   before,
+                                   after);
+
+      before = System.currentTimeMillis();
+      response = this.invokeServerViaHttp(
+          DELETE, uriText, SzDeleteRecordResponse.class);
+      response.concludeTimers();
+      after = System.currentTimeMillis();
+
+      validateDeleteRecordResponse(response,
+                                   DELETE,
+                                   uriText,
+                                   false, // second delete, set false
+                                   (withRaw != null ? withRaw : false),
+                                   WATCHLIST_DATA_SOURCE,
+                                   recordId1,
+                                   1,
+                                   0,
+                                   Collections.emptySet(),
+                                   before,
+                                   after);
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void deleteRecordViaJavaClientTest(Boolean withInfo,
+                                                Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      final String recordId2 = "DEF456";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/"
+              + recordId1, queryParams);
+
+      Map recordBody = new HashMap();
+      recordBody.put("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
+      recordBody.put("RECORD_ID", recordId1);
+      recordBody.put("NAME_FIRST", "James");
+      recordBody.put("NAME_LAST", "Moriarty");
+      recordBody.put("PHONE_NUMBER", "702-555-1212");
+      recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
+
+      long before = System.currentTimeMillis();
+      com.senzing.gen.api.model.SzLoadRecordResponse clientLoadResponse
+          = this.entityDataApi.addRecord(recordBody,
+                                         WATCHLIST_DATA_SOURCE,
+                                         recordId1,
+                                         null,
+                                         withInfo,
+                                         withRaw);
+      long after = System.currentTimeMillis();
+
+      SzLoadRecordResponse loadResponse = jsonCopy(clientLoadResponse,
+                                                   SzLoadRecordResponse.class);
+
+      validateLoadRecordResponse(loadResponse,
+                                 PUT,
+                                 uriText,
+                                 WATCHLIST_DATA_SOURCE,
+                                 recordId1,
+                                 (withInfo != null ? withInfo : false),
+                                 (withRaw != null ? withRaw : false),
+                                 1,
+                                 0,
+                                 Collections.emptySet(),
+                                 before,
+                                 after);
+
+      before = System.currentTimeMillis();
+      com.senzing.gen.api.model.SzDeleteRecordResponse clientResponse
+          = this.entityDataApi.deleteRecord(WATCHLIST_DATA_SOURCE,
+                                            recordId1,
+                                            null,
+                                            withInfo,
+                                            withRaw);
+      after = System.currentTimeMillis();
+
+      SzDeleteRecordResponse response = jsonCopy(clientResponse,
+                                                 SzDeleteRecordResponse.class);
+
+      validateDeleteRecordResponse(response,
+                                   DELETE,
+                                   uriText,
+                                   (withInfo != null ? withInfo : false),
+                                   (withRaw != null ? withRaw : false),
+                                   WATCHLIST_DATA_SOURCE,
+                                   recordId1,
+                                   1,
+                                   0,
+                                   Collections.emptySet(),
+                                   before,
+                                   after);
+
+      before = System.currentTimeMillis();
+      clientResponse = this.entityDataApi.deleteRecord(WATCHLIST_DATA_SOURCE,
+                                                       recordId1,
+                                                       null,
+                                                       withInfo,
+                                                       withRaw);
+      after = System.currentTimeMillis();
+
+      response = jsonCopy(clientResponse, SzDeleteRecordResponse.class);
+
+      validateDeleteRecordResponse(response,
+                                   DELETE,
+                                   uriText,
+                                   false, // second delete, set false
+                                   (withRaw != null ? withRaw : false),
+                                   WATCHLIST_DATA_SOURCE,
+                                   recordId1,
+                                   1,
+                                   0,
+                                   Collections.emptySet(),
+                                   before,
+                                   after);
+
+
+    });
+  }
+
   private Long getEntityIdForRecordId(SzRecordId recordId) {
     String uriText = this.formatServerUri(
         "data-sources/" + recordId.getDataSourceCode() + "/records/"

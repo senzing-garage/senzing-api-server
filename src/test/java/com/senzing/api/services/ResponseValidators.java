@@ -2055,7 +2055,6 @@ public class ResponseValidators {
     }
   }
 
-
   /**
    * Validates an {@Link SzReevaluateRecordResponse} instance.
    *
@@ -2202,6 +2201,155 @@ public class ResponseValidators {
       throw e;
     }
   }
+
+
+  /**
+   * Validates an {@Link SzDeleteRecordResponse} instance.
+   *
+   * @param response The response to validate.
+   * @param httpMethod The HTTP method used to load the record.
+   * @param dataSourceCode The data source code fo the loaded record.
+   * @param beforeTimestamp The timestamp before executing the request.
+   * @param afterTimestamp The timestamp after executing the request and
+   *                       concluding timers on the response.
+   */
+  public static void validateDeleteRecordResponse(
+      SzDeleteRecordResponse  response,
+      SzHttpMethod            httpMethod,
+      String                  selfLink,
+      Boolean                 withInfo,
+      Boolean                 withRaw,
+      String                  dataSourceCode,
+      String                  expectedRecordId,
+      Integer                 expectedAffectedCount,
+      Integer                 expectedFlaggedCount,
+      Set<String>             expectedFlags,
+      long                    beforeTimestamp,
+      long                    afterTimestamp)
+  {
+    try {
+      String testInfo = "method=[ " + httpMethod + " ], path=[ " + selfLink
+          + " ], dataSource=[ " + dataSourceCode + " ], expectedRecordId=[ "
+          + expectedRecordId + " ], withInfo=[ " + withInfo + " ], withRaw=[ "
+          + withRaw + " ]";
+
+      validateBasics(
+          testInfo, response, httpMethod, selfLink, beforeTimestamp, afterTimestamp);
+
+      SzDeleteRecordResponse.Data data = response.getData();
+
+      assertNotNull(data, "Response data is null: " + testInfo);
+
+      // if withInfo is null then don't check the info at all (or raw data)
+      if (withInfo == null) return;
+
+      // check for info
+      SzResolutionInfo info = data.getInfo();
+      if (withInfo) {
+        assertNotNull(info, "Info requested, but was null: " + testInfo);
+      } else {
+        assertNull(info, "Info not requested, but was found: " + testInfo);
+      }
+
+      if (withInfo) {
+        if (expectedRecordId != null) {
+          assertEquals(expectedRecordId, info.getRecordId(),
+                       "Unexpected record ID in info: " + testInfo);
+        }
+        if (dataSourceCode != null) {
+          assertEquals(dataSourceCode, info.getDataSource(),
+                       "Unexpected data source in info: " + testInfo);
+        }
+        // check the affected entities
+        if (expectedAffectedCount != null && expectedAffectedCount > 0) {
+          Set<Long> affected = info.getAffectedEntities();
+          assertNotNull(affected,
+                        "Affected entities set is null: " + testInfo);
+          assertEquals(expectedAffectedCount, affected.size(),
+                       "Affected entities set is the wrong size: "
+                           + affected);
+        }
+
+        // check the interesting entites
+        if (expectedFlaggedCount != null && expectedFlaggedCount > 0) {
+          List<SzFlaggedEntity> flagged = info.getFlaggedEntities();
+          assertNotNull(flagged,
+                        "Flagged entities list is null: " + testInfo);
+          assertEquals(expectedAffectedCount, flagged.size(),
+                       "Flagged entities set is the wrong size: "
+                           + flagged);
+
+          if (expectedFlags != null && expectedFlags.size() > 0) {
+            Set<String> entityFlags = new LinkedHashSet<>();
+            for (SzFlaggedEntity flaggedEntity : flagged) {
+              entityFlags.addAll(flaggedEntity.getFlags());
+            }
+            assertEquals(expectedFlags, entityFlags,
+                         "Unexpected flags for flagged entities: "
+                             + flagged);
+
+            Set<String> recordFlags = new LinkedHashSet<>();
+            for (SzFlaggedEntity flaggedEntity : flagged) {
+              for (SzFlaggedRecord flaggedRecord : flaggedEntity.getSampleRecords()) {
+                recordFlags.addAll(flaggedRecord.getFlags());
+              }
+            }
+            assertEquals(expectedFlags, recordFlags,
+                         "Unexpected flags for flagged records: "
+                             + flagged);
+          }
+        }
+      }
+
+      // check for raw data
+      if (withInfo && withRaw != null) {
+        Object rawData = response.getRawData();
+        if (withRaw) {
+          assertNotNull(rawData, "Raw data requested, but was null: "
+              + testInfo);
+
+          validateRawDataMap(
+              rawData,
+              false,
+              "DATA_SOURCE", "RECORD_ID");
+
+          // check the raw data affected entities
+          if (expectedAffectedCount != null && expectedAffectedCount > 0) {
+            validateRawDataMap(
+                rawData,
+                false,
+                "AFFECTED_ENTITIES");
+
+            Object array = ((Map) response.getRawData()).get("AFFECTED_ENTITIES");
+            validateRawDataMapArray(
+                testInfo, array, false, "ENTITY_ID", "LENS_CODE");
+          }
+
+          // check the raw data interesting entities
+          if (expectedFlaggedCount != null && expectedFlaggedCount > 0) {
+            validateRawDataMap(
+                rawData,
+                false,
+                "INTERESTING_ENTITIES");
+
+            Object array = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            validateRawDataMapArray(
+                testInfo, array, false,
+                "ENTITY_ID", "LENS_CODE", "DEGREES", "FLAGS",
+                "SAMPLE_RECORDS");
+          }
+
+        } else {
+          assertNull(rawData, "Raw data not requested, but was found: "
+              + testInfo);
+        }
+      }
+    } catch (RuntimeException e) {
+      e.printStackTrace();
+      throw e;
+    }
+  }
+
 
   public static void validateLicenseResponse(
       SzLicenseResponse  response,

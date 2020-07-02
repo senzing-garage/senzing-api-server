@@ -1,29 +1,25 @@
 package com.senzing.api.services;
 
 import com.senzing.api.model.SzErrorResponse;
-import com.senzing.api.model.SzLoadRecordResponse;
-import com.senzing.api.model.SzRecordId;
-import com.senzing.api.model.SzReevaluateResponse;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
 import com.senzing.util.JsonUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.web.client.HttpStatusCodeException;
 
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.POST;
 import static com.senzing.api.model.SzHttpMethod.PUT;
+import static com.senzing.api.model.SzHttpMethod.DELETE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static com.senzing.api.services.ResponseValidators.*;
@@ -847,39 +843,6 @@ public class ReadOnlyEntityDataWriteServicesTest
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
-  public void reevaluateEntityTest(Boolean withInfo, Boolean withRaw)
-  {
-    this.performTest(() -> {
-      final String recordId1 = "ABC123";
-      Map<String, Object> queryParams = new LinkedHashMap<>();
-      if (withInfo != null) queryParams.put("withInfo", withInfo);
-      if (withRaw != null) queryParams.put("withRaw", withRaw);
-      queryParams.put("entityId", 100L);
-
-      String uriText = this.formatServerUri("reevaluate-entity", queryParams);
-      UriInfo uriInfo = this.newProxyUriInfo(uriText);
-
-      long before = System.currentTimeMillis();
-      try {
-        this.entityDataServices.reevaluateEntity(
-            100L,
-            (withInfo != null ? withInfo : false),
-            (withRaw != null ? withRaw : false),
-            uriInfo);
-        fail("Did not get expected 403 ForbiddenException in read-only mode");
-
-      } catch (ForbiddenException expected) {
-        SzErrorResponse response
-            = (SzErrorResponse) expected.getResponse().getEntity();
-        response.concludeTimers();
-        long after = System.currentTimeMillis();
-        validateBasics(response, 403, POST, uriText, before, after);
-      }
-    });
-  }
-
-  @ParameterizedTest
-  @MethodSource("withInfoParams")
   public void reevaluateRecordViaJavaClientTest(Boolean withInfo,
                                                 Boolean withRaw)
   {
@@ -1018,6 +981,180 @@ public class ReadOnlyEntityDataWriteServicesTest
                        uriText,
                        before,
                        after);
+      }
+    });
+  }
+  
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void deleteRecordTest(Boolean withInfo, Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE
+              + "/records/" + recordId1, queryParams);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      long before = System.currentTimeMillis();
+      try {
+        this.entityDataServices.deleteRecord(
+            WATCHLIST_DATA_SOURCE,
+            recordId1,
+            null,
+            (withInfo != null ? withInfo : false),
+            (withRaw != null ? withRaw : false),
+            uriInfo);
+        fail("Did not get expected 403 ForbiddenException in read-only mode");
+
+      } catch (ForbiddenException expected) {
+        SzErrorResponse response
+            = (SzErrorResponse) expected.getResponse().getEntity();
+        response.concludeTimers();
+        long after = System.currentTimeMillis();
+        validateBasics(response, 403, DELETE, uriText, before, after);
+      }
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void deleteRecordViaHttpTest(Boolean withInfo, Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE
+              + "/records/" + recordId1, queryParams);
+
+      long before = System.currentTimeMillis();
+      SzErrorResponse response = this.invokeServerViaHttp(
+          DELETE, uriText, SzErrorResponse.class);
+      response.concludeTimers();
+      long after = System.currentTimeMillis();
+
+      validateBasics(response,
+                     403,
+                     DELETE,
+                     uriText,
+                     before,
+                     after);
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void deleteRecordViaJavaClientTest(Boolean withInfo, Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      final String recordId2 = "DEF456";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+
+      String uriText = this.formatServerUri(
+          "data-sources/" + WATCHLIST_DATA_SOURCE + "/records/"
+              + recordId1, queryParams);
+
+      Map recordBody = new HashMap();
+      recordBody.put("DATA_SOURCE", WATCHLIST_DATA_SOURCE);
+      recordBody.put("RECORD_ID", recordId1);
+      recordBody.put("NAME_FIRST", "James");
+      recordBody.put("NAME_LAST", "Moriarty");
+      recordBody.put("PHONE_NUMBER", "702-555-1212");
+      recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
+
+      long before = System.currentTimeMillis();
+      try {
+        this.entityDataApi.addRecord(recordBody,
+                                     WATCHLIST_DATA_SOURCE,
+                                     recordId1,
+                                     null,
+                                     withInfo,
+                                     withRaw);
+
+      } catch (HttpStatusCodeException expected) {
+        long after = System.currentTimeMillis();
+        com.senzing.gen.api.model.SzErrorResponse clientResponse
+            = jsonParse(expected.getResponseBodyAsString(),
+                        com.senzing.gen.api.model.SzErrorResponse.class);
+
+        SzErrorResponse response = jsonCopy(clientResponse,
+                                            SzErrorResponse.class);
+
+        validateBasics(response,
+                       403,
+                       PUT,
+                       uriText,
+                       before,
+                       after);
+      }
+
+      before = System.currentTimeMillis();
+      try {
+        this.entityDataApi.deleteRecord(WATCHLIST_DATA_SOURCE,
+                                        recordId1,
+                                        null,
+                                        withInfo,
+                                        withRaw);
+
+      } catch (HttpStatusCodeException expected) {
+        long after = System.currentTimeMillis();
+        com.senzing.gen.api.model.SzErrorResponse clientResponse
+            = jsonParse(expected.getResponseBodyAsString(),
+                        com.senzing.gen.api.model.SzErrorResponse.class);
+
+        SzErrorResponse response = jsonCopy(clientResponse,
+                                            SzErrorResponse.class);
+
+        validateBasics(response,
+                       403,
+                       DELETE,
+                       uriText,
+                       before,
+                       after);
+      }
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("withInfoParams")
+  public void reevaluateEntityTest(Boolean withInfo, Boolean withRaw)
+  {
+    this.performTest(() -> {
+      final String recordId1 = "ABC123";
+      Map<String, Object> queryParams = new LinkedHashMap<>();
+      if (withInfo != null) queryParams.put("withInfo", withInfo);
+      if (withRaw != null) queryParams.put("withRaw", withRaw);
+      queryParams.put("entityId", 100L);
+
+      String uriText = this.formatServerUri("reevaluate-entity", queryParams);
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      long before = System.currentTimeMillis();
+      try {
+        this.entityDataServices.reevaluateEntity(
+            100L,
+            (withInfo != null ? withInfo : false),
+            (withRaw != null ? withRaw : false),
+            uriInfo);
+        fail("Did not get expected 403 ForbiddenException in read-only mode");
+
+      } catch (ForbiddenException expected) {
+        SzErrorResponse response
+            = (SzErrorResponse) expected.getResponse().getEntity();
+        response.concludeTimers();
+        long after = System.currentTimeMillis();
+        validateBasics(response, 403, POST, uriText, before, after);
       }
     });
   }
