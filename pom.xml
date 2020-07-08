@@ -194,7 +194,7 @@
               <goal>generate</goal>
             </goals>
             <configuration>
-              <inputSpec>${project.basedir}/senzing-rest-api/senzing-rest-api.yaml</inputSpec>
+              <inputSpec>${project.basedir}/senzing-rest-api-specification/senzing-rest-api.yaml</inputSpec>
               <language>java</language>
               <configOptions>
                 <dateLibrary>joda</dateLibrary>
