@@ -54,7 +54,7 @@ To build the Senzing REST API Server you will need Apache Maven (recommend versi
 as well as OpenJDK version 11.0.x (recommend version 11.0.6+10 or later).
 
 You will also need the Senzing `g2.jar` file installed in your Maven repository.
-The Senzing REST API Server requires version 1.13.x or later of the Senzing API and Senzing App.
+The Senzing REST API Server requires version 2.x or later of the Senzing API and Senzing App.
 In order to install `g2.jar` you must:
 
 1. Locate your
@@ -74,9 +74,9 @@ In order to install `g2.jar` you must:
         ```console
         {
             "PLATFORM": "Linux",
-            "VERSION": "1.15.1",
-            "BUILD_VERSION": "1.15.1.20119",
-            "BUILD_NUMBER": "2020_04_28__10_44",
+            "VERSION": "2.0.0",
+            "BUILD_VERSION": "2.0.0.20192",
+            "BUILD_NUMBER": "2020_07_08__02_00",
             "DATA_VERSION": "1.0.0"
         }
         ```
@@ -88,7 +88,7 @@ In order to install `g2.jar` you must:
 
         ```console
         export SENZING_G2_DIR=/opt/senzing/g2
-        export SENZING_G2_JAR_VERSION=1.15.1
+        export SENZING_G2_JAR_VERSION=2.0.0
 
         mvn install:install-file \
             -Dfile=${SENZING_G2_DIR}/lib/g2.jar \
@@ -102,7 +102,7 @@ In order to install `g2.jar` you must:
 
         ```console
         set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
-        set SENZING_G2_JAR_VERSION=1.15.1
+        set SENZING_G2_JAR_VERSION=2.0.0
 
         mvn install:install-file \
             -Dfile="%SENZING_G2_DIR%\lib\g2.jar" \
@@ -130,6 +130,12 @@ In order to install `g2.jar` you must:
 
         set Path=%SENZING_G2_DIR%\lib;%Path%
         ```
+        
+1. Ensure the OpenAPI specification GIT submodule (senzing-rest-api-specification) is cloned:
+
+    ```console
+    git submodule update --init --recursive
+    ```
 
 ### Building
 
