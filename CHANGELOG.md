@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed in 2.0.0
 
-- Modified to build with version 2.x of Senzing product include use of new 
+- Modified to build with version 2.x of Senzing product include use of new
   entity formatting flags.
 
 - Updated REST API Version to v2.0.0
@@ -42,8 +42,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   value for that field.
 
 - In `com.senzing.api.model.SzResolvedEntity` the property `attributeData` was
-  renamed to `characteristicData` to match the OpenAPI Specification for the 
-  Senzing REST API.  **NOTE**: Client code that was written to look for 
+  renamed to `characteristicData` to match the OpenAPI Specification for the
+  Senzing REST API.  **NOTE**: Client code that was written to look for
   `attributeData` must be modified or will find a missing property.
 
 - Potentially Backward-Compatibility Breaking Changes by Java class and
@@ -74,7 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       - Renamed to `GET /configs/active` since “current” is ambiguous with
         regards to the “currently active config” versus the configuration
         managers currently configured “default config”.
-        - *MIGRATION*: Use the `/configs/active` path in place of 
+        - *MIGRATION*: Use the `/configs/active` path in place of
           `/config/current`.
 
     - `GET /config/default`
@@ -89,7 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         `SzEntityRecord`.  However, the Open API specification for the Senzing
          REST API had always documented it as an object with a single property
          named `record` whose type was `SzEntityRecord` (an additional level of
-         indirection).  In order to conform with the specification and make it 
+         indirection).  In order to conform with the specification and make it
          consistent with `SzEntityResponse`, the server has been modified with
          class `SzRecordResponse` now having a `data` property with a `record`
          sub-property.
@@ -97,7 +97,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
           reference `data.record`.
       - The `SzEntityRecord` in the response will exclude fields that are `null`
         or empty arrays.
-        - *MIGRATION*: Depending on the client language, check if fields are 
+        - *MIGRATION*: Depending on the client language, check if fields are
           missing, `null` or `undefined` before attempting to use them.
 
     - `GET /entities/{entityId}`
@@ -110,7 +110,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
           and use `?withRelated=PARTIAL` in place of `?withRelated=false`.
       - The `SzResolvedEntity` and the contained `SzEntityRecord` instances in
         the response will exclude fields that are `null` or empty arrays.
-        - *MIGRATION*: Depending on the client language, check if fields are 
+        - *MIGRATION*: Depending on the client language, check if fields are
           missing, `null` or `undefined` before attempting to use them.
 
     - `GET /entities`
@@ -123,12 +123,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       - The `SzAttributeSearchResult` instances and contained `SzRelatedEntity`
         and `SzEntityRecord` instances in the response will exclude fields that
         are `null` or empty arrays.
-        - *MIGRATION*: Depending on the client language, check if fields are 
+        - *MIGRATION*: Depending on the client language, check if fields are
           missing, `null` or `undefined` before attempting to use them.
       - The `withRelationships` query parameter now defaults to `false` instead
         of `true`.
-        - *MIGRATION*: Use `?withRelationships=true` if relationships are 
-          desired. 
+        - *MIGRATION*: Use `?withRelationships=true` if relationships are
+          desired.
 
     - `POST /data-sources/{dataSourceCode}/records/`
     - `PUT /data-sources/{dataSourceCode}/records/{recordId}`
@@ -143,23 +143,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
       - The `SzResolvedEntity` instances and the contained `SzEntityRecord`
         instances in the response will exclude fields that are `null` or empty
         arrays.
-        - *MIGRATION*: Depending on the client language, check if fields are 
+        - *MIGRATION*: Depending on the client language, check if fields are
           missing, `null` or `undefined` before attempting to use them.
     - `GET /entity-paths`
       - The `SzResolvedEntity` instances and the contained `SzEntityRecord`
         instances in the response will exclude fields that are `null` or empty
         arrays.
-        - *MIGRATION*: Depending on the client language, check if fields are 
+        - *MIGRATION*: Depending on the client language, check if fields are
           missing, `null` or `undefined` before attempting to use them.
 
   - `com.senzing.api.services.BulkDataServices`
     - `POST /bulk-data/load`
-      - Replaced the `dataSource_[DATA_SOURCE_CODE]` parameters with the 
-        multi-valued `mapDataSource` parameter so that this parameter 
+      - Replaced the `dataSource_[DATA_SOURCE_CODE]` parameters with the
+        multi-valued `mapDataSource` parameter so that this parameter
         could better be documented in Open API Spec and examples provided via
         Swagger Editor.
         - *MIGRATION*: Use `?mapDataSource=FOO:BAR` in place of
-          `?dataSource_FOO=BAR` or use the new `mapDataSources` parameter instead.
+          `?dataSource_FOO=BAR` or use the new `mapDataSources` parameter
+           instead.
       - Replaced the `entityType_[ENTITY_TYPE_CODE]` parameters with the
         multi-valued `mapEntityType` parameter so that this parameter could
         better be documented in Open API Spec and examples provided via
@@ -178,11 +179,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         parameter.
 
     - `POST /bulk-data/load`
-      - Added the single-valued `mapDataSources` parameter which accepts 
-        URL-encoded JSON to map the original data sources to target data 
+      - Added the single-valued `mapDataSources` parameter which accepts
+        URL-encoded JSON to map the original data sources to target data
         sources.
-      - Added the single-valued `mapEntityTypes` parameter which accepts 
-        URL-encoded JSON to map the original entity types to target entity 
+      - Added the single-valued `mapEntityTypes` parameter which accepts
+        URL-encoded JSON to map the original entity types to target entity
         types.
 
 - Removed pre-recorded mock data from integration tests for versions prior to
