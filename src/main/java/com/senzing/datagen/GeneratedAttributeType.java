@@ -300,8 +300,7 @@ public enum GeneratedAttributeType {
       // iterate over the entries in the full map
       fullMap.entrySet().forEach(entry -> {
         LookupKey key = entry.getKey();
-        if (partMap.containsKey(key)) return;
-        partMap.put(key, Collections.singleton(entry.getValue()));
+        partMap.putIfAbsent(key, Collections.singleton(entry.getValue()));
       });
 
     } catch (Exception e) {

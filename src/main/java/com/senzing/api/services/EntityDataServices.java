@@ -278,11 +278,10 @@ public class EntityDataServices {
         String rawData = null;
         if (withInfo) {
           StringBuffer sb = new StringBuffer();
-          if (withInfo)
             callingNativeAPI(timers, "engine", "deleteRecordWithInfo");
           returnCode = engineApi.deleteRecordWithInfo(
               dataSource, recordId, normalizedLoadId,0, sb);
-          calledNativeAPI(timers, "engine", "reevaluateRecordWithInfo");
+          calledNativeAPI(timers, "engine", "deleteRecordWithInfo");
           rawData = sb.toString();
         } else {
           callingNativeAPI(timers, "engine", "deleteRecord");
@@ -379,7 +378,6 @@ public class EntityDataServices {
         String rawData = null;
         if (withInfo) {
           StringBuffer sb = new StringBuffer();
-          if (withInfo)
           callingNativeAPI(timers, "engine", "reevaluateRecordWithInfo");
           returnCode = engineApi.reevaluateRecordWithInfo(
               dataSource, recordId,0, sb);
@@ -509,9 +507,9 @@ public class EntityDataServices {
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
       @DefaultValue("PARTIAL") @QueryParam("withRelated")         SzRelationshipMode  withRelated,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
-      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
+      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode       featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
-      @DefaultValue("false") @QueryParam("withInternalFeatures")   boolean             withInternalFeatures,
+      @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean             withInternalFeatures,
       @Context                                                    UriInfo             uriInfo)
   {
     Timers timers = newTimers();
@@ -961,8 +959,7 @@ public class EntityDataServices {
         String rawData = null;
         if (withInfo) {
           StringBuffer sb = new StringBuffer();
-          if (withInfo)
-            callingNativeAPI(timers, "engine", "reevaluateEntityWithInfo");
+          callingNativeAPI(timers, "engine", "reevaluateEntityWithInfo");
           returnCode = engineApi.reevaluateEntityWithInfo(entityId,0, sb);
           calledNativeAPI(timers, "engine", "reevaluateEntityWithInfo");
           rawData = sb.toString();
@@ -1222,10 +1219,7 @@ public class EntityDataServices {
       });
 
       // iterate over the default values
-      defaultMap.entrySet().forEach(entry -> {
-        String key = entry.getKey();
-        String val = entry.getValue();
-
+      defaultMap.forEach((key, val) -> {
         // get the value for the key
         String jsonVal = JsonUtils.getString(jsonObject, key.toUpperCase());
         if (jsonVal == null) {
@@ -1271,7 +1265,7 @@ public class EntityDataServices {
   private static void postProcessSearchResults(
       List<SzAttributeSearchResult>   searchResults,
       boolean                         forceMinimal,
-      SzFeatureMode featureMode,
+      SzFeatureMode                   featureMode,
       boolean                         withRelationships)
   {
     // check if we need to strip out duplicate features
