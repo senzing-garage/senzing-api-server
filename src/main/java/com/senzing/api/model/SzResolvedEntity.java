@@ -102,7 +102,7 @@ public class SzResolvedEntity {
     this.bestName             = null;
     this.recordSummaries      = new LinkedList<>();
     this.addressData          = new LinkedList<>();
-    this.characteristicData = new LinkedList<>();
+    this.characteristicData   = new LinkedList<>();
     this.identifierData       = new LinkedList<>();
     this.nameData             = new LinkedList<>();
     this.phoneData            = new LinkedList<>();
