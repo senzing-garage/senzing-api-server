@@ -236,35 +236,35 @@ public class RecordReaderTest {
 
     Map<String,String> specificMap1 = new HashMap<>();
     specificMap1.put("EMPLOYEES", "EMPL");
-    specificMap1.put("", "CUST");
+    specificMap1.put(null, "CUST");
     specificMap1 = Collections.unmodifiableMap(specificMap1);
 
     Map<String,String> specificMap2 = new HashMap<>();
     specificMap2.put("EMPLOYEES", "EMPL");
     specificMap2.put("CUSTOMERS", "CUST");
-    specificMap2.put("", "PEOPLE");
+    specificMap2.put(null, "PEOPLE");
     specificMap2 = Collections.unmodifiableMap(specificMap2);
 
     Map<String, String> specificMap3 = new HashMap<>();
     specificMap3.put("EMPL", "WORKER");
-    specificMap3.put("", "CONSUMER");
+    specificMap3.put(null, "CONSUMER");
 
     Map<String, String> specificMap4 = new HashMap<>();
     specificMap4.put("EMPL", "WORKER");
     specificMap4.put("CUST", "CONSUMER");
-    specificMap4.put("", "GENERIC");
+    specificMap4.put(null, "GENERIC");
 
     List<Map<String,String>> dataSourceMaps = new LinkedList<>();
     dataSourceMaps.add(null);
     dataSourceMaps.add(Collections.emptyMap());
-    dataSourceMaps.add(Collections.singletonMap("", "PEOPLE"));
+    dataSourceMaps.add(Collections.singletonMap(null, "PEOPLE"));
     dataSourceMaps.add(specificMap1);
     dataSourceMaps.add(specificMap2);
 
     List<Map<String,String>> entityTypeMaps = new LinkedList<>();
     entityTypeMaps.add(null);
     entityTypeMaps.add(Collections.emptyMap());
-    entityTypeMaps.add(Collections.singletonMap("", "GENERIC"));
+    entityTypeMaps.add(Collections.singletonMap(null, "GENERIC"));
     entityTypeMaps.add(specificMap3);
     entityTypeMaps.add(specificMap4);
 
@@ -300,6 +300,7 @@ public class RecordReaderTest {
   {
     StringReader sr = new StringReader(recordsText);
     Map<String,String> dsMap = dataSourceMap;
+    Map<String,String> etMap = entityTypeMap;
     try {
       RecordReader rr = new RecordReader(
           sr, dataSourceMap, entityTypeMap, sourceId);
@@ -314,6 +315,8 @@ public class RecordReaderTest {
                          recordsText,
                          " --> dataSourceMap: "
                              + ((dsMap != null) ? dsMap.toString() : null),
+                         " --> entityTypeMap: "
+                             + ((etMap != null) ? etMap.toString() : null),
                          "EXPECTED: ",
                          JsonUtils.toJsonText(expected, true),
                          "ACTUAL: ",
@@ -344,7 +347,7 @@ public class RecordReaderTest {
       String origDS = dataSource;
       dataSource = dataSourceMap.get(dataSource);
       if (dataSource == null) {
-        dataSource = dataSourceMap.get("");
+        dataSource = dataSourceMap.get(null);
       }
       if (dataSource == null) {
         dataSource = origDS;
@@ -365,7 +368,7 @@ public class RecordReaderTest {
       String origET = entityType;
       entityType = entityTypeMap.get(entityType);
       if (entityType == null) {
-        entityType = entityTypeMap.get("");
+        entityType = entityTypeMap.get(null);
       }
       if (entityType == null) {
         entityType = origET;

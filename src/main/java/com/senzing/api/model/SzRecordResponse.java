@@ -3,6 +3,7 @@ package com.senzing.api.model;
 import com.senzing.util.Timers;
 
 import javax.ws.rs.core.UriInfo;
+import java.util.*;
 
 /**
  * A response object that contains entity record data.
@@ -10,15 +11,15 @@ import javax.ws.rs.core.UriInfo;
  */
 public class SzRecordResponse extends SzResponseWithRawData {
   /**
-   * The {@link SzEntityRecord} describing the record.
+   * The data for this instance.
    */
-  private SzEntityRecord entityRecord;
+  private Data data = new Data();
 
   /**
    * Default constructor.
    */
   public SzRecordResponse() {
-    this.entityRecord = null;
+    // do nothing
   }
 
   /**
@@ -46,16 +47,16 @@ public class SzRecordResponse extends SzResponseWithRawData {
    * @param httpStatusCode The HTTP response status code.
    * @param selfLink The string URL link to generate this response.
    * @param timers The {@link Timers} object for the timings that were taken.
-   * @param data The {@link SzEntityRecord} describing the record.
+   * @param record The {@link SzEntityRecord} describing the record.
    */
   public SzRecordResponse(SzHttpMethod   httpMethod,
                           int            httpStatusCode,
                           String         selfLink,
                           Timers         timers,
-                          SzEntityRecord data)
+                          SzEntityRecord record)
   {
     super(httpMethod, httpStatusCode, selfLink, timers);
-    this.entityRecord = data;
+    this.data.setRecord(record);
   }
 
   /**
@@ -82,34 +83,75 @@ public class SzRecordResponse extends SzResponseWithRawData {
    * @param httpStatusCode The HTTP response status code.
    * @param uriInfo The {@link UriInfo} from the request.
    * @param timers The {@link Timers} object for the timings that were taken.
-   * @param data The {@link SzEntityRecord} describing the record.
+   * @param record The {@link SzEntityRecord} describing the record.
    */
   public SzRecordResponse(SzHttpMethod   httpMethod,
                           int            httpStatusCode,
                           UriInfo        uriInfo,
                           Timers         timers,
-                          SzEntityRecord data)
+                          SzEntityRecord record)
   {
     super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.entityRecord = data;
+    this.data.setRecord(record);
   }
 
   /**
-   * Returns the data associated with this response which is an
+   * Returns the data associated with this response which contains an
    * {@link SzEntityRecord}.
    *
    * @return The data associated with this response.
    */
-  public SzEntityRecord getData() {
-    return this.entityRecord;
+  public Data getData() {
+    return this.data;
+  }
+
+  /**
+   * Private setter for JSON marshalling.
+   */
+  private void setData(Data data) {
+    this.data = data;
   }
 
   /**
    * Sets the data associated with this response with an {@link SzEntityRecord}.
    *
-   * @param data The {@link SzEntityRecord} describing the record.
+   * @param record The {@link SzEntityRecord} describing the record.
    */
-  public void setData(SzEntityRecord data) {
-    this.entityRecord = data;
+  public void setRecord(SzEntityRecord record) {
+    this.data.setRecord(record);
   }
+
+  /**
+   * Inner class to represent the data section for this response.
+   */
+  public static class Data {
+    /**
+     * The {@link SzEntityRecord} describing the record.
+     */
+    private SzEntityRecord entityRecord;
+
+    /**
+     * Private default constructor.
+     */
+    private Data() {
+      this.entityRecord = null;
+    }
+
+    /**
+     * Gets the {@link SzEntityRecord} describing the record.
+     *
+     * @return The {@link SzEntityRecord} describing the record.
+     */
+    public SzEntityRecord getRecord() {
+      return this.entityRecord;
+    }
+
+    /**
+     * Private setter used for deserialization.
+     */
+    private void setRecord(SzEntityRecord entityRecord) {
+      this.entityRecord = entityRecord;
+    }
+  }
+
 }

@@ -8,6 +8,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import javax.json.Json;
+import javax.json.JsonObject;
+import javax.json.JsonObjectBuilder;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
@@ -92,47 +95,53 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   };
 
   static {
-    Map<String, String> dataSourceMap = new LinkedHashMap<>();
-    Map<String, String> entityTypeMap = new LinkedHashMap<>();
+    try {
+      Map<String, String> dataSourceMap = new LinkedHashMap<>();
+      Map<String, String> entityTypeMap = new LinkedHashMap<>();
 
-    dataSourceMap.put(CUSTOMER_DATA_SOURCE, CUSTOMERS_DATA_SOURCE);
-    dataSourceMap.put(SUBSCRIBER_DATA_SOURCE, SUBSCRIBERS_DATA_SOURCE);
-    dataSourceMap.put(EMPLOYEE_DATA_SOURCE, EMPLOYEES_DATA_SOURCE);
-    dataSourceMap.put(VENDOR_DATA_SOURCE, VENDORS_DATA_SOURCE);
-    dataSourceMap.put(PARTNER_DATA_SOURCE, PARTNERS_DATA_SOURCE);
-    dataSourceMap.put(STORE_DATA_SOURCE, STORES_DATA_SOURCE);
+      dataSourceMap.put(CUSTOMER_DATA_SOURCE, CUSTOMERS_DATA_SOURCE);
+      dataSourceMap.put(SUBSCRIBER_DATA_SOURCE, SUBSCRIBERS_DATA_SOURCE);
+      dataSourceMap.put(EMPLOYEE_DATA_SOURCE, EMPLOYEES_DATA_SOURCE);
+      dataSourceMap.put(VENDOR_DATA_SOURCE, VENDORS_DATA_SOURCE);
+      dataSourceMap.put(PARTNER_DATA_SOURCE, PARTNERS_DATA_SOURCE);
+      dataSourceMap.put(STORE_DATA_SOURCE, STORES_DATA_SOURCE);
 
-    entityTypeMap.put(CUSTOMER_ENTITY_TYPE, PERSON_ENTITY_TYPE);
-    entityTypeMap.put(EMPLOYEE_ENTITY_TYPE, PERSON_ENTITY_TYPE);
-    entityTypeMap.put(SUBSCRIBER_ENTITY_TYPE, PERSON_ENTITY_TYPE);
-    entityTypeMap.put(VENDOR_ENTITY_TYPE, ORGANIZATION_ENTITY_TYPE);
-    entityTypeMap.put(PARTNER_ENTITY_TYPE, ORGANIZATION_ENTITY_TYPE);
-    entityTypeMap.put(STORE_ENTITY_TYPE, ORGANIZATION_ENTITY_TYPE);
+      entityTypeMap.put(CUSTOMER_ENTITY_TYPE, PERSON_ENTITY_TYPE);
+      entityTypeMap.put(EMPLOYEE_ENTITY_TYPE, PERSON_ENTITY_TYPE);
+      entityTypeMap.put(SUBSCRIBER_ENTITY_TYPE, PERSON_ENTITY_TYPE);
+      entityTypeMap.put(VENDOR_ENTITY_TYPE, ORGANIZATION_ENTITY_TYPE);
+      entityTypeMap.put(PARTNER_ENTITY_TYPE, ORGANIZATION_ENTITY_TYPE);
+      entityTypeMap.put(STORE_ENTITY_TYPE, ORGANIZATION_ENTITY_TYPE);
 
-    DATA_SOURCE_MAP = Collections.unmodifiableMap(dataSourceMap);
-    ENTITY_TYPE_MAP = Collections.unmodifiableMap(entityTypeMap);
+      DATA_SOURCE_MAP = Collections.unmodifiableMap(dataSourceMap);
+      ENTITY_TYPE_MAP = Collections.unmodifiableMap(entityTypeMap);
 
-    Map<String, RecordType> sourceRecordTypeMap = new LinkedHashMap<>();
+      Map<String, RecordType> sourceRecordTypeMap = new LinkedHashMap<>();
 
-    sourceRecordTypeMap.put(CUSTOMER_DATA_SOURCE, PERSON);
-    sourceRecordTypeMap.put(EMPLOYEE_DATA_SOURCE, PERSON);
-    sourceRecordTypeMap.put(SUBSCRIBER_DATA_SOURCE, PERSON);
-    sourceRecordTypeMap.put(VENDOR_DATA_SOURCE, ORGANIZATION);
-    sourceRecordTypeMap.put(PARTNER_ENTITY_TYPE, ORGANIZATION);
-    sourceRecordTypeMap.put(STORE_ENTITY_TYPE, BUSINESS);
+      sourceRecordTypeMap.put(CUSTOMER_DATA_SOURCE, PERSON);
+      sourceRecordTypeMap.put(EMPLOYEE_DATA_SOURCE, PERSON);
+      sourceRecordTypeMap.put(SUBSCRIBER_DATA_SOURCE, PERSON);
+      sourceRecordTypeMap.put(VENDOR_DATA_SOURCE, ORGANIZATION);
+      sourceRecordTypeMap.put(PARTNER_ENTITY_TYPE, ORGANIZATION);
+      sourceRecordTypeMap.put(STORE_ENTITY_TYPE, BUSINESS);
 
-    SOURCE_RECORD_TYPE_MAP = Collections.unmodifiableMap(sourceRecordTypeMap);
+      SOURCE_RECORD_TYPE_MAP = Collections.unmodifiableMap(sourceRecordTypeMap);
 
-    Map<String, String> sourceEntityTypeMap = new LinkedHashMap<>();
+      Map<String, String> sourceEntityTypeMap = new LinkedHashMap<>();
 
-    sourceEntityTypeMap.put(CUSTOMER_DATA_SOURCE, CUSTOMER_ENTITY_TYPE);
-    sourceEntityTypeMap.put(EMPLOYEE_DATA_SOURCE, EMPLOYEE_ENTITY_TYPE);
-    sourceEntityTypeMap.put(SUBSCRIBER_DATA_SOURCE, SUBSCRIBER_ENTITY_TYPE);
-    sourceEntityTypeMap.put(VENDOR_DATA_SOURCE, VENDOR_ENTITY_TYPE);
-    sourceEntityTypeMap.put(PARTNER_ENTITY_TYPE, PARTNER_ENTITY_TYPE);
-    sourceEntityTypeMap.put(STORE_ENTITY_TYPE, STORE_ENTITY_TYPE);
+      sourceEntityTypeMap.put(CUSTOMER_DATA_SOURCE, CUSTOMER_ENTITY_TYPE);
+      sourceEntityTypeMap.put(EMPLOYEE_DATA_SOURCE, EMPLOYEE_ENTITY_TYPE);
+      sourceEntityTypeMap.put(SUBSCRIBER_DATA_SOURCE, SUBSCRIBER_ENTITY_TYPE);
+      sourceEntityTypeMap.put(VENDOR_DATA_SOURCE, VENDOR_ENTITY_TYPE);
+      sourceEntityTypeMap.put(PARTNER_ENTITY_TYPE, PARTNER_ENTITY_TYPE);
+      sourceEntityTypeMap.put(STORE_ENTITY_TYPE, STORE_ENTITY_TYPE);
 
-    SOURCE_ENTITY_TYPE_MAP = Collections.unmodifiableMap(sourceEntityTypeMap);
+      SOURCE_ENTITY_TYPE_MAP = Collections.unmodifiableMap(sourceEntityTypeMap);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
+    }
   }
 
   protected BulkDataServices bulkDataServices;
@@ -246,6 +255,9 @@ public class BulkDataServicesTest extends AbstractServiceTest {
           entityTypeMap.put(entityType, ENTITY_TYPE_MAP.get(entityType));
         }
       }
+
+      testInfo = testInfo + ", dataSourceMap=[ " + dataSourceMap
+          + " ], entityTypeMap=[ " + entityTypeMap + " ]";
 
       if (evenOdd) {
         result.add(Arguments.of(
@@ -609,13 +621,55 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     });
   }
 
-  private String formatLoadURL(String               defaultDataSource,
-                               String               defaultEntityType,
-                               String               loadId,
-                               Integer              maxFailures,
-                               Map<String, String>  dataSourceMap,
-                               Map<String, String>  entityTypeMap,
-                               String               progressPeriod)
+  @ParameterizedTest
+  @MethodSource("getAnalyzeBulkRecordsParameters")
+  public void analyzeBulkRecordsViaFormJavaClientTest(
+      String              testInfo,
+      MediaType           mediaType,
+      File                bulkDataFile,
+      SzBulkDataAnalysis  expected)
+  {
+    this.performTest(() -> {
+      String uriText = this.formatServerUri("bulk-data/analyze");
+
+      try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
+        long before = System.currentTimeMillis();
+        com.senzing.gen.api.model.SzBulkDataAnalysisResponse clientResponse
+            = this.invokeServerViaHttp(
+            POST, uriText, null, mediaType.toString(),
+            bulkDataFile.length(), new FileInputStream(bulkDataFile),
+            com.senzing.gen.api.model.SzBulkDataAnalysisResponse.class);
+        long after = System.currentTimeMillis();
+
+        SzBulkDataAnalysisResponse response
+            = jsonCopy(clientResponse, SzBulkDataAnalysisResponse.class);
+
+        validateAnalyzeResponse(testInfo,
+                                response,
+                                POST,
+                                uriText,
+                                mediaType,
+                                bulkDataFile,
+                                expected,
+                                before,
+                                after);
+
+      } catch (Exception e) {
+        System.err.println("********** FAILED TEST: " + testInfo);
+        e.printStackTrace();
+        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  protected String formatLoadURL(String               defaultDataSource,
+                                 String               defaultEntityType,
+                                 String               loadId,
+                                 Integer              maxFailures,
+                                 Map<String, String>  dataSourceMap,
+                                 Map<String, String>  entityTypeMap,
+                                 String               progressPeriod)
   {
     try {
       StringBuilder sb = new StringBuilder();
@@ -640,34 +694,93 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         sb.append(prefix).append("maxFailures=").append(maxFailures);
         prefix = "&";
       }
+
       if (dataSourceMap != null) {
-        String[] prefixArr = { prefix };
+        String[]          prefixArr   = { prefix };
+        boolean[]         jsonFlag    = { true };
+        boolean[]         overlapFlag = { true };
+        JsonObjectBuilder builder   = Json.createObjectBuilder();
         dataSourceMap.entrySet().forEach(entry -> {
+          String  key   = entry.getKey();
+          String  value = entry.getValue();
+          if (jsonFlag[0] || overlapFlag[0]) {
+            builder.add(key, value);
+
+          } else {
+            String mapping = ":" + key + ":" + value;
+            try {
+              sb.append(prefixArr[0]).append("mapDataSource=").append(
+                  URLEncoder.encode(mapping, UTF_8));
+              prefixArr[0] = "&";
+            } catch (UnsupportedEncodingException cannotHappen) {
+              throw new IllegalStateException("UTF-8 encoding not supported");
+            }
+            overlapFlag[0] = !overlapFlag[0];
+          }
+          jsonFlag[0] = !jsonFlag[0];
+        });
+        JsonObject jsonObject = builder.build();
+        if (jsonObject.size() > 0) {
+          String mapDataSources = jsonObject.toString();
           try {
-            sb.append(prefixArr[0]).append("dataSource_").append(
-                URLEncoder.encode(entry.getKey(), UTF_8)).append("=").append(
-                    URLEncoder.encode(entry.getValue(), UTF_8));
+            sb.append(prefixArr[0]).append("mapDataSources=").append(
+                URLEncoder.encode(mapDataSources, UTF_8));
+
+            prefixArr[0] = "&";
+
           } catch (UnsupportedEncodingException cannotHappen) {
             throw new IllegalStateException("UTF-8 encoding not supported");
           }
-          prefixArr[0] = "&";
-        });
+        }
+
+        // update the prefix
+        prefix = prefixArr[0];
       }
+
       if (entityTypeMap != null) {
-        String[] prefixArr = { prefix };
+        String[]          prefixArr   = { prefix };
+        boolean[]         jsonFlag    = { true };
+        boolean[]         overlapFlag = { true };
+        JsonObjectBuilder builder   = Json.createObjectBuilder();
         entityTypeMap.entrySet().forEach(entry -> {
+          String  key   = entry.getKey();
+          String  value = entry.getValue();
+          if (jsonFlag[0] || overlapFlag[0]) {
+            builder.add(key, value);
+
+          } else {
+            String mapping = ":" + key + ":" + value;
+            try {
+              sb.append(prefixArr[0]).append("mapEntityType=").append(
+                  URLEncoder.encode(mapping, UTF_8));
+              prefixArr[0] = "&";
+            } catch (UnsupportedEncodingException cannotHappen) {
+              throw new IllegalStateException("UTF-8 encoding not supported");
+            }
+            overlapFlag[0] = !overlapFlag[0];
+          }
+          jsonFlag[0] = !jsonFlag[0];
+        });
+        JsonObject jsonObject = builder.build();
+        if (jsonObject.size() > 0) {
+          String mapEntityTypes = jsonObject.toString();
           try {
-            sb.append(prefixArr[0]).append("entityType_").append(
-                URLEncoder.encode(entry.getKey(), UTF_8)).append("=").append(
-                URLEncoder.encode(entry.getValue(), UTF_8));
+            sb.append(prefixArr[0]).append("mapEntityTypes=").append(
+                URLEncoder.encode(mapEntityTypes, UTF_8));
+
+            prefixArr[0] = "&";
+
           } catch (UnsupportedEncodingException cannotHappen) {
             throw new IllegalStateException("UTF-8 encoding not supported");
           }
-          prefixArr[0] = "&";
-        });
+        }
+
+        // update the prefix
+        prefix = prefixArr[0];
       }
+
       if (progressPeriod != null) {
-        sb.append("progressPeriod=").append(progressPeriod);
+        sb.append(prefix).append("progressPeriod=").append(progressPeriod);
       }
 
       return sb.toString();
@@ -692,19 +805,61 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       String  uriText = this.formatServerUri("bulk-data/load");
 
-      MultivaluedMap queryParams = new MultivaluedHashMap();
-      queryParams.add("dataSource", CONTACTS_DATA_SOURCE);
-      queryParams.add("entityType", GENERIC_ENTITY_TYPE);
+      MultivaluedMap  queryParams       = new MultivaluedHashMap();
+      String          mapDataSources    = null;
+      String          mapEntityTypes    = null;
+      List<String>    mapDataSourceList = new LinkedList<>();
+      List<String>    mapEntityTypeList = new LinkedList<>();
       if (dataSourceMap != null) {
+        boolean[]         jsonFlag    = { true };
+        boolean[]         overlapFlag = { true };
+        JsonObjectBuilder builder   = Json.createObjectBuilder();
         dataSourceMap.entrySet().forEach(entry -> {
-          queryParams.add("dataSource_" + entry.getKey(), entry.getValue());
+          String  key   = entry.getKey();
+          String  value = entry.getValue();
+          if (jsonFlag[0] || overlapFlag[0]) {
+            builder.add(key, value);
+
+          } else {
+            String mapping = ":" + key + ":" + value;
+            mapDataSourceList.add(mapping);
+            queryParams.add("mapDataSource", mapping);
+            overlapFlag[0] = !overlapFlag[0];
+          }
+          jsonFlag[0] = !jsonFlag[0];
         });
+        JsonObject jsonObject = builder.build();
+        if (jsonObject.size() > 0) {
+          mapDataSources = jsonObject.toString();
+          queryParams.add("mapDataSources", mapDataSources);
+        }
       }
+
       if (entityTypeMap != null) {
+        boolean[]         jsonFlag    = { true };
+        boolean[]         overlapFlag = { true };
+        JsonObjectBuilder builder   = Json.createObjectBuilder();
         entityTypeMap.entrySet().forEach(entry -> {
-          queryParams.add("entityType_" + entry.getKey(), entry.getValue());
+          String  key   = entry.getKey();
+          String  value = entry.getValue();
+          if (jsonFlag[0] || overlapFlag[0]) {
+            builder.add(key, value);
+
+          } else {
+            String mapping = ":" + key + ":" + value;
+            mapEntityTypeList.add(mapping);
+            queryParams.add("mapEntityType", mapping);
+            overlapFlag[0] = !overlapFlag[0];
+          }
+          jsonFlag[0] = !jsonFlag[0];
         });
+        JsonObject jsonObject = builder.build();
+        if (jsonObject.size() > 0) {
+          mapEntityTypes = jsonObject.toString();
+          queryParams.add("mapEntityTypes", mapDataSources);
+        }
       }
+
       UriInfo uriInfo = this.newProxyUriInfo(uriText, queryParams);
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
@@ -712,7 +867,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         SzBulkLoadResponse response
             = this.bulkDataServices.loadBulkRecordsViaForm(
                 CONTACTS_DATA_SOURCE,
+                mapDataSources,
+                mapDataSourceList,
                 GENERIC_ENTITY_TYPE,
+                mapEntityTypes,
+                mapEntityTypeList,
                 null,
                 0,
                 mediaType,
@@ -721,7 +880,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                 uriInfo);
         response.concludeTimers();
         long after = System.currentTimeMillis();
-
 
         Map<String,String> allDataSourceMap = new LinkedHashMap<>();
         allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
@@ -789,6 +947,69 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         Map<String,String> allEntityTypeMap = new LinkedHashMap<>();
         allEntityTypeMap.put(null, GENERIC_ENTITY_TYPE);
         if (entityTypeMap != null) allEntityTypeMap.putAll(entityTypeMap);
+
+        validateLoadResponse(testInfo,
+                             response,
+                             POST,
+                             uriText,
+                             COMPLETED,
+                             mediaType,
+                             bulkDataFile,
+                             analysis,
+                             analysis.getRecordCount(),
+                             allDataSourceMap,
+                             allEntityTypeMap,
+                             null,
+                             null,
+                             before,
+                             after);
+
+      } catch (Exception e) {
+        System.err.println("********** FAILED TEST: " + testInfo);
+        e.printStackTrace();
+        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("getLoadBulkRecordsParameters")
+  public void loadBulkRecordsDirectJavaClientTest(
+      String              testInfo,
+      MediaType           mediaType,
+      File                bulkDataFile,
+      SzBulkDataAnalysis  analysis,
+      Map<String,String>  dataSourceMap,
+      Map<String,String>  entityTypeMap)
+  {
+    this.performTest(() -> {
+      this.livePurgeRepository();
+
+      String uriText = this.formatServerUri(formatLoadURL(
+          CONTACTS_DATA_SOURCE, GENERIC_ENTITY_TYPE, null, null,
+          dataSourceMap, entityTypeMap, null));
+
+      try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
+        long before = System.currentTimeMillis();
+        com.senzing.gen.api.model.SzBulkLoadResponse clientResponse
+            = this.invokeServerViaHttp(
+            POST, uriText, null, mediaType.toString(),
+            bulkDataFile.length(), new FileInputStream(bulkDataFile),
+            com.senzing.gen.api.model.SzBulkLoadResponse.class);
+
+        long after = System.currentTimeMillis();
+
+        Map<String,String> allDataSourceMap = new LinkedHashMap<>();
+        allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
+        if (dataSourceMap != null) allDataSourceMap.putAll(dataSourceMap);
+
+        Map<String,String> allEntityTypeMap = new LinkedHashMap<>();
+        allEntityTypeMap.put(null, GENERIC_ENTITY_TYPE);
+        if (entityTypeMap != null) allEntityTypeMap.putAll(entityTypeMap);
+
+        SzBulkLoadResponse response = jsonCopy(clientResponse,
+                                               SzBulkLoadResponse.class);
 
         validateLoadResponse(testInfo,
                              response,
@@ -976,6 +1197,10 @@ public class BulkDataServicesTest extends AbstractServiceTest {
            BufferedInputStream bis = new BufferedInputStream(is)) {
         long before = System.currentTimeMillis();
         response = this.bulkDataServices.loadBulkRecordsViaForm(
+            null,
+            null,
+            null,
+            null,
             null,
             null,
             null,

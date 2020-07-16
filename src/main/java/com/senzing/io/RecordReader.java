@@ -53,11 +53,17 @@ public class RecordReader {
      * Initializes the lookup.
      */
     static {
-      Map<String, Format> map = new LinkedHashMap<>();
-      for (Format format: Format.values()) {
-        map.put(format.getMediaType(), format);
+      try {
+        Map<String, Format> map = new LinkedHashMap<>();
+        for (Format format: Format.values()) {
+          map.put(format.getMediaType(), format);
+        }
+        MEDIA_TYPE_LOOKUP = Collections.unmodifiableMap(map);
+
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw new ExceptionInInitializerError(e);
       }
-      MEDIA_TYPE_LOOKUP = Collections.unmodifiableMap(map);
     }
 
     /**
@@ -266,13 +272,17 @@ public class RecordReader {
    *
    * @param dataSourceMap The map of original data source codes to replacement
    *                      data source codes.  The mapping from empty-string will
-   *                      be used for any record that has no data source or
-   *                      whose data source is not in the map.
+   *                      be used for any record that has no data source.  The
+   *                      mapping from <tt>null</tt> will be for any data
+   *                      source (including no data source) that has no key in
+   *                      the map.
    *
    * @param entityTypeMap The map of original entity type codes to replacement
    *                      entity type codes.  The mapping from empty-string will
-   *                      be used for any record that has no entity type or
-   *                      whose entity type is not in the map.
+   *                      be used for any record that has no entity type.  The
+   *                      mapping from <tt>null</tt> will be for any data
+   *                      source (including no data source) that has no key in
+   *                      the map.
    *
    * @throws IOException If an I/O failure occurs.
    */
@@ -436,33 +446,34 @@ public class RecordReader {
     // initialize the data source map with upper-case keys
     this.dataSourceMap = (dataSourceMap == null) ? Collections.emptyMap()
         : new LinkedHashMap<>();
-    if (dataSourceMap != null) {
-      dataSourceMap.entrySet().forEach(entry -> {
-        String key = entry.getKey();
-        if (key == null) {
-          if (this.dataSourceMap.containsKey("")) return;
-          key = "";
-        }
-        this.dataSourceMap.put(key.toUpperCase(), entry.getValue());
-      });
-      this.dataSourceMap = Collections.unmodifiableMap(this.dataSourceMap);
-    }
+    try {
+      if (dataSourceMap != null) {
+        dataSourceMap.entrySet().forEach(entry -> {
+          String key = entry.getKey();
+          if (key != null) key = key.trim().toUpperCase();
+          String value = entry.getValue().trim().toUpperCase();
+          this.dataSourceMap.put(key, value);
+        });
+        this.dataSourceMap = Collections.unmodifiableMap(this.dataSourceMap);
+      }
 
-    // initialize the data source map with upper-case keys
-    this.entityTypeMap = (entityTypeMap == null) ? Collections.emptyMap()
-        : new LinkedHashMap<>();
-    if (entityTypeMap != null) {
-      entityTypeMap.entrySet().forEach(entry -> {
-        String key = entry.getKey();
-        if (key == null) {
-          if (this.entityTypeMap.containsKey("")) return;
-          key = "";
-        }
-        this.entityTypeMap.put(key.toUpperCase(), entry.getValue());
-      });
-      this.entityTypeMap = Collections.unmodifiableMap(this.entityTypeMap);
+      // initialize the data source map with upper-case keys
+      this.entityTypeMap = (entityTypeMap == null) ? Collections.emptyMap()
+          : new LinkedHashMap<>();
+      if (entityTypeMap != null) {
+        entityTypeMap.entrySet().forEach(entry -> {
+          String key = entry.getKey();
+          if (key != null) key = key.trim().toUpperCase();
+          String value = entry.getValue().trim().toUpperCase();
+          this.entityTypeMap.put(key, value);
+        });
+        this.entityTypeMap = Collections.unmodifiableMap(this.entityTypeMap);
+      }
+    } catch (NullPointerException e) {
+      System.err.println("DATA SOURCE MAP: " + dataSourceMap);
+      System.err.println("ENTITY TYPE MAP: " + entityTypeMap);
+      throw e;
     }
-
     this.sourceId = sourceId;
     if (this.sourceId != null) {
       this.sourceId = this.sourceId.trim();
@@ -521,14 +532,14 @@ public class RecordReader {
 
     // get the mapped data source
     String dataSource = this.dataSourceMap.get(dsrc);
-    if (dataSource == null) dataSource = this.dataSourceMap.get("");
+    if (dataSource == null) dataSource = this.dataSourceMap.get(null);
     if (dataSource != null && dataSource.trim().length() == 0) {
       dataSource = null;
     }
 
     // get the mapped entity type
     String entityType = this.entityTypeMap.get(etype);
-    if (entityType == null) entityType = this.entityTypeMap.get("");
+    if (entityType == null) entityType = this.entityTypeMap.get(null);
     if (entityType != null && entityType.trim().length() == 0) {
       entityType = null;
     }

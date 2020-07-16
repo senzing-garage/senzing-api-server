@@ -8,15 +8,12 @@ import com.senzing.util.Timers;
 import javax.json.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
 import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.*;
-import static com.senzing.api.model.SzFeatureInclusion.*;
 import static com.senzing.api.services.ServicesUtil.*;
-import static com.senzing.g2.engine.G2Engine.*;
 
 /**
  * Provides "why" API services.
@@ -36,9 +33,9 @@ public class WhyServices {
       @PathParam("dataSourceCode")                                String              dataSourceCode,
       @PathParam("recordId")                                      String              recordId,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
-      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
       @DefaultValue("true") @QueryParam("withFeatureStats")       boolean             withFeatureStats,
-      @DefaultValue("true") @QueryParam("withDerivedFeatures")    boolean             withDerivedFeatures,
+      @DefaultValue("true") @QueryParam("withInternalFeatures")    boolean             withInternalFeatures,
       @DefaultValue("false") @QueryParam("withRelationships")     boolean             withRelationships,
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
       @Context                                                    UriInfo             uriInfo)
@@ -58,7 +55,7 @@ public class WhyServices {
       int flags = getFlags(forceMinimal,
                            featureMode,
                            withFeatureStats,
-                           withDerivedFeatures,
+                           withInternalFeatures,
                            withRelationships);
 
       enteringQueue(timers);
@@ -108,9 +105,9 @@ public class WhyServices {
       @PathParam("entityId")                                      long                entityId,
       @DefaultValue("false") @QueryParam("withRelationships")     boolean             withRelationships,
       @DefaultValue("true") @QueryParam("withFeatureStats")       boolean             withFeatureStats,
-      @DefaultValue("true") @QueryParam("withDerivedFeatures")    boolean             withDerivedFeatures,
+      @DefaultValue("true") @QueryParam("withInternalFeatures")    boolean             withInternalFeatures,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
-      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
       @Context                                                    UriInfo             uriInfo)
   {
@@ -126,7 +123,7 @@ public class WhyServices {
       int flags = getFlags(forceMinimal,
                            featureMode,
                            withFeatureStats,
-                           withDerivedFeatures,
+                           withInternalFeatures,
                            withRelationships);
 
       enteringQueue(timers);
@@ -177,9 +174,9 @@ public class WhyServices {
       @QueryParam("dataSource2")                                  String              dataSourceCode2,
       @QueryParam("recordId2")                                    String              recordId2,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
-      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
       @DefaultValue("true") @QueryParam("withFeatureStats")       boolean             withFeatureStats,
-      @DefaultValue("true") @QueryParam("withDerivedFeatures")    boolean             withDerivedFeatures,
+      @DefaultValue("true") @QueryParam("withInternalFeatures")    boolean             withInternalFeatures,
       @DefaultValue("false") @QueryParam("withRelationships")     boolean             withRelationships,
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
       @Context                                                    UriInfo             uriInfo)
@@ -221,7 +218,7 @@ public class WhyServices {
       int flags = getFlags(forceMinimal,
                            featureMode,
                            withFeatureStats,
-                           withDerivedFeatures,
+                           withInternalFeatures,
                            withRelationships);
 
       enteringQueue(timers);

@@ -50,72 +50,84 @@ public class RepositoryManager {
   private static String engineInitializedWith = null;
 
   static {
-    Set<String> set = new LinkedHashSet<>();
-    set.add("G2Module.ini.template".toLowerCase());
-    set.add("G2Project.ini.template".toLowerCase());
-    set.add("G2C.db.template".toLowerCase());
-    set.add("g2config.json.template".toLowerCase());
-    EXCLUDED_TEMPLATE_FILES = Collections.unmodifiableSet(set);
+    try {
+      Set<String> set = new LinkedHashSet<>();
+      set.add("G2Module.ini".toLowerCase());
+      set.add("G2Project.ini".toLowerCase());
+      set.add("G2C.db".toLowerCase());
+      set.add("g2config.json".toLowerCase());
+      EXCLUDED_TEMPLATE_FILES = Collections.unmodifiableSet(set);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
+    }
   }
 
   static {
-    InstallLocations locations = InstallLocations.findLocations();
-
-    if (locations != null) {
-      INSTALL_DIR   = locations.getInstallDirectory();
-      CONFIG_DIR    = locations.getConfigDirectory();
-      SUPPORT_DIR   = locations.getSupportDirectory();
-      RESOURCE_DIR  = locations.getResourceDirectory();
-      TEMPLATES_DIR = locations.getTemplatesDirectory();
-    } else {
-      INSTALL_DIR   = null;
-      CONFIG_DIR    = null;
-      SUPPORT_DIR   = null;
-      RESOURCE_DIR  = null;
-      TEMPLATES_DIR = null;
-    }
-
-    G2Engine    engineApi     = null;
-    G2Config    configApi     = null;
-    G2ConfigMgr configMgrApi  = null;
     try {
-      engineApi     = NativeApiFactory.createEngineApi();
-      configApi     = NativeApiFactory.createConfigApi();
-      configMgrApi  = NativeApiFactory.createConfigMgrApi();
+      InstallLocations locations = InstallLocations.findLocations();
+
+      if (locations != null) {
+        INSTALL_DIR   = locations.getInstallDirectory();
+        CONFIG_DIR    = locations.getConfigDirectory();
+        SUPPORT_DIR   = locations.getSupportDirectory();
+        RESOURCE_DIR  = locations.getResourceDirectory();
+        TEMPLATES_DIR = locations.getTemplatesDirectory();
+      } else {
+        INSTALL_DIR   = null;
+        CONFIG_DIR    = null;
+        SUPPORT_DIR   = null;
+        RESOURCE_DIR  = null;
+        TEMPLATES_DIR = null;
+      }
+
+      G2Engine    engineApi     = null;
+      G2Config    configApi     = null;
+      G2ConfigMgr configMgrApi  = null;
+      try {
+        engineApi     = NativeApiFactory.createEngineApi();
+        configApi     = NativeApiFactory.createConfigApi();
+        configMgrApi  = NativeApiFactory.createConfigMgrApi();
+
+      } catch (Exception e) {
+        File libPath = new File(INSTALL_DIR, "lib");
+        e.printStackTrace();
+        System.err.println();
+        switch (RUNTIME_OS_FAMILY) {
+          case WINDOWS:
+            System.err.println("Failed to load native G2.dll library.");
+            System.err.println(
+                "Check PATH environment variable for " + libPath);
+            break;
+          case MAC_OS:
+            System.err.println("Failed to load native libG2.so library");
+            System.err.println(
+                "Check DYLD_LIBRARY_PATH environment variable for: ");
+            System.err.println("     - " + libPath);
+            System.err.println("     - " + (new File(libPath, "macos")));
+            break;
+          case UNIX:
+            System.err.println("Failed to load native libG2.so library");
+            System.err.println(
+                "Check LD_LIBRARY_PATH environment variable for: ");
+            System.err.println("     - " + libPath);
+            System.err.println("     - " + (new File(libPath, "debian")));
+            break;
+          default:
+            // do nothing
+        }
+        throw new ExceptionInInitializerError(e);
+
+      } finally {
+        ENGINE_API      = engineApi;
+        CONFIG_API      = configApi;
+        CONFIG_MGR_API  = configMgrApi;
+      }
 
     } catch (Exception e) {
-      File libPath = new File(INSTALL_DIR, "lib");
       e.printStackTrace();
-      System.err.println();
-      switch (RUNTIME_OS_FAMILY) {
-        case WINDOWS:
-          System.err.println("Failed to load native G2.dll library.");
-          System.err.println(
-              "Check PATH environment variable for " + libPath);
-          break;
-        case MAC_OS:
-          System.err.println("Failed to load native libG2.so library");
-          System.err.println(
-              "Check DYLD_LIBRARY_PATH environment variable for: ");
-          System.err.println("     - " + libPath);
-          System.err.println("     - " + (new File(libPath, "macos")));
-          break;
-        case UNIX:
-          System.err.println("Failed to load native libG2.so library");
-          System.err.println(
-              "Check LD_LIBRARY_PATH environment variable for: ");
-          System.err.println("     - " + libPath);
-          System.err.println("     - " + (new File(libPath, "debian")));
-          break;
-        default:
-          // do nothing
-      }
       throw new ExceptionInInitializerError(e);
-
-    } finally {
-      ENGINE_API      = engineApi;
-      CONFIG_API      = configApi;
-      CONFIG_MGR_API  = configMgrApi;
     }
   }
 
@@ -155,9 +167,43 @@ public class RepositoryManager {
         }
       }
 
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
+
     } finally {
       JAR_BASE_URL  = jarBaseUrl;
       JAR_FILE_NAME = jarFileName;
+    }
+  }
+
+  /**
+   * Copies the config template files from the template directory to the
+   * specified configuration directory (creating the directory if necessary).
+   *
+   * @param templateDir The template directory to get the templates from.
+   * @param configDir The config directory to copy the files to.
+   * @throws IOException If an I/O failure occurs.
+   */
+  public static void copyConfigFiles(File   templateDir,
+                                     File   configDir)
+    throws IOException
+  {
+    if (templateDir != null) {
+      File[] templateFiles = templateDir.listFiles(
+          f -> !f.getName().endsWith(".template") && !f.isDirectory()
+              && (!EXCLUDED_TEMPLATE_FILES.contains(f.getName().toLowerCase())));
+
+      if (templateFiles.length > 0)
+      {
+        if (!configDir.exists()) {
+          configDir.mkdirs();
+        }
+        for (File templateFile : templateFiles) {
+          File targetFile = new File(configDir, templateFile.getName());
+          copyFile(templateFile, targetFile);
+        }
+      }
     }
   }
 
@@ -546,31 +592,13 @@ public class RepositoryManager {
     }
     try {
       directory.mkdirs();
-      File repoConfigDir = null;
-      if (TEMPLATES_DIR != null) {
-        File[] templateFiles = TEMPLATES_DIR.listFiles(
-            f -> f.getName().endsWith(".template") && !f.isDirectory()
-             && (!EXCLUDED_TEMPLATE_FILES.contains(f.getName().toLowerCase())));
-
-        if (templateFiles.length > 0)
-        {
-          repoConfigDir = new File(directory, "etc");
-          repoConfigDir.mkdirs();
-          for (File templateFile : templateFiles) {
-            String  templateName  = templateFile.getName();
-            int     nameLength    = templateName.length();
-            int     targetLength  = nameLength - ".template".length();
-            String  targetName    = templateName.substring(0, targetLength);
-            File    targetFile    = new File(repoConfigDir, targetName);
-            copyFile(templateFile, targetFile);
-          }
-        }
-      }
+      File repoConfigDir = new File(directory, "etc");
+      copyConfigFiles(TEMPLATES_DIR, repoConfigDir);
 
       // find the template DB file
       File templateDB = (TEMPLATES_DIR != null)
-          ? new File(TEMPLATES_DIR, "G2C.db.template")
-          : new File(SUPPORT_DIR, "G2C.db.template");
+          ? new File(TEMPLATES_DIR, "G2C.db")
+          : new File(SUPPORT_DIR, "G2C.db");
       if (!templateDB.exists()) {
         templateDB = new File(SUPPORT_DIR, "G2C.db");
       }
@@ -736,7 +764,7 @@ public class RepositoryManager {
         returnCode = CONFIG_MGR_API.initV2(moduleName, initJsonText, verbose);
         if (returnCode != 0) {
           CONFIG_API.destroy();
-          logError("G2ConfigMgr.init()", CONFIG_MGR_API);
+          logError("G2ConfigMgr.initV2()", CONFIG_MGR_API);
           return;
         }
         baseInitializedWith = initializer;
@@ -1657,6 +1685,136 @@ public class RepositoryManager {
 
     return true;
   }
+
+  /**
+   * Updates the configuration to be the configuration in the specified {@link
+   * JsonObject}.
+   *
+   * @param repository The directory for the repository.
+   * @param configJson The {@link JsonObject} describing the configuration.
+   * @param comment The comment to associate with the config.
+   *
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
+   */
+  public static Configuration updateConfig(File       repository,
+                                           JsonObject configJson,
+                                           String     comment)
+  {
+    return updateConfig(repository, configJson, comment, false);
+  }
+
+  /**
+   * Updates the configuration to be the configuration in the specified {@link
+   * JsonObject}.
+   *
+   * @param repository The directory for the repository.
+   * @param verbose <tt>true</tt> for verbose API logging, otherwise
+   *                <tt>false</tt>
+   * @param configJson The {@link JsonObject} describing the configuration.
+   * @param comment The comment to associate with the config.
+   *
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
+   */
+  public static Configuration updateConfig(File       repository,
+                                           boolean    verbose,
+                                           JsonObject configJson,
+                                           String     comment)
+  {
+    return updateConfig(repository, verbose, configJson, comment, false);
+  }
+
+  /**
+   * Updates the configuration to be the configuration in the specified {@link
+   * JsonObject}.
+   *
+   * @param repository The directory for the repository.
+   * @param configJson The {@link JsonObject} describing the configuration.
+   * @param comment The comment to associate with the config.
+   * @param silent <tt>true</tt> if no feedback should be given to the user
+   *               upon completion, otherwise <tt>false</tt>
+   *
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
+   */
+  public static Configuration updateConfig(File       repository,
+                                           JsonObject configJson,
+                                           String     comment,
+                                           boolean    silent)
+  {
+    return updateConfig(repository, false, configJson, comment, silent);
+  }
+
+  /**
+   * Updates the configuration to be the configuration in the specified {@link
+   * JsonObject}.
+   *
+   * @param repository The directory for the repository.
+   * @param verbose <tt>true</tt> for verbose API logging, otherwise
+   *                <tt>false</tt>
+   * @param configJson The {@link JsonObject} describing the configuration.
+   * @param comment The comment to associate with the config.
+   * @param silent <tt>true</tt> if no feedback should be given to the user
+   *               upon completion, otherwise <tt>false</tt>
+   *
+   * @return The {@link Configuration} describing the new configuration or
+   *         <tt>null</tt> if the operation failed.
+   */
+  public static Configuration updateConfig(File         repository,
+                                           boolean      verbose,
+                                           JsonObject   configJson,
+                                           String       comment,
+                                           boolean      silent)
+  {
+    initApis(repository, verbose);
+    Long        resultConfigId  = null;
+    JsonObject  resultConfig    = null;
+
+    Result<Long> configId = new Result<>();
+    int returnCode = 0;
+    String configJsonText = JsonUtils.toJsonText(configJson);
+    Result<Long> result = new Result<>();
+    returnCode = CONFIG_MGR_API.addConfig(configJsonText, comment, result);
+    if (returnCode != 0) {
+      logError("G2ConfigMgr.addConfig()", CONFIG_MGR_API);
+      return null;
+    }
+    resultConfigId = result.getValue();
+    returnCode = CONFIG_MGR_API.setDefaultConfigID(resultConfigId);
+    if (returnCode != 0) {
+      logError("G2ConfigMgr.setDefaultConfigID()", CONFIG_MGR_API);
+      return null;
+    }
+
+    StringBuffer sb = new StringBuffer();
+    returnCode = CONFIG_MGR_API.getConfig(resultConfigId, sb);
+    if (returnCode != 0) {
+      logError("G2ConfigMgr.getConfig()", CONFIG_MGR_API);
+      return null;
+    }
+
+    // parse the configuration
+    resultConfig = JsonUtils.parseJsonObject(sb.toString());
+
+    if (!silent) {
+      System.out.println();
+      System.out.println("Added config and set as default: " + resultConfigId);
+      System.out.println();
+    }
+
+    destroyApis();
+    initApis(repository, verbose);
+
+    // check if the result config ID is not set (usually means that all the
+    // data sources to be added already existed)
+    if (resultConfigId == null) {
+      return getDefaultConfig();
+    }
+
+    return new Configuration(resultConfigId, resultConfig);
+  }
+
 
   /**
    * Configures the specified data sources for the specified repository

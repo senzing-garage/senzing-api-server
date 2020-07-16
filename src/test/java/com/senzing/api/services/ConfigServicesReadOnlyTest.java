@@ -98,7 +98,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
   }
 
   @Test
-  public void postDataSourcesTestViaHttp()
+  public void postDataSourcesViaHttpTest()
   {
     this.performTest(() -> {
       SzDataSource dataSource
@@ -134,7 +134,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
     });
   }
 
-  @Test
+  //@Test
   public void postEntityClassesTest()
   {
     this.performTest(() -> {
@@ -167,8 +167,8 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
     });
   }
 
-  @Test
-  public void postEntityClassesTestViaHttp()
+  //@Test
+  public void postEntityClassesViaHttpTest()
   {
     this.performTest(() -> {
       SzEntityClass entityClass = new SzEntityClass(
@@ -239,7 +239,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
   }
 
   @Test
-  public void postEntityTypesTestViaHttp()
+  public void postEntityTypesViaHttpTest()
   {
     this.performTest(() -> {
       SzEntityType entityType = new SzEntityType(
@@ -312,7 +312,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
   }
 
   @Test
-  public void postEntityTypesForClassTestViaHttp()
+  public void postEntityTypesForClassViaHttpTest()
   {
     this.performTest(() -> {
       SzEntityType entityType = new SzEntityType(

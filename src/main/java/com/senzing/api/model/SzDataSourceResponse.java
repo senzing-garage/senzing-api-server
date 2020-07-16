@@ -75,6 +75,13 @@ public class SzDataSourceResponse extends SzResponseWithRawData
   }
 
   /**
+   * Private setter for JSON marshalling.
+   */
+  private void setData(Data data) {
+    this.data = data;
+  }
+
+  /**
    * Adds the specified data source providing the specified data source
    * is not already containe
    *

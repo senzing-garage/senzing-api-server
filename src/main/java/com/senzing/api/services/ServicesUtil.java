@@ -15,13 +15,46 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.*;
 
-import static com.senzing.api.model.SzFeatureInclusion.*;
+import static com.senzing.api.model.SzFeatureMode.*;
 import static com.senzing.g2.engine.G2Engine.*;
 
 /**
  * Utility functions for services.
  */
 public class ServicesUtil {
+  /**
+   * HTTP Response code for server error.
+   */
+  public static final int SERVER_ERROR = 500;
+
+  /**
+   * HTTP Response code for bad request.
+   */
+  public static final int BAD_REQUEST = 400;
+
+  /**
+   * HTTP Response code for forbidden.
+   */
+  public static final int FORBIDDEN = 403;
+
+  /**
+   * HTTP Response code for "not found".
+\   */
+  public static final int NOT_FOUND = 404;
+
+  /**
+   * HTTP Response code for "not allowed".
+   */
+  public static final int NOT_ALLOWED = 405;
+
+  /**
+   * Default flags for retrieving records.
+   */
+  public static final int DEFAULT_RECORD_FLAGS
+      = G2_ENTITY_INCLUDE_RECORD_FORMATTED_DATA
+      | G2_ENTITY_INCLUDE_RECORD_JSON_DATA
+      | G2_ENTITY_INCLUDE_RECORD_SUMMARY;
+
   /**
    * Creates an {@link InternalServerErrorException} and builds a response
    * with an {@link SzErrorResponse} using the specified {@link UriInfo}
@@ -43,9 +76,9 @@ public class ServicesUtil {
       Timers        timers,
       Exception     exception)
   {
-    Response.ResponseBuilder builder = Response.status(500);
+    Response.ResponseBuilder builder = Response.status(SERVER_ERROR);
     builder.entity(
-        new SzErrorResponse(httpMethod, 500, uriInfo, timers, exception));
+        new SzErrorResponse(httpMethod, SERVER_ERROR, uriInfo, timers, exception));
     return new InternalServerErrorException(builder.build());
   }
 
@@ -70,9 +103,9 @@ public class ServicesUtil {
       Timers        timers,
       G2Fallible    fallible)
   {
-    Response.ResponseBuilder builder = Response.status(500);
+    Response.ResponseBuilder builder = Response.status(SERVER_ERROR);
     SzErrorResponse errorResponse =
-        new SzErrorResponse(httpMethod, 500, uriInfo, timers, fallible);
+        new SzErrorResponse(httpMethod, SERVER_ERROR, uriInfo, timers, fallible);
     builder.entity(errorResponse);
     fallible.clearLastException();
     return new InternalServerErrorException(
@@ -101,9 +134,9 @@ public class ServicesUtil {
       Timers        timers,
       G2Fallible    fallible)
   {
-    Response.ResponseBuilder builder = Response.status(404);
+    Response.ResponseBuilder builder = Response.status(NOT_FOUND);
     builder.entity(
-        new SzErrorResponse(httpMethod, 404, uriInfo, timers, fallible));
+        new SzErrorResponse(httpMethod, NOT_FOUND, uriInfo, timers, fallible));
     fallible.clearLastException();
     return new NotFoundException(builder.build());
   }
@@ -125,9 +158,9 @@ public class ServicesUtil {
       UriInfo       uriInfo,
       Timers        timers)
   {
-    Response.ResponseBuilder builder = Response.status(404);
+    Response.ResponseBuilder builder = Response.status(NOT_FOUND);
     builder.entity(
-        new SzErrorResponse(httpMethod, 404, uriInfo, timers));
+        new SzErrorResponse(httpMethod, NOT_FOUND, uriInfo, timers));
     return new NotFoundException(builder.build());
   }
 
@@ -151,11 +184,38 @@ public class ServicesUtil {
       Timers        timers,
       String        errorMessage)
   {
-    Response.ResponseBuilder builder = Response.status(404);
+    Response.ResponseBuilder builder = Response.status(NOT_FOUND);
     builder.entity(
         new SzErrorResponse(
-            httpMethod, 404, uriInfo, timers, errorMessage));
+            httpMethod, NOT_FOUND, uriInfo, timers, errorMessage));
     return new NotFoundException(builder.build());
+  }
+
+  /**
+   * Creates a {@link NotAllowedException} and builds a response
+   * with an {@link SzErrorResponse} using the specified {@link UriInfo}.
+   *
+   * @param httpMethod The HTTP method for the request.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
+   * @param errorMessage The error message.
+   *
+   * @return The {@link InternalServerErrorException}
+   */
+  static NotAllowedException newNotAllowedException(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      Timers        timers,
+      String        errorMessage)
+  {
+    Response.ResponseBuilder builder = Response.status(NOT_ALLOWED);
+    builder.entity(
+        new SzErrorResponse(
+            httpMethod, NOT_ALLOWED, uriInfo, timers, errorMessage));
+    return new NotAllowedException(builder.build());
   }
 
   /**
@@ -179,9 +239,9 @@ public class ServicesUtil {
       Timers        timers,
       G2Fallible    fallible)
   {
-    Response.ResponseBuilder builder = Response.status(400);
+    Response.ResponseBuilder builder = Response.status(BAD_REQUEST);
     builder.entity(
-        new SzErrorResponse(httpMethod, 400, uriInfo, timers, fallible));
+        new SzErrorResponse(httpMethod, BAD_REQUEST, uriInfo, timers, fallible));
     fallible.clearLastException();
     return new BadRequestException(builder.build());
   }
@@ -207,10 +267,10 @@ public class ServicesUtil {
       Timers        timers,
       String        errorMessage)
   {
-    Response.ResponseBuilder builder = Response.status(400);
+    Response.ResponseBuilder builder = Response.status(BAD_REQUEST);
     builder.entity(
         new SzErrorResponse(
-            httpMethod, 400, uriInfo, timers, errorMessage));
+            httpMethod, BAD_REQUEST, uriInfo, timers, errorMessage));
     return new BadRequestException(builder.build());
   }
 
@@ -235,9 +295,9 @@ public class ServicesUtil {
       Timers        timers,
       Exception     exception)
   {
-    Response.ResponseBuilder builder = Response.status(400);
+    Response.ResponseBuilder builder = Response.status(BAD_REQUEST);
     builder.entity(
-        new SzErrorResponse(httpMethod, 400, uriInfo, timers, exception));
+        new SzErrorResponse(httpMethod, BAD_REQUEST, uriInfo, timers, exception));
     return new BadRequestException(builder.build());
   }
 
@@ -262,10 +322,10 @@ public class ServicesUtil {
       Timers        timers,
       String        errorMessage)
   {
-    Response.ResponseBuilder builder = Response.status(403);
+    Response.ResponseBuilder builder = Response.status(FORBIDDEN);
     builder.entity(
         new SzErrorResponse(
-            httpMethod, 403, uriInfo, timers, errorMessage));
+            httpMethod, FORBIDDEN, uriInfo, timers, errorMessage));
     return new ForbiddenException(builder.build());
   }
 
@@ -516,47 +576,58 @@ public class ServicesUtil {
    *
    * @param forceMinimal Whether or not minimal format is forced.
    *
-   * @param featureMode The {@link SzFeatureInclusion} describing how features
+   * @param featureMode The {@link SzFeatureMode} describing how features
    *                    are retrieved.
    *
    * @param withFeatureStats Whether or not feature stats should be included.
    *
-   * @param withDerivedFeatures Whether or not to include derived features.
+   * @param withInternalFeatures Whether or not to include internal features.
    *
    * @param withRelationships Whether or not to include relationships.
    *
    * @return The flags to use given the parameters.
    */
   static int getFlags(boolean             forceMinimal,
-                      SzFeatureInclusion  featureMode,
+                      SzFeatureMode       featureMode,
                       boolean             withFeatureStats,
-                      boolean             withDerivedFeatures,
+                      boolean             withInternalFeatures,
                       boolean             withRelationships)
   {
-    int flags = withRelationships
-        ? G2_ENTITY_INCLUDE_ALL_RELATIONS
-        : G2_ENTITY_INCLUDE_NO_RELATIONS;
+    int flags = G2_ENTITY_INCLUDE_RECORD_DATA
+              | G2_SEARCH_INCLUDE_FEATURE_SCORES; // for searches
 
+    // check for relationships
+    flags |= withRelationships ? G2_ENTITY_INCLUDE_ALL_RELATIONS : 0;
+
+    // check if forcing minimal format
     if (forceMinimal) {
       // minimal format, not much else to do
-      flags |= G2_ENTITY_MINIMAL_FORMAT;
+      return flags;
+    }
 
-    } else if (featureMode == NONE) {
-      // no features requested
-      flags |= G2_ENTITY_INCLUDE_NO_FEATURES;
+    // add the standard flags
+    flags |= (G2_ENTITY_INCLUDE_ENTITY_NAME | DEFAULT_RECORD_FLAGS);
 
-    } else {
+    // add the standard relationship flags
+    if (withRelationships) {
+      flags |= G2_ENTITY_INCLUDE_RELATED_ENTITY_NAME
+            | G2_ENTITY_INCLUDE_RELATED_RECORD_SUMMARY
+            | G2_ENTITY_INCLUDE_RELATED_MATCHING_INFO;
+    }
+
+    // add the feature flags
+    if (featureMode != NONE) {
       // get represenative features
       flags |= G2_ENTITY_INCLUDE_REPRESENTATIVE_FEATURES;
 
       // check if feature stats are requested
       if (withFeatureStats) {
-        flags |= G2_ENTITY_SHOW_FEATURES_STATS;
+        flags |= G2_ENTITY_OPTION_INCLUDE_FEATURE_STATS;
       }
 
-      // check if derived features are requested
-      if (withDerivedFeatures) {
-        flags |= G2_ENTITY_SHOW_FEATURES_EXPRESSED;
+      // check if internal features are requested
+      if (withInternalFeatures) {
+        flags |= G2_ENTITY_OPTION_INCLUDE_INTERNAL_FEATURES;
       }
     }
     return flags;
@@ -569,12 +640,12 @@ public class ServicesUtil {
    *
    * @param forceMinimal Whether or not minimal format is forced.
    *
-   * @param featureMode The {@link SzFeatureInclusion} describing how features
+   * @param featureMode The {@link SzFeatureMode} describing how features
    *                    are retrieved.
    */
-  static void postProcessEntityData(SzEntityData        entityData,
-                                    boolean             forceMinimal,
-                                    SzFeatureInclusion  featureMode)
+  static void postProcessEntityData(SzEntityData  entityData,
+                                    boolean       forceMinimal,
+                                    SzFeatureMode featureMode)
   {
     // check if we need to strip out duplicate features
     if (featureMode == REPRESENTATIVE) {
@@ -604,7 +675,10 @@ public class ServicesUtil {
    */
   static void stripDuplicateFeatureValues(SzEntityData entityData) {
     stripDuplicateFeatureValues(entityData.getResolvedEntity());
-    entityData.getRelatedEntities().forEach(e->stripDuplicateFeatureValues(e));
+    List<SzRelatedEntity> relatedEntities = entityData.getRelatedEntities();
+    if (relatedEntities != null) {
+      relatedEntities.forEach(e -> stripDuplicateFeatureValues(e));
+    }
   }
 
   /**
@@ -613,9 +687,11 @@ public class ServicesUtil {
    */
   static void stripDuplicateFeatureValues(SzResolvedEntity entity) {
     Map<String, List<SzEntityFeature>> featureMap = entity.getFeatures();
-    featureMap.values().forEach(list -> {
-      list.forEach(f -> f.setDuplicateValues(null));
-    });
+    if (featureMap != null) {
+      featureMap.values().forEach(list -> {
+        list.forEach(f -> f.setDuplicateValues(null));
+      });
+    }
   }
 
 
@@ -739,5 +815,4 @@ public class ServicesUtil {
   {
     return "uriText=[ " + uriText + " ], bodyContent=[ " + bodyContent + " ]";
   }
-
 }

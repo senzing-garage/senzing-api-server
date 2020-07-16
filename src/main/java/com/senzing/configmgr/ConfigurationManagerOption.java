@@ -96,59 +96,65 @@ enum ConfigurationManagerOption
   }
 
   static {
-    Map<String, ConfigurationManagerOption> lookupMap = new LinkedHashMap<>();
-    for (ConfigurationManagerOption opt: values()) {
-      lookupMap.put(opt.getCommandLineFlag(), opt);
+    try {
+      Map<String, ConfigurationManagerOption> lookupMap = new LinkedHashMap<>();
+      for (ConfigurationManagerOption opt: values()) {
+        lookupMap.put(opt.getCommandLineFlag(), opt);
+      }
+      OPTIONS_BY_FLAG = Collections.unmodifiableMap(lookupMap);
+
+      Set<Set<ConfigurationManagerOption>> nodeps = Collections.singleton(noneOf(ConfigurationManagerOption.class));
+
+      HELP.conflicts = complementOf(EnumSet.of(HELP));
+      HELP.dependencies = nodeps;
+
+      INIT_FILE.conflicts = of(INIT_JSON, INIT_ENV_VAR, MIGRATE_INI_FILE);
+      INIT_FILE.dependencies = nodeps;
+
+      INIT_JSON.conflicts = of(INIT_FILE, INIT_ENV_VAR, MIGRATE_INI_FILE);
+      INIT_JSON.dependencies = nodeps;
+
+      INIT_ENV_VAR.conflicts = of(INIT_FILE, INIT_JSON, MIGRATE_INI_FILE);
+      INIT_ENV_VAR.dependencies = nodeps;
+
+      Set<Set<ConfigurationManagerOption>> initDeps = new LinkedHashSet<>();
+      initDeps.add(of(INIT_FILE));
+      initDeps.add(of(INIT_ENV_VAR));
+      initDeps.add(of(INIT_JSON));
+      initDeps = Collections.unmodifiableSet(initDeps);
+
+      LIST_CONFIGS.conflicts = complementOf(
+          of(INIT_FILE, INIT_JSON, INIT_ENV_VAR, VERBOSE));
+      LIST_CONFIGS.dependencies = initDeps;
+
+      GET_DEFAULT_CONFIG_ID.conflicts = complementOf(
+          of(INIT_FILE, INIT_JSON, INIT_ENV_VAR, VERBOSE));
+      GET_DEFAULT_CONFIG_ID.dependencies = initDeps;
+
+      IMPORT_CONFIG.conflicts = complementOf(
+          of(INIT_FILE, INIT_JSON, INIT_ENV_VAR, VERBOSE));
+      IMPORT_CONFIG.dependencies = initDeps;
+
+      Set<Set<ConfigurationManagerOption>> initConfigDeps = new LinkedHashSet<>();
+      initConfigDeps.add(of(INIT_FILE, CONFIG_ID));
+      initConfigDeps.add(of(INIT_ENV_VAR, CONFIG_ID));
+      initConfigDeps.add(of(INIT_JSON, CONFIG_ID));
+      initConfigDeps = Collections.unmodifiableSet(initConfigDeps);
+
+      SET_DEFAULT_CONFIG_ID.conflicts = complementOf(
+          of(INIT_FILE, INIT_JSON, INIT_ENV_VAR, VERBOSE, CONFIG_ID));
+      SET_DEFAULT_CONFIG_ID.dependencies = initConfigDeps;
+
+      EXPORT_CONFIG.conflicts = complementOf(
+          of(INIT_FILE, INIT_JSON, INIT_ENV_VAR, VERBOSE, CONFIG_ID));
+      EXPORT_CONFIG.dependencies = initDeps;
+
+      MIGRATE_INI_FILE.conflicts = complementOf(of(VERBOSE));
+      MIGRATE_INI_FILE.dependencies = nodeps;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
     }
-    OPTIONS_BY_FLAG = Collections.unmodifiableMap(lookupMap);
-
-    Set<Set<ConfigurationManagerOption>> nodeps = Collections.singleton(noneOf(ConfigurationManagerOption.class));
-
-    HELP.conflicts = complementOf(EnumSet.of(HELP));
-    HELP.dependencies = nodeps;
-
-    INIT_FILE.conflicts = of(INIT_JSON, INIT_ENV_VAR, MIGRATE_INI_FILE);
-    INIT_FILE.dependencies = nodeps;
-
-    INIT_JSON.conflicts = of(INIT_FILE, INIT_ENV_VAR, MIGRATE_INI_FILE);
-    INIT_JSON.dependencies = nodeps;
-
-    INIT_ENV_VAR.conflicts = of(INIT_FILE, INIT_JSON, MIGRATE_INI_FILE);
-    INIT_ENV_VAR.dependencies = nodeps;
-
-    Set<Set<ConfigurationManagerOption>> initDeps = new LinkedHashSet<>();
-    initDeps.add(of(INIT_FILE));
-    initDeps.add(of(INIT_ENV_VAR));
-    initDeps.add(of(INIT_JSON));
-    initDeps = Collections.unmodifiableSet(initDeps);
-
-    LIST_CONFIGS.conflicts = complementOf(
-        of(INIT_FILE, INIT_JSON, INIT_ENV_VAR, VERBOSE));
-    LIST_CONFIGS.dependencies = initDeps;
-
-    GET_DEFAULT_CONFIG_ID.conflicts = complementOf(
-        of(INIT_FILE, INIT_JSON, INIT_ENV_VAR, VERBOSE));
-    GET_DEFAULT_CONFIG_ID.dependencies = initDeps;
-
-    IMPORT_CONFIG.conflicts = complementOf(
-        of(INIT_FILE, INIT_JSON, INIT_ENV_VAR, VERBOSE));
-    IMPORT_CONFIG.dependencies = initDeps;
-
-    Set<Set<ConfigurationManagerOption>> initConfigDeps = new LinkedHashSet<>();
-    initConfigDeps.add(of(INIT_FILE, CONFIG_ID));
-    initConfigDeps.add(of(INIT_ENV_VAR, CONFIG_ID));
-    initConfigDeps.add(of(INIT_JSON, CONFIG_ID));
-    initConfigDeps = Collections.unmodifiableSet(initConfigDeps);
-
-    SET_DEFAULT_CONFIG_ID.conflicts = complementOf(
-        of(INIT_FILE, INIT_JSON, INIT_ENV_VAR, VERBOSE, CONFIG_ID));
-    SET_DEFAULT_CONFIG_ID.dependencies = initConfigDeps;
-
-    EXPORT_CONFIG.conflicts = complementOf(
-        of(INIT_FILE, INIT_JSON, INIT_ENV_VAR, VERBOSE, CONFIG_ID));
-    EXPORT_CONFIG.dependencies = initDeps;
-
-    MIGRATE_INI_FILE.conflicts = complementOf(of(VERBOSE));
-    MIGRATE_INI_FILE.dependencies = nodeps;
   }
 }

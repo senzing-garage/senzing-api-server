@@ -8,7 +8,7 @@ import java.util.Map;
  * Enumerates the various methods for retrieving features for entities.
  *
  */
-public enum SzFeatureInclusion {
+public enum SzFeatureMode {
   /**
    * Do not include any feature values.  This option provides the fastest
    * performance because no feature values need to be retrieved.

@@ -5,14 +5,13 @@ import com.senzing.util.Timers;
 
 import javax.ws.rs.core.UriInfo;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 /**
- * The response containing the record ID of the record that was loaded.
+ * The response for a reevaluation operation..
  *
  */
-public class SzLoadRecordResponse extends SzResponseWithRawData
+public class SzReevaluateResponse extends SzResponseWithRawData
 {
   /**
    * The data for this instance.
@@ -22,8 +21,8 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
   /**
    * Default constructor.
    */
-  public SzLoadRecordResponse() {
-    this.data.recordId = null;
+  public SzReevaluateResponse() {
+    // do nothing
   }
 
   /**
@@ -38,7 +37,7 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
    *
    * @param timers The {@link Timers} object for the timings that were taken.
    */
-  public SzLoadRecordResponse(SzHttpMethod httpMethod,
+  public SzReevaluateResponse(SzHttpMethod httpMethod,
                               int          httpStatusCode,
                               String       selfLink,
                               Timers       timers)
@@ -57,21 +56,17 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
    *
    * @param timers The {@link Timers} object for the timings that were taken.
    *
-   * @param recordId The record ID of the record that was loaded.
-   *
    * @param info The {@link SzResolutionInfo} providing the information
    *             associated with the resolution of the record.
    */
-  public SzLoadRecordResponse(SzHttpMethod      httpMethod,
+  public SzReevaluateResponse(SzHttpMethod      httpMethod,
                               int               httpStatusCode,
                               String            selfLink,
                               Timers            timers,
-                              String            recordId,
                               SzResolutionInfo  info)
   {
     super(httpMethod, httpStatusCode, selfLink, timers);
-    this.data.recordId  = recordId;
-    this.data.info      = info;
+    this.data.info = info;
   }
 
   /**
@@ -86,7 +81,7 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
    *
    * @param timers The {@link Timers} object for the timings that were taken.
    */
-  public SzLoadRecordResponse(SzHttpMethod httpMethod,
+  public SzReevaluateResponse(SzHttpMethod httpMethod,
                               int          httpStatusCode,
                               UriInfo      uriInfo,
                               Timers       timers)
@@ -103,21 +98,17 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
-   * @param recordId The record ID of the record that was loaded.
-   *
    * @param info The {@link SzResolutionInfo} providing the information
    *             associated with the resolution of the record.
    */
-  public SzLoadRecordResponse(SzHttpMethod      httpMethod,
+  public SzReevaluateResponse(SzHttpMethod      httpMethod,
                               int               httpStatusCode,
                               UriInfo           uriInfo,
                               Timers            timers,
-                              String            recordId,
                               SzResolutionInfo  info)
   {
     super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.data.recordId  = recordId;
-    this.data.info      = info;
+    this.data.info = info;
   }
 
   /**
@@ -127,15 +118,6 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
    */
   public Data getData() {
     return this.data;
-  }
-
-  /**
-   * Sets the record ID of the record that was loaded.
-   *
-   * @param recordId The record ID of the record.
-   */
-  public void setRecordId(String recordId) {
-    this.data.recordId = recordId;
   }
 
   /**
@@ -154,11 +136,6 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
    */
   public static class Data {
     /**
-     * The record ID of the record that was loaded.
-     */
-    private String recordId;
-
-    /**
      * The {@link SzResolutionInfo} providing the information associated with
      * the resolution of the record.
      */
@@ -168,18 +145,7 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
      * Private default constructor.
      */
     private Data() {
-      this.recordId = null;
-      this.info     = null;
-    }
-
-    /**
-     * Gets the record ID of the record that was loaded.
-     *
-     * @return The record ID of the record that was loaded.
-     */
-    @JsonInclude(NON_NULL)
-    public String getRecordId() {
-      return this.recordId;
+      this.info = null;
     }
 
     /**

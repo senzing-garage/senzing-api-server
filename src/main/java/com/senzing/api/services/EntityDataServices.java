@@ -8,15 +8,14 @@ import com.senzing.util.Timers;
 import javax.json.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
 import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.*;
-import static com.senzing.api.model.SzFeatureInclusion.*;
+import static com.senzing.api.model.SzFeatureMode.*;
+import static com.senzing.api.model.SzRelationshipMode.*;
 import static com.senzing.api.services.ServicesUtil.*;
-import static com.senzing.g2.engine.G2Engine.*;
 
 /**
  * Provides entity data related API services.
@@ -33,10 +32,12 @@ public class EntityDataServices {
   @POST
   @Path("data-sources/{dataSourceCode}/records")
   public SzLoadRecordResponse loadRecord(
-      @PathParam("dataSourceCode")  String  dataSourceCode,
-      @QueryParam("loadId")         String  loadId,
-      @Context                      UriInfo uriInfo,
-      String                                recordJsonData)
+      @PathParam("dataSourceCode")                    String  dataSourceCode,
+      @QueryParam("loadId")                           String  loadId,
+      @QueryParam("withInfo") @DefaultValue("false")  boolean withInfo,
+      @QueryParam("withRaw")  @DefaultValue("false")  boolean withRaw,
+      @Context                                        UriInfo uriInfo,
+      String                                                  recordJsonData)
   {
     Timers timers = newTimers();
 
@@ -54,25 +55,39 @@ public class EntityDataServices {
           uriInfo,
           timers,
           recordJsonData,
-          Collections.singletonMap("DATA_SOURCE", dataSource));
+          Collections.singletonMap("DATA_SOURCE", dataSource),
+          Collections.singletonMap("ENTITY_TYPE", "GENERIC"));
 
       checkDataSource(POST, uriInfo, timers, dataSource, provider);
 
       StringBuffer sb = new StringBuffer();
 
       enteringQueue(timers);
-      String recordId = provider.executeInThread(() -> {
+      String text = provider.executeInThread(() -> {
         exitingQueue(timers);
 
         // get the engine API and the config API
         G2Engine engineApi = provider.getEngineApi();
 
-        callingNativeAPI(timers, "engine","addRecordWithReturnedRecordID");
-        int result = engineApi.addRecordWithReturnedRecordID(dataSource,
-                                                             sb,
-                                                             recordText,
-                                                             normalizedLoadId);
-        calledNativeAPI(timers, "engine","addRecordWithReturnedRecordID");
+        int result;
+        if (withInfo) {
+          callingNativeAPI(timers, "engine", "addRecordWithInfo");
+          result = engineApi.addRecordWithInfo(dataSource,
+                                               "", // empty record ID
+                                               recordText,
+                                               normalizedLoadId,
+                                               0,
+                                               sb);
+          calledNativeAPI(timers, "engine", "addRecordWithInfo");
+
+        } else {
+          callingNativeAPI(timers, "engine", "addRecordWithReturnedRecordID");
+          result = engineApi.addRecordWithReturnedRecordID(dataSource,
+                                                           sb,
+                                                           recordText,
+                                                           normalizedLoadId);
+          calledNativeAPI(timers, "engine", "addRecordWithReturnedRecordID");
+        }
 
         if (result != 0) {
           throw newWebApplicationException(POST, uriInfo, timers, engineApi);
@@ -81,9 +96,25 @@ public class EntityDataServices {
         return sb.toString().trim();
       });
 
+      String            recordId  = null;
+      SzResolutionInfo  info      = null;
+      String            rawData   = null;
+      if (withInfo) {
+        rawData = text;
+        JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
+        info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+        recordId = info.getRecordId();
+      } else {
+        recordId = text;
+      }
+
       // construct the response
       SzLoadRecordResponse response = new SzLoadRecordResponse(
-          POST, 200, uriInfo, timers, recordId);
+          POST, 200, uriInfo, timers, recordId, info);
+
+      if (withRaw && withInfo) {
+        response.setRawData(rawData);
+      }
 
       // return the response
       return response;
@@ -104,11 +135,13 @@ public class EntityDataServices {
   @PUT
   @Path("data-sources/{dataSourceCode}/records/{recordId}")
   public SzLoadRecordResponse loadRecord(
-      @PathParam("dataSourceCode")  String  dataSourceCode,
-      @PathParam("recordId")        String  recordId,
-      @QueryParam("loadId")         String  loadId,
-      @Context                      UriInfo uriInfo,
-      String                                recordJsonData)
+      @PathParam("dataSourceCode")                    String  dataSourceCode,
+      @PathParam("recordId")                          String  recordId,
+      @QueryParam("loadId")                           String  loadId,
+      @QueryParam("withInfo") @DefaultValue("false")  boolean withInfo,
+      @QueryParam("withRaw")  @DefaultValue("false")  boolean withRaw,
+      @Context                                        UriInfo uriInfo,
+      String                                                  recordJsonData)
   {
     Timers timers = newTimers();
     try {
@@ -120,15 +153,17 @@ public class EntityDataServices {
 
       final String normalizedLoadId = normalizeString(loadId);
 
-      Map<String,String> map = new HashMap<>();
-      map.put("DATA_SOURCE", dataSource);
-      map.put("RECORD_ID", recordId);
+      Map<String,String> map = Map.of("DATA_SOURCE", dataSource,
+                                      "RECORD_ID", recordId);
+
+      Map<String,String> defaultMap = Map.of("ENTITY_TYPE", "GENERIC");
 
       String recordText = ensureJsonFields(PUT,
                                            uriInfo,
                                            timers,
                                            recordJsonData,
-                                           map);
+                                           map,
+                                           defaultMap);
 
       Set<String> dataSources = provider.getDataSources(dataSource);
 
@@ -139,28 +174,54 @@ public class EntityDataServices {
       }
 
       enteringQueue(timers);
-      provider.executeInThread(() -> {
+      String rawInfo = provider.executeInThread(() -> {
         exitingQueue(timers);
 
         // get the engine API
         G2Engine engineApi = provider.getEngineApi();
 
-        callingNativeAPI(timers, "engine", "addRecord");
-        int result = engineApi.addRecord(dataSource,
-                                         recordId,
-                                         recordText,
-                                         normalizedLoadId);
-        calledNativeAPI(timers, "engine", "addRecord");
+        int result;
+        String rawData = null;
+        if (withInfo) {
+          StringBuffer sb = new StringBuffer();
+          callingNativeAPI(timers, "engine", "addRecordWithInfo");
+          result = engineApi.addRecordWithInfo(dataSource,
+                                               recordId,
+                                               recordText,
+                                               normalizedLoadId,
+                                               0,
+                                               sb);
+          calledNativeAPI(timers, "engine", "addRecordWithInfo");
+          rawData = sb.toString();
+        } else {
+          callingNativeAPI(timers, "engine", "addRecord");
+          result = engineApi.addRecord(dataSource,
+                                       recordId,
+                                       recordText,
+                                       normalizedLoadId);
+          calledNativeAPI(timers, "engine", "addRecord");
+        }
         if (result != 0) {
           throw newWebApplicationException(PUT, uriInfo, timers, engineApi);
         }
 
-        return recordId;
+        return rawData;
       });
+
+      SzResolutionInfo info = null;
+      if (rawInfo != null) {
+        JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
+        info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+      }
 
       // construct the response
       SzLoadRecordResponse response = new SzLoadRecordResponse(
-          PUT, 200, uriInfo, timers, recordId);
+          PUT, 200, uriInfo, timers, recordId, info);
+
+      // check if we have info and raw data was requested
+      if (withRaw && withInfo) {
+        response.setRawData(rawInfo);
+      }
 
       // return the response
       return response;
@@ -175,6 +236,193 @@ public class EntityDataServices {
     } catch (Exception e) {
       e.printStackTrace();
       throw ServicesUtil.newInternalServerErrorException(PUT, uriInfo, timers, e);
+    }
+  }
+
+  @DELETE
+  @Path("data-sources/{dataSourceCode}/records/{recordId}")
+  public SzDeleteRecordResponse deleteRecord(
+      @PathParam("dataSourceCode")                    String  dataSourceCode,
+      @PathParam("recordId")                          String  recordId,
+      @QueryParam("loadId")                           String  loadId,
+      @QueryParam("withInfo") @DefaultValue("false")  boolean withInfo,
+      @QueryParam("withRaw")  @DefaultValue("false")  boolean withRaw,
+      @Context                                        UriInfo uriInfo)
+  {
+    Timers timers = newTimers();
+    try {
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      ensureLoadingIsAllowed(provider, DELETE, uriInfo, timers);
+      dataSourceCode = dataSourceCode.trim().toUpperCase();
+
+      final String dataSource = dataSourceCode;
+
+      Set<String> dataSources = provider.getDataSources(dataSource);
+
+      if (!dataSources.contains(dataSource)) {
+        throw newNotFoundException(
+            DELETE, uriInfo, timers,
+            "The specified data source is not recognized: " + dataSource);
+      }
+
+      final String normalizedLoadId = normalizeString(loadId);
+
+      enteringQueue(timers);
+      String rawInfo = provider.executeInThread(() -> {
+        exitingQueue(timers);
+
+        // get the engine API
+        G2Engine engineApi = provider.getEngineApi();
+
+        int returnCode;
+        String rawData = null;
+        if (withInfo) {
+          StringBuffer sb = new StringBuffer();
+            callingNativeAPI(timers, "engine", "deleteRecordWithInfo");
+          returnCode = engineApi.deleteRecordWithInfo(
+              dataSource, recordId, normalizedLoadId,0, sb);
+          calledNativeAPI(timers, "engine", "deleteRecordWithInfo");
+          rawData = sb.toString();
+        } else {
+          callingNativeAPI(timers, "engine", "deleteRecord");
+          returnCode = engineApi.deleteRecord(
+              dataSource, recordId, normalizedLoadId);
+          calledNativeAPI(timers, "engine", "deleteRecord");
+        }
+        if (returnCode != 0) {
+          int errorCode = engineApi.getLastExceptionCode();
+          // if the record was not found, that is okay -- treat as idempotent,
+          // but note that "info" will differ when deleting a not-found record
+          if (errorCode == RECORD_NOT_FOUND_CODE) {
+            return null;
+          }
+          // otherwise throw a server error
+          throw newInternalServerErrorException(
+              DELETE, uriInfo, timers, engineApi);
+        }
+
+        return rawData;
+      });
+
+      SzResolutionInfo info = null;
+      if (rawInfo != null) {
+        JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
+        info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+        if ((normalizeString(info.getDataSource()) == null)
+            && (normalizeString(info.getRecordId()) == null)
+            && (info.getAffectedEntities().size() == 0)
+            && (info.getFlaggedEntities().size() == 0)) {
+          info = null;
+        }
+      }
+
+      // construct the response
+      SzDeleteRecordResponse response = new SzDeleteRecordResponse(
+          DELETE, 200, uriInfo, timers, info);
+
+      // check if we have info and raw data was requested
+      if (withRaw && withInfo) {
+        response.setRawData(rawInfo);
+      }
+
+      // return the response
+      return response;
+
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw ServicesUtil.newInternalServerErrorException(
+          DELETE, uriInfo, timers, e);
+    }
+  }
+
+  @POST
+  @Path("data-sources/{dataSourceCode}/records/{recordId}/reevaluate")
+  public SzReevaluateResponse reevaluateRecord(
+      @PathParam("dataSourceCode")                    String  dataSourceCode,
+      @PathParam("recordId")                          String  recordId,
+      @QueryParam("withInfo") @DefaultValue("false")  boolean withInfo,
+      @QueryParam("withRaw")  @DefaultValue("false")  boolean withRaw,
+      @Context                                        UriInfo uriInfo)
+  {
+    Timers timers = newTimers();
+    try {
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
+      dataSourceCode = dataSourceCode.trim().toUpperCase();
+
+      final String dataSource = dataSourceCode;
+
+      Set<String> dataSources = provider.getDataSources(dataSource);
+
+      if (!dataSources.contains(dataSource)) {
+        throw newNotFoundException(
+            POST, uriInfo, timers,
+            "The specified data source is not recognized: " + dataSource);
+      }
+
+      enteringQueue(timers);
+      String rawInfo = provider.executeInThread(() -> {
+        exitingQueue(timers);
+
+        // get the engine API
+        G2Engine engineApi = provider.getEngineApi();
+
+        int returnCode;
+        String rawData = null;
+        if (withInfo) {
+          StringBuffer sb = new StringBuffer();
+          callingNativeAPI(timers, "engine", "reevaluateRecordWithInfo");
+          returnCode = engineApi.reevaluateRecordWithInfo(
+              dataSource, recordId,0, sb);
+          calledNativeAPI(timers, "engine", "reevaluateRecordWithInfo");
+          rawData = sb.toString();
+        } else {
+          callingNativeAPI(timers, "engine", "reevaluateRecord");
+          returnCode = engineApi.reevaluateRecord(dataSource, recordId,0);
+          calledNativeAPI(timers, "engine", "reevaluateRecord");
+        }
+        if (returnCode != 0) {
+          throw newWebApplicationException(POST, uriInfo, timers, engineApi);
+        }
+
+        return rawData;
+      });
+
+      SzResolutionInfo info = null;
+      if (rawInfo != null) {
+        JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
+        info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+      }
+
+      // construct the response
+      SzReevaluateResponse response = new SzReevaluateResponse(
+          POST, 200, uriInfo, timers, info);
+
+      // check if we have info and raw data was requested
+      if (withRaw && withInfo) {
+        response.setRawData(rawInfo);
+      }
+
+      // return the response
+      return response;
+
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw ServicesUtil.newInternalServerErrorException(POST, uriInfo, timers, e);
     }
   }
 
@@ -204,7 +452,8 @@ public class EntityDataServices {
         G2Engine engineApi = provider.getEngineApi();
 
         callingNativeAPI(timers, "engine", "getRecord");
-        int result = engineApi.getRecord(dataSource, recordId, sb);
+        int result = engineApi.getRecordV2(
+            dataSource, recordId, DEFAULT_RECORD_FLAGS, sb);
         calledNativeAPI(timers, "engine", "getRecord");
 
         if (result != 0) {
@@ -256,11 +505,11 @@ public class EntityDataServices {
       @PathParam("dataSourceCode")                                String              dataSourceCode,
       @PathParam("recordId")                                      String              recordId,
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
-      @DefaultValue("false") @QueryParam("withRelated")           boolean             withRelated,
+      @DefaultValue("PARTIAL") @QueryParam("withRelated")         SzRelationshipMode  withRelated,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
-      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode       featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
-      @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
+      @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean             withInternalFeatures,
       @Context                                                    UriInfo             uriInfo)
   {
     Timers timers = newTimers();
@@ -278,14 +527,14 @@ public class EntityDataServices {
       int flags = getFlags(forceMinimal,
                            featureMode,
                            withFeatureStats,
-                           withDerivedFeatures,
-                           true);
+                           withInternalFeatures,
+                           (withRelated != SzRelationshipMode.NONE));
 
       String rawData = null;
 
       // check if we want 1-degree relations as well -- if so we need to
       // find the network instead of a simple lookup
-      if (withRelated && !forceMinimal) {
+      if (withRelated == FULL && !forceMinimal) {
         // build the record IDs JSON to find the network
         JsonObjectBuilder builder1 = Json.createObjectBuilder();
         JsonArrayBuilder builder2 = Json.createArrayBuilder();
@@ -338,8 +587,10 @@ public class EntityDataServices {
                 && record.getRecordId().equals(recordId)) {
               // found the entity ID for the record ID
               entityId = resolvedEntity.getEntityId();
+              break;
             }
           }
+          if (entityId != null) break;
         }
 
         // get the result entity data
@@ -397,11 +648,11 @@ public class EntityDataServices {
   public SzEntityResponse getEntityByEntityId(
       @PathParam("entityId")                                      long                entityId,
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
-      @DefaultValue("false") @QueryParam("withRelated")           boolean             withRelated,
+      @DefaultValue("PARTIAL") @QueryParam("withRelated")         SzRelationshipMode  withRelated,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
-      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode       featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
-      @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
+      @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean             withInternalFeatures,
       @Context                                                    UriInfo             uriInfo)
   {
     Timers timers = newTimers();
@@ -418,12 +669,12 @@ public class EntityDataServices {
       int flags = getFlags(forceMinimal,
                            featureMode,
                            withFeatureStats,
-                           withDerivedFeatures,
-                           true);
+                           withInternalFeatures,
+                           (withRelated != SzRelationshipMode.NONE));
 
       // check if we want 1-degree relations as well -- if so we need to
       // find the network instead of a simple lookup
-      if (withRelated && !forceMinimal) {
+      if (withRelated == FULL && !forceMinimal) {
         // build the entity IDs JSON to find the network
         JsonObjectBuilder builder1 = Json.createObjectBuilder();
         JsonArrayBuilder builder2 = Json.createArrayBuilder();
@@ -520,11 +771,12 @@ public class EntityDataServices {
   @Path("entities")
   public SzAttributeSearchResponse searchByAttributes(
       @QueryParam("attrs")                                        String              attrs,
+      @QueryParam("attr")                                         List<String>        attrList,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
-      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode       featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
-      @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
-      @DefaultValue("true") @QueryParam("withRelationships")      boolean             withRelationships,
+      @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean             withInternalFeatures,
+      @DefaultValue("false") @QueryParam("withRelationships")     boolean             withRelationships,
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
       @Context                                                    UriInfo             uriInfo)
   {
@@ -532,49 +784,79 @@ public class EntityDataServices {
     try {
       SzApiProvider provider = SzApiProvider.Factory.getProvider();
 
-      boolean[] logAttrs = { false };
-      // check if no attributes
-      if (attrs == null || attrs.trim().length() == 0) {
-        // look for the "attr_" parameters
-        MultivaluedMap<String,String> params= uriInfo.getQueryParameters(true);
-        JsonObjectBuilder objBuilder = Json.createObjectBuilder();
-        params.entrySet().forEach(e -> {
-          String key = e.getKey().trim();
-          if (!key.toLowerCase().startsWith("attr_")
-              || key.length() <= ("attr_").length())
-          {
-            // skip this key since it is not of the expected format
-            return;
-          }
-          String        jsonProp    = key.substring("attr_".length());
-          List<String>  values      = e.getValue();
-          String        firstValue  = values.get(0);
-          if (values.size() == 1) {
-            JsonUtils.add(objBuilder, jsonProp, firstValue);
-          } else if (values.size() > 1) {
-            logAttrs[0] = true;
-            JsonArrayBuilder jab = Json.createArrayBuilder();
-            for (String value : values) {
-              JsonObjectBuilder job = Json.createObjectBuilder();
-              JsonUtils.add(job, jsonProp, value);
-              jab.add(job);
-            }
-            objBuilder.add(jsonProp, jab);
-          }
-        });
-        JsonObject jsonObject = null;
+      JsonObject searchCriteria = null;
+      if (attrs != null && attrs.trim().length() > 0) {
         try {
-          jsonObject = objBuilder.build();
-        } catch (Exception ignore) {
-          // do nothing
-        }
-        if (jsonObject == null || jsonObject.size() == 0) {
+          searchCriteria = JsonUtils.parseJsonObject(attrs);
+        } catch (Exception e) {
           throw newBadRequestException(
               GET, uriInfo, timers,
-              "Parameter missing or empty: \"attrs\".  "
-              + "Search criteria attributes are required.");
+              "The search criteria specified via the \"attrs\" parameter "
+                  + "does not parse as valid JSON: " + attrs);
         }
-        attrs = JsonUtils.toJsonText(jsonObject);
+      } else if (attrList != null && attrList.size() > 0) {
+        Map<String, List<String>> attrMap = new LinkedHashMap<>();
+        JsonObjectBuilder objBuilder = Json.createObjectBuilder();
+        for (String attrParam : attrList) {
+          // check for the colon
+          int index = attrParam.indexOf(":");
+
+          // if not found that is a problem
+          if (index < 0) {
+            throw newBadRequestException(
+                GET, uriInfo, timers,
+                "The attr param value must be a colon-delimited string, "
+                    + "but no colon character was found: " + attrParam);
+          }
+          if (index == 0) {
+            throw newBadRequestException(
+                GET, uriInfo, timers,
+                "The attr param value must contain a property name followed by "
+                    + "a colon, but no property was provided before the colon: "
+                    + attrParam);
+          }
+
+          // get the property name
+          String propName = attrParam.substring(0, index);
+          String propValue = "";
+          if (index < attrParam.length() - 1) {
+            propValue = attrParam.substring(index + 1);
+          }
+
+          // store in the map
+          List<String> values = attrMap.get(propName);
+          if (values == null) {
+            values = new LinkedList<>();
+            attrMap.put(propName, values);
+          }
+          values.add(propValue);
+        }
+        attrMap.entrySet().forEach(entry -> {
+          String propName = entry.getKey();
+          List<String> propValues = entry.getValue();
+          if (propValues.size() == 1) {
+            // add the attribute to the object builder
+            objBuilder.add(propName, propValues.get(0));
+          } else {
+            JsonArrayBuilder jab = Json.createArrayBuilder();
+            for (String propValue : propValues) {
+              JsonObjectBuilder job = Json.createObjectBuilder();
+              job.add(propName, propValue);
+              jab.add(job);
+            }
+            objBuilder.add(propName + "_LIST", jab);
+          }
+        });
+        searchCriteria = objBuilder.build();
+      }
+
+      // check if we have no attributes at all
+      if (searchCriteria == null || searchCriteria.size() == 0) {
+        throw newBadRequestException(
+            GET, uriInfo, timers,
+            "At least one search criteria attribute must be provided via the "
+                + "\"attrs\" or \"attr\" parameter.  attrs=[ " + attrs
+                + " ], attrList=[ " + attrList + " ]");
       }
 
       StringBuffer sb = new StringBuffer();
@@ -582,10 +864,11 @@ public class EntityDataServices {
       int flags = getFlags(forceMinimal,
                            featureMode,
                            withFeatureStats,
-                           withDerivedFeatures,
+                           withInternalFeatures,
                            withRelationships);
 
-      final String json = attrs;
+      final String searchJson = JsonUtils.toJsonText(searchCriteria);
+
       enteringQueue(timers);
       provider.executeInThread(() -> {
         exitingQueue(timers);
@@ -594,7 +877,7 @@ public class EntityDataServices {
         G2Engine engineApi = provider.getEngineApi();
 
         callingNativeAPI(timers, "engine", "searchBy AttributesV2");
-        int result = engineApi.searchByAttributesV2(json, flags, sb);
+        int result = engineApi.searchByAttributesV2(searchJson, flags, sb);
         calledNativeAPI(timers, "engine", "searchByAttributesV2");
         if (result != 0) {
           throw newInternalServerErrorException(GET, uriInfo, timers, engineApi);
@@ -606,14 +889,14 @@ public class EntityDataServices {
 
       JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
       JsonArray jsonResults = jsonObject.getValue(
-        "/RESOLVED_ENTITIES").asJsonArray();
+          "/RESOLVED_ENTITIES").asJsonArray();
 
       // parse the result
       List<SzAttributeSearchResult> list
           = SzAttributeSearchResult.parseSearchResultList(
-            null,
-              jsonResults,
-              (f) -> provider.getAttributeClassForFeature(f));
+          null,
+          jsonResults,
+          (f) -> provider.getAttributeClassForFeature(f));
 
 
       postProcessSearchResults(
@@ -647,6 +930,90 @@ public class EntityDataServices {
     }
   }
 
+  @POST
+  @Path("reevaluate-entity")
+  public SzReevaluateResponse reevaluateEntity(
+      @QueryParam("entityId")                         Long    entityId,
+      @QueryParam("withInfo") @DefaultValue("false")  boolean withInfo,
+      @QueryParam("withRaw")  @DefaultValue("false")  boolean withRaw,
+      @Context                                        UriInfo uriInfo)
+  {
+    Timers timers = newTimers();
+    try {
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
+
+      if (entityId == null) {
+        throw newBadRequestException(
+            POST, uriInfo, timers, "The entityId parameter is required.");
+      }
+
+      enteringQueue(timers);
+      String rawInfo = provider.executeInThread(() -> {
+        exitingQueue(timers);
+
+        // get the engine API
+        G2Engine engineApi = provider.getEngineApi();
+
+        int returnCode;
+        String rawData = null;
+        if (withInfo) {
+          StringBuffer sb = new StringBuffer();
+          callingNativeAPI(timers, "engine", "reevaluateEntityWithInfo");
+          returnCode = engineApi.reevaluateEntityWithInfo(entityId,0, sb);
+          calledNativeAPI(timers, "engine", "reevaluateEntityWithInfo");
+          rawData = sb.toString();
+        } else {
+          callingNativeAPI(timers, "engine", "reevaluateEntity");
+          returnCode = engineApi.reevaluateEntity(entityId,0);
+          calledNativeAPI(timers, "engine", "reevaluateEntity");
+        }
+
+        if (returnCode != 0) {
+          int errorCode = engineApi.getLastExceptionCode();
+          if (errorCode == ENTITY_ID_NOT_FOUND_CODE) {
+            throw newBadRequestException(
+                POST, uriInfo, timers, "The specified entityId was not found: "
+                    + entityId);
+          } else {
+            throw newWebApplicationException(POST, uriInfo, timers, engineApi);
+          }
+        }
+
+        return rawData;
+      });
+
+      SzResolutionInfo info = null;
+      if (rawInfo != null) {
+        info = SzResolutionInfo.parseResolutionInfo(
+            null, JsonUtils.parseJsonObject(rawInfo));
+      }
+
+      // construct the response
+      SzReevaluateResponse response = new SzReevaluateResponse(
+          POST, 200, uriInfo, timers, info);
+
+      // check if we have info and raw data was requested
+      if (withRaw && withInfo) {
+        response.setRawData(rawInfo);
+      }
+
+      // return the response
+      return response;
+
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw ServicesUtil.newInternalServerErrorException(POST, uriInfo, timers, e);
+    }
+  }
+
   private static WebApplicationException newWebApplicationException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
@@ -672,8 +1039,8 @@ public class EntityDataServices {
    * @return
    */
   private static SzEntityData getAugmentedEntityData(
-      long                    entityId,
-      Map<Long, SzEntityData> dataMap,
+      long                      entityId,
+      Map<Long, SzEntityData>   dataMap,
       SzApiProvider             provider)
   {
     // get the result entity data
@@ -822,7 +1189,8 @@ public class EntityDataServices {
                                          UriInfo              uriInfo,
                                          Timers               timers,
                                          String               jsonText,
-                                         Map<String, String>  map)
+                                         Map<String, String>  map,
+                                         Map<String, String>  defaultMap)
   {
     try {
       JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
@@ -846,6 +1214,20 @@ public class EntityDataServices {
           }
         } else {
           // we need to add the value for the key
+          jsonBuilder.add(key, val);
+        }
+      });
+
+      // iterate over the default values
+      defaultMap.forEach((key, val) -> {
+        // get the value for the key
+        String jsonVal = JsonUtils.getString(jsonObject, key.toUpperCase());
+        if (jsonVal == null) {
+          jsonVal = JsonUtils.getString(jsonObject, key.toLowerCase());
+          if (jsonVal != null) key = key.toLowerCase();
+        }
+        if (jsonVal == null || jsonVal.trim().length() == 0) {
+          if (jsonObject.containsKey(key)) jsonBuilder.remove(key);
           jsonBuilder.add(key, val);
         }
       });
@@ -875,7 +1257,7 @@ public class EntityDataServices {
    *
    * @param forceMinimal Whether or not minimal format is forced.
    *
-   * @param featureMode The {@link SzFeatureInclusion} describing how features
+   * @param featureMode The {@link SzFeatureMode} describing how features
    *                    are retrieved.
    *
    * @param withRelationships Whether or not to include relationships.
@@ -883,7 +1265,7 @@ public class EntityDataServices {
   private static void postProcessSearchResults(
       List<SzAttributeSearchResult>   searchResults,
       boolean                         forceMinimal,
-      SzFeatureInclusion              featureMode,
+      SzFeatureMode                   featureMode,
       boolean                         withRelationships)
   {
     // check if we need to strip out duplicate features
@@ -892,7 +1274,7 @@ public class EntityDataServices {
     }
 
     // check if fields are going to be null if they would otherwise be set
-    if (featureMode == NONE || forceMinimal) {
+    if (featureMode == SzFeatureMode.NONE || forceMinimal) {
       setEntitiesPartial(searchResults);
     }
   }

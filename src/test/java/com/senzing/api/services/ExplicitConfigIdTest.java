@@ -74,7 +74,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
     });
   }
 
-  @Test public void getCurrentConfigTest() {
+  @Test public void getActiveConfigTest() {
     this.performTest(() -> {
       final String newDataSource = "PHOO";
       String  uriText = this.formatServerUri("config/current");
@@ -87,7 +87,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
 
       long before = System.currentTimeMillis();
       SzConfigResponse response
-          = this.configServices.getCurrentConfig(uriInfo);
+          = this.configServices.getActiveConfig(uriInfo);
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
@@ -124,7 +124,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
       long before = System.currentTimeMillis();
       try {
         this.entityDataServices.loadRecord(
-            newDataSource, null, uriInfo, jsonText);
+            newDataSource, null, false, false, uriInfo, jsonText);
         fail("Expected for data source \"" + newDataSource
                  + "\" to trigger a NotFoundException");
       } catch (NotFoundException expected) {
@@ -163,7 +163,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
       long before = System.currentTimeMillis();
       try {
         this.entityDataServices.loadRecord(
-            newDataSource, recordId, null, uriInfo, jsonText);
+            newDataSource, recordId, null, false, false, uriInfo, jsonText);
         fail("Expected for data source \"" + newDataSource
                  + "\" to trigger a NotFoundException");
       } catch (NotFoundException expected) {

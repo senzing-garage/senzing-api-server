@@ -1,11 +1,14 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 /**
  * Describes the details of an entity feature value, optionally including
@@ -83,6 +86,7 @@ public class SzEntityFeatureDetail {
    *         for the feature value, or <tt>null</tt> if the statistics were not
    *         requested.
    */
+  @JsonInclude(NON_NULL)
   public SzEntityFeatureStatistics getStatistics() {
     return statistics;
   }

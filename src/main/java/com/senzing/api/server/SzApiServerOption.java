@@ -111,41 +111,47 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption> {
   }
 
   static {
-    Map<SzApiServerOption,Set<SzApiServerOption>> conflictMap = new LinkedHashMap<>();
-    Map<SzApiServerOption,Set<SzApiServerOption>> altMap = new LinkedHashMap<>();
-    Map<String, SzApiServerOption> lookupMap = new LinkedHashMap<>();
+    try {
+      Map<SzApiServerOption,Set<SzApiServerOption>> conflictMap = new LinkedHashMap<>();
+      Map<SzApiServerOption,Set<SzApiServerOption>> altMap = new LinkedHashMap<>();
+      Map<String, SzApiServerOption> lookupMap = new LinkedHashMap<>();
 
-    for (SzApiServerOption option : SzApiServerOption.values()) {
-      conflictMap.put(option, new LinkedHashSet<>());
-      altMap.put(option, new LinkedHashSet<>());
-      lookupMap.put(option.getCommandLineFlag().toLowerCase(), option);
-    }
-    SzApiServerOption[] exclusiveOptions = { HELP, VERSION };
-    for (SzApiServerOption option : SzApiServerOption.values()) {
-      for (SzApiServerOption exclOption : exclusiveOptions) {
-        Set<SzApiServerOption> set = conflictMap.get(exclOption);
-        set.add(option);
-        set = conflictMap.get(option);
-        set.add(exclOption);
+      for (SzApiServerOption option : SzApiServerOption.values()) {
+        conflictMap.put(option, new LinkedHashSet<>());
+        altMap.put(option, new LinkedHashSet<>());
+        lookupMap.put(option.getCommandLineFlag().toLowerCase(), option);
       }
-    }
-    SzApiServerOption[] initOptions = { INI_FILE, INIT_ENV_VAR, INIT_FILE, INIT_JSON };
-    for (SzApiServerOption option1 : initOptions) {
-      for (SzApiServerOption option2 : initOptions) {
-        if (option1 != option2) {
-          Set<SzApiServerOption> set = conflictMap.get(option1);
-          set.add(option2);
+      SzApiServerOption[] exclusiveOptions = { HELP, VERSION };
+      for (SzApiServerOption option : SzApiServerOption.values()) {
+        for (SzApiServerOption exclOption : exclusiveOptions) {
+          Set<SzApiServerOption> set = conflictMap.get(exclOption);
+          set.add(option);
+          set = conflictMap.get(option);
+          set.add(exclOption);
         }
       }
+      SzApiServerOption[] initOptions = { INI_FILE, INIT_ENV_VAR, INIT_FILE, INIT_JSON };
+      for (SzApiServerOption option1 : initOptions) {
+        for (SzApiServerOption option2 : initOptions) {
+          if (option1 != option2) {
+            Set<SzApiServerOption> set = conflictMap.get(option1);
+            set.add(option2);
+          }
+        }
+      }
+
+      Set<SzApiServerOption> iniAlts = altMap.get(INI_FILE);
+      iniAlts.add(INIT_ENV_VAR);
+      iniAlts.add(INIT_FILE);
+      iniAlts.add(INIT_JSON);
+
+      CONFLICTING_OPTIONS = recursivelyUnmodifiableMap(conflictMap);
+      ALTERNATIVE_OPTIONS = recursivelyUnmodifiableMap(altMap);
+      OPTIONS_BY_FLAG = Collections.unmodifiableMap(lookupMap);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
     }
-
-    Set<SzApiServerOption> iniAlts = altMap.get(INI_FILE);
-    iniAlts.add(INIT_ENV_VAR);
-    iniAlts.add(INIT_FILE);
-    iniAlts.add(INIT_JSON);
-
-    CONFLICTING_OPTIONS = recursivelyUnmodifiableMap(conflictMap);
-    ALTERNATIVE_OPTIONS = recursivelyUnmodifiableMap(altMap);
-    OPTIONS_BY_FLAG = Collections.unmodifiableMap(lookupMap);
   }
 }

@@ -53,11 +53,15 @@ public class CommandLineUtilities {
             jarFileName = url.substring(index + 1);
           }
 
-          url       = url.substring(0, index);
-          index     = url.indexOf("/");
+          url = url.substring(0, index);
+          index = url.indexOf("/");
           pathToJar = url.substring(index);
         }
       }
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
 
     } finally {
       JAR_BASE_URL  = jarBaseUrl;

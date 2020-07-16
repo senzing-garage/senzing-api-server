@@ -39,9 +39,9 @@ public class EntityGraphServices {
       @DefaultValue("false") @QueryParam("forbidAvoided")         boolean             forbidAvoided,
       @QueryParam("s")                                            List<String>        sourcesParam,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
-      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
-      @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
+      @DefaultValue("false") @QueryParam("withInternalFeatures")   boolean             withInternalFeatures,
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
       @Context                                                    UriInfo             uriInfo)
   {
@@ -154,7 +154,7 @@ public class EntityGraphServices {
                     | getFlags(forceMinimal,
                                featureMode,
                                withFeatureStats,
-                               withDerivedFeatures,
+                               withInternalFeatures,
                                true);
 
     try {
@@ -307,13 +307,13 @@ public class EntityGraphServices {
   public SzEntityNetworkResponse getEntityNetwork(
       @QueryParam("e")        List<String>  entitiesParam,
       @QueryParam("entities") String        entityList,
-      @DefaultValue("5")      @QueryParam("maxDegrees")           int                 maxDegrees,
+      @DefaultValue("3")      @QueryParam("maxDegrees")           int                 maxDegrees,
       @DefaultValue("1")      @QueryParam("buildOut")             int                 buildOut,
       @DefaultValue("1000")   @QueryParam("maxEntities")          int                 maxEntities,
       @DefaultValue("false")  @QueryParam("forceMinimal")         boolean             forceMinimal,
-      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureInclusion  featureMode,
+      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
-      @DefaultValue("false") @QueryParam("withDerivedFeatures")   boolean             withDerivedFeatures,
+      @DefaultValue("false") @QueryParam("withInternalFeatures")   boolean             withInternalFeatures,
       @DefaultValue("false")  @QueryParam("withRaw")              boolean             withRaw,
       @Context                                                    UriInfo             uriInfo)
   {
@@ -382,7 +382,7 @@ public class EntityGraphServices {
     final int flags = getFlags(forceMinimal,
                                featureMode,
                                withFeatureStats,
-                               withDerivedFeatures,
+                               withInternalFeatures,
                                true);
     try {
       enteringQueue(timers);

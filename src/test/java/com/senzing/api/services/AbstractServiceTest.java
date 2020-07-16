@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.senzing.api.model.*;
 import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.nativeapi.replay.ReplayNativeApiProvider;
@@ -18,6 +19,7 @@ import com.senzing.g2.engine.*;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.AccessToken;
 import com.senzing.util.JsonUtils;
+import org.junit.jupiter.params.provider.Arguments;
 
 import javax.json.*;
 import javax.ws.rs.core.MultivaluedMap;
@@ -27,6 +29,7 @@ import static com.senzing.io.IOUtilities.*;
 import static org.junit.jupiter.api.Assumptions.*;
 import static com.senzing.util.LoggingUtilities.*;
 import static com.senzing.repomgr.RepositoryManager.*;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
  * Provides an abstract base class for services tests that will create a
@@ -75,6 +78,10 @@ public abstract class AbstractServiceTest {
       }
 
       NativeApiFactory.installProvider(REPLAY_PROVIDER);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
 
     } finally {
       NATIVE_API_AVAILABLE = (productApi != null);
@@ -262,16 +269,21 @@ public abstract class AbstractServiceTest {
    * Signals the end of the current test suite.
    */
   protected void endTests() {
-    REPLAY_PROVIDER.endTests(this.replayTestToken);
-    this.replayTestToken = null;
-    if (this.getFailureCount() > 0 && REPLAY_PROVIDER.isCacheStale()) {
-      System.out.println();
-      System.out.println("**********************");
-      System.out.println("** WARNING: DEPENDENCIES HAVE CHANGED");
-      System.out.println("** CACHED TEST RESULTS MAY BE INVALID");
-      System.out.println("** " + REPLAY_PROVIDER.getTestCacheZip());
-      System.out.println("**********************");
-      System.out.println();
+    try {
+      REPLAY_PROVIDER.endTests(this.replayTestToken);
+      this.replayTestToken = null;
+      if (this.getFailureCount() > 0 && REPLAY_PROVIDER.isCacheStale()) {
+        System.out.println();
+        System.out.println("**********************");
+        System.out.println("** WARNING: DEPENDENCIES HAVE CHANGED");
+        System.out.println("** CACHED TEST RESULTS MAY BE INVALID");
+        System.out.println("** " + REPLAY_PROVIDER.getTestCacheZip());
+        System.out.println("**********************");
+        System.out.println();
+      }
+    } catch (RuntimeException e) {
+      e.printStackTrace();
+      throw e;
     }
   }
 
@@ -286,6 +298,22 @@ public abstract class AbstractServiceTest {
    * @return The absolute URI for localhost on the current port.
    */
   protected String formatServerUri(String relativeUri) {
+    return this.formatServerUri(relativeUri, null);
+  }
+
+  /**
+   * Creates an absolute URI for the relative URI provided.  For example, if
+   * <tt>"license"</tt> was passed as the parameter then
+   * <tt>"http://localhost:[port]/license"</tt> will be returned where
+   * <tt>"[port]"</tt> is the port number of the currently running server, if
+   * running, and is <tt>"2080"</tt> (the default port) if not running.
+   *
+   * @param basePath The relative URI to build the absolute URI from.
+   * @param queryParams The optional query parameters to append.
+   * @return The absolute URI for localhost on the current port.
+   */
+  protected String formatServerUri(String basePath, Map<String, ?> queryParams)
+  {
     StringBuilder sb = new StringBuilder();
     sb.append("http://localhost:");
     if (this.server != null) {
@@ -293,9 +321,44 @@ public abstract class AbstractServiceTest {
     } else {
       sb.append("2080");
     }
-    if (relativeUri.startsWith(sb.toString())) return relativeUri;
-    sb.append("/" + relativeUri);
+    if (basePath.startsWith(sb.toString())) {
+      sb.delete(0, sb.length());
+      sb.append(basePath);
+      return basePath;
+    } else {
+      sb.append("/" + basePath);
+    }
+
+    if (queryParams != null && queryParams.size() > 0) {
+      String initialPrefix = basePath.contains("?") ? "&" : "?";
+      int initialLength = sb.length();
+
+      queryParams.entrySet().forEach(entry -> {
+        String key = entry.getKey();
+        Object value = entry.getValue();
+        Collection values = null;
+        if (value instanceof Collection) {
+          values = (Collection) value;
+        } else {
+          values = Collections.singletonList(value);
+        }
+        try {
+          key = URLEncoder.encode(key, "UTF-8");
+          for (Object val : values) {
+            if (val == null) return;
+            String textValue = val.toString();
+            textValue = URLEncoder.encode(textValue, "UTF-8");
+            sb.append((sb.length() == initialLength) ? initialPrefix : "&");
+            sb.append(key).append("=").append(textValue);
+          }
+        } catch (UnsupportedEncodingException cannotHappen) {
+          throw new RuntimeException(cannotHappen);
+        }
+      });
+    }
+
     return sb.toString();
+
   }
 
   /**
@@ -429,6 +492,7 @@ public abstract class AbstractServiceTest {
                        this.initialEntityTypes,
                        this.initialAttributeTypes);
 
+    // make the maps unmodifiable
     this.initialDataSources
         = Collections.unmodifiableMap(this.initialDataSources);
     this.initialEntityClasses
@@ -504,6 +568,15 @@ public abstract class AbstractServiceTest {
       JsonArray jsonArray = config.getJsonArray("CFG_ECLASS");
       for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
         String  eclassCode  = jsonObject.getString("ECLASS_CODE");
+
+        //---------------------------------------------------------------------
+        // check the entity class code to ensure it is ACTOR
+        // TODO(bcaceres) -- remove this code when entity classes other than
+        // ACTOR are supported ** OR ** when the API server no longer supports
+        // product versions that ship with alternate entity classes
+        if (!eclassCode.equals("ACTOR")) continue; // skip this one
+        //---------------------------------------------------------------------
+
         Integer eclassId    = jsonObject.getInt("ECLASS_ID");
         String  resolve     = jsonObject.getString("RESOLVE");
         SzEntityClass entityClass = new SzEntityClass(
@@ -1141,10 +1214,10 @@ public abstract class AbstractServiceTest {
    * @param httpMethod    The HTTP method to use.
    * @param uri           The relative or absolute URI (optionally including query params)
    * @param responseClass The class of the response.
-   * @param <T>           The response type which must extend {@link SzBasicResponse}
+   * @param <T>           The response type.
    * @return
    */
-  protected <T extends SzBasicResponse> T invokeServerViaHttp(
+  protected <T> T invokeServerViaHttp(
       SzHttpMethod httpMethod,
       String uri,
       Class<T> responseClass) {
@@ -1160,10 +1233,10 @@ public abstract class AbstractServiceTest {
    * @param queryParams   The optional map of query parameters.
    * @param bodyContent   The object to be converted to JSON for body content.
    * @param responseClass The class of the response.
-   * @param <T>           The response type which must extend {@link SzBasicResponse}
+   * @param <T>           The response type.
    * @return
    */
-  protected <T extends SzBasicResponse> T invokeServerViaHttp(
+  protected <T> T invokeServerViaHttp(
       SzHttpMethod httpMethod,
       String uri,
       Map<String, ?> queryParams,
@@ -1171,38 +1244,9 @@ public abstract class AbstractServiceTest {
       Class<T> responseClass)
   {
     ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JodaModule());
     try {
-      if (!uri.toLowerCase().startsWith("http://")) {
-        uri = this.formatServerUri(uri);
-      }
-      if (queryParams != null && queryParams.size() > 0) {
-        String initialPrefix = uri.contains("?") ? "&" : "?";
-
-        StringBuilder sb = new StringBuilder();
-        queryParams.entrySet().forEach(entry -> {
-          String key = entry.getKey();
-          Object value = entry.getValue();
-          Collection values = null;
-          if (value instanceof Collection) {
-            values = (Collection) value;
-          } else {
-            values = Collections.singletonList(value);
-          }
-          try {
-            key = URLEncoder.encode(key, "UTF-8");
-            for (Object val : values) {
-              if (val == null) return;
-              String textValue = val.toString();
-              textValue = URLEncoder.encode(textValue, "UTF-8");
-              sb.append((sb.length() == 0) ? initialPrefix : "&");
-              sb.append(key).append("=").append(textValue);
-            }
-          } catch (UnsupportedEncodingException cannotHappen) {
-            throw new RuntimeException(cannotHappen);
-          }
-        });
-        uri = uri + sb.toString();
-      }
+      uri = this.formatServerUri(uri, queryParams);
 
       String jsonContent = null;
       if (bodyContent != null) {
@@ -1283,10 +1327,10 @@ public abstract class AbstractServiceTest {
    * @param contentType   The content type for the body.
    * @param bodyContent   The raw body content data.
    * @param responseClass The class of the response.
-   * @param <T>           The response type which must extend {@link SzBasicResponse}
+   * @param <T>           The response type.
    * @return
    */
-  protected <T extends SzBasicResponse> T invokeServerViaHttp(
+  protected <T> T invokeServerViaHttp(
       SzHttpMethod httpMethod,
       String uri,
       Map<String, ?> queryParams,
@@ -1315,10 +1359,10 @@ public abstract class AbstractServiceTest {
    * @param contentLength The optional content length.
    * @param bodyStream    The raw body content data.
    * @param responseClass The class of the response.
-   * @param <T>           The response type which must extend {@link SzBasicResponse}
+   * @param <T>           The response type.
    * @return
    */
-  protected <T extends SzBasicResponse> T invokeServerViaHttp(
+  protected <T> T invokeServerViaHttp(
       SzHttpMethod httpMethod,
       String uri,
       Map<String, ?> queryParams,
@@ -1328,6 +1372,7 @@ public abstract class AbstractServiceTest {
       Class<T> responseClass)
   {
     ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JodaModule());
     try {
       if (!uri.toLowerCase().startsWith("http://")) {
         uri = this.formatServerUri(uri);
@@ -1660,5 +1705,132 @@ public abstract class AbstractServiceTest {
     return optionCombos;
   }
 
+  /**
+   * Converts the source object to JSON and then parses the JSON to the
+   * specified target class.
+   *
+   * @param source The source object to copy.
+   * @param targetClass The target class to parse the JSON as.
+   * @return The target object that was parsed.
+   */
+  public static <S, T> T jsonCopy(S source, Class<T> targetClass) {
+    String jsonText = null;
+    try {
+      ObjectMapper objectMapper = new ObjectMapper();
+      objectMapper.registerModule(new JodaModule());
+      StringWriter sw = new StringWriter();
+      objectMapper.writeValue(sw, source);
+      jsonText = sw.toString();
+      return objectMapper.readValue(jsonText, targetClass);
 
+    } catch (RuntimeException e) {
+      if (jsonText != null) {
+        System.err.println("JSON TEXT: " + jsonText);
+        e.printStackTrace();
+      }
+      throw e;
+    } catch (Exception e) {
+      if (jsonText != null) {
+        System.err.println("JSON TEXT: " + jsonText);
+        e.printStackTrace();
+      }
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Converts each source object in the specified {@link Collection} to JSON and
+   * then parses the JSON to the specified target class and populates the
+   * target collection.
+   *
+   * @param source The {@link Collection} of source objects to copy.
+   * @param targetClass The target class to parse the JSON as.
+   * @return The {@link Collection} containing target objects that were parsed.
+   */
+  public static <S, T, C extends Collection<T>> C jsonCopy(
+      Collection<S> source,
+      Class<T>      targetClass,
+      Class<C>      collectionClass)
+  {
+    try {
+      C target = collectionClass.newInstance();
+
+      source.forEach(s -> {
+        T t = jsonCopy(s, targetClass);
+        target.add(t);
+      });
+
+      return target;
+
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Converts each source object in the specified {@link Map} to JSON and
+   * then parses the JSON to the specified target class and populates the
+   * target {@link Map}.
+   *
+   * @param source The {@link Map} of source objects to copy.
+   * @param targetClass The target class to parse the JSON as.
+   * @return The {@link Map} containing the target objects that were parsed.
+   */
+  public static <S, T, K> Map<K, T> jsonCopy(
+      Map<K, S>     source,
+      Class<T>      targetClass)
+  {
+    try {
+      Map<K, T> target = new LinkedHashMap<K, T>();
+
+      source.entrySet().forEach(entry -> {
+        K key = entry.getKey();
+        S s   = entry.getValue();
+        T t   = jsonCopy(s, targetClass);
+        target.put(key, t);
+      });
+
+      return target;
+
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Parse JSON text as the specified target class.
+   * @param jsonText The JSON text to parse.
+   * @param targetClass The target class to parse to.
+   */
+  public static <T> T jsonParse(String jsonText, Class<T> targetClass) {
+    try {
+      ObjectMapper objectMapper = new ObjectMapper();
+      objectMapper.registerModule(new JodaModule());
+      return objectMapper.readValue(jsonText, targetClass);
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Serves as a method source for a test method with a withRaw parameter.
+   *
+   * @return The list of arguments for the boolean withRaw options.
+   */
+  protected List<Arguments> getWithRawVariants() {
+    List<Arguments> result = new LinkedList<>();
+    Boolean[] booleanVariants = {null, true, false};
+    for (Boolean withRaw: booleanVariants) {
+      Object[] argArray = new Object[1];
+      argArray[0] = withRaw;
+      result.add(arguments(argArray));
+    }
+    return result;
+  }
 }

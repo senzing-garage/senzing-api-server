@@ -1,10 +1,13 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonObject;
 import java.util.Optional;
 import java.util.function.Function;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
   /**
@@ -21,11 +24,6 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * The match score.
    */
   private Integer matchScore;
-
-  /**
-   * Whether or not the relationship is ambiguous.
-   */
-  private boolean ambiguous;
 
   /**
    * The match key for the relationship.
@@ -49,7 +47,6 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
     this.matchLevel         = null;
     this.fullNameScore      = null;
     this.matchScore         = null;
-    this.ambiguous          = false;
     this.matchKey           = null;
     this.resolutionRuleCode = null;
     this.refScore           = null;
@@ -62,6 +59,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @return The underlying match level from the entity resolution between the
    *         entities.
    */
+  @JsonInclude(NON_NULL)
   public Integer getMatchLevel() {
     return this.matchLevel;
   }
@@ -84,6 +82,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @return The underlying full name score from the entity resolution between
    *         the entities.
    */
+  @JsonInclude(NON_NULL)
   public Integer getFullNameScore() {
     return this.fullNameScore;
   }
@@ -106,6 +105,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @return The underlying match score from the entity resolution between
    *         the entities.
    */
+  @JsonInclude(NON_NULL)
   public Integer getMatchScore() {
     return this.matchScore;
   }
@@ -122,34 +122,13 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
   }
 
   /**
-   * Checks whether or not the relationship between the entities is an
-   * ambiguous possible match.
-   *
-   * @return <tt>true</tt> if the relationship is an ambiguous possible match,
-   *         or <tt>false</tt> if not disclosed.
-   */
-  public boolean isAmbiguous() {
-    return this.ambiguous;
-  }
-
-  /**
-   * Sets whether or not the relationship between the entities is an
-   * ambiguous possible match.
-   *
-   * @param ambiguous <tt>true</tt> if the relationship is an ambiguous
-   *                  possible match, or <tt>false</tt> if not disclosed.
-   */
-  public void setAmbiguous(boolean ambiguous) {
-    this.ambiguous = ambiguous;
-  }
-
-  /**
    * Gets the underlying match key from the entity resolution between
    * the entities.
    *
    * @return The underlying match key from the entity resolution between
    *         the entities.
    */
+  @JsonInclude(NON_NULL)
   public String getMatchKey() {
     return matchKey;
   }
@@ -172,6 +151,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @return The underlying resolution rule code from the entity resolution
    *         between the entities.
    */
+  @JsonInclude(NON_NULL)
   public String getResolutionRuleCode() {
     return resolutionRuleCode;
   }
@@ -192,8 +172,9 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * the entities.
    *
    * @return The underlying ref score from the entity resolution between
-   * the entities.
+   *         the entities.
    */
+  @JsonInclude(NON_NULL)
   public Integer getRefScore() {
     return this.refScore;
   }
@@ -275,11 +256,6 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
     entity.setResolutionRuleCode(ruleCode);
     entity.setRefScore(refScore);
 
-    if (jsonObject.containsKey("IS_AMBIGUOUS")) {
-      boolean ambiguous = jsonObject.getInt("IS_AMBIGUOUS") != 0;
-      entity.setAmbiguous(ambiguous);
-    }
-
     entity.setFullNameScore(nameScore.orElse(null));
     entity.setPartial(partial);
 
@@ -322,7 +298,6 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
         ", matchLevel=" + matchLevel +
         ", fullNameScore=" + fullNameScore +
         ", matchScore=" + matchScore +
-        ", ambiguous=" + ambiguous +
         ", matchKey='" + matchKey + '\'' +
         ", resolutionRuleCode='" + resolutionRuleCode + '\'' +
         ", refScore=" + refScore +

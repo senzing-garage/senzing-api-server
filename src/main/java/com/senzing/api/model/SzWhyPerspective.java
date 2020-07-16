@@ -1,5 +1,6 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -8,6 +9,9 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.Collections;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 /**
  * Describes the perspective used in evaluating why an entity resolved or why
@@ -29,10 +33,11 @@ public class SzWhyPerspective {
   private Long entityId;
 
   /**
-   * The {@link Set} of {@link SzRecordId} instances identifying the effectively
-   * identical records that are being compared against the other records.
+   * The {@link Set} of {@link SzFocusRecordId} instances identifying the
+   * effectively identical records that are being compared against the other
+   * records.
    */
-  private Set<SzRecordId> focusRecords;
+  private Set<SzFocusRecordId> focusRecords;
 
   /**
    * Default constructor.
@@ -50,6 +55,7 @@ public class SzWhyPerspective {
    * @return The internal ID uniquely identifying this perspective from others
    * in the complete "why" response.
    */
+  @JsonInclude(NON_NULL)
   public Long getInternalId() {
     return this.internalId;
   }
@@ -70,6 +76,7 @@ public class SzWhyPerspective {
    *
    * @return The associated entity ID for the perspective.
    */
+  @JsonInclude(NON_NULL)
   public Long getEntityId() {
     return this.entityId;
   }
@@ -84,33 +91,35 @@ public class SzWhyPerspective {
   }
 
   /**
-   * Gets the <b>unmodifiable</b> {@link Set} of {@link SzRecordId} instances
-   * identifying the focus records for this perspective.
-   *
-   * @return The <b>unmodifiable</b> {@link Set} of {@link SzRecordId}
+   * Gets the <b>unmodifiable</b> {@link Set} of {@link SzFocusRecordId}
    * instances identifying the focus records for this perspective.
+   *
+   * @return The <b>unmodifiable</b> {@link Set} of {@link SzFocusRecordId}
+   *         instances identifying the focus records for this perspective.
    */
-  public Set<SzRecordId> getFocusRecords() {
+  @JsonInclude(NON_EMPTY)
+  public Set<SzFocusRecordId> getFocusRecords() {
     return Collections.unmodifiableSet(this.focusRecords);
   }
 
   /**
-   * Adds the specified {@link SzRecordId} to the {@link Set} of focus records.
+   * Adds the specified {@link SzFocusRecordId} to the {@link Set} of focus
+   * records.
    *
-   * @param focusRecord The {@link SzRecordId} to add to the focus records.
+   * @param focusRecord The {@link SzFocusRecordId} to add to the focus records.
    */
-  public void addFocusRecord(SzRecordId focusRecord) {
+  public void addFocusRecord(SzFocusRecordId focusRecord) {
     this.focusRecords.add(focusRecord);
   }
 
   /**
-   * Sets the {@link Set} of {@link SzRecordId} instances identifying the
+   * Sets the {@link Set} of {@link SzFocusRecordId} instances identifying the
    * focus records for this perspective.
    *
-   * @param focusRecords The {@link Set} of {@link SzRecordId} instances
+   * @param focusRecords The {@link Set} of {@link SzFocusRecordId} instances
    *                     identifying the focus records for this perspective.
    */
-  public void setFocusRecords(Collection<SzRecordId> focusRecords) {
+  public void setFocusRecords(Collection<SzFocusRecordId> focusRecords) {
     this.focusRecords.clear();
     if (focusRecords != null) this.focusRecords.addAll(focusRecords);
   }
@@ -148,7 +157,8 @@ public class SzWhyPerspective {
 
     JsonArray jsonArr = jsonObject.getJsonArray("FOCUS_RECORDS" + suffix);
 
-    Collection<SzRecordId> focusRecords = SzRecordId.parseRecordIdList(jsonArr);
+    Collection<SzFocusRecordId> focusRecords
+        = SzFocusRecordId.parseFocusRecordIdList(jsonArr);
 
     SzWhyPerspective perspective = new SzWhyPerspective();
 

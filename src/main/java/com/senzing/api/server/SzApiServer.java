@@ -142,6 +142,10 @@ public class SzApiServer implements SzApiProvider {
           }
         }
       }
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
+
     } finally {
       JAR_BASE_URL      = jarBaseUrl;
       JAR_FILE_NAME     = jarFileName;
@@ -927,21 +931,25 @@ public class SzApiServer implements SzApiProvider {
         "",
         "   -iniFile <ini-file-path>",
         "        The path to the Senzing INI file to with which to initialize.",
+        "        EXAMPLE: -iniFile /etc/opt/senzing/G2Module.ini",
         "",
         "   -initFile <json-init-file>",
         "        The path to the file containing the JSON text to use for Senzing",
         "        initialization.",
+        "        EXAMPLE: -initFile ~/senzing/g2-init.json",
         "",
         "   -initEnvVar <environment-variable-name>",
         "        The environment variable from which to extract the JSON text",
         "        to use for Senzing initialization.",
         "        *** SECURITY WARNING: If the JSON text contains a password",
         "        then it may be visible to other users via process monitoring.",
+        "        EXAMPLE: -initEnvVar SENZING_INIT_JSON",
         "",
         "   -initJson <json-init-text>",
         "        The JSON text to use for Senzing initialization.",
         "        *** SECURITY WARNING: If the JSON text contains a password",
         "        then it may be visible to other users via process monitoring.",
+        "        EXAMPLE: -initJson \"{\"PIPELINE\":{ ... }}\"",
         "",
         "   -configId <config-id>",
         "        Use with the -iniFile, -initFile, -initEnvVar or -initJson options",
@@ -1583,16 +1591,6 @@ public class SzApiServer implements SzApiProvider {
     context.setResourceBase(url);
 
     RewriteHandler rewriteHandler = new RewriteHandler();
-    rewriteHandler.setRewritePathInfo(true);
-    rewriteHandler.setRewriteRequestURI(true);
-    RewriteRegexRule rewriteRule = null;
-    TerminatingRegexRule terminatingRule = null;
-    terminatingRule = new TerminatingRegexRule("/sz/api/(.*)");
-    rewriteHandler.addRule(terminatingRule);
-    rewriteRule = new RewriteRegexRule();
-    rewriteRule.setRegex("/sz/[^\\.]+$");
-    rewriteRule.setReplacement("/sz/");
-    rewriteHandler.addRule(rewriteRule);
 
     rewriteHandler.setHandler(context);
 
@@ -1843,15 +1841,9 @@ public class SzApiServer implements SzApiProvider {
       }
     }
     this.productApi = NativeApiFactory.createProductApi();
-    int initResult = 0;
-    if (this.configType.isManaged()) {
-      initResult = this.productApi.initV2(
-          this.moduleName, initJsonText, this.verbose);
+    int initResult = this.productApi.initV2(
+        this.moduleName, initJsonText, this.verbose);
 
-    } else {
-      initResult = this.productApi.init(
-          this.moduleName, iniFilePath, this.verbose);
-    }
     if (initResult < 0) {
       throw new RuntimeException(buildErrorMessage(
           "Failed to initialize G2Product API.",
@@ -1860,13 +1852,8 @@ public class SzApiServer implements SzApiProvider {
     }
 
     this.configApi = NativeApiFactory.createConfigApi();
-    if (this.configType.isManaged()) {
-      initResult = this.configApi.initV2(
-          this.moduleName, initJsonText, this.verbose);
-    } else {
-      initResult = this.configApi.init(
-          this.moduleName, iniFilePath, this.verbose);
-    }
+    initResult = this.configApi.initV2(
+        this.moduleName, initJsonText, this.verbose);
     if (initResult < 0) {
       throw new RuntimeException(buildErrorMessage(
           "Failed to initialize G2Config API.",
@@ -1882,15 +1869,10 @@ public class SzApiServer implements SzApiProvider {
       initResult = this.engineApi.initWithConfigIDV2(
           this.moduleName, initJsonText, this.configId, this.verbose);
 
-    } else if (this.configType.isManaged()) {
+    } else {
       // config is in the repository
       initResult = this.engineApi.initV2(
           this.moduleName, initJsonText, this.verbose);
-
-    } else {
-      // config is on a file on disk
-      initResult = this.engineApi.init(
-          this.moduleName, iniFilePath, this.verbose);
     }
 
     if (initResult < 0) {

@@ -11,11 +11,11 @@ import java.util.*;
 
 import static com.senzing.api.BuildInfo.MAVEN_VERSION;
 import static com.senzing.api.BuildInfo.REST_API_VERSION;
-import static com.senzing.api.model.SzFeatureInclusion.NONE;
-import static com.senzing.api.model.SzFeatureInclusion.REPRESENTATIVE;
+import static com.senzing.api.model.SzFeatureMode.NONE;
+import static com.senzing.api.model.SzFeatureMode.REPRESENTATIVE;
+import static com.senzing.api.model.SzRelationshipMode.*;
 import static com.senzing.api.model.SzHttpMethod.GET;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertNull;
 
 public class ResponseValidators {
   /**
@@ -205,7 +205,10 @@ public class ResponseValidators {
 
     SzLinks links = response.getLinks();
     SzMeta meta = response.getMeta();
-    assertEquals(selfLink, links.getSelf(), "Unexpected self link" + suffix);
+
+    String expectedLink = selfLink.replaceAll("%20", "+");
+    String actualLink   = links.getSelf().replaceAll("%20", "+");
+    assertEquals(expectedLink, actualLink, "Unexpected self link" + suffix);
     assertEquals(expectedHttpMethod, meta.getHttpMethod(),
                  "Unexpected HTTP method" + suffix);
     assertEquals(expectedResponseCode, meta.getHttpStatusCode(), "Unexpected HTTP status code" + suffix);
@@ -368,7 +371,7 @@ public class ResponseValidators {
    * @param rawData      The raw data to validate.
    * @param expectedKeys The zero or more expected property keys.
    */
-  public static void validateRawDataMap(Object rawData, String... expectedKeys) 
+  public static void validateRawDataMap(Object rawData, String... expectedKeys)
   {
     validateRawDataMap(null,
                             rawData,
@@ -465,7 +468,7 @@ public class ResponseValidators {
    * @param rawData      The raw data to validate.
    * @param expectedKeys The zero or more expected property keys.
    */
-  public static void validateRawDataMapArray(Object     rawData, 
+  public static void validateRawDataMapArray(Object     rawData,
                                              String...  expectedKeys)
   {
     validateRawDataMapArray(null, rawData, true, expectedKeys);
@@ -618,9 +621,9 @@ public class ResponseValidators {
       SzResolvedEntity                    entity,
       List<SzRelatedEntity>               relatedEntities,
       Boolean                             forceMinimal,
-      SzFeatureInclusion                  featureMode,
+      SzFeatureMode                       featureMode,
       boolean                             withFeatureStats,
-      boolean                             withDerivedFeatures,
+      boolean                             withInternalFeatures,
       Integer                             expectedRecordCount,
       Set<SzRecordId>                     expectedRecordIds,
       Boolean                             relatedSuppressed,
@@ -665,24 +668,24 @@ public class ResponseValidators {
                       "Features not present for entity: " + testInfo);
 
       Set<String> featureKeys = entity.getFeatures().keySet();
-      if (withDerivedFeatures) {
+      if (withInternalFeatures) {
         if (featureKeys.contains("NAME") && !featureKeys.contains("NAME_KEY")) {
-          fail("Missing NAME_KEY, but found NAME with derived features "
+          fail("Missing NAME_KEY, but found NAME with internal features "
                    + "requested: " + testInfo + " / " + featureKeys);
         }
         if (featureKeys.contains("ADDRESS")
             && !featureKeys.contains("ADDR_KEY"))
         {
-          fail("Missing ADDR_KEY, but found ADDRESS with derived features "
+          fail("Missing ADDR_KEY, but found ADDRESS with internal features "
                    + "requested: " + testInfo + " / " + featureKeys);
         }
       } else {
         if (featureKeys.contains("NAME_KEY")) {
-          fail("Found NAME_KEY with derived features suppressed: "
+          fail("Found NAME_KEY with internal features suppressed: "
                    + testInfo + " / " + featureKeys);
         }
         if (featureKeys.contains("ADDR_KEY")) {
-          fail("Found ADDR_KEY with derived features suppressed: "
+          fail("Found ADDR_KEY with internal features suppressed: "
                    + testInfo + " / " + featureKeys);
         }
       }
@@ -796,8 +799,8 @@ public class ResponseValidators {
             provider.getAttributeClassForFeature(featureKey));
 
         if (attrClass == null) {
-          // skip this feature if working with derived features
-          if (withDerivedFeatures) return;
+          // skip this feature if working with internal features
+          if (withInternalFeatures) return;
 
           // otherwise fail
           fail("Unrecognized feature key (" + featureKey + "): " + testInfo
@@ -895,7 +898,7 @@ public class ResponseValidators {
       case NAME:
         return entity.getNameData();
       case CHARACTERISTIC:
-        return entity.getAttributeData();
+        return entity.getCharacteristicData();
       case PHONE:
         return entity.getPhoneData();
       case IDENTIFIER:
@@ -1373,18 +1376,23 @@ public class ResponseValidators {
                      + " ], testInfo=[ " + testInfo + " ]");
 
     if (expectRawData) {
+      validateRawDataMap(
+          response.getRawData(), true, "CFG_ATTR");
+
+      Object attrs = ((Map) response.getRawData()).get("CFG_ATTR");
+
       validateRawDataMapArray(testInfo,
-                                   response.getRawData(),
-                                   false,
-                                   "DEFAULT_VALUE",
-                                   "ATTR_CODE",
-                                   "FELEM_REQ",
-                                   "ATTR_CLASS",
-                                   "INTERNAL",
-                                   "ATTR_ID",
-                                   "FTYPE_CODE",
-                                   "FELEM_CODE",
-                                   "ADVANCED");
+                              attrs,
+                              false,
+                              "DEFAULT_VALUE",
+                              "ATTR_CODE",
+                              "FELEM_REQ",
+                              "ATTR_CLASS",
+                              "INTERNAL",
+                              "ATTR_ID",
+                              "FTYPE_CODE",
+                              "FELEM_CODE",
+                              "ADVANCED");
     }
   }
 
@@ -1537,9 +1545,13 @@ public class ResponseValidators {
     validateBasics(
         response, httpMethod, selfLink, beforeTimestamp, afterTimestamp);
 
-    SzEntityRecord record = response.getData();
+    SzRecordResponse.Data data = response.getData();
 
-    assertNotNull(record, "Response data is null");
+    assertNotNull(data, "Response data is null");
+
+    SzEntityRecord record = data.getRecord();
+
+    assertNotNull(record, "Response record is null");
 
     String dataSource = record.getDataSource();
     assertNotNull(dataSource, "Data source is null");
@@ -1558,7 +1570,7 @@ public class ResponseValidators {
     assertSameElements(
         expectedIdentifierData, record.getIdentifierData(), "identifiers");
     assertSameElements(
-        expectedAttributeData, record.getAttributeData(), "attributes");
+        expectedAttributeData, record.getCharacteristicData(), "characteristics");
     assertSameElements(
         expectedRelationshipData, record.getRelationshipData(), "relationships");
     assertSameElements(
@@ -1591,17 +1603,16 @@ public class ResponseValidators {
    * @param withRaw <tt>true</tt> if requested with raw data, <tt>false</tt>
    *                if requested without raw data and <tt>null</tt> if this is
    *                not being validated.
-   * @param withRelated <tt>true</tt> if requested with first-degree relations,
-   *                    <tt>false</tt> if requested without them and
-   *                    <tt>null</tt> if this aspect is not being validated.
+   * @param withRelated The {@link SzRelationshipMode} value or <tt>null</tt>
+   *                    if this aspect is not being validated.
    * @param forceMinimal <tt>true</tt> if requested with minimal data,
    *                     <tt>false</tt> if requested with standard data and
    *                     <tt>null</tt> if this aspect is not being validated.
-   * @param featureMode The {@link SzFeatureInclusion} requested or
+   * @param featureMode The {@link SzFeatureMode} requested or
    *                    <tt>null</tt> if this is not being validated.
    * @param withFeatureStats <tt>true</tt> if request with feature statistics,
    *                         otherwise <tt>false</tt>.
-   * @param withDerivedFeatures <tt>true</tt> if request with derived features,
+   * @param withInternalFeatures <tt>true</tt> if request with internal features,
    *                            otherwise <tt>false</tt>.
    * @param expectedRecordCount The number of expected records for the entity,
    *                            or <tt>null</tt> if this is not being validated.
@@ -1630,11 +1641,11 @@ public class ResponseValidators {
       SzHttpMethod                        httpMethod,
       String                              selfLink,
       Boolean                             withRaw,
-      Boolean                             withRelated,
+      SzRelationshipMode                  withRelated,
       Boolean                             forceMinimal,
-      SzFeatureInclusion                  featureMode,
+      SzFeatureMode                       featureMode,
       boolean                             withFeatureStats,
-      boolean                             withDerivedFeatures,
+      boolean                             withInternalFeatures,
       Integer                             expectedRecordCount,
       Set<SzRecordId>                     expectedRecordIds,
       Integer                             relatedEntityCount,
@@ -1666,27 +1677,27 @@ public class ResponseValidators {
     assertNotNull(relatedEntities,
                   "Related entities list is null: " + testInfo);
 
-    validateEntity(testInfo,
-                   resolvedEntity,
-                   relatedEntities,
-                   forceMinimal,
-                   featureMode,
-                   withFeatureStats,
-                   withDerivedFeatures,
-                   expectedRecordCount,
-                   expectedRecordIds,
-                   false,
-                   relatedEntityCount,
-                   (withRelated == null || !withRelated),
-                   expectedFeatureCounts,
-                   primaryFeatureValues,
-                   duplicateFeatureValues,
-                   expectedDataValues,
-                   expectedOtherDataValues);
+    validateEntity(
+        testInfo,
+        resolvedEntity,
+        relatedEntities,
+        forceMinimal,
+        featureMode,
+        withFeatureStats,
+        withInternalFeatures,
+        expectedRecordCount,
+        expectedRecordIds,
+        (withRelated == SzRelationshipMode.NONE),
+        (withRelated == SzRelationshipMode.NONE ? 0 : relatedEntityCount),
+        (withRelated != SzRelationshipMode.FULL),
+        expectedFeatureCounts,
+        primaryFeatureValues,
+        duplicateFeatureValues,
+        expectedDataValues,
+        expectedOtherDataValues);
 
     if (withRaw != null && withRaw) {
-      if (withRelated != null && withRelated
-          && (forceMinimal == null || !forceMinimal))
+      if ((withRelated == FULL) && (forceMinimal == null || !forceMinimal))
       {
         validateRawDataMap(testInfo,
                            response.getRawData(),
@@ -1724,11 +1735,18 @@ public class ResponseValidators {
 
 
       } else {
-        validateRawDataMap(testInfo,
-                           response.getRawData(),
-                           false,
-                           "RESOLVED_ENTITY",
-                           "RELATED_ENTITIES");
+        if (withRelated == PARTIAL) {
+          validateRawDataMap(testInfo,
+                             response.getRawData(),
+                             false,
+                             "RESOLVED_ENTITY",
+                             "RELATED_ENTITIES");
+        } else {
+          validateRawDataMap(testInfo,
+                             response.getRawData(),
+                             false,
+                             "RESOLVED_ENTITY");
+        }
 
         Object entity = ((Map) response.getRawData()).get("RESOLVED_ENTITY");
         if (featureMode == NONE || (forceMinimal != null && forceMinimal)) {
@@ -1762,17 +1780,16 @@ public class ResponseValidators {
    *                      validated.
    * @param withRelationships <tt>true</tt> if requested with relationship
    *                          information should be included with the entity
-   *                          results, <tt>false</tt> if the relationship
-   *                          information should be excluded and <tt>null</tt>
-   *                          if this aspect is not being validated.
+   *                          results, <tt>false</tt> or <tt>null</tt> if the
+   *                          relationship information should be excluded.
    * @param forceMinimal <tt>true</tt> if requested with minimal data,
    *                     <tt>false</tt> if requested with standard data and
    *                     <tt>null</tt> if this aspect is not being validated.
-   * @param featureInclusion The {@link SzFeatureInclusion} requested or
+   * @param featureInclusion The {@link SzFeatureMode} requested or
    *                         <tt>null</tt> if this is not being validated.
    * @param withFeatureStats <tt>true</tt> if request with feature statistics,
    *                         otherwise <tt>false</tt>.
-   * @param withDerivedFeatures <tt>true</tt> if request with derived features,
+   * @param withInternalFeatures <tt>true</tt> if request with internal features,
    *                            otherwise <tt>false</tt>.
    * @param beforeTimestamp The timestamp before executing the request.
    * @param afterTimestamp The timestamp after executing the request and
@@ -1787,9 +1804,9 @@ public class ResponseValidators {
       Integer                   expectedCount,
       Boolean                   withRelationships,
       Boolean                   forceMinimal,
-      SzFeatureInclusion        featureInclusion,
+      SzFeatureMode featureInclusion,
       boolean                   withFeatureStats,
-      boolean                   withDerivedFeatures,
+      boolean                   withInternalFeatures,
       long                      beforeTimestamp,
       long                      afterTimestamp,
       Boolean                   expectRawData)
@@ -1817,22 +1834,22 @@ public class ResponseValidators {
     for (SzAttributeSearchResult result : results) {
 
       validateEntity(testInfo,
-                          result,
-                          result.getRelatedEntities(),
-                          forceMinimal,
-                          featureInclusion,
-                          withFeatureStats,
-                          withDerivedFeatures,
-                          null,
-                          null,
-                          (withRelationships == null || !withRelationships),
-                          null,
-                          true,
-                          null,
-                          null,
-                          null,
-                          null,
-                          null);
+                     result,
+                     result.getRelatedEntities(),
+                     forceMinimal,
+                     featureInclusion,
+                     withFeatureStats,
+                     withInternalFeatures,
+                     null,
+                     null,
+                     (withRelationships == null ? false : withRelationships),
+                     null,
+                     true,
+                     null,
+                     null,
+                     null,
+                     null,
+                     null);
     }
 
     if (expectRawData) {
@@ -1881,7 +1898,6 @@ public class ResponseValidators {
     }
   }
 
-
   /**
    * Validates an {@Link SzLoadRecordResponse} instance.
    *
@@ -1899,25 +1915,441 @@ public class ResponseValidators {
       String                selfLink,
       String                dataSourceCode,
       String                expectedRecordId,
+      Boolean               withInfo,
+      Boolean               withRaw,
+      Integer               expectedAffectedCount,
+      Integer               expectedFlaggedCount,
+      Set<String>           expectedFlags,
       long                  beforeTimestamp,
       long                  afterTimestamp)
   {
-    validateBasics(
-        response, httpMethod, selfLink, beforeTimestamp, afterTimestamp);
+    try {
+      String testInfo = "method=[ " + httpMethod + " ], path=[ " + selfLink
+          + " ], dataSource=[ " + dataSourceCode + " ], expectedRecordId=[ "
+          + expectedRecordId + " ], withInfo=[ " + withInfo + " ], withRaw=[ "
+          + withRaw + " ]";
 
-    SzLoadRecordResponse.Data data = response.getData();
+      validateBasics(
+          testInfo, response, httpMethod, selfLink, beforeTimestamp, afterTimestamp);
 
-    assertNotNull(data, "Response data is null");
+      SzLoadRecordResponse.Data data = response.getData();
 
-    String recordId = data.getRecordId();
+      assertNotNull(data, "Response data is null: " + testInfo);
 
-    assertNotNull(recordId, "Record ID is null");
+      String recordId = data.getRecordId();
 
-    if (expectedRecordId != null) {
-      assertEquals(expectedRecordId, recordId,
-                   "Unexpected record ID value");
+      assertNotNull(recordId, "Record ID is null: " + testInfo);
+
+      if (expectedRecordId != null) {
+        assertEquals(expectedRecordId, recordId,
+                     "Unexpected record ID value: " + testInfo);
+      }
+
+      // if withInfo is null then don't check the info at all (or raw data)
+      if (withInfo == null) return;
+
+      // check for info
+      SzResolutionInfo info = data.getInfo();
+      if (withInfo) {
+        assertNotNull(info, "Info requested, but was null: " + testInfo);
+      } else {
+        assertNull(info, "Info not requested, but was found: " + testInfo);
+      }
+
+      if (withInfo) {
+        if (expectedRecordId != null) {
+          assertEquals(expectedRecordId, info.getRecordId(),
+                       "Unexpected record ID in info: " + testInfo);
+        }
+        if (dataSourceCode != null) {
+          assertEquals(dataSourceCode, info.getDataSource(),
+                       "Unexpected data source in info: " + testInfo);
+        }
+        // check the affected entities
+        if (expectedAffectedCount != null && expectedAffectedCount > 0) {
+          Set<Long> affected = info.getAffectedEntities();
+          assertNotNull(affected,
+                        "Affected entities set is null: " + testInfo);
+          assertEquals(expectedAffectedCount, affected.size(),
+                       "Affected entities set is the wrong size: "
+                           + affected);
+        }
+
+        // check the interesting entites
+        if (expectedFlaggedCount != null && expectedFlaggedCount > 0) {
+          List<SzFlaggedEntity> flagged = info.getFlaggedEntities();
+          assertNotNull(flagged,
+                        "Flagged entities list is null: " + testInfo);
+          assertEquals(expectedAffectedCount, flagged.size(),
+                       "Flagged entities set is the wrong size: "
+                           + flagged);
+
+          if (expectedFlags != null && expectedFlags.size() > 0) {
+            Set<String> entityFlags = new LinkedHashSet<>();
+            for (SzFlaggedEntity flaggedEntity : flagged) {
+              entityFlags.addAll(flaggedEntity.getFlags());
+            }
+            assertEquals(expectedFlags, entityFlags,
+                         "Unexpected flags for flagged entities: "
+                             + flagged);
+
+            Set<String> recordFlags = new LinkedHashSet<>();
+            for (SzFlaggedEntity flaggedEntity : flagged) {
+              for (SzFlaggedRecord flaggedRecord : flaggedEntity.getSampleRecords()) {
+                recordFlags.addAll(flaggedRecord.getFlags());
+              }
+            }
+            assertEquals(expectedFlags, recordFlags,
+                         "Unexpected flags for flagged records: "
+                             + flagged);
+          }
+        }
+      }
+
+      // check for raw data
+      if (withInfo && withRaw != null) {
+        Object rawData = response.getRawData();
+        if (withRaw) {
+          assertNotNull(rawData, "Raw data requested, but was null: "
+              + testInfo);
+
+          validateRawDataMap(
+              rawData,
+              false,
+              "DATA_SOURCE", "RECORD_ID");
+
+          // check the raw data affected entities
+          if (expectedAffectedCount != null && expectedAffectedCount > 0) {
+            validateRawDataMap(
+                rawData,
+                false,
+                "AFFECTED_ENTITIES");
+
+            Object array = ((Map) response.getRawData()).get("AFFECTED_ENTITIES");
+            validateRawDataMapArray(
+                testInfo, array, false, "ENTITY_ID", "LENS_CODE");
+          }
+
+          // check the raw data interesting entities
+          if (expectedFlaggedCount != null && expectedFlaggedCount > 0) {
+            validateRawDataMap(
+                rawData,
+                false,
+                "INTERESTING_ENTITIES");
+
+            Object array = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            validateRawDataMapArray(
+                testInfo, array, false,
+                "ENTITY_ID", "LENS_CODE", "DEGREES", "FLAGS",
+                "SAMPLE_RECORDS");
+          }
+
+        } else {
+          assertNull(rawData, "Raw data not requested, but was found: "
+              + testInfo);
+        }
+      }
+    } catch (RuntimeException e) {
+      e.printStackTrace();
+      throw e;
     }
   }
+
+  /**
+   * Validates an {@Link SzReevaluateRecordResponse} instance.
+   *
+   * @param response The response to validate.
+   * @param httpMethod The HTTP method used to load the record.
+   * @param dataSourceCode The data source code fo the loaded record.
+   * @param beforeTimestamp The timestamp before executing the request.
+   * @param afterTimestamp The timestamp after executing the request and
+   *                       concluding timers on the response.
+   */
+  public static void validateReevaluateResponse(
+      SzReevaluateResponse  response,
+      SzHttpMethod          httpMethod,
+      String                selfLink,
+      Boolean               withInfo,
+      Boolean               withRaw,
+      String                dataSourceCode,
+      String                expectedRecordId,
+      Integer               expectedAffectedCount,
+      Integer               expectedFlaggedCount,
+      Set<String>           expectedFlags,
+      long                  beforeTimestamp,
+      long                  afterTimestamp)
+  {
+    try {
+      String testInfo = "method=[ " + httpMethod + " ], path=[ " + selfLink
+          + " ], dataSource=[ " + dataSourceCode + " ], expectedRecordId=[ "
+          + expectedRecordId + " ], withInfo=[ " + withInfo + " ], withRaw=[ "
+          + withRaw + " ]";
+
+      validateBasics(
+          testInfo, response, httpMethod, selfLink, beforeTimestamp, afterTimestamp);
+
+      SzReevaluateResponse.Data data = response.getData();
+
+      assertNotNull(data, "Response data is null: " + testInfo);
+
+      // if withInfo is null then don't check the info at all (or raw data)
+      if (withInfo == null) return;
+
+      // check for info
+      SzResolutionInfo info = data.getInfo();
+      if (withInfo) {
+        assertNotNull(info, "Info requested, but was null: " + testInfo);
+      } else {
+        assertNull(info, "Info not requested, but was found: " + testInfo);
+      }
+
+      if (withInfo) {
+        if (expectedRecordId != null) {
+          assertEquals(expectedRecordId, info.getRecordId(),
+                       "Unexpected record ID in info: " + testInfo);
+        }
+        if (dataSourceCode != null) {
+          assertEquals(dataSourceCode, info.getDataSource(),
+                       "Unexpected data source in info: " + testInfo);
+        }
+        // check the affected entities
+        if (expectedAffectedCount != null && expectedAffectedCount > 0) {
+          Set<Long> affected = info.getAffectedEntities();
+          assertNotNull(affected,
+                        "Affected entities set is null: " + testInfo);
+          assertEquals(expectedAffectedCount, affected.size(),
+                       "Affected entities set is the wrong size: "
+                           + affected);
+        }
+
+        // check the interesting entites
+        if (expectedFlaggedCount != null && expectedFlaggedCount > 0) {
+          List<SzFlaggedEntity> flagged = info.getFlaggedEntities();
+          assertNotNull(flagged,
+                        "Flagged entities list is null: " + testInfo);
+          assertEquals(expectedAffectedCount, flagged.size(),
+                       "Flagged entities set is the wrong size: "
+                           + flagged);
+
+          if (expectedFlags != null && expectedFlags.size() > 0) {
+            Set<String> entityFlags = new LinkedHashSet<>();
+            for (SzFlaggedEntity flaggedEntity : flagged) {
+              entityFlags.addAll(flaggedEntity.getFlags());
+            }
+            assertEquals(expectedFlags, entityFlags,
+                         "Unexpected flags for flagged entities: "
+                             + flagged);
+
+            Set<String> recordFlags = new LinkedHashSet<>();
+            for (SzFlaggedEntity flaggedEntity : flagged) {
+              for (SzFlaggedRecord flaggedRecord : flaggedEntity.getSampleRecords()) {
+                recordFlags.addAll(flaggedRecord.getFlags());
+              }
+            }
+            assertEquals(expectedFlags, recordFlags,
+                         "Unexpected flags for flagged records: "
+                             + flagged);
+          }
+        }
+      }
+
+      // check for raw data
+      if (withInfo && withRaw != null) {
+        Object rawData = response.getRawData();
+        if (withRaw) {
+          assertNotNull(rawData, "Raw data requested, but was null: "
+              + testInfo);
+
+          validateRawDataMap(
+              rawData,
+              false,
+              "DATA_SOURCE", "RECORD_ID");
+
+          // check the raw data affected entities
+          if (expectedAffectedCount != null && expectedAffectedCount > 0) {
+            validateRawDataMap(
+                rawData,
+                false,
+                "AFFECTED_ENTITIES");
+
+            Object array = ((Map) response.getRawData()).get("AFFECTED_ENTITIES");
+            validateRawDataMapArray(
+                testInfo, array, false, "ENTITY_ID", "LENS_CODE");
+          }
+
+          // check the raw data interesting entities
+          if (expectedFlaggedCount != null && expectedFlaggedCount > 0) {
+            validateRawDataMap(
+                rawData,
+                false,
+                "INTERESTING_ENTITIES");
+
+            Object array = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            validateRawDataMapArray(
+                testInfo, array, false,
+                "ENTITY_ID", "LENS_CODE", "DEGREES", "FLAGS",
+                "SAMPLE_RECORDS");
+          }
+
+        } else {
+          assertNull(rawData, "Raw data not requested, but was found: "
+              + testInfo);
+        }
+      }
+    } catch (RuntimeException e) {
+      e.printStackTrace();
+      throw e;
+    }
+  }
+
+
+  /**
+   * Validates an {@Link SzDeleteRecordResponse} instance.
+   *
+   * @param response The response to validate.
+   * @param httpMethod The HTTP method used to load the record.
+   * @param dataSourceCode The data source code fo the loaded record.
+   * @param beforeTimestamp The timestamp before executing the request.
+   * @param afterTimestamp The timestamp after executing the request and
+   *                       concluding timers on the response.
+   */
+  public static void validateDeleteRecordResponse(
+      SzDeleteRecordResponse  response,
+      SzHttpMethod            httpMethod,
+      String                  selfLink,
+      Boolean                 withInfo,
+      Boolean                 withRaw,
+      String                  dataSourceCode,
+      String                  expectedRecordId,
+      Integer                 expectedAffectedCount,
+      Integer                 expectedFlaggedCount,
+      Set<String>             expectedFlags,
+      long                    beforeTimestamp,
+      long                    afterTimestamp)
+  {
+    try {
+      String testInfo = "method=[ " + httpMethod + " ], path=[ " + selfLink
+          + " ], dataSource=[ " + dataSourceCode + " ], expectedRecordId=[ "
+          + expectedRecordId + " ], withInfo=[ " + withInfo + " ], withRaw=[ "
+          + withRaw + " ]";
+
+      validateBasics(
+          testInfo, response, httpMethod, selfLink, beforeTimestamp, afterTimestamp);
+
+      SzDeleteRecordResponse.Data data = response.getData();
+
+      assertNotNull(data, "Response data is null: " + testInfo);
+
+      // if withInfo is null then don't check the info at all (or raw data)
+      if (withInfo == null) return;
+
+      // check for info
+      SzResolutionInfo info = data.getInfo();
+      if (withInfo) {
+        assertNotNull(info, "Info requested, but was null: " + testInfo);
+      } else {
+        assertNull(info, "Info not requested, but was found: " + testInfo);
+      }
+
+      if (withInfo) {
+        if (expectedRecordId != null) {
+          assertEquals(expectedRecordId, info.getRecordId(),
+                       "Unexpected record ID in info: " + testInfo);
+        }
+        if (dataSourceCode != null) {
+          assertEquals(dataSourceCode, info.getDataSource(),
+                       "Unexpected data source in info: " + testInfo);
+        }
+        // check the affected entities
+        if (expectedAffectedCount != null && expectedAffectedCount > 0) {
+          Set<Long> affected = info.getAffectedEntities();
+          assertNotNull(affected,
+                        "Affected entities set is null: " + testInfo);
+          assertEquals(expectedAffectedCount, affected.size(),
+                       "Affected entities set is the wrong size: "
+                           + affected);
+        }
+
+        // check the interesting entites
+        if (expectedFlaggedCount != null && expectedFlaggedCount > 0) {
+          List<SzFlaggedEntity> flagged = info.getFlaggedEntities();
+          assertNotNull(flagged,
+                        "Flagged entities list is null: " + testInfo);
+          assertEquals(expectedAffectedCount, flagged.size(),
+                       "Flagged entities set is the wrong size: "
+                           + flagged);
+
+          if (expectedFlags != null && expectedFlags.size() > 0) {
+            Set<String> entityFlags = new LinkedHashSet<>();
+            for (SzFlaggedEntity flaggedEntity : flagged) {
+              entityFlags.addAll(flaggedEntity.getFlags());
+            }
+            assertEquals(expectedFlags, entityFlags,
+                         "Unexpected flags for flagged entities: "
+                             + flagged);
+
+            Set<String> recordFlags = new LinkedHashSet<>();
+            for (SzFlaggedEntity flaggedEntity : flagged) {
+              for (SzFlaggedRecord flaggedRecord : flaggedEntity.getSampleRecords()) {
+                recordFlags.addAll(flaggedRecord.getFlags());
+              }
+            }
+            assertEquals(expectedFlags, recordFlags,
+                         "Unexpected flags for flagged records: "
+                             + flagged);
+          }
+        }
+      }
+
+      // check for raw data
+      if (withInfo && withRaw != null) {
+        Object rawData = response.getRawData();
+        if (withRaw) {
+          assertNotNull(rawData, "Raw data requested, but was null: "
+              + testInfo);
+
+          validateRawDataMap(
+              rawData,
+              false,
+              "DATA_SOURCE", "RECORD_ID");
+
+          // check the raw data affected entities
+          if (expectedAffectedCount != null && expectedAffectedCount > 0) {
+            validateRawDataMap(
+                rawData,
+                false,
+                "AFFECTED_ENTITIES");
+
+            Object array = ((Map) response.getRawData()).get("AFFECTED_ENTITIES");
+            validateRawDataMapArray(
+                testInfo, array, false, "ENTITY_ID", "LENS_CODE");
+          }
+
+          // check the raw data interesting entities
+          if (expectedFlaggedCount != null && expectedFlaggedCount > 0) {
+            validateRawDataMap(
+                rawData,
+                false,
+                "INTERESTING_ENTITIES");
+
+            Object array = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            validateRawDataMapArray(
+                testInfo, array, false,
+                "ENTITY_ID", "LENS_CODE", "DEGREES", "FLAGS",
+                "SAMPLE_RECORDS");
+          }
+
+        } else {
+          assertNull(rawData, "Raw data not requested, but was found: "
+              + testInfo);
+        }
+      }
+    } catch (RuntimeException e) {
+      e.printStackTrace();
+      throw e;
+    }
+  }
+
 
   public static void validateLicenseResponse(
       SzLicenseResponse  response,
@@ -1943,11 +2375,11 @@ public class ResponseValidators {
 
     assertNotNull(licenseInfo, "License data is null");
 
-    assertEquals(10000,
+    assertEquals(expectedRecordLimit,
                  licenseInfo.getRecordLimit(),
                  "Record limit wrong");
 
-    assertEquals("EVAL",
+    assertEquals(expectedLicenseType,
                  licenseInfo.getLicenseType(),
                  "Unexpected license type");
 

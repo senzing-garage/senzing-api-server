@@ -1,6 +1,7 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
 
@@ -12,6 +13,8 @@ import javax.ws.rs.core.UriInfo;
 import java.io.StringReader;
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 /**
  * Extends the {@link SzBasicResponse} to add the optional raw data section
@@ -126,6 +129,7 @@ public class SzResponseWithRawData extends SzBasicResponse {
    *
    * @return The raw data associated with this response.
    */
+  @JsonInclude(NON_NULL)
   public Object getRawData() {
     return this.rawData;
   }

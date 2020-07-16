@@ -2,6 +2,7 @@ package com.senzing.nativeapi.replay;
 
 import com.senzing.nativeapi.NativeApiProvider;
 import com.senzing.g2.engine.*;
+import com.senzing.g2.engine.internal.*;
 import com.senzing.io.IOUtilities;
 import com.senzing.util.AccessToken;
 import com.senzing.util.JsonUtils;
@@ -28,6 +29,42 @@ import static javax.json.stream.JsonGenerator.PRETTY_PRINTING;
  * results from a JSON file.
  */
 public class ReplayNativeApiProvider implements NativeApiProvider {
+  /**
+   * The prefix for the system properties used by this class.
+   */
+  public static final String SYSTEM_PROPERTY_PREFIX
+      = "com.senzing.api.test.replay";
+
+  /**
+   * The system property for forcing direct use of the native API (no replay).
+   */
+  public static final String DIRECT_PROPERTY
+      = SYSTEM_PROPERTY_PREFIX + ".direct";
+
+  /**
+   * The system property for forcing the cache version to use.
+   */
+  public static final String VERSION_PROPERTY
+      = SYSTEM_PROPERTY_PREFIX + ".version";
+
+  /**
+   * The system property to force recording of a new cache.
+   */
+  public static final String RECORD_PROPERTY
+      = SYSTEM_PROPERTY_PREFIX + ".record";
+
+  /**
+   * Property indicating if stale caches should automatically be refreshed.
+   */
+  public static final String REFRESH_PROPERTY
+      = SYSTEM_PROPERTY_PREFIX + ".refresh";
+
+  /**
+   * Property to activate verbose output from replay cache.
+   */
+  public static final String VERBOSE_PROPERTY
+      = SYSTEM_PROPERTY_PREFIX + ".verbose";
+
   /**
    * Pretty printing {@link JsonWriterFactory}.
    */
@@ -129,7 +166,9 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
    */
   private static final File RESOURCE_CACHE_DIR
       = new File(TEST_RESOURCE_DIR,
-                 PACKAGE_PREFIX.replaceAll("\\.", File.separator)
+                 PACKAGE_PREFIX.replaceAll(
+                     "\\.",
+                     File.separator.equals("\\") ? "\\\\" : File.separator)
                      + "cache");
 
   /**
@@ -141,6 +180,18 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
    * The existing cache directories.
    */
   private static final Set<File> EXISTING_CACHE_DIRS;
+
+  /**
+   * Utility method for getting a system property value.
+   */
+  private static String getPropertyValue(String prop) {
+    String propValue = System.getProperty(prop);
+    if (propValue != null) {
+      propValue = propValue.trim();
+      if (propValue.length() == 0) propValue = null;
+    }
+    return propValue;
+  }
 
   /**
    * Determine the existing cache directories.
@@ -196,7 +247,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       map.put(G2Config.class, "com.senzing.g2.engine.G2ConfigJNI");
       map.put(G2ConfigMgr.class, "com.senzing.g2.engine.G2ConfigMgrJNI");
       map.put(G2Product.class, "com.senzing.g2.engine.G2ProductJNI");
-      map.put(G2Audit.class, "com.senzing.g2.engine.G2AuditJNI");
+      map.put(G2Audit.class, "com.senzing.g2.engine.internal.G2AuditJNI");
     } finally {
       API_IMPLEMENTATIONS = Collections.unmodifiableMap(map);
     }
@@ -228,15 +279,22 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       JsonObject versionObj = JsonUtils.parseJsonObject(versionJson);
       nativeVersion = versionObj.getString("VERSION");
 
-    } catch (Throwable ignore) {
+    } catch (Throwable e) {
       // looks like the product API is not available -- let the version be null
+      // so long as the direct or record flags are not set
+      boolean direct = TRUE.toString().equalsIgnoreCase(
+          getPropertyValue(DIRECT_PROPERTY));
+      boolean record = TRUE.toString().equalsIgnoreCase(
+          getPropertyValue(RECORD_PROPERTY));
+      if (direct || record) {
+        e.printStackTrace();
+        throw new ExceptionInInitializerError(
+            "Failed to find valid Senzing installation for integration test "
+            + "run.");
+      }
 
     } finally {
-      String forceVersion = System.getProperty("com.senzing.api.test.replay.version");
-      if (forceVersion != null) {
-        forceVersion = forceVersion.trim();
-        if (forceVersion.length() == 0) forceVersion = null;
-      }
+      String forceVersion = getPropertyValue(VERSION_PROPERTY);
       G2_NATIVE_VERSION = (forceVersion != null) ? forceVersion: nativeVersion;
     }
   }
@@ -307,6 +365,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       }
 
     } catch (Exception e) {
+      e.printStackTrace();
       throw new ExceptionInInitializerError(e);
 
     } finally {
@@ -375,7 +434,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     this.workingCacheDir  = null;
 
     this.direct = TRUE.toString().equalsIgnoreCase(
-        System.getProperty("com.senzing.api.test.replay.direct"));
+        getPropertyValue(DIRECT_PROPERTY));
 
     // check if running inside a maven build
     if (TARGET_DIR.exists() && MAIN_JAVA_DIR.exists() && TEST_JAVA_DIR.exists()
@@ -387,8 +446,8 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
                                  CACHE_DIR_PREFIX + G2_NATIVE_VERSION);
 
         // check if forcing creation of the cache
-        this.forceRecord = Boolean.TRUE.toString().toLowerCase().equals(
-            System.getProperty("com.senzing.api.test.replay.record"));
+        this.forceRecord = TRUE.toString().equalsIgnoreCase(
+            getPropertyValue(RECORD_PROPERTY));
 
         // check if running all tests or specific tests
         boolean runningAllTests = System.getProperty("test") == null;
@@ -743,12 +802,12 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       this.cacheStale = (!computedDependencyHash.equals(cachedDependencyHash));
 
       // check if refreshing stale caches
-      boolean refresh = Boolean.TRUE.toString().toLowerCase().equals(
-          System.getProperty("com.senzing.api.test.replay.refresh"));
+      boolean refresh = TRUE.toString().equalsIgnoreCase(
+          getPropertyValue(REFRESH_PROPERTY));
 
       // check if always reporting stale
-      boolean verbose = Boolean.TRUE.toString().toLowerCase().equals(
-          System.getProperty("com.senzing.api.test.replay.verbose"));
+      boolean verbose = TRUE.toString().equalsIgnoreCase(
+          getPropertyValue(VERBOSE_PROPERTY));
 
       if (this.cacheStale && verbose) {
         System.out.println("***** CACHE IS STALE: " + cacheZip);

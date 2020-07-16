@@ -5,14 +5,13 @@ import com.senzing.util.Timers;
 
 import javax.ws.rs.core.UriInfo;
 
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 /**
- * The response containing the record ID of the record that was loaded.
+ * The response for a record deletion operation.
  *
  */
-public class SzLoadRecordResponse extends SzResponseWithRawData
+public class SzDeleteRecordResponse extends SzResponseWithRawData
 {
   /**
    * The data for this instance.
@@ -22,13 +21,12 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
   /**
    * Default constructor.
    */
-  public SzLoadRecordResponse() {
-    this.data.recordId = null;
+  public SzDeleteRecordResponse() {
+    // do nothing
   }
 
   /**
-   * Constructs with only the HTTP method and the self link, leaving the
-   * record ID to be initialized later.
+   * Constructs with only the HTTP method and the self link.
    *
    * @param httpMethod The {@link SzHttpMethod}.
    *
@@ -38,16 +36,16 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
    *
    * @param timers The {@link Timers} object for the timings that were taken.
    */
-  public SzLoadRecordResponse(SzHttpMethod httpMethod,
-                              int          httpStatusCode,
-                              String       selfLink,
-                              Timers       timers)
+  public SzDeleteRecordResponse(SzHttpMethod httpMethod,
+                                int          httpStatusCode,
+                                String       selfLink,
+                                Timers       timers)
   {
     super(httpMethod, httpStatusCode, selfLink, timers);
   }
 
   /**
-   * Constructs with the HTTP method, the self link, and the record ID.
+   * Constructs with the HTTP method, the self link and the info.
    *
    * @param httpMethod The {@link SzHttpMethod}.
    *
@@ -57,26 +55,21 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
    *
    * @param timers The {@link Timers} object for the timings that were taken.
    *
-   * @param recordId The record ID of the record that was loaded.
-   *
    * @param info The {@link SzResolutionInfo} providing the information
    *             associated with the resolution of the record.
    */
-  public SzLoadRecordResponse(SzHttpMethod      httpMethod,
-                              int               httpStatusCode,
-                              String            selfLink,
-                              Timers            timers,
-                              String            recordId,
-                              SzResolutionInfo  info)
+  public SzDeleteRecordResponse(SzHttpMethod      httpMethod,
+                                int               httpStatusCode,
+                                String            selfLink,
+                                Timers            timers,
+                                SzResolutionInfo  info)
   {
     super(httpMethod, httpStatusCode, selfLink, timers);
-    this.data.recordId  = recordId;
-    this.data.info      = info;
+    this.data.info = info;
   }
 
   /**
-   * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
-   * record ID to be initialized later.
+   * Constructs with only the HTTP method and the {@link UriInfo}.
    *
    * @param httpMethod The {@link SzHttpMethod}.
    *
@@ -86,16 +79,16 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
    *
    * @param timers The {@link Timers} object for the timings that were taken.
    */
-  public SzLoadRecordResponse(SzHttpMethod httpMethod,
-                              int          httpStatusCode,
-                              UriInfo      uriInfo,
-                              Timers       timers)
+  public SzDeleteRecordResponse(SzHttpMethod httpMethod,
+                                int          httpStatusCode,
+                                UriInfo      uriInfo,
+                                Timers       timers)
   {
     super(httpMethod, httpStatusCode, uriInfo, timers);
   }
 
   /**
-   * Constructs with the HTTP method, the {@link UriInfo}, and the record ID.
+   * Constructs with the HTTP method, the {@link UriInfo}, and the info.
    *
    * @param httpMethod The {@link SzHttpMethod}.
    *
@@ -103,21 +96,17 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
    *
    * @param uriInfo The {@link UriInfo} from the request.
    *
-   * @param recordId The record ID of the record that was loaded.
-   *
    * @param info The {@link SzResolutionInfo} providing the information
    *             associated with the resolution of the record.
    */
-  public SzLoadRecordResponse(SzHttpMethod      httpMethod,
-                              int               httpStatusCode,
-                              UriInfo           uriInfo,
-                              Timers            timers,
-                              String            recordId,
-                              SzResolutionInfo  info)
+  public SzDeleteRecordResponse(SzHttpMethod      httpMethod,
+                                int               httpStatusCode,
+                                UriInfo           uriInfo,
+                                Timers            timers,
+                                SzResolutionInfo  info)
   {
     super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.data.recordId  = recordId;
-    this.data.info      = info;
+    this.data.info = info;
   }
 
   /**
@@ -130,17 +119,8 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
   }
 
   /**
-   * Sets the record ID of the record that was loaded.
-   *
-   * @param recordId The record ID of the record.
-   */
-  public void setRecordId(String recordId) {
-    this.data.recordId = recordId;
-  }
-
-  /**
    * Sets the @link SzResolutionInfo} providing the information associated
-   * with the resolution of the record.
+   * with the deletion of the record.
    *
    * @param info The @link SzResolutionInfo} providing the information associated
    *             with the resolution of the record.
@@ -154,13 +134,8 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
    */
   public static class Data {
     /**
-     * The record ID of the record that was loaded.
-     */
-    private String recordId;
-
-    /**
      * The {@link SzResolutionInfo} providing the information associated with
-     * the resolution of the record.
+     * the deletion of the record.
      */
     private SzResolutionInfo info;
 
@@ -168,26 +143,15 @@ public class SzLoadRecordResponse extends SzResponseWithRawData
      * Private default constructor.
      */
     private Data() {
-      this.recordId = null;
-      this.info     = null;
-    }
-
-    /**
-     * Gets the record ID of the record that was loaded.
-     *
-     * @return The record ID of the record that was loaded.
-     */
-    @JsonInclude(NON_NULL)
-    public String getRecordId() {
-      return this.recordId;
+      this.info = null;
     }
 
     /**
      * Gets the {@link SzResolutionInfo} providing the information associated
-     * with the resolution of the record.
+     * with the deletion of the record.
      *
      * @return The {@link SzResolutionInfo} providing the information
-     *         associated with the resolution of the record.
+     *         associated with the deletion of the record.
      */
     @JsonInclude(NON_NULL)
     public SzResolutionInfo getInfo() {

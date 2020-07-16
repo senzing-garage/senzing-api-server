@@ -1,5 +1,6 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -7,6 +8,9 @@ import javax.json.JsonObject;
 import javax.json.JsonString;
 import java.util.*;
 import java.util.function.Consumer;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 /**
  * Describes an entity record.
@@ -28,9 +32,9 @@ public class SzEntityRecord {
   private List<String> addressData;
 
   /**
-   * The list of attribute data strings.
+   * The list of characteristic data strings.
    */
-  private List<String> attributeData;
+  private List<String> characteristicData;
 
   /**
    * The list of identifier data strings.
@@ -69,7 +73,7 @@ public class SzEntityRecord {
     this.dataSource         = null;
     this.recordId           = null;
     this.addressData        = new LinkedList<>();
-    this.attributeData      = new LinkedList<>();
+    this.characteristicData = new LinkedList<>();
     this.identifierData     = new LinkedList<>();
     this.nameData           = new LinkedList<>();
     this.phoneData          = new LinkedList<>();
@@ -123,8 +127,8 @@ public class SzEntityRecord {
    *
    * @return The list of address data strings for the record.
    */
-  public List<String> getAddressData()
-  {
+  @JsonInclude(NON_EMPTY)
+  public List<String> getAddressData() {
     return Collections.unmodifiableList(this.addressData);
   }
 
@@ -136,7 +140,9 @@ public class SzEntityRecord {
   public void setAddressData(List<String> addressData)
   {
     this.addressData.clear();
-    this.addressData.addAll(addressData);
+    if (addressData != null) {
+      this.addressData.addAll(addressData);
+    }
   }
 
   /**
@@ -150,35 +156,37 @@ public class SzEntityRecord {
   }
 
   /**
-   * Returns the list of attribute data strings for the record.
+   * Returns the list of characteristic data strings for the record.
    *
-   * @return The list of attribute data strings for the record.
+   * @return The list of characteristic data strings for the record.
    */
-  public List<String> getAttributeData()
-  {
-    return Collections.unmodifiableList(this.attributeData);
+  @JsonInclude(NON_EMPTY)
+  public List<String> getCharacteristicData() {
+    return Collections.unmodifiableList(this.characteristicData);
   }
 
   /**
-   * Sets the attribute data list for the record.
+   * Sets the characteristic data list for the record.
    *
-   * @param attributeData The list of attribute data strings.
+   * @param characteristicData The list of characteristic data strings.
    */
-  public void setAttributeData(List<String> attributeData)
+  public void setCharacteristicData(List<String> characteristicData)
   {
-    this.attributeData.clear();
-    this.attributeData.addAll(attributeData);
+    this.characteristicData.clear();
+    if (characteristicData != null) {
+      this.characteristicData.addAll(characteristicData);
+    }
   }
 
   /**
-   * Adds to the attribute data list for the record.
+   * Adds to the characteristic data list for the record.
    *
-   * @param attributeData The attribute data string to add to the address
+   * @param characteristicData The characteristic data string to add to the address
    *                      data list.
    */
-  public void addAttributeData(String attributeData)
+  public void addCharacteristicData(String characteristicData)
   {
-    this.attributeData.add(attributeData);
+    this.characteristicData.add(characteristicData);
   }
 
   /**
@@ -186,8 +194,8 @@ public class SzEntityRecord {
    *
    * @return The list of identifier data strings for the record.
    */
-  public List<String> getIdentifierData()
-  {
+  @JsonInclude(NON_EMPTY)
+  public List<String> getIdentifierData() {
     return Collections.unmodifiableList(this.identifierData);
   }
 
@@ -199,7 +207,9 @@ public class SzEntityRecord {
   public void setIdentifierData(List<String> identifierData)
   {
     this.identifierData.clear();
-    this.identifierData.addAll(identifierData);
+    if (identifierData != null) {
+      this.identifierData.addAll(identifierData);
+    }
   }
 
   /**
@@ -218,6 +228,7 @@ public class SzEntityRecord {
    *
    * @return The list of name data strings for the record.
    */
+  @JsonInclude(NON_EMPTY)
   public List<String> getNameData() {
     return Collections.unmodifiableList(this.nameData);
   }
@@ -229,7 +240,9 @@ public class SzEntityRecord {
    */
   public void setNameData(List<String> nameData) {
     this.nameData.clear();
-    this.nameData.addAll(nameData);
+    if (nameData != null) {
+      this.nameData.addAll(nameData);
+    }
   }
 
   /**
@@ -247,6 +260,7 @@ public class SzEntityRecord {
    *
    * @return The list of phone data strings for the record.
    */
+  @JsonInclude(NON_EMPTY)
   public List<String> getPhoneData() {
     return Collections.unmodifiableList(this.phoneData);
   }
@@ -258,7 +272,9 @@ public class SzEntityRecord {
    */
   public void setPhoneData(List<String> phoneData) {
     this.phoneData.clear();
-    this.phoneData.addAll(phoneData);
+    if (phoneData != null) {
+      this.phoneData.addAll(phoneData);
+    }
   }
 
   /**
@@ -276,6 +292,7 @@ public class SzEntityRecord {
    *
    * @return The list of relationship data strings for the record.
    */
+  @JsonInclude(NON_EMPTY)
   public List<String> getRelationshipData() {
     return Collections.unmodifiableList(this.relationshipData);
   }
@@ -286,8 +303,10 @@ public class SzEntityRecord {
    * @param relationshipData The list of relationship data strings.
    */
    public void setRelationshipData(List<String> relationshipData) {
-   this.relationshipData.clear();
-   this.relationshipData.addAll(relationshipData);
+     this.relationshipData.clear();
+     if (relationshipData != null) {
+       this.relationshipData.addAll(relationshipData);
+     }
    }
 
    /**
@@ -306,6 +325,7 @@ public class SzEntityRecord {
    *
    * @return The list of other data strings for the record.
    */
+  @JsonInclude(NON_EMPTY)
   public List<String> getOtherData() {
     return Collections.unmodifiableList(this.otherData);
   }
@@ -317,7 +337,9 @@ public class SzEntityRecord {
    */
   public void setOtherData(List<String> otherData) {
     this.otherData.clear();
-    this.otherData.addAll(otherData);
+    if (otherData != null) {
+      this.otherData.addAll(otherData);
+    }
   }
 
   /**
@@ -335,6 +357,7 @@ public class SzEntityRecord {
    *
    * @return The original source data that was used to load the record.
    */
+  @JsonInclude(NON_NULL)
   public Object getOriginalSourceData() {
     return originalSourceData;
   }
@@ -448,7 +471,7 @@ public class SzEntityRecord {
     });
 
     getValueList(jsonObject, "ATTRIBUTE_DATA", (attr) -> {
-      rec.addAttributeData(attr);
+      rec.addCharacteristicData(attr);
     });
 
     getValueList(jsonObject, "IDENTIFIER_DATA", (ident) -> {
@@ -483,7 +506,7 @@ public class SzEntityRecord {
     return "dataSource='" + dataSource + '\'' +
         ", recordId='" + recordId + '\'' +
         ", addressData=" + addressData +
-        ", attributeData=" + attributeData +
+        ", characteristicData=" + characteristicData +
         ", identifierData=" + identifierData +
         ", nameData=" + nameData +
         ", phoneData=" + phoneData +

@@ -21,6 +21,7 @@ import javax.ws.rs.core.UriInfo;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
 
+import static com.senzing.api.services.ServicesUtil.newBadRequestException;
 import static java.lang.Boolean.FALSE;
 import static java.lang.Boolean.TRUE;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
@@ -46,10 +47,6 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
   static {
     List<String> list = new ArrayList<>();
     list.add("ACTOR");
-    list.add("OBJECT");
-    list.add("LOCATION");
-    list.add("EVENT");
-    list.add("TRAN");
     ALL_ENTITY_CLASSES_LIST = Collections.unmodifiableList(list);
   }
   private ConfigServices configServices;
@@ -533,7 +530,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
         {
           String code = null;
           for (SzEntityType value: values) {
-            if (code != null && code.equals(value.getEntityClassCode())) {
+            if (code != null && !code.equals(value.getEntityClassCode())) {
               throw new IllegalStateException(
                   "Cannot format as a quoted text array and have different "
                   + "entity class codes: " + values);
@@ -702,18 +699,6 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     this.nextDataSourceId   = 10001;
     this.nextEntityTypeId   = 10001;
     this.nextEntityClassId  = 10001;
-  }
-
-
-  private List<Arguments> getWithRawVariants() {
-    List<Arguments> result = new LinkedList<>();
-    Boolean[] booleanVariants = {null, true, false};
-    for (Boolean withRaw: booleanVariants) {
-      Object[] argArray = new Object[1];
-      argArray[0] = withRaw;
-      result.add(arguments(argArray));
-    }
-    return result;
   }
 
   private SzDataSource nextDataSource(SpecifiedMode idMode) {
@@ -1181,7 +1166,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
 
   @ParameterizedTest
   @MethodSource("getPostDataSourcesParameters")
-  public void postDataSourcesTestViaHttp(
+  public void postDataSourcesViaHttpTest(
       int                   querySourceCount,
       DataSourceBodyVariant bodySourceVariant,
       int                   overlapCount,
@@ -1258,8 +1243,12 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     });
   }
 
-  @ParameterizedTest
-  @MethodSource("getPostEntityClassesParameters")
+
+  //---------------------------------------------------------------------
+  // TODO(bcaceres) -- remove this code when entity classes other than
+  // ACTOR are supported
+  //@ParameterizedTest
+  //@MethodSource("getPostEntityClassesParameters")
   public void postEntityClassesTest(int                     queryClassCount,
                                     EntityClassBodyVariant  bodyClassVariant,
                                     int                     overlapCount,
@@ -1335,9 +1324,12 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     });
   }
 
-  @ParameterizedTest
-  @MethodSource("getPostEntityClassesParameters")
-  public void postEntityClassesTestViaHttp(
+  //---------------------------------------------------------------------
+  // TODO(bcaceres) -- remove this code when entity classes other than
+  // ACTOR are supported
+  //@ParameterizedTest
+  //@MethodSource("getPostEntityClassesParameters")
+  public void postEntityClassesViaHttpTest(
       int                     queryClassCount,
       EntityClassBodyVariant  bodyClassVariant,
       int                     overlapCount,
@@ -1509,7 +1501,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
 
   @ParameterizedTest
   @MethodSource("getPostEntityTypeParameters")
-  public void postEntityTypesTestViaHttp(int                    queryTypeCount,
+  public void postEntityTypesViaHttpTest(int                    queryTypeCount,
                                          EntityTypeBodyVariant  bodyTypeVariant,
                                          int                    overlapCount,
                                          boolean                queryClass,
@@ -1687,7 +1679,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
 
   @ParameterizedTest
   @MethodSource("getPostEntityTypeForClassParameters")
-  public void postEntityTypesForClassTestViaHttp(
+  public void postEntityTypesForClassViaHttpTest(
       int                    queryTypeCount,
       EntityTypeBodyVariant  bodyTypeVariant,
       int                    overlapCount,
@@ -1776,7 +1768,9 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     });
   }
 
-  @Test
+  // TODO(bcaceres): Renable this test when entity classes other than ACTOR
+  // are supported by the product.
+  //@Test
   public void postEntityTypesForWrongClassTest()
   {
     this.performTest(() -> {
@@ -1817,8 +1811,10 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     });
   }
 
-  @Test
-  public void postEntityTypesForWrongClassTestViaHttp() {
+  // TODO(bcaceres): Renable this test when entity classes other than ACTOR
+  // are supported by the product.
+  //@Test
+  public void postEntityTypesForWrongClassViaHttpTest() {
     this.performTest(() -> {
       this.revertToInitialConfig();
 
@@ -1859,7 +1855,9 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     });
   }
 
-  @Test
+  // TODO(bcaceres): Renable this test when entity classes other than ACTOR
+  // are supported by the product.
+  //@Test
   public void postEntityTypesForInvalidClassTest()
   {
     this.performTest(() -> {
@@ -1903,8 +1901,10 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     });
   }
 
-  @Test
-  public void postEntityTypesForInvalidClassTestViaHttp() {
+  // TODO(bcaceres): Renable this test when entity classes other than ACTOR
+  // are supported by the product.
+  //@Test
+  public void postEntityTypesForInvalidClassViaHttpTest() {
     this.performTest(() -> {
       this.revertToInitialConfig();
 

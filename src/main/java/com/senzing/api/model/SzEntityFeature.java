@@ -1,9 +1,13 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import javax.json.JsonArray;
 import javax.json.JsonObject;
-import javax.json.JsonValue;
 import java.util.*;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 
 /**
  * Describes a feature for an entity.
@@ -51,6 +55,7 @@ public class SzEntityFeature {
    *
    * @return The internal ID for the primary feature value.
    */
+  @JsonInclude(NON_NULL)
   public Long getPrimaryId() {
     return this.primaryId;
   }
@@ -69,6 +74,7 @@ public class SzEntityFeature {
    *
    * @return The primary value for the feature.
    */
+  @JsonInclude(NON_NULL)
   public String getPrimaryValue() {
     return primaryValue;
   }
@@ -87,6 +93,7 @@ public class SzEntityFeature {
    *
    * @return The usage type for the feature.
    */
+  @JsonInclude(NON_NULL)
   public String getUsageType() {
     return usageType;
   }
@@ -107,6 +114,7 @@ public class SzEntityFeature {
    * @return The <b>unmodifiable</b> {@link Set} of duplicate values for the
    *         entity.
    */
+  @JsonInclude(NON_EMPTY)
   public Set<String> getDuplicateValues() {
     return Collections.unmodifiableSet(this.duplicateValues);
   }
@@ -142,6 +150,7 @@ public class SzEntityFeature {
    *         SzEntityFeatureDetail} instances describing the details of each of
    *         the clustered feature values for this feature.
    */
+  @JsonInclude(NON_EMPTY)
   public List<SzEntityFeatureDetail> getFeatureDetails() {
     return Collections.unmodifiableList(this.featureDetails);
   }

@@ -6,6 +6,189 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2020-07-16
+
+### Changed in 2.0.0
+
+- Modified to build with version 2.x of Senzing product include use of new
+  entity formatting flags.
+
+- Updated REST API Version to v2.0.0
+
+- Renamed `com.senzing.api.model.SzFeatureInclusion` to
+  `com.senzing.api.model.SzFeatureMode`
+
+- Added `com.senzing.api.model.SzRelationshipMode` with values of `NONE`,
+  `PARTIAL` and `FULL`.
+
+- Added new model classes to support Senzing REST API 2.0
+
+- Added `withInfo` and `withRaw` query parameters to following endpoints:
+  - `POST /data-sources/{dataSourceCode}/records`
+  - `PUT /data-sources/{dataSourceCode}/records/{recordId}`
+
+- Added `DELETE /data-sources/{dataSourceCode}/records/{recordId}` endpoint
+  including `withInfo` and `withRaw` query parameters.
+
+- Added the following endpoints to reevaluate entities or specific records
+  including `withInfo` and `withRaw` query parameters:
+  - `POST /data-sources/{dataSourceCode}/records/{recordId}/entity/reevaluate`
+  - `POST /reevaluate-entities`
+
+- In `com.senzing.io.RecordReader` a `null` value in the `dataSourceMap` and
+  `entityTypeMap` is now used as the general overriding data source or entity
+  type, respectively, while the value mapped to empty-string is used to assign
+  a data source or entity type (respectively) to a record that is missing a
+  value for that field.
+
+- In `com.senzing.api.model.SzResolvedEntity` the property `attributeData` was
+  renamed to `characteristicData` to match the OpenAPI Specification for the
+  Senzing REST API.  **NOTE**: Client code that was written to look for
+  `attributeData` must be modified or will find a missing property.
+
+- Potentially Backward-Compatibility Breaking Changes by Java class and
+  API Endpoint:
+  - `com.senzing.api.services.ConfigServices`
+    - `GET /entity-classes`
+    - `GET /entity-classes/{entityClassCode}`
+    - `POST /entity-types`
+    - `POST /entity-classes/{entityClassCode}/entity-types`
+    - `GET /entity-classes/{entityClassCode}/entity-types/{entityTypeCode}`
+      - Removed support for any entity class other than ACTOR as it was
+        discovered that the underlying product does not properly support entity
+        resolution when using entity classes other than ACTOR and it may not for
+        some time. This will change if and when additional entity classes are
+        supported.
+        - *MIGRATION*: Ensure the value provided for all entity classes are
+          changed to `ACTOR`.
+
+    - `POST /entity-classes`
+      - Removed this operation as it was discovered that the underlying product
+        does not fully properly support entity resolution when using entity
+        classes other than ACTOR and it may not for some time.  This will change
+        if and when additional entity classes are supported.
+        - *MIGRATION*: Remove calls to create new entity classes and instead
+          leverage the default entity class `ACTOR`.
+
+    - `GET /config/current`
+      - Renamed to `GET /configs/active` since “current” is ambiguous with
+        regards to the “currently active config” versus the configuration
+        managers currently configured “default config”.
+        - *MIGRATION*: Use the `/configs/active` path in place of
+          `/config/current`.
+
+    - `GET /config/default`
+      - Renamed to `GET /configs/template` since “default” is ambiguous with the
+        configuration managers “default config” setting.
+        - *MIGRATION*: Use the `/configs/template` path in place of
+          `/config/default`.
+
+  - `com.senzing.api.services.EntityDataServices`
+    - `GET /data-sources/{dataSourceCode}/records/{recordId}`
+      - The `data` property of `SzRecordResponse` was previously of type
+        `SzEntityRecord`.  However, the Open API specification for the Senzing
+         REST API had always documented it as an object with a single property
+         named `record` whose type was `SzEntityRecord` (an additional level of
+         indirection).  In order to conform with the specification and make it
+         consistent with `SzEntityResponse`, the server has been modified with
+         class `SzRecordResponse` now having a `data` property with a `record`
+         sub-property.
+        - *MIGRATION*: Change direct references to the `data` field to instead
+          reference `data.record`.
+      - The `SzEntityRecord` in the response will exclude fields that are `null`
+        or empty arrays.
+        - *MIGRATION*: Depending on the client language, check if fields are
+          missing, `null` or `undefined` before attempting to use them.
+
+    - `GET /entities/{entityId}`
+    - `GET /data-sources/{dataSourceCode}/records/{recordId}/entity`
+      - The `withRelated` parameter is no longer a `boolean` value that accepts
+        `true` or `false`.  It now accepts an enumerated value of
+         type `com.senzing.api.model.SzRelationshipMode` with values of `NONE`,
+        `PARTIAL` or `FULL`.
+        - *MIGRATION*: Use `?withRelated=FULL` in place of `?withRelated=true`
+          and use `?withRelated=PARTIAL` in place of `?withRelated=false`.
+      - The `SzResolvedEntity` and the contained `SzEntityRecord` instances in
+        the response will exclude fields that are `null` or empty arrays.
+        - *MIGRATION*: Depending on the client language, check if fields are
+          missing, `null` or `undefined` before attempting to use them.
+
+    - `GET /entities`
+      - Removed the `attr_[PROPERTY_NAME]` parameters and replaced with the
+        multi-valued `attr` parameter so that this parameter could better be
+        documented in the Open API Spec and examples provided via Swagger
+        Editor.
+        - *MIGRATION*: Use `?attr=NAME_FIRST:Joe` in place of
+          `?attr_NAME_FIRST=Joe` or use the `attrs` parameter with a JSON value.
+      - The `SzAttributeSearchResult` instances and contained `SzRelatedEntity`
+        and `SzEntityRecord` instances in the response will exclude fields that
+        are `null` or empty arrays.
+        - *MIGRATION*: Depending on the client language, check if fields are
+          missing, `null` or `undefined` before attempting to use them.
+      - The `withRelationships` query parameter now defaults to `false` instead
+        of `true`.
+        - *MIGRATION*: Use `?withRelationships=true` if relationships are
+          desired.
+
+    - `POST /data-sources/{dataSourceCode}/records/`
+    - `PUT /data-sources/{dataSourceCode}/records/{recordId}`
+      - Modified to default `ENTITY_TYPE` to `GENERIC` if `ENTITY_TYPE` not
+        found in record.
+        - *MIGRATION*: Specify an entity type if `GENERIC` is not desired.
+
+  - `com.senzing.api.services.EntityGraphServices`
+    - `GET /entity-networks`
+      - Changed the default value for `maxDegrees` parameter from 5 to 3
+        - *MIGRATION*: Use `?maxDegrees=5` if the old default is desired.
+      - The `SzResolvedEntity` instances and the contained `SzEntityRecord`
+        instances in the response will exclude fields that are `null` or empty
+        arrays.
+        - *MIGRATION*: Depending on the client language, check if fields are
+          missing, `null` or `undefined` before attempting to use them.
+    - `GET /entity-paths`
+      - The `SzResolvedEntity` instances and the contained `SzEntityRecord`
+        instances in the response will exclude fields that are `null` or empty
+        arrays.
+        - *MIGRATION*: Depending on the client language, check if fields are
+          missing, `null` or `undefined` before attempting to use them.
+
+  - `com.senzing.api.services.BulkDataServices`
+    - `POST /bulk-data/load`
+      - Replaced the `dataSource_[DATA_SOURCE_CODE]` parameters with the
+        multi-valued `mapDataSource` parameter so that this parameter
+        could better be documented in Open API Spec and examples provided via
+        Swagger Editor.
+        - *MIGRATION*: Use `?mapDataSource=FOO:BAR` in place of
+          `?dataSource_FOO=BAR` or use the new `mapDataSources` parameter
+           instead.
+      - Replaced the `entityType_[ENTITY_TYPE_CODE]` parameters with the
+        multi-valued `mapEntityType` parameter so that this parameter could
+        better be documented in Open API Spec and examples provided via
+        Swagger Editor.
+        - *MIGRATION*: Use `?mapEntityType=FOO:BAR` in place of
+          `?entityType_FOO=BAR` or use the new `mapEntityTypes` parameter instead.
+
+- Other Changes by Java class and API Endpoint:
+  - `com.senzing.api.services.AdminServices`
+    - `GET /license`
+      - Added the previously undocumented (but always-supported) the “withRaw”
+        parameter.
+
+    - `GET /version`
+      - Added the previously undocumented (but always-supported) the “withRaw”
+        parameter.
+
+    - `POST /bulk-data/load`
+      - Added the single-valued `mapDataSources` parameter which accepts
+        URL-encoded JSON to map the original data sources to target data
+        sources.
+      - Added the single-valued `mapEntityTypes` parameter which accepts
+        URL-encoded JSON to map the original entity types to target entity
+        types.
+
+- Removed pre-recorded mock data from integration tests for versions prior to
+  2.0.0 and added pre-recorded mock data for integratioon tests for v2.0.0.
+
 ## [1.8.5] - 2020-07-08
 
 ### Changed in 1.8.5
