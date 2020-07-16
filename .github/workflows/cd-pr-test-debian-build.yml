@@ -82,7 +82,7 @@ jobs:
         run: curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_logs.txt ${{ steps.job_info.outputs.log_url }}/logs
       - name: Slack Notification
         id: slack_notification
-        uses: Senzing/git-action-slack-notification@1.0.0
+        uses: senzing-factory/git-action-slack-notification@1.0.0
         if: contains(steps.job_info.outputs.status, 'failure')
         env:
           SLACK_CHANNEL: production-build-failures

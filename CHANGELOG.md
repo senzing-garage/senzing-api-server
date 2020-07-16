@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.0.0] - 2020-07-13
+## [2.0.0] - 2020-07-16
 
 ### Changed in 2.0.0
 
@@ -188,6 +188,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed pre-recorded mock data from integration tests for versions prior to
   2.0.0 and added pre-recorded mock data for integratioon tests for v2.0.0.
+
+## [1.8.5] - 2020-07-08
+
+### Changed in 1.8.5
+
+- Works with senzing versions up to 1.15.6
+- Not supported for senzing version 2.0.0 and above
 
 ## [1.8.4] - 2020-05-07
 
