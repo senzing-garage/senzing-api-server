@@ -46,7 +46,7 @@ jobs:
         run: |
           make \
             BASE_BUILDER_IMAGE="senzing/base-image-debian:1.0.3" \
-            BASE_IMAGE="senzing/senzing-base:1.4.0" \
+            BASE_IMAGE="senzing/senzing-base:1.5.2" \
             SENZING_G2_JAR_PATHNAME=${HOME}/work/senzing-api-server/senzing-api-server/g2/lib/g2.jar \
             SENZING_G2_JAR_VERSION=$(cat /opt/senzing/g2/g2BuildVersion.json | jq --raw-output '.VERSION') \
             docker-build
