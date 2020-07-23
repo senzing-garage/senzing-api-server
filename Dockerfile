@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=senzing/senzing-base:1.5.0
+ARG BASE_IMAGE=senzing/senzing-base:1.5.2
 ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.3
 
 # -----------------------------------------------------------------------------
