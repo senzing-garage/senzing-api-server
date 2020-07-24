@@ -1,9 +1,9 @@
 name: Pull Request Test Java API Server Build on Debian
 
 on:
-  pull_request:
+  push:
     branches:
-      - master
+      - issue-173.jadair.2
 
 jobs:
   prBuildSenzingJavaApiServer:
@@ -80,29 +80,29 @@ jobs:
           echo ::set-output name=branch_name::$(echo ${GITHUB_REF##*/})
       - name: Generate log file
         run: curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_logs.txt ${{ steps.job_info.outputs.log_url }}/logs
-      - name: Slack Notification
-        id: slack_notification
-        uses: senzing-factory/git-action-slack-notification@1.0.0
-        if: contains(steps.job_info.outputs.status, 'failure')
-        env:
-          SLACK_CHANNEL: production-build-failures
-          SLACK_COLOR: '#3278BD'
-          SLACK_TITLE: Senzing API server failed to build on commit sha ${{ github.sha }} using G2 Version ${{ steps.job_info.outputs.g2_version }}
-          SLACK_MESSAGE: |
-            OS: senzing/base-image-debian:1.0.3
-            Senzing RPM version: ${{ steps.job_info.outputs.g2_version }}
-            DEB URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
-            Branch Name: ${{ steps.job_info.outputs.branch_name }}
-            The commit SHA is: ${{ github.sha }}
-            Git Actions Log URL: ${{ steps.job_info.outputs.html_url }}
-          SLACK_USERNAME: senzing-api-server
-          SLACK_WEBHOOK: ${{ secrets.SLACK_NOTIFICATION }}
-          GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_REF: ${{ github.ref }}
-          GITHUB_ACTION: ${{ github.action }}
-          GITHUB_EVENT_NAME: ${{ github.event_name }}
-          GITHUB_WORKFLOW: ${{ github.workflow }}
+      # - name: Slack Notification
+        # id: slack_notification
+        # uses: senzing-factory/git-action-slack-notification@1.0.0
+        # if: contains(steps.job_info.outputs.status, 'failure')
+        # env:
+          # SLACK_CHANNEL: production-build-failures
+          # SLACK_COLOR: '#3278BD'
+          # SLACK_TITLE: Senzing API server failed to build on commit sha ${{ github.sha }} using G2 Version ${{ steps.job_info.outputs.g2_version }}
+          # SLACK_MESSAGE: |
+            # OS: senzing/base-image-debian:1.0.3
+            # Senzing RPM version: ${{ steps.job_info.outputs.g2_version }}
+            # DEB URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
+            # Branch Name: ${{ steps.job_info.outputs.branch_name }}
+            # The commit SHA is: ${{ github.sha }}
+            # Git Actions Log URL: ${{ steps.job_info.outputs.html_url }}
+          # SLACK_USERNAME: senzing-api-server
+          # SLACK_WEBHOOK: ${{ secrets.SLACK_NOTIFICATION }}
+          # GITHUB_ACTOR: ${{ github.actor }}
+          # GITHUB_REPOSITORY: ${{ github.repository }}
+          # GITHUB_REF: ${{ github.ref }}
+          # GITHUB_ACTION: ${{ github.action }}
+          # GITHUB_EVENT_NAME: ${{ github.event_name }}
+          # GITHUB_WORKFLOW: ${{ github.workflow }}
       - name: Persisting log
         id: persisting_log
         if: always()
