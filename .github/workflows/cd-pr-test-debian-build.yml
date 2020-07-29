@@ -15,6 +15,9 @@ jobs:
       - name: Check if there are conflicts when local merging master
         id: local_merge_master
         run: git merge origin/master
+      - name: Update submodules
+        id: update_submodules
+        run: git submodule update --init --recursive
       - name: Download Senzing Deb Package Onto Runner
         id: download_senzing_deb
         env:
