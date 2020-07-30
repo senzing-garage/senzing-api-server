@@ -12,6 +12,9 @@ jobs:
       - uses: actions/checkout@v1
       - name: Capture environment variables
         run: printenv
+      - name: Update submodules
+        id: update_submodules
+        run: git submodule update --init --recursive
       - name: Download Senzing Deb Package Onto Runner
         id: download_senzing_deb
         env:
