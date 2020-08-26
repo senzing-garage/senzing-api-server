@@ -10,6 +10,7 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.json.stream.JsonParser;
 import javax.json.stream.JsonParserFactory;
+import javax.json.stream.JsonParsingException;
 import java.io.*;
 import java.util.*;
 
@@ -22,14 +23,19 @@ public class RecordReader {
    * Represents the supported format for the records.
    */
   public enum Format {
-    JSON("application/json"),
-    JSON_LINES("application/x-jsonlines"),
-    CSV("text/csv");
+    JSON("application/json", "JSON"),
+    JSON_LINES("application/x-jsonlines", "JSON Lines"),
+    CSV("text/csv", "CSV");
 
     /**
      *  The associated media type.
      */
     private String mediaType;
+
+    /**
+     * The simple name associated with the media type.
+     */
+    private String simpleName;
 
     /**
      * The lookup map to lookup format by media type.
@@ -38,16 +44,25 @@ public class RecordReader {
 
     /**
      * Constructs with the specified media type.
+     * @param mediaType The media type.
+     * @param simpleName The simple name for the format.
      */
-    Format(String mediaType) {
+    Format(String mediaType, String simpleName) {
       this.mediaType = mediaType;
+      this.simpleName = simpleName;
     }
+
     /**
      * Returns the associated media type.
      */
     public String getMediaType() {
       return this.mediaType;
     }
+
+    /**
+     * Returns the simple name for the format.
+     */
+    public String getSimpleName() { return this.simpleName; }
 
     /**
      * Initializes the lookup.
@@ -504,6 +519,19 @@ public class RecordReader {
   }
 
   /**
+   * Gets the line number of an error after calling {@link #readRecord()}.
+   * This returns <tt>null</tt> if there was no error after calling {@link
+   * #readRecord()} and will return <tt>null</tt> if {@link #readRecord()}
+   * has never been called.
+   *
+   * @return The line number associated with the error on the last attempt to
+   *         get a record, or <tt>null</tt> if there was no error.
+   */
+  public Long getErrorLineNumber() {
+    return this.recordProvider.getErrorLineNumber();
+  }
+
+  /**
    * A interface for providing records.
    */
   private interface RecordProvider {
@@ -512,6 +540,17 @@ public class RecordReader {
      * @return The next {@link JsonObject} record.
      */
     JsonObject getNextRecord();
+
+    /**
+     * Gets the line number of an error after calling {@link #getNextRecord()}.
+     * This returns <tt>null</tt> if there was no error after calling {@link
+     * #getNextRecord()} and will return <tt>null</tt> if {@link
+     * #getNextRecord()} has never been called.
+     *
+     * @return The line number associated with the error on the last attempt to
+     *         get a record, or <tt>null</tt> if there was no error.
+     */
+    Long getErrorLineNumber();
   }
 
   /**
@@ -580,6 +619,16 @@ public class RecordReader {
     private Iterator<JsonObject> recordIter;
 
     /**
+     * Indicates whether or not the JSON properly parses to avoid
+     */
+    private boolean errant = false;
+
+    /**
+     * The line number for the last error.
+     */
+    private Long errorLineNumber = null;
+
+    /**
      * Constructor.
      */
     public JsonArrayRecordProvider(Reader reader) {
@@ -596,11 +645,31 @@ public class RecordReader {
      */
     public JsonObject getNextRecord() {
       RecordReader owner = RecordReader.this;
-      if (this.recordIter.hasNext()) {
-        return owner.augmentRecord(this.recordIter.next());
-      } else {
-        return null;
+      JsonObject result = null;
+      while (result == null) {
+        try {
+          if (!recordIter.hasNext()) break;
+          result = owner.augmentRecord(this.recordIter.next());
+          this.errant = false; // clear the errant flag
+
+        } catch (Exception e) {
+          if (this.errant) continue;
+          if (e instanceof JsonParsingException) {
+            JsonParsingException jpe = (JsonParsingException) e;
+            System.out.println("LOCATION: " + jpe.getLocation());
+            System.out.println("LINE NUMBER: " + jpe.getLocation().getLineNumber());
+            this.errorLineNumber = jpe.getLocation().getLineNumber();
+          }
+          this.errant = true;
+          throw e;
+        }
       }
+      return result;
+    }
+
+    @Override
+    public Long getErrorLineNumber() {
+      return this.errorLineNumber;
     }
   }
 
@@ -613,6 +682,16 @@ public class RecordReader {
      * The backing {@link BufferedReader} for reading the lines from the file.
      */
     private BufferedReader reader;
+
+    /**
+     * The current line number.
+     */
+    private long lineNumber = 0;
+
+    /**
+     * The error line number if an error is found.
+     */
+    private Long errorLineNumber = null;
 
     /**
      * Default constructor.
@@ -631,6 +710,7 @@ public class RecordReader {
       try {
         RecordReader  owner   = RecordReader.this;
         JsonObject    record  = null;
+
         while (this.reader != null && record == null) {
           // read the next line and check for EOF
           String line = this.reader.readLine();
@@ -639,6 +719,8 @@ public class RecordReader {
             this.reader = null;
             continue;
           }
+          this.lineNumber++;
+          this.errorLineNumber = null; // clear the error line number
 
           // trim the line of extra whitespace
           line = line.trim();
@@ -656,7 +738,13 @@ public class RecordReader {
           }
 
           // parse the line
-          record = JsonUtils.parseJsonObject(line);
+          try {
+            record = JsonUtils.parseJsonObject(line);
+
+          } catch (JsonParsingException e) {
+            this.errorLineNumber = this.lineNumber;
+            throw e;
+          }
         }
 
         return owner.augmentRecord(record);
@@ -665,6 +753,11 @@ public class RecordReader {
         throw new RuntimeException(e);
       }
     }
+
+    @Override
+    public Long getErrorLineNumber() {
+      return this.errorLineNumber;
+    }
   }
 
   /**
@@ -672,16 +765,28 @@ public class RecordReader {
    *
    */
   private class CsvRecordProvider implements RecordProvider {
+    /**
+     * The CSV parser.
+     */
+    private CSVParser parser;
+
+    /**
+     * The record iterator.
+     */
     private Iterator<CSVRecord> recordIter;
-    private JsonObject previousRecord = null;
+
+    /**
+     * The line number for the last error.
+     */
+    private Long errorLineNumber = null;
 
     public CsvRecordProvider(Reader reader) {
       CSVFormat csvFormat = CSVFormat.DEFAULT
           .withFirstRecordAsHeader().withIgnoreEmptyLines(true).withTrim(true);
 
       try {
-        CSVParser parser = new CSVParser(reader, csvFormat);
-        Map<String, Integer> headerMap = parser.getHeaderMap();
+        this.parser = new CSVParser(reader, csvFormat);
+        Map<String, Integer> headerMap = this.parser.getHeaderMap();
         Set<String> headers = new HashSet<>();
         headerMap.keySet().forEach(h -> {
           headers.add(h.toUpperCase());
@@ -695,6 +800,7 @@ public class RecordReader {
 
     public JsonObject getNextRecord() {
       RecordReader owner = RecordReader.this;
+      this.errorLineNumber = null;
       try {
         if (!this.recordIter.hasNext()) return null;
         CSVRecord record = this.recordIter.next();
@@ -714,17 +820,21 @@ public class RecordReader {
 
         JsonObject result = owner.augmentRecord(jsonObj);
 
-        this.previousRecord = result;
-
         return result;
 
       } catch (RuntimeException e) {
-        System.err.println("PREVIOUS RECORD: " + JsonUtils.toJsonText(this.previousRecord));
+        this.errorLineNumber = this.parser.getCurrentLineNumber();
         throw e;
+
       } catch (Exception e) {
-        System.err.println("PREVIOUS RECORD: " + JsonUtils.toJsonText(this.previousRecord));
+        this.errorLineNumber = this.parser.getCurrentLineNumber();
         throw new RuntimeException(e);
       }
+    }
+
+    @Override
+    public Long getErrorLineNumber() {
+      return this.errorLineNumber;
     }
   }
 
