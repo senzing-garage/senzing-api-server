@@ -640,18 +640,42 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   }
 
   /**
+   *
+   */
+  protected static class RecordedResult {
+    private int repeatCount = 1;
+    private Object value = null;
+    private RecordedResult(Object value) {
+      this(value, 1);
+    }
+    private RecordedResult(Object value, int repeatCount) {
+      this.value = value;
+      this.repeatCount = repeatCount;
+    }
+    private boolean remaining() {
+      return (this.repeatCount > 0);
+    }
+    private void increment() {
+      this.repeatCount++;
+    }
+    private void decrement() {
+      this.repeatCount--;
+    }
+  }
+
+  /**
    * The describes the cache associated with a specific invocation of a method
    * with parameter values.
    */
   protected static class InvocationCache {
-    private String        apiClass;
-    private String        apiMethod;
-    private List<String>  parameterTypes;
-    private String        parametersHash;
-    private List          parameters;
-    private List          results;
-    private Object        lastResult = null;
-    private Set<Long>     threadIdSet = new LinkedHashSet<>();
+    private String                apiClass;
+    private String                apiMethod;
+    private List<String>          parameterTypes;
+    private String                parametersHash;
+    private List                  parameters;
+    private List<RecordedResult>  results;
+    private RecordedResult        lastResult = null;
+    private Set<Long>             threadIdSet = new LinkedHashSet<>();
   }
 
   /**
@@ -845,12 +869,20 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
           cache.parameters      = this.readArray(paramsArray);
         }
         cache.results = new LinkedList<>();
-        for (JsonValue resultsValue : resultValues) {
-          if (resultsValue.getValueType() == JsonValue.ValueType.STRING) {
-            cache.results.add(((JsonString) resultsValue).getString());
+        for (JsonObject result : resultValues.getValuesAs(JsonObject.class)) {
+          int repeatCount = JsonUtils.getInteger(result, "repeatCount", 1);
+          JsonValue value = result.get("value");
+          RecordedResult recordedResult = null;
+          if (value.getValueType() == JsonValue.ValueType.STRING) {
+            recordedResult = new RecordedResult(
+                ((JsonString) value).getString(), repeatCount);
+            cache.results.add(recordedResult);
           } else {
-            cache.results.add(this.readResults((JsonObject) resultsValue));
+            recordedResult = new RecordedResult(
+                this.readResults((JsonObject) value), repeatCount);
+            cache.results.add(recordedResult);
           }
+          cache.lastResult = null;
         }
         this.currentCache.put(hashKey, cache);
       });
@@ -914,9 +946,12 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
           cacheJob.add("parameters", paramsJab);
         }
         JsonArrayBuilder resultJab = Json.createArrayBuilder();
-        for (Object resultItem: cache.results) {
+        for (RecordedResult recordedResult: cache.results) {
+          JsonObjectBuilder recordedJob = Json.createObjectBuilder();
+          recordedJob.add("repeatCount", recordedResult.repeatCount);
+          Object resultItem = recordedResult.value;
           if (resultItem instanceof String) {
-            resultJab.add(resultItem.toString());
+            recordedJob.add("value", resultItem.toString());
           } else {
             JsonObjectBuilder resultJob = Json.createObjectBuilder();
             Map<String, Object> resultMap = (Map<String,Object>) resultItem;
@@ -925,8 +960,9 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
               Object value  = resultEntry.getValue();
               this.objectAdd(resultJob, key, value);
             });
-            resultJab.add(resultJob);
+            recordedJob.add("value", resultJob);
           }
+          resultJab.add(recordedJob);
         }
         cacheJob.add("results", resultJab);
 
@@ -1660,8 +1696,23 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
             cache.results = new LinkedList<>();
             provider.currentCache.put(invocationHash, cache);
           }
+
           String resultsHash = provider.saveResults(resultMap);
-          cache.results.add(resultsHash == null ? resultMap : resultsHash);
+          Object newValue = (resultsHash == null ? resultMap : resultsHash);
+
+          // check if this one is the same as the previous result
+          if (cache.lastResult != null
+              && newValue.equals(cache.lastResult.value))
+          {
+            // simply increment the repeat count
+            cache.lastResult.increment();
+
+          } else {
+            // otherwise save this new recorded result
+            RecordedResult recordedResult = new RecordedResult(newValue);
+            cache.results.add(recordedResult);
+            cache.lastResult = recordedResult;
+          }
 
           // return the return value
           return result;
@@ -1674,9 +1725,16 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
             sw.append(this.apiInterface.getSimpleName());
             sw.append(".").append(method.getName()).append("(");
             String prefix = "";
+            int argIndex = 0;
             for (Class argType : method.getParameterTypes()) {
               sw.append(prefix);
               sw.append(argType.getSimpleName());
+              if (argType != StringBuffer.class && argType != Result.class) {
+                sw.append(" (");
+                sw.append(String.valueOf(args[argIndex]));
+                sw.append(")");
+              }
+              argIndex++;
               prefix = ", ";
             }
             sw.append(")");
@@ -1692,9 +1750,15 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
           // get the results item
           Object resultsItem;
-          if (cache.results.size() > 0) {
-            resultsItem = cache.results.remove(0);
-            cache.lastResult = resultsItem;
+          if (cache.lastResult != null && cache.lastResult.remaining()) {
+            cache.lastResult.decrement();
+            resultsItem = cache.lastResult.value;
+
+          } else if (cache.results.size() > 0) {
+            cache.lastResult = cache.results.remove(0);
+            cache.lastResult.decrement();
+            resultsItem = cache.lastResult.value;
+
           } else {
             // repeat the last result to handle multi-threaded timing
             if (cache.threadIdSet.size() == 1) {
@@ -1707,7 +1771,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
                   "Invocation ran out of results in single-threaded "
                       + "environment: " + hashInfo);
             }
-            resultsItem = cache.lastResult;
+            resultsItem = cache.lastResult.value;
           }
 
           Map<String, Object> results = null;
