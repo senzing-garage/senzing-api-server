@@ -2,7 +2,7 @@ name: Cron Schedule 3 hr Test Java API Server Build on Debian
 
 on:
   schedule:
-    - cron: '0 */3 * * *'
+    - cron: '0 0 * * *'
 
 
 jobs:
