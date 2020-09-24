@@ -108,7 +108,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   private static final File TARGET_DIR = new File(CURRENT_DIR, "target");
 
   /**
-   * The source directory of the maven build.
+   * The source directory of the maven build..
    */
   private static final File SOURCE_DIR = new File(CURRENT_DIR, "src");
 

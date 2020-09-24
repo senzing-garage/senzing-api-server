@@ -1,10 +1,15 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 
@@ -12,6 +17,23 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 public class SzResolvedEntity {
+  /**
+   * The pattern for parsing the date values returned from the native API.
+   */
+  private static final String NATIVE_DATE_PATTERN = "yyyy-MM-dd HH:mm:ss.SSS";
+
+  /**
+   * The time zone used for the time component of the build number.
+   */
+  private static final ZoneId UTC_ZONE = ZoneId.of("UTC");
+
+  /**
+   * The {@link DateTimeFormatter} for interpreting the timestamps from the
+   * native API.
+   */
+  private static final DateTimeFormatter NATIVE_DATE_FORMATTER
+      = DateTimeFormatter.ofPattern(NATIVE_DATE_PATTERN);
+
   /**
    * The number of records to consider to be the top records.
    */
@@ -94,6 +116,14 @@ public class SzResolvedEntity {
   private boolean partial;
 
   /**
+   * The last seen timestamp.
+   */
+  @JsonFormat(shape   = JsonFormat.Shape.STRING,
+      pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+      locale  = "en_GB")
+  private Date lastSeenTimestamp;
+
+  /**
    * Default constructor.
    */
   public SzResolvedEntity() {
@@ -111,6 +141,7 @@ public class SzResolvedEntity {
     this.features             = new LinkedHashMap<>();
     this.unmodifiableFeatures = new LinkedHashMap<>();
     this.records              = new LinkedList<>();
+    this.lastSeenTimestamp    = null;
     this.partial              = true;
   }
 
@@ -660,6 +691,25 @@ public class SzResolvedEntity {
   }
 
   /**
+   * Gets the last-seen timestamp for the entity.
+   *
+   * @return The last-seen timestamp for the entity.
+   */
+  @JsonInclude(NON_NULL)
+  public Date getLastSeenTimestamp() {
+    return this.lastSeenTimestamp;
+  }
+
+  /**
+   * Sets the last-seen timestamp for the entity.
+   *
+   * @param timestamp The last-seen timestamp for the entity.
+   */
+  public void setLastSeenTimestamp(Date timestamp) {
+    this.lastSeenTimestamp = timestamp;
+  }
+
+  /**
    * Parses a list of resolved entities from a {@link JsonArray} describing a
    * JSON array in the Senzing native API format for entity features and
    * populates the specified {@link List} or creates a new {@link List}.
@@ -763,6 +813,17 @@ public class SzResolvedEntity {
 
     }
 
+    // get the last seen date
+    String lastSeen = JsonUtils.getString(jsonObject, "LAST_SEEN_DT");
+    Date lastSeenDate = null;
+    if (lastSeen != null && lastSeen.trim().length() > 0) {
+      LocalDateTime localDateTime
+          = LocalDateTime.parse(lastSeen, NATIVE_DATE_FORMATTER);
+      ZonedDateTime zonedDateTime = ZonedDateTime.of(localDateTime, UTC_ZONE);
+      lastSeenDate = Date.from(zonedDateTime.toInstant());
+    }
+
+    entity.setLastSeenTimestamp(lastSeenDate);
     entity.setEntityName(entityName);
     entity.setEntityId(entityId);
     entity.setFeatures(featureMap, featureToAttrClassMapper);
@@ -919,6 +980,7 @@ public class SzResolvedEntity {
         ", entityName='" + entityName + '\'' +
         ", bestName='" + bestName + '\'' +
         ", recordSummaries=" + recordSummaries +
+        ", lastSeenTimestamp=" + lastSeenTimestamp +
         ", addressData=" + addressData +
         ", attributeData=" + characteristicData +
         ", identifierData=" + identifierData +
@@ -927,7 +989,6 @@ public class SzResolvedEntity {
         ", relationshipData=" + relationshipData +
         ", otherData=" + otherData +
         ", features=" + features +
-        ", unmodifiableFeatures=" + unmodifiableFeatures +
         ", records=" + records +
         '}';
   }

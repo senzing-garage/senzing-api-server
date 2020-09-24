@@ -1,10 +1,13 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.*;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 
 /**
  * Describes an entity record that has matched another record in a resolved
@@ -55,6 +58,7 @@ public class SzMatchedRecord extends SzEntityRecord {
    * @return The match level for how this record matched against the first record
    *         in the resolved entity.
    */
+  @JsonInclude(NON_EMPTY)
   public Integer getMatchLevel() {
     return matchLevel;
   }
@@ -77,6 +81,7 @@ public class SzMatchedRecord extends SzEntityRecord {
    * @return The match score for how this record matched against the first
    *         record in the resolved entity.
    */
+  @JsonInclude(NON_EMPTY)
   public Integer getMatchScore() {
     return matchScore;
   }
@@ -99,6 +104,7 @@ public class SzMatchedRecord extends SzEntityRecord {
    * @return The match key for how this record matched against the first record
    *         in the resolved entity.
    */
+  @JsonInclude(NON_EMPTY)
   public String getMatchKey() {
     return matchKey;
   }
@@ -121,6 +127,7 @@ public class SzMatchedRecord extends SzEntityRecord {
    * @return The resolution rule code for how this record matched against the
    *         first record in the resolved entity.
    */
+  @JsonInclude(NON_EMPTY)
   public String getResolutionRuleCode() {
     return resolutionRuleCode;
   }
@@ -144,6 +151,7 @@ public class SzMatchedRecord extends SzEntityRecord {
    * @return The ref score for how this record matched against the
    *         first record in the resolved entity.
    */
+  @JsonInclude(NON_EMPTY)
   public Integer getRefScore() {
     return refScore;
   }
