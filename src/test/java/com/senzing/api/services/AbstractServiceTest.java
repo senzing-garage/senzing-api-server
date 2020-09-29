@@ -974,6 +974,7 @@ public abstract class AbstractServiceTest {
     options.setVerbose(this.isVerbose());
     options.setQuiet(this.isQuiet());
     options.setAutoRefreshPeriod(-1L); // refresh on demand for auto-tests
+    options.setStatsInterval(0L); // don't log stats for tests
   }
 
   /**
