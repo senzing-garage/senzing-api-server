@@ -1,9 +1,6 @@
 package com.senzing.api.services;
 
-import com.senzing.g2.engine.G2Config;
-import com.senzing.g2.engine.G2ConfigMgr;
-import com.senzing.g2.engine.G2Engine;
-import com.senzing.g2.engine.G2Product;
+import com.senzing.g2.engine.*;
 import com.senzing.util.AccessToken;
 import com.senzing.util.WorkerThreadPool;
 
@@ -116,7 +113,7 @@ public interface SzApiProvider {
   G2Config getConfigApi();
 
   /**
-   * Returns the assocaited {@link G2ConfigMgr} API implementation.
+   * Returns the associated {@link G2ConfigMgr} API implementation.
    * This returns <tt>null</tt> if the configuration is not automatically
    * being picked up as the current default configuration.
    *
@@ -125,6 +122,13 @@ public interface SzApiProvider {
    *         being picked up as the current default configuration.
    */
   G2ConfigMgr getConfigMgrApi();
+
+  /**
+   * Returns the associated {@link G2Diagnostic} API implementation.
+   *
+   * @return The associated {@link G2Diagnostic} API implementation.
+   */
+  G2Diagnostic getDiagnosticApi();
 
   /**
    * Returns the concurrency for the API provider.  This is the number
