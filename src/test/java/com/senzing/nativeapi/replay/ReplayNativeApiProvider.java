@@ -248,7 +248,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       map.put(G2ConfigMgr.class, "com.senzing.g2.engine.G2ConfigMgrJNI");
       map.put(G2Product.class, "com.senzing.g2.engine.G2ProductJNI");
       map.put(G2Audit.class, "com.senzing.g2.engine.internal.G2AuditJNI");
-      map.put(G2Diagnostic.class, "com.senzing.g2.engine.G2Diagnostic");
+      map.put(G2Diagnostic.class, "com.senzing.g2.engine.G2DiagnosticJNI");
     } finally {
       API_IMPLEMENTATIONS = Collections.unmodifiableMap(map);
     }
