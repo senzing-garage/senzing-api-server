@@ -309,7 +309,12 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   static {
     Map<Class, Set<Method>> map = new LinkedHashMap<>();
     Class[] classes = {
-        G2Engine.class, G2Product.class, G2Config.class, G2ConfigMgr.class };
+        G2Engine.class,
+        G2Product.class,
+        G2Config.class,
+        G2ConfigMgr.class,
+        G2Diagnostic.class
+    };
 
     try {
       for (Class c : classes) {
