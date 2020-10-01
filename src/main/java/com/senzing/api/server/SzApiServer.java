@@ -335,6 +335,11 @@ public class SzApiServer implements SzApiProvider {
   private long statsInterval = DEFAULT_STATS_INTERVAL;
 
   /**
+   * Flag indicating if the performance check should be skipped on startup.
+   */
+  private boolean skipStartupPerf = false;
+
+  /**
    * CORS Access-Control-Allow-Origin for all endpoints on the server.
    */
   private String allowedOrigins;
@@ -519,6 +524,16 @@ public class SzApiServer implements SzApiProvider {
    */
   public long getStatsInterval() {
     return this.statsInterval;
+  }
+
+  /**
+   * Checks if we are skipping the performance check on startup.
+   *
+   * @return <tt>true</tt> if skipping the performance check, and
+   *         <tt>false</tt> otherwise.
+   */
+  public boolean isSkippingStartupPerformance() {
+    return this.skipStartupPerf;
   }
 
   /**
@@ -901,6 +916,7 @@ public class SzApiServer implements SzApiProvider {
             case ENABLE_ADMIN:
             case VERBOSE:
             case QUIET:
+            case SKIP_STARTUP_PERF:
               return Boolean.TRUE;
 
             case MODULE_NAME:
@@ -1053,7 +1069,11 @@ public class SzApiServer implements SzApiProvider {
         "        equivalent of 15 minutes.  If zero (0) is specified then the logging of",
         "        stats will be suppressed.",
         "",
-        "   -verbose If specified then initialize in verbose mode.",
+        "   -skipStartupPerf",
+        "        If specified then the performance check on startup is skipped.",
+        "",
+        "   -verbose",
+        "        If specified then initialize in verbose mode.",
         "",
         "   -quiet If specified then the API server reduces the number of messages",
         "          provided as feedback to standard output.  This applies only to",
@@ -1493,6 +1513,12 @@ public class SzApiServer implements SzApiProvider {
           = (Long) options.get(SzApiServerOption.STATS_INTERVAL);
     }
 
+    this.skipStartupPerf = false;
+    if (options.containsKey(SzApiServerOption.SKIP_STARTUP_PERF)) {
+      this.skipStartupPerf
+          = (Boolean) options.get(SzApiServerOption.SKIP_STARTUP_PERF);
+    }
+
     // determine the init JSON
     this.initJson = (JsonObject) options.get(SzApiServerOption.INIT_FILE);
     if (this.initJson == null) {
@@ -1708,7 +1734,9 @@ public class SzApiServer implements SzApiProvider {
     rootHolder.setInitParameter("dirAllowed", "false");
     context.addServlet(rootHolder, "/");
 
-    this.logDiagnostics();
+    if (!this.isSkippingStartupPerformance()) {
+      this.logDiagnostics();
+    }
 
     // System.out.println("INITIALIZING SENZING ENGINE....");
     try {
@@ -1943,7 +1971,6 @@ public class SzApiServer implements SzApiProvider {
           this.productApi.getLastException()));
     }
 
-
     this.diagnosticApi = NativeApiFactory.createDiagnosticApi();
     initResult = this.diagnosticApi.initV2(
         this.moduleName, initJsonText, this.verbose);
@@ -2105,6 +2132,7 @@ public class SzApiServer implements SzApiProvider {
       if (this.configMgrApi != null) {
         this.configMgrApi.destroy();
       }
+      this.diagnosticApi.destroy();
       this.productApi.destroy();
       this.completed = true;
       this.joinMonitor.notifyAll();

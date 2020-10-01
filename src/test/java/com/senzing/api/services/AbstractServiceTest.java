@@ -975,6 +975,7 @@ public abstract class AbstractServiceTest {
     options.setQuiet(this.isQuiet());
     options.setAutoRefreshPeriod(-1L); // refresh on demand for auto-tests
     options.setStatsInterval(0L); // don't log stats for tests
+    options.setSkippingStartupPerformance(true); // no sense in doing perf check
   }
 
   /**

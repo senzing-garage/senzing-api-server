@@ -25,6 +25,7 @@ public class SzApiServerOptions {
   private boolean     quiet             = false;
   private boolean     readOnly          = false;
   private boolean     adminEnabled      = false;
+  private boolean     skipStartupPerf   = false;
   private long        statsInterval     = DEFAULT_STATS_INTERVAL;
   private String      allowedOrigins    = null;
   private Long        configId          = null;
@@ -252,7 +253,7 @@ public class SzApiServerOptions {
    *         messages sent to standard output, otherwise <tt>false</tt>
    */
   public boolean isQuiet() {
-    return this.adminEnabled;
+    return this.quiet;
   }
 
   /**
@@ -350,8 +351,9 @@ public class SzApiServerOptions {
    *
    * @param autoRefreshPeriod The number of seconds to automatically
    */
-  public void setAutoRefreshPeriod(Long autoRefreshPeriod) {
+  public SzApiServerOptions setAutoRefreshPeriod(Long autoRefreshPeriod) {
     this.autoRefreshPeriod = autoRefreshPeriod;
+    return this;
   }
 
   /**
@@ -383,8 +385,32 @@ public class SzApiServerOptions {
    * @param statsInterval The stats interval, or a non-positive number (e.g.:
    *                      zero) to suppress logging stats.
    */
-  public void setStatsInterval(long statsInterval) {
+  public SzApiServerOptions setStatsInterval(long statsInterval) {
     this.statsInterval = (statsInterval < 0L) ? 0L : statsInterval;
+    return this;
+  }
+
+  /**
+   * Checks whether or not the API server should skip the performance check that
+   * is performed at startup.
+   *
+   * @return <tt>true</tt> if the API server should skip the performance
+   *         check performed at startup, and <tt>false</tt> if not.
+   */
+  public boolean isSkippingStartupPerformance() {
+    return this.skipStartupPerf;
+  }
+
+  /**
+   * Sets whether or not the API server should skip the performance check that
+   * is performed at startup.
+   *
+   * @param skipping <tt>true</tt> if the API server should skip the performance
+   *                 check performed at startup, and <tt>false</tt> if not.
+   */
+  public SzApiServerOptions setSkippingStartupPerformance(boolean skipping) {
+    this.skipStartupPerf = skipping;
+    return this;
   }
 
   /**
@@ -409,6 +435,7 @@ public class SzApiServerOptions {
     map.put(INIT_JSON,            this.getJsonInitParameters());
     map.put(AUTO_REFRESH_PERIOD,  this.getAutoRefreshPeriod());
     map.put(STATS_INTERVAL,       this.getStatsInterval());
+    map.put(SKIP_STARTUP_PERF,    this.isSkippingStartupPerformance());
     return map;
   }
 }
