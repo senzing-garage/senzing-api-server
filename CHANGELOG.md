@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2020-10-01
+
+### Changed in 2.1.0
+
+- Fixed defect preventing fields in `SzMatchInfo` from being properly populated
+  on "why" endpoints -- now all the matching data comes back.
+- Added `SzMatchLevel` enum type to enumerate and describe the various
+  match levels and added a `matchLevel` field of that type to `SzMatchInfo`
+  to expose the `MATCH_LEVEL_CODE` in the "why" endpoints.
+- Added `lastSeenTimestamp` field to expose `LAST_SEEN_DT` for
+  `SzResolvedEntity` and `SzEntityRecord`.
+- Added periodic logging of `stats()` from the `G2Engine` API with automatic
+  suppression if the API Server is idle or not performing tasks that involve
+  entity scoring and would therefore not affect the result from `stats()` call.
+- Added `-statsInterval` option to specify the time interval in milliseconds for
+  stats logging with a 15-minute default and option to suppress if zero (0) is
+  specified.
+- Added logging of performance information and database performance at startup
+- Added `-skipStartupPerf` option to prevent startup performance logging
+- Modified tests to validate `lastSeenTimestamp` field.
+- Updated test data to include versions 2.0.0 through 2.1.1
+
 ## [2.0.2] - 2020-08-25
 
 ### Changed in 2.0.2
