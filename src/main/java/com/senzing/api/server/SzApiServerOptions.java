@@ -25,6 +25,8 @@ public class SzApiServerOptions {
   private boolean     quiet             = false;
   private boolean     readOnly          = false;
   private boolean     adminEnabled      = false;
+  private boolean     skipStartupPerf   = false;
+  private long        statsInterval     = DEFAULT_STATS_INTERVAL;
   private String      allowedOrigins    = null;
   private Long        configId          = null;
   private Long        autoRefreshPeriod = null;
@@ -251,7 +253,7 @@ public class SzApiServerOptions {
    *         messages sent to standard output, otherwise <tt>false</tt>
    */
   public boolean isQuiet() {
-    return this.adminEnabled;
+    return this.quiet;
   }
 
   /**
@@ -349,8 +351,66 @@ public class SzApiServerOptions {
    *
    * @param autoRefreshPeriod The number of seconds to automatically
    */
-  public void setAutoRefreshPeriod(Long autoRefreshPeriod) {
+  public SzApiServerOptions setAutoRefreshPeriod(Long autoRefreshPeriod) {
     this.autoRefreshPeriod = autoRefreshPeriod;
+    return this;
+  }
+
+  /**
+   * Gets the minimum time interval for logging stats.  This is the minimum
+   * period between logging of stats assuming the API Server is performing
+   * operations that will affect stats (i.e.: activities pertaining to entity
+   * scoring).  If the API Server is idle or active, but not performing entity
+   * scoring activities then stats logging will be delayed until activities are
+   * performed that will affect stats.  If the returned interval is zero (0)
+   * then stats logging will be suppressed.
+   *
+   * @return The interval for logging stats, or zero (0) if stats logging is
+   *         suppressed.
+   */
+  public long getStatsInterval() {
+    return this.statsInterval;
+  }
+
+  /**
+   * Sets the minimum interval for logging stats.  This is the minimum
+   * period between logging of stats assuming the API Server is performing
+   * operations that will affect stats (i.e.: activities pertaining to entity
+   * scoring).  If the API Server is idle or active, but not performing entity
+   * scoring activities then stats logging will be delayed until activities are
+   * performed that will affect stats.  If the specified value is zero (0)
+   * then stats logging will be suppressed.  If the specified value is less-than
+   * zero (0) then the value will be set to zero (0).
+   *
+   * @param statsInterval The stats interval, or a non-positive number (e.g.:
+   *                      zero) to suppress logging stats.
+   */
+  public SzApiServerOptions setStatsInterval(long statsInterval) {
+    this.statsInterval = (statsInterval < 0L) ? 0L : statsInterval;
+    return this;
+  }
+
+  /**
+   * Checks whether or not the API server should skip the performance check that
+   * is performed at startup.
+   *
+   * @return <tt>true</tt> if the API server should skip the performance
+   *         check performed at startup, and <tt>false</tt> if not.
+   */
+  public boolean isSkippingStartupPerformance() {
+    return this.skipStartupPerf;
+  }
+
+  /**
+   * Sets whether or not the API server should skip the performance check that
+   * is performed at startup.
+   *
+   * @param skipping <tt>true</tt> if the API server should skip the performance
+   *                 check performed at startup, and <tt>false</tt> if not.
+   */
+  public SzApiServerOptions setSkippingStartupPerformance(boolean skipping) {
+    this.skipStartupPerf = skipping;
+    return this;
   }
 
   /**
@@ -374,6 +434,8 @@ public class SzApiServerOptions {
     map.put(CONFIG_ID,            this.getConfigurationId());
     map.put(INIT_JSON,            this.getJsonInitParameters());
     map.put(AUTO_REFRESH_PERIOD,  this.getAutoRefreshPeriod());
+    map.put(STATS_INTERVAL,       this.getStatsInterval());
+    map.put(SKIP_STARTUP_PERF,    this.isSkippingStartupPerformance());
     return map;
   }
 }

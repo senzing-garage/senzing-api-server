@@ -4,16 +4,18 @@ import java.io.*;
 import java.lang.reflect.Proxy;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.senzing.api.BuildInfo;
+import com.senzing.nativeapi.EngineStatsLoggingHandler;
 import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.api.services.SzApiProvider;
 import com.senzing.api.model.SzLicenseInfo;
@@ -32,8 +34,6 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.rewrite.handler.RewriteHandler;
-import org.eclipse.jetty.rewrite.handler.TerminatingRegexRule;
-import org.eclipse.jetty.rewrite.handler.RewriteRegexRule;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 
 import javax.json.*;
@@ -52,6 +52,11 @@ import static com.senzing.util.LoggingUtilities.*;
  */
 public class SzApiServer implements SzApiProvider {
   /**
+   * The period to avoid over-logging of the diagnostics.
+   */
+  private static final long DIAGNOSTIC_PERIOD = (1000L * 60L * 45L);
+
+  /**
    * The default port number used by the API server instances if an
    * explicit port number is not provided.
    */
@@ -62,6 +67,15 @@ public class SzApiServer implements SzApiProvider {
    * an explicit concurrency is not provided.
    */
   public static final int DEFAULT_CONCURRENCY = 8;
+
+  /**
+   * The default stats interval for logging stats.  This is the default
+   * minimum period of time between logging of stats.  The actual interval
+   * may be longer if the API Server is idle or not performing activities
+   * related to entity scoring (i.e.: activities that would affect stats).
+   * The default is every fifteen minutes.
+   */
+  public static final long DEFAULT_STATS_INTERVAL = 1000L * 60L * 15L;
 
   /**
    * The default module name to use for initialization of the Senzing native
@@ -203,6 +217,11 @@ public class SzApiServer implements SzApiProvider {
   private G2Engine engineApi;
 
   /**
+   * The {@link G2Diagnostic} diagnostics API.
+   */
+  private G2Diagnostic diagnosticApi;
+
+  /**
    * The {@link G2EngineRetryHandler} backing the proxied
    * retry version of {@link G2Engine}.
    */
@@ -308,6 +327,19 @@ public class SzApiServer implements SzApiProvider {
   private boolean adminEnabled;
 
   /**
+   * The minimum period of time between logging of stats.  If this is zero (0)
+   * then stats will not be logged.  The time is a minimum because stats will
+   * not be logged if no operations are taking place within the process that are
+   * affecting entity scoring.
+   */
+  private long statsInterval = DEFAULT_STATS_INTERVAL;
+
+  /**
+   * Flag indicating if the performance check should be skipped on startup.
+   */
+  private boolean skipStartupPerf = false;
+
+  /**
    * CORS Access-Control-Allow-Origin for all endpoints on the server.
    */
   private String allowedOrigins;
@@ -338,6 +370,11 @@ public class SzApiServer implements SzApiProvider {
    * Flag indicating if the server has been shutdown.
    */
   private boolean completed = false;
+
+  /**
+   * The timestamp from the last diagnostics run.
+   */
+  private long lastDiagnosticsRun = -1L;
 
   /**
    * The read-write lock to use to prevent simultaneous request handling and
@@ -442,6 +479,16 @@ public class SzApiServer implements SzApiProvider {
   }
 
   /**
+   * Returns the initialized {@link G2Diagnostic} API interface.
+   *
+   * @return The initialized {@link G2Diagnostic} API interface.
+   */
+  public G2Diagnostic getDiagnosticApi() {
+    this.assertNotShutdown();
+    return this.diagnosticApi;
+  }
+
+  /**
    * Checks whether or not only read operations are being allowed.
    *
    * @return <tt>true</tt> if only read operations are allowed, and
@@ -461,6 +508,32 @@ public class SzApiServer implements SzApiProvider {
   public boolean isAdminEnabled() {
     this.assertNotShutdown();
     return this.adminEnabled;
+  }
+
+  /**
+   * Returns the minimum time interval for logging stats.  This is the minimum
+   * period between logging of stats assuming the API Server is performing
+   * operations that will affect stats (i.e.: activities pertaining to entity
+   * scoring).  If the API Server is idle or active, but not performing entity
+   * scoring activities then stats logging will be delayed until activities are
+   * performed that will affect stats.  If the returned interval is zero (0)
+   * then stats logging will be suppressed.
+   *
+   * @return The interval for logging stats, or zero (0) if stats logging is
+   *         suppressed.
+   */
+  public long getStatsInterval() {
+    return this.statsInterval;
+  }
+
+  /**
+   * Checks if we are skipping the performance check on startup.
+   *
+   * @return <tt>true</tt> if skipping the performance check, and
+   *         <tt>false</tt> otherwise.
+   */
+  public boolean isSkippingStartupPerformance() {
+    return this.skipStartupPerf;
   }
 
   /**
@@ -843,6 +916,7 @@ public class SzApiServer implements SzApiProvider {
             case ENABLE_ADMIN:
             case VERBOSE:
             case QUIET:
+            case SKIP_STARTUP_PERF:
               return Boolean.TRUE;
 
             case MODULE_NAME:
@@ -850,6 +924,23 @@ public class SzApiServer implements SzApiProvider {
 
             case ALLOWED_ORIGINS:
               return params.get(0);
+
+            case STATS_INTERVAL:
+            {
+              long statsInterval;
+              try {
+                statsInterval = Long.parseLong(params.get(0));
+              } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException(
+                    "Stats interval must be a long integer: " + params.get(0));
+              }
+              if (statsInterval < 0) {
+                throw new IllegalArgumentException(
+                    "Negative stats intervals are not allowed: "
+                        + statsInterval);
+              }
+              return statsInterval;
+            }
 
             default:
               throw new IllegalArgumentException(
@@ -969,7 +1060,20 @@ public class SzApiServer implements SzApiProvider {
         "        the config was specified via the G2CONFIGFILE init option or if ",
         "        -configId has been specified to lock to a specific configuration.",
         "",
-        "   -verbose If specified then initialize in verbose mode.",
+        "   -statsInterval <milliseconds>",
+        "        The minimum number of milliseconds between logging of stats.  This is",
+        "        minimum because stats logging is suppressed if the API Server is idle",
+        "        or active but not performing activities pertaining to entity scoring.",
+        "        In such cases, stats logging is delayed until an activity pertaining to",
+        "        entity scoring is performed.  By default this is set to the millisecond",
+        "        equivalent of 15 minutes.  If zero (0) is specified then the logging of",
+        "        stats will be suppressed.",
+        "",
+        "   -skipStartupPerf",
+        "        If specified then the performance check on startup is skipped.",
+        "",
+        "   -verbose",
+        "        If specified then initialize in verbose mode.",
         "",
         "   -quiet If specified then the API server reduces the number of messages",
         "          provided as feedback to standard output.  This applies only to",
@@ -1403,6 +1507,18 @@ public class SzApiServer implements SzApiProvider {
       this.adminEnabled = (Boolean) options.get(SzApiServerOption.ENABLE_ADMIN);
     }
 
+    this.statsInterval = DEFAULT_STATS_INTERVAL;
+    if (options.containsKey(SzApiServerOption.STATS_INTERVAL)) {
+      this.statsInterval
+          = (Long) options.get(SzApiServerOption.STATS_INTERVAL);
+    }
+
+    this.skipStartupPerf = false;
+    if (options.containsKey(SzApiServerOption.SKIP_STARTUP_PERF)) {
+      this.skipStartupPerf
+          = (Boolean) options.get(SzApiServerOption.SKIP_STARTUP_PERF);
+    }
+
     // determine the init JSON
     this.initJson = (JsonObject) options.get(SzApiServerOption.INIT_FILE);
     if (this.initJson == null) {
@@ -1617,6 +1733,10 @@ public class SzApiServer implements SzApiProvider {
     ServletHolder rootHolder = new ServletHolder("default", DefaultServlet.class);
     rootHolder.setInitParameter("dirAllowed", "false");
     context.addServlet(rootHolder, "/");
+
+    if (!this.isSkippingStartupPerformance()) {
+      this.logDiagnostics();
+    }
 
     // System.out.println("INITIALIZING SENZING ENGINE....");
     try {
@@ -1851,6 +1971,16 @@ public class SzApiServer implements SzApiProvider {
           this.productApi.getLastException()));
     }
 
+    this.diagnosticApi = NativeApiFactory.createDiagnosticApi();
+    initResult = this.diagnosticApi.initV2(
+        this.moduleName, initJsonText, this.verbose);
+    if (initResult < 0) {
+      throw new RuntimeException(buildErrorMessage(
+          "Failed to initialize G2Diagnostic API.",
+          this.diagnosticApi.getLastExceptionCode(),
+          this.diagnosticApi.getLastException()));
+    }
+
     this.configApi = NativeApiFactory.createConfigApi();
     initResult = this.configApi.initV2(
         this.moduleName, initJsonText, this.verbose);
@@ -1896,6 +2026,19 @@ public class SzApiServer implements SzApiProvider {
 
       Class[]     interfaces  = { G2Engine.class };
       ClassLoader classLoader = this.getClass().getClassLoader();
+
+      // check if logging stats
+      if (this.getStatsInterval() > 0L) {
+        // proxy the engine API to log stats
+        EngineStatsLoggingHandler statsHandler
+            = new EngineStatsLoggingHandler(this.engineApi,
+                                            this.getStatsInterval(),
+                                            System.out);
+        this.engineApi = (G2Engine) Proxy.newProxyInstance(
+            classLoader, interfaces, statsHandler);
+      }
+
+
       this.engineRetryHandler
           = new G2EngineRetryHandler(this.engineApi, this);
       this.retryEngineApi = (G2Engine) Proxy.newProxyInstance(
@@ -1989,6 +2132,7 @@ public class SzApiServer implements SzApiProvider {
       if (this.configMgrApi != null) {
         this.configMgrApi.destroy();
       }
+      this.diagnosticApi.destroy();
       this.productApi.destroy();
       this.completed = true;
       this.joinMonitor.notifyAll();
@@ -2275,4 +2419,70 @@ public class SzApiServer implements SzApiProvider {
       this.attrCodeToAttrClassMap = Collections.unmodifiableMap(attrCodeMap);
     }
   }
+
+
+  private void logDiagnostics() {
+    long now = System.currentTimeMillis();
+    if ((now - this.lastDiagnosticsRun) <= DIAGNOSTIC_PERIOD) return;
+    boolean firstRun = (this.lastDiagnosticsRun < 0L);
+    this.lastDiagnosticsRun = now;
+
+    StringWriter  sw = new StringWriter();
+    PrintWriter   pw = new PrintWriter(sw);
+
+    pw.println();
+    pw.println("=============================================================");
+
+    if (firstRun) {
+      NumberFormat numFormat = new DecimalFormat("#.##");
+      double totalMem = ((double) this.diagnosticApi.getTotalSystemMemory());
+      totalMem /= (1024.0 * 1024.0 * 1024.0);
+      double availMem = ((double) this.diagnosticApi.getAvailableMemory());
+      availMem /= (1024.0 * 1024.0 * 1024.0);
+
+      int physicalCores = this.diagnosticApi.getPhysicalCores();
+      int logicalCores = this.diagnosticApi.getLogicalCores();
+
+      pw.println("TOTAL SYSTEM MEMORY     : "
+                     + numFormat.format(totalMem) + "GB");
+      pw.println("AVAILABLE SYSTEM MEMORY : "
+                     + numFormat.format(availMem) + "GB");
+      pw.println("PHYSICAL CORE COUNT     : " + physicalCores);
+      pw.println("LOGICAL CORE COUNT      : " + logicalCores);
+    }
+
+    pw.println("=============================================================");
+    StringBuffer sb = new StringBuffer();
+    int result = this.diagnosticApi.checkDBPerf(3, sb);
+    if (result == 0) {
+      String jsonText = sb.toString();
+
+      pw.println("DATABASE PERF CHECK RESULT: ");
+      pw.println("----------------------------");
+      JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
+      jsonObject.forEach((key, value) -> {
+        pw.println(key + " = " + value);
+      });
+
+      JsonObject jsonObj = JsonUtils.parseJsonObject(jsonText);
+      long insertCount = jsonObj.getInt("numRecordsInserted");
+      long insertTimeMS = jsonObj.getJsonNumber("insertTime").longValue();
+      double insertTimeSec = ((double) insertTimeMS) / 1000.0;
+
+      double txnPerSecond = ((double) insertCount) / insertTimeSec;
+
+      pw.println("transactionsPerSecond = " + txnPerSecond);
+      pw.println("=============================================================");
+      pw.println();
+
+    } else {
+      pw.println("****** DATABASE PERF CHECK FAILED: " + result);
+      pw.println("****** ERROR CODE : "
+                     + this.diagnosticApi.getLastExceptionCode());
+      pw.println("****** ERROR      : "
+                     + this.diagnosticApi.getLastException());
+    }
+    System.out.println(sw.toString());
+  }
+
 }

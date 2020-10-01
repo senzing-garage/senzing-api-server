@@ -108,7 +108,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   private static final File TARGET_DIR = new File(CURRENT_DIR, "target");
 
   /**
-   * The source directory of the maven build.
+   * The source directory of the maven build..
    */
   private static final File SOURCE_DIR = new File(CURRENT_DIR, "src");
 
@@ -248,6 +248,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       map.put(G2ConfigMgr.class, "com.senzing.g2.engine.G2ConfigMgrJNI");
       map.put(G2Product.class, "com.senzing.g2.engine.G2ProductJNI");
       map.put(G2Audit.class, "com.senzing.g2.engine.internal.G2AuditJNI");
+      map.put(G2Diagnostic.class, "com.senzing.g2.engine.G2DiagnosticJNI");
     } finally {
       API_IMPLEMENTATIONS = Collections.unmodifiableMap(map);
     }
@@ -308,7 +309,12 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   static {
     Map<Class, Set<Method>> map = new LinkedHashMap<>();
     Class[] classes = {
-        G2Engine.class, G2Product.class, G2Config.class, G2ConfigMgr.class };
+        G2Engine.class,
+        G2Product.class,
+        G2Config.class,
+        G2ConfigMgr.class,
+        G2Diagnostic.class
+    };
 
     try {
       for (Class c : classes) {
@@ -524,6 +530,12 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   public G2ConfigMgr createConfigMgrApi() {
     if (this.direct) return new G2ConfigMgrJNI();
     return this.createProxy(G2ConfigMgr.class);
+  }
+
+  @Override
+  public G2Diagnostic createDiagnosticApi() {
+    if (this.direct) return new G2DiagnosticJNI();
+    return this.createProxy(G2Diagnostic.class);
   }
 
   /**

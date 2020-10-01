@@ -27,7 +27,9 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption> {
   MONITOR_FILE("-monitorFile", 1),
   CONCURRENCY("-concurrency", 1),
   AUTO_REFRESH_PERIOD("-autoRefreshPeriod", 1),
-  ALLOWED_ORIGINS("-allowedOrigins", 1);
+  ALLOWED_ORIGINS("-allowedOrigins", 1),
+  STATS_INTERVAL("-statsInterval", 1),
+  SKIP_STARTUP_PERF("-skipStartupPerf", 0);
 
   private static Map<SzApiServerOption, Set<SzApiServerOption>> CONFLICTING_OPTIONS;
 

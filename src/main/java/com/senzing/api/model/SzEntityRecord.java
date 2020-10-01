@@ -1,11 +1,16 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonString;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -16,6 +21,23 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
  * Describes an entity record.
  */
 public class SzEntityRecord {
+  /**
+   * The pattern for parsing the date values returned from the native API.
+   */
+  private static final String NATIVE_DATE_PATTERN = "yyyy-MM-dd HH:mm:ss.SSS";
+
+  /**
+   * The time zone used for the time component of the build number.
+   */
+  private static final ZoneId UTC_ZONE = ZoneId.of("UTC");
+
+  /**
+   * The {@link DateTimeFormatter} for interpreting the timestamps from the
+   * native API.
+   */
+  private static final DateTimeFormatter NATIVE_DATE_FORMATTER
+      = DateTimeFormatter.ofPattern(NATIVE_DATE_PATTERN);
+
   /**
    * The data source code for the record.
    */
@@ -67,11 +89,20 @@ public class SzEntityRecord {
   private Object originalSourceData;
 
   /**
+   * The last seen timestamp.
+   */
+  @JsonFormat(shape   = JsonFormat.Shape.STRING,
+      pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+      locale  = "en_GB")
+  private Date lastSeenTimestamp;
+
+  /**
    * Default constructor.
    */
   public SzEntityRecord() {
     this.dataSource         = null;
     this.recordId           = null;
+    this.lastSeenTimestamp  = null;
     this.addressData        = new LinkedList<>();
     this.characteristicData = new LinkedList<>();
     this.identifierData     = new LinkedList<>();
@@ -120,6 +151,25 @@ public class SzEntityRecord {
   public void setRecordId(String recordId)
   {
     this.recordId = recordId;
+  }
+
+  /**
+   * Gets the last-seen timestamp for the entity.
+   *
+   * @return The last-seen timestamp for the entity.
+   */
+  @JsonInclude(NON_NULL)
+  public Date getLastSeenTimestamp() {
+    return this.lastSeenTimestamp;
+  }
+
+  /**
+   * Sets the last-seen timestamp for the entity.
+   *
+   * @param timestamp The last-seen timestamp for the entity.
+   */
+  public void setLastSeenTimestamp(Date timestamp) {
+    this.lastSeenTimestamp = timestamp;
   }
 
   /**
@@ -460,10 +510,22 @@ public class SzEntityRecord {
     record.setDataSource(dataSource);
     record.setRecordId(recordId);
 
+
+    // get the last seen date
+    String lastSeen = JsonUtils.getString(jsonObject, "LAST_SEEN_DT");
+    Date lastSeenDate = null;
+    if (lastSeen != null && lastSeen.trim().length() > 0) {
+      LocalDateTime localDateTime
+          = LocalDateTime.parse(lastSeen, NATIVE_DATE_FORMATTER);
+      ZonedDateTime zonedDateTime = ZonedDateTime.of(localDateTime, UTC_ZONE);
+      lastSeenDate = Date.from(zonedDateTime.toInstant());
+    }
+
     // get the raw data map
     JsonObject  jsonData    = jsonObject.getJsonObject("JSON_DATA");
     String      sourceData  = JsonUtils.toJsonText(jsonData);
 
+    record.setLastSeenTimestamp(lastSeenDate);
     record.setOriginalSourceDataFromText(sourceData);
 
     getValueList(jsonObject, "ADDRESS_DATA", (addr) -> {
@@ -505,6 +567,7 @@ public class SzEntityRecord {
   protected String fieldsToString() {
     return "dataSource='" + dataSource + '\'' +
         ", recordId='" + recordId + '\'' +
+        ", lastSeenTimestamp=" + lastSeenTimestamp +
         ", addressData=" + addressData +
         ", characteristicData=" + characteristicData +
         ", identifierData=" + identifierData +

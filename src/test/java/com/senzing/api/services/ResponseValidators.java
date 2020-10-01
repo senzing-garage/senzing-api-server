@@ -789,6 +789,17 @@ public class ResponseValidators {
         });
       }
 
+      if (forceMinimal == null || !forceMinimal) {
+        Date lastSeenTimestamp = entity.getLastSeenTimestamp();
+        assertNotNull(lastSeenTimestamp,
+                      "Last-seen timestamp is null: " + testInfo);
+        long now = System.currentTimeMillis();
+        long lastSeen = lastSeenTimestamp.getTime();
+        assertTrue(now > lastSeen,
+                   "Last-seen timestamp in the future: " + lastSeenTimestamp
+                       + " / " + (new Date(now)) + " / " + testInfo);
+      }
+
       // validate the features versus the data elements
       SzApiProvider provider = SzApiProvider.Factory.getProvider();
       entity.getFeatures().entrySet().forEach(entry -> {
@@ -1560,6 +1571,15 @@ public class ResponseValidators {
     String recordId = record.getRecordId();
     assertNotNull(recordId, "Record ID is null");
     assertEquals(expectedRecordId, recordId, "Unexpected record ID value");
+
+    Date lastSeenTimestamp = record.getLastSeenTimestamp();
+    assertNotNull(lastSeenTimestamp, "Last-seen timestamp is null: "
+                  + record + " / " + response.getRawData());
+    long now = System.currentTimeMillis();
+    long lastSeen = lastSeenTimestamp.getTime();
+    assertTrue(now > lastSeen,
+               "Last-seen timestamp in the future: " + lastSeenTimestamp
+                   + " / " + (new Date(now)));
 
     assertSameElements(
         expectedNameData, record.getNameData(), "names");

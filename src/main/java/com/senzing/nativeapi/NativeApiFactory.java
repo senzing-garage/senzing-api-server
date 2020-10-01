@@ -200,4 +200,27 @@ public class NativeApiFactory {
     }
   }
 
+  /**
+   * Provides a new instance of {@link G2Diagnostic} to use.  If a
+   * {@link NativeApiProvider} is installed then it is used to create
+   * the instance, otherwise a new instance of {@link G2DiagnosticJNI} is
+   * constructed and returned.
+   *
+   * @return A new instance of {@link G2Diagnostic} to use.
+   *
+   */
+  public static G2Diagnostic createDiagnosticApi() {
+    NativeApiProvider provider = getInstalledProvider();
+    if (provider != null) {
+      return provider.createDiagnosticApi();
+
+    } else if (getInstallLocations() == null) {
+      throw new InvalidInstallationException(
+          "Unable to find Senzing native installation.");
+
+    } else {
+      return new G2DiagnosticJNI();
+    }
+  }
+
 }

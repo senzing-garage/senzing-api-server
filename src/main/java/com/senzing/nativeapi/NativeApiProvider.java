@@ -1,9 +1,6 @@
 package com.senzing.nativeapi;
 
-import com.senzing.g2.engine.G2Config;
-import com.senzing.g2.engine.G2ConfigMgr;
-import com.senzing.g2.engine.G2Engine;
-import com.senzing.g2.engine.G2Product;
+import com.senzing.g2.engine.*;
 
 public interface NativeApiProvider {
   /**
@@ -34,4 +31,11 @@ public interface NativeApiProvider {
    *
    */
   G2ConfigMgr createConfigMgrApi();
+
+  /**
+   * Provides a new instance of {@link G2Diagnostic} to use.
+   *
+   * @return A new instance of {@link G2Diagnostic} to use.
+   */
+  G2Diagnostic createDiagnosticApi();
 }

@@ -1,11 +1,15 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonValue;
 import java.util.*;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
+import static com.senzing.api.model.SzMatchLevel.*;
 
 /**
  * The match info describing why two entities (or records) resolve or
@@ -17,6 +21,11 @@ public class SzMatchInfo {
    * match key).
    */
   private String whyKey;
+
+  /**
+   * The match level describing how the two records resolve against each other.
+   */
+  private SzMatchLevel matchLevel;
 
   /**
    * The resolution rule that triggered the match.
@@ -52,6 +61,7 @@ public class SzMatchInfo {
    */
   public SzMatchInfo() {
     this.whyKey             = null;
+    this.matchLevel         = null;
     this.resolutionRule     = null;
     this.candidateKeys      = new LinkedHashMap<>();
     this.candidateKeyViews  = new LinkedHashMap<>();
@@ -80,10 +90,33 @@ public class SzMatchInfo {
   }
 
   /**
+   * Returns the {@link SzMatchLevel} describing how the records resolve
+   * against each other.
+   *
+   * @return The {@link SzMatchLevel} describing how the records resolve
+   *         against each other.
+   */
+  public SzMatchLevel getMatchLevel() {
+    return this.matchLevel;
+  }
+
+  /**
+   * Sets the {@link SzMatchLevel} describing how the records resolve
+   * against each other.
+   *
+   * @param matchLevel The {@link SzMatchLevel} describing how the records
+   *                   resolve against each other.
+   */
+  public void setMatchLevel(SzMatchLevel matchLevel) {
+    this.matchLevel = matchLevel;
+  }
+
+  /**
    * Gets the resolution rule that triggered the match.
    *
    * @return The resolution rule that triggered the match.
    */
+  @JsonInclude(NON_EMPTY)
   public String getResolutionRule() {
     return this.resolutionRule;
   }
@@ -107,6 +140,7 @@ public class SzMatchInfo {
    *         instances of {@link SzCandidateKey} describing the candidate keys
    *         for that type.
    */
+  @JsonInclude(NON_EMPTY)
   public Map<String, List<SzCandidateKey>> getCandidateKeys() {
     if (this.candidateKeyViews.size() == 0) return null;
     return Collections.unmodifiableMap(this.candidateKeyViews);
@@ -169,6 +203,7 @@ public class SzMatchInfo {
    *         instances of {@link SzFeatureScore} describing the feature scores
    *         for that type.
    */
+  @JsonInclude(NON_EMPTY)
   public Map<String, List<SzFeatureScore>> getFeatureScores() {
     if (this.featureScoreViews.size() == 0) return null;
     return Collections.unmodifiableMap(this.featureScoreViews);
@@ -236,6 +271,13 @@ public class SzMatchInfo {
     String whyKey   = JsonUtils.getString(jsonObject, "WHY_KEY");
     if (whyKey != null && whyKey.trim().length() == 0) whyKey = null;
 
+    SzMatchLevel matchLevel = NO_MATCH;
+    String matchLevelCode
+        = JsonUtils.getString(jsonObject, "MATCH_LEVEL_CODE");
+    if (matchLevelCode != null && matchLevelCode.trim().length() > 0) {
+      matchLevel = SzMatchLevel.valueOf(matchLevelCode);
+    }
+
     String ruleCode = JsonUtils.getString(jsonObject, "WHY_ERRULE_CODE");
     if (ruleCode != null && ruleCode.trim().length() == 0) ruleCode = null;
 
@@ -280,6 +322,7 @@ public class SzMatchInfo {
     SzMatchInfo result = new SzMatchInfo();
 
     result.setWhyKey(whyKey);
+    result.setMatchLevel(matchLevel);
     result.setResolutionRule(ruleCode);
     result.setCandidateKeys(candidateKeyMap);
     result.setFeatureScores(featureScoreMap);
