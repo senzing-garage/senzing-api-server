@@ -65,7 +65,21 @@ public class JsonUtils {
   {
     if (obj == null) return defaultValue;
     if (!obj.containsKey(key)) return defaultValue;
-    return obj.isNull(key) ? defaultValue : obj.getString(key);
+    JsonValue jsonValue = obj.get(key);
+    switch (jsonValue.getValueType()) {
+      case STRING:
+        return obj.getString(key);
+      case NULL:
+        return defaultValue;
+      case TRUE:
+        return Boolean.TRUE.toString();
+      case FALSE:
+        return Boolean.FALSE.toString();
+      case NUMBER:
+        return "" + ((JsonNumber) jsonValue).numberValue();
+      default:
+        return JsonUtils.toJsonText(jsonValue, true);
+    }
   }
 
   /**
