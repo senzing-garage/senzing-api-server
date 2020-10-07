@@ -201,8 +201,20 @@ public class SzFeatureScore {
     String  bucket    = JsonUtils.getString(jsonObject, "SCORE_BUCKET");
     String  behavior  = JsonUtils.getString(jsonObject, "SCORE_BEHAVIOR");
 
-    SzScoringBucket   scoringBucket   = SzScoringBucket.valueOf(bucket);
-    SzScoringBehavior scoringBehavior = SzScoringBehavior.parse(behavior);
+    SzScoringBucket scoringBucket = null;
+    try {
+      scoringBucket = SzScoringBucket.valueOf(bucket);
+    } catch (Exception e) {
+      System.err.println("FAILED TO PARSE SCORE_BUCKET: " + bucket);
+      e.printStackTrace();
+    }
+    SzScoringBehavior scoringBehavior = null;
+    try {
+      scoringBehavior = SzScoringBehavior.parse(behavior);
+    } catch (Exception e) {
+      System.err.println("FAILED TO PARSE SCORE_BEHAVIOR: " + behavior);
+      e.printStackTrace();
+    }
 
     SzFeatureScore result = new SzFeatureScore();
 

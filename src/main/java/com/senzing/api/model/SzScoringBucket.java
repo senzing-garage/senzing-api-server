@@ -5,6 +5,11 @@ package com.senzing.api.model;
  */
 public enum SzScoringBucket {
   /**
+   * The respective features were not scored.
+   */
+  NOT_SCORED,
+
+  /**
    * The two feature values are considered to be the same.
    */
   SAME,

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2020-10-06
+
+### Changed in 2.1.1
+
+- No longer errors when encountering the `NOT_SCORED` value for `SzScoringBucket`
+- No longer errors when encountering a numeric `RECORD_ID` on bulk data load
+
 ## [2.1.0] - 2020-10-01
 
 ### Changed in 2.1.0
@@ -225,6 +232,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Removed pre-recorded mock data from integration tests for versions prior to
   2.0.0 and added pre-recorded mock data for integratioon tests for v2.0.0.
+
+## [1.8.6] - 2020-10-06
+
+### Changed in 1.8.6
+
+- No longer errors when encountering the NOT_SCORED value for SzScoringBucket
+- No longer errors when encountering a numeric RECORD_ID on bulk data load
 
 ## [1.8.5] - 2020-07-08
 
