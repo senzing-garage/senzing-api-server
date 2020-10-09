@@ -130,7 +130,7 @@ In order to install `g2.jar` you must:
 
         set Path=%SENZING_G2_DIR%\lib;%Path%
         ```
-        
+
 1. Ensure the OpenAPI specification GIT submodule (senzing-rest-api-specification) is cloned:
 
     ```console
@@ -178,80 +178,80 @@ For example:
 
 ```console
 $ java -jar target/senzing-api-server-2.0.0.jar -help
-  
+
   java -jar senzing-api-server-2.0.0.jar <options>
-  
+
   <options> includes:
-  
+
   [ Standard Options ]
-  
+
      -help
           Should be the first and only option if provided.
           Causes this help message to be displayed.
           NOTE: If this option is provided, the server will not start.
-  
+
      -version
           Should be the first and only option if provided.
           Causes the version of the G2 REST API Server to be displayed.
           NOTE: If this option is provided, the server will not start.
-  
+
      -readOnly
           Disables functions that would modify the entity repository data, causing
           those functions to return a 403 Forbidden response.  NOTE: this option
           will not only disable loading data to the entity repository, but will
           also disable modifications to the configuration even if the -enableAdmin
           option is provided.
-  
+
      -enableAdmin
           Enables administrative functions via the API server.  If not specified
           then administrative functions will return a 403 Forbidden response.
-  
+
      -httpPort <port-number>
           Sets the port for HTTP communication.  Defaults to 2080.
           Specify 0 for a randomly selected port number.
-  
+
      -bindAddr <ip-address|loopback|all>
           Sets the port for HTTP bind address communication.
           Defaults to the loopback address.
-  
+
      -allowedOrigins <url-domain>
           Sets the CORS Access-Control-Allow-Origin header for all endpoints.
           There is no default value.
-  
+
      -concurrency <thread-count>
           Sets the number of threads available for executing
           Senzing API functions (i.e.: the number of engine threads).
           If not specified, then this defaults to 8.
-  
+
      -moduleName <module-name>
           The module name to initialize with.  Defaults to 'ApiServer'.
-  
+
      -iniFile <ini-file-path>
           The path to the Senzing INI file to with which to initialize.
           EXAMPLE: -iniFile /etc/opt/senzing/G2Module.ini
-  
+
      -initFile <json-init-file>
           The path to the file containing the JSON text to use for Senzing
           initialization.
           EXAMPLE: -initFile ~/senzing/g2-init.json
-  
+
      -initEnvVar <environment-variable-name>
           The environment variable from which to extract the JSON text
           to use for Senzing initialization.
           *** SECURITY WARNING: If the JSON text contains a password
           then it may be visible to other users via process monitoring.
           EXAMPLE: -initEnvVar SENZING_INIT_JSON
-  
+
      -initJson <json-init-text>
           The JSON text to use for Senzing initialization.
           *** SECURITY WARNING: If the JSON text contains a password
           then it may be visible to other users via process monitoring.
           EXAMPLE: -initJson "{"PIPELINE":{ ... }}"
-  
+
      -configId <config-id>
           Use with the -iniFile, -initFile, -initEnvVar or -initJson options
           to force a specific configuration ID to use for initialization.
-  
+
      -autoRefreshPeriod <positive-integer-seconds|0|negative-integer>
           If leveraging the default configuration stored in the database,
           this is used to specify how often the API server should background
@@ -290,9 +290,9 @@ $ java -jar target/senzing-api-server-2.0.0.jar -help
      -monitorFile [file-path]
           Specifies a file whose timestamp is monitored to determine
           when to shutdown.
-  
+
   [ Advanced Options ]
-  
+
      --configmgr [config manager options]...
           Should be the first option if provided.  All subsequent options
           are interpreted as configuration manager options.  If this option
@@ -578,20 +578,33 @@ see [Environment Variables](https://github.com/Senzing/knowledge-base/blob/maste
 
     ```console
     export SENZING_G2_DIR=/opt/senzing/g2
+    export SENZING_API_SERVER_GIT_TAG=0.0.0
     ```
 
 1. Build docker image.
+   Example:
 
     ```console
     cd ${GIT_REPOSITORY_DIR}
 
+    git checkout ${SENZING_API_SERVER_GIT_TAG}
+    git submodule update --init --recursive
+
     sudo make \
         SENZING_G2_JAR_PATHNAME=${SENZING_G2_DIR}/lib/g2.jar \
         SENZING_G2_JAR_VERSION=$(cat ${SENZING_G2_DIR}/g2BuildVersion.json | jq --raw-output '.VERSION') \
-        docker-build
+        docker-build \
+        > make-output.txt
     ```
 
-    Note: `sudo make docker-build-development-cache` can be used to create cached docker layers.
+1. Review output.
+   Example:
+
+    ```console
+    tail -f ${GIT_REPOSITORY_DIR}/make-output.txt
+    ```
+
+1. Note: `sudo make docker-build-development-cache` can be used to create cached docker layers.
 
 ## Examples
 
