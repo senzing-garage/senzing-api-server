@@ -16,11 +16,6 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
   private Integer matchLevel;
 
   /**
-   * The full name score.
-   */
-  private Integer fullNameScore;
-
-  /**
    * The match score.
    */
   private Integer matchScore;
@@ -45,7 +40,6 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    */
   public SzBaseRelatedEntity() {
     this.matchLevel         = null;
-    this.fullNameScore      = null;
     this.matchScore         = null;
     this.matchKey           = null;
     this.resolutionRuleCode = null;
@@ -73,29 +67,6 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    */
   public void setMatchLevel(Integer matchLevel) {
     this.matchLevel = matchLevel;
-  }
-
-  /**
-   * Gets the underlying full name score from the entity resolution between
-   * the entities.
-   *
-   * @return The underlying full name score from the entity resolution between
-   *         the entities.
-   */
-  @JsonInclude(NON_NULL)
-  public Integer getFullNameScore() {
-    return this.fullNameScore;
-  }
-
-  /**
-   * Sets the underlying full name score from the entity resolution between
-   * the entities.
-   *
-   * @param fullNameScore The underlying full name score from the entity
-   *                      resolution between the entities.
-   */
-  public void setFullNameScore(Integer fullNameScore) {
-    this.fullNameScore = fullNameScore;
   }
 
   /**
@@ -256,7 +227,6 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
     entity.setResolutionRuleCode(ruleCode);
     entity.setRefScore(refScore);
 
-    entity.setFullNameScore(nameScore.orElse(null));
     entity.setPartial(partial);
 
     // iterate over the feature map
@@ -296,7 +266,6 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
     return "SzRelatedEntity{" +
         super.toString() +
         ", matchLevel=" + matchLevel +
-        ", fullNameScore=" + fullNameScore +
         ", matchScore=" + matchScore +
         ", matchKey='" + matchKey + '\'' +
         ", resolutionRuleCode='" + resolutionRuleCode + '\'' +
