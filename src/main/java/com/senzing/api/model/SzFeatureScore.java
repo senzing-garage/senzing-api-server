@@ -1,11 +1,14 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 
 /**
  * Describes the scoring between {@link SzScoredFeature} instances.
@@ -33,6 +36,11 @@ public class SzFeatureScore {
   private Integer score;
 
   /**
+   * The optional name scoring details.
+   */
+  private SzNameScoring nameScoringDetails;
+
+  /**
    * The {@link SzScoringBucket} describing the meaning of the score.
    */
   private SzScoringBucket scoringBucket;
@@ -47,12 +55,13 @@ public class SzFeatureScore {
    * Default constructor.
    */
   public SzFeatureScore() {
-    this.featureType      = null;
-    this.inboundFeature   = null;
-    this.candidateFeature = null;
-    this.score            = null;
-    this.scoringBucket    = null;
-    this.scoringBehavior  = null;
+    this.featureType        = null;
+    this.inboundFeature     = null;
+    this.candidateFeature   = null;
+    this.score              = null;
+    this.nameScoringDetails = null;
+    this.scoringBucket      = null;
+    this.scoringBehavior    = null;
   }
 
   /**
@@ -116,13 +125,19 @@ public class SzFeatureScore {
 
   /**
    * Gets the integer score between the two feature values (typically from 0
-   * and 100).
+   * and 100).  If the score has not been explicitly set, but the {@linkplain
+   * #setNameScoringDetails(SzNameScoring) name scoring details} have been set
+   * then this returns {@link SzNameScoring#asFullScore()}.
    *
    * @return The integer score between the two feature values (typically from 0
    *         and 100).
    */
   public Integer getScore() {
-    return score;
+    if (this.score != null) return this.score;
+    if (this.nameScoringDetails != null) {
+      return this.nameScoringDetails.asFullScore();
+    }
+    return null;
   }
 
   /**
@@ -134,6 +149,29 @@ public class SzFeatureScore {
    */
   public void setScore(Integer score) {
     this.score = score;
+  }
+
+  /**
+   * Gets the name scoring details if any exist.  This method returns
+   * <tt>null</tt> if the scored feature was not a name.
+   *
+   * @return The name scoring details, or <tt>null</tt> if the scored feature
+   *         was not a name.
+   */
+  @JsonInclude(NON_EMPTY)
+  public SzNameScoring getNameScoringDetails() {
+    return this.nameScoringDetails;
+  }
+
+  /**
+   * Sets the name scoring details if any exist.  Set the value to <tt>null</tt>
+   * if the scored feature was not a name.
+   *
+   * @param scoring The {@link SzNameScoring} describing the name-scoring
+   *                details.
+   */
+  public void setNameScoringDetails(SzNameScoring scoring) {
+    this.nameScoringDetails = scoring;
   }
 
   /**
@@ -197,9 +235,17 @@ public class SzFeatureScore {
     SzScoredFeature candidateFeature = SzScoredFeature.parseScoredFeature(
         jsonObject, "CANDIDATE_", featureType);
 
-    Integer score     = JsonUtils.getInteger(jsonObject, "FULL_SCORE");
     String  bucket    = JsonUtils.getString(jsonObject, "SCORE_BUCKET");
     String  behavior  = JsonUtils.getString(jsonObject, "SCORE_BEHAVIOR");
+    Integer score     = JsonUtils.getInteger(jsonObject, "FULL_SCORE");
+
+    SzNameScoring nameScoring = null;
+    if (score == null || featureType.equalsIgnoreCase("NAME")) {
+      nameScoring = SzNameScoring.parseNameScoring(jsonObject);
+      if (score == null && nameScoring != null) {
+        score = nameScoring.asFullScore();
+      }
+    }
 
     SzScoringBucket scoringBucket = null;
     try {
@@ -222,6 +268,7 @@ public class SzFeatureScore {
     result.setInboundFeature(inboundFeature);
     result.setCandidateFeature(candidateFeature);
     result.setScore(score);
+    result.setNameScoringDetails(nameScoring);
     result.setScoringBehavior(scoringBehavior);
     result.setScoringBucket(scoringBucket);
 
