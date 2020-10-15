@@ -22,7 +22,7 @@ based on the strength of the name match).
 - Modified `com.senzing.api.model.SzAttributeSearchResult` to include the
 `featureScores` field to provide feature scores without using "raw data"
 - Added `nameScoringDetails` field to `com.senzing.api.model.SzFeatureScore` 
-class to `SzNameScoring` name scoring details on why operations,
+class to provide `SzNameScoring` name scoring details on why operations,
 - Updated `com.senzing.api.model.SzFeatureScore` to set its `score` field to 
 the most sensible score value from the `nameScoringDetails` for `"NAME"`
 features since the `FULL_SCORE` field is not available for names.
