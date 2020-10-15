@@ -1870,6 +1870,42 @@ public class ResponseValidators {
                      null,
                      null,
                      null);
+
+      Map<String, List<SzSearchFeatureScore>> featureScores
+          = result.getFeatureScores();
+      assertNotNull(featureScores, "Feature scores was null for entity "
+                    + result.getEntityId() + ": " + testInfo);
+      if (featureScores.containsKey("NAME")) {
+        Integer bestNameScore = result.getBestNameScore();
+        assertNotNull(bestNameScore, "Best name score is null for "
+            + "entity " + result.getEntityId() + " even though NAME feature "
+            + "scores exist (" + featureScores.get("NAME") + "): " + testInfo);
+
+        List<SzSearchFeatureScore> nameScores = featureScores.get("NAME");
+        int expectedBestNameScore = -1;
+        for (SzSearchFeatureScore nameScore : nameScores) {
+          SzNameScoring nameScoringDetails = nameScore.getNameScoringDetails();
+          assertEquals(nameScore.getScore(),
+                       nameScoringDetails.asFullScore(),
+                       "Overall score not equal to overall name score "
+                       + "for entity " + result.getEntityId() + " with name "
+                       + "scoring details (" + nameScoringDetails
+                       + "): " + testInfo);
+          Integer fullNameScore = nameScoringDetails.getFullNameScore();
+          Integer orgNameScore  = nameScoringDetails.getOrgNameScore();
+          if (fullNameScore == null) fullNameScore = -1;
+          if (orgNameScore == null) orgNameScore = -1;
+          int maxScore = Integer.max(fullNameScore, orgNameScore);
+          if (maxScore > expectedBestNameScore) {
+            expectedBestNameScore = maxScore;
+          }
+        }
+        assertEquals(bestNameScore, expectedBestNameScore,
+          "Unexpected best name score for entity "
+              + result.getEntityId() + " with name feature scores ("
+              + nameScores + "): " + testInfo);
+
+      }
     }
 
     if (expectRawData) {
