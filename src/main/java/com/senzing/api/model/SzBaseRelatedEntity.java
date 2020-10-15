@@ -211,12 +211,6 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
                            || (matchKey == null)
                            || (ruleCode == null));
 
-    Optional<Integer> nameScore = Optional.ofNullable(
-        jsonObject.getJsonObject("FEATURE_SCORES"))
-          .map(o -> o.getJsonArray("NAME"))
-          .map(a -> a.stream().map(v -> v.asJsonObject().getInt("GNR_FN")))
-          .flatMap(s -> s.max(Integer::compareTo));
-
     final JsonObject matchObject = matchInfo;
     Optional<Integer> matchScore = readMatchScore(matchObject);
 
