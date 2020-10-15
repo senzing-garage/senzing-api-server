@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2020-10-15
+
+### Changed in 2.2.0
+
+- Added `com.senzing.api.model.SzNameScoring` to describe name scoring details
+- Added `com.senzing.api.model.SzSearchFeatureScore` for search feature scores
+- Modified `com.senzing.api.model.SzBaseRelatedEntity` to remove `fullNameScore`
+field since it has not been populated since switch to version 2.0.0 of native
+Senzing SDK.
+- Added `bestNameScore` field to `com.senzing.api.model.SzAttributeSearchResult`
+to replace `fullNameScore` in the place where the name score was previously 
+used with version 1.x of the native Senzing SDK (i.e.: to sort search results
+based on the strength of the name match).
+- Modified `com.senzing.api.model.SzAttributeSearchResult` to include the
+`featureScores` field to provide feature scores without using "raw data"
+- Added `nameScoringDetails` field to `com.senzing.api.model.SzFeatureScore` 
+class to `SzNameScoring` name scoring details on why operations,
+- Updated `com.senzing.api.model.SzFeatureScore` to set its `score` field to 
+the most sensible score value from the `nameScoringDetails` for `"NAME"`
+features since the `FULL_SCORE` field is not available for names.
+- Updated to latest `senzing-rest-api-specification` specification.
+- Updated version numbers to 2.2.0
+- Re-ran tests for all versions of native Senzing SDK from 2.0.0 to 2.2.1
+
 ## [2.1.1] - 2020-10-06
 
 ### Changed in 2.1.1
