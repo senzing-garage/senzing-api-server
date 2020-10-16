@@ -4,6 +4,7 @@ import com.senzing.api.model.SzErrorResponse;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
 import com.senzing.util.JsonUtils;
+import org.glassfish.hk2.api.messaging.MessageReceiver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -40,7 +41,9 @@ public class ReadOnlyEntityDataWriteServicesTest
     options.setReadOnly(true);
   }
 
-  @Test public void postRecordTest() {
+  @Test
+  @Override
+  public void postRecordTest() {
     this.performTest(() -> {
       String  uriText = this.formatServerUri(
           "data-sources/" + WATCHLIST_DATA_SOURCE + "/records");
@@ -70,7 +73,9 @@ public class ReadOnlyEntityDataWriteServicesTest
     });
   }
 
-  @Test public void postRecordViaHttpTest() {
+  @Test
+  @Override
+  public void postRecordViaHttpTest() {
     this.performTest(() -> {
       String  uriText = this.formatServerUri(
           "data-sources/" + WATCHLIST_DATA_SOURCE + "/records");
@@ -92,7 +97,9 @@ public class ReadOnlyEntityDataWriteServicesTest
     });
   }
 
-  @Test public void postMismatchedDataSourceTest() {
+  @Test
+  @Override
+  public void postMismatchedDataSourceTest() {
     this.performTest(() -> {
       String  uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records");
@@ -128,7 +135,9 @@ public class ReadOnlyEntityDataWriteServicesTest
     });
   }
 
-  @Test public void postMismatchedDataSourceViaHttpTest() {
+  @Test
+  @Override
+  public void postMismatchedDataSourceViaHttpTest() {
     this.performTest(() -> {
       String  uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records");
@@ -157,8 +166,10 @@ public class ReadOnlyEntityDataWriteServicesTest
   }
 
   @ParameterizedTest
-  @MethodSource("withInfoParams")
-  public void postRecordWithInfoTest(Boolean  withInfo,
+  @MethodSource("postWithInfoParams")
+  @Override
+  public void postRecordWithInfoTest(String   recordId,
+                                     Boolean  withInfo,
                                      Boolean  withRaw)
   {
     this.performTest(() -> {
@@ -172,6 +183,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       JsonObjectBuilder job = Json.createObjectBuilder();
+      if (recordId != null) job.add("RECORD_ID", recordId);
       job.add("NAME_FIRST", "James");
       job.add("NAME_LAST", "Moriarty");
       job.add("PHONE_NUMBER", "702-555-1212");
@@ -202,8 +214,10 @@ public class ReadOnlyEntityDataWriteServicesTest
   }
 
   @ParameterizedTest
-  @MethodSource("withInfoParams")
-  public void postRecordWithInfoViaHttpTest(Boolean withInfo,
+  @MethodSource("postWithInfoParams")
+  @Override
+  public void postRecordWithInfoViaHttpTest(String  recordId,
+                                            Boolean withInfo,
                                             Boolean withRaw)
   {
     this.performTest(() -> {
@@ -216,6 +230,7 @@ public class ReadOnlyEntityDataWriteServicesTest
           queryParams);
 
       Map recordBody = new HashMap();
+      if (recordId != null) recordBody.put("RECORD_ID", recordId);
       recordBody.put("NAME_FIRST", "James");
       recordBody.put("NAME_LAST", "Moriarty");
       recordBody.put("PHONE_NUMBER", "702-555-1212");
@@ -232,8 +247,10 @@ public class ReadOnlyEntityDataWriteServicesTest
   }
 
   @ParameterizedTest
-  @MethodSource("withInfoParams")
-  public void postRecordWithInfoViaJavaClientTest(Boolean withInfo,
+  @MethodSource("postWithInfoParams")
+  @Override
+  public void postRecordWithInfoViaJavaClientTest(String  recordId,
+                                                  Boolean withInfo,
                                                   Boolean withRaw)
   {
     this.performTest(() -> {
@@ -246,6 +263,7 @@ public class ReadOnlyEntityDataWriteServicesTest
           queryParams);
 
       Map recordBody = new HashMap();
+      if (recordId != null) recordBody.put("RECORD_ID", recordId);
       recordBody.put("NAME_FIRST", "James");
       recordBody.put("NAME_LAST", "Moriarty");
       recordBody.put("PHONE_NUMBER", "702-555-1212");
@@ -309,7 +327,9 @@ public class ReadOnlyEntityDataWriteServicesTest
     });
   }
 
-  @Test public void putRecordTest() {
+  @Test
+  @Override
+  public void putRecordTest() {
     this.performTest(() -> {
       final String recordId = "ABC123";
 
@@ -341,7 +361,7 @@ public class ReadOnlyEntityDataWriteServicesTest
     });
   }
 
-  @Test public void putRecordViaHttpTest() {
+  @Test @Override public void putRecordViaHttpTest() {
     this.performTest(() -> {
       final String recordId = "XYZ456";
 
@@ -365,7 +385,7 @@ public class ReadOnlyEntityDataWriteServicesTest
     });
   }
 
-  @Test public void putMismatchedRecordTest() {
+  @Test @Override public void putMismatchedRecordTest() {
     this.performTest(() -> {
       final String recordId = "ABC123";
 
@@ -404,7 +424,7 @@ public class ReadOnlyEntityDataWriteServicesTest
     });
   }
 
-  @Test public void putMismatchedRecordViaHttpTest() {
+  @Test @Override public void putMismatchedRecordViaHttpTest() {
     this.performTest(() -> {
       final String recordId = "XYZ456";
 
@@ -434,7 +454,7 @@ public class ReadOnlyEntityDataWriteServicesTest
     });
   }
 
-  @Test public void putMismatchedRecordViaJavaClientTest() {
+  @Test @Override public void putMismatchedRecordViaJavaClientTest() {
     this.performTest(() -> {
       final String recordId = "XYZ456";
 
@@ -484,7 +504,7 @@ public class ReadOnlyEntityDataWriteServicesTest
     });
   }
 
-  @Test public void putMismatchedDataSourceTest() {
+  @Test @Override public void putMismatchedDataSourceTest() {
     this.performTest(() -> {
       final String recordId = "ABC123";
 
@@ -523,7 +543,7 @@ public class ReadOnlyEntityDataWriteServicesTest
     });
   }
 
-  @Test public void putMismatchedDataSourceViaHttpTest() {
+  @Test @Override public void putMismatchedDataSourceViaHttpTest() {
     this.performTest(() -> {
       final String recordId = "XYZ456";
 
@@ -553,7 +573,7 @@ public class ReadOnlyEntityDataWriteServicesTest
     });
   }
 
-  @Test public void putMismatchedDataSourceViaJavaClientTest() {
+  @Test @Override public void putMismatchedDataSourceViaJavaClientTest() {
     this.performTest(() -> {
       final String recordId = "XYZ456";
 
@@ -605,6 +625,7 @@ public class ReadOnlyEntityDataWriteServicesTest
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
+  @Override
   public void putRecordWithInfoTest(Boolean  withInfo,
                                     Boolean  withRaw)
   {
@@ -653,6 +674,7 @@ public class ReadOnlyEntityDataWriteServicesTest
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
+  @Override
   public void putRecordWithInfoViaHttpTest(Boolean withInfo,
                                            Boolean withRaw)
   {
@@ -691,6 +713,7 @@ public class ReadOnlyEntityDataWriteServicesTest
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
+  @Override
   public void putRecordWithInfoViaJavaClientTest(Boolean withInfo,
                                                  Boolean withRaw)
   {
@@ -779,6 +802,7 @@ public class ReadOnlyEntityDataWriteServicesTest
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
+  @Override
   public void reevaluateRecordTest(Boolean withInfo, Boolean withRaw)
   {
     this.performTest(() -> {
@@ -814,6 +838,7 @@ public class ReadOnlyEntityDataWriteServicesTest
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
+  @Override
   public void reevaluateRecordViaHttpTest(Boolean withInfo, Boolean withRaw)
   {
     this.performTest(() -> {
@@ -843,6 +868,7 @@ public class ReadOnlyEntityDataWriteServicesTest
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
+  @Override
   public void reevaluateRecordViaJavaClientTest(Boolean withInfo,
                                                 Boolean withRaw)
   {
@@ -987,6 +1013,7 @@ public class ReadOnlyEntityDataWriteServicesTest
   
   @ParameterizedTest
   @MethodSource("withInfoParams")
+  @Override
   public void deleteRecordTest(Boolean withInfo, Boolean withRaw)
   {
     this.performTest(() -> {
@@ -1023,6 +1050,7 @@ public class ReadOnlyEntityDataWriteServicesTest
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
+  @Override
   public void deleteRecordViaHttpTest(Boolean withInfo, Boolean withRaw)
   {
     this.performTest(() -> {
@@ -1052,6 +1080,7 @@ public class ReadOnlyEntityDataWriteServicesTest
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
+  @Override
   public void deleteRecordViaJavaClientTest(Boolean withInfo, Boolean withRaw)
   {
     this.performTest(() -> {
@@ -1128,6 +1157,7 @@ public class ReadOnlyEntityDataWriteServicesTest
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
+  @Override
   public void reevaluateEntityTest(Boolean withInfo, Boolean withRaw)
   {
     this.performTest(() -> {
@@ -1161,6 +1191,7 @@ public class ReadOnlyEntityDataWriteServicesTest
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
+  @Override
   public void reevaluateEntityViaHttpTest(Boolean withInfo, Boolean withRaw)
   {
     this.performTest(() -> {
@@ -1188,6 +1219,7 @@ public class ReadOnlyEntityDataWriteServicesTest
 
   @ParameterizedTest
   @MethodSource("withInfoParams")
+  @Override
   public void reevaluateEntityViaJavaClientTest(Boolean withInfo,
                                                 Boolean withRaw)
   {
