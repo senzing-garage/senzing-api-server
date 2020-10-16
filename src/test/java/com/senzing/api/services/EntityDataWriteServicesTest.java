@@ -240,9 +240,24 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     return argumentsList;
   }
 
+  protected List<Arguments> postWithInfoParams() {
+    List<Arguments> argumentsList = new LinkedList<>();
+    Boolean[] booleans = { null, Boolean.TRUE, Boolean.FALSE };
+    String[] recordIds = { "ABC123", "", "  ", null };
+    for (String recordId : recordIds) {
+     for (Boolean withInfo : booleans) {
+       for (Boolean withRaw : booleans) {
+         argumentsList.add(arguments(recordId, withInfo, withRaw));
+       }
+     }
+    }
+    return argumentsList;
+  }
+
   @ParameterizedTest
-  @MethodSource("withInfoParams")
-  public void postRecordWithInfoTest(Boolean  withInfo,
+  @MethodSource("postWithInfoParams")
+  public void postRecordWithInfoTest(String   recordId,
+                                     Boolean  withInfo,
                                      Boolean  withRaw)
   {
     this.performTest(() -> {
@@ -256,6 +271,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       JsonObjectBuilder job = Json.createObjectBuilder();
+      if (recordId != null) job.add("RECORD_ID", recordId);
       job.add("NAME_FIRST", "James");
       job.add("NAME_LAST", "Moriarty");
       job.add("PHONE_NUMBER", "702-555-1212");
@@ -274,11 +290,16 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
+      String expectedRecordId = null;
+      if (recordId != null && recordId.trim().length() > 0) {
+        expectedRecordId = recordId;
+      }
+
       validateLoadRecordResponse(response,
                                  POST,
                                  uriText,
                                  WATCHLIST_DATA_SOURCE,
-                                 null,
+                                 expectedRecordId,
                                  (withInfo != null ? withInfo : false),
                                  (withRaw != null ? withRaw : false),
                                  1,
@@ -327,8 +348,9 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
   }
 
   @ParameterizedTest
-  @MethodSource("withInfoParams")
-  public void postRecordWithInfoViaHttpTest(Boolean withInfo,
+  @MethodSource("postWithInfoParams")
+  public void postRecordWithInfoViaHttpTest(String  recordId,
+                                            Boolean withInfo,
                                             Boolean withRaw)
   {
     this.performTest(() -> {
@@ -341,6 +363,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           queryParams);
 
       Map recordBody = new HashMap();
+      if (recordId != null) recordBody.put("RECORD_ID", recordId);
       recordBody.put("NAME_FIRST", "James");
       recordBody.put("NAME_LAST", "Moriarty");
       recordBody.put("PHONE_NUMBER", "702-555-1212");
@@ -352,11 +375,16 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
+      String expectedRecordId = null;
+      if (recordId != null && recordId.trim().length() > 0) {
+        expectedRecordId = recordId;
+      }
+
       validateLoadRecordResponse(response,
                                  POST,
                                  uriText,
                                  WATCHLIST_DATA_SOURCE,
-                                 null,
+                                 expectedRecordId,
                                  (withInfo != null ? withInfo : false),
                                  (withRaw != null ? withRaw : false),
                                  1,
@@ -397,8 +425,9 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
   }
 
   @ParameterizedTest
-  @MethodSource("withInfoParams")
-  public void postRecordWithInfoViaJavaClientTest(Boolean withInfo,
+  @MethodSource("postWithInfoParams")
+  public void postRecordWithInfoViaJavaClientTest(String  recordId,
+                                                  Boolean withInfo,
                                                   Boolean withRaw)
   {
     this.performTest(() -> {
@@ -411,6 +440,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           queryParams);
 
       Map recordBody = new HashMap();
+      if (recordId != null) recordBody.put("RECORD_ID", recordId);
       recordBody.put("NAME_FIRST", "James");
       recordBody.put("NAME_LAST", "Moriarty");
       recordBody.put("PHONE_NUMBER", "702-555-1212");
@@ -428,11 +458,16 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       SzLoadRecordResponse response = jsonCopy(clientResponse,
                                                SzLoadRecordResponse.class);
 
+      String expectedRecordId = null;
+      if (recordId != null && recordId.trim().length() > 0) {
+        expectedRecordId = recordId;
+      }
+
       validateLoadRecordResponse(response,
                                  POST,
                                  uriText,
                                  WATCHLIST_DATA_SOURCE,
-                                 null,
+                                 expectedRecordId,
                                  (withInfo != null ? withInfo : false),
                                  (withRaw != null ? withRaw : false),
                                  1,
@@ -473,7 +508,9 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
     });
   }
 
-  @Test public void putRecordTest() {
+  @Test
+  public void putRecordTest()
+  {
     this.performTest(() -> {
       final String recordId = "ABC123";
 
@@ -491,7 +528,13 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
 
       long before = System.currentTimeMillis();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
-          CUSTOMER_DATA_SOURCE, recordId, null, false, false, uriInfo, jsonText);
+          CUSTOMER_DATA_SOURCE,
+          recordId,
+          null,
+          false,
+          false,
+          uriInfo,
+          jsonText);
       response.concludeTimers();
       long after = System.currentTimeMillis();
 
