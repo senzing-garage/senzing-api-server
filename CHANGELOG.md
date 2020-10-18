@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2020-10-16
+
+### Changed in 2.2.1
+
+- Modified `com.senzing.api.services.EntityDataServices` so that 
+`POST /data-sources/{dataSourceCode}/records` call will be tolerant of the 
+`RECORD_ID` specified in the JSON payload for the record.
+- Updated EntityDataWriteServicesTest to handle testing POST with various 
+record ID variants.
+- Re-ran tests for all versions of native Senzing SDK from 2.0.0 to 2.2.1
+
+
 ## [2.2.0] - 2020-10-15
 
 ### Changed in 2.2.0

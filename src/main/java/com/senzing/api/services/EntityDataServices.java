@@ -58,6 +58,21 @@ public class EntityDataServices {
           Collections.singletonMap("DATA_SOURCE", dataSource),
           Collections.singletonMap("ENTITY_TYPE", "GENERIC"));
 
+      JsonObject  recordJson    = JsonUtils.parseJsonObject(recordText);
+      String      jsonRecordId  = JsonUtils.getString(recordJson, "RECORD_ID");
+      if (jsonRecordId != null) {
+        if (jsonRecordId.trim().length() == 0) {
+          // we have an empty record ID, we need to strip it from the JSON
+          JsonObjectBuilder jsonBuilder = Json.createObjectBuilder(recordJson);
+          jsonBuilder.remove("RECORD_ID");
+          recordJson    = jsonBuilder.build();
+          jsonRecordId  = null;
+          recordText    = JsonUtils.toJsonText(recordJson);
+        }
+      }
+
+      final String inRecordId     = jsonRecordId;
+      final String recordJsonText = recordText;
       checkDataSource(POST, uriInfo, timers, dataSource, provider);
 
       StringBuffer sb = new StringBuffer();
@@ -72,21 +87,30 @@ public class EntityDataServices {
         int result;
         if (withInfo) {
           callingNativeAPI(timers, "engine", "addRecordWithInfo");
-          result = engineApi.addRecordWithInfo(dataSource,
-                                               "", // empty record ID
-                                               recordText,
-                                               normalizedLoadId,
-                                               0,
-                                               sb);
+          result = engineApi.addRecordWithInfo(
+              dataSource,
+              (inRecordId == null) ? "" : inRecordId, // empty record ID
+              recordJsonText,
+              normalizedLoadId,
+              0,
+              sb);
           calledNativeAPI(timers, "engine", "addRecordWithInfo");
 
-        } else {
+        } else if (inRecordId == null) {
           callingNativeAPI(timers, "engine", "addRecordWithReturnedRecordID");
           result = engineApi.addRecordWithReturnedRecordID(dataSource,
                                                            sb,
-                                                           recordText,
+                                                           recordJsonText,
                                                            normalizedLoadId);
           calledNativeAPI(timers, "engine", "addRecordWithReturnedRecordID");
+
+        } else {
+          callingNativeAPI(timers, "engine", "addRecord");
+          result = engineApi.addRecord(dataSource,
+                                       inRecordId,
+                                       recordJsonText,
+                                       normalizedLoadId);
+          calledNativeAPI(timers, "engine", "addRecord");
         }
 
         if (result != 0) {
@@ -96,15 +120,15 @@ public class EntityDataServices {
         return sb.toString().trim();
       });
 
-      String            recordId  = null;
+      String            recordId  = inRecordId;
       SzResolutionInfo  info      = null;
       String            rawData   = null;
       if (withInfo) {
         rawData = text;
         JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
         info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
-        recordId = info.getRecordId();
-      } else {
+        if (inRecordId == null) recordId = info.getRecordId();
+      } else if (inRecordId == null) {
         recordId = text;
       }
 
