@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2] - 2020-11-05
+
+### Changed in 2.2.2
+
+- Modified `com.senzing.api.server.G2EngineRetryHandler` so that it
+recognizes new functions in `com.senzing.g2.engine.G2Engine`.
+- Re-ran tests for all versions of native Senzing SDK from 2.0.0 to 2.3.0
+and recorded mock test data.
+
 ## [2.2.1] - 2020-10-16
 
 ### Changed in 2.2.1
