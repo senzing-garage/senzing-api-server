@@ -2,6 +2,7 @@ package com.senzing.api.services;
 
 import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2ConfigMgr;
+import com.senzing.g2.engine.G2Engine;
 import com.senzing.g2.engine.G2Fallible;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
@@ -46,6 +47,21 @@ public class ServicesUtil {
    * HTTP Response code for "not allowed".
    */
   public static final int NOT_ALLOWED = 405;
+
+  /**
+   * Error code when a data source code is not found.
+   */
+  static final int DATA_SOURCE_NOT_FOUND_CODE = 27;
+
+  /**
+   * Error code when a record ID is not found.
+   */
+  static final int RECORD_NOT_FOUND_CODE = 33;
+
+  /**
+   * Error code when the entity ID is not found.
+   */
+  static final int ENTITY_ID_NOT_FOUND_CODE = 37;
 
   /**
    * Default flags for retrieving records.
@@ -330,6 +346,73 @@ public class ServicesUtil {
     return new ForbiddenException(builder.build());
   }
 
+  /**
+   * When an Engine API operation fails this will either throw a
+   * {@link NotFoundException} if the error code indicates a data source,
+   * record ID or entity ID was not found, <b>or</b> it will throw an
+   * {@link InternalServerErrorException}.
+   *
+   * @param httpMethod The HTTP method for the request.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
+   * @param engineApi The {@link G2Fallible} to get the last exception from.
+   *
+   * @return A newly created {@link NotFoundException} or {@link
+   *         InternalServerErrorException}.
+   */
+  static WebApplicationException newPossiblyNotFoundException(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      Timers        timers,
+      G2Engine      engineApi)
+  {
+    int errorCode = engineApi.getLastExceptionCode();
+    if (errorCode == DATA_SOURCE_NOT_FOUND_CODE
+        || errorCode == RECORD_NOT_FOUND_CODE
+        || errorCode == ENTITY_ID_NOT_FOUND_CODE)
+    {
+      return newNotFoundException(httpMethod, uriInfo, timers, engineApi);
+    }
+    return newInternalServerErrorException(
+        httpMethod, uriInfo, timers, engineApi);
+  }
+
+  /**
+   * When an Engine API operation fails this will either throw a
+   * {@link BadRequestException} if the error code indicates a data source,
+   * record ID or entity ID was not found, <b>or</b> it will throw an
+   * {@link InternalServerErrorException}.
+   *
+   * @param httpMethod The HTTP method for the request.
+   *
+   * @param uriInfo The {@link UriInfo} from the request.
+   *
+   * @param timers The {@link Timers} object for the timings that were taken.
+   *
+   * @param engineApi The {@link G2Fallible} to get the last exception from.
+   *
+   * @return A newly created {@link BadRequestException} or {@link
+   *         InternalServerErrorException}.
+   */
+  static WebApplicationException newPossiblyBadRequestException(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      Timers        timers,
+      G2Engine      engineApi)
+  {
+    int errorCode = engineApi.getLastExceptionCode();
+    if (errorCode == DATA_SOURCE_NOT_FOUND_CODE
+        || errorCode == RECORD_NOT_FOUND_CODE
+        || errorCode == ENTITY_ID_NOT_FOUND_CODE)
+    {
+      return newBadRequestException(httpMethod, uriInfo, timers, engineApi);
+    }
+    return newInternalServerErrorException(
+        httpMethod, uriInfo, timers, engineApi);
+  }
 
   /**
    * URL encodes the specified text using UTF-8 encoding.

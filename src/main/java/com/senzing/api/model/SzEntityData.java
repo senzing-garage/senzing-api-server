@@ -1,11 +1,14 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.*;
 import java.util.function.Function;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 
 /**
  * Describes a resolved entity and its related entities.
@@ -54,6 +57,7 @@ public class SzEntityData {
    *
    * @return The {@link List} of {@linkplain SzRelatedEntity related entities}.
    */
+  @JsonInclude(NON_EMPTY)
   public List<SzRelatedEntity> getRelatedEntities() {
     return Collections.unmodifiableList(this.relatedEntities);
   }

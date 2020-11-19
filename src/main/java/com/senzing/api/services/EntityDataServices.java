@@ -23,12 +23,6 @@ import static com.senzing.api.services.ServicesUtil.*;
 @Path("/")
 @Produces("application/json; charset=UTF-8")
 public class EntityDataServices {
-  private static final int DATA_SOURCE_NOT_FOUND_CODE = 27;
-
-  private static final int RECORD_NOT_FOUND_CODE = 33;
-
-  private static final int ENTITY_ID_NOT_FOUND_CODE = 37;
-
   @POST
   @Path("data-sources/{dataSourceCode}/records")
   public SzLoadRecordResponse loadRecord(
@@ -114,7 +108,7 @@ public class EntityDataServices {
         }
 
         if (result != 0) {
-          throw newWebApplicationException(POST, uriInfo, timers, engineApi);
+          throw newPossiblyNotFoundException(POST, uriInfo, timers, engineApi);
         }
 
         return sb.toString().trim();
@@ -226,7 +220,7 @@ public class EntityDataServices {
           calledNativeAPI(timers, "engine", "addRecord");
         }
         if (result != 0) {
-          throw newWebApplicationException(PUT, uriInfo, timers, engineApi);
+          throw newPossiblyNotFoundException(PUT, uriInfo, timers, engineApi);
         }
 
         return rawData;
@@ -413,7 +407,7 @@ public class EntityDataServices {
           calledNativeAPI(timers, "engine", "reevaluateRecord");
         }
         if (returnCode != 0) {
-          throw newWebApplicationException(POST, uriInfo, timers, engineApi);
+          throw newPossiblyNotFoundException(POST, uriInfo, timers, engineApi);
         }
 
         return rawData;
@@ -481,7 +475,7 @@ public class EntityDataServices {
         calledNativeAPI(timers, "engine", "getRecord");
 
         if (result != 0) {
-          throw newWebApplicationException(GET, uriInfo, timers, engineApi);
+          throw newPossiblyNotFoundException(GET, uriInfo, timers, engineApi);
         }
 
         return sb.toString();
@@ -589,7 +583,7 @@ public class EntityDataServices {
           calledNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
 
           if (result != 0) {
-            throw newWebApplicationException(GET, uriInfo, timers, engineApi);
+            throw newPossiblyNotFoundException(GET, uriInfo, timers, engineApi);
           }
 
           return sb.toString();
@@ -727,7 +721,7 @@ public class EntityDataServices {
           calledNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
 
           if (result != 0) {
-            throw newWebApplicationException(GET, uriInfo, timers, engineApi);
+            throw newPossiblyNotFoundException(GET, uriInfo, timers, engineApi);
           }
           return sb.toString();
         });
@@ -1000,7 +994,7 @@ public class EntityDataServices {
                 POST, uriInfo, timers, "The specified entityId was not found: "
                     + entityId);
           } else {
-            throw newWebApplicationException(POST, uriInfo, timers, engineApi);
+            throw newPossiblyNotFoundException(POST, uriInfo, timers, engineApi);
           }
         }
 
@@ -1036,23 +1030,6 @@ public class EntityDataServices {
       e.printStackTrace();
       throw ServicesUtil.newInternalServerErrorException(POST, uriInfo, timers, e);
     }
-  }
-
-  private static WebApplicationException newWebApplicationException(
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers,
-      G2Engine      engineApi)
-  {
-    int errorCode = engineApi.getLastExceptionCode();
-    if (errorCode == DATA_SOURCE_NOT_FOUND_CODE
-        || errorCode == RECORD_NOT_FOUND_CODE
-        || errorCode == ENTITY_ID_NOT_FOUND_CODE)
-    {
-      return newNotFoundException(httpMethod, uriInfo, timers, engineApi);
-    }
-    return newInternalServerErrorException(
-        httpMethod, uriInfo, timers, engineApi);
   }
 
   /**
@@ -1167,7 +1144,7 @@ public class EntityDataServices {
   {
     // check if failed to find result
     if (result != 0) {
-      throw newWebApplicationException(GET, uriInfo, timers, engineApi);
+      throw newPossiblyNotFoundException(GET, uriInfo, timers, engineApi);
     }
     if (nativeJson.trim().length() == 0) {
       throw newNotFoundException(GET, uriInfo, timers);
