@@ -20,7 +20,9 @@ import static com.senzing.api.services.ServicesUtil.*;
  */
 @Path("/")
 @Produces("application/json; charset=UTF-8")
-public class WhyServices {
+public class
+
+WhyServices {
   private static final int DATA_SOURCE_NOT_FOUND_CODE = 27;
 
   private static final int RECORD_NOT_FOUND_CODE = 33;
@@ -297,6 +299,138 @@ public class WhyServices {
     }
   }
 
+
+  @GET
+  @Path("why/entities")
+  public SzWhyEntitiesResponse whyEntities(
+      @QueryParam("entity1")                                      String        entity1,
+      @QueryParam("entity2")                                      String        entity2,
+      @DefaultValue("false") @QueryParam("forceMinimal")          boolean       forceMinimal,
+      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
+      @DefaultValue("true") @QueryParam("withFeatureStats")       boolean       withFeatureStats,
+      @DefaultValue("true") @QueryParam("withInternalFeatures")   boolean       withInternalFeatures,
+      @DefaultValue("false") @QueryParam("withRelationships")     boolean       withRelationships,
+      @DefaultValue("false") @QueryParam("withRaw")               boolean       withRaw,
+      @Context                                                    UriInfo       uriInfo)
+  {
+    Timers timers = newTimers();
+
+    try {
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+
+      SzEntityIdentifier ident1 = null;
+      SzEntityIdentifier ident2 = null;
+
+      // check the parameters
+      try {
+        if (entity1 == null) {
+          throw newBadRequestException(
+              GET, uriInfo, timers,
+              "Parameter missing or empty: \"entity1\".  "
+                  + "The 'entity1' entity identifier is required.");
+        }
+        if (entity2 == null) {
+          throw newBadRequestException(
+              GET, uriInfo, timers,
+              "Parameter missing or empty: \"entity2\".  "
+                  + "The 'entity2' entity identifier is required.");
+        }
+
+        try {
+          ident1 = SzEntityIdentifier.valueOf(entity1.trim());
+        } catch (Exception e) {
+          throw newBadRequestException(
+              GET, uriInfo, timers,
+              "Parameter is not formatted correctly: \"entity1\".");
+        }
+
+        try {
+          ident2 = SzEntityIdentifier.valueOf(entity2.trim());
+        } catch (Exception e) {
+          throw newBadRequestException(
+              GET, uriInfo, timers,
+              "Parameter is not formatted correctly: \"entity2\".");
+        }
+
+        // check for consistent from/to
+        if (ident1.getClass() != ident2.getClass()) {
+          throw newBadRequestException(
+              GET, uriInfo, timers,
+              "Entity identifiers must be consistent types.  entity1="
+                  + entity1 + ", entity2=" + entity2);
+        }
+
+      } catch (WebApplicationException e) {
+        throw e;
+      } catch (Exception e) {
+        throw newBadRequestException(GET, uriInfo, timers, e.getMessage());
+      }
+
+      StringBuffer sb = new StringBuffer();
+
+      String rawData = null;
+
+      int flags = getFlags(forceMinimal,
+                           featureMode,
+                           withFeatureStats,
+                           withInternalFeatures,
+                           withRelationships);
+
+      enteringQueue(timers);
+
+      final SzEntityIdentifier entityIdent1 = ident1;
+      final SzEntityIdentifier entityIdent2 = ident2;
+
+      rawData = provider.executeInThread(() -> {
+        exitingQueue(timers);
+
+        // get the engine API and the config API
+        G2Engine engineApi = provider.getEngineApi();
+
+        Long entityId1 = resolveEntityId(
+            GET, uriInfo, timers, engineApi, entityIdent1);
+        Long entityId2 = resolveEntityId(
+            GET, uriInfo, timers, engineApi, entityIdent2);
+
+        callingNativeAPI(timers, "engine", "whyEntities");
+
+        // perform the "why" operation
+        int result = engineApi.whyEntitiesV2(
+            entityId1, entityId2, flags, sb);
+
+        calledNativeAPI(timers, "engine", "whyEntities");
+
+        if (result != 0) {
+          int errorCode = engineApi.getLastExceptionCode();
+          if (errorCode == ENTITY_ID_NOT_FOUND_CODE)
+          {
+            throw newBadRequestException(GET, uriInfo, timers, engineApi);
+          }
+          throw newInternalServerErrorException(
+              GET, uriInfo, timers, engineApi);
+        }
+
+        return sb.toString();
+      });
+
+      // construct the response
+      return this.createWhyEntitiesResponse(
+          rawData, timers, uriInfo, withRaw, provider);
+
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
+    }
+  }
+
+
   private static WebApplicationException newWebApplicationException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
@@ -346,6 +480,85 @@ public class WhyServices {
     }
 
     return response;
+
+  }
+
+  private static SzWhyEntitiesResponse createWhyEntitiesResponse(
+      String        rawData,
+      Timers        timers,
+      UriInfo       uriInfo,
+      boolean       withRaw,
+      SzApiProvider provider)
+  {
+    processingRawData(timers);
+    // parse the result
+    JsonObject  json        = JsonUtils.parseJsonObject(rawData);
+    JsonArray   whyArray    = json.getJsonArray("WHY_RESULTS");
+    JsonArray   entityArray = json.getJsonArray("ENTITIES");
+
+    List<SzWhyEntitiesResult> whyResults
+        = SzWhyEntitiesResult.parseWhyEntitiesResultList(null, whyArray);
+
+    List<SzEntityData> entities = SzEntityData.parseEntityDataList(
+        null, entityArray, (f) -> provider.getAttributeClassForFeature(f));
+    processedRawData(timers);
+
+    // construct the response
+    SzWhyEntitiesResponse response = new SzWhyEntitiesResponse(
+        GET, 200, uriInfo, timers);
+
+    if (whyResults.size() != 1) {
+      throw new IllegalStateException(
+          "Unexpected number of why-entities result.  Expected only one: "
+          + whyResults.size() + " / " + whyResults);
+    }
+
+    response.setWhyResult(whyResults.get(0));
+    response.setEntities(entities);
+
+    if (withRaw) {
+      response.setRawData(rawData);
+    }
+
+    return response;
+
+  }
+
+  /**
+   * Gets the entity ID for the entity identifier which may be a record ID.
+   */
+  private static Long resolveEntityId(SzHttpMethod        httpMethod,
+                                      UriInfo             uriInfo,
+                                      Timers              timers,
+                                      G2Engine            engineApi,
+                                      SzEntityIdentifier  identifier)
+  {
+    // get the entity IDs
+    if (identifier instanceof SzEntityId) {
+      return ((SzEntityId) identifier).getValue();
+
+    } else {
+      SzRecordId  recordIdent = (SzRecordId) identifier;
+      String      dataSource  = recordIdent.getDataSourceCode();
+      String      recordId    = recordIdent.getRecordId();
+
+      StringBuffer sb = new StringBuffer();
+      callingNativeAPI(timers, "engine", "getEntityByRecordIDV2");
+      int result = engineApi.getEntityByRecordIDV2(dataSource, recordId, 0, sb);
+      calledNativeAPI(timers, "engine", "getEntityByRecordIDV2");
+
+      if (result != 0) {
+        throw newPossiblyBadRequestException(
+            httpMethod, uriInfo, timers, engineApi);
+      }
+
+      // parse as a JSON object
+      JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
+      jsonObject = jsonObject.getJsonObject("RESOLVED_ENTITY");
+
+      // get the entity ID
+      return JsonUtils.getLong(jsonObject, "ENTITY_ID");
+    }
 
   }
 }

@@ -1803,6 +1803,7 @@ public class SzApiServer implements SzApiProvider {
         throw new IllegalStateException(
             formatError("G2Engine.purgeRepository()", engineApi));
       }
+      this.workerThreadPool.close(true);
       this.workerThreadPool
           = new WorkerThreadPool(this.getClass().getName(), this.concurrency);
 

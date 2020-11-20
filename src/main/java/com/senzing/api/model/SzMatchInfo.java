@@ -57,6 +57,11 @@ public class SzMatchInfo {
   private Map<String, List<SzFeatureScore>> featureScoreViews;
 
   /**
+   * The {@link List} of {@link SzDisclosedRelation} instances.
+   */
+  private List<SzDisclosedRelation> disclosedRelations;
+
+  /**
    * Default constructor.
    */
   public SzMatchInfo() {
@@ -67,6 +72,7 @@ public class SzMatchInfo {
     this.candidateKeyViews  = new LinkedHashMap<>();
     this.featureScores      = new LinkedHashMap<>();
     this.featureScoreViews  = new LinkedHashMap<>();
+    this.disclosedRelations = new LinkedList<>();
   }
 
   /**
@@ -75,6 +81,7 @@ public class SzMatchInfo {
    *
    * @return The why key indicating the components of the match.
    */
+  @JsonInclude(NON_EMPTY)
   public String getWhyKey() {
     return this.whyKey;
   }
@@ -142,7 +149,6 @@ public class SzMatchInfo {
    */
   @JsonInclude(NON_EMPTY)
   public Map<String, List<SzCandidateKey>> getCandidateKeys() {
-    if (this.candidateKeyViews.size() == 0) return null;
     return Collections.unmodifiableMap(this.candidateKeyViews);
   }
 
@@ -199,13 +205,12 @@ public class SzMatchInfo {
    * {@link SzFeatureScore} describing the feature scores for that type.
    *
    * @return The <b>unmodifiable</b> {@link Map} of {@link String} feature type
-   *         keys to <b>unmodifiable</b> {@link List} values contianing
+   *         keys to <b>unmodifiable</b> {@link List} values containing
    *         instances of {@link SzFeatureScore} describing the feature scores
    *         for that type.
    */
   @JsonInclude(NON_EMPTY)
   public Map<String, List<SzFeatureScore>> getFeatureScores() {
-    if (this.featureScoreViews.size() == 0) return null;
     return Collections.unmodifiableMap(this.featureScoreViews);
   }
 
@@ -254,6 +259,55 @@ public class SzMatchInfo {
       this.featureScores.put(featureType, listCopy);
       this.featureScoreViews.put(featureType, listView);
     });
+  }
+
+  /**
+   * Gets the <b>unmodifiable</b> {@link List} of {@link
+   * SzDisclosedRelation} objects describing the disclosed relationships
+   * between two entities.  If this {@link SzMatchInfo} instance is for a
+   * single entity then this list is empty.
+   *
+   * @return The <b>unmodifiable</b> {@link List} of {@link
+   *         SzDisclosedRelation} objects describing the disclosed
+   *         relationships between two entities.
+   */
+  @JsonInclude(NON_EMPTY)
+  public List<SzDisclosedRelation> getDisclosedRelations() {
+    return Collections.unmodifiableList(this.disclosedRelations);
+  }
+
+  /**
+   * Sets the disclosed relationships for this match info to those in the
+   * specified {@link Collection} of {@link SzDisclosedRelation}
+   * instances.
+   *
+   * @param relations The {@link Collection} of {@link SzDisclosedRelation}
+   *                  instances for this instance.
+   */
+  public void setDisclosedRelations(Collection<SzDisclosedRelation> relations) {
+    this.disclosedRelations.clear();
+    if (relations != null) {
+      this.disclosedRelations.addAll(relations);
+    }
+  }
+
+  /**
+   * Adds the specified {@link SzDisclosedRelation} to the list of
+   * disclosed relationships for this match info.
+   *
+   * @param relation The {@link SzDisclosedRelation} instance describing the
+   *                 disclosed relationship to add.
+   */
+  public void addDisclosedRelation(SzDisclosedRelation relation) {
+    this.disclosedRelations.add(relation);
+  }
+
+  /**
+   * Removes all disclosed relationships from the list of disclosed
+   * relationships for this match info.
+   */
+  public void clearDisclosedRelations() {
+    this.disclosedRelations.clear();
   }
 
   /**
@@ -319,6 +373,13 @@ public class SzMatchInfo {
       featureScoreMap.put(featureType, featureScores);
     });
 
+    JsonObject disclosedRelationshipObject
+        = JsonUtils.getJsonObject(jsonObject, "DISCLOSED_RELATIONS");
+
+    List<SzDisclosedRelation> disclosedRelations
+        = SzDisclosedRelation.parseDisclosedRelationships(
+            disclosedRelationshipObject, whyKey);
+
     SzMatchInfo result = new SzMatchInfo();
 
     result.setWhyKey(whyKey);
@@ -326,6 +387,7 @@ public class SzMatchInfo {
     result.setResolutionRule(ruleCode);
     result.setCandidateKeys(candidateKeyMap);
     result.setFeatureScores(featureScoreMap);
+    result.setDisclosedRelations(disclosedRelations);
 
     return result;
   }

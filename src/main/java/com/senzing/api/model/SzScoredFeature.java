@@ -1,10 +1,12 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.util.JsonUtils;
 
-import javax.json.JsonArray;
 import javax.json.JsonObject;
-import java.util.Collection;
+import java.util.Objects;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 
 /**
  * Describes a feature value that has been scored.
@@ -60,7 +62,7 @@ public class SzScoredFeature {
    * @return The feature ID for the scored feature.
    */
   public Long getFeatureId() {
-    return featureId;
+    return this.featureId;
   }
 
   /**
@@ -78,7 +80,7 @@ public class SzScoredFeature {
    * @return The feature type for the scored feature.
    */
   public String getFeatureType() {
-    return featureType;
+    return this.featureType;
   }
 
   /**
@@ -96,7 +98,7 @@ public class SzScoredFeature {
    * @return The feature value for the scored feature.
    */
   public String getFeatureValue() {
-    return featureValue;
+    return this.featureValue;
   }
 
   /**
@@ -113,8 +115,9 @@ public class SzScoredFeature {
    *
    * @return The usage type for the scored feature.
    */
+  @JsonInclude(NON_EMPTY)
   public String getUsageType() {
-    return usageType;
+    return this.usageType;
   }
 
   /**
@@ -124,6 +127,36 @@ public class SzScoredFeature {
    */
   public void setUsageType(String usageType) {
     this.usageType = usageType;
+  }
+
+
+  @Override
+  public boolean equals(Object object) {
+    if (this == object) return true;
+    if (object == null || getClass() != object.getClass()) return false;
+    SzScoredFeature that = (SzScoredFeature) object;
+    return Objects.equals(this.getFeatureId(), that.getFeatureId()) &&
+        Objects.equals(this.getFeatureType(), that.getFeatureType()) &&
+        Objects.equals(this.getFeatureValue(), that.getFeatureValue()) &&
+        Objects.equals(this.getUsageType(), that.getUsageType());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.getFeatureId(),
+                        this.getFeatureType(),
+                        this.getFeatureValue(),
+                        this.getUsageType());
+  }
+
+  @Override
+  public String toString() {
+    return "SzScoredFeature{" +
+        "featureId=" + this.getFeatureId() +
+        ", featureType='" + this.getFeatureType() + '\'' +
+        ", featureValue='" + this.getFeatureValue() + '\'' +
+        ", usageType='" + this.getUsageType() + '\'' +
+        '}';
   }
 
   /**
@@ -144,10 +177,15 @@ public class SzScoredFeature {
                                                    String     prefix,
                                                    String     featureType)
   {
-    Long    featureId = JsonUtils.getLong(jsonObject, prefix + "FEAT_ID");
-    String  value     = JsonUtils.getString(jsonObject, prefix + "FEAT");
-    String  usage     = JsonUtils.getString(jsonObject,
-                                            prefix + "FEAT_USAGE_TYPE");
+    Long featureId = JsonUtils.getLong(jsonObject, prefix + "FEAT_ID");
+
+    String value = (jsonObject.containsKey(prefix + "FEAT"))
+      ? jsonObject.getString(prefix + "FEAT")
+      : JsonUtils.getString(jsonObject, prefix + "FEAT_DESC");
+
+    String usage = (jsonObject.containsKey(prefix + "FEAT_USAGE_TYPE"))
+      ? jsonObject.getString(prefix + "FEAT_USAGE_TYPE")
+      : JsonUtils.getString(jsonObject,prefix + "FEAT_UTYPE_CODE");
 
     SzScoredFeature result = new SzScoredFeature();
 

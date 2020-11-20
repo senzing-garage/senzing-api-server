@@ -6,6 +6,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2020-11-18
+
+### Changed in 2.3.0
+
+- Added `WhyServices.whyEntities()` method for `GET /why/entities`
+- Modified `com.senzing.api.model.SzMatchInfo` to support `whyEntities()`
+- Modified `com.senzing.api.model.SzScoredFeature` to support `whyEntities()`
+- Modified `com.senzing.api.model.SzEntityData` to exclude `relatedEntities`
+  from the JSON serialization if empty or null.
+- Added `com.senzing.api.model.SzWhyEntitiesResponse`
+- Added `com.senzing.api.model.SzWhyEntitiesResult`
+- Added `com.senzing.api.model.SzDisclosedRelation`
+- Added `com.senzing.api.model.SzRelationDirection`
+- Added `com.senzing.api.model.SzRelatedFeatures`
+- Refactored some functionality from `EntityDataServices` to `ServicesUtil` 
+- Added new tests for `WhyServices.whyEntities()`
+- Pared down the number of tests ran from `WhyServicesTest` for faster runs.
+- Re-ran tests for all versions of native Senzing SDK from 2.0.0 to 2.2.5
+and recorded mock test data.
+
+## [2.2.2] - 2020-11-05
+
+### Changed in 2.2.2
+
+- Modified `com.senzing.api.server.G2EngineRetryHandler` so that it
+recognizes new functions in `com.senzing.g2.engine.G2Engine`.
+- Re-ran tests for all versions of native Senzing SDK from 2.0.0 to 2.3.0
+and recorded mock test data.
+
 ## [2.2.1] - 2020-10-16
 
 ### Changed in 2.2.1

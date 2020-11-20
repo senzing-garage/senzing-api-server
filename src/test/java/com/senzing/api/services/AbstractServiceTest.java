@@ -1648,6 +1648,64 @@ public abstract class AbstractServiceTest {
   }
 
   /**
+   * Creates a JSON-lines temp file with the specified headers and records.
+   *
+   * @param filePrefix The prefix for the temp file name.
+   * @param jsonArray The {@link JsonArray} describing the records.
+   * @return The {@link File} that was created.
+   */
+  protected File prepareJsonArrayFile(String filePrefix, JsonArray jsonArray) {
+    try {
+      File jsonFile = File.createTempFile(filePrefix, ".json");
+
+      // populate the file as one JSON record per line
+      try (FileOutputStream fos = new FileOutputStream(jsonFile);
+           OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+           PrintWriter pw = new PrintWriter(osw))
+      {
+        String jsonText = JsonUtils.toJsonText(jsonArray, true);
+        pw.println(jsonText);
+        pw.flush();
+      }
+
+      return jsonFile;
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Creates a JSON-lines temp file with the specified headers and records.
+   *
+   * @param filePrefix The prefix for the temp file name.
+   * @param jsonArray The {@link JsonArray} describing the records.
+   * @return The {@link File} that was created.
+   */
+  protected File prepareJsonFile(String filePrefix, JsonArray jsonArray) {
+    try {
+      File jsonFile = File.createTempFile(filePrefix, ".json");
+
+      // populate the file as one JSON record per line
+      try (FileOutputStream fos = new FileOutputStream(jsonFile);
+           OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+           PrintWriter pw = new PrintWriter(osw)) {
+        for (JsonObject record: jsonArray.getValuesAs(JsonObject.class)) {
+          String jsonText = JsonUtils.toJsonText(record);
+          pw.println(jsonText);
+          pw.flush();
+        }
+        pw.flush();
+      }
+
+      return jsonFile;
+
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
    * Returns the contents of the JSON init file as a {@link String}.
    *
    * @return The contents of the JSON init file as a {@link String}.
@@ -1683,11 +1741,18 @@ public abstract class AbstractServiceTest {
 
     // determine the intervals for each variant
     List<Integer> intervals = new ArrayList<>(variants.length);
+    // iterate over the variants
     for (int index = 0; index < variants.length; index++) {
+      // default the interval count to one (1)
       int intervalCount = 1;
+
+      // loop over the remaining variants after the current
       for (int index2 = index+1; index2 < variants.length; index2++) {
+        // multiply the interval count by the remaining variant sizes
         intervalCount *= variants[index2].size();
       }
+
+      // add the interval count
       intervals.add(intervalCount);
     }
 

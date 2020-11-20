@@ -6,10 +6,10 @@ import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
 /**
- * A response object that contains the {@link SzWhyEntityResult} describing
- * why an entity resolved.
+ * A response object that contains the {@link SzWhyEntitiesResult} describing
+ * why two entities related or did not resolve.
  */
-public class SzWhyEntityResponse extends SzResponseWithRawData {
+public class SzWhyEntitiesResponse extends SzResponseWithRawData {
   /**
    * The {@link Data} describing the result data.
    */
@@ -18,7 +18,7 @@ public class SzWhyEntityResponse extends SzResponseWithRawData {
   /**
    * Package-private default constructor.
    */
-  SzWhyEntityResponse() {
+  SzWhyEntitiesResponse() {
     // do nothing
   }
 
@@ -31,10 +31,10 @@ public class SzWhyEntityResponse extends SzResponseWithRawData {
    * @param selfLink The string URL link to generate this response.
    * @param timers The {@link Timers} object for the timings that were taken.
    */
-  public SzWhyEntityResponse(SzHttpMethod httpMethod,
-                             int          httpStatusCode,
-                             String       selfLink,
-                             Timers       timers)
+  public SzWhyEntitiesResponse(SzHttpMethod httpMethod,
+                               int          httpStatusCode,
+                               String       selfLink,
+                               Timers       timers)
   {
     super(httpMethod, httpStatusCode, selfLink, timers);
   }
@@ -48,10 +48,10 @@ public class SzWhyEntityResponse extends SzResponseWithRawData {
    * @param uriInfo The {@link UriInfo} from the request.
    * @param timers The {@link Timers} object for the timings that were taken.
    */
-  public SzWhyEntityResponse(SzHttpMethod httpMethod,
-                             int          httpStatusCode,
-                             UriInfo      uriInfo,
-                             Timers       timers)
+  public SzWhyEntitiesResponse(SzHttpMethod httpMethod,
+                               int          httpStatusCode,
+                               UriInfo      uriInfo,
+                               Timers       timers)
   {
     super(httpMethod, httpStatusCode, uriInfo, timers);
   }
@@ -75,27 +75,19 @@ public class SzWhyEntityResponse extends SzResponseWithRawData {
   }
 
   /**
-   * Sets the {@link Collection} of {@link SzWhyEntityResult} describing why
-   * the records in the entity resolved.
-   */
-  public void setWhyResults(Collection<SzWhyEntityResult> results) {
-    this.data.setWhyResults(results);
-  }
-
-  /**
-   * Adds an {@link SzWhyEntityResult} to add to the list of results describing
-   * why the records in the entity resolved.
+   * Sets the {@link SzWhyEntitiesResult} describing why the entities did not
+   * resolve or why they related.
    *
-   * @param result The {@link SzWhyEntityResult} to add to the list of results
-   *               describing why the records in the entity resolved.
+   * @param result The {@link SzWhyEntitiesResult} the result describing why
+   *               the entities did not resolve or why they related.
    */
-  public void addWhyResult(SzWhyEntityResult result) {
-    this.data.whyResults.add(result);
+  public void setWhyResult(SzWhyEntitiesResult result) {
+    this.data.setWhyResult(result);
   }
 
   /**
    * Adds an entity to the list of entities associated with the {@link
-   * SzWhyEntityResult}.
+   * SzWhyEntitiesResult}.
    *
    * @param entity The {@link SzEntityData} describing the entity to add.
    */
@@ -116,9 +108,10 @@ public class SzWhyEntityResponse extends SzResponseWithRawData {
    */
   public static class Data {
     /**
-     * The {@link List} of {@link SzWhyEntityResult} instances for the entity.
+     * The {@link List} of {@link SzWhyEntitiesResult} instances for the
+     * entities.
      */
-    private List<SzWhyEntityResult> whyResults;
+    private SzWhyEntitiesResult whyResult;
 
     /**
      * The {@link List} of {@link SzEntityData} instances decribing the
@@ -130,32 +123,30 @@ public class SzWhyEntityResponse extends SzResponseWithRawData {
      * Private default constructor.
      */
     private Data() {
-      this.whyResults = new LinkedList<>();
+      this.whyResult  = null;
       this.entities   = new LinkedList<>();
     }
 
     /**
-     * Gets the {@link List} of {@link SzWhyEntityResult} instances describing
-     * why the records in the entity resolved.
+     * Gets the {@link SzWhyEntitiesResult} describing why the entities did not
+     * resolve or why they related.
      *
-     * @return The {@link List} of {@link SzWhyEntityResult} instances
-     *         describing why the records in the entity resolved.
+     * @return The {@link SzWhyEntitiesResult} describing why the entities did
+     *         not resolve or why they related.
      */
-    public List<SzWhyEntityResult> getWhyResults() {
-      return Collections.unmodifiableList(this.whyResults);
+    public SzWhyEntitiesResult getWhyResult() {
+      return this.whyResult;
     }
 
     /**
-     * Sets the {@link List} of {@link SzWhyEntityResult} instances describing
-     * why the records in the entity resolved.
+     * Sets the {@link SzWhyEntitiesResult} describing why the entities did not
+     * resolve or why they related.
      *
-     * @param whyResults The {@link Collection} of {@link SzWhyEntityResult}
-     *                   instances describing why the records in the entity
-     *                   resolved.
+     * @param whyResult The {@link SzWhyEntitiesResult} describing why the
+     *                  entities did not resolve or why they related.
      */
-    private void setWhyResults(Collection<SzWhyEntityResult> whyResults) {
-      this.whyResults.clear();
-      this.whyResults.addAll(whyResults);
+    private void setWhyResult(SzWhyEntitiesResult whyResult) {
+      this.whyResult = whyResult;
     }
 
     /**

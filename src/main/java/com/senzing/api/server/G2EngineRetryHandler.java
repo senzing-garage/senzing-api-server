@@ -73,6 +73,10 @@ class G2EngineRetryHandler implements InvocationHandler {
                         int.class, StringBuffer.class, StringBuffer.class);
       addMethodIfExists(unsupportedSet,"processWithInfo",
                         String.class, int.class, StringBuffer.class);
+      addMethodIfExists(unsupportedSet,
+                        "addRecordWithInfoWithReturnedRecordID",
+                        String.class, String.class, String.class, int.class,
+                        StringBuffer.class, StringBuffer.class);
 
       directSet.add(cls.getMethod("primeEngine"));
       directSet.add(cls.getMethod("purgeRepository"));
