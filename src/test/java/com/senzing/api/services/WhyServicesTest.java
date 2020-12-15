@@ -2406,12 +2406,25 @@ public class WhyServicesTest extends AbstractServiceTest {
     }
 
     for (SzDisclosedRelation relation : matchInfo.getDisclosedRelations()) {
-      expectedTokens.add("+" + relation.getDomain());
-      for (String role: relation.getRoles1()) {
-        expectedTokens.add(role);
-      }
-      for (String role: relation.getRoles2()) {
-        expectedTokens.add(role);
+      String relToken = "+" + relation.getDomain();
+      expectedTokens.add(relToken);
+      // if the WHY_KEY is constructed correctly for a REL_ANCHOR/REL_POINTER
+      // and there are relationship roles then the why-key token for the
+      // relationship will be followed by an open parentheses
+      relToken = relToken + "(";
+
+      // check if we have a REL_ANCHOR/REL_POINTER or REL_LINK relationship
+      if ((whyKey.indexOf(relToken) >= 0)
+          || relation.getDirection() != SzRelationDirection.BIDIRECTIONAL)
+      {
+        // NOTE: all REL_LINK relationships are bidirectional so if not
+        // bidirectional then we are dealing with a REL_ANCHOR/REL_POINTER
+        for (String role : relation.getRoles1()) {
+          expectedTokens.add(role);
+        }
+        for (String role : relation.getRoles2()) {
+          expectedTokens.add(role);
+        }
       }
     }
 
