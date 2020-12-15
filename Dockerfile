@@ -52,7 +52,7 @@ ENV REFRESHED_AT=2020-04-24
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
-      Version="2.2.1"
+      Version="2.3.1"
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
 

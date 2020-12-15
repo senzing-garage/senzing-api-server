@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1] - 2020-12-15
+
+### Changed in 2.3.1
+
+- Updated `WhyServicesTest` to properly validate `whyEntitiesV2()` responses for
+  Senzing API version 2.3.0
+- Added recorded test data for Senzing API version 2.2.6
+- Added recorded test data for Senzing API version 2.3.0
+- Updated Jetty to version 9.4.35.v20201120 for security patch
+
 ## [2.3.0] - 2020-11-18
 
 ### Changed in 2.3.0
