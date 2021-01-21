@@ -1697,8 +1697,11 @@ public class SzApiServer implements SzApiProvider {
     context.setContextPath("/");
 
     if (this.allowedOrigins != null) {
+      context.addFilter(DiagnoseRequestFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
       FilterHolder filterHolder = context.addFilter(CrossOriginFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
-      filterHolder.setInitParameter("allowedOrigins", this.allowedOrigins);
+      filterHolder.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, this.allowedOrigins);
+      filterHolder.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,POST,PUT,DELETE,PATCH,HEAD,OPTIONS");
+      //filterHolder.setInitParameter(CrossOriginFilter.PREFLIGHT_MAX_AGE_PARAM, "10"); // for testing to see OPTIONS requests
     }
 
     // find how this class was loaded so we can find the path to the static content
