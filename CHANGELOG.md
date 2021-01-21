@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.2] - 2021-01-21
+
+### Changed in 2.3.2
+
+- Added JAXB and Javassist dependencies to fix ClassNotFoundException during
+  OPTIONS requests (especially for CORS support with `-allowedOrigins` option)
+- Added additional allowed HTTP methods for CORS support (`PUT`, `DELETE`,
+  `PATCH` and `OPTIONS` in addition to the already supported `GET`, `POST`,
+  and `HEAD`)
+- Added DiagnoseRequestFilter to log the request line to `stderr` if an 
+  exception is caught in processing the request
+- Updated recorded test data for Senzing API versions 2.0.0 through version 2.3.0
+
 ## [2.3.1] - 2020-12-15
 
 ### Changed in 2.3.1
