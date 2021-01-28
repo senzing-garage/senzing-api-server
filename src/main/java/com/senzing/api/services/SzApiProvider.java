@@ -216,4 +216,23 @@ public interface SzApiProvider {
    *         <tt>false</tt>.
    */
   boolean isAdminEnabled();
+
+  /**
+   * Gets the {@link SzMessageSink} for sending record messages for loading.
+   * This returns <tt>null</tt> if an loading queue is not configured.
+   *
+   * @return The {@link SzMessageSink} for sending record messages for loading,
+   *         or <tt>null</tt> if none is configured.
+   */
+  SzMessageSink getLoadSink();
+
+  /**
+   * Gets the {@link SzMessageSink} for sending info messages when records are
+   * loaded, deleted or re-evaluated.  This returns <tt>null</tt> if an info
+   * queue is not configured.
+   *
+   * @return The {@link SzMessageSink} for sending the info messages, or
+   *         <tt>null</tt> if none is configured.
+   */
+  SzMessageSink getInfoSink();
 }

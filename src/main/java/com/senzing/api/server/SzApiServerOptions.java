@@ -31,6 +31,8 @@ public class SzApiServerOptions {
   private Long        configId          = null;
   private Long        autoRefreshPeriod = null;
   private JsonObject  jsonInit          = null;
+  private String      asyncLoadQueueUrl = null;
+  private String      asyncInfoQueueUrl = null;
 
   /**
    * Constructs with the JSON initialization parameters as a {@link
@@ -414,6 +416,59 @@ public class SzApiServerOptions {
   }
 
   /**
+   * Gets the URL for connecting to the message queue for loading records
+   * asynchronously.  This returns <tt>null</tt> if no such message queue
+   * is configured.
+   *
+   * @return The URL for connecting to message queue to post records for
+   *         asynchronous loading.
+   */
+  public String getAsyncLoadQueueUrl() {
+    return this.asyncLoadQueueUrl;
+  }
+
+  /**
+   * Sets the URL for connecting to the message queue for loading records
+   * asynchronously.  Set this to <tt>null</tt> if asynchronous loading
+   * via message queues should not be enabled.
+   *
+   * @param loadQueueUrl The URL for connecting to message queue to post
+   *                     records for asynchronous loading, or <tt>null</tt>
+   *                     if asynchronous loading to message queues should not
+   *                     be enabled.
+   */
+  public void setAsyncLoadQueueUrl(String loadQueueUrl) {
+    this.asyncLoadQueueUrl = loadQueueUrl;
+  }
+
+  /**
+   * Gets the URL for connecting to the message queue for asynchronously posting
+   * "info" messages when records are loaded deleted or re-evaluated.  This
+   * returns <tt>null</tt> if no such message queue is configured.
+   *
+   * @return The URL for connecting to message queue to post info messages
+   *         when records are loaded, deleted or re-evaluated.
+   */
+  public String getAsyncInfoQueueUrl() {
+    return this.asyncInfoQueueUrl;
+  }
+
+  /**
+   * Sets the URL for connecting to the message queue for asynchronously posting
+   * "info" messages when records are loaded deleted or re-evaluated.  Set this
+   * to <tt>null</tt> if asynchronous posting of "info" messages via a message
+   * queue should not be enabled.
+   *
+   * @param infoQueueUrl The URL for connecting to message queue to post info
+   *                     messages when records are loaded, deleted or
+   *                     re-evaluated, or <tt>null</tt> if such posting of
+   *                     "info" messages should not be enabled.
+   */
+  public void setAsyncInfoQueueUrl(String infoQueueUrl) {
+    this.asyncInfoQueueUrl = infoQueueUrl;
+  }
+
+  /**
    * Creates a {@link Map} of {@link SzApiServerOption} keys to {@link Object} values
    * for initializing an {@link SzApiServer} instance.
    *
@@ -436,6 +491,8 @@ public class SzApiServerOptions {
     map.put(AUTO_REFRESH_PERIOD,  this.getAutoRefreshPeriod());
     map.put(STATS_INTERVAL,       this.getStatsInterval());
     map.put(SKIP_STARTUP_PERF,    this.isSkippingStartupPerformance());
+    map.put(ASYNC_LOAD_QUEUE_URL, this.getAsyncLoadQueueUrl());
+    map.put(ASYNC_INFO_QUEUE_URL, this.getAsyncInfoQueueUrl());
     return map;
   }
 }

@@ -15,6 +15,9 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.senzing.api.BuildInfo;
+import com.senzing.api.server.mq.SzMessagingEndpoint;
+import com.senzing.api.server.mq.SzMessagingEndpointFactory;
+import com.senzing.api.services.SzMessageSink;
 import com.senzing.nativeapi.EngineStatsLoggingHandler;
 import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.api.services.SzApiProvider;
@@ -35,6 +38,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.rewrite.handler.RewriteHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
 
 import javax.json.*;
 import javax.servlet.DispatcherType;
@@ -45,6 +49,7 @@ import static com.senzing.util.WorkerThreadPool.Task;
 import static com.senzing.cmdline.CommandLineUtilities.*;
 import static com.senzing.io.IOUtilities.*;
 import static com.senzing.util.LoggingUtilities.*;
+import static com.senzing.api.server.SzApiServerOption.*;
 
 /**
  * Implements the Senzing REST API specification in Java in an HTTP server.
@@ -220,6 +225,16 @@ public class SzApiServer implements SzApiProvider {
    * The {@link G2Diagnostic} diagnostics API.
    */
   private G2Diagnostic diagnosticApi;
+
+  /**
+   * The {@link SzMessagingEndpoint} to use for asynchronous info messages.
+   */
+  private SzMessagingEndpoint infoEndpoint;
+
+  /**
+   * The {@link SzMessagingEndpoint} to use for asynchronous load messages.
+   */
+  private SzMessagingEndpoint loadEndpoint;
 
   /**
    * The {@link G2EngineRetryHandler} backing the proxied
@@ -548,6 +563,31 @@ public class SzApiServer implements SzApiProvider {
   }
 
   /**
+   * Gets the {@link SzMessageSink} for sending record messages for loading.
+   * This returns <tt>null</tt> if an loading queue is not configured.
+   *
+   * @return The {@link SzMessageSink} for sending record messages for loading,
+   *         or <tt>null</tt> if none is configured.
+   */
+  public SzMessageSink getLoadSink() {
+    return (this.loadEndpoint == null) ? null
+        : this.loadEndpoint.asMessageSink();
+  }
+
+  /**
+   * Gets the {@link SzMessageSink} for sending info messages when records are
+   * loaded, deleted or re-evaluated.  This returns <tt>null</tt> if an info
+   * queue is not configured.
+   *
+   * @return The {@link SzMessageSink} for sending the info messages, or
+   *         <tt>null</tt> if none is configured.
+   */
+  public SzMessageSink getInfoSink() {
+    return (this.infoEndpoint == null) ? null
+        : this.infoEndpoint.asMessageSink();
+  }
+
+  /**
    * Evaluates the configuration and populates the {@link Set} of
    * data sources and maps mapping f-type code to attribute class and
    * attribute code to attribute class.
@@ -824,6 +864,11 @@ public class SzApiServer implements SzApiProvider {
               }
               return threadCount;
             }
+
+            case ASYNC_INFO_QUEUE_URL:
+            case ASYNC_LOAD_QUEUE_URL:
+              String url = params.get(0);
+              return url;
 
             case INI_FILE:
               File iniFile = new File(params.get(0));
@@ -1134,6 +1179,26 @@ public class SzApiServer implements SzApiProvider {
   }
 
   /**
+   *
+   * @param context
+   * @param socketClasses
+   */
+  private static void addWebSocketHandler(ServletContextHandler context,
+                                          Class...              socketClasses)
+  {
+    WebSocketServerContainerInitializer.configure(
+        context,
+        ((servletContext, wsContainer) -> {
+          wsContainer.setDefaultMaxTextMessageBufferSize(65535);
+          wsContainer.setDefaultMaxBinaryMessageBufferSize(65535);
+
+          for (Class socketClass: socketClasses) {
+            wsContainer.addEndpoint(socketClass);
+          }
+        }));
+  }
+
+  /**
    * @param context
    * @param path
    * @param viaHost
@@ -1192,11 +1257,11 @@ public class SzApiServer implements SzApiProvider {
       System.exit(1);
     }
 
-    if (options.containsKey(SzApiServerOption.HELP)) {
+    if (options.containsKey(HELP)) {
       System.out.println(SzApiServer.getUsageString());
       System.exit(0);
     }
-    if (options.containsKey(SzApiServerOption.VERSION)) {
+    if (options.containsKey(VERSION)) {
       System.out.println(SzApiServer.getVersionString());
       System.exit(0);
     }
@@ -1274,11 +1339,11 @@ public class SzApiServer implements SzApiProvider {
    * @return
    */
   private static boolean initialize(Map<SzApiServerOption, ?> options) {
-    if (options.containsKey(SzApiServerOption.HELP)) {
+    if (options.containsKey(HELP)) {
       System.out.println(SzApiServer.getUsageString());
       return false;
     }
-    if (options.containsKey(SzApiServerOption.VERSION)) {
+    if (options.containsKey(VERSION)) {
       System.out.println(SzApiServer.getVersionString());
       return false;
     }
@@ -1443,12 +1508,12 @@ public class SzApiServer implements SzApiProvider {
                                                            Boolean      verbose)
   {
     Map<SzApiServerOption, Object> map = new HashMap<>();
-    if (httpPort != null)     map.put(SzApiServerOption.HTTP_PORT, httpPort);
-    if (bindAddress != null)  map.put(SzApiServerOption.BIND_ADDRESS, bindAddress);
-    if (concurrency != null)  map.put(SzApiServerOption.CONCURRENCY, concurrency);
-    if (moduleName != null)   map.put(SzApiServerOption.MODULE_NAME, moduleName);
-    if (iniFile != null)      map.put(SzApiServerOption.INI_FILE, iniFile);
-    if (verbose != null)      map.put(SzApiServerOption.VERBOSE, verbose);
+    if (httpPort != null)     map.put(HTTP_PORT, httpPort);
+    if (bindAddress != null)  map.put(BIND_ADDRESS, bindAddress);
+    if (concurrency != null)  map.put(CONCURRENCY, concurrency);
+    if (moduleName != null)   map.put(MODULE_NAME, moduleName);
+    if (iniFile != null)      map.put(INI_FILE, iniFile);
+    if (verbose != null)      map.put(VERBOSE, verbose);
     return map;
   }
 
@@ -1468,73 +1533,73 @@ public class SzApiServer implements SzApiProvider {
     this.accessToken = token;
 
     this.httpPort = DEFAULT_PORT;
-    if (options.containsKey(SzApiServerOption.HTTP_PORT)) {
-      this.httpPort = (Integer) options.get(SzApiServerOption.HTTP_PORT);
+    if (options.containsKey(HTTP_PORT)) {
+      this.httpPort = (Integer) options.get(HTTP_PORT);
     }
 
     this.ipAddr = InetAddress.getLoopbackAddress();
-    if (options.containsKey(SzApiServerOption.BIND_ADDRESS)) {
-      this.ipAddr = (InetAddress) options.get(SzApiServerOption.BIND_ADDRESS);
+    if (options.containsKey(BIND_ADDRESS)) {
+      this.ipAddr = (InetAddress) options.get(BIND_ADDRESS);
     }
 
     this.concurrency = DEFAULT_CONCURRENCY;
-    if (options.containsKey(SzApiServerOption.CONCURRENCY)) {
-      this.concurrency = (Integer) options.get(SzApiServerOption.CONCURRENCY);
+    if (options.containsKey(CONCURRENCY)) {
+      this.concurrency = (Integer) options.get(CONCURRENCY);
     }
 
     this.moduleName = DEFAULT_MODULE_NAME;
-    if (options.containsKey(SzApiServerOption.MODULE_NAME)) {
-      this.moduleName = (String) options.get(SzApiServerOption.MODULE_NAME);
+    if (options.containsKey(MODULE_NAME)) {
+      this.moduleName = (String) options.get(MODULE_NAME);
     }
 
     this.verbose = false;
-    if (options.containsKey(SzApiServerOption.VERBOSE)) {
-      this.verbose = (Boolean) options.get(SzApiServerOption.VERBOSE);
+    if (options.containsKey(VERBOSE)) {
+      this.verbose = (Boolean) options.get(VERBOSE);
     }
 
     this.quiet = false;
-    if (options.containsKey(SzApiServerOption.QUIET)) {
-      this.quiet = (Boolean) options.get(SzApiServerOption.QUIET);
+    if (options.containsKey(QUIET)) {
+      this.quiet = (Boolean) options.get(QUIET);
     }
 
     this.readOnly = false;
-    if (options.containsKey(SzApiServerOption.READ_ONLY)) {
-      this.readOnly = (Boolean) options.get(SzApiServerOption.READ_ONLY);
+    if (options.containsKey(READ_ONLY)) {
+      this.readOnly = (Boolean) options.get(READ_ONLY);
     }
 
     this.adminEnabled = false;
-    if (options.containsKey(SzApiServerOption.ENABLE_ADMIN)) {
-      this.adminEnabled = (Boolean) options.get(SzApiServerOption.ENABLE_ADMIN);
+    if (options.containsKey(ENABLE_ADMIN)) {
+      this.adminEnabled = (Boolean) options.get(ENABLE_ADMIN);
     }
 
     this.statsInterval = DEFAULT_STATS_INTERVAL;
-    if (options.containsKey(SzApiServerOption.STATS_INTERVAL)) {
+    if (options.containsKey(STATS_INTERVAL)) {
       this.statsInterval
-          = (Long) options.get(SzApiServerOption.STATS_INTERVAL);
+          = (Long) options.get(STATS_INTERVAL);
     }
 
     this.skipStartupPerf = false;
-    if (options.containsKey(SzApiServerOption.SKIP_STARTUP_PERF)) {
+    if (options.containsKey(SKIP_STARTUP_PERF)) {
       this.skipStartupPerf
-          = (Boolean) options.get(SzApiServerOption.SKIP_STARTUP_PERF);
+          = (Boolean) options.get(SKIP_STARTUP_PERF);
     }
 
     // determine the init JSON
-    this.initJson = (JsonObject) options.get(SzApiServerOption.INIT_FILE);
+    this.initJson = (JsonObject) options.get(INIT_FILE);
     if (this.initJson == null) {
-      this.initJson = (JsonObject) options.get(SzApiServerOption.INIT_ENV_VAR);
+      this.initJson = (JsonObject) options.get(INIT_ENV_VAR);
     }
     if (this.initJson == null) {
-      this.initJson = (JsonObject) options.get(SzApiServerOption.INIT_JSON);
+      this.initJson = (JsonObject) options.get(INIT_JSON);
     }
     if (this.initJson == null) {
-      this.iniFile = (File) options.get(SzApiServerOption.INI_FILE);
+      this.iniFile = (File) options.get(INI_FILE);
       if (this.iniFile != null) {
         this.initJson = JsonUtils.iniToJson(this.iniFile);
       }
     }
 
-    this.configId = (Long) options.get(SzApiServerOption.CONFIG_ID);
+    this.configId = (Long) options.get(CONFIG_ID);
 
     // validate the init JSON
     this.configType = getConfigType(this.moduleName, this.initJson);
@@ -1661,12 +1726,22 @@ public class SzApiServer implements SzApiProvider {
       System.err.println(msg);
     }
 
-    this.autoRefreshPeriod = (Long) options.get(SzApiServerOption.AUTO_REFRESH_PERIOD);
+    // check the messaging options
+    String infoUrl = (String) options.get(ASYNC_INFO_QUEUE_URL);
+    String loadUrl = (String) options.get(ASYNC_LOAD_QUEUE_URL);
+
+    this.infoEndpoint = (infoUrl == null) ? null
+        : SzMessagingEndpointFactory.createEndpoint(infoUrl);
+
+    this.loadEndpoint = (loadUrl == null) ? null
+        : SzMessagingEndpointFactory.createEndpoint(loadUrl);
+
+    this.autoRefreshPeriod = (Long) options.get(AUTO_REFRESH_PERIOD);
     if (this.autoRefreshPeriod != null) {
       this.autoRefreshPeriod *= 1000;
     }
 
-    this.allowedOrigins = (String) options.get(SzApiServerOption.ALLOWED_ORIGINS);
+    this.allowedOrigins = (String) options.get(ALLOWED_ORIGINS);
 
     this.baseUrl = "http://" + ipAddr.getHostAddress() + ":" + httpPort + "/";
 
@@ -1714,8 +1789,8 @@ public class SzApiServer implements SzApiProvider {
     this.jettyServer = new Server(new InetSocketAddress(ipAddr, httpPort));
 
     this.fileMonitor = null;
-    if (options.containsKey(SzApiServerOption.MONITOR_FILE)) {
-      this.fileMonitor = (FileMonitor) options.get(SzApiServerOption.MONITOR_FILE);
+    if (options.containsKey(MONITOR_FILE)) {
+      this.fileMonitor = (FileMonitor) options.get(MONITOR_FILE);
     }
     this.jettyServer.setHandler(rewriteHandler);
     LifeCycleListener lifeCycleListener
@@ -1729,6 +1804,7 @@ public class SzApiServer implements SzApiProvider {
     //                "www.senzing.com", initOrder++);
 
     addJerseyServlet(context, packageName, apiPath, initOrder++);
+    addWebSocketHandler(context);
 
     ServletHolder rootHolder = new ServletHolder("default", DefaultServlet.class);
     rootHolder.setInitParameter("dirAllowed", "false");
@@ -1744,7 +1820,7 @@ public class SzApiServer implements SzApiProvider {
       int actualPort = this.httpPort
           = ((ServerConnector) (this.jettyServer.getConnectors()[0])).getLocalPort();
 
-      if (options.containsKey(SzApiServerOption.MONITOR_FILE)) {
+      if (options.containsKey(MONITOR_FILE)) {
         this.fileMonitor.initialize(actualPort);
         this.fileMonitor.start();
       }

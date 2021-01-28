@@ -29,7 +29,9 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption> {
   AUTO_REFRESH_PERIOD("-autoRefreshPeriod", 1),
   ALLOWED_ORIGINS("-allowedOrigins", 1),
   STATS_INTERVAL("-statsInterval", 1),
-  SKIP_STARTUP_PERF("-skipStartupPerf", 0);
+  SKIP_STARTUP_PERF("-skipStartupPerf", 0),
+  ASYNC_LOAD_QUEUE_URL("-asyncLoadQueue", 1),
+  ASYNC_INFO_QUEUE_URL("-asyncInfoQueue", 1);
 
   private static Map<SzApiServerOption, Set<SzApiServerOption>> CONFLICTING_OPTIONS;
 
@@ -141,6 +143,10 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption> {
           }
         }
       }
+
+      Set<SzApiServerOption> readOnlyConflicts = conflictMap.get(READ_ONLY);
+      readOnlyConflicts.add(ASYNC_LOAD_QUEUE_URL);
+      readOnlyConflicts.add(ASYNC_INFO_QUEUE_URL);
 
       Set<SzApiServerOption> iniAlts = altMap.get(INI_FILE);
       iniAlts.add(INIT_ENV_VAR);
