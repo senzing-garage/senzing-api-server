@@ -1,12 +1,12 @@
 NOTICE: This software depends on open source third-party software in order to be
-built into binary from the source code and to be executed as a binary.  Those
-dependencies are downloaded during the build process and are then included as
-part of the binary products of that build process.  Some licenses for those
-third-party open source dependencies require notification regarding copyrights
-and/or licensing terms.  Those license terms requiring notification as part of
-distribution are listed below with the relevant copyrights and terms.  Some
-dependencies of this software are governed under the following copyrights and
-licenses:
+built into binary form from the source code and in order to be executed as a
+binary.  Those dependencies are downloaded during the build process and are then
+included as part of the binary products of that build process.  Some licenses
+for those third-party open source dependencies require notification regarding
+copyrights and/or licensing terms.  Those license terms requiring notification
+as part of distribution are listed below with the relevant copyrights and terms.
+Some dependencies of this software are governed under the following copyrights
+and licenses:
 
 --------------------------------------------------------------------------------
 Copyright (c) 2007, Eclipse Foundation, Inc. and its licensors.

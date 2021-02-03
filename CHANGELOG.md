@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added DiagnoseRequestFilter to log the request line to `stderr` if an 
   exception is caught in processing the request
 - Updated recorded test data for Senzing API versions 2.0.0 through version 2.3.0
+- Added NOTICES file to account for Eclipse Distribution License v1.0 requirements
 
 ## [2.3.1] - 2020-12-15
 
