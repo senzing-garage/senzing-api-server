@@ -6,14 +6,11 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.senzing.api.services.SzMessage;
 import com.senzing.api.services.SzMessageSink;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import software.amazon.awssdk.services.sqs.SqsClient;
 
 import java.io.UnsupportedEncodingException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -39,7 +36,7 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
   private static final Pattern URL_PATTERN
       = Pattern.compile(
           "amqp://([^:@]+):([^:@]+)@([^:]+):([0-9]+)"
-          + "/([^\\?]+)/([^\\?]+)/([^\\?]+)"
+          + "/([^\\?]*)/([^\\?]+)/([^\\?]+)"
           + "(\\?([^=&]+)=([^=&]+)(&([^=&]+)=([^=&]+))*)?");
 
   /**
@@ -162,9 +159,9 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
       String routingKey   = matcher.group(7);
       String params       = matcher.group(8);
 
-      // format the URL
-      String uri = "amqp://" + user + ":" + password + "@" + host + ":" + port
-          + "/" + virtualHost;
+      // normalize the virtual host
+      virtualHost = virtualHost.trim();
+      virtualHost = (virtualHost.length() == 0) ? "/" : virtualHost;
 
       // parse the query string into a multi-map
       Map<String, List<String>> paramMap = parseQueryString(params);
@@ -186,7 +183,11 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
         ConnectionFactory factory = new ConnectionFactory();
 
         // set the URI
-        factory.setUri(uri);
+        factory.setHost(host);
+        factory.setPort(Integer.parseInt(port));
+        factory.setVirtualHost(virtualHost);
+        factory.setUsername(user);
+        factory.setPassword(password);
 
         // add the other properties if specified
         if (paramMap.size() > 0) {

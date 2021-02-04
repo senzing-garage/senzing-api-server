@@ -130,6 +130,11 @@ public class EntityDataServices {
           info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
         }
 
+        // check for an info sink
+        if (infoSink != null) {
+          infoSink.send(new SzMessage(rawData));
+        }
+
         // if the record ID is generated, we need to return it
         if (inRecordId == null) recordId = info.getRecordId();
 
