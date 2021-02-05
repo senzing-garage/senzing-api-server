@@ -117,7 +117,7 @@ public class SqsEndpoint extends SzAbstractMessagingEndpoint {
    *
    * @throws Exception If a failure occurs.
    */
-  public void close() throws Exception {
+  public void doClose() throws Exception {
     this.sqsClient.close();
   }
 
@@ -136,7 +136,8 @@ public class SqsEndpoint extends SzAbstractMessagingEndpoint {
     /**
      * Handles <tt>"kafka:"</tt> URL's to establish
      */
-    public SzMessagingEndpoint establish(String originalUrl) {
+    @Override
+    public SzMessagingEndpoint establish(String originalUrl, int concurrency) {
       String url = originalUrl;
       if (url == null) return null;
       url = url.trim();

@@ -754,8 +754,7 @@ public class BulkDataServices {
     String recordId   = JsonUtils.getString(record, "RECORD_ID");
     String recordJSON = JsonUtils.toJsonText(record);
 
-    SzMessageSink infoSink  = provider.getInfoSink();
-    G2Engine      engineApi = provider.getEngineApi();
+    G2Engine engineApi = provider.getEngineApi();
     return asyncPool.execute(() -> {
       try {
         // otherwise try to load the record
@@ -763,7 +762,7 @@ public class BulkDataServices {
         return provider.executeInThread(() -> {
           exitingQueue(timers);
           int returnCode = this.addRecord(engineApi,
-                                          infoSink,
+                                          provider,
                                           dataSource,
                                           recordId,
                                           recordJSON,
@@ -798,8 +797,7 @@ public class BulkDataServices {
       SzBulkLoadResult  bulkLoadResult,
       int               maxFailures)
   {
-    SzMessageSink infoSink  = provider.getInfoSink();
-    G2Engine      engineApi = provider.getEngineApi();
+    G2Engine engineApi = provider.getEngineApi();
     // otherwise try to load the record
     enteringQueue(timers);
     provider.executeInThread(() -> {
@@ -818,7 +816,7 @@ public class BulkDataServices {
 
         } else {
           int returnCode = this.addRecord(engineApi,
-                                          infoSink,
+                                          provider,
                                           dataSource,
                                           recordId,
                                           recordJSON,
@@ -850,7 +848,7 @@ public class BulkDataServices {
    * Adds the record either with or without a record ID and tracks the timing.
    */
   private int addRecord(G2Engine      engineApi,
-                        SzMessageSink infoSink,
+                        SzApiProvider provider,
                         String        dataSource,
                         String        recordId,
                         String        recordJSON,
@@ -858,7 +856,8 @@ public class BulkDataServices {
                         Timers        timers)
   {
     int returnCode;
-    if (infoSink != null) {
+    boolean asyncInfo = provider.hasInfoSink();
+    if (asyncInfo) {
       StringBuffer sb = new StringBuffer();
       callingNativeAPI(timers, "engine", "addRecordWithInfo");
       returnCode = engineApi.addRecordWithInfo(
@@ -870,10 +869,16 @@ public class BulkDataServices {
           sb);
       calledNativeAPI(timers, "engine", "addRecordWithInfo");
 
+      SzMessageSink infoSink  = provider.acquireInfoSink();
+      String        rawInfo   = sb.toString();
       try {
-        infoSink.send(new SzMessage(sb.toString()));
+        infoSink.send(new SzMessage(rawInfo));
+
       } catch (Exception e) {
-        System.err.println("FAILED TO SEND INFO ON MESSAGE QUEUE: " + e);
+        logFailedAsyncInfo(e, rawInfo);
+
+      } finally {
+        provider.releaseInfoSink(infoSink);
       }
 
     } else if (recordId != null) {

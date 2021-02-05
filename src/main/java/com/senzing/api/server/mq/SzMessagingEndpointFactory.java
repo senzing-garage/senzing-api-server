@@ -1,10 +1,10 @@
 package com.senzing.api.server.mq;
 
-import com.senzing.api.services.SzMessageSink;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import com.senzing.api.server.SzApiServer;
 
 /**
  * A factory for converting messaging endpoint URLs into instances of
@@ -37,15 +37,19 @@ public class SzMessagingEndpointFactory {
    *
    * @param url The messaging endpoint URL.
    *
+   * @param concurrency The concurrency of the {@link SzApiServer} to use for
+   *                    creating pooled resources.
+   *
    * @return The {@link SzMessagingEndpoint} for the specified URL.
    *
    * @throws IllegalArgumentException If the specified URL has an unrecognized
    *                                  format.
    */
-  public static SzMessagingEndpoint createEndpoint(String url) {
+  public static SzMessagingEndpoint createEndpoint(String url, int concurrency)
+  {
     SzMessagingEndpoint endpoint = null;
     for (SzMessagingEndpoint.Initiator initiator: INITIATORS) {
-      endpoint = initiator.establish(url);
+      endpoint = initiator.establish(url, concurrency);
       if (endpoint != null) return endpoint;
     }
     throw new IllegalArgumentException(

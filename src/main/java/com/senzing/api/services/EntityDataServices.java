@@ -4,6 +4,7 @@ import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
+import software.amazon.awssdk.core.internal.handler.BaseSyncClientHandler;
 
 import javax.json.*;
 import javax.ws.rs.*;
@@ -72,7 +73,7 @@ public class EntityDataServices {
       StringBuffer sb = new StringBuffer();
 
       // get the asynchronous info queue
-      SzMessageSink infoSink = provider.getInfoSink();
+      boolean asyncInfo = provider.hasInfoSink();
 
       enteringQueue(timers);
       String text = provider.executeInThread(() -> {
@@ -82,7 +83,7 @@ public class EntityDataServices {
         G2Engine engineApi = provider.getEngineApi();
 
         int result;
-        if (withInfo || infoSink != null) {
+        if (withInfo || asyncInfo) {
           callingNativeAPI(timers, "engine", "addRecordWithInfo");
           result = engineApi.addRecordWithInfo(
               dataSource,
@@ -120,7 +121,8 @@ public class EntityDataServices {
       String            recordId  = inRecordId;
       SzResolutionInfo  info      = null;
       String            rawData   = null;
-      if (withInfo || infoSink != null) {
+
+      if (withInfo || asyncInfo) {
         rawData = text;
         JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
 
@@ -130,9 +132,19 @@ public class EntityDataServices {
           info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
         }
 
-        // check for an info sink
-        if (infoSink != null) {
-          infoSink.send(new SzMessage(rawData));
+        // check if the info sink is configured
+        if (asyncInfo) {
+          SzMessageSink infoSink = provider.acquireInfoSink();
+          try {
+            // send the info on the async queue
+            infoSink.send(new SzMessage(rawData));
+
+          } catch (Exception e) {
+            logFailedAsyncInfo(e, rawData);
+
+          } finally {
+            provider.releaseInfoSink(infoSink);
+          }
         }
 
         // if the record ID is generated, we need to return it
@@ -211,7 +223,7 @@ public class EntityDataServices {
       }
 
       // get the asynchronous info sink
-      SzMessageSink infoSink = provider.getInfoSink();
+      boolean asyncInfo = provider.hasInfoSink();
 
       enteringQueue(timers);
       String rawInfo = provider.executeInThread(() -> {
@@ -222,7 +234,7 @@ public class EntityDataServices {
 
         int result;
         String rawData = null;
-        if (withInfo || infoSink != null) {
+        if (withInfo || asyncInfo) {
           StringBuffer sb = new StringBuffer();
           callingNativeAPI(timers, "engine", "addRecordWithInfo");
           result = engineApi.addRecordWithInfo(dataSource,
@@ -251,8 +263,18 @@ public class EntityDataServices {
       SzResolutionInfo info = null;
       if (rawInfo != null) {
         // check if the info sink is configured
-        if (infoSink != null) {
-          infoSink.send(new SzMessage(rawInfo));
+        if (asyncInfo) {
+          SzMessageSink infoSink = provider.acquireInfoSink();
+          try {
+            // send the info on the async queue
+            infoSink.send(new SzMessage(rawInfo));
+
+          } catch (Exception e) {
+            logFailedAsyncInfo(e, rawInfo);
+
+          } finally {
+            provider.releaseInfoSink(infoSink);
+          }
         }
 
         // check if the info was requested
@@ -316,7 +338,7 @@ public class EntityDataServices {
       final String normalizedLoadId = normalizeString(loadId);
 
       // get the asynchronous info sink (if configured)
-      SzMessageSink infoSink = provider.getInfoSink();
+      boolean asyncInfo = provider.hasInfoSink();
 
       enteringQueue(timers);
       String rawInfo = provider.executeInThread(() -> {
@@ -327,7 +349,7 @@ public class EntityDataServices {
 
         int returnCode;
         String rawData = null;
-        if (withInfo || infoSink != null) {
+        if (withInfo || asyncInfo) {
           StringBuffer sb = new StringBuffer();
             callingNativeAPI(timers, "engine", "deleteRecordWithInfo");
           returnCode = engineApi.deleteRecordWithInfo(
@@ -357,9 +379,19 @@ public class EntityDataServices {
 
       SzResolutionInfo info = null;
       if (rawInfo != null) {
-        // check if the async info queue is configured
-        if (infoSink != null) {
-          infoSink.send(new SzMessage(rawInfo));
+        // check if the info sink is configured
+        if (asyncInfo) {
+          SzMessageSink infoSink = provider.acquireInfoSink();
+          try {
+            // send the info on the async queue
+            infoSink.send(new SzMessage(rawInfo));
+
+          } catch (Exception e) {
+            logFailedAsyncInfo(e, rawInfo);
+
+          } finally {
+            provider.releaseInfoSink(infoSink);
+          }
         }
 
         // check if the info was explicitly requested
@@ -427,7 +459,7 @@ public class EntityDataServices {
       }
 
       // get the configured info message sink (if any)
-      SzMessageSink infoSink = provider.getInfoSink();
+      boolean asyncInfo = provider.hasInfoSink();
 
       enteringQueue(timers);
       String rawInfo = provider.executeInThread(() -> {
@@ -438,7 +470,7 @@ public class EntityDataServices {
 
         int returnCode;
         String rawData = null;
-        if (withInfo || infoSink != null) {
+        if (withInfo || asyncInfo) {
           StringBuffer sb = new StringBuffer();
           callingNativeAPI(timers, "engine", "reevaluateRecordWithInfo");
           returnCode = engineApi.reevaluateRecordWithInfo(
@@ -460,8 +492,17 @@ public class EntityDataServices {
       SzResolutionInfo info = null;
       if (rawInfo != null) {
         // check if the info sink is configured
-        if (infoSink != null) {
-          infoSink.send(new SzMessage(rawInfo));
+        if (asyncInfo) {
+          SzMessageSink infoSink = provider.acquireInfoSink();
+          try {
+            infoSink.send(new SzMessage(rawInfo));
+
+          } catch (Exception e) {
+            logFailedAsyncInfo(e, rawInfo);
+
+          } finally {
+            provider.releaseInfoSink(infoSink);
+          }
         }
 
         // check if the info was explicitly requested
@@ -1019,7 +1060,7 @@ public class EntityDataServices {
       }
 
       // get the info sink (if configured)
-      SzMessageSink infoSink = provider.getInfoSink();
+      boolean asyncInfo = provider.hasInfoSink();
 
       enteringQueue(timers);
       String rawInfo = provider.executeInThread(() -> {
@@ -1030,7 +1071,7 @@ public class EntityDataServices {
 
         int returnCode;
         String rawData = null;
-        if (withInfo || infoSink != null) {
+        if (withInfo || asyncInfo) {
           StringBuffer sb = new StringBuffer();
           callingNativeAPI(timers, "engine", "reevaluateEntityWithInfo");
           returnCode = engineApi.reevaluateEntityWithInfo(entityId,0, sb);
@@ -1058,9 +1099,19 @@ public class EntityDataServices {
 
       SzResolutionInfo info = null;
       if (rawInfo != null) {
-        // send the info on the async queue
-        if (infoSink != null) {
-          infoSink.send(new SzMessage(rawInfo));
+        // check if the info sink is configured
+        if (asyncInfo) {
+          SzMessageSink infoSink = provider.acquireInfoSink();
+          try {
+            // send the info on the async queue
+            infoSink.send(new SzMessage(rawInfo));
+
+          } catch (Exception e) {
+            logFailedAsyncInfo(e, rawInfo);
+
+          } finally {
+            provider.releaseInfoSink(infoSink);
+          }
         }
 
         // if the info was requested, then we also want to parse and return it

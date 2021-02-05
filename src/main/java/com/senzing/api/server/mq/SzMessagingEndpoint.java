@@ -1,7 +1,7 @@
 package com.senzing.api.server.mq;
 
-import com.senzing.api.services.SzMessage;
 import com.senzing.api.services.SzMessageSink;
+import com.senzing.api.server.SzApiServer;
 
 /**
  * Represents an established connection to a messaging endpoint.
@@ -19,22 +19,39 @@ public interface SzMessagingEndpoint extends SzMessageSink, AutoCloseable {
      *
      * @param url The URL to use for establishing the endpoint conenction.
      *
+     * @param concurrency The concurrency of the {@link SzApiServer} to use for
+     *                    creating pooled resources.
+     *
      * @return The {@link SzMessagingEndpoint} created for the specified URL,
      *         or <tt>null</tt> if the format of the specified URL is not
      *         handled by this instance.
      */
-    SzMessagingEndpoint establish(String url);
+    SzMessagingEndpoint establish(String url, int concurrency);
   }
 
   /**
-   * Returns an {@link SzMessageSink} interface to this endpoint that lacks
-   * access to the other functionality of the endpoint (e.g.: {@link #close()}).
+   * Acquires an {@link SzMessageSink} interface to this endpoint to be used
+   * on the current thread.
    *
-   * @return An {@link SzMessageSink} interace to this instance.
+   * @return The acquired {@link SzMessageSink} to this instance.
+   *
+   * @throws IllegalStateException If an {@link SzMessageSink} was already
+   *                               acquired on this thread, but not released.
    */
-  default SzMessageSink asMessageSink() {
-    return (SzMessagingEndpoint.this::send);
-  }
+  SzMessageSink acquireMessageSink() throws IllegalStateException;
+
+  /**
+   * Releases the {@link SzMessageSink} that was obtained on this thread.
+   *
+   * @param sink The {@link SzMessageSink} that was previously acquired on this
+   *             thread that should be released.
+   *
+   * @throws IllegalStateException If an {@link SzMessageSink} was not
+   *                               previously acquired on this thread or if the
+   *                               previously acquired {@link SzMessageSink}
+   *                               was a different reference.
+   */
+  void releaseMessageSink(SzMessageSink sink) throws IllegalStateException;
 
   /**
    * Closes the endpoint.
@@ -42,4 +59,9 @@ public interface SzMessagingEndpoint extends SzMessageSink, AutoCloseable {
    * @throws Exception If a failure occurs.
    */
   void close() throws Exception;
+
+  /**
+   * Checks if this endpoint has been closed.
+   */
+  boolean isClosed();
 }

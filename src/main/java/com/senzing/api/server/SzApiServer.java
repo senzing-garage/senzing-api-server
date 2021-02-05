@@ -398,6 +398,18 @@ public class SzApiServer implements SzApiProvider {
   private final ReadWriteLock purgeLock = new ReentrantReadWriteLock();
 
   /**
+   * The thread-local reference to the load message sink acquired on the
+   * current thread.
+   */
+  private ThreadLocal<SzMessageSink> acquiredLoadSink = new ThreadLocal<>();
+
+  /**
+   * The thread-local reference to the info message sink acquired on the
+   * current thread.
+   */
+  private ThreadLocal<SzMessageSink> acquiredInfoSink = new ThreadLocal<>();
+
+  /**
    * Returns the base URL for this instance.
    *
    * @return The base URL for this instance.
@@ -562,29 +574,44 @@ public class SzApiServer implements SzApiProvider {
     return this.workerThreadPool.size();
   }
 
-  /**
-   * Gets the {@link SzMessageSink} for sending record messages for loading.
-   * This returns <tt>null</tt> if an loading queue is not configured.
-   *
-   * @return The {@link SzMessageSink} for sending record messages for loading,
-   *         or <tt>null</tt> if none is configured.
-   */
-  public SzMessageSink getLoadSink() {
-    return (this.loadEndpoint == null) ? null
-        : this.loadEndpoint.asMessageSink();
+  @Override
+  public boolean hasLoadSink() {
+    return (this.loadEndpoint != null);
   }
 
-  /**
-   * Gets the {@link SzMessageSink} for sending info messages when records are
-   * loaded, deleted or re-evaluated.  This returns <tt>null</tt> if an info
-   * queue is not configured.
-   *
-   * @return The {@link SzMessageSink} for sending the info messages, or
-   *         <tt>null</tt> if none is configured.
-   */
-  public SzMessageSink getInfoSink() {
+  @Override
+  public SzMessageSink acquireLoadSink() {
+    return (this.loadEndpoint == null) ? null
+        : this.loadEndpoint.acquireMessageSink();
+  }
+
+  @Override
+  public void releaseLoadSink(SzMessageSink sink) {
+    if (this.loadEndpoint == null) {
+      throw new IllegalStateException(
+          "No load message endpoint exists for releasing the sink");
+    }
+    this.loadEndpoint.releaseMessageSink(sink);
+  }
+
+  @Override
+  public boolean hasInfoSink() {
+    return (this.infoEndpoint != null);
+  }
+
+  @Override
+  public SzMessageSink acquireInfoSink() {
     return (this.infoEndpoint == null) ? null
-        : this.infoEndpoint.asMessageSink();
+        : this.infoEndpoint.acquireMessageSink();
+  }
+
+  @Override
+  public void releaseInfoSink(SzMessageSink sink) {
+    if (this.infoEndpoint == null) {
+      throw new IllegalStateException(
+          "No load message endpoint exists for releasing the sink");
+    }
+    this.infoEndpoint.releaseMessageSink(sink);
   }
 
   /**
@@ -1731,10 +1758,10 @@ public class SzApiServer implements SzApiProvider {
     String loadUrl = (String) options.get(ASYNC_LOAD_QUEUE_URL);
 
     this.infoEndpoint = (infoUrl == null) ? null
-        : SzMessagingEndpointFactory.createEndpoint(infoUrl);
+        : SzMessagingEndpointFactory.createEndpoint(infoUrl, this.concurrency);
 
     this.loadEndpoint = (loadUrl == null) ? null
-        : SzMessagingEndpointFactory.createEndpoint(loadUrl);
+        : SzMessagingEndpointFactory.createEndpoint(loadUrl, this.concurrency);
 
     this.autoRefreshPeriod = (Long) options.get(AUTO_REFRESH_PERIOD);
     if (this.autoRefreshPeriod != null) {

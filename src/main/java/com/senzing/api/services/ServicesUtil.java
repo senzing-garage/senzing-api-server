@@ -4,6 +4,7 @@ import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2ConfigMgr;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.g2.engine.G2Fallible;
+import com.senzing.util.ErrorLogSuppressor;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
 
@@ -18,11 +19,18 @@ import java.util.*;
 
 import static com.senzing.api.model.SzFeatureMode.*;
 import static com.senzing.g2.engine.G2Engine.*;
+import static com.senzing.util.ErrorLogSuppressor.State.*;
 
 /**
  * Utility functions for services.
  */
 public class ServicesUtil {
+  /**
+   * The suppression state for info errors.
+   */
+  private static final ErrorLogSuppressor INFO_ERROR_SUPPRESSOR
+      = new ErrorLogSuppressor();
+
   /**
    * HTTP Response code for server error.
    */
@@ -898,5 +906,38 @@ public class ServicesUtil {
   public static String formatTestInfo(String uriText, String bodyContent)
   {
     return "uriText=[ " + uriText + " ], bodyContent=[ " + bodyContent + " ]";
+  }
+
+  /**
+   * Logs an error related to sending asynchronous info messages.
+   *
+   * @param e The {@link Exception} that occurred.
+   * @param info The info message that failed.
+   */
+  public static final void logFailedAsyncInfo(Exception e, String info) {
+    Date timestamp = new Date();
+    synchronized (INFO_ERROR_SUPPRESSOR) {
+      boolean suppressing = INFO_ERROR_SUPPRESSOR.isSuppressing();
+      ErrorLogSuppressor.Result result = INFO_ERROR_SUPPRESSOR.updateOnError();
+      switch (result.getState()) {
+        case SUPPRESSED:
+          if (!suppressing) {
+            System.err.println(
+                timestamp + ": SUPPRESSING ASYNC INFO MESSAGE ERRORS FOR "
+                    + INFO_ERROR_SUPPRESSOR.getSuppressDuration() + "ms");
+          }
+          break;
+        case REACTIVATED:
+          if (result.getSuppressedCount() > 0) {
+            System.err.println(
+                timestamp + ": RESUMING ASYNC INFO MESSAGE ERRORS ("
+                    + result.getSuppressedCount() + " SUPPRESSED)");
+          }
+        case ACTIVE:
+          System.err.println(timestamp + ": FAILED TO SEND ASYNC INFO MESSAGE: " + info);
+          e.printStackTrace();
+          break;
+      }
+    }
   }
 }

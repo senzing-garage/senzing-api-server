@@ -218,13 +218,36 @@ public interface SzApiProvider {
   boolean isAdminEnabled();
 
   /**
-   * Gets the {@link SzMessageSink} for sending record messages for loading.
+   * Checks if there is a load message sink configured for asynchronous loading.
+   *
+   * @return <tt>true</tt> if a load message sink is configured, and
+   *         <tt>false</tt> if none is configured.
+   */
+  boolean hasLoadSink();
+
+  /**
+   * Acquires the {@link SzMessageSink} for sending record messages for loading.
    * This returns <tt>null</tt> if an loading queue is not configured.
    *
    * @return The {@link SzMessageSink} for sending record messages for loading,
    *         or <tt>null</tt> if none is configured.
    */
-  SzMessageSink getLoadSink();
+  SzMessageSink acquireLoadSink();
+
+  /**
+   * Releases the {@link SzMessageSink} for sending record messages for loading.
+   *
+   * @param sink The {@link SzMessageSink} to be released.
+   */
+  void releaseLoadSink(SzMessageSink sink);
+
+  /**
+   * Checks if there is an info message sink configured.
+   *
+   * @return <tt>true</tt> if an info message sink is configured, and
+   *         <tt>false</tt> if none is configured.
+   */
+  boolean hasInfoSink();
 
   /**
    * Gets the {@link SzMessageSink} for sending info messages when records are
@@ -234,5 +257,10 @@ public interface SzApiProvider {
    * @return The {@link SzMessageSink} for sending the info messages, or
    *         <tt>null</tt> if none is configured.
    */
-  SzMessageSink getInfoSink();
+  SzMessageSink acquireInfoSink();
+
+  /**
+   *
+   */
+  void releaseInfoSink(SzMessageSink sink);
 }
