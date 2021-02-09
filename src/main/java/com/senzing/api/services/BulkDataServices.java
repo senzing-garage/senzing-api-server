@@ -869,16 +869,23 @@ public class BulkDataServices {
           sb);
       calledNativeAPI(timers, "engine", "addRecordWithInfo");
 
-      SzMessageSink infoSink  = provider.acquireInfoSink();
-      String        rawInfo   = sb.toString();
-      try {
-        infoSink.send(new SzMessage(rawInfo));
+      // check the return code before trying to send out the info
+      if (returnCode == 0) {
+        String rawInfo = sb.toString();
 
-      } catch (Exception e) {
-        logFailedAsyncInfo(e, rawInfo);
+        // check if we have raw info to send
+        if (rawInfo != null && rawInfo.trim().length() > 0) {
+          SzMessageSink infoSink = provider.acquireInfoSink();
+          try {
+            infoSink.send(new SzMessage(rawInfo));
 
-      } finally {
-        provider.releaseInfoSink(infoSink);
+          } catch (Exception e) {
+            logFailedAsyncInfo(e, rawInfo);
+
+          } finally {
+            provider.releaseInfoSink(infoSink);
+          }
+        }
       }
 
     } else if (recordId != null) {

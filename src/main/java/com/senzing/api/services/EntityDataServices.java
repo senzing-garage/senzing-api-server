@@ -133,7 +133,7 @@ public class EntityDataServices {
         }
 
         // check if the info sink is configured
-        if (asyncInfo) {
+        if (asyncInfo && rawData != null && rawData.trim().length() > 0) {
           SzMessageSink infoSink = provider.acquireInfoSink();
           try {
             // send the info on the async queue
@@ -261,7 +261,7 @@ public class EntityDataServices {
       });
 
       SzResolutionInfo info = null;
-      if (rawInfo != null) {
+      if (rawInfo != null && rawInfo.trim().length() > 0) {
         // check if the info sink is configured
         if (asyncInfo) {
           SzMessageSink infoSink = provider.acquireInfoSink();
@@ -378,7 +378,7 @@ public class EntityDataServices {
       });
 
       SzResolutionInfo info = null;
-      if (rawInfo != null) {
+      if (rawInfo != null && rawInfo.trim().length() > 0) {
         // check if the info sink is configured
         if (asyncInfo) {
           SzMessageSink infoSink = provider.acquireInfoSink();
@@ -490,7 +490,7 @@ public class EntityDataServices {
       });
 
       SzResolutionInfo info = null;
-      if (rawInfo != null) {
+      if (rawInfo != null && rawInfo.trim().length() > 0) {
         // check if the info sink is configured
         if (asyncInfo) {
           SzMessageSink infoSink = provider.acquireInfoSink();
@@ -1098,7 +1098,7 @@ public class EntityDataServices {
       });
 
       SzResolutionInfo info = null;
-      if (rawInfo != null) {
+      if (rawInfo != null && rawInfo.trim().length() > 0) {
         // check if the info sink is configured
         if (asyncInfo) {
           SzMessageSink infoSink = provider.acquireInfoSink();
