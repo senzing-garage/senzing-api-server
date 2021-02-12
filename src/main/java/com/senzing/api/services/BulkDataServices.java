@@ -876,11 +876,12 @@ public class BulkDataServices {
         // check if we have raw info to send
         if (rawInfo != null && rawInfo.trim().length() > 0) {
           SzMessageSink infoSink = provider.acquireInfoSink();
+          SzMessage message = new SzMessage(rawInfo);
           try {
-            infoSink.send(new SzMessage(rawInfo));
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
 
           } catch (Exception e) {
-            logFailedAsyncInfo(e, rawInfo);
+            logFailedAsyncInfo(e, message);
 
           } finally {
             provider.releaseInfoSink(infoSink);

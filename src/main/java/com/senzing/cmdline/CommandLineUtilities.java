@@ -150,8 +150,8 @@ public class CommandLineUtilities {
       setLastLoggedAndThrow(new IllegalArgumentException(msg));
     }
 
+    Set<T> conflicts = option.getConflicts();
     for (T opt : optionKeys) {
-      Set<T> conflicts = option.getConflicts();
       if (conflicts != null && conflicts.contains(opt)) {
         String msg = "Cannot specify both the " + opt.getCommandLineFlag()
             + " and " + option.getCommandLineFlag() + " options.";

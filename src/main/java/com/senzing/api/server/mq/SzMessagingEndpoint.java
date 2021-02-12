@@ -1,7 +1,11 @@
 package com.senzing.api.server.mq;
 
+import com.senzing.api.services.SzMessage;
 import com.senzing.api.services.SzMessageSink;
 import com.senzing.api.server.SzApiServer;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Represents an established connection to a messaging endpoint.
@@ -12,21 +16,32 @@ public interface SzMessagingEndpoint extends SzMessageSink, AutoCloseable {
    */
   interface Initiator {
     /**
-     * Given the specified {@link String} URL this method will create an
-     * instance of {@link SzMessagingEndpoint} if the specified URL is in the
-     * format expected for this builder.  If the specified URL format is not
-     * handled by this instance then <tt>null</tt> is returned.
+     * Given the specified {@link Map} of {@link String} keys to {@lnk Object}
+     * values this method will create an instance of {@link SzMessagingEndpoint}
+     * if the specified URL is in the format expected for this builder.  If the
+     * specified URL format is not handled by this instance then <tt>null</tt>
+     * is returned.
      *
-     * @param url The URL to use for establishing the endpoint conenction.
+     * @param props The {@link Map} of {@link String} keys to {@link Object}
+     *              values to use for establishing the endpoint conenction.
      *
      * @param concurrency The concurrency of the {@link SzApiServer} to use for
      *                    creating pooled resources.
      *
-     * @return The {@link SzMessagingEndpoint} created for the specified URL,
-     *         or <tt>null</tt> if the format of the specified URL is not
+     * @return The {@link SzMessagingEndpoint} created for the specified
+     *         properties, or <tt>null</tt> if the specified properties are not
      *         handled by this instance.
      */
-    SzMessagingEndpoint establish(String url, int concurrency);
+    SzMessagingEndpoint establish(Map<String, ?> props, int concurrency);
+
+    /**
+     * Gets the <b>unmodifiable</b> {@link Set} of property keys recognized by
+     * this inititator.
+     *
+     * @return The <b>unmodifiable</b> {@link Set} of property keys recognized
+     *         by this inititator.
+     */
+    Set<String> getPropertyKeys();
   }
 
   /**

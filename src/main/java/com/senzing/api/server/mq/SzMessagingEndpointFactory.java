@@ -1,8 +1,6 @@
 package com.senzing.api.server.mq;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import com.senzing.api.server.SzApiServer;
 
@@ -33,9 +31,11 @@ public class SzMessagingEndpointFactory {
   }
 
   /**
-   * Creates the appropriate {@link SzMessagingEndpoint} from the specified URL.
+   * Creates the appropriate {@link SzMessagingEndpoint} from the specified
+   * {@link Map} of {@link String} keys to {@link Object} values.
    *
-   * @param url The messaging endpoint URL.
+   * @param props The {@link Map} of properties to use for creating the
+   *              endpoint.
    *
    * @param concurrency The concurrency of the {@link SzApiServer} to use for
    *                    creating pooled resources.
@@ -45,14 +45,16 @@ public class SzMessagingEndpointFactory {
    * @throws IllegalArgumentException If the specified URL has an unrecognized
    *                                  format.
    */
-  public static SzMessagingEndpoint createEndpoint(String url, int concurrency)
+  public static SzMessagingEndpoint createEndpoint(
+      Map<String, ?>  props,
+      int             concurrency)
   {
     SzMessagingEndpoint endpoint = null;
     for (SzMessagingEndpoint.Initiator initiator: INITIATORS) {
-      endpoint = initiator.establish(url, concurrency);
+      endpoint = initiator.establish(props, concurrency);
       if (endpoint != null) return endpoint;
     }
     throw new IllegalArgumentException(
-        "Unrecognized messaging endpoint URL: " + url);
+        "Unrecognized messaging endpoint properties: " + props);
   }
 }

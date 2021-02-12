@@ -135,12 +135,14 @@ public class EntityDataServices {
         // check if the info sink is configured
         if (asyncInfo && rawData != null && rawData.trim().length() > 0) {
           SzMessageSink infoSink = provider.acquireInfoSink();
+          SzMessage message = new SzMessage(rawData);
           try {
             // send the info on the async queue
-            infoSink.send(new SzMessage(rawData));
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
 
           } catch (Exception e) {
-            logFailedAsyncInfo(e, rawData);
+            // failed async logger will not double-log
+            logFailedAsyncInfo(e, message);
 
           } finally {
             provider.releaseInfoSink(infoSink);
@@ -265,12 +267,13 @@ public class EntityDataServices {
         // check if the info sink is configured
         if (asyncInfo) {
           SzMessageSink infoSink = provider.acquireInfoSink();
+          SzMessage message = new SzMessage(rawInfo);
           try {
             // send the info on the async queue
-            infoSink.send(new SzMessage(rawInfo));
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
 
           } catch (Exception e) {
-            logFailedAsyncInfo(e, rawInfo);
+            logFailedAsyncInfo(e, message);
 
           } finally {
             provider.releaseInfoSink(infoSink);
@@ -382,12 +385,13 @@ public class EntityDataServices {
         // check if the info sink is configured
         if (asyncInfo) {
           SzMessageSink infoSink = provider.acquireInfoSink();
+          SzMessage message = new SzMessage(rawInfo);
           try {
             // send the info on the async queue
-            infoSink.send(new SzMessage(rawInfo));
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
 
           } catch (Exception e) {
-            logFailedAsyncInfo(e, rawInfo);
+            logFailedAsyncInfo(e, message);
 
           } finally {
             provider.releaseInfoSink(infoSink);
@@ -494,11 +498,12 @@ public class EntityDataServices {
         // check if the info sink is configured
         if (asyncInfo) {
           SzMessageSink infoSink = provider.acquireInfoSink();
+          SzMessage message = new SzMessage(rawInfo);
           try {
-            infoSink.send(new SzMessage(rawInfo));
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
 
           } catch (Exception e) {
-            logFailedAsyncInfo(e, rawInfo);
+            logFailedAsyncInfo(e, message);
 
           } finally {
             provider.releaseInfoSink(infoSink);
@@ -1102,12 +1107,13 @@ public class EntityDataServices {
         // check if the info sink is configured
         if (asyncInfo) {
           SzMessageSink infoSink = provider.acquireInfoSink();
+          SzMessage message = new SzMessage(rawInfo);
           try {
             // send the info on the async queue
-            infoSink.send(new SzMessage(rawInfo));
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
 
           } catch (Exception e) {
-            logFailedAsyncInfo(e, rawInfo);
+            logFailedAsyncInfo(e, message);
 
           } finally {
             provider.releaseInfoSink(infoSink);

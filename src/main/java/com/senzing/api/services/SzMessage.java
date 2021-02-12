@@ -1,5 +1,7 @@
 package com.senzing.api.services;
 
+import javax.json.Json;
+import javax.json.JsonObjectBuilder;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -124,6 +126,7 @@ public class SzMessage {
    * @return A diagnostic {@link String} describing this message.
    */
   public String toString() {
+    // if there are then format as JSON
     return ("properties=[ " + this.getProperties()
             + " ], body=[ " + this.getBody() + " ]");
   }

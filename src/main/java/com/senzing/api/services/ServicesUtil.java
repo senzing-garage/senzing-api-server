@@ -32,6 +32,13 @@ public class ServicesUtil {
       = new ErrorLogSuppressor();
 
   /**
+   * The hash of the system identity codes of the last info message exception
+   * as well as the the message object that was sent.
+   */
+  private static final ThreadLocal<Long> LAST_INFO_ERROR_HASH
+      = new ThreadLocal<>();
+
+  /**
    * HTTP Response code for server error.
    */
   public static final int SERVER_ERROR = 500;
@@ -909,13 +916,39 @@ public class ServicesUtil {
   }
 
   /**
+   * Generates a 64-bit hash from the system identity hash codes of the two
+   * specified objects.
+   *
+   * @param obj1 The first object whose identity hash code goes to the high-order
+   *             bits.
+   * @param obj2 The second object whose identity hash code goes to the low-order
+   *             bits.
+   *
+   * @return The <tt>long</tt> hash code of the object pair.
+   */
+  public static long identityPairHash(Object obj1, Object obj2) {
+    long high = (long) ((obj1 == null) ? 0 : System.identityHashCode(obj1));
+    long low = (long) ((obj2 == null) ? 0 : System.identityHashCode(obj2));
+    return (high << 32) | low;
+  }
+
+  /**
    * Logs an error related to sending asynchronous info messages.
    *
    * @param e The {@link Exception} that occurred.
    * @param info The info message that failed.
    */
-  public static final void logFailedAsyncInfo(Exception e, String info) {
+  public static final void logFailedAsyncInfo(Exception e, SzMessage message) {
+    // check what was previously logged and avoid double-logging
+    Long previous = LAST_INFO_ERROR_HASH.get();
+    long hash = identityPairHash(e, message);
+    if (previous != null && previous == hash) return;
+    LAST_INFO_ERROR_HASH.set(hash);
+
     Date timestamp = new Date();
+    String info = message.getBody();
+    System.err.println(
+        timestamp + ": FAILED TO SEND ASYNC INFO MESSAGE: " + info);
     synchronized (INFO_ERROR_SUPPRESSOR) {
       boolean suppressing = INFO_ERROR_SUPPRESSOR.isSuppressing();
       ErrorLogSuppressor.Result result = INFO_ERROR_SUPPRESSOR.updateOnError();
@@ -934,7 +967,6 @@ public class ServicesUtil {
                     + result.getSuppressedCount() + " SUPPRESSED)");
           }
         case ACTIVE:
-          System.err.println(timestamp + ": FAILED TO SEND ASYNC INFO MESSAGE: " + info);
           e.printStackTrace();
           break;
       }

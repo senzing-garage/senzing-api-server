@@ -7,6 +7,7 @@ import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -23,16 +24,25 @@ import java.util.regex.Pattern;
  */
 public class SqsEndpoint extends SzAbstractMessagingEndpoint {
   /**
+   * The prefix to use for the initialization properties.
+   */
+  public static final String PROPERTY_PREFIX = "sqs-";
+
+  /**
+   * The property key for the URL.
+   */
+  public static final String URL_PROPERTY_KEY = PROPERTY_PREFIX + "url";
+
+  /**
+   * The <b>unmodifiable</b> {@link Set} of {@link String} property keys for
+   * creating an {@link SqsEndpoint}.
+   */
+  public static final Set<String> PROPERTY_KEYS = Set.of(URL_PROPERTY_KEY);
+
+  /**
    * The {@link Initiator} for the {@link RabbitEndpoint} class.
    */
   public static final Initiator INITIATOR = new SqsInitiator();
-
-  /**
-   * The pattern for Kafka URL's.
-   */
-  private static final Pattern URL_PATTERN
-      = Pattern.compile("sqs://(([^/]+)/([^\\?]+)/(.+))");
-
 
   /**
    * The number of seconds to delay the message (zero).
@@ -65,13 +75,10 @@ public class SqsEndpoint extends SzAbstractMessagingEndpoint {
     this.queueUrl   = queueUrl;
   }
 
-  /**
-   * Provides an implementation for sending on this queue.
-   *
-   * @param message The message to be sent.
-   * @throws Exception Thrown if a failure occurs.
-   */
-  public void send(SzMessage message) throws Exception {
+  @Override
+  public void send(SzMessage message, FailureHandler onFailure)
+      throws Exception
+  {
     // get the message body
     String body = message.getBody();
 
@@ -108,8 +115,20 @@ public class SqsEndpoint extends SzAbstractMessagingEndpoint {
     // build the request
     SendMessageRequest request = builder.build();
 
-    // send the request
-    this.sqsClient.sendMessage(request);
+    // send the request -- handling any exceptions
+    try {
+      this.sqsClient.sendMessage(request);
+
+    } catch (Exception e) {
+      // check if we have a failure handler
+      if (onFailure != null) {
+        // handle the exception
+        onFailure.handle(e, message);
+      }
+
+      // rethrow
+      throw e;
+    }
   }
 
   /**
@@ -134,28 +153,33 @@ public class SqsEndpoint extends SzAbstractMessagingEndpoint {
     }
 
     /**
-     * Handles <tt>"kafka:"</tt> URL's to establish
+     * Handles establishing an SQS endpoint.
      */
     @Override
-    public SzMessagingEndpoint establish(String originalUrl, int concurrency) {
-      String url = originalUrl;
-      if (url == null) return null;
-      url = url.trim();
-      if (url.length() == 0) return null;
-      if (!url.startsWith("sqs:")) return null;
-      Matcher matcher = URL_PATTERN.matcher(url);
-      if (!matcher.matches()) {
-        throw new IllegalArgumentException(
-            "The specified SQS URL does not appear to be properly formed: "
-                + originalUrl);
+    public SzMessagingEndpoint establish(Map<String, ?> props,
+                                         int            concurrency)
+    {
+      if (props == null) return null;
+      int count = 0;
+      for (String key: this.getPropertyKeys()) {
+        if (props.containsKey(key)) count++;
       }
-      String queueUrl = "https://" + matcher.group(1);
+      if (count == 0) return null;
+      String queueUrl = (String) props.get(URL_PROPERTY_KEY);
 
       // create the SQS Client
       SqsClient client = SqsClient.create();
 
       // create the endpoint
       return new SqsEndpoint(client, queueUrl);
+    }
+
+    /**
+     * Implemented to return {@link #PROPERTY_KEYS}.
+     */
+    @Override
+    public Set<String> getPropertyKeys() {
+      return PROPERTY_KEYS;
     }
   }
 

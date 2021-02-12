@@ -9,10 +9,7 @@ import com.senzing.api.services.SzMessageSink;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.nio.channels.Pipe;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.senzing.io.IOUtilities.*;
 
@@ -29,6 +26,63 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
    * The {@link Initiator} for the {@link RabbitEndpoint} class.
    */
   public static final Initiator INITIATOR = new RabbitInitiator();
+
+  /**
+   * The prefix to use for the initialization properties.
+   */
+  public static final String PROPERTY_PREFIX = "rabbitmq-";
+
+  /**
+   * The property key for the RabbitMQ user.
+   */
+  public static final String USER_PROPERTY_KEY = PROPERTY_PREFIX + "user";
+
+  /**
+   * The property key for the RabbitMQ password.
+   */
+  public static final String PASSWORD_PROPERTY_KEY
+      = PROPERTY_PREFIX + "password";
+
+  /**
+   * The property key for the RabbitMQ host.
+   */
+  public static final String HOST_PROPERTY_KEY = PROPERTY_PREFIX + "host";
+
+  /**
+   * The property key for the RabbitMQ port.
+   */
+  public static final String PORT_PROPERTY_KEY = PROPERTY_PREFIX + "port";
+
+  /**
+   * The property key for the RabbitMQ virtual host.
+   */
+  public static final String VIRTUAL_HOST_PROPERTY_KEY
+      = PROPERTY_PREFIX + "virtual-host";
+
+  /**
+   * The property key for the RabbitMQ exchange.
+   */
+  public static final String EXCHANGE_PROPERTY_KEY
+      = PROPERTY_PREFIX + "exchange";
+
+  /**
+   * The property key for the RabbitMQ routing-key.
+   */
+  public static final String ROUTING_KEY_PROPERTY_KEY
+      = PROPERTY_PREFIX + "routing-key";
+
+  /**
+   * The <b>unmodifiable</b> {@link Set} of {@link String} property keys for
+   * creating an {@link RabbitEndpoint} via {@link RabbitInitiator}.
+   */
+  public static final Set<String> PROPERTY_KEYS
+      = Set.of(USER_PROPERTY_KEY,
+               PASSWORD_PROPERTY_KEY,
+               HOST_PROPERTY_KEY,
+               PORT_PROPERTY_KEY,
+               VIRTUAL_HOST_PROPERTY_KEY,
+               EXCHANGE_PROPERTY_KEY,
+               ROUTING_KEY_PROPERTY_KEY);
 
   /**
    * The amount of time to wait for the pool to have an available channel.
@@ -64,7 +118,9 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
      * {@link Channel}.
      */
     @Override
-    public void send(SzMessage message) throws Exception {
+    public void send(SzMessage message, FailureHandler onFailure)
+        throws Exception
+    {
       // get the acquired message sink for this thread
       SzMessageSink acquiredSink = RabbitEndpoint.this.getAcquiredSink();
 
@@ -86,7 +142,7 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
       CONTEXT_SINK.set(this);
       try {
         // send the message
-        RabbitEndpoint.this.send(message);
+        RabbitEndpoint.this.send(message, onFailure);
 
       } finally {
         CONTEXT_SINK.set(null);
@@ -96,19 +152,10 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
 
   /**
    * The thread-local {@link ChannelSink} to use for calling the
-   * {@link #send(SzMessage)} method.
+   * {@link #send(SzMessage,FailureHandler)} method.
    */
   private static final ThreadLocal<ChannelSink> CONTEXT_SINK
       = new ThreadLocal<>();
-
-  /**
-   * The pattern for Kafka URL's.
-   */
-  private static final Pattern URL_PATTERN
-      = Pattern.compile(
-          "amqp://([^:@]+):([^:@]+)@([^:]+):([0-9]+)"
-          + "/([^\\?]*)/([^\\?]+)/([^\\?]+)"
-          + "(\\?([^=&]+)=([^=&]+)(&([^=&]+)=([^=&]+))*)?");
 
   /**
    * The delivery mode to use with RabbitMQ.
@@ -205,7 +252,9 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
   }
 
   @Override
-  public void send(SzMessage message) throws Exception {
+  public void send(SzMessage message, FailureHandler onFailure)
+      throws Exception
+  {
     // get the sink
     boolean acquired = false; // flag to indicate if acquired from the pool
 
@@ -260,6 +309,16 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
       // send the message on the channel
       channel.basicPublish(this.exchange, this.routingKey, basicProps, body);
 
+    } catch (Exception e) {
+      // check if we have a handler for the failure
+      if (onFailure != null) {
+        // handle the failure
+        onFailure.handle(e, message);
+      }
+
+      // rethrow the exception
+      throw e;
+
     } finally {
       if (acquired) {
         this.releaseMessageSink(sink);
@@ -297,50 +356,39 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
     }
 
     /**
-     * Handles <tt>"amqp:"</tt> URL's to establish an endpoint.
-     *
-     * @param url The URL for establishing the endpoint.
+     * Handles establishing a RabbitMQ endpoint.
      */
-    public SzMessagingEndpoint establish(String url, int concurrency) {
-      final String originalUrl = url;
-      if (url == null) return null;
-      url = url.trim();
-      if (url.length() == 0) return null;
-      if (!url.startsWith("amqp:")) return null;
-      Matcher matcher = URL_PATTERN.matcher(url);
-      if (!matcher.matches()) {
-        throw new IllegalArgumentException(
-            "The specified RabbitMQ URL does not appear to be properly formed: "
-                + originalUrl);
+    @Override
+    public SzMessagingEndpoint establish(Map<String, ?> props,
+                                         int            concurrency)
+    {
+      if (props == null) return null;
+      int count = 0;
+      Set<String> propKeys = this.getPropertyKeys();
+      for (String key: propKeys) {
+        if (props.containsKey(key)) count++;
       }
-      Map<String,String> props = new LinkedHashMap<>();
-      String user         = matcher.group(1);
-      String password     = matcher.group(2);
-      String host         = matcher.group(3);
-      String port         = matcher.group(4);
-      String virtualHost  = matcher.group(5);
-      String exchange     = matcher.group(6);
-      String routingKey   = matcher.group(7);
-      String params       = matcher.group(8);
+      if (count == 0) return null;
 
-      // normalize the virtual host
-      virtualHost = virtualHost.trim();
-      virtualHost = (virtualHost.length() == 0) ? "/" : virtualHost;
-
-      // parse the query string into a multi-map
-      Map<String, List<String>> paramMap = parseQueryString(params);
-
-      // iterate over the key-value pairs
-      paramMap.forEach((key, values) -> {
-        if (values.size() > 1) {
-          throw new IllegalArgumentException(
-              "The specified RabbitMQ URL has multiple values for '" + key
-                  + "': " + originalUrl);
+      // check if any are missing
+      if (count != propKeys.size()) {
+        Set<String> missing = new LinkedHashSet<>();
+        for (String key : propKeys) {
+          if (!props.containsKey(key)) missing.add(key);
         }
-        values.forEach(value -> {
-          props.put(key, value);
-        });
-      });
+        throw new IllegalArgumentException(
+            "Missing one or more RabbitMQ connection properties: missing=[ "
+                + missing + " ], provided=[ " + props + " ]");
+      }
+
+      // get the properties
+      String  user        = (String) props.get(USER_PROPERTY_KEY);
+      String  password    = (String) props.get(PASSWORD_PROPERTY_KEY);
+      String  host        = (String) props.get(HOST_PROPERTY_KEY);
+      Integer port        = (Integer) props.get(PORT_PROPERTY_KEY);
+      String  virtualHost = (String) props.get(VIRTUAL_HOST_PROPERTY_KEY);
+      String  exchange    = (String) props.get(EXCHANGE_PROPERTY_KEY);
+      String  routingKey  = (String) props.get(ROUTING_KEY_PROPERTY_KEY);
 
       // create the connection factory
       try {
@@ -348,15 +396,10 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
 
         // set the URI
         factory.setHost(host);
-        factory.setPort(Integer.parseInt(port));
+        factory.setPort(port);
         factory.setVirtualHost(virtualHost);
         factory.setUsername(user);
         factory.setPassword(password);
-
-        // add the other properties if specified
-        if (paramMap.size() > 0) {
-          factory.load(props, "");
-        }
 
         // create the connection
         Connection conn = factory.newConnection();
@@ -388,6 +431,14 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
+    }
+
+    /**
+     * Implemented to return {@link #PROPERTY_KEYS}.
+     */
+    @Override
+    public Set<String> getPropertyKeys() {
+      return PROPERTY_KEYS;
     }
   }
 

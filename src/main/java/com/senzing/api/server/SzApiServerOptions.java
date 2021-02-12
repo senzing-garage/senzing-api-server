@@ -17,22 +17,33 @@ import static com.senzing.api.server.SzApiServerOption.*;
  *
  */
 public class SzApiServerOptions {
-  private int         httpPort          = DEFAULT_PORT;
-  private InetAddress bindAddress       = null;
-  private int         concurrency       = DEFAULT_CONCURRENCY;
-  private String      moduleName        = DEFAULT_MODULE_NAME;
-  private boolean     verbose           = false;
-  private boolean     quiet             = false;
-  private boolean     readOnly          = false;
-  private boolean     adminEnabled      = false;
-  private boolean     skipStartupPerf   = false;
-  private long        statsInterval     = DEFAULT_STATS_INTERVAL;
-  private String      allowedOrigins    = null;
-  private Long        configId          = null;
-  private Long        autoRefreshPeriod = null;
-  private JsonObject  jsonInit          = null;
-  private String      asyncLoadQueueUrl = null;
-  private String      asyncInfoQueueUrl = null;
+  private int         httpPort              = DEFAULT_PORT;
+  private InetAddress bindAddress           = null;
+  private int         concurrency           = DEFAULT_CONCURRENCY;
+  private String      moduleName            = DEFAULT_MODULE_NAME;
+  private boolean     verbose               = false;
+  private boolean     quiet                 = false;
+  private boolean     readOnly              = false;
+  private boolean     adminEnabled          = false;
+  private boolean     skipStartupPerf       = false;
+  private long        statsInterval         = DEFAULT_STATS_INTERVAL;
+  private String      allowedOrigins        = null;
+  private Long        configId              = null;
+  private Long        autoRefreshPeriod     = null;
+  private JsonObject  jsonInit              = null;
+  private String      asyncLoadQueueUrl     = null;
+  private String      asyncInfoQueueUrl     = null;
+  private String      kafkaInfoServers      = null;
+  private String      kafkaInfoGroupId      = null;
+  private String      kafkaInfoTopic        = null;
+  private String      rabbitInfoUser        = null;
+  private String      rabbitInfoPassword    = null;
+  private String      rabbitInfoHost        = null;
+  private Integer     rabbitInfoPort        = null;
+  private String      rabbitInfoVHost       = null;
+  private String      rabbitInfoExchange    = null;
+  private String      rabbitInfoRoutingKey  = null;
+  private String      sqsInfoUrl            = null;
 
   /**
    * Constructs with the JSON initialization parameters as a {@link
@@ -188,6 +199,8 @@ public class SzApiServerOptions {
    *
    * @param verbose <tt>true</tt> if the native Senzing API's should be
    *                initialized in verbose mode, otherwise <tt>false</tt>.
+   *
+   * @return A reference to this instance.
    */
   public SzApiServerOptions setVerbose(boolean verbose) {
     this.verbose = verbose;
@@ -214,6 +227,8 @@ public class SzApiServerOptions {
    * @param readOnly <tt>true</tt> if the API server should forbid write
    *                 operations, and <tt>false</tt> if all operations are
    *                 allowed.
+   *
+   * @return A reference to this instance.
    */
   public SzApiServerOptions setReadOnly(boolean readOnly) {
     this.readOnly = readOnly;
@@ -239,6 +254,8 @@ public class SzApiServerOptions {
    * @param adminEnabled <tt>true</tt> if the API server should allow admin
    *                     operations, and <tt>false</tt> if admin operations
    *                     are forbidden.
+   *
+   * @return A reference to this instance.
    */
   public SzApiServerOptions setAdminEnabled(boolean adminEnabled) {
     this.adminEnabled = adminEnabled;
@@ -266,6 +283,8 @@ public class SzApiServerOptions {
    *
    * @param quiet <tt>true</tt> if the API server should reduce the number of
    *              messages sent to standard output, otherwise <tt>false</tt>
+   *
+   * @return A reference to this instance.
    */
   public SzApiServerOptions setQuiet(boolean quiet) {
     this.quiet = quiet;
@@ -296,6 +315,8 @@ public class SzApiServerOptions {
    *                          use for responses from all HTTP REST API
    *                          endpoints, or <tt>null</tt> if the header
    *                          is to be omitted.
+   *
+   * @return A reference to this instance.
    */
   public SzApiServerOptions setAllowedOrigins(String allowOriginHeader) {
     this.allowedOrigins = allowOriginHeader;
@@ -328,6 +349,8 @@ public class SzApiServerOptions {
    *                 the Senzing native engine API, or <tt>null</tt> if the
    *                 API server should use the current default configuration
    *                 ID from the entity repository.
+   *
+   * @return A reference to this instance.
    */
   public SzApiServerOptions setConfigurationId(Long configId) {
     this.configId = configId;
@@ -352,6 +375,8 @@ public class SzApiServerOptions {
    * SzApiServer#DEFAULT_CONFIG_REFRESH_PERIOD}.
    *
    * @param autoRefreshPeriod The number of seconds to automatically
+   *
+   * @return A reference to this instance.
    */
   public SzApiServerOptions setAutoRefreshPeriod(Long autoRefreshPeriod) {
     this.autoRefreshPeriod = autoRefreshPeriod;
@@ -386,6 +411,8 @@ public class SzApiServerOptions {
    *
    * @param statsInterval The stats interval, or a non-positive number (e.g.:
    *                      zero) to suppress logging stats.
+   *
+   * @return A reference to this instance.
    */
   public SzApiServerOptions setStatsInterval(long statsInterval) {
     this.statsInterval = (statsInterval < 0L) ? 0L : statsInterval;
@@ -409,6 +436,8 @@ public class SzApiServerOptions {
    *
    * @param skipping <tt>true</tt> if the API server should skip the performance
    *                 check performed at startup, and <tt>false</tt> if not.
+   *
+   * @return A reference to this instance.
    */
   public SzApiServerOptions setSkippingStartupPerformance(boolean skipping) {
     this.skipStartupPerf = skipping;
@@ -416,56 +445,270 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Gets the URL for connecting to the message queue for loading records
-   * asynchronously.  This returns <tt>null</tt> if no such message queue
-   * is configured.
+   * Returns the Kafka bootstrap servers to connect to for the "info" queue.
+   * This is part of the info queue configuration to push "info" messages when
+   * records are loaded or deleted or entities are reevaluated.
    *
-   * @return The URL for connecting to message queue to post records for
-   *         asynchronous loading.
+   * @return The Kafka boostrap servers for the "info" queue.
    */
-  public String getAsyncLoadQueueUrl() {
-    return this.asyncLoadQueueUrl;
+  public String getKafkaInfoBootstrapServers() {
+    return this.kafkaInfoServers;
   }
 
   /**
-   * Sets the URL for connecting to the message queue for loading records
-   * asynchronously.  Set this to <tt>null</tt> if asynchronous loading
-   * via message queues should not be enabled.
+   * Sets the Kafka server to connect to for the "info" queue.  This is part
+   * of the info queue configuration to push "info" messages when records are
+   * loaded or deleted or entities are reevaluated.
    *
-   * @param loadQueueUrl The URL for connecting to message queue to post
-   *                     records for asynchronous loading, or <tt>null</tt>
-   *                     if asynchronous loading to message queues should not
-   *                     be enabled.
+   * @param servers The Kafka bootstrap servers for the "info" queue.
+   *
+   * @return A reference to this instance.
    */
-  public void setAsyncLoadQueueUrl(String loadQueueUrl) {
-    this.asyncLoadQueueUrl = loadQueueUrl;
+  public SzApiServerOptions setKafkaInfoBootstrapServers(String servers)
+  {
+    this.kafkaInfoServers = servers;
+    return this;
   }
 
   /**
-   * Gets the URL for connecting to the message queue for asynchronously posting
-   * "info" messages when records are loaded deleted or re-evaluated.  This
-   * returns <tt>null</tt> if no such message queue is configured.
+   * Returns the Kafka group ID to for the "info" queue.  This is part of the
+   * info queue configuration to push "info" messages when records are loaded
+   * or deleted or entities are reevaluated.
    *
-   * @return The URL for connecting to message queue to post info messages
-   *         when records are loaded, deleted or re-evaluated.
+   * @return The Kafka group ID for the "info" queue.
    */
-  public String getAsyncInfoQueueUrl() {
-    return this.asyncInfoQueueUrl;
+  public String getKafkaInfoGroupId() {
+    return this.kafkaInfoGroupId;
   }
 
   /**
-   * Sets the URL for connecting to the message queue for asynchronously posting
-   * "info" messages when records are loaded deleted or re-evaluated.  Set this
-   * to <tt>null</tt> if asynchronous posting of "info" messages via a message
-   * queue should not be enabled.
+   * Sets the Kafka group ID to for the "info" queue.  This is part of the info
+   * queue configuration to push "info" messages when records are loaded or
+   * deleted or entities are reevaluated.
    *
-   * @param infoQueueUrl The URL for connecting to message queue to post info
-   *                     messages when records are loaded, deleted or
-   *                     re-evaluated, or <tt>null</tt> if such posting of
-   *                     "info" messages should not be enabled.
+   * @param groupId The Kafka group ID for the "info" queue.
+   *
+   * @return A reference to this instance.
    */
-  public void setAsyncInfoQueueUrl(String infoQueueUrl) {
-    this.asyncInfoQueueUrl = infoQueueUrl;
+  public SzApiServerOptions setKafkaInfoGroupId(String groupId) {
+    this.kafkaInfoGroupId = groupId;
+    return this;
+  }
+
+  /**
+   * Returns the Kafka topic for the "info" queue.  This is part of the info
+   * queue configuration to push "info" messages when records are loaded or
+   * deleted or entities are reevaluated.
+   *
+   * @return The Kafka topic for the "info" queue.
+   */
+  public String getKafkaInfoTopic() {
+    return this.kafkaInfoTopic;
+  }
+
+  /**
+   * Sets the Kafka topic for the "info" queue.  This is part of the info
+   * queue configuration to push "info" messages when records are loaded or
+   * deleted or entities are reevaluated.
+   *
+   * @param topic The Kafka topic for the "info" queue.
+   *
+   * @return A reference to this instance.
+   */
+  public SzApiServerOptions setKafkaInfoTopic(String topic) {
+    this.kafkaInfoTopic = topic;
+    return this;
+  }
+
+  /**
+   * Returns the RabbitMQ user for the "info" queue.  This is part of the info
+   * queue configuration to push "info" messages when records are loaded or
+   * deleted or entities are reevaluated.
+   *
+   * @return The RabbitMQ user for the "info" queue.
+   */
+  public String getRabbitInfoUser() {
+    return this.rabbitInfoUser;
+  }
+
+  /**
+   * Sets the RabbitMQ user for the "info" queue.  This is part of the info
+   * queue configuration to push "info" messages when records are loaded or
+   * deleted or entities are reevaluated.
+   *
+   * @param user The RabbitMQ user for the "info" queue.
+   *
+   * @return A reference to this instance.
+   */
+  public SzApiServerOptions setRabbitInfoUser(String user) {
+    this.rabbitInfoUser = user;
+    return this;
+  }
+
+  /**
+   * Returns the RabbitMQ password for the "info" queue.  This is part of the
+   * info queue configuration to push "info" messages when records are loaded
+   * or deleted or entities are reevaluated.
+   *
+   * @return The RabbitMQ password for the "info" queue.
+   */
+  public String getRabbitInfoPassword() {
+    return this.rabbitInfoPassword;
+  }
+
+  /**
+   * Sets the RabbitMQ password for the "info" queue.  This is part of the info
+   * queue configuration to push "info" messages when records are loaded or
+   * deleted or entities are reevaluated.
+   *
+   * @param password The RabbitMQ password for the "info" queue.
+   *
+   * @return A reference to this instance.
+   */
+  public SzApiServerOptions setRabbitInfoPassword(String password) {
+    this.rabbitInfoPassword = password;
+    return this;
+  }
+
+  /**
+   * Returns the RabbitMQ host for the "info" queue.  This is part of the
+   * info queue configuration to push "info" messages when records are loaded
+   * or deleted or entities are reevaluated.
+   *
+   * @return The RabbitMQ host for the "info" queue.
+   */
+  public String getRabbitInfoHost() {
+    return this.rabbitInfoHost;
+  }
+
+  /**
+   * Sets the RabbitMQ host for the "info" queue.  This is part of the info
+   * queue configuration to push "info" messages when records are loaded or
+   * deleted or entities are reevaluated.
+   *
+   * @param host The RabbitMQ host for the "info" queue.
+   *
+   * @return A reference to this instance.
+   */
+  public SzApiServerOptions setRabbitInfoHost(String host) {
+    this.rabbitInfoHost = host;
+    return this;
+  }
+
+  /**
+   * Returns the RabbitMQ port for the "info" queue.  This is part of the
+   * info queue configuration to push "info" messages when records are loaded
+   * or deleted or entities are reevaluated.
+   *
+   * @return The RabbitMQ port for the "info" queue.
+   */
+  public Integer getRabbitInfoPort() {
+    return this.rabbitInfoPort;
+  }
+
+  /**
+   * Sets the RabbitMQ port for the "info" queue.  This is part of the info
+   * queue configuration to push "info" messages when records are loaded or
+   * deleted or entities are reevaluated.
+   *
+   * @param port The RabbitMQ port for the "info" queue.
+   *
+   * @return A reference to this instance.
+   */
+  public SzApiServerOptions setRabbitInfoPort(Integer port) {
+    this.rabbitInfoPort = port;
+    return this;
+  }
+
+  /**
+   * Returns the RabbitMQ virtual host for the "info" queue.  This is part of
+   * the info queue configuration to push "info" messages when records are
+   * loaded or deleted or entities are reevaluated.
+   *
+   * @return The RabbitMQ virtual host for the "info" queue.
+   */
+  public String getRabbitInfoVirtualHost() {
+    return this.rabbitInfoVHost;
+  }
+
+  /**
+   * Sets the RabbitMQ virtual host for the "info" queue.  This is part of the
+   * info queue configuration to push "info" messages when records are loaded
+   * or deleted or entities are reevaluated.
+   *
+   * @param virtualHost The RabbitMQ virtual host for the "info" queue.
+   *
+   * @return A reference to this instance.
+   */
+  public SzApiServerOptions setRabbitInfoVirtualHost(String virtualHost) {
+    this.rabbitInfoVHost = virtualHost;
+    return this;
+  }
+
+  /**
+   * Returns the RabbitMQ exchange for the "info" queue.  This is part of
+   * the info queue configuration to push "info" messages when records are
+   * loaded or deleted or entities are reevaluated.
+   *
+   * @return The RabbitMQ exchange for the "info" queue.
+   */
+  public String getRabbitInfoExchange() {
+    return this.rabbitInfoExchange;
+  }
+
+  /**
+   * Sets the RabbitMQ exchange for the "info" queue.  This is part of the
+   * info queue configuration to push "info" messages when records are loaded
+   * or deleted or entities are reevaluated.
+   *
+   * @param exchange The RabbitMQ exchange for the "info" queue.
+   *
+   * @return A reference to this instance.
+   */
+  public SzApiServerOptions setRabbitInfoExchange(String exchange) {
+    this.rabbitInfoExchange = exchange;
+    return this;
+  }
+
+  /**
+   * Returns the RabbitMQ routing key for the "info" queue.  This is part of
+   * the info queue configuration to push "info" messages when records are
+   * loaded or deleted or entities are reevaluated.
+   *
+   * @return The RabbitMQ routing key for the "info" queue.
+   */
+  public String getRabbitInfoRoutingKey() {
+    return this.rabbitInfoRoutingKey;
+  }
+
+  /**
+   * Sets the RabbitMQ routing key for the "info" queue.  This is part of the
+   * info queue configuration to push "info" messages when records are loaded
+   * or deleted or entities are reevaluated.
+   *
+   * @param routingKey The RabbitMQ routing key for the "info" queue.
+   *
+   * @return A reference to this instance.
+   */
+  public SzApiServerOptions setRabbitInfoRoutingKey(String routingKey) {
+    this.rabbitInfoRoutingKey = routingKey;
+    return this;
+  }
+
+  /**
+   * Returns the SQS URL for the "info" queue.  This is part of
+   * the info queue configuration to push "info" messages when records are
+   * loaded or deleted or entities are reevaluated.
+   *
+   * @return The SQS URL for the "info" queue.
+   */
+  public String getSqsInfoUrl() {
+    return sqsInfoUrl;
+  }
+
+  public SzApiServerOptions setSqsInfoUrl(String url) {
+    this.sqsInfoUrl = url;
+    return this;
   }
 
   /**
@@ -477,22 +720,31 @@ public class SzApiServerOptions {
    */
   Map<SzApiServerOption, ?> buildOptionsMap() {
     Map<SzApiServerOption, Object> map = new HashMap<>();
-    map.put(HTTP_PORT,            this.getHttpPort());
-    map.put(BIND_ADDRESS,         this.getBindAddress());
-    map.put(CONCURRENCY,          this.getConcurrency());
-    map.put(MODULE_NAME,          this.getModuleName());
-    map.put(VERBOSE,              this.isVerbose());
-    map.put(QUIET,                this.isQuiet());
-    map.put(READ_ONLY,            this.isReadOnly());
-    map.put(ENABLE_ADMIN,         this.isAdminEnabled());
-    map.put(ALLOWED_ORIGINS,      this.getAllowedOrigins());
-    map.put(CONFIG_ID,            this.getConfigurationId());
-    map.put(INIT_JSON,            this.getJsonInitParameters());
-    map.put(AUTO_REFRESH_PERIOD,  this.getAutoRefreshPeriod());
-    map.put(STATS_INTERVAL,       this.getStatsInterval());
-    map.put(SKIP_STARTUP_PERF,    this.isSkippingStartupPerformance());
-    map.put(ASYNC_LOAD_QUEUE_URL, this.getAsyncLoadQueueUrl());
-    map.put(ASYNC_INFO_QUEUE_URL, this.getAsyncInfoQueueUrl());
+    map.put(HTTP_PORT,                    this.getHttpPort());
+    map.put(BIND_ADDRESS,                 this.getBindAddress());
+    map.put(CONCURRENCY,                  this.getConcurrency());
+    map.put(MODULE_NAME,                  this.getModuleName());
+    map.put(VERBOSE,                      this.isVerbose());
+    map.put(QUIET,                        this.isQuiet());
+    map.put(READ_ONLY,                    this.isReadOnly());
+    map.put(ENABLE_ADMIN,                 this.isAdminEnabled());
+    map.put(ALLOWED_ORIGINS,              this.getAllowedOrigins());
+    map.put(CONFIG_ID,                    this.getConfigurationId());
+    map.put(INIT_JSON,                    this.getJsonInitParameters());
+    map.put(AUTO_REFRESH_PERIOD,          this.getAutoRefreshPeriod());
+    map.put(STATS_INTERVAL,               this.getStatsInterval());
+    map.put(SKIP_STARTUP_PERF,            this.isSkippingStartupPerformance());
+    map.put(KAFKA_INFO_BOOTSTRAP_SERVERS, this.getKafkaInfoBootstrapServers());
+    map.put(KAFKA_INFO_GROUP_ID,          this.getKafkaInfoGroupId());
+    map.put(KAFKA_INFO_TOPIC,             this.getKafkaInfoTopic());
+    map.put(RABBIT_INFO_USER,             this.getRabbitInfoUser());
+    map.put(RABBIT_INFO_PASSWORD,         this.getRabbitInfoPassword());
+    map.put(RABBIT_INFO_HOST,             this.getRabbitInfoHost());
+    map.put(RABBIT_INFO_PORT,             this.getRabbitInfoPort());
+    map.put(RABBIT_INFO_VIRTUAL_HOST,     this.getRabbitInfoVirtualHost());
+    map.put(RABBIT_INFO_EXCHANGE,         this.getRabbitInfoExchange());
+    map.put(RABBIT_INFO_ROUTING_KEY,      this.getRabbitInfoRoutingKey());
+    map.put(SQS_INFO_URL,                 this.getSqsInfoUrl());
     return map;
   }
 }

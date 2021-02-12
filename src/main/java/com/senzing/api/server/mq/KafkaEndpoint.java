@@ -6,11 +6,9 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.io.UnsupportedEncodingException;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.Set;
 
 import static com.senzing.io.IOUtilities.UTF_8;
 
@@ -34,11 +32,41 @@ public class KafkaEndpoint extends SzAbstractMessagingEndpoint {
   public static final Initiator INITIATOR = new KafkaInitiator();
 
   /**
-   * The pattern for Kafka URL's.
+   * The prefix to use for the initialization properties.
    */
-  private static final Pattern URL_PATTERN
-      = Pattern.compile("kafka://([^:]+):([0-9]+)/([^\\?]+)"
-                        + "(\\?([^=&]+)=([^=&]+)(&([^=&]+)=([^=&]+))*)?");
+  public static final String PROPERTY_PREFIX = "kafka-";
+
+  /**
+   * The property key for the Kafka bootstrap servers.
+   */
+  public static final String BOOTSTRAP_SERVERS_PROPERTY_KEY
+      = PROPERTY_PREFIX + "bootstrap-servers";
+
+  /**
+   * The property key for the Kafka group ID.
+   */
+  public static final String GROUP_ID_PROPERTY_KEY
+      = PROPERTY_PREFIX + "group-id";
+
+  /**
+   * The property key for the Kafka topic.
+   */
+  public static final String TOPIC_PROPERTY_KEY = PROPERTY_PREFIX + "topic";
+
+  /**
+   * The <b>unmodifiable</b> {@link Set} of {@link String} property keys for
+   * creating an {@link KafkaEndpoint} via {@link KafkaInitiator}.
+   */
+  public static final Set<String> PROPERTY_KEYS
+      = Set.of(BOOTSTRAP_SERVERS_PROPERTY_KEY,
+               GROUP_ID_PROPERTY_KEY,
+               TOPIC_PROPERTY_KEY);
+
+  /**
+   * The class name for the string serializer.
+   */
+  private static final String STRING_SERIALIZER
+      = "org.apache.kafka.common.serialization.StringSerializer";
 
   /**
    * The producer for sending the messages.
@@ -63,7 +91,9 @@ public class KafkaEndpoint extends SzAbstractMessagingEndpoint {
   }
 
   @Override
-  public void send(SzMessage message) throws Exception {
+  public void send(SzMessage message, FailureHandler onFailure)
+      throws Exception
+  {
     // create the record to send
     ProducerRecord<String, String> record
         = new ProducerRecord<>(this.topic, message.getBody());
@@ -81,8 +111,21 @@ public class KafkaEndpoint extends SzAbstractMessagingEndpoint {
       });
     }
 
-    // send the record
-    this.producer.send(record);
+    // send the record -- account for immediate and asynchronous exceptions
+    Exception[] failure = { null };
+    this.producer.send(record, ((recordMetadata, exception) -> {
+      // check if a handler is defined
+      if (onFailure != null) {
+        // handle the failure
+        onFailure.handle(exception, message);
+      }
+
+      // set the failure as an exception object in case this was blocking
+      failure[0] = exception;
+    }));
+
+    // check if non-null and rethrow (usually not the case)
+    if (failure[0] != null) throw failure[0];
   }
 
   /**
@@ -107,47 +150,51 @@ public class KafkaEndpoint extends SzAbstractMessagingEndpoint {
     }
 
     /**
-     * Handles <tt>"kafka:"</tt> URL's to establish
+     * Handles establishing a Kafka connection.
      */
     @Override
-    public SzMessagingEndpoint establish(String originalUrl, int concurrency) {
-      String url = originalUrl;
-      if (url == null) return null;
-      url = url.trim();
-      if (url.length() == 0) return null;
-      if (!url.startsWith("kafka:")) return null;
-      Matcher matcher = URL_PATTERN.matcher(url);
-      if (!matcher.matches()) {
-        throw new IllegalArgumentException(
-            "The specified Kafka URL does not appear to be properly formed: "
-            + originalUrl);
+    public SzMessagingEndpoint establish(Map<String, ?> props,
+                                         int            concurrency)
+    {
+      if (props == null) return null;
+      Set<String> propKeys = this.getPropertyKeys();
+      int count = 0;
+      for (String key: propKeys) {
+        if (props.containsKey(key)) count++;
       }
-      Properties  props   = new Properties();
-      String      host    = matcher.group(1);
-      String      port    = matcher.group(2);
-      String      topic   = matcher.group(3);
-      String      params  = matcher.group(4);
+      if (count == 0) return null;
+      String servers = (String) props.get(BOOTSTRAP_SERVERS_PROPERTY_KEY);
+      String groupId = (String) props.get(GROUP_ID_PROPERTY_KEY);
+      String topic   = (String) props.get(TOPIC_PROPERTY_KEY);
 
-      props.put("bootstrap.servers", host + ":" + port);
+      // check if the servers and topic are provided
+      if (servers == null || topic == null) {
+        throw new IllegalArgumentException(
+            "The bootstrap servers and topic properties are required for a "
+            + "Kafka connection.  props=[ " + props + " ]");
+      }
 
-      // parse the query string into a multi-map
-      Map<String, List<String>> paramMap = parseQueryString(params);
+      // create the kafka properties object
+      Properties kafkaProps  = new Properties();
 
-      // iterate over the key-value pairs
-      paramMap.forEach((key, values) -> {
-        if (values.size() > 1) {
-          throw new IllegalArgumentException(
-              "The specified Kafka URL has multiple values for '" + key + "': "
-              + originalUrl);
-        }
-        values.forEach(value -> {
-          props.put(key, value);
-        });
-      });
+      kafkaProps.put("bootstrap.servers", servers);
+      kafkaProps.put("group.id", groupId);
+      kafkaProps.put("key.serializer", STRING_SERIALIZER);
+      kafkaProps.put("value.serializer", STRING_SERIALIZER);
 
       // create the producer
-      KafkaProducer<String,String> producer = new KafkaProducer<>(props);
+      KafkaProducer<String,String> producer = new KafkaProducer<>(kafkaProps);
+
+      // return the endpoint
       return new KafkaEndpoint(topic, producer);
+    }
+
+    /**
+     * Implemented to return {@link #PROPERTY_KEYS}.
+     */
+    @Override
+    public Set<String> getPropertyKeys() {
+      return PROPERTY_KEYS;
     }
   }
 }
