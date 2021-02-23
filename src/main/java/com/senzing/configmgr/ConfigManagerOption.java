@@ -7,8 +7,7 @@ import java.util.*;
 import static java.util.EnumSet.*;
 import static java.util.EnumSet.of;
 
-enum ConfigurationManagerOption
-    implements CommandLineOption<ConfigurationManagerOption>
+enum ConfigManagerOption implements CommandLineOption<ConfigManagerOption>
 {
   HELP("--help", true, 0),
   VERBOSE("-verbose", 0),
@@ -23,28 +22,28 @@ enum ConfigurationManagerOption
   IMPORT_CONFIG("--importConfig", true, 1, 2),
   MIGRATE_INI_FILE("--migrateIni", true, 1, 2);
 
-  ConfigurationManagerOption(String commandLineFlag) {
+  ConfigManagerOption(String commandLineFlag) {
     this(commandLineFlag, false, -1);
   }
-  ConfigurationManagerOption(String commandLineFlag, boolean primary) {
+  ConfigManagerOption(String commandLineFlag, boolean primary) {
     this(commandLineFlag, primary, -1);
   }
-  ConfigurationManagerOption(String commandLineFlag, int parameterCount) {
+  ConfigManagerOption(String commandLineFlag, int parameterCount) {
     this(commandLineFlag, false, parameterCount);
   }
-  ConfigurationManagerOption(String   commandLineFlag,
-                             boolean  primary,
-                             int      parameterCount)
+  ConfigManagerOption(String   commandLineFlag,
+                      boolean  primary,
+                      int      parameterCount)
   {
     this(commandLineFlag,
          primary,
          (parameterCount < 0) ? 0 : parameterCount,
          parameterCount);
   }
-  ConfigurationManagerOption(String   commandLineFlag,
-                             boolean  primary,
-                             int      minParameterCount,
-                             int      maxParameterCount)
+  ConfigManagerOption(String   commandLineFlag,
+                      boolean  primary,
+                      int      minParameterCount,
+                      int      maxParameterCount)
   {
     this.commandLineFlag = commandLineFlag;
     this.primary         = primary;
@@ -54,22 +53,22 @@ enum ConfigurationManagerOption
     this.dependencies    = null;
   }
 
-  private static Map<String, ConfigurationManagerOption> OPTIONS_BY_FLAG;
+  private static Map<String, ConfigManagerOption> OPTIONS_BY_FLAG;
 
   private String commandLineFlag;
   private int minParamCount;
   private int maxParamCount;
   private boolean primary;
-  private EnumSet<ConfigurationManagerOption> conflicts;
-  private Set<Set<ConfigurationManagerOption>> dependencies;
+  private EnumSet<ConfigManagerOption> conflicts;
+  private Set<Set<ConfigManagerOption>> dependencies;
 
-  public static final EnumSet<ConfigurationManagerOption> PRIMARY_OPTIONS
-      = complementOf(of(LIST_CONFIGS,
-                        GET_DEFAULT_CONFIG_ID,
-                        SET_DEFAULT_CONFIG_ID,
-                        EXPORT_CONFIG,
-                        IMPORT_CONFIG,
-                        MIGRATE_INI_FILE));
+  public static final EnumSet<ConfigManagerOption> PRIMARY_OPTIONS
+      = complementOf(EnumSet.of(LIST_CONFIGS,
+                                GET_DEFAULT_CONFIG_ID,
+                                SET_DEFAULT_CONFIG_ID,
+                                EXPORT_CONFIG,
+                                IMPORT_CONFIG,
+                                MIGRATE_INI_FILE));
 
   public String getCommandLineFlag() {
     return this.commandLineFlag;
@@ -83,27 +82,27 @@ enum ConfigurationManagerOption
 
   public boolean isDeprecated() { return false; };
 
-  public Set<ConfigurationManagerOption> getConflicts() {
+  public Set<ConfigManagerOption> getConflicts() {
     return this.conflicts;
   }
 
-  public Set<Set<ConfigurationManagerOption>> getDependencies() {
+  public Set<Set<ConfigManagerOption>> getDependencies() {
     return this.dependencies;
   }
 
-  public static ConfigurationManagerOption lookup(String commandLineFlag) {
+  public static ConfigManagerOption lookup(String commandLineFlag) {
     return OPTIONS_BY_FLAG.get(commandLineFlag.toLowerCase());
   }
 
   static {
     try {
-      Map<String, ConfigurationManagerOption> lookupMap = new LinkedHashMap<>();
-      for (ConfigurationManagerOption opt: values()) {
+      Map<String, ConfigManagerOption> lookupMap = new LinkedHashMap<>();
+      for (ConfigManagerOption opt: values()) {
         lookupMap.put(opt.getCommandLineFlag(), opt);
       }
       OPTIONS_BY_FLAG = Collections.unmodifiableMap(lookupMap);
 
-      Set<Set<ConfigurationManagerOption>> nodeps = Collections.singleton(noneOf(ConfigurationManagerOption.class));
+      Set<Set<ConfigManagerOption>> nodeps = Collections.singleton(noneOf(ConfigManagerOption.class));
 
       HELP.conflicts = complementOf(EnumSet.of(HELP));
       HELP.dependencies = nodeps;
@@ -117,7 +116,7 @@ enum ConfigurationManagerOption
       INIT_ENV_VAR.conflicts = of(INIT_FILE, INIT_JSON, MIGRATE_INI_FILE);
       INIT_ENV_VAR.dependencies = nodeps;
 
-      Set<Set<ConfigurationManagerOption>> initDeps = new LinkedHashSet<>();
+      Set<Set<ConfigManagerOption>> initDeps = new LinkedHashSet<>();
       initDeps.add(of(INIT_FILE));
       initDeps.add(of(INIT_ENV_VAR));
       initDeps.add(of(INIT_JSON));
@@ -135,7 +134,7 @@ enum ConfigurationManagerOption
           of(INIT_FILE, INIT_JSON, INIT_ENV_VAR, VERBOSE));
       IMPORT_CONFIG.dependencies = initDeps;
 
-      Set<Set<ConfigurationManagerOption>> initConfigDeps = new LinkedHashSet<>();
+      Set<Set<ConfigManagerOption>> initConfigDeps = new LinkedHashSet<>();
       initConfigDeps.add(of(INIT_FILE, CONFIG_ID));
       initConfigDeps.add(of(INIT_ENV_VAR, CONFIG_ID));
       initConfigDeps.add(of(INIT_JSON, CONFIG_ID));

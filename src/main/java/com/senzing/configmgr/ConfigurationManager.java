@@ -1,5 +1,6 @@
 package com.senzing.configmgr;
 
+import com.senzing.cmdline.CommandLineValue;
 import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.cmdline.CommandLineUtilities;
 import com.senzing.g2.engine.*;
@@ -17,7 +18,7 @@ import java.util.*;
 import static com.senzing.io.IOUtilities.readTextFileAsString;
 import static com.senzing.util.LoggingUtilities.*;
 import static com.senzing.util.OperatingSystemFamily.RUNTIME_OS_FAMILY;
-import static com.senzing.configmgr.ConfigurationManagerOption.*;
+import static com.senzing.configmgr.ConfigManagerOption.*;
 import static com.senzing.cmdline.CommandLineUtilities.*;
 
 /**
@@ -124,146 +125,155 @@ public class ConfigurationManager {
    * @return The {@link Map} of options to their values.
    * @throws IllegalArgumentException If command line arguments are invalid.
    */
-  private static Map<ConfigurationManagerOption, Object> parseCommandLine(
+  private static Map<ConfigManagerOption, Object> parseCommandLine(
       String[] args)
   {
-    return CommandLineUtilities.parseCommandLine(
-        ConfigurationManagerOption.class,
-        args,
-        (option, params) -> {
-          switch (option) {
-            case HELP:
-              if (args.length > 1) {
-                throw new IllegalArgumentException(
-                  "Help option should be only option when provided.");
+    Map<ConfigManagerOption, CommandLineValue<ConfigManagerOption>>
+        optionValues = CommandLineUtilities.parseCommandLine(
+            ConfigManagerOption.class, args,
+            (option, params) -> {
+              switch (option) {
+                case HELP:
+                  if (args.length > 1) {
+                    throw new IllegalArgumentException(
+                        "Help option should be only option when provided.");
+                  }
+                  return Boolean.TRUE;
+
+                case VERBOSE:
+                  return Boolean.TRUE;
+
+                case INIT_FILE:
+                  File initFile = new File(params.get(0));
+                  if (!initFile.exists()) {
+                    throw new IllegalArgumentException(
+                        "Specified JSON init file does not exist: " + initFile);
+                  }
+                  String jsonText;
+                  try {
+                    jsonText = readTextFileAsString(initFile, "UTF-8");
+
+                  } catch (IOException e) {
+                    throw new RuntimeException(
+                        multilineFormat(
+                            "Failed to read JSON initialization file: "
+                                + initFile,
+                            "",
+                            "Cause: " + e.getMessage()));
+                  }
+                  try {
+                    return JsonUtils.parseJsonObject(jsonText);
+
+                  } catch (Exception e) {
+                    throw new IllegalArgumentException(
+                        "The initialization file does not contain valid JSON: "
+                            + initFile);
+                  }
+
+                case INIT_ENV_VAR:
+                  String envVar = params.get(0);
+                  String envValue = System.getenv(envVar);
+                  if (envValue == null || envValue.trim().length() == 0) {
+                    throw new IllegalArgumentException(
+                        "Environment variable is missing or empty: " + envVar);
+                  }
+                  try {
+                    return JsonUtils.parseJsonObject(envValue);
+
+                  } catch (Exception e) {
+                    throw new IllegalArgumentException(
+                        multilineFormat(
+                            "Environment variable value is not valid JSON: ",
+                            envValue));
+                  }
+
+                case INIT_JSON:
+                  String initJson = params.get(0);
+                  if (initJson.trim().length() == 0) {
+                    throw new IllegalArgumentException(
+                        "Initialization JSON is missing or empty.");
+                  }
+                  try {
+                    return JsonUtils.parseJsonObject(initJson);
+
+                  } catch (Exception e) {
+                    throw new IllegalArgumentException(
+                        multilineFormat(
+                            "Initialization JSON is not valid JSON: ",
+                            initJson), e);
+                  }
+
+                case CONFIG_ID:
+                  try {
+                    return Long.parseLong(params.get(0));
+                  } catch (Exception e) {
+                    throw new IllegalArgumentException(
+                        "The configuration ID for " + option.getCommandLineFlag()
+                            + " must be an integer: " + params.get(0));
+                  }
+
+                case LIST_CONFIGS:
+                  return Boolean.TRUE;
+
+                case GET_DEFAULT_CONFIG_ID:
+                  return Boolean.TRUE;
+
+                case SET_DEFAULT_CONFIG_ID:
+                  return Boolean.TRUE;
+
+                case EXPORT_CONFIG:
+                  if (params.size() == 0) return null;
+                  File outputFile = new File(params.get(0));
+                  if (outputFile.exists()) {
+                    throw new IllegalArgumentException(
+                        "The specified output file already exists: " + outputFile);
+                  }
+                  return outputFile;
+
+                case IMPORT_CONFIG:
+                  File configFile = new File(params.get(0));
+                  if (!configFile.exists()) {
+                    throw new IllegalArgumentException(
+                        "Specified config file does not exist: " + configFile);
+                  }
+                  if (params.size() == 1) {
+                    return new Object[] { configFile, null };
+                  }
+                  String description = params.get(1);
+                  return new Object[] { configFile, description };
+
+                case MIGRATE_INI_FILE:
+                  File iniFile = new File(params.get(0));
+                  if (!iniFile.exists()) {
+                    throw new IllegalArgumentException(
+                        "Specified INI file does not exist: " + iniFile);
+                  }
+                  if (params.size() == 1) {
+                    return new File[] { iniFile, null };
+                  }
+                  File outFile = new File(params.get(1));
+                  if (outFile.exists()) {
+                    throw new IllegalArgumentException(
+                        "The output file already exists: " + outFile);
+                  }
+                  return new File[] { iniFile, outFile };
+
+                default:
+                  throw new IllegalArgumentException(
+                      "Unhandled command line option: "
+                          + option.getCommandLineFlag()
+                          + " / " + option);
               }
-              return Boolean.TRUE;
+            });
 
-            case VERBOSE:
-              return Boolean.TRUE;
+    // create a result map
+    Map<ConfigManagerOption, Object> result = new LinkedHashMap<>();
 
-            case INIT_FILE:
-              File initFile = new File(params.get(0));
-              if (!initFile.exists()) {
-                throw new IllegalArgumentException(
-                    "Specified JSON init file does not exist: " + initFile);
-              }
-              String jsonText;
-              try {
-                jsonText = readTextFileAsString(initFile, "UTF-8");
+    // iterate over the option values and handle them
+    CommandLineUtilities.processCommandLine(optionValues, result);
 
-              } catch (IOException e) {
-                throw new RuntimeException(
-                    multilineFormat(
-                        "Failed to read JSON initialization file: "
-                            + initFile,
-                        "",
-                        "Cause: " + e.getMessage()));
-              }
-              try {
-                return JsonUtils.parseJsonObject(jsonText);
-
-              } catch (Exception e) {
-                throw new IllegalArgumentException(
-                    "The initialization file does not contain valid JSON: "
-                        + initFile);
-              }
-
-            case INIT_ENV_VAR:
-              String envVar = params.get(0);
-              String envValue = System.getenv(envVar);
-              if (envValue == null || envValue.trim().length() == 0) {
-                throw new IllegalArgumentException(
-                    "Environment variable is missing or empty: " + envVar);
-              }
-              try {
-                return JsonUtils.parseJsonObject(envValue);
-
-              } catch (Exception e) {
-                throw new IllegalArgumentException(
-                    multilineFormat(
-                        "Environment variable value is not valid JSON: ",
-                        envValue));
-              }
-
-            case INIT_JSON:
-              String initJson = params.get(0);
-              if (initJson.trim().length() == 0) {
-                throw new IllegalArgumentException(
-                    "Initialization JSON is missing or empty.");
-              }
-              try {
-                return JsonUtils.parseJsonObject(initJson);
-
-              } catch (Exception e) {
-                throw new IllegalArgumentException(
-                    multilineFormat(
-                        "Initialization JSON is not valid JSON: ",
-                        initJson), e);
-              }
-
-            case CONFIG_ID:
-              try {
-                return Long.parseLong(params.get(0));
-              } catch (Exception e) {
-                throw new IllegalArgumentException(
-                    "The configuration ID for " + option.getCommandLineFlag()
-                        + " must be an integer: " + params.get(0));
-              }
-
-            case LIST_CONFIGS:
-              return Boolean.TRUE;
-
-            case GET_DEFAULT_CONFIG_ID:
-              return Boolean.TRUE;
-
-            case SET_DEFAULT_CONFIG_ID:
-              return Boolean.TRUE;
-
-            case EXPORT_CONFIG:
-              if (params.size() == 0) return null;
-              File outputFile = new File(params.get(0));
-              if (outputFile.exists()) {
-                throw new IllegalArgumentException(
-                    "The specified output file already exists: " + outputFile);
-              }
-              return outputFile;
-
-            case IMPORT_CONFIG:
-              File configFile = new File(params.get(0));
-              if (!configFile.exists()) {
-                throw new IllegalArgumentException(
-                    "Specified config file does not exist: " + configFile);
-              }
-              if (params.size() == 1) {
-                return new Object[] { configFile, null };
-              }
-              String description = params.get(1);
-              return new Object[] { configFile, description };
-
-            case MIGRATE_INI_FILE:
-              File iniFile = new File(params.get(0));
-              if (!iniFile.exists()) {
-                throw new IllegalArgumentException(
-                    "Specified INI file does not exist: " + iniFile);
-              }
-              if (params.size() == 1) {
-                return new File[] { iniFile, null };
-              }
-              File outFile = new File(params.get(1));
-              if (outFile.exists()) {
-                throw new IllegalArgumentException(
-                    "The output file already exists: " + outFile);
-              }
-              return new File[] { iniFile, outFile };
-
-            default:
-              throw new IllegalArgumentException(
-                  "Unhandled command line option: "
-                      + option.getCommandLineFlag()
-                      + " / " + option);
-      }
-    });
+    // return the result
+    return result;
   }
 
   /**
@@ -473,7 +483,7 @@ public class ConfigurationManager {
    * @throws Exception
    */
   public static void main(String[] args) throws Exception {
-    Map<ConfigurationManagerOption, Object> options = null;
+    Map<ConfigManagerOption, Object> options = null;
     try {
       options = parseCommandLine(args);
     } catch (Exception e) {

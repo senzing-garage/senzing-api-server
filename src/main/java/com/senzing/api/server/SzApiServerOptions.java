@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.senzing.api.server.SzApiServer.*;
+import static com.senzing.api.server.SzApiServerConstants.*;
 import static com.senzing.api.server.SzApiServerOption.*;
 
 /**
@@ -734,8 +734,8 @@ public class SzApiServerOptions {
     map.put(AUTO_REFRESH_PERIOD,          this.getAutoRefreshPeriod());
     map.put(STATS_INTERVAL,               this.getStatsInterval());
     map.put(SKIP_STARTUP_PERF,            this.isSkippingStartupPerformance());
-    map.put(KAFKA_INFO_BOOTSTRAP_SERVERS, this.getKafkaInfoBootstrapServers());
-    map.put(KAFKA_INFO_GROUP_ID,          this.getKafkaInfoGroupId());
+    map.put(KAFKA_INFO_BOOTSTRAP_SERVER,  this.getKafkaInfoBootstrapServers());
+    map.put(KAFKA_INFO_GROUP,             this.getKafkaInfoGroupId());
     map.put(KAFKA_INFO_TOPIC,             this.getKafkaInfoTopic());
     map.put(RABBIT_INFO_USER,             this.getRabbitInfoUser());
     map.put(RABBIT_INFO_PASSWORD,         this.getRabbitInfoPassword());

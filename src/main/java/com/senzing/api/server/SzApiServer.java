@@ -18,6 +18,7 @@ import com.senzing.api.BuildInfo;
 import com.senzing.api.server.mq.SzMessagingEndpoint;
 import com.senzing.api.server.mq.SzMessagingEndpointFactory;
 import com.senzing.api.services.SzMessageSink;
+import com.senzing.cmdline.CommandLineValue;
 import com.senzing.nativeapi.EngineStatsLoggingHandler;
 import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.api.services.SzApiProvider;
@@ -50,7 +51,7 @@ import static com.senzing.cmdline.CommandLineUtilities.*;
 import static com.senzing.io.IOUtilities.*;
 import static com.senzing.util.LoggingUtilities.*;
 import static com.senzing.api.server.SzApiServerOption.*;
-import static com.senzing.api.server.SzApiServerUtilities.*;
+import static com.senzing.api.server.SzApiServerConstants.*;
 
 /**
  * Implements the Senzing REST API specification in Java in an HTTP server.
@@ -61,39 +62,6 @@ public class SzApiServer implements SzApiProvider {
    * The period to avoid over-logging of the diagnostics.
    */
   private static final long DIAGNOSTIC_PERIOD = (1000L * 60L * 45L);
-
-  /**
-   * The default port number used by the API server instances if an
-   * explicit port number is not provided.
-   */
-  public static final int DEFAULT_PORT = 2080;
-
-  /**
-   * The default concurrency setting used by API server instances if
-   * an explicit concurrency is not provided.
-   */
-  public static final int DEFAULT_CONCURRENCY = 8;
-
-  /**
-   * The default stats interval for logging stats.  This is the default
-   * minimum period of time between logging of stats.  The actual interval
-   * may be longer if the API Server is idle or not performing activities
-   * related to entity scoring (i.e.: activities that would affect stats).
-   * The default is every fifteen minutes.
-   */
-  public static final long DEFAULT_STATS_INTERVAL = 1000L * 60L * 15L;
-
-  /**
-   * The default module name to use for initialization of the Senzing native
-   * API objects.  The value is "{@value}"
-   */
-  public static final String DEFAULT_MODULE_NAME = "ApiServer";
-
-  /**
-   * The number of milliseconds to wait in between checking for changes in the
-   * configuration and automatically refreshing the configuration.
-   */
-  public static final long DEFAULT_CONFIG_REFRESH_PERIOD = 10000;
 
   /**
    * The number of milliseconds to provide advance warning of an expiring
@@ -827,218 +795,249 @@ public class SzApiServer implements SzApiProvider {
    * @return
    */
   private static Map<SzApiServerOption, ?> parseCommandLine(String[] args) {
-    return CommandLineUtilities.parseCommandLine(
-        SzApiServerOption.class,
-        args,
-        (option, params) -> {
-          switch (option) {
-            case HELP:
-              if (args.length > 1) {
-                throw new IllegalArgumentException(
-                    "Help option should be only option when provided.");
-              }
-              return Boolean.TRUE;
+    Map<SzApiServerOption, CommandLineValue<SzApiServerOption>> optionValues
+        = CommandLineUtilities.parseCommandLine(
+            SzApiServerOption.class, args,
+            (option, params) -> {
+              switch (option) {
+                case HELP:
+                  if (args.length > 1) {
+                    throw new IllegalArgumentException(
+                        "Help option should be only option when provided.");
+                  }
+                  return Boolean.TRUE;
 
-            case VERSION:
-              if (args.length > 1) {
-                throw new IllegalArgumentException(
-                    "Version option should be only option when provided.");
-              }
-              return Boolean.TRUE;
+                case VERSION:
+                  if (args.length > 1) {
+                    throw new IllegalArgumentException(
+                        "Version option should be only option when provided.");
+                  }
+                  return Boolean.TRUE;
 
-            case MONITOR_FILE:
-              File f = new File(params.get(0));
-              return new FileMonitor(f);
+                case MONITOR_FILE:
+                  File f = new File(params.get(0));
+                  return new FileMonitor(f);
 
-            case HTTP_PORT:
-            {
-              int port = Integer.parseInt(params.get(0));
-              if (port < 0) {
-                throw new IllegalArgumentException(
-                    "Negative port numbers are not allowed: " + port);
-              }
-              return port;
-            }
-            case BIND_ADDRESS:
-              String addrArg = params.get(0);
-              InetAddress addr = null;
-              try {
-                if ("all".equals(addrArg)) {
-                  addr = InetAddress.getByName("0.0.0.0");
-                } else if ("loopback".equals(addrArg)) {
-                  addr = InetAddress.getLoopbackAddress();
-                } else {
-                  addr = InetAddress.getByName(addrArg);
+                case HTTP_PORT:
+                {
+                  int port = Integer.parseInt(params.get(0));
+                  if (port < 0) {
+                    throw new IllegalArgumentException(
+                        "Negative port numbers are not allowed: " + port);
+                  }
+                  return port;
                 }
-              } catch (RuntimeException e) {
-                throw e;
-              } catch (Exception e) {
-                throw new IllegalArgumentException(e);
+                case BIND_ADDRESS:
+                  String addrArg = params.get(0);
+                  InetAddress addr = null;
+                  try {
+                    if ("all".equals(addrArg)) {
+                      addr = InetAddress.getByName("0.0.0.0");
+                    } else if ("loopback".equals(addrArg)) {
+                      addr = InetAddress.getLoopbackAddress();
+                    } else {
+                      addr = InetAddress.getByName(addrArg);
+                    }
+                  } catch (RuntimeException e) {
+                    throw e;
+                  } catch (Exception e) {
+                    throw new IllegalArgumentException(e);
+                  }
+                  return addr;
+
+                case CONCURRENCY:
+                {
+                  int threadCount;
+                  try {
+                    threadCount = Integer.parseInt(params.get(0));
+                  } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException(
+                        "Thread count must be an integer: " + params.get(0));
+                  }
+                  if (threadCount <= 0) {
+                    throw new IllegalArgumentException(
+                        "Negative thread counts are not allowed: " + threadCount);
+                  }
+                  return threadCount;
+                }
+
+                case KAFKA_INFO_BOOTSTRAP_SERVER:
+                case KAFKA_INFO_GROUP:
+                case KAFKA_INFO_TOPIC:
+                case RABBIT_INFO_HOST:
+                case RABBIT_INFO_USER:
+                case RABBIT_INFO_PASSWORD:
+                case RABBIT_INFO_VIRTUAL_HOST:
+                case RABBIT_INFO_EXCHANGE:
+                case RABBIT_INFO_ROUTING_KEY:
+                case SQS_INFO_URL:
+                  return params.get(0);
+
+                case RABBIT_INFO_PORT:
+                {
+                  int port = Integer.parseInt(params.get(0));
+                  if (port < 0) {
+                    throw new IllegalArgumentException(
+                        "Negative RabbitMQ port numbers are not allowed: " + port);
+                  }
+                  return port;
+                }
+
+                case INI_FILE:
+                  File iniFile = new File(params.get(0));
+                  if (!iniFile.exists()) {
+                    throw new IllegalArgumentException(
+                        "Specified INI file does not exist: " + iniFile);
+                  }
+                  return iniFile;
+
+                case INIT_FILE:
+                  File initFile = new File(params.get(0));
+                  if (!initFile.exists()) {
+                    throw new IllegalArgumentException(
+                        "Specified JSON init file does not exist: " + initFile);
+                  }
+                  String jsonText;
+                  try {
+                    jsonText = readTextFileAsString(initFile, "UTF-8");
+
+                  } catch (IOException e) {
+                    throw new RuntimeException(
+                        multilineFormat(
+                            "Failed to read JSON initialization file: "
+                                + initFile,
+                            "",
+                            "Cause: " + e.getMessage()));
+                  }
+                  try {
+                    return JsonUtils.parseJsonObject(jsonText);
+
+                  } catch (Exception e) {
+                    throw new IllegalArgumentException(
+                        "The initialization file does not contain valid JSON: "
+                            + initFile);
+                  }
+
+                case INIT_ENV_VAR:
+                  String envVar = params.get(0);
+                  String envValue = System.getenv(envVar);
+                  if (envValue == null || envValue.trim().length() == 0) {
+                    throw new IllegalArgumentException(
+                        "Environment variable is missing or empty: " + envVar);
+                  }
+                  try {
+                    return JsonUtils.parseJsonObject(envValue);
+
+                  } catch (Exception e) {
+                    throw new IllegalArgumentException(
+                        multilineFormat(
+                            "Environment variable value is not valid JSON: ",
+                            envValue));
+                  }
+
+                case INIT_JSON:
+                  String initJson = params.get(0);
+                  if (initJson.trim().length() == 0) {
+                    throw new IllegalArgumentException(
+                        "Initialization JSON is missing or empty.");
+                  }
+                  try {
+                    return JsonUtils.parseJsonObject(initJson);
+
+                  } catch (Exception e) {
+                    throw new IllegalArgumentException(
+                        multilineFormat(
+                            "Initialization JSON is not valid JSON: ",
+                            initJson));
+                  }
+
+                case CONFIG_ID:
+                  try {
+                    return Long.parseLong(params.get(0));
+                  } catch (Exception e) {
+                    throw new IllegalArgumentException(
+                        "The configuration ID for " + option.getCommandLineFlag()
+                            + " must be an integer: " + params.get(0));
+                  }
+
+                case AUTO_REFRESH_PERIOD:
+                  try {
+                    return Long.parseLong(params.get(0));
+                  } catch (Exception e) {
+                    throw new IllegalArgumentException(
+                        "The specified refresh period for "
+                            + option.getCommandLineFlag() + " must be an integer: "
+                            + params.get(0));
+                  }
+
+                case READ_ONLY:
+                case ENABLE_ADMIN:
+                case VERBOSE:
+                case QUIET:
+                case SKIP_STARTUP_PERF:
+                  if (params.size() == 0) return Boolean.TRUE;
+                  String boolText = params.get(0);
+                  if ("false".equalsIgnoreCase(boolText)) {
+                    return Boolean.FALSE;
+                  }
+                  if ("true".equalsIgnoreCase(boolText)) {
+                    return Boolean.TRUE;
+                  }
+                  throw new IllegalArgumentException(
+                      "The specified parameter for "
+                          + option.getCommandLineFlag()
+                          + " must be true or false: " + params.get(0));
+
+                case MODULE_NAME:
+                  return params.get(0);
+
+                case ALLOWED_ORIGINS:
+                  return params.get(0);
+
+                case STATS_INTERVAL:
+                {
+                  long statsInterval;
+                  try {
+                    statsInterval = Long.parseLong(params.get(0));
+                  } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException(
+                        "Stats interval must be a long integer: " + params.get(0));
+                  }
+                  if (statsInterval < 0) {
+                    throw new IllegalArgumentException(
+                        "Negative stats intervals are not allowed: "
+                            + statsInterval);
+                  }
+                  return statsInterval;
+                }
+
+                default:
+                  throw new IllegalArgumentException(
+                      "Unhandled command line option: "
+                          + option.getCommandLineFlag()
+                          + " / " + option);
               }
-              return addr;
-
-            case CONCURRENCY:
-            {
-              int threadCount;
-              try {
-                threadCount = Integer.parseInt(params.get(0));
-              } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException(
-                    "Thread count must be an integer: " + params.get(0));
-              }
-              if (threadCount <= 0) {
-                throw new IllegalArgumentException(
-                    "Negative thread counts are not allowed: " + threadCount);
-              }
-              return threadCount;
-            }
-
-            case KAFKA_INFO_BOOTSTRAP_SERVERS:
-            case KAFKA_INFO_GROUP_ID:
-            case KAFKA_INFO_TOPIC:
-            case RABBIT_INFO_HOST:
-            case RABBIT_INFO_USER:
-            case RABBIT_INFO_PASSWORD:
-            case RABBIT_INFO_VIRTUAL_HOST:
-            case RABBIT_INFO_EXCHANGE:
-            case RABBIT_INFO_ROUTING_KEY:
-            case SQS_INFO_URL:
-              return params.get(0);
-
-            case RABBIT_INFO_PORT:
-            {
-              int port = Integer.parseInt(params.get(0));
-              if (port < 0) {
-                throw new IllegalArgumentException(
-                    "Negative RabbitMQ port numbers are not allowed: " + port);
-              }
-              return port;
-            }
-
-            case INI_FILE:
-              File iniFile = new File(params.get(0));
-              if (!iniFile.exists()) {
-                throw new IllegalArgumentException(
-                    "Specified INI file does not exist: " + iniFile);
-              }
-              return iniFile;
-
-            case INIT_FILE:
-              File initFile = new File(params.get(0));
-              if (!initFile.exists()) {
-                throw new IllegalArgumentException(
-                    "Specified JSON init file does not exist: " + initFile);
-              }
-              String jsonText;
-              try {
-                jsonText = readTextFileAsString(initFile, "UTF-8");
-
-              } catch (IOException e) {
-                throw new RuntimeException(
-                    multilineFormat(
-                        "Failed to read JSON initialization file: "
-                            + initFile,
-                        "",
-                        "Cause: " + e.getMessage()));
-              }
-              try {
-                return JsonUtils.parseJsonObject(jsonText);
-
-              } catch (Exception e) {
-                throw new IllegalArgumentException(
-                    "The initialization file does not contain valid JSON: "
-                    + initFile);
-              }
-
-            case INIT_ENV_VAR:
-              String envVar = params.get(0);
-              String envValue = System.getenv(envVar);
-              if (envValue == null || envValue.trim().length() == 0) {
-                throw new IllegalArgumentException(
-                    "Environment variable is missing or empty: " + envVar);
-              }
-              try {
-                return JsonUtils.parseJsonObject(envValue);
-
-              } catch (Exception e) {
-                throw new IllegalArgumentException(
-                    multilineFormat(
-                        "Environment variable value is not valid JSON: ",
-                        envValue));
-              }
-
-            case INIT_JSON:
-              String initJson = params.get(0);
-              if (initJson.trim().length() == 0) {
-                throw new IllegalArgumentException(
-                    "Initialization JSON is missing or empty.");
-              }
-              try {
-                return JsonUtils.parseJsonObject(initJson);
-
-              } catch (Exception e) {
-                throw new IllegalArgumentException(
-                    multilineFormat(
-                        "Initialization JSON is not valid JSON: ",
-                        initJson));
-              }
-
-            case CONFIG_ID:
-              try {
-                return Long.parseLong(params.get(0));
-              } catch (Exception e) {
-                throw new IllegalArgumentException(
-                    "The configuration ID for " + option.getCommandLineFlag()
-                    + " must be an integer: " + params.get(0));
-              }
-
-            case AUTO_REFRESH_PERIOD:
-              try {
-                return Long.parseLong(params.get(0));
-              } catch (Exception e) {
-                throw new IllegalArgumentException(
-                    "The specified refresh period for "
-                    + option.getCommandLineFlag() + " must be an integer: "
-                    + params.get(0));
-              }
-
-            case READ_ONLY:
-            case ENABLE_ADMIN:
-            case VERBOSE:
-            case QUIET:
-            case SKIP_STARTUP_PERF:
-              return Boolean.TRUE;
-
-            case MODULE_NAME:
-              return params.get(0);
-
-            case ALLOWED_ORIGINS:
-              return params.get(0);
-
-            case STATS_INTERVAL:
-            {
-              long statsInterval;
-              try {
-                statsInterval = Long.parseLong(params.get(0));
-              } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException(
-                    "Stats interval must be a long integer: " + params.get(0));
-              }
-              if (statsInterval < 0) {
-                throw new IllegalArgumentException(
-                    "Negative stats intervals are not allowed: "
-                        + statsInterval);
-              }
-              return statsInterval;
-            }
-
-            default:
-              throw new IllegalArgumentException(
-                  "Unhandled command line option: "
-                      + option.getCommandLineFlag()
-                      + " / " + option);
-          }
         });
+
+    // create a result map
+    Map<SzApiServerOption, Object> result = new LinkedHashMap<>();
+
+    // iterate over the option values and handle them
+    JsonObjectBuilder job = Json.createObjectBuilder();
+    job.add("message", "Startup Options");
+
+    StringBuilder sb = new StringBuilder();
+
+    CommandLineUtilities.processCommandLine(optionValues, result, job, sb);
+
+    // log the options
+    if (!optionValues.containsKey(HELP) && !optionValues.containsKey(VERSION)) {
+      System.out.println(
+          "[" + (new Date()) + "] Senzing API Server: " + sb.toString());
+    }
+
+    // return the result
+    return result;
   }
 
   /**
@@ -1066,113 +1065,148 @@ public class SzApiServer implements SzApiProvider {
         "",
         "[ Standard Options ]",
         "",
-        "   -help",
-        "        Should be the first and only option if provided.",
+        "   --help",
+        "        Also -help.  Should be the first and only option if provided.",
         "        Causes this help message to be displayed.",
         "        NOTE: If this option is provided, the server will not start.",
         "",
-        "   -version",
-        "        Should be the first and only option if provided.",
+        "   --version",
+        "        Also -version.  Should be the first and only option if provided.",
         "        Causes the version of the G2 REST API Server to be displayed.",
         "        NOTE: If this option is provided, the server will not start.",
         "",
-        "   -readOnly",
-        "        Disables functions that would modify the entity repository data, causing",
-        "        those functions to return a 403 Forbidden response.  NOTE: this option",
-        "        will not only disable loading data to the entity repository, but will",
-        "        also disable modifications to the configuration even if the -enableAdmin",
-        "        option is provided.",
+        "   --read-only [true|false]",
+        "        Also -readOnly.  Disables functions that would modify the entity",
+        "        repository data, causing those functions to return a 403 Forbidden",
+        "        response.  The true/false parameter is optional, if not specified",
+        "        then true is assumed.  If specified as false then it is the same as",
+        "        omitting the option.  NOTE: this option will not only disable loading",
+        "        data to the entity repository, but will also disable modifications to",
+        "        the configuration even if the --enable-admin option is provided.",
+        "        --> VIA ENVIRONMENT: " + READ_ONLY.getEnvironmentVariable(),
         "",
-        "   -enableAdmin",
-        "        Enables administrative functions via the API server.  If not specified",
-        "        then administrative functions will return a 403 Forbidden response.",
+        "   --enable-admin [true|false]",
+        "        Also -enableAdmin.  Enables administrative functions via the API",
+        "        server.  The true/false parameter is optional, if not specified then",
+        "        true is assumed.  If specified as false then it is the same as omitting",
+        "        the option.  If not specified then administrative functions will return",
+        "        a 403 Forbidden response.",
+        "        --> VIA ENVIRONMENT: " + ENABLE_ADMIN.getEnvironmentVariable(),
         "",
-        "   -httpPort <port-number>",
-        "        Sets the port for HTTP communication.  Defaults to "
-            + DEFAULT_PORT + ".",
-        "        Specify 0 for a randomly selected port number.",
+        "   --http-port <port-number>",
+        "        Also -httpPort.  Sets the port for HTTP communication.  If not",
+        "        specified, then the default port (" + DEFAULT_PORT + ") is used.",
+        "        Specify 0 for a randomly selected available port number.",
+        "        --> VIA ENVIRONMENT: " + HTTP_PORT.getEnvironmentVariable(),
         "",
-        "   -bindAddr <ip-address|loopback|all>",
-        "        Sets the port for HTTP bind address communication.",
-        "        Defaults to the loopback address.",
+        "   --bind-addr <ip-address|loopback|all>",
+        "        Also -bindAddr.  Sets the bind address for HTTP communication.  If not",
+        "        provided the bind address defaults to the loopback address.",
+        "        --> VIA ENVIRONMENT: " + BIND_ADDRESS.getEnvironmentVariable(),
         "",
-        "   -allowedOrigins <url-domain>",
-        "        Sets the CORS Access-Control-Allow-Origin header for all endpoints.",
-        "        There is no default value.",
+        "   --allowed-origins <url-domain>",
+        "        Also -allowedOrigins.  Sets the CORS Access-Control-Allow-Origin header",
+        "        for all endpoints.  There is no default value.  If not specified then",
+        "        the Access-Control-Allow-Origin is not included with responses.",
+        "        --> VIA ENVIRONMENT: " + ALLOWED_ORIGINS.getEnvironmentVariable(),
         "",
-        "   -concurrency <thread-count>",
-        "        Sets the number of threads available for executing ",
+        "   --concurrency <thread-count>",
+        "        Also -concurrency.  Sets the number of threads available for executing ",
         "        Senzing API functions (i.e.: the number of engine threads).",
         "        If not specified, then this defaults to "
                    + DEFAULT_CONCURRENCY + ".",
+        "        --> VIA ENVIRONMENT: " + CONCURRENCY.getEnvironmentVariable(),
         "",
-        "   -moduleName <module-name>",
-        "        The module name to initialize with.  Defaults to '"
-                   + DEFAULT_MODULE_NAME + "'.",
+        "   --module-name <module-name>",
+        "        Also -moduleName.  The module name to initialize with.  If not",
+        "        specified, then the module name defaults to \""
+                   + DEFAULT_MODULE_NAME + "\".",
+        "        --> VIA ENVIRONMENT: " + MODULE_NAME.getEnvironmentVariable(),
         "",
-        "   -iniFile <ini-file-path>",
-        "        The path to the Senzing INI file to with which to initialize.",
+        "   --ini-file <ini-file-path>",
+        "        Also -iniFile.  The path to the Senzing INI file to with which to",
+        "        initialize.",
         "        EXAMPLE: -iniFile /etc/opt/senzing/G2Module.ini",
+        "        --> VIA ENVIRONMENT: " + INI_FILE.getEnvironmentVariable(),
         "",
-        "   -initFile <json-init-file>",
-        "        The path to the file containing the JSON text to use for Senzing",
-        "        initialization.",
+        "   --init-file <json-init-file>",
+        "        Also -initFile.  The path to the file containing the JSON text to",
+        "        use for Senzing initialization.",
         "        EXAMPLE: -initFile ~/senzing/g2-init.json",
+        "        --> VIA ENVIRONMENT: " + INIT_FILE.getEnvironmentVariable(),
         "",
-        "   -initEnvVar <environment-variable-name>",
-        "        The environment variable from which to extract the JSON text",
-        "        to use for Senzing initialization.",
+        "   --init-env-var <environment-variable-name>",
+        "        Also -initEnvVar.  The environment variable from which to extract",
+        "        the JSON text to use for Senzing initialization.",
         "        *** SECURITY WARNING: If the JSON text contains a password",
         "        then it may be visible to other users via process monitoring.",
         "        EXAMPLE: -initEnvVar SENZING_INIT_JSON",
+        "        --> VIA ENVIRONMENT: " + INIT_ENV_VAR.getEnvironmentVariable(),
         "",
-        "   -initJson <json-init-text>",
-        "        The JSON text to use for Senzing initialization.",
+        "   --init-json <json-init-text>",
+        "        Also -initJson.  The JSON text to use for Senzing initialization.",
         "        *** SECURITY WARNING: If the JSON text contains a password",
         "        then it may be visible to other users via process monitoring.",
         "        EXAMPLE: -initJson \"{\"PIPELINE\":{ ... }}\"",
+        "        --> VIA ENVIRONMENT: " + INIT_JSON.getEnvironmentVariable(),
         "",
-        "   -configId <config-id>",
-        "        Use with the -iniFile, -initFile, -initEnvVar or -initJson options",
-        "        to force a specific configuration ID to use for initialization.",
+        "   --config-id <config-id>",
+        "        Also -configId.  Use with the -iniFile, -initFile, -initEnvVar or",
+        "        -initJson options to force a specific configuration ID to use for",
+        "        initialization.",
+        "        --> VIA ENVIRONMENT: " + CONFIG_ID.getEnvironmentVariable(),
         "",
-        "   -autoRefreshPeriod <positive-integer-seconds|0|negative-integer>",
-        "        If leveraging the default configuration stored in the database,",
-        "        this is used to specify how often the API server should background",
-        "        check that the current active config is the same as the current",
-        "        default config, and if different reinitialize with the current",
-        "        default config.  If zero is specified, then the auto-refresh",
-        "        is disabled and it will only occur when a requested configuration",
-        "        element is not found in the current active config.  Specifying",
-        "        a negative integer is allowed but is used to enable a check and ",
-        "        conditional refresh only when manually requested (programmatically).",
-        "        NOTE: This is option ignored if auto-refresh is disabled because",
-        "        the config was specified via the G2CONFIGFILE init option or if ",
-        "        -configId has been specified to lock to a specific configuration.",
+        "   --auto-refresh-period <positive-integer-seconds|0|negative-integer>",
+        "        Also -autoRefreshPeriod.  If leveraging the default configuration stored",
+        "        in the database, this is used to specify how often the API server should",
+        "        background check that the current active config is the same as the",
+        "        current default config, and if different reinitialize with the current",
+        "        default config.  If zero is specified, then the auto-refresh is disabled",
+        "        and it will only occur when a requested configuration element is not",
+        "        found in the current active config.  Specifying a negative integer is",
+        "        allowed but is used to enable a check and conditional refresh only when",
+        "        manually requested (programmatically).  NOTE: This is option ignored if",
+        "        auto-refresh is disabled because the config was specified via the",
+        "        G2CONFIGFILE init option or if --config-id has been specified to lock to",
+        "        a specific configuration.",
+        "        --> VIA ENVIRONMENT: " + AUTO_REFRESH_PERIOD.getEnvironmentVariable(),
         "",
-        "   -statsInterval <milliseconds>",
-        "        The minimum number of milliseconds between logging of stats.  This is",
-        "        minimum because stats logging is suppressed if the API Server is idle",
-        "        or active but not performing activities pertaining to entity scoring.",
-        "        In such cases, stats logging is delayed until an activity pertaining to",
-        "        entity scoring is performed.  By default this is set to the millisecond",
-        "        equivalent of 15 minutes.  If zero (0) is specified then the logging of",
-        "        stats will be suppressed.",
+        "   --stats-interval <milliseconds>",
+        "        Also -statsInterval.  The minimum number of milliseconds between logging",
+        "        of stats.  This is minimum because stats logging is suppressed if the API",
+        "        Server is idle or active but not performing activities pertaining to",
+        "        entity scoring.  In such cases, stats logging is delayed until an",
+        "        activity pertaining to entity scoring is performed.  By default this is",
+        "        set to the millisecond equivalent of 15 minutes.  If zero (0) is",
+        "        specified then the logging of stats will be suppressed.",
+        "        --> VIA ENVIRONMENT: " + STATS_INTERVAL.getEnvironmentVariable(),
         "",
-        "   -skipStartupPerf",
-        "        If specified then the performance check on startup is skipped.",
+        "   --skip-startup-perf [true|false]",
+        "        Also -skipStartupPerf.  If specified then the performance check on",
+        "        startup is skipped.  The true/false parameter is optional, if not",
+        "        specified then true is assumed.  If specified as false then it is the",
+        "        same as omitting the option.",
+        "        --> VIA ENVIRONMENT: " + SKIP_STARTUP_PERF.getEnvironmentVariable(),
         "",
-        "   -verbose",
-        "        If specified then initialize in verbose mode.",
+        "   --verbose [true|false]",
+        "        Also -verbose.  If specified then initialize in verbose mode.  The",
+        "        true/false parameter is optional, if not specified then true is assumed.",
+        "        If specified as false then it is the same as omitting the option.",
+        "        --> VIA ENVIRONMENT: " + VERBOSE.getEnvironmentVariable(),
         "",
-        "   -quiet If specified then the API server reduces the number of messages",
-        "          provided as feedback to standard output.  This applies only to",
-        "          messages generated by the API server and not by the underlying ",
-        "          API which can be quite prolific if -verbose is provided.",
+        "   --quiet [true|false]",
+        "        Also -quiet.  If specified then the API server reduces the number of",
+        "        messages provided as feedback to standard output.  This applies only to",
+        "        messages generated by the API server and not by the underlying API which",
+        "        can be quite prolific if --verbose is provided.  The true/false",
+        "        parameter is optional, if not specified then true is assumed.  If",
+        "        specified as false then it is the same as omitting the option.",
+        "        --> VIA ENVIRONMENT: " + QUIET.getEnvironmentVariable(),
         "",
-        "   -monitorFile <file-path>",
-        "        Specifies a file whose timestamp is monitored to determine",
-        "        when to shutdown.",
+        "   --monitor-file <file-path>",
+        "        Also -monitorFile.  Specifies a file whose timestamp is monitored to",
+        "        determine when to shutdown.",
+        "        --> VIA ENVIRONMENT: " + MONITOR_FILE.getEnvironmentVariable(),
         "",
         "[ Asynchronous Info Queue Options ]",
         "   The following options pertain to configuring an asynchronous message",
@@ -1183,48 +1217,83 @@ public class SzApiServer implements SzApiProvider {
         "   generate an info message.  The info messages that are sent on the queue",
         "   (or topic) are the relevant \"raw data\" JSON segments.",
         "",
-        "   -sqsInfoUrl <url>",
-        "        Specifies an Amazon SQS queue URL as the info queue.",
+        "   --sqs-info-url <url>",
+        "        Also -sqsInfoUrl.  Specifies an Amazon SQS queue URL as the info queue.",
+        "        --> VIA ENVIRONMENT: " + SQS_INFO_URL.getEnvironmentVariable(),
         "",
-        "   -rabbitInfoHost <hostname>",
-        "        Used to specify the hostname for connecting to RabbitMQ as part",
-        "        of specifying a RabbitMQ info queue.",
+        "   --rabbit-info-host <hostname>",
+        "        Also -rabbitInfoHost.  Used to specify the hostname for connecting to",
+        "        RabbitMQ as part of specifying a RabbitMQ info queue.",
+        "        --> VIA ENVIRONMENT: " + RABBIT_INFO_HOST.getEnvironmentVariable(),
+        "                             "
+            + RABBIT_INFO_HOST.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
         "",
-        "   -rabbitInfoPort <port>",
-        "        Used to specify the port number for connecting to RabbitMQ as",
-        "        part of specifying a RabbitMQ info queue.",
+        "   --rabbit-info-port <port>",
+        "        Also -rabbitInfoPort.  Used to specify the port number for connecting",
+        "        to RabbitMQ as part of specifying a RabbitMQ info queue.",
+        "        --> VIA ENVIRONMENT: " + RABBIT_INFO_PORT.getEnvironmentVariable(),
+        "                             "
+            + RABBIT_INFO_PORT.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
         "",
-        "   -rabbitInfoUser <user name>",
-        "        Used to specify the user name for connecting to RabbitMQ as part",
-        "        of specifying a RabbitMQ info queue.",
+        "   --rabbit-info-user <user name>",
+        "        Also -rabbitInfoUser.  Used to specify the user name for connecting to",
+        "        RabbitMQ as part of specifying a RabbitMQ info queue.",
+        "        --> VIA ENVIRONMENT: " + RABBIT_INFO_USER.getEnvironmentVariable(),
+        "                             "
+            + RABBIT_INFO_USER.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
         "",
-        "   -rabbitInfoPassword <password>",
-        "        Used to specify the password for connecting to RabbitMQ as part",
-        "        of specifying a RabbitMQ info queue.",
+        "   --rabbit-info-password <password>",
+        "        Also -rabbitInfoPassword.  Used to specify the password for connecting",
+        "        to RabbitMQ as part of specifying a RabbitMQ info queue.",
+        "        --> VIA ENVIRONMENT: " + RABBIT_INFO_PASSWORD.getEnvironmentVariable(),
+        "                             "
+            + RABBIT_INFO_PASSWORD.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
         "",
-        "   -rabbitInfoVirtualHost <virtual host>",
-        "        Used to specify the virtual host for connecting to RabbitMQ as",
-        "        part of specifying a RabbitMQ info queue.",
+        "   --rabbit-info-virtual-host <virtual host>",
+        "        Also -rabbitInfoVirtualHost.  Used to specify the virtual host for",
+        "        connecting to RabbitMQ as part of specifying a RabbitMQ info queue.",
+        "        --> VIA ENVIRONMENT: " + RABBIT_INFO_VIRTUAL_HOST.getEnvironmentVariable(),
+        "                             "
+            + RABBIT_INFO_VIRTUAL_HOST.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
         "",
-        "   -rabbitInfoExchange <exchange>",
-        "        Used to specify the exchange for connecting to RabbitMQ as",
-        "        part of specifying a RabbitMQ info queue.",
+        "   --rabbit-info-exchange <exchange>",
+        "        Also -rabbitInfoExchange.  Used to specify the exchange for connecting",
+        "        to RabbitMQ as part of specifying a RabbitMQ info queue.",
+        "        --> VIA ENVIRONMENT: " + RABBIT_INFO_EXCHANGE.getEnvironmentVariable(),
+        "                             "
+            + RABBIT_INFO_EXCHANGE.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
         "",
-        "   -rabbitInfoRoutingKey <routing key>",
-        "        Used to specify the routing key for connecting to RabbitMQ as",
-        "        part of specifying a RabbitMQ info queue.",
+        "   --rabbit-info-routing-key <routing key>",
+        "        Also -rabbitInfoRoutingKey.  Used to specify the routing key for",
+        "        connecting to RabbitMQ as part of specifying a RabbitMQ info queue.",
+        "        --> VIA ENVIRONMENT: " + RABBIT_INFO_ROUTING_KEY.getEnvironmentVariable(),
         "",
-        "   -kafkaInfoBootstrapServers <bootstrap servers>",
-        "        Used to specify the bootstrap servers for connecting to Kafka",
-        "        as part of specifying a Kafka info topic.",
+        "   --kafka-info-bootstrap-server <bootstrap servers>",
+        "        Also -kafkaInfoBootstrapServer.  Used to specify the bootstrap servers",
+        "        for connecting to Kafka as part of specifying a Kafka info topic.",
+        "        --> VIA ENVIRONMENT: " + KAFKA_INFO_BOOTSTRAP_SERVER.getEnvironmentVariable(),
+        "                             "
+            + KAFKA_INFO_BOOTSTRAP_SERVER.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
         "",
-        "   -kafkaInfoGroupId <group id>",
-        "        Used to specify the group ID for connecting to Kafka as part",
-        "        of specifying a Kafka info topic.",
+        "   --kafka-info-group <group id>",
+        "        Also -kafkaInfoGroupId.  Used to specify the group ID for connecting to",
+        "        Kafka as part of specifying a Kafka info topic.",
+        "        --> VIA ENVIRONMENT: " + KAFKA_INFO_GROUP.getEnvironmentVariable(),
+        "                             "
+            + KAFKA_INFO_GROUP.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
         "",
-        "   -kafkaInfoTopic <topic>",
-        "        Used to specify the topic name for connecting to Kafka as part",
-        "        of specifying a Kafka info topic.",
+        "   --kafka-info-topic <topic>",
+        "        Also -kafkaInfoTopic.  Used to specify the topic name for connecting to",
+        "        Kafka as part of specifying a Kafka info topic.",
+        "        --> VIA ENVIRONMENT: " + KAFKA_INFO_TOPIC.getEnvironmentVariable(),
         "",
         "[ Advanced Options ]",
         "",
@@ -1345,6 +1414,9 @@ public class SzApiServer implements SzApiProvider {
       options = parseCommandLine(args);
 
     } catch (Exception e) {
+      if (e instanceof NullPointerException) {
+        e.printStackTrace();
+      }
       if (!isLastLoggedException(e)) {
         System.err.println();
         System.err.println(e.getMessage());
@@ -1849,8 +1921,9 @@ public class SzApiServer implements SzApiProvider {
     }
 
     // build the info endpoint
-    this.infoEndpoint = SzMessagingEndpointFactory.createEndpoint(
-        infoQueueProps, this.concurrency);
+    this.infoEndpoint = (infoQueueProps == null) ? null
+      : SzMessagingEndpointFactory.createEndpoint(infoQueueProps,
+                                                  this.concurrency);
 
     this.autoRefreshPeriod = (Long) options.get(AUTO_REFRESH_PERIOD);
     if (this.autoRefreshPeriod != null) {
