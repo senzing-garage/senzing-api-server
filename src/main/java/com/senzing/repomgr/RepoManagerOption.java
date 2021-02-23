@@ -8,46 +8,62 @@ import static java.util.EnumSet.*;
 
 enum RepoManagerOption implements CommandLineOption<RepoManagerOption> {
   HELP("--help", true, 0),
-  CREATE_REPO("--createRepo", true, 1),
-  PURGE_REPO("--purgeRepo", true, 0),
-  LOAD_FILE("--loadFile", true, 1),
-  ADD_RECORD("--addRecord", true, 1),
-  CONFIG_SOURCES("--configSources", true),
-  CONFIG_ENTITY_TYPES("--configEntityTypes", true),
-  DATA_SOURCE("-dataSource", false, 1),
-  ENTITY_TYPE("-entityType", false, 1),
-  REPOSITORY("-repo", false, 1),
-  VERBOSE("-verbose", false, 0);
+  CREATE_REPO("--create-repo", true, 1),
+  PURGE_REPO("--purge-repo", true, 0),
+  LOAD_FILE("--load-file", true, 1),
+  ADD_RECORD("--add-record", true, 1),
+  CONFIG_SOURCES("--config-sources", true),
+  CONFIG_ENTITY_TYPES("--config-entity-types", true),
+  DATA_SOURCE("--data-source", false, 1),
+  ENTITY_TYPE("--entity-type", false, 1),
+  REPOSITORY("--repo", false, 1),
+  VERBOSE("--verbose", false,
+          0, "false");
 
-  RepoManagerOption(String commandLineFlag) {
-    this(commandLineFlag, false, -1);
+  RepoManagerOption(String commandLineFlag, String... defaultParameters) {
+    this(commandLineFlag, false, -1, defaultParameters);
   }
-  RepoManagerOption(String commandLineFlag, boolean primary) {
-    this(commandLineFlag, primary, -1);
+
+  RepoManagerOption(String    commandLineFlag,
+                    boolean   primary,
+                    String... defaultParameters)
+  {
+    this(commandLineFlag, primary, -1, defaultParameters);
   }
-  RepoManagerOption(String commandLineFlag, int parameterCount) {
-    this(commandLineFlag, false, parameterCount);
+
+  RepoManagerOption(String    commandLineFlag,
+                    int       parameterCount,
+                    String... defaultParameters)
+  {
+    this(commandLineFlag, false, parameterCount, defaultParameters);
   }
-  RepoManagerOption(String  commandLineFlag,
-                    boolean primary,
-                    int     parameterCount)
+
+  RepoManagerOption(String    commandLineFlag,
+                    boolean   primary,
+                    int       parameterCount,
+                    String... defaultParameters)
   {
     this(commandLineFlag,
          primary,
          parameterCount < 0 ? 0 : parameterCount,
-         parameterCount);
+         parameterCount,
+         defaultParameters);
   }
-  RepoManagerOption(String  commandLineFlag,
-                    boolean primary,
-                    int     minParameterCount,
-                    int     maxParameterCount)
+
+  RepoManagerOption(String    commandLineFlag,
+                    boolean   primary,
+                    int       minParameterCount,
+                    int       maxParameterCount,
+                    String... defaultParameters)
   {
-    this.commandLineFlag = commandLineFlag;
-    this.primary         = primary;
-    this.minParamCount   = minParameterCount;
-    this.maxParamCount   = maxParameterCount;
-    this.conflicts       = null;
-    this.dependencies    = null;
+    this.commandLineFlag    = commandLineFlag;
+    this.primary            = primary;
+    this.minParamCount      = minParameterCount;
+    this.maxParamCount      = maxParameterCount;
+    this.conflicts          = null;
+    this.dependencies       = null;
+    this.defaultParameters  = (defaultParameters == null)
+        ? Collections.emptyList() : Arrays.asList(defaultParameters);
   }
 
   private static Map<String, RepoManagerOption> OPTIONS_BY_FLAG;
@@ -58,6 +74,7 @@ enum RepoManagerOption implements CommandLineOption<RepoManagerOption> {
   private int maxParamCount;
   private Set<RepoManagerOption> conflicts;
   private Set<Set<RepoManagerOption>>  dependencies;
+  private List<String> defaultParameters;
 
   public static final EnumSet<RepoManagerOption> PRIMARY_OPTIONS
       = complementOf(of(DATA_SOURCE, REPOSITORY, VERBOSE));

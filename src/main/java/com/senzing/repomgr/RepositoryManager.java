@@ -456,39 +456,39 @@ public class RepositoryManager {
         "        Should be the first and only option if provided.",
         "        Displays a complete usage message describing all options.",
         "",
-        "   --createRepo <repository-directory-path>",
+        "   --create-repo <repository-directory-path>",
         "        Creates a new Senzing repository at the specified path.",
         "",
-        "   --purgeRepo",
+        "   --purge-repo",
         "        Purges the Senzing repository at the specified path.",
         "",
-        "   --configSources <data-source-1> [data-source-2 ... data-source-n]",
+        "   --config-sources <data-source-1> [data-source-2 ... data-source-n]",
         "        Configures the specified data sources for the repository",
         "        specified by the -repo option.",
         "",
-        "   --loadFile <source-file>",
+        "   --load-file <source-file>",
         "        Loads the records in the specified source CSV or JSON file.",
         "        Records are loaded to the repository specified by the -repo option.",
         "        Use the -dataSource option to specify or override a data source for",
         "        the records.",
         "",
-        "   --addRecord <json-record>",
+        "   --add-record <json-record>",
         "        Loads the specified JSON record provided on the command line.",
         "        The record is loaded to the repository specified by the -repo option.",
         "        Use the -dataSource option to specify or override the data source for ",
         "        the record.",
         "",
-        "   -repo <repository-directory-path>",
+        "   --repo <repository-directory-path>",
         "        Specifies the directory path to the repository to use when performing",
         "        other operations such as:",
         formatUsageOptionsList(
             "           ".length(),
             PURGE_REPO, CONFIG_SOURCES, LOAD_FILE, ADD_RECORD),
-        "   -dataSource <data-source>",
+        "   --data-source <data-source>",
         "        Specifies a data source to use when loading records.  If the records",
         "        already have a DATA_SOURCE property then this will override that value.",
         "",
-        "   -verbose",
+        "   --verbose",
         "        If provided then Senzing will be initialized in verbose mode"));
     pw.flush();
     sw.flush();
@@ -505,7 +505,11 @@ public class RepositoryManager {
     try {
       options = parseCommandLine(args);
     } catch (Exception e) {
-      if (!isLastLoggedException(e)) e.printStackTrace();
+      if (!(e instanceof IllegalArgumentException)
+          && !isLastLoggedException(e))
+      {
+        e.printStackTrace();
+      }
       System.out.println(RepositoryManager.getUsageString(false));
       System.exit(1);
     }

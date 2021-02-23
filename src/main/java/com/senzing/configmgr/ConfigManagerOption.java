@@ -39,7 +39,8 @@ enum ConfigManagerOption implements CommandLineOption<ConfigManagerOption>
    * </ul>
    * </p>
    */
-  VERBOSE("--verbose", Set.of("-verbose"), 0),
+  VERBOSE("--verbose", Set.of("-verbose"),
+          0, "false"),
 
   /**
    * <p>
@@ -250,37 +251,44 @@ enum ConfigManagerOption implements CommandLineOption<ConfigManagerOption>
 
   ConfigManagerOption(String      commandLineFlag,
                       Set<String> synonymFlags,
-                      int         parameterCount)
+                      int         parameterCount,
+                      String...   defaultParameters)
   {
-    this(commandLineFlag, synonymFlags, false, parameterCount);
+    this(commandLineFlag, synonymFlags, false,
+         parameterCount, defaultParameters);
   }
 
-  ConfigManagerOption(String      commandLineFlag,
-                      Set<String> synonymFlags,
-                      boolean     primary,
-                      int         parameterCount)
+  ConfigManagerOption(String        commandLineFlag,
+                      Set<String>   synonymFlags,
+                      boolean       primary,
+                      int           parameterCount,
+                      String...     defaultParameters)
   {
     this(commandLineFlag,
          synonymFlags,
          primary,
          (parameterCount < 0) ? 0 : parameterCount,
-         parameterCount);
+         parameterCount,
+         defaultParameters);
   }
 
-  ConfigManagerOption(String      commandLineFlag,
-                      Set<String> synonymFlags,
-                      boolean     primary,
-                      int         minParameterCount,
-                      int         maxParameterCount)
+  ConfigManagerOption(String        commandLineFlag,
+                      Set<String>   synonymFlags,
+                      boolean       primary,
+                      int           minParameterCount,
+                      int           maxParameterCount,
+                      String...     defaultParameters)
   {
-    this.commandLineFlag = commandLineFlag;
-    this.primary         = primary;
-    this.minParamCount   = minParameterCount;
-    this.maxParamCount   = maxParameterCount;
-    this.conflicts       = null;
-    this.dependencies    = null;
-    this.synonymFlags    = (synonymFlags == null)
+    this.commandLineFlag    = commandLineFlag;
+    this.primary            = primary;
+    this.minParamCount      = minParameterCount;
+    this.maxParamCount      = maxParameterCount;
+    this.conflicts          = null;
+    this.dependencies       = null;
+    this.synonymFlags       = (synonymFlags == null)
         ? Collections.emptySet() : Set.copyOf(synonymFlags);
+    this.defaultParameters  = (defaultParameters == null)
+      ? Collections.emptyList() : Arrays.asList(defaultParameters);
   }
 
   private static Map<String, ConfigManagerOption> OPTIONS_BY_FLAG;
@@ -292,6 +300,7 @@ enum ConfigManagerOption implements CommandLineOption<ConfigManagerOption>
   private boolean primary;
   private EnumSet<ConfigManagerOption> conflicts;
   private Set<Set<ConfigManagerOption>> dependencies;
+  private List<String> defaultParameters;
 
   public static final EnumSet<ConfigManagerOption> PRIMARY_OPTIONS
       = complementOf(EnumSet.of(LIST_CONFIGS,
@@ -331,6 +340,11 @@ enum ConfigManagerOption implements CommandLineOption<ConfigManagerOption>
   @Override
   public Set<Set<ConfigManagerOption>> getDependencies() {
     return this.dependencies;
+  }
+
+  @Override
+  public List<String> getDefaultParameters() {
+    return this.defaultParameters;
   }
 
   public static ConfigManagerOption lookup(String commandLineFlag) {
