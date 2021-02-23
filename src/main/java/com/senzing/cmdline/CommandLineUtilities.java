@@ -243,6 +243,7 @@ public class CommandLineUtilities {
     int minParamCount = option.getMinimumParameterCount();
     int maxParamCount = option.getMaximumParameterCount();
     return (minParamCount == 0 && maxParamCount >= 0
+            && option.getDefaultParameters() != null
             && option.getDefaultParameters().size() == 1
             && "false".equalsIgnoreCase(option.getDefaultParameters().get(0))
             && cmdLineValue.getParameters() != null
@@ -672,6 +673,7 @@ public class CommandLineUtilities {
 
       // check if we have a zero-argument parameter
       if (minParamCount == 0 && maxParamCount == 0
+          && option.getDefaultParameters() != null
           && option.getDefaultParameters().size() == 1
           && "false".equalsIgnoreCase(option.getDefaultParameters().get(0)))
       {
@@ -707,6 +709,7 @@ public class CommandLineUtilities {
 
       // check if we have a zero-parameter option with a "false" default
       if (minParamCount == 0 && maxParamCount == 0 && params.size() == 0
+          && option.getDefaultParameters() != null
           && option.getDefaultParameters().size() == 1
           && "false".equalsIgnoreCase(option.getDefaultParameters().get(0)))
       {
@@ -989,7 +992,7 @@ public class CommandLineUtilities {
       List<String> params = option.getDefaultParameters();
 
       // check if there are none
-      if (params.size() == 0) continue;
+      if (params == null || params.size() == 0) continue;
 
       // process the parameters
       Object processedValue = processValue(option, processor, params);

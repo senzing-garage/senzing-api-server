@@ -213,11 +213,7 @@ public class ConfigurationManager {
                   }
 
                 case LIST_CONFIGS:
-                  return Boolean.TRUE;
-
                 case GET_DEFAULT_CONFIG_ID:
-                  return Boolean.TRUE;
-
                 case SET_DEFAULT_CONFIG_ID:
                   return Boolean.TRUE;
 
@@ -311,31 +307,31 @@ public class ConfigurationManager {
         "        Should be the first and only option if provided.",
         "        Displays a complete usage message describing all options.",
         "",
-        "   --listConfigs",
+        "   --list-configs",
         "        List the available configurations and their IDs.  This requires",
         "        one of the following options be specified:",
         "",
-        "   --getDefaultConfig",
+        "   --get-default-config",
         "        Gets the default configuration ID from the repository and prints it",
         "",
-        "   --setDefaultConfig <configuration-id>",
+        "   --set-default-config",
         "        Sets the default configuration ID in the repository to the specified ID.",
         "",
-        "   --exportConfig [output-file-path]",
-        "        Exports the configuration specified by the -configId option to the",
-        "        specified file.  If the -configId option is not specified then the",
+        "   --export-config [output-file-path]",
+        "        Exports the configuration specified by the --config-id option to the",
+        "        specified file.  If the --config-id option is not specified then the",
         "        current default configuration is exported.  If no default configuration",
         "        then an error message will be displayed.  This accepts an optional",
         "        parameter representing the file to export the config to, if not provided",
         "        the configuration is written to stdout.",
         "",
-        "   --importConfig <config-file-path> [description]",
+        "   --import-config <config-file-path> [description]",
         "        Imports the configuration contained in the specified JSON configuration",
         "        file and outputs the configuration ID for the imported configuration.",
         "        The optional second parameter specifies a description for the ",
         "        imported configuration.",
         "",
-        "   --migrateIni <deprecated-ini-file> [init-json-file]",
+        "   --migrate-ini <ini-file-path> [init-json-file]",
         "        Migrates the specified INI file to JSON initialization parameters and",
         "        imports any referenced configuration file and sets it as the default",
         "        configuration.  If a different configuration is already configured as",
@@ -344,7 +340,7 @@ public class ConfigurationManager {
         "        specifies the file path to the write the JSON initialization parameters",
         "        to, if not provided then they are written to stdout.",
         "",
-        "   -initFile <json-init-file>",
+        "   --init-file <json-init-file>",
         "        The path to the file containing the initialization JSON text to use",
         "        initializing Senzing and connecting to the Senzing repository.  This",
         "        can be used with the following options:",
@@ -352,7 +348,7 @@ public class ConfigurationManager {
             "          ".length(),
             LIST_CONFIGS, GET_DEFAULT_CONFIG_ID, SET_DEFAULT_CONFIG_ID,
             EXPORT_CONFIG, IMPORT_CONFIG),
-        "   -initEnvVar <environment-variable-name>",
+        "   --init-env-var <environment-variable-name>",
         "        The environment variable from which to extract the JSON",
         "        initialization text to use for initializing Senzing and connecting",
         "        to the Senzing repository.  This can be used with the following options:",
@@ -360,7 +356,7 @@ public class ConfigurationManager {
             "           ".length(),
             LIST_CONFIGS, GET_DEFAULT_CONFIG_ID, SET_DEFAULT_CONFIG_ID,
             EXPORT_CONFIG, IMPORT_CONFIG),
-        "   -initJson <json-init-text>",
+        "   --init-json <json-init-text>",
         "        The initialization JSON text to use for initializing Senzing and",
         "        connecting to the Senzing repository.  This can be used with the ",
         "        following options:",
@@ -372,12 +368,12 @@ public class ConfigurationManager {
         "        provided as a command line option then it may be visible to other users",
         "        ~via process monitoring.",
         "",
-        "   -verbose",
+        "   --verbose",
         "        If provided then Senzing will be initialized in verbose mode",
         "",
-        "   -configId <config-id>",
-        "        Use with the -export and -setDefaultId options to specify the ID of",
-        "        the configuration to use."));
+        "   --config-id <config-id>",
+        "        Use with the --export and --set-default-config options to ",
+        "        specify the ID of the configuration to use."));
     pw.flush();
     sw.flush();
 
@@ -487,8 +483,12 @@ public class ConfigurationManager {
     try {
       options = parseCommandLine(args);
     } catch (Exception e) {
-      if (!isLastLoggedException(e)) e.printStackTrace();
-      System.out.println(ConfigurationManager.getUsageString(false));
+      if (!(e instanceof IllegalArgumentException)
+          && !isLastLoggedException(e))
+      {
+        e.printStackTrace();
+      }
+      System.out.println(ConfigurationManager.getUsageString(true));
       System.exit(1);
     }
 
