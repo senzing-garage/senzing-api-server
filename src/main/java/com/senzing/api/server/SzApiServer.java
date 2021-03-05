@@ -917,11 +917,10 @@ public class SzApiServer implements SzApiProvider {
             case VERBOSE:
             case QUIET:
             case SKIP_STARTUP_PERF:
+            case SKIP_ENGINE_PRIMING:
               return Boolean.TRUE;
 
             case MODULE_NAME:
-              return params.get(0);
-
             case ALLOWED_ORIGINS:
               return params.get(0);
 
@@ -1691,6 +1690,25 @@ public class SzApiServer implements SzApiProvider {
     }
 
     this.initializeConfigData();
+
+    // prime the engine unless told mot to
+    Boolean skipPriming = (Boolean)
+        options.get(SzApiServerOption.SKIP_ENGINE_PRIMING);
+    if (!Boolean.TRUE.equals(skipPriming)) {
+      // prime the engine
+      long start = System.currentTimeMillis();
+      System.out.println("Priming engine....");
+      int returnCode = this.engineApi.primeEngine();
+      long end = System.currentTimeMillis();
+      System.out.println("Primed engine: " + (end-start) + "ms");
+
+      if (returnCode != 0) {
+        throw new IllegalStateException(
+            formatError("G2Engine.primeEngine()", this.engineApi));
+      }
+    } else {
+      System.out.println("Engine priming deferred.");
+    }
 
     // setup a servlet context handler
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
