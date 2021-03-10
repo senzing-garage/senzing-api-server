@@ -7,6 +7,7 @@ import com.senzing.gen.api.invoker.ApiClient;
 import com.senzing.gen.api.services.EntityDataApi;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
+import com.senzing.util.SemanticVersion;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -32,6 +33,8 @@ import static com.senzing.api.model.SzFeatureMode.*;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static com.senzing.api.services.ResponseValidators.*;
 import static com.senzing.api.model.SzRelationshipMode.*;
+import static com.senzing.api.model.SzAttributeSearchResultType.*;
+import static com.senzing.api.services.EntityDataServices.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class EntityDataReadServicesTest extends AbstractServiceTest {
@@ -56,6 +59,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
                                                           "STU901");
   private static final SzRecordId XYZ234 = new SzRecordId(VIPS,
                                                           "XYZ234");
+  private static final SzRecordId ZYX321 = new SzRecordId(EMPLOYEES,
+                                                          "ZYX321");
+  private static final SzRecordId CBA654 = new SzRecordId(EMPLOYEES,
+                                                          "CBA654");
 
   private static final SzRecordId BCD123 = new SzRecordId(MARRIAGES,
                                                           "BCD123");
@@ -162,13 +169,21 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   private File prepareEmployeeFile() {
     String[] headers = {
         "RECORD_ID", "NAME_FIRST", "NAME_LAST", "PHONE_NUMBER", "ADDR_FULL",
-        "DATE_OF_BIRTH","MOTHERS_MAIDEN_NAME"};
+        "DATE_OF_BIRTH","MOTHERS_MAIDEN_NAME", "SSN_NUMBER"};
 
     String[][] employees = {
         {MNO345.getRecordId(), "Joseph", "Schmoe", "702-555-1212",
-            "101 Main Street, Las Vegas, NV 89101", "12-JAN-1981", "WILSON"},
+            "101 Main Street, Las Vegas, NV 89101", "12-JAN-1981", "WILSON",
+            "145-45-9866"},
         {PQR678.getRecordId(), "Jo Anne", "Smith", "212-555-1212",
-            "101 Fifth Ave, Las Vegas, NV 10018", "15-MAY-1983", "JACOBS"}
+            "101 Fifth Ave, Las Vegas, NV 10018", "15-MAY-1983", "JACOBS",
+            "213-98-9374"},
+        {ZYX321.getRecordId(), "Mark", "Hightower", "563-927-2833",
+            "1882 Meadows Lane, Las Vegas, NV 89125", "22-JUN-1981", "JENKINS",
+            "873-22-4213"},
+        {CBA654.getRecordId(), "Mark", "Hightower", "781-332-2824",
+            "2121 Roscoe Blvd, Los Angeles, CA 90232", "09-SEP-1980", "BROOKS",
+            "827-27-4829"}
     };
 
     return this.prepareJsonArrayFile("test-employees-", headers, employees);
@@ -1829,33 +1844,68 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   private List<Arguments> searchParameters() {
-    Map<Map<String, Set<String>>, Integer> searchCountMap = new LinkedHashMap<>();
+    SemanticVersion version = new SemanticVersion(this.getNativeApiVersion());
+    boolean supportFiltering
+        = MINIMUM_SEARCH_FILTERING_VERSION.compareTo(version) <= 0;
 
-    searchCountMap.put(criteria("PHONE_NUMBER", "702-555-1212"), 1);
-    searchCountMap.put(criteria("PHONE_NUMBER", "212-555-1212"), 1);
-    searchCountMap.put(criteria("PHONE_NUMBER", "818-555-1313"), 1);
-    searchCountMap.put(criteria("PHONE_NUMBER", "818-555-1212"), 1);
-    searchCountMap.put(criteria("PHONE_NUMBER", "818-555-1212", "818-555-1313"), 2);
+    Map<Map<String, Set<String>>, Map<SzAttributeSearchResultType, Integer>>
+        searchCountMap = new LinkedHashMap<>();
+
+    searchCountMap.put(criteria("PHONE_NUMBER", "702-555-1212"),
+                       Map.of(POSSIBLE_RELATION, 1));
+
+    searchCountMap.put(criteria("PHONE_NUMBER", "212-555-1212"),
+                       Map.of(POSSIBLE_RELATION, 1));
+
+    searchCountMap.put(criteria("PHONE_NUMBER", "818-555-1313"),
+                       Map.of(POSSIBLE_RELATION, 1));
+
+    searchCountMap.put(criteria("PHONE_NUMBER", "818-555-1212"),
+                       Map.of(POSSIBLE_RELATION, 1));
+
+    searchCountMap.put(
+        criteria("PHONE_NUMBER", "818-555-1212", "818-555-1313"),
+        Map.of(POSSIBLE_RELATION, 2));
+
     searchCountMap.put(
         criteria(criterion("ADDR_LINE1", "100 MAIN STREET"),
                  criterion("ADDR_CITY", "LOS ANGELES"),
                  criterion("ADDR_STATE", "CALIFORNIA"),
                  criterion("ADDR_POSTAL_CODE", "90012")),
-        2);
+        Map.of(POSSIBLE_RELATION, 2));
+
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "JOHN DOE", "JANE DOE"),
                  criterion("ADDR_LINE1", "100 MAIN STREET"),
                  criterion("ADDR_CITY", "LOS ANGELES"),
                  criterion("ADDR_STATE", "CALIFORNIA"),
                  criterion("ADDR_POSTAL_CODE", "90012")),
-        2);
+        Map.of(MATCH, 2));
+
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "JOHN DOE"),
                  criterion("ADDR_LINE1", "100 MAIN STREET"),
                  criterion("ADDR_CITY", "LOS ANGELES"),
                  criterion("ADDR_STATE", "CALIFORNIA"),
                  criterion("ADDR_POSTAL_CODE", "90012")),
-        2);
+        Map.of(MATCH, 1, POSSIBLE_RELATION, 1));
+
+    searchCountMap.put(
+        criteria(criterion("NAME_FULL", "Mark Hightower"),
+                 criterion("PHONE_NUMBER", "563-927-2833")),
+        Map.of(MATCH, 1, NAME_ONLY_MATCH, 1));
+
+    searchCountMap.put(
+        criteria(criterion("NAME_FULL", "Mark Hightower"),
+                 criterion("DATE_OF_BIRTH", "22-MAR-1981")),
+        Map.of(POSSIBLE_MATCH, 1));
+
+    searchCountMap.put(
+        criteria(criterion("NAME_FULL", "Mark Hightower"),
+                 criterion("PHONE_NUMBER", "563-927-2833"),
+                 criterion("PHONE_NUMBER", "781-332-2824"),
+                 criterion("DATE_OF_BIRTH", "22-JUN-1981")),
+        Map.of(MATCH, 1, POSSIBLE_MATCH, 1));
 
     List<Arguments> list = new LinkedList<>();
 
@@ -1869,7 +1919,61 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
     searchCountMap.entrySet().forEach(entry -> {
       Map<String, Set<String>> criteria = entry.getKey();
-      Integer resultCount = entry.getValue();
+      Map<SzAttributeSearchResultType, Integer> resultCounts = entry.getValue();
+
+      List<Set<SzAttributeSearchResultType>> typeSetList = new ArrayList<>(20);
+      List<Integer> countList = new ArrayList<>(20);
+
+      int sum = resultCounts.values().stream()
+          .reduce(0, Integer::sum);
+
+      typeSetList.add(Collections.emptySet());
+      countList.add(sum);
+
+      // iterate over the result types and try singleton sets
+      resultCounts.forEach((resultType, count) -> {
+        // handle the singleton set
+        EnumSet<SzAttributeSearchResultType> singletonSet
+            = EnumSet.of(resultType);
+
+        typeSetList.add(singletonSet);
+        countList.add(supportFiltering ? count : sum);
+      });
+
+      // try complemente sets
+      EnumSet<SzAttributeSearchResultType> allSet
+          = EnumSet.copyOf(resultCounts.keySet());
+
+      // create the complement set
+      EnumSet<SzAttributeSearchResultType> complementSet
+          = EnumSet.complementOf(allSet);
+
+      if (complementSet.size() > 0) {
+        typeSetList.add(complementSet);
+        countList.add(supportFiltering ? 0 : sum);
+      }
+
+      // try sets of 2 if we have heterogeneous result types
+      if (resultCounts.size() > 1) {
+        // try sets of two
+        resultCounts.forEach((type1, count1) -> {
+          resultCounts.forEach((type2, count2) -> {
+            if (type1 != type2) {
+              typeSetList.add(Set.of(type1, type2));
+              countList.add(supportFiltering ? (count1 + count2) : sum);
+            }
+          });
+        });
+      }
+
+      // check for more than 2 result types
+      if (allSet.size() > 2) {
+        // try all result types specified individually
+        typeSetList.add(allSet);
+        countList.add(sum);
+      }
+
+      int typeSetIndex = 0;
 
       for (Boolean withRaw : booleanVariants) {
         for (Boolean forceMinimal : booleanVariants) {
@@ -1877,14 +1981,19 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
             for (SzFeatureMode featureMode : featureModes) {
               for (Boolean withFeatureStats: booleanVariants) {
                 for (Boolean withInternalFeatures : booleanVariants) {
+                  // try with empty set of result types
                   list.add(arguments(criteria,
-                                     resultCount,
+                                     typeSetList.get(typeSetIndex),
+                                     countList.get(typeSetIndex),
                                      forceMinimal,
                                      featureMode,
                                      withFeatureStats,
                                      withInternalFeatures,
                                      withRelationships,
                                      withRaw));
+
+                  // increment the type set index
+                  typeSetIndex = (typeSetIndex + 1) % typeSetList.size();
                 }
               }
             }
@@ -1898,17 +2007,20 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("searchParameters")
-  public void searchByJsonAttrsTest(Map<String, Set<String>>  criteria,
-                                    Integer                   expectedCount,
-                                    Boolean                   forceMinimal,
-                                    SzFeatureMode             featureMode,
-                                    Boolean                   withFeatureStats,
-                                    Boolean                   withInternalFeatures,
-                                    Boolean                   withRelationships,
-                                    Boolean                   withRaw)
+  public void searchByJsonAttrsTest(
+      Map<String, Set<String>>          criteria,
+      Set<SzAttributeSearchResultType>  includeOnlySet,
+      Integer                           expectedCount,
+      Boolean                           forceMinimal,
+      SzFeatureMode                     featureMode,
+      Boolean                           withFeatureStats,
+      Boolean                           withInternalFeatures,
+      Boolean                           withRelationships,
+      Boolean                           withRaw)
   {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
+          + " ], includeOnly=[ " + includeOnlySet
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
@@ -1938,6 +2050,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       StringBuilder sb = new StringBuilder();
       sb.append(this.formatServerUri(
           "entities?attrs=" + urlEncode(attrs)));
+      if (includeOnlySet != null && includeOnlySet.size() > 0) {
+        for (SzAttributeSearchResultType resultType: includeOnlySet) {
+          sb.append("&includeOnly=").append(resultType);
+        }
+      }
       if (featureMode != null) {
         sb.append("&featureMode=").append(featureMode);
       }
@@ -1956,6 +2073,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       if (withRaw != null) {
         sb.append("&withRaw=").append(withRaw);
       }
+      Set<String> includeOnlyParams = new LinkedHashSet<>();
+      includeOnlySet.forEach(
+          resultType -> includeOnlyParams.add(resultType.toString()));
+
       String uriText = sb.toString();
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
@@ -1964,6 +2085,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           = this.entityDataServices.searchByAttributes(
           attrs,
           null,
+          includeOnlyParams,
           (forceMinimal != null ? forceMinimal : false),
           (featureMode != null ? featureMode : WITH_DUPLICATES),
           (withFeatureStats != null ? withFeatureStats : false),
@@ -2016,17 +2138,19 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("searchParameters")
   public void searchByJsonAttrsViaHttpTest(
-      Map<String, Set<String>>  criteria,
-      Integer                   expectedCount,
-      Boolean                   forceMinimal,
-      SzFeatureMode             featureMode,
-      Boolean                   withFeatureStats,
-      Boolean                   withInternalFeatures,
-      Boolean                   withRelationships,
-      Boolean                   withRaw)
+      Map<String, Set<String>>          criteria,
+      Set<SzAttributeSearchResultType>  includeOnlySet,
+      Integer                           expectedCount,
+      Boolean                           forceMinimal,
+      SzFeatureMode                     featureMode,
+      Boolean                           withFeatureStats,
+      Boolean                           withInternalFeatures,
+      Boolean                           withRelationships,
+      Boolean                           withRaw)
   {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
+          + " ], includeOnly=[ " + includeOnlySet
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
@@ -2055,6 +2179,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
       StringBuilder sb = new StringBuilder();
       sb.append("entities?attrs=").append(urlEncode(attrs));
+      if (includeOnlySet != null && includeOnlySet.size() > 0) {
+        for (SzAttributeSearchResultType resultType: includeOnlySet) {
+          sb.append("&includeOnly=").append(resultType);
+        }
+      }
       if (featureMode != null) {
         sb.append("&featureMode=").append(featureMode);
       }
@@ -2101,17 +2230,19 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("searchParameters")
   public void searchByJsonAttrsViaJavaClientTest(
-      Map<String, Set<String>>  criteria,
-      Integer                   expectedCount,
-      Boolean                   forceMinimal,
-      SzFeatureMode             featureMode,
-      Boolean                   withFeatureStats,
-      Boolean                   withInternalFeatures,
-      Boolean                   withRelationships,
-      Boolean                   withRaw)
+      Map<String, Set<String>>          criteria,
+      Set<SzAttributeSearchResultType>  includeOnlySet,
+      Integer                           expectedCount,
+      Boolean                           forceMinimal,
+      SzFeatureMode                     featureMode,
+      Boolean                           withFeatureStats,
+      Boolean                           withInternalFeatures,
+      Boolean                           withRelationships,
+      Boolean                           withRaw)
   {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
+          + " ], includeOnly=[ " + includeOnlySet
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
@@ -2140,6 +2271,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
       StringBuilder sb = new StringBuilder();
       sb.append("entities?attrs=").append(urlEncode(attrs));
+      if (includeOnlySet != null && includeOnlySet.size() > 0) {
+        for (SzAttributeSearchResultType resultType: includeOnlySet) {
+          sb.append("&includeOnly=").append(resultType);
+        }
+      }
       if (featureMode != null) {
         sb.append("&featureMode=").append(featureMode);
       }
@@ -2166,10 +2302,18 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
             featureMode.toString());
       }
 
+      List<com.senzing.gen.api.model.SzAttributeSearchResultType>
+          includeOnlyParams = new ArrayList<>(includeOnlySet.size());
+      includeOnlySet.forEach(
+          resultType -> includeOnlyParams.add(
+              com.senzing.gen.api.model.SzAttributeSearchResultType.valueOf(
+                  resultType.toString())));
+
       long before = System.currentTimeMillis();
       com.senzing.gen.api.model.SzAttributeSearchResponse clientResponse
           = this.entityDataApi.searchByAttributes(attrs,
                                                   null,
+                                                  includeOnlyParams,
                                                   featMode,
                                                   withFeatureStats,
                                                   withInternalFeatures,
@@ -2201,17 +2345,19 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("searchParameters")
   public void searchByParamAttrsTest(
-      Map<String, Set<String>>  criteria,
-      Integer                   expectedCount,
-      Boolean                   forceMinimal,
-      SzFeatureMode             featureMode,
-      Boolean                   withFeatureStats,
-      Boolean                   withInternalFeatures,
-      Boolean                   withRelationships,
-      Boolean                   withRaw)
+      Map<String, Set<String>>          criteria,
+      Set<SzAttributeSearchResultType>  includeOnlySet,
+      Integer                           expectedCount,
+      Boolean                           forceMinimal,
+      SzFeatureMode                     featureMode,
+      Boolean                           withFeatureStats,
+      Boolean                           withInternalFeatures,
+      Boolean                           withRelationships,
+      Boolean                           withRaw)
   {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
+          + " ], includeOnly=[ " + includeOnlySet
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
@@ -2232,6 +2378,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       });
 
       sb.setCharAt(0, '?');
+      if (includeOnlySet != null && includeOnlySet.size() > 0) {
+        for (SzAttributeSearchResultType resultType: includeOnlySet) {
+          sb.append("&includeOnly=").append(resultType);
+        }
+      }
       if (featureMode != null) {
         sb.append("&featureMode=").append(featureMode);
       }
@@ -2251,6 +2402,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         sb.append("&withRaw=").append(withRaw);
       }
 
+      Set<String> includeOnlyParams = new LinkedHashSet<>();
+      includeOnlySet.forEach(
+          resultType -> includeOnlyParams.add(resultType.toString()));
+
       String uriText = this.formatServerUri(
           "entities" + sb.toString());
 
@@ -2261,6 +2416,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           = this.entityDataServices.searchByAttributes(
           null,
           attrList,
+          includeOnlyParams,
           (forceMinimal != null ? forceMinimal : false),
           (featureMode != null ? featureMode : WITH_DUPLICATES),
           (withFeatureStats != null ? withFeatureStats : false),
@@ -2293,17 +2449,19 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("searchParameters")
   public void searchByParamAttrsViaHttpTest(
-      Map<String, Set<String>>  criteria,
-      Integer                   expectedCount,
-      Boolean                   forceMinimal,
-      SzFeatureMode             featureMode,
-      Boolean                   withFeatureStats,
-      Boolean                   withInternalFeatures,
-      Boolean                   withRelationships,
-      Boolean                   withRaw)
+      Map<String, Set<String>>          criteria,
+      Set<SzAttributeSearchResultType>  includeOnlySet,
+      Integer                           expectedCount,
+      Boolean                           forceMinimal,
+      SzFeatureMode                     featureMode,
+      Boolean                           withFeatureStats,
+      Boolean                           withInternalFeatures,
+      Boolean                           withRelationships,
+      Boolean                           withRaw)
   {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
+          + " ], includeOnly=[ " + includeOnlySet
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
@@ -2323,6 +2481,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
       // replace the "&" with a "?" at the start
       sb.setCharAt(0, '?');
+      if (includeOnlySet != null && includeOnlySet.size() > 0) {
+        for (SzAttributeSearchResultType resultType: includeOnlySet) {
+          sb.append("&includeOnly=").append(resultType);
+        }
+      }
       if (featureMode != null) {
         sb.append("&featureMode=").append(featureMode);
       }
@@ -2369,17 +2532,19 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("searchParameters")
   public void searchByParamAttrsViaJavaClientTest(
-      Map<String, Set<String>>  criteria,
-      Integer                   expectedCount,
-      Boolean                   forceMinimal,
-      SzFeatureMode             featureMode,
-      Boolean                   withFeatureStats,
-      Boolean                   withInternalFeatures,
-      Boolean                   withRelationships,
-      Boolean                   withRaw)
+      Map<String, Set<String>>          criteria,
+      Set<SzAttributeSearchResultType>  includeOnlySet,
+      Integer                           expectedCount,
+      Boolean                           forceMinimal,
+      SzFeatureMode                     featureMode,
+      Boolean                           withFeatureStats,
+      Boolean                           withInternalFeatures,
+      Boolean                           withRelationships,
+      Boolean                           withRaw)
   {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
+          + " ], includeOnly=[ " + includeOnlySet
           + " ], forceMinimal=[ " + forceMinimal
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
@@ -2401,6 +2566,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
       // replace the "&" with a "?" at the start
       sb.setCharAt(0, '?');
+      if (includeOnlySet != null && includeOnlySet.size() > 0) {
+        for (SzAttributeSearchResultType resultType: includeOnlySet) {
+          sb.append("&includeOnly=").append(resultType);
+        }
+      }
       if (featureMode != null) {
         sb.append("&featureMode=").append(featureMode);
       }
@@ -2427,10 +2597,18 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
             featureMode.toString());
       }
 
+      List<com.senzing.gen.api.model.SzAttributeSearchResultType>
+          includeOnlyParams = new ArrayList<>(includeOnlySet.size());
+      includeOnlySet.forEach(
+          resultType -> includeOnlyParams.add(
+              com.senzing.gen.api.model.SzAttributeSearchResultType.valueOf(
+                  resultType.toString())));
+
       long before = System.currentTimeMillis();
       com.senzing.gen.api.model.SzAttributeSearchResponse clientResponse
           = this.entityDataApi.searchByAttributes(null,
                                                   attrList,
+                                                  includeOnlyParams,
                                                   featMode,
                                                   withFeatureStats,
                                                   withInternalFeatures,

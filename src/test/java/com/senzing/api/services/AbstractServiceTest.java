@@ -920,6 +920,70 @@ public abstract class AbstractServiceTest {
   }
 
   /**
+   * Gets the version number of the REST API server implementation.
+   *
+   * @return The version number of the REST API server implementation.
+   */
+  protected String getApiServerVersion() {
+    if (this.server == null) return null;
+    return this.server.getApiProviderVersion();
+  }
+
+  /**
+   * Gets the version number of the REST API specification implemented by
+   * the underlying server.
+   *
+   * @return The version number of the REST API specification implemented by
+   *         the underlying server.
+   */
+  protected String getRestApiVersion() {
+    if (this.server == null) return null;
+    return this.server.getRestApiVersion();
+  }
+
+  /**
+   * Gets the version for the underlying runtime native Senzing API.
+   *
+   * @return The version for the underlying runtime native Senzing API.
+   */
+  protected String getNativeApiVersion() {
+    if (this.server == null) return null;
+    return this.server.getNativeApiVersion();
+  }
+
+  /**
+   * Gets the build number for the underlying runtime native Senzing API.
+   *
+   * @return The build number for the underlying runtime native Senzing API.
+   */
+  protected String getNativeApiBuildNumber() {
+    if (this.server == null) return null;
+    return this.server.getNativeApiBuildNumber();
+  }
+
+  /**
+   * Gets the build date for the underlying runtime native Senzing API.
+   *
+   * @return The build date for the underlying runtime native Senzing API.
+   */
+  protected Date getNativeApiBuildDate() {
+    if (this.server == null) return null;
+    return this.server.getNativeApiBuildDate();
+  }
+
+  /**
+   * Gets the configuration compatibility version for the underlying runtime
+   * native Senzing API.
+   *
+   * @return The configuration compatibility version for the underlying runtime
+   *         native Senzing API.
+   */
+  protected String getConfigCompatibilityVersion() {
+    if (this.server == null) return null;
+    return this.server.getConfigCompatibilityVersion();
+  }
+
+  /**
    * Returns the module name with which to initialize the server.  By default
    * this returns <tt>"Test API Server"</tt>.  Override to use a different
    * module name.

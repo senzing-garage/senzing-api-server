@@ -1,9 +1,14 @@
 package com.senzing.api.services;
 
+import com.senzing.api.model.SzServerInfo;
+import com.senzing.api.model.SzVersionInfo;
 import com.senzing.g2.engine.*;
 import com.senzing.util.AccessToken;
+import com.senzing.util.SemanticVersion;
 import com.senzing.util.WorkerThreadPool;
 
+import java.lang.invoke.StringConcatException;
+import java.util.Date;
 import java.util.Set;
 
 /**
@@ -129,6 +134,52 @@ public interface SzApiProvider {
    * @return The associated {@link G2Diagnostic} API implementation.
    */
   G2Diagnostic getDiagnosticApi();
+
+  /**
+   * Gets the version number of the REST API provider implementation.
+   *
+   * @return The version number of the REST API provider implementation.
+   */
+  String getApiProviderVersion();
+
+  /**
+   * Gets the version number of the REST API specification implemented by
+   * this provider.
+   *
+   * @return The version number of the REST API specification implemented by
+   *         this provider.
+   */
+  String getRestApiVersion();
+
+  /**
+   * Gets the version for the underlying runtime native Senzing API.
+   *
+   * @return The version for the underlying runtime native Senzing API.
+   */
+  String getNativeApiVersion();
+
+  /**
+   * Gets the build number for the underlying runtime native Senzing API.
+   *
+   * @return The build number for the underlying runtime native Senzing API.
+   */
+  String getNativeApiBuildNumber();
+
+  /**
+   * Gets the build date for the underlying runtime native Senzing API.
+   *
+   * @return The build date for the underlying runtime native Senzing API.
+   */
+  Date getNativeApiBuildDate();
+
+  /**
+   * Gets the configuration compatibility version for the underlying runtime
+   * native Senzing API.
+   *
+   * @return The configuration compatibility version for the underlying runtime
+   *         native Senzing API.
+   */
+  String getConfigCompatibilityVersion();
 
   /**
    * Returns the concurrency for the API provider.  This is the number

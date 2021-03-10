@@ -3,6 +3,7 @@ package com.senzing.api.services;
 import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.util.JsonUtils;
+import com.senzing.util.SemanticVersion;
 import com.senzing.util.Timers;
 
 import javax.json.*;
@@ -10,12 +11,18 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.*;
 import static com.senzing.api.model.SzFeatureMode.*;
 import static com.senzing.api.model.SzRelationshipMode.*;
+import static com.senzing.api.model.SzAttributeSearchResultType.*;
 import static com.senzing.api.services.ServicesUtil.*;
+import static com.senzing.g2.engine.G2Engine.*;
 
 /**
  * Provides entity data related API services.
@@ -23,6 +30,44 @@ import static com.senzing.api.services.ServicesUtil.*;
 @Path("/")
 @Produces("application/json; charset=UTF-8")
 public class EntityDataServices {
+  /**
+   * The minimum native API version to support search filtering.
+   */
+  public static final SemanticVersion MINIMUM_SEARCH_FILTERING_VERSION
+      = new SemanticVersion("2.4.1");
+
+  /**
+   * The {@link Map} of {@link SzAttributeSearchResultType} keys to {@link
+   * Integer} values representing the flags to apply.
+   */
+  private static final Map<SzAttributeSearchResultType, Integer>
+      RESULT_TYPE_FLAG_MAP;
+
+  private static final Set<String> SEEN_CRITERIA = new HashSet<>();
+  private static final File OUT_FILE;
+  static {
+    File file = null;
+    try {
+      File userHome = new File(System.getProperty("user.home"));
+      file = File.createTempFile("search-", ".json", userHome);
+
+      PrintWriter printWriter = new PrintWriter(new FileWriter(file));
+      printWriter.println("[ ");
+      printWriter.close();
+
+    } catch (Exception ignore) {
+      ignore.printStackTrace();
+    } finally {
+      OUT_FILE = file;
+    }
+
+    Map<SzAttributeSearchResultType, Integer> map = new LinkedHashMap<>();
+    map.put(MATCH, G2_EXPORT_INCLUDE_RESOLVED);
+    map.put(POSSIBLE_MATCH, G2_EXPORT_INCLUDE_POSSIBLY_SAME);
+    map.put(POSSIBLE_RELATION, G2_EXPORT_INCLUDE_POSSIBLY_RELATED);
+    map.put(NAME_ONLY_MATCH, G2_EXPORT_INCLUDE_NAME_ONLY);
+    RESULT_TYPE_FLAG_MAP = Collections.unmodifiableMap(map);
+  }
   @POST
   @Path("data-sources/{dataSourceCode}/records")
   public SzLoadRecordResponse loadRecord(
@@ -790,6 +835,7 @@ public class EntityDataServices {
   public SzAttributeSearchResponse searchByAttributes(
       @QueryParam("attrs")                                        String              attrs,
       @QueryParam("attr")                                         List<String>        attrList,
+      @QueryParam("includeOnly")                                  Set<String>         includeOnlySet,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode       featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
@@ -877,14 +923,51 @@ public class EntityDataServices {
                 + " ], attrList=[ " + attrList + " ]");
       }
 
+      // check for the include-only parameters, convert to result types
+      if (includeOnlySet == null) includeOnlySet = Collections.emptySet();
+      List<SzAttributeSearchResultType> resultTypes
+          = new ArrayList<>(includeOnlySet.size());
+      for (String includeOnly : includeOnlySet) {
+        try {
+          resultTypes.add(SzAttributeSearchResultType.valueOf(includeOnly));
+
+        } catch (Exception e) {
+          throw newBadRequestException(
+              GET, uriInfo, timers,
+              "At least one of the includeOnly parameter values was not "
+              + "recognized: " + includeOnly);
+        }
+      }
+
+      // augment the flags based on includeOnly parameter result types
+      int includeFlags = 0;
+      SemanticVersion version
+          = new SemanticVersion(provider.getNativeApiVersion());
+
+      boolean supportFiltering
+          = MINIMUM_SEARCH_FILTERING_VERSION.compareTo(version) <= 0;
+
+      // only support the include flags on versions where it works
+      if (supportFiltering) {
+        for (SzAttributeSearchResultType resultType : resultTypes) {
+          Integer flag = RESULT_TYPE_FLAG_MAP.get(resultType);
+          if (flag == null) continue;
+          includeFlags |= flag.intValue();
+        }
+      }
+
+      // create the response buffer
       StringBuffer sb = new StringBuffer();
 
-      int flags = getFlags(forceMinimal,
+      // get the flags
+      int flags = getFlags(includeFlags,
+                           forceMinimal,
                            featureMode,
                            withFeatureStats,
                            withInternalFeatures,
                            withRelationships);
 
+      // format the search JSON
       final String searchJson = JsonUtils.toJsonText(searchCriteria);
 
       enteringQueue(timers);
@@ -903,6 +986,23 @@ public class EntityDataServices {
         return sb.toString();
       });
 
+      if (!SEEN_CRITERIA.contains(searchJson)) {
+        SEEN_CRITERIA.add(searchJson);
+        try (PrintWriter pw = new PrintWriter(new FileWriter(OUT_FILE, true))) {
+          pw.println("   {");
+          pw.println("      \"search\": ");
+          JsonObject searchObj = JsonUtils.parseJsonObject(searchJson);
+          pw.println(JsonUtils.toJsonText(searchObj, true) + ",");
+          pw.println();
+          pw.println("      \"results\": ");
+          JsonObject resultsObj = JsonUtils.parseJsonObject(sb.toString());
+          pw.println(JsonUtils.toJsonText(resultsObj, true));
+          pw.println("   },");
+          pw.flush();
+        } catch (IOException ignore) {
+          // do nothing
+        }
+      }
       processingRawData(timers);
 
       JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());

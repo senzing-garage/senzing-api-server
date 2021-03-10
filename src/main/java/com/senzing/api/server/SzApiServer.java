@@ -15,6 +15,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import com.senzing.api.BuildInfo;
+import com.senzing.api.model.SzVersionInfo;
 import com.senzing.nativeapi.EngineStatsLoggingHandler;
 import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.api.services.SzApiProvider;
@@ -377,6 +378,11 @@ public class SzApiServer implements SzApiProvider {
   private long lastDiagnosticsRun = -1L;
 
   /**
+   * The {@link SzVersionInfo} describing the version.
+   */
+  private SzVersionInfo versionInfo = null;
+
+  /**
    * The read-write lock to use to prevent simultaneous request handling and
    * purging.
    */
@@ -439,6 +445,7 @@ public class SzApiServer implements SzApiProvider {
    *
    * @return The initialized {@link G2Product} API interface.
    */
+  @Override
   public G2Product getProductApi() {
     this.assertNotShutdown();
     return this.productApi;
@@ -449,6 +456,7 @@ public class SzApiServer implements SzApiProvider {
    *
    * @return The initialized {@link G2Config} API interface.
    */
+  @Override
   public G2Config getConfigApi() {
     this.assertNotShutdown();
     return this.configApi;
@@ -459,6 +467,7 @@ public class SzApiServer implements SzApiProvider {
    *
    * @return The initialized {@link G2Engine} API interface.
    */
+  @Override
   public G2Engine getEngineApi() {
     this.assertNotShutdown();
     return (this.retryEngineApi == null)
@@ -474,6 +483,7 @@ public class SzApiServer implements SzApiProvider {
    *         configuration is not automatically being picked up as the current
    *         default configuration.
    */
+  @Override
   public G2ConfigMgr getConfigMgrApi() {
     return this.configMgrApi;
   }
@@ -483,6 +493,7 @@ public class SzApiServer implements SzApiProvider {
    *
    * @return The initialized {@link G2Diagnostic} API interface.
    */
+  @Override
   public G2Diagnostic getDiagnosticApi() {
     this.assertNotShutdown();
     return this.diagnosticApi;
@@ -494,6 +505,7 @@ public class SzApiServer implements SzApiProvider {
    * @return <tt>true</tt> if only read operations are allowed, and
    *         <tt>false</tt> if all operations are being supported.
    */
+  @Override
   public boolean isReadOnly() {
     this.assertNotShutdown();
     return this.readOnly;
@@ -505,6 +517,7 @@ public class SzApiServer implements SzApiProvider {
    * @return <tt>true</tt> if admin operations are enabled, and
    *         <tt>false</tt> if admin operations are disabled.
    */
+  @Override
   public boolean isAdminEnabled() {
     this.assertNotShutdown();
     return this.adminEnabled;
@@ -543,8 +556,45 @@ public class SzApiServer implements SzApiProvider {
    * @return The number of worker threads initialized to do work against
    *         the Senzing repository.
    */
+  @Override
   public int getConcurrency() {
     return this.workerThreadPool.size();
+  }
+
+  @Override
+  public String getApiProviderVersion() {
+    if (this.versionInfo == null) return null;
+    return this.versionInfo.getApiServerVersion();
+  }
+
+  @Override
+  public String getRestApiVersion() {
+    if (this.versionInfo == null) return null;
+    return this.versionInfo.getRestApiVersion();
+  }
+
+  @Override
+  public String getNativeApiVersion() {
+    if (this.versionInfo == null) return null;
+    return this.versionInfo.getNativeApiVersion();
+  }
+
+  @Override
+  public String getNativeApiBuildNumber() {
+    if (this.versionInfo == null) return null;
+    return this.versionInfo.getNativeApiBuildNumber();
+  }
+
+  @Override
+  public Date getNativeApiBuildDate() {
+    if (this.versionInfo == null) return null;
+    return this.versionInfo.getNativeApiBuildDate();
+  }
+
+  @Override
+  public String getConfigCompatibilityVersion() {
+    if (this.versionInfo == null) return null;
+    return this.versionInfo.getConfigCompatibilityVersion();
   }
 
   /**
@@ -1067,6 +1117,11 @@ public class SzApiServer implements SzApiProvider {
         "        entity scoring is performed.  By default this is set to the millisecond",
         "        equivalent of 15 minutes.  If zero (0) is specified then the logging of",
         "        stats will be suppressed.",
+        "",
+        "   -skipEnginePriming",
+        "        If specified then the engine is not primed on startup.  This makes",
+        "        startup faster, but the first request requiring engine priming will be",
+        "        much slower.",
         "",
         "   -skipStartupPerf",
         "        If specified then the performance check on startup is skipped.",
@@ -1670,6 +1725,10 @@ public class SzApiServer implements SzApiProvider {
     this.baseUrl = "http://" + ipAddr.getHostAddress() + ":" + httpPort + "/";
 
     this.initNativeApis();
+
+    String      versionJsonText = this.productApi.version();
+    JsonObject  versionJson     = JsonUtils.parseJsonObject(versionJsonText);
+    this.versionInfo = SzVersionInfo.parseVersionInfo(null, versionJson);
 
     this.workerThreadPool
         = new WorkerThreadPool(this.getClass().getName(), this.concurrency);
