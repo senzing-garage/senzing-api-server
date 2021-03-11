@@ -13,18 +13,14 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import javax.json.Json;
-import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObjectBuilder;
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.sql.ClientInfoStatus;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 
 import static com.senzing.api.model.SzFeatureMode.NONE;
 import static com.senzing.api.model.SzFeatureMode.WITH_DUPLICATES;

@@ -614,7 +614,14 @@ public class RepositoryManager {
         touchFile(new File(directory, "G2_RES.db"));
         touchFile(new File(directory, "G2_LIB_FEAT.db"));
       }
-      File licensePath    = new File(directory, "g2.lic");
+
+      InstallLocations installLocations = InstallLocations.findLocations();
+      File installDir   = installLocations.getInstallDirectory();
+      File etcDir       = new File(installDir, "etc");
+      File licensePath  = new File(etcDir, "g2.lic");
+      if (!licensePath.exists()) {
+        licensePath = new File(directory, "g2.lic");
+      }
 
       String fileSep = System.getProperty("file.separator");
       String sqlitePrefix = "sqlite3://na:na@" + directory.toString() + fileSep;

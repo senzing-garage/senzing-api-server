@@ -4,7 +4,6 @@ import com.senzing.api.model.SzErrorResponse;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
 import com.senzing.util.JsonUtils;
-import org.glassfish.hk2.api.messaging.MessageReceiver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -24,7 +23,6 @@ import static com.senzing.api.model.SzHttpMethod.DELETE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static com.senzing.api.services.ResponseValidators.*;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class ReadOnlyEntityDataWriteServicesTest

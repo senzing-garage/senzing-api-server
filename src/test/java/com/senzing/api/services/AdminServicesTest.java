@@ -14,7 +14,6 @@ import static com.senzing.api.services.ResponseValidators.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class AdminServicesTest extends AbstractServiceTest {
-  public static final int TEST_LICENSE_RECORD_LIMIT = 100000;
   private AdminServices adminServices;
   private AdminApi adminApi;
 
@@ -92,8 +91,8 @@ public class AdminServicesTest extends AbstractServiceTest {
                               before,
                               after,
                               null,
-                              "EVAL",
-                              TEST_LICENSE_RECORD_LIMIT);
+                              null,
+                              null);
     });
   }
 
@@ -112,8 +111,8 @@ public class AdminServicesTest extends AbstractServiceTest {
                               before,
                               after,
                               null,
-                              "EVAL",
-                              TEST_LICENSE_RECORD_LIMIT);
+                              null,
+                              null);
     });
   }
 
@@ -134,8 +133,8 @@ public class AdminServicesTest extends AbstractServiceTest {
                               before,
                               after,
                               null,
-                              "EVAL",
-                              TEST_LICENSE_RECORD_LIMIT);
+                              null,
+                              null);
     });
   }
 
@@ -154,8 +153,8 @@ public class AdminServicesTest extends AbstractServiceTest {
                               before,
                               after,
                               false,
-                              "EVAL",
-                              TEST_LICENSE_RECORD_LIMIT);
+                              null,
+                              null);
 
     });
   }
@@ -174,8 +173,8 @@ public class AdminServicesTest extends AbstractServiceTest {
                               before,
                               after,
                               false,
-                              "EVAL",
-                              TEST_LICENSE_RECORD_LIMIT);
+                              null,
+                              null);
     });
   }
 
@@ -196,8 +195,8 @@ public class AdminServicesTest extends AbstractServiceTest {
                               before,
                               after,
                               null,
-                              "EVAL",
-                              TEST_LICENSE_RECORD_LIMIT);
+                              null,
+                              null);
     });
   }
 
@@ -216,8 +215,8 @@ public class AdminServicesTest extends AbstractServiceTest {
                               before,
                               after,
                               true,
-                              "EVAL",
-                              TEST_LICENSE_RECORD_LIMIT);
+                              null,
+                              null);
     });
   }
 
@@ -235,8 +234,8 @@ public class AdminServicesTest extends AbstractServiceTest {
                               before,
                               after,
                               true,
-                              "EVAL",
-                              TEST_LICENSE_RECORD_LIMIT);
+                              null,
+                              null);
     });
   }
 
@@ -257,8 +256,8 @@ public class AdminServicesTest extends AbstractServiceTest {
                               before,
                               after,
                               true,
-                              "EVAL",
-                              TEST_LICENSE_RECORD_LIMIT);
+                              null,
+                              null);
     });
   }
 

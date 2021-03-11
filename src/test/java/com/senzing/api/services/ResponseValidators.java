@@ -2414,7 +2414,7 @@ public class ResponseValidators {
       long               afterTimestamp,
       Boolean            expectRawData,
       String             expectedLicenseType,
-      long               expectedRecordLimit)
+      Long               expectedRecordLimit)
   {
     if (expectRawData == null) {
       expectRawData = false;
@@ -2431,13 +2431,17 @@ public class ResponseValidators {
 
     assertNotNull(licenseInfo, "License data is null");
 
-    assertEquals(expectedRecordLimit,
-                 licenseInfo.getRecordLimit(),
-                 "Record limit wrong");
+    if (expectedRecordLimit != null) {
+      assertEquals(expectedRecordLimit,
+                   licenseInfo.getRecordLimit(),
+                   "Record limit wrong");
+    }
 
-    assertEquals(expectedLicenseType,
-                 licenseInfo.getLicenseType(),
-                 "Unexpected license type");
+    if (expectedLicenseType != null) {
+      assertEquals(expectedLicenseType,
+                   licenseInfo.getLicenseType(),
+                   "Unexpected license type");
+    }
 
     if (expectRawData) {
       validateRawDataMap(

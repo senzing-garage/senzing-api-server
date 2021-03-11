@@ -1,6 +1,5 @@
 package com.senzing.api.services;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senzing.api.model.*;
 import com.senzing.repomgr.RepositoryManager;
 import org.junit.jupiter.api.AfterAll;

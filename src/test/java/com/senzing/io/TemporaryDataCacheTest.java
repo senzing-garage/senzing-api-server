@@ -1,8 +1,11 @@
 package com.senzing.io;
 
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.springframework.aop.interceptor.ConcurrencyThrottleInterceptor;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -15,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Tests for {@link TemporaryDataCache}.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.CONCURRENT)
 public class TemporaryDataCacheTest {
   /**
    * The test file

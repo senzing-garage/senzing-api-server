@@ -197,9 +197,15 @@ public abstract class AbstractServiceTest {
    */
   private static File createTempRepoDirectory(String prefix) {
     try {
-      String  workingDir  = System.getProperty("user.dir");
-      File    currentDir  = new File(workingDir);
-      File    targetDir   = new File(currentDir, "target");
+      File    targetDir     = null;
+      String  buildDirProp  = System.getProperty("project.build.directory");
+      if (buildDirProp != null) {
+        targetDir = new File(buildDirProp);
+      } else {
+        String workingDir = System.getProperty("user.dir");
+        File currentDir = new File(workingDir);
+        targetDir = new File(currentDir, "target");
+      }
 
       boolean forceTempRepos = false;
       String prop = System.getProperty("senzing.test.tmp.repos");

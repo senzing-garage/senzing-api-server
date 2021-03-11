@@ -3,6 +3,7 @@ package com.senzing.api.services;
 import com.senzing.api.model.*;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -26,6 +27,7 @@ import static com.senzing.api.services.ResponseValidators.validateBasics;
 import static org.junit.jupiter.api.Assertions.fail;
 import static com.senzing.api.model.SzHttpMethod.POST;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
   /**
    * Sets the desired options for the {@link SzApiServer} during server
