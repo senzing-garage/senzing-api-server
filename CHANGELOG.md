@@ -21,7 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `ServiceUtil.getFlags()` variant that takes a base flags parameter
 - Added automatic engine priming on startup
 - Added `-skipEnginePriming` option to skip engine priming on startup
-  
 - Updated supported specification version to 2.4.0
 - Updated recorded test data for Senzing API versions 2.0.0 through version 2.4.0
 
