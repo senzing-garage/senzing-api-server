@@ -202,8 +202,10 @@
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>${maven.compiler.source}</maven.compiler.target>
     <junit.jupiter.version>5.4.2</junit.jupiter.version>
+    <buildDirectory>${project.basedir}/target</buildDirectory>
   </properties>
   <build>
+    <directory>${buildDirectory}</directory>
     <plugins>
       <plugin>
         <groupId>io.swagger.codegen.v3</groupId>
@@ -287,7 +289,19 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>2.22.1</version>
         <configuration>
-          <jvm>target/java-wrapper/bin/java-wrapper.bat</jvm>
+          <jvm>${project.build.directory}/java-wrapper/bin/java-wrapper.bat</jvm>
+          <systemPropertyVariables>
+            <project.build.directory>${project.build.directory}</project.build.directory>
+          </systemPropertyVariables>
+          <properties>
+            <configurationParameters>
+              junit.jupiter.execution.parallel.enabled = true
+              junit.jupiter.execution.parallel.mode.default = same_thread
+              junit.jupiter.execution.parallel.mode.classes.default = concurrent
+              junit.jupiter.execution.parallel.config.strategy = dynamic
+              junit.jupiter.execution.parallel.config.dynamic.factor = 1
+            </configurationParameters>
+          </properties>
         </configuration>
       </plugin>
       <plugin>
@@ -306,10 +320,10 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${basedir}/target/classes</outputDirectory>
+              <outputDirectory>${project.build.directory}/classes</outputDirectory>
               <resources>
                 <resource>
-                  <directory>${basedir}/src/main/resources</directory>
+                  <directory>${project.build.directory}/src/main/resources</directory>
                   <filtering>true</filtering>
                 </resource>
               </resources>
