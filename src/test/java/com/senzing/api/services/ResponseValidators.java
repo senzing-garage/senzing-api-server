@@ -219,9 +219,9 @@ public class ResponseValidators {
 
     // check the timestamp
     if (now < beforeTimestamp || now > afterTimestamp) {
-      fail("Timestamp (" + new Date(now) + ") should be between "
-               + new Date(beforeTimestamp) + " and "
-               + new Date(afterTimestamp) + suffix);
+      fail("Timestamp (" + new Date(now) + " / " + now + ") should be between "
+               + new Date(beforeTimestamp) + " / " + beforeTimestamp + " and "
+               + new Date(afterTimestamp) + " / " + afterTimestamp + suffix);
     }
     Map<String, Long> timings = meta.getTimings();
 

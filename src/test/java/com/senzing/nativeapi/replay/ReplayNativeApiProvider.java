@@ -105,7 +105,13 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   /**
    * The target directory of the maven build.
    */
-  private static final File TARGET_DIR = new File(CURRENT_DIR, "target");
+  private static final File TARGET_DIR;
+  static {
+    String propValue = System.getProperty("project.build.directory");
+    File file = (propValue == null) ? null : new File(propValue);
+    TARGET_DIR = (file != null && file.exists()) ? file
+        : new File(CURRENT_DIR, "target");
+  }
 
   /**
    * The source directory of the maven build..
@@ -574,6 +580,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     // parse the cache file
     if (!this.direct) {
       try {
+        this.recording = this.loadCacheFile();
         this.recording = this.loadCacheFile();
       } catch (IOException e) {
         throw new RuntimeException(e);
