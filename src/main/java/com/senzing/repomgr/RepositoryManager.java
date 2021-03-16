@@ -615,11 +615,19 @@ public class RepositoryManager {
         touchFile(new File(directory, "G2_LIB_FEAT.db"));
       }
 
+      // define the license path
+      File licensePath = null;
+
+      // check if there is a license file in the installation
       InstallLocations installLocations = InstallLocations.findLocations();
-      File installDir   = installLocations.getInstallDirectory();
-      File etcDir       = new File(installDir, "etc");
-      File licensePath  = new File(etcDir, "g2.lic");
-      if (!licensePath.exists()) {
+      if (installLocations != null) {
+        File installDir = installLocations.getInstallDirectory();
+        File etcDir = new File(installDir, "etc");
+        licensePath = new File(etcDir, "g2.lic");
+      }
+
+      // if no existing license then set a license path in the repo directory
+      if (licensePath == null || !licensePath.exists()) {
         licensePath = new File(directory, "g2.lic");
       }
 
