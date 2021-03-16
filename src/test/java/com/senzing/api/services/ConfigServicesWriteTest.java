@@ -1141,7 +1141,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
       String testInfo = this.formatTestInfo(relativeUri,
                                             bodyContent);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzDataSourcesResponse response = this.configServices.addDataSources(
           queryCodes,
           TRUE.equals(withRaw),
@@ -1149,14 +1149,13 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           bodyContent);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateDataSourcesResponse(testInfo,
                                   response,
                                   POST,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   expectedSources);
     });
@@ -1217,7 +1216,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
       } catch (UnsupportedEncodingException cannotHappen) {
         throw new IllegalStateException(cannotHappen);
       }
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzDataSourcesResponse response = this.invokeServerViaHttp(
           POST,
@@ -1228,14 +1227,13 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           SzDataSourcesResponse.class);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateDataSourcesResponse(testInfo,
                                   response,
                                   POST,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   expectedSources);
     });
@@ -1298,7 +1296,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
       String  testInfo    = this.formatTestInfo(relativeUri,
                                                 bodyContent);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityClassesResponse response = this.configServices.addEntityClasses(
           queryCodes,
           queryResolve,
@@ -1308,14 +1306,13 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
 
       response.concludeTimers();
 
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityClassesResponse(testInfo,
                                     response,
                                     POST,
                                     uriText,
-                                    before,
-                                    after,
+                                    after - before,
                                     TRUE.equals(withRaw),
                                     queryResolve,
                                     expectedClasses);
@@ -1384,7 +1381,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
       } catch (UnsupportedEncodingException cannotHappen) {
         throw new IllegalStateException(cannotHappen);
       }
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzEntityClassesResponse response = this.invokeServerViaHttp(
           POST,
@@ -1395,14 +1392,13 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           SzEntityClassesResponse.class);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityClassesResponse(testInfo,
                                     response,
                                     POST,
                                     uriText,
-                                    before,
-                                    after,
+                                    after - before,
                                     TRUE.equals(withRaw),
                                     queryResolve,
                                     expectedClasses);
@@ -1474,7 +1470,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
       String  testInfo    = this.formatTestInfo(relativeUri,
                                                 bodyContent);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzEntityTypesResponse response = this.configServices.addEntityTypes(
           queryClassCode,
@@ -1484,14 +1480,13 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           bodyContent);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityTypesResponse(testInfo,
                                   response,
                                   POST,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   expectedTypes);
     });
@@ -1569,7 +1564,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
       } catch (UnsupportedEncodingException cannotHappen) {
         throw new IllegalStateException(cannotHappen);
       }
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzEntityTypesResponse response = this.invokeServerViaHttp(
           POST,
@@ -1580,14 +1575,13 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           SzEntityTypesResponse.class);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityTypesResponse(testInfo,
                                   response,
                                   POST,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   expectedTypes);
     });
@@ -1652,7 +1646,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
       String  testInfo    = this.formatTestInfo(relativeUri,
                                                 bodyContent);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzEntityTypesResponse response
           = this.configServices.addEntityTypesForClass(entityClass,
@@ -1662,14 +1656,13 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
                                                        bodyContent);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityTypesResponse(testInfo,
                                   response,
                                   POST,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   expectedTypes);
     });
@@ -1742,7 +1735,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
       } catch (UnsupportedEncodingException cannotHappen) {
         throw new IllegalStateException(cannotHappen);
       }
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzEntityTypesResponse response = this.invokeServerViaHttp(
           POST,
@@ -1753,14 +1746,13 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           SzEntityTypesResponse.class);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityTypesResponse(testInfo,
                                   response,
                                   POST,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   expectedTypes);
     });
@@ -1786,7 +1778,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
       String  testInfo    = this.formatTestInfo(relativeUri,
                                                 bodyContent);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       try {
         this.configServices.addEntityTypesForClass("OBJECT",
@@ -1801,9 +1793,9 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         validateBasics(
-            response, 400, POST, uriText, before, after);
+            response, 400, POST, uriText, after - before);
 
       }
     });
@@ -1835,7 +1827,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
       } catch (UnsupportedEncodingException cannotHappen) {
         throw new IllegalStateException(cannotHappen);
       }
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzErrorResponse response = this.invokeServerViaHttp(
           POST,
@@ -1846,10 +1838,10 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           SzErrorResponse.class);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(
-          testInfo, response, 400, POST, uriText, before, after);
+          testInfo, response, 400, POST, uriText, after - before);
     });
   }
 
@@ -1876,7 +1868,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
       String  testInfo    = this.formatTestInfo(relativeUri,
                                                 bodyContent);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       try {
         this.configServices.addEntityTypesForClass(entityClass,
@@ -1891,9 +1883,9 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         validateBasics(
-            response, 404, POST, uriText, before, after);
+            response, 404, POST, uriText, after - before);
 
       }
     });
@@ -1928,7 +1920,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
       } catch (UnsupportedEncodingException cannotHappen) {
         throw new IllegalStateException(cannotHappen);
       }
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzErrorResponse response = this.invokeServerViaHttp(
           POST,
@@ -1939,10 +1931,10 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           SzErrorResponse.class);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(
-          testInfo, response, 404, POST, uriText, before, after);
+          testInfo, response, 404, POST, uriText, after - before);
     });
   }
 }

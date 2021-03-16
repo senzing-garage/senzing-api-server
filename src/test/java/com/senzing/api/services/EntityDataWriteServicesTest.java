@@ -111,11 +111,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
           CUSTOMER_DATA_SOURCE, null, false, false, uriInfo, jsonText);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLoadRecordResponse(response,
                                  POST,
@@ -127,8 +127,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  0,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
     });
   }
 
@@ -144,11 +143,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "212-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse response = this.invokeServerViaHttp(
           POST, uriText, null, recordBody, SzLoadRecordResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLoadRecordResponse(response,
                                  POST,
@@ -160,8 +159,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  0,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
     });
   }
 
@@ -180,7 +178,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataServices.loadRecord(CUSTOMER_DATA_SOURCE,
                                            null,
@@ -195,8 +193,8 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
-        validateBasics(response, 400, POST, uriText, before, after);
+        long after = System.nanoTime();
+        validateBasics(response, 400, POST, uriText, after - before);
       }
     });
   }
@@ -214,18 +212,17 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "818-555-1212");
       recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           POST, uriText, null, recordBody, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(response,
                      400,
                      POST,
                      uriText,
-                     before,
-                     after);
+                     after - before);
     });
   }
 
@@ -279,7 +276,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
           WATCHLIST_DATA_SOURCE,
           null,
@@ -288,7 +285,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           uriInfo,
           jsonText);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       String expectedRecordId = null;
       if (recordId != null && recordId.trim().length() > 0) {
@@ -305,8 +302,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records",
@@ -321,7 +317,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       jsonObject  = job.build();
       jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       response = this.entityDataServices.loadRecord(
           CUSTOMER_DATA_SOURCE,
           null,
@@ -330,7 +326,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           uriInfo,
           jsonText);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateLoadRecordResponse(response,
                                  POST,
@@ -342,8 +338,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
     });
   }
 
@@ -369,11 +364,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse response = this.invokeServerViaHttp(
           POST, uriText, null, recordBody, SzLoadRecordResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       String expectedRecordId = null;
       if (recordId != null && recordId.trim().length() > 0) {
@@ -390,8 +385,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records",
@@ -403,11 +397,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       response = this.invokeServerViaHttp(
           POST, uriText, null, recordBody, SzLoadRecordResponse.class);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateLoadRecordResponse(response,
                                  POST,
@@ -419,8 +413,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
     });
   }
 
@@ -446,14 +439,14 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzLoadRecordResponse clientResponse
           = this.entityDataApi.addRecordWithReturnedRecordId(recordBody,
                                                              WATCHLIST_DATA_SOURCE,
                                                              null,
                                                              withInfo,
                                                              withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzLoadRecordResponse response = jsonCopy(clientResponse,
                                                SzLoadRecordResponse.class);
@@ -473,8 +466,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records",
@@ -486,10 +478,10 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       clientResponse = this.entityDataApi.addRecordWithReturnedRecordId(
           recordBody, CUSTOMER_DATA_SOURCE, null, withInfo, withRaw);
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       response = jsonCopy(clientResponse, SzLoadRecordResponse.class);
 
@@ -503,8 +495,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
     });
   }
 
@@ -526,7 +517,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
           CUSTOMER_DATA_SOURCE,
           recordId,
@@ -536,7 +527,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           uriInfo,
           jsonText);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLoadRecordResponse(response,
                                  PUT,
@@ -548,8 +539,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  0,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
     });
   }
 
@@ -567,11 +557,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "818-555-1212");
       recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse response = this.invokeServerViaHttp(
           PUT, uriText, null, recordBody, SzLoadRecordResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLoadRecordResponse(response,
                                  PUT,
@@ -583,8 +573,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  0,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
     });
   }
@@ -606,7 +595,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataServices.loadRecord(CUSTOMER_DATA_SOURCE,
                                            recordId,
@@ -622,8 +611,8 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
-        validateBasics(response, 400, PUT, uriText, before, after);
+        long after = System.nanoTime();
+        validateBasics(response, 400, PUT, uriText, after - before);
       }
     });
   }
@@ -643,18 +632,17 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "818-555-1212");
       recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           PUT, uriText, null, recordBody, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(response,
                      400,
                      PUT,
                      uriText,
-                     before,
-                     after);
+                     after - before);
     });
   }
 
@@ -673,7 +661,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "818-555-1212");
       recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         com.senzing.gen.api.model.SzLoadRecordResponse clientResponse
             = this.entityDataApi.addRecord(recordBody,
@@ -690,7 +678,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                  + clientResponse + " ]");
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -702,8 +690,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                        400,
                        PUT,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
     });
   }
@@ -725,7 +712,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataServices.loadRecord(CUSTOMER_DATA_SOURCE,
                                            recordId,
@@ -741,8 +728,8 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
-        validateBasics(response, 400, PUT, uriText, before, after);
+        long after = System.nanoTime();
+        validateBasics(response, 400, PUT, uriText, after - before);
       }
     });
   }
@@ -762,18 +749,17 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "818-555-1212");
       recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           PUT, uriText, null, recordBody, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(response,
                      400,
                      PUT,
                      uriText,
-                     before,
-                     after);
+                     after - before);
     });
   }
 
@@ -792,7 +778,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "818-555-1212");
       recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         com.senzing.gen.api.model.SzLoadRecordResponse clientResponse
             = this.entityDataApi.addRecord(recordBody,
@@ -809,7 +795,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                  + clientResponse + " ]");
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -821,8 +807,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                        400,
                        PUT,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
     });
   }
@@ -854,7 +839,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
           WATCHLIST_DATA_SOURCE,
           recordId1,
@@ -864,7 +849,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           uriInfo,
           jsonText);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLoadRecordResponse(response,
                                  PUT,
@@ -876,8 +861,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
@@ -892,7 +876,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       jsonObject  = job.build();
       jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       response = this.entityDataServices.loadRecord(
           CUSTOMER_DATA_SOURCE,
           recordId2,
@@ -902,7 +886,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           uriInfo,
           jsonText);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateLoadRecordResponse(response,
                                  PUT,
@@ -914,8 +898,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
     });
   }
 
@@ -943,11 +926,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse response = this.invokeServerViaHttp(
           PUT, uriText, null, recordBody, SzLoadRecordResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLoadRecordResponse(response,
                                  PUT,
@@ -959,8 +942,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
@@ -972,11 +954,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       response = this.invokeServerViaHttp(
           PUT, uriText, null, recordBody, SzLoadRecordResponse.class);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateLoadRecordResponse(response,
                                  PUT,
@@ -988,8 +970,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
     });
   }
 
@@ -1017,7 +998,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzLoadRecordResponse clientResponse
           = this.entityDataApi.addRecord(recordBody,
                                          WATCHLIST_DATA_SOURCE,
@@ -1025,7 +1006,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                          null,
                                          withInfo,
                                          withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzLoadRecordResponse response = jsonCopy(clientResponse,
                                                SzLoadRecordResponse.class);
@@ -1040,8 +1021,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
@@ -1053,14 +1033,14 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       clientResponse = this.entityDataApi.addRecord(recordBody,
                                                     CUSTOMER_DATA_SOURCE,
                                                     recordId2,
                                                     null,
                                                     withInfo,
                                                     withRaw);
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       response = jsonCopy(clientResponse, SzLoadRecordResponse.class);
 
@@ -1074,8 +1054,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
     });
   }
 
@@ -1105,7 +1084,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse loadResponse = this.entityDataServices.loadRecord(
           WATCHLIST_DATA_SOURCE,
           recordId1,
@@ -1115,7 +1094,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           uriInfo,
           jsonText);
       loadResponse.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLoadRecordResponse(loadResponse,
                                  PUT,
@@ -1127,15 +1106,14 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + WATCHLIST_DATA_SOURCE
               + "/records/" + recordId1 + "/reevaluate", queryParams);
       uriInfo = this.newProxyUriInfo(uriText);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       SzReevaluateResponse response = this.entityDataServices.reevaluateRecord(
           WATCHLIST_DATA_SOURCE,
           recordId1,
@@ -1143,7 +1121,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           (withRaw != null ? withRaw : false),
           uriInfo);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateReevaluateResponse(response,
                                  POST,
@@ -1155,8 +1133,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
@@ -1171,7 +1148,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       jsonObject  = job.build();
       jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       loadResponse = this.entityDataServices.loadRecord(
           CUSTOMER_DATA_SOURCE,
           recordId2,
@@ -1181,7 +1158,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           uriInfo,
           jsonText);
       loadResponse.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateLoadRecordResponse(loadResponse,
                                  PUT,
@@ -1193,15 +1170,14 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE
               + "/records/" + recordId2 + "/reevaluate", queryParams);
       uriInfo = this.newProxyUriInfo(uriText);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       response = this.entityDataServices.reevaluateRecord(
           CUSTOMER_DATA_SOURCE,
           recordId2,
@@ -1209,7 +1185,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           (withRaw != null ? withRaw : false),
           uriInfo);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateReevaluateResponse(response,
                                  POST,
@@ -1221,8 +1197,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
 
     });
   }
@@ -1250,11 +1225,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse loadResponse = this.invokeServerViaHttp(
           PUT, uriText, null, recordBody, SzLoadRecordResponse.class);
       loadResponse.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLoadRecordResponse(loadResponse,
                                  PUT,
@@ -1266,18 +1241,17 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + WATCHLIST_DATA_SOURCE
               + "/records/" + recordId1 + "/reevaluate", queryParams);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       SzReevaluateResponse response = this.invokeServerViaHttp(
           POST, uriText, SzReevaluateResponse.class);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateReevaluateResponse(response,
                                  POST,
@@ -1289,8 +1263,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
@@ -1302,11 +1275,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       loadResponse = this.invokeServerViaHttp(
           PUT, uriText, null, recordBody, SzLoadRecordResponse.class);
       loadResponse.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateLoadRecordResponse(loadResponse,
                                  PUT,
@@ -1318,18 +1291,17 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
               + recordId2 + "/reevaluate", queryParams);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       response = this.invokeServerViaHttp(
           POST, uriText, SzReevaluateResponse.class);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateReevaluateResponse(response,
                                  POST,
@@ -1341,8 +1313,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
 
     });
   }
@@ -1371,7 +1342,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzLoadRecordResponse clientLoadResponse
           = this.entityDataApi.addRecord(recordBody,
                                          WATCHLIST_DATA_SOURCE,
@@ -1379,7 +1350,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                          null,
                                          withInfo,
                                          withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzLoadRecordResponse loadResponse = jsonCopy(clientLoadResponse,
                                                    SzLoadRecordResponse.class);
@@ -1394,20 +1365,19 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + WATCHLIST_DATA_SOURCE
               + "/records/" + recordId1 + "/reevaluate", queryParams);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       com.senzing.gen.api.model.SzReevaluateResponse clientResponse
           = this.entityDataApi.reevaluateRecord(WATCHLIST_DATA_SOURCE,
                                                 recordId1,
                                                 withInfo,
                                                 withRaw);
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       SzReevaluateResponse response = jsonCopy(clientResponse,
                                                SzReevaluateResponse.class);
@@ -1422,8 +1392,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
@@ -1435,14 +1404,14 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       clientLoadResponse = this.entityDataApi.addRecord(recordBody,
                                                         CUSTOMER_DATA_SOURCE,
                                                         recordId2,
                                                         null,
                                                         withInfo,
                                                         withRaw);
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       loadResponse = jsonCopy(clientLoadResponse, SzLoadRecordResponse.class);
 
@@ -1456,19 +1425,18 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
               + recordId2 + "/reevaluate", queryParams);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       clientResponse = this.entityDataApi.reevaluateRecord(CUSTOMER_DATA_SOURCE,
                                                            recordId2,
                                                            withInfo,
                                                            withRaw);
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       response = jsonCopy(clientResponse, SzReevaluateResponse.class);
 
@@ -1482,8 +1450,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
 
     });
   }
@@ -1515,7 +1482,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse loadResponse = this.entityDataServices.loadRecord(
           WATCHLIST_DATA_SOURCE,
           recordId1,
@@ -1525,7 +1492,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           uriInfo,
           jsonText);
       loadResponse.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLoadRecordResponse(loadResponse,
                                  PUT,
@@ -1537,10 +1504,9 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       SzDeleteRecordResponse response = this.entityDataServices.deleteRecord(
           WATCHLIST_DATA_SOURCE,
           recordId1,
@@ -1549,7 +1515,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           (withRaw != null ? withRaw : false),
           uriInfo);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateDeleteRecordResponse(response,
                                    DELETE,
@@ -1561,11 +1527,10 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                    1,
                                    0,
                                    Collections.emptySet(),
-                                   before,
-                                   after);
+                                   after - before);
 
       // try a second delete (prove idempotence)
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       response = this.entityDataServices.deleteRecord(
           WATCHLIST_DATA_SOURCE,
           recordId1,
@@ -1574,7 +1539,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           (withRaw != null ? withRaw : false),
           uriInfo);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateDeleteRecordResponse(response,
                                    DELETE,
@@ -1586,8 +1551,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                    1,
                                    0,
                                    Collections.emptySet(),
-                                   before,
-                                   after);
+                                   after - before);
 
     });
   }
@@ -1615,11 +1579,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse loadResponse = this.invokeServerViaHttp(
           PUT, uriText, null, recordBody, SzLoadRecordResponse.class);
       loadResponse.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLoadRecordResponse(loadResponse,
                                  PUT,
@@ -1631,14 +1595,13 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       SzDeleteRecordResponse response = this.invokeServerViaHttp(
           DELETE, uriText, SzDeleteRecordResponse.class);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateDeleteRecordResponse(response,
                                    DELETE,
@@ -1650,14 +1613,13 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                    1,
                                    0,
                                    Collections.emptySet(),
-                                   before,
-                                   after);
+                                   after - before);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       response = this.invokeServerViaHttp(
           DELETE, uriText, SzDeleteRecordResponse.class);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateDeleteRecordResponse(response,
                                    DELETE,
@@ -1669,8 +1631,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                    1,
                                    0,
                                    Collections.emptySet(),
-                                   before,
-                                   after);
+                                   after - before);
     });
   }
 
@@ -1698,7 +1659,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzLoadRecordResponse clientLoadResponse
           = this.entityDataApi.addRecord(recordBody,
                                          WATCHLIST_DATA_SOURCE,
@@ -1706,7 +1667,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                          null,
                                          withInfo,
                                          withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzLoadRecordResponse loadResponse = jsonCopy(clientLoadResponse,
                                                    SzLoadRecordResponse.class);
@@ -1721,17 +1682,16 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       com.senzing.gen.api.model.SzDeleteRecordResponse clientResponse
           = this.entityDataApi.deleteRecord(WATCHLIST_DATA_SOURCE,
                                             recordId1,
                                             null,
                                             withInfo,
                                             withRaw);
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       SzDeleteRecordResponse response = jsonCopy(clientResponse,
                                                  SzDeleteRecordResponse.class);
@@ -1746,16 +1706,15 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                    1,
                                    0,
                                    Collections.emptySet(),
-                                   before,
-                                   after);
+                                   after - before);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       clientResponse = this.entityDataApi.deleteRecord(WATCHLIST_DATA_SOURCE,
                                                        recordId1,
                                                        null,
                                                        withInfo,
                                                        withRaw);
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       response = jsonCopy(clientResponse, SzDeleteRecordResponse.class);
 
@@ -1769,8 +1728,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                    1,
                                    0,
                                    Collections.emptySet(),
-                                   before,
-                                   after);
+                                   after - before);
 
 
     });
@@ -1826,7 +1784,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse loadResponse = this.entityDataServices.loadRecord(
           WATCHLIST_DATA_SOURCE,
           recordId1,
@@ -1836,7 +1794,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           uriInfo,
           jsonText);
       loadResponse.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLoadRecordResponse(loadResponse,
                                  PUT,
@@ -1848,8 +1806,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       Long entityId1 = this.getEntityIdForRecordId(
           new SzRecordId(WATCHLIST_DATA_SOURCE, recordId1));
@@ -1859,14 +1816,14 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       uriInfo = this.newProxyUriInfo(uriText);
       queryParams.remove("entityId");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       SzReevaluateResponse response = this.entityDataServices.reevaluateEntity(
           entityId1,
           (withInfo != null ? withInfo : false),
           (withRaw != null ? withRaw : false),
           uriInfo);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateReevaluateResponse(response,
                                  POST,
@@ -1878,8 +1835,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
@@ -1894,7 +1850,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       jsonObject  = job.build();
       jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       loadResponse = this.entityDataServices.loadRecord(
           CUSTOMER_DATA_SOURCE,
           recordId2,
@@ -1904,7 +1860,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
           uriInfo,
           jsonText);
       loadResponse.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateLoadRecordResponse(loadResponse,
                                  PUT,
@@ -1916,8 +1872,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
 
       Long entityId2 = this.getEntityIdForRecordId(
           new SzRecordId(CUSTOMER_DATA_SOURCE, recordId2));
@@ -1927,14 +1882,14 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       uriInfo = this.newProxyUriInfo(uriText);
       queryParams.remove("entityId");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       response = this.entityDataServices.reevaluateEntity(
           entityId2,
           (withInfo != null ? withInfo : false),
           (withRaw != null ? withRaw : false),
           uriInfo);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateReevaluateResponse(response,
                                  POST,
@@ -1946,8 +1901,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
 
     });
   }
@@ -1975,11 +1929,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse loadResponse = this.invokeServerViaHttp(
           PUT, uriText, null, recordBody, SzLoadRecordResponse.class);
       loadResponse.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLoadRecordResponse(loadResponse,
                                  PUT,
@@ -1991,8 +1945,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       Long entityId1 = this.getEntityIdForRecordId(
           new SzRecordId(WATCHLIST_DATA_SOURCE, recordId1));
@@ -2001,11 +1954,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       uriText = this.formatServerUri("reevaluate-entity", queryParams);
       queryParams.remove("entityId");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       SzReevaluateResponse response = this.invokeServerViaHttp(
           POST, uriText, SzReevaluateResponse.class);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateReevaluateResponse(response,
                                  POST,
@@ -2017,8 +1970,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
@@ -2030,11 +1982,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       loadResponse = this.invokeServerViaHttp(
           PUT, uriText, null, recordBody, SzLoadRecordResponse.class);
       loadResponse.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateLoadRecordResponse(loadResponse,
                                  PUT,
@@ -2046,8 +1998,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
 
       Long entityId2 = this.getEntityIdForRecordId(
           new SzRecordId(CUSTOMER_DATA_SOURCE, recordId2));
@@ -2056,11 +2007,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       uriText = this.formatServerUri("reevaluate-entity", queryParams);
       queryParams.remove("entityId");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       response = this.invokeServerViaHttp(
           POST, uriText, SzReevaluateResponse.class);
       response.concludeTimers();
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       validateReevaluateResponse(response,
                                  POST,
@@ -2072,8 +2023,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
 
     });
   }
@@ -2102,7 +2052,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzLoadRecordResponse clientLoadResponse
           = this.entityDataApi.addRecord(recordBody,
                                          WATCHLIST_DATA_SOURCE,
@@ -2110,7 +2060,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                          null,
                                          withInfo,
                                          withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzLoadRecordResponse loadResponse =  jsonCopy(clientLoadResponse,
                                                     SzLoadRecordResponse.class);
@@ -2125,8 +2075,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       Long entityId1 = this.getEntityIdForRecordId(
           new SzRecordId(WATCHLIST_DATA_SOURCE, recordId1));
@@ -2136,10 +2085,10 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       queryParams2.putAll(queryParams);
       uriText = this.formatServerUri("reevaluate-entity", queryParams2);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       com.senzing.gen.api.model.SzReevaluateResponse clientResponse
           = this.entityDataApi.reevaluateEntity(entityId1, withInfo, withRaw);
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       SzReevaluateResponse response = jsonCopy(clientResponse,
                                                SzReevaluateResponse.class);
@@ -2154,8 +2103,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  0,
                                  Collections.emptySet(),
-                                 before,
-                                 after);
+                                 after - before);
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
@@ -2167,14 +2115,14 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       clientLoadResponse = this.entityDataApi.addRecord(recordBody,
                                                         CUSTOMER_DATA_SOURCE,
                                                         recordId2,
                                                         null,
                                                         withInfo,
                                                         withRaw);
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       loadResponse = jsonCopy(clientLoadResponse, SzLoadRecordResponse.class);
 
@@ -2188,8 +2136,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
+                                 after - before);
 
       Long entityId2 = this.getEntityIdForRecordId(
           new SzRecordId(CUSTOMER_DATA_SOURCE, recordId2));
@@ -2199,11 +2146,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       queryParams2.putAll(queryParams);
       uriText = this.formatServerUri("reevaluate-entity", queryParams2);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       clientResponse = this.entityDataApi.reevaluateEntity(entityId2,
                                                            withInfo,
                                                            withRaw);
-      after = System.currentTimeMillis();
+      after = System.nanoTime();
 
       response = jsonCopy(clientResponse, SzReevaluateResponse.class);
 
@@ -2217,9 +2164,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  1,
                                  1,
                                  Set.of(WATCHLIST_FLAG),
-                                 before,
-                                 after);
-
+                                 after - before);
     });
   }
 

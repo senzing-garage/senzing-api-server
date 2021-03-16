@@ -8,6 +8,8 @@ import com.senzing.gen.api.services.EntityDataApi;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.SemanticVersion;
+import com.senzing.util.Timers;
+import org.glassfish.jersey.internal.guava.Lists;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,7 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import javax.json.Json;
+import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObjectBuilder;
 import javax.ws.rs.NotFoundException;
@@ -251,11 +254,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(
           "data-sources/" + dataSource + "/records/" + recordId);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzRecordResponse response = this.entityDataServices.getRecord(
           dataSource, recordId, false, uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateRecordResponse(
           response,
@@ -270,8 +273,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("DOB: 12-JAN-1981"),
           null,
           null,
-          before,
-          after,
+          after - before,
           null);
     });
   }
@@ -285,11 +287,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(
           "data-sources/" + dataSource + "/records/" + recordId);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzRecordResponse response = this.invokeServerViaHttp(
           GET, uriText, SzRecordResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateRecordResponse(
           response,
@@ -304,8 +306,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("DOB: 15-MAY-1983"),
           null,
           null,
-          before,
-          after,
+          after - before,
           null);
     });
   }
@@ -320,11 +321,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           "data-sources/" + dataSource + "/records/" + recordId
               + "?withRaw=true");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzRecordResponse response = this.entityDataServices.getRecord(
           dataSource, recordId, true, uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateRecordResponse(
           response,
@@ -339,8 +340,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("DOB: 17-OCT-1978"),
           null,
           null,
-          before,
-          after,
+          after - before,
           true);
     });
   }
@@ -355,11 +355,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           "data-sources/" + dataSource + "/records/" + recordId
               + "?withRaw=true");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzRecordResponse response = this.invokeServerViaHttp(
           GET, uriText, SzRecordResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateRecordResponse(
           response,
@@ -374,8 +374,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("DOB: 5-FEB-1979"),
           null,
           null,
-          before,
-          after,
+          after - before,
           true);
     });
   }
@@ -390,11 +389,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           "data-sources/" + dataSource + "/records/" + recordId
               + "?withRaw=false");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzRecordResponse response = this.entityDataServices.getRecord(
           dataSource, recordId, false, uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateRecordResponse(
           response,
@@ -409,8 +408,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("DOB: 12-JAN-1981"),
           null,
           Collections.singleton("MOTHERS_MAIDEN_NAME: WILSON"),
-          before,
-          after,
+          after - before,
           false);
     });
   }
@@ -425,11 +423,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           "data-sources/" + dataSource + "/records/" + recordId
               + "?withRaw=false");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzRecordResponse response = this.invokeServerViaHttp(
           GET, uriText, SzRecordResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateRecordResponse(
           response,
@@ -444,8 +442,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("DOB: 15-MAY-1983"),
           null,
           Collections.singleton("MOTHERS_MAIDEN_NAME: JACOBS"),
-          before,
-          after,
+          after - before,
           false);
     });
   }
@@ -465,10 +462,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       }
       String uriText = this.formatServerUri(sb.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzRecordResponse clientResponse
           = this.entityDataApi.getRecord(dataSource, recordId, withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzRecordResponse response = jsonCopy(clientResponse,
                                            SzRecordResponse.class);
@@ -486,8 +483,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("DOB: 15-MAY-1983"),
           null,
           null,
-          before,
-          after,
+          after - before,
           (withRaw != null ? withRaw : false));
     });
   }
@@ -502,11 +498,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(
           "data-sources/" + dataSource + "/records/" + recordId);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzRecordResponse response = this.entityDataServices.getRecord(
           dataSource, recordId, false, uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateRecordResponse(
           response,
@@ -521,8 +517,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           set("DOB: 08-SEP-1971", "GENDER: M"),
           Collections.singleton("REL_LINK: HUSBAND: SPOUSE " + relKey),
           null,
-          before,
-          after,
+          after - before,
           null);
     });
   }
@@ -537,11 +532,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(
           "data-sources/" + dataSource + "/records/" + recordId);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzRecordResponse response = this.invokeServerViaHttp(
           GET, uriText, SzRecordResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateRecordResponse(
           response,
@@ -556,8 +551,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           set("DOB: 05-DEC-1981", "GENDER: F"),
           Collections.singleton("REL_LINK: WIFE: SPOUSE " + relKey),
           null,
-          before,
-          after,
+          after - before,
           null);
     });
   }
@@ -1154,7 +1148,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzEntityResponse response = this.entityDataServices.getEntityByRecordId(
           keyRecordId.getDataSourceCode(),
@@ -1188,7 +1182,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       }
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityResponse(
           testInfo,
@@ -1209,8 +1203,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           duplicateFeatureValues,
           expectedDataValues,
           expectedOtherDataValues,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -1255,11 +1248,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityResponse response = this.invokeServerViaHttp(
           GET, uriText, SzEntityResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityResponse(
           testInfo,
@@ -1280,8 +1273,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           duplicateFeatureValues,
           expectedDataValues,
           expectedOtherDataValues,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -1338,7 +1330,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
             withRelated.toString());
       }
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzEntityResponse clientResponse
           = this.entityDataApi.getEntityByRecordId(
               keyRecordId.getDataSourceCode(),
@@ -1350,7 +1342,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
               relMode,
               withRaw);
 
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzEntityResponse response = jsonCopy(clientResponse,
                                            SzEntityResponse.class);
@@ -1374,8 +1366,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           duplicateFeatureValues,
           expectedDataValues,
           expectedOtherDataValues,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -1391,7 +1382,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       try {
         this.entityDataServices.getEntityByRecordId(
@@ -1411,10 +1402,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
         validateBasics(
-            response, 404, GET, uriText, before, after);
+            response, 404, GET, uriText, after - before);
       }
     });
   }
@@ -1432,7 +1423,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       try {
         this.entityDataServices.getEntityByRecordId(
@@ -1452,10 +1443,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
         validateBasics(
-            response, 404, GET, uriText, before, after);
+            response, 404, GET, uriText, after - before);
       }
     });
   }
@@ -1471,14 +1462,14 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           GET, uriText, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(
-          response, 404, GET, uriText, before, after);
+          response, 404, GET, uriText, after - before);
     });
   }
 
@@ -1494,14 +1485,14 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           GET, uriText, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(
-          response, 404, GET, uriText, before, after);
+          response, 404, GET, uriText, after - before);
     });
   }
 
@@ -1548,7 +1539,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzEntityResponse response = this.entityDataServices.getEntityByEntityId(
           entityId,
@@ -1561,7 +1552,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           uriInfo);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityResponse(
           testInfo,
@@ -1582,8 +1573,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           duplicateFeatureValues,
           expectedDataValues,
           expectedOtherDataValues,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -1629,11 +1619,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityResponse response = this.invokeServerViaHttp(
           GET, uriText, SzEntityResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityResponse(
           testInfo,
@@ -1654,8 +1644,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           duplicateFeatureValues,
           expectedDataValues,
           expectedOtherDataValues,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -1713,7 +1702,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
             withRelated.toString());
       }
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzEntityResponse clientResponse
           = this.entityDataApi.getEntityByEntityId(entityId,
                                                    featMode,
@@ -1723,7 +1712,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
                                                    relMode,
                                                    withRaw);
 
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzEntityResponse response = jsonCopy(clientResponse,
                                            SzEntityResponse.class);
@@ -1747,8 +1736,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           duplicateFeatureValues,
           expectedDataValues,
           expectedOtherDataValues,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -1761,7 +1749,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri("entities/" + badEntityId);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       try {
         this.entityDataServices.getEntityByEntityId(
@@ -1780,10 +1768,10 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
         validateBasics(
-            response, 404, GET, uriText, before, after);
+            response, 404, GET, uriText, after - before);
       }
     });
   }
@@ -1796,14 +1784,14 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri("entities/" + badEntityId);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           GET, uriText, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(
-          response, 404, GET, uriText, before, after);
+          response, 404, GET, uriText, after - before);
 
     });
   }
@@ -1843,36 +1831,62 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     return result;
   }
 
-  private List<Arguments> searchParameters() {
-    SemanticVersion version = new SemanticVersion(this.getNativeApiVersion());
-    boolean supportFiltering
-        = MINIMUM_SEARCH_FILTERING_VERSION.compareTo(version) <= 0;
+  private <T extends Comparable<T>> Set<T> sortedSet(Set<T> set) {
+    List<T> list = new ArrayList<>(set.size());
+    list.addAll(set);
+    Collections.sort(list);
+    Set<T> sortedSet = new LinkedHashSet<>();
+    sortedSet.addAll(list);
+    return sortedSet;
+  }
 
+  private <K extends Comparable<K>, V> Map<K, V> sortedMap(Map<K, V> map)
+  {
+    List<K> list = new ArrayList<>(map.size());
+    list.addAll(map.keySet());
+    Collections.sort(list);
+    Map<K, V> sortedMap = new LinkedHashMap<>();
+    for (K key: list) {
+      sortedMap.put(key, map.get(key));
+    }
+    return sortedMap;
+  }
+
+  private List<Arguments> searchParameters() {
+    String versionString = this.getNativeApiVersion();
+
+    SemanticVersion version = (versionString == null)
+        ? null : new SemanticVersion(versionString);
+
+    boolean supportFiltering = (version == null) ? true // assume latest version
+        : (MINIMUM_SEARCH_FILTERING_VERSION.compareTo(version) <= 0);
+
+    System.out.println("SUPPORTING FILTERING FOR SEARCH: " + supportFiltering);
     Map<Map<String, Set<String>>, Map<SzAttributeSearchResultType, Integer>>
         searchCountMap = new LinkedHashMap<>();
 
     searchCountMap.put(criteria("PHONE_NUMBER", "702-555-1212"),
-                       Map.of(POSSIBLE_RELATION, 1));
+                       sortedMap(Map.of(POSSIBLE_RELATION, 1)));
 
     searchCountMap.put(criteria("PHONE_NUMBER", "212-555-1212"),
-                       Map.of(POSSIBLE_RELATION, 1));
+                       sortedMap(Map.of(POSSIBLE_RELATION, 1)));
 
     searchCountMap.put(criteria("PHONE_NUMBER", "818-555-1313"),
-                       Map.of(POSSIBLE_RELATION, 1));
+                       sortedMap(Map.of(POSSIBLE_RELATION, 1)));
 
     searchCountMap.put(criteria("PHONE_NUMBER", "818-555-1212"),
-                       Map.of(POSSIBLE_RELATION, 1));
+                       sortedMap(Map.of(POSSIBLE_RELATION, 1)));
 
     searchCountMap.put(
         criteria("PHONE_NUMBER", "818-555-1212", "818-555-1313"),
-        Map.of(POSSIBLE_RELATION, 2));
+        sortedMap(Map.of(POSSIBLE_RELATION, 2)));
 
     searchCountMap.put(
         criteria(criterion("ADDR_LINE1", "100 MAIN STREET"),
                  criterion("ADDR_CITY", "LOS ANGELES"),
                  criterion("ADDR_STATE", "CALIFORNIA"),
                  criterion("ADDR_POSTAL_CODE", "90012")),
-        Map.of(POSSIBLE_RELATION, 2));
+        sortedMap(Map.of(POSSIBLE_RELATION, 2)));
 
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "JOHN DOE", "JANE DOE"),
@@ -1880,7 +1894,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
                  criterion("ADDR_CITY", "LOS ANGELES"),
                  criterion("ADDR_STATE", "CALIFORNIA"),
                  criterion("ADDR_POSTAL_CODE", "90012")),
-        Map.of(MATCH, 2));
+        sortedMap(Map.of(MATCH, 2)));
 
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "JOHN DOE"),
@@ -1888,24 +1902,24 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
                  criterion("ADDR_CITY", "LOS ANGELES"),
                  criterion("ADDR_STATE", "CALIFORNIA"),
                  criterion("ADDR_POSTAL_CODE", "90012")),
-        Map.of(MATCH, 1, POSSIBLE_RELATION, 1));
+        sortedMap(Map.of(MATCH, 1, POSSIBLE_RELATION, 1)));
 
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "Mark Hightower"),
                  criterion("PHONE_NUMBER", "563-927-2833")),
-        Map.of(MATCH, 1, NAME_ONLY_MATCH, 1));
+        sortedMap(Map.of(MATCH, 1, NAME_ONLY_MATCH, 1)));
 
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "Mark Hightower"),
                  criterion("DATE_OF_BIRTH", "22-MAR-1981")),
-        Map.of(POSSIBLE_MATCH, 1));
+        sortedMap(Map.of(POSSIBLE_MATCH, 1)));
 
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "Mark Hightower"),
                  criterion("PHONE_NUMBER", "563-927-2833"),
                  criterion("PHONE_NUMBER", "781-332-2824"),
                  criterion("DATE_OF_BIRTH", "22-JUN-1981")),
-        Map.of(MATCH, 1, POSSIBLE_MATCH, 1));
+        sortedMap(Map.of(MATCH, 1, POSSIBLE_MATCH, 1)));
 
     List<Arguments> list = new LinkedList<>();
 
@@ -1941,12 +1955,18 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       });
 
       // try complemente sets
-      EnumSet<SzAttributeSearchResultType> allSet
+      EnumSet<SzAttributeSearchResultType> allEnumSet
           = EnumSet.copyOf(resultCounts.keySet());
 
+      Set<SzAttributeSearchResultType> allSet
+          = sortedSet(allEnumSet);
+
       // create the complement set
-      EnumSet<SzAttributeSearchResultType> complementSet
-          = EnumSet.complementOf(allSet);
+      EnumSet<SzAttributeSearchResultType> complementEnumSet
+          = EnumSet.complementOf(allEnumSet);
+
+      Set<SzAttributeSearchResultType> complementSet
+          = sortedSet(complementEnumSet);
 
       if (complementSet.size() > 0) {
         typeSetList.add(complementSet);
@@ -1959,7 +1979,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         resultCounts.forEach((type1, count1) -> {
           resultCounts.forEach((type2, count2) -> {
             if (type1 != type2) {
-              typeSetList.add(Set.of(type1, type2));
+              typeSetList.add(sortedSet(Set.of(type1, type2)));
               countList.add(supportFiltering ? (count1 + count2) : sum);
             }
           });
@@ -2080,7 +2100,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       String uriText = sb.toString();
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzAttributeSearchResponse response
           = this.entityDataServices.searchByAttributes(
           attrs,
@@ -2095,7 +2115,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           uriInfo);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       // TODO(barry): remove this extra code
       int flags = ServicesUtil.getFlags(
@@ -2128,8 +2148,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           featureMode,
           withFeatureStats == null ? false : withFeatureStats,
           withInternalFeatures == null ? false : withInternalFeatures,
-          before,
-          after,
+          after - before,
           withRaw);
 
     });
@@ -2204,11 +2223,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       }
       String uriText = this.formatServerUri(sb.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzAttributeSearchResponse response = this.invokeServerViaHttp(
           GET, uriText, SzAttributeSearchResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateSearchResponse(
           testInfo,
@@ -2221,8 +2240,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           featureMode,
           withFeatureStats == null ? false : withFeatureStats,
           withInternalFeatures == null ? false : withInternalFeatures,
-          before,
-          after,
+          after - before,
           withRaw);
     });
   }
@@ -2309,7 +2327,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
               com.senzing.gen.api.model.SzAttributeSearchResultType.valueOf(
                   resultType.toString())));
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzAttributeSearchResponse clientResponse
           = this.entityDataApi.searchByAttributes(attrs,
                                                   null,
@@ -2320,7 +2338,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
                                                   forceMinimal,
                                                   withRelationships,
                                                   withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzAttributeSearchResponse response = jsonCopy(
           clientResponse, SzAttributeSearchResponse.class);
@@ -2336,8 +2354,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           featureMode,
           withFeatureStats == null ? false : withFeatureStats,
           withInternalFeatures == null ? false : withInternalFeatures,
-          before,
-          after,
+          after - before,
           withRaw);
     });
   }
@@ -2411,7 +2428,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzAttributeSearchResponse response
           = this.entityDataServices.searchByAttributes(
           null,
@@ -2426,7 +2443,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           uriInfo);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateSearchResponse(
           testInfo,
@@ -2439,8 +2456,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           featureMode,
           withFeatureStats == null ? false : withFeatureStats,
           withInternalFeatures == null ? false : withInternalFeatures,
-          before,
-          after,
+          after - before,
           withRaw);
 
     });
@@ -2506,11 +2522,11 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       }
       String uriText = this.formatServerUri("entities" + sb.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzAttributeSearchResponse response = this.invokeServerViaHttp(
           GET, uriText, SzAttributeSearchResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateSearchResponse(
           testInfo,
@@ -2523,8 +2539,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           featureMode,
           withFeatureStats == null ? false : withFeatureStats,
           withInternalFeatures == null ? false : withInternalFeatures,
-          before,
-          after,
+          after - before,
           withRaw);
     });
   }
@@ -2604,7 +2619,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
               com.senzing.gen.api.model.SzAttributeSearchResultType.valueOf(
                   resultType.toString())));
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzAttributeSearchResponse clientResponse
           = this.entityDataApi.searchByAttributes(null,
                                                   attrList,
@@ -2615,7 +2630,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
                                                   forceMinimal,
                                                   withRelationships,
                                                   withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzAttributeSearchResponse response = jsonCopy(
           clientResponse, SzAttributeSearchResponse.class);
@@ -2631,8 +2646,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           featureMode,
           withFeatureStats == null ? false : withFeatureStats,
           withInternalFeatures == null ? false : withInternalFeatures,
-          before,
-          after,
+          after - before,
           withRaw);
     });
   }

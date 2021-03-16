@@ -40,39 +40,39 @@ public class AdminServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri("heartbeat");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzBasicResponse response = this.adminServices.heartbeat(uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
-      validateBasics(response, uriText, before, after);
+      validateBasics(response, uriText, after - before);
     });
   }
 
   @Test public void heartbeatViaHttpTest() {
     this.performTest(() -> {
       String  uriText = this.formatServerUri("heartbeat");
-      long    before  = System.currentTimeMillis();
+      long    before  = System.nanoTime();
       SzBasicResponse response
           = this.invokeServerViaHttp(GET, uriText, SzBasicResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
-      validateBasics(response, uriText, before, after);
+      validateBasics(response, uriText, after - before);
     });
   }
 
   @Test public void heartbeatViaJavaClientTest() {
     this.performTest(() -> {
       String uriText = this.formatServerUri("heartbeat");
-      long    before  = System.currentTimeMillis();
+      long    before  = System.nanoTime();
       com.senzing.gen.api.model.SzBaseResponse clientResponse
           = this.adminApi.heartbeat();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzBasicResponse response
           = jsonCopy(clientResponse, SzBasicResponse.class);
 
-      validateBasics(response, uriText, before, after);
+      validateBasics(response, uriText, after - before);
     });
   }
 
@@ -81,15 +81,14 @@ public class AdminServicesTest extends AbstractServiceTest {
       String  uriText = this.formatServerUri("license");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long              before    = System.currentTimeMillis();
+      long              before    = System.nanoTime();
       SzLicenseResponse response  = this.adminServices.license(false, uriInfo);
       response.concludeTimers();
-      long              after     = System.currentTimeMillis();
+      long              after     = System.nanoTime();
 
       validateLicenseResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - after - before,
                               null,
                               null,
                               null);
@@ -101,15 +100,14 @@ public class AdminServicesTest extends AbstractServiceTest {
       String  uriText = this.formatServerUri("license");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLicenseResponse response
           = this.invokeServerViaHttp(GET, uriText, SzLicenseResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLicenseResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - after - before,
                               null,
                               null,
                               null);
@@ -120,18 +118,17 @@ public class AdminServicesTest extends AbstractServiceTest {
     this.performTest(() -> {
       String  uriText = this.formatServerUri("license");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzLicenseResponse clientResponse
           = this.adminApi.license(null);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzLicenseResponse response
           = jsonCopy(clientResponse, SzLicenseResponse.class);
 
       validateLicenseResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - after - before,
                               null,
                               null,
                               null);
@@ -143,15 +140,14 @@ public class AdminServicesTest extends AbstractServiceTest {
       String  uriText = this.formatServerUri("license?withRaw=false");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long              before    = System.currentTimeMillis();
+      long              before    = System.nanoTime();
       SzLicenseResponse response  = this.adminServices.license(false, uriInfo);
       response.concludeTimers();
-      long              after     = System.currentTimeMillis();
+      long              after     = System.nanoTime();
 
       validateLicenseResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - after - before,
                               false,
                               null,
                               null);
@@ -163,15 +159,14 @@ public class AdminServicesTest extends AbstractServiceTest {
     this.performTest(() -> {
       String  uriText = this.formatServerUri("license?withRaw=false");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLicenseResponse response
           = this.invokeServerViaHttp(GET, uriText, SzLicenseResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLicenseResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - after - before,
                               false,
                               null,
                               null);
@@ -182,18 +177,17 @@ public class AdminServicesTest extends AbstractServiceTest {
     this.performTest(() -> {
       String  uriText = this.formatServerUri("license?withRaw=false");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzLicenseResponse clientResponse
           = this.adminApi.license(false);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzLicenseResponse response
           = jsonCopy(clientResponse, SzLicenseResponse.class);
 
       validateLicenseResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - after - before,
                               null,
                               null,
                               null);
@@ -205,15 +199,14 @@ public class AdminServicesTest extends AbstractServiceTest {
       String  uriText = this.formatServerUri("license?withRaw=true");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long              before    = System.currentTimeMillis();
+      long              before    = System.nanoTime();
       SzLicenseResponse response  = this.adminServices.license(true, uriInfo);
       response.concludeTimers();
-      long              after     = System.currentTimeMillis();
+      long              after     = System.nanoTime();
 
       validateLicenseResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - before,
                               true,
                               null,
                               null);
@@ -224,15 +217,14 @@ public class AdminServicesTest extends AbstractServiceTest {
     this.performTest(()-> {
       String uriText = this.formatServerUri("license?withRaw=true");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLicenseResponse response
           = this.invokeServerViaHttp(GET, uriText, SzLicenseResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLicenseResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - before,
                               true,
                               null,
                               null);
@@ -243,18 +235,17 @@ public class AdminServicesTest extends AbstractServiceTest {
     this.performTest(()-> {
       String uriText = this.formatServerUri("license?withRaw=true");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzLicenseResponse clientResponse
           = this.adminApi.license(true);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzLicenseResponse response
           = jsonCopy(clientResponse, SzLicenseResponse.class);
 
       validateLicenseResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - before,
                               true,
                               null,
                               null);
@@ -266,16 +257,15 @@ public class AdminServicesTest extends AbstractServiceTest {
       String  uriText = this.formatServerUri("version");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long              before    = System.currentTimeMillis();
+      long              before    = System.nanoTime();
       SzVersionResponse response  = this.adminServices.version(false,
                                                                uriInfo);
       response.concludeTimers();
-      long              after     = System.currentTimeMillis();
+      long              after     = System.nanoTime();
 
       validateVersionResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - before,
                               null,
                               this.readInitJsonFile());
     });
@@ -285,15 +275,14 @@ public class AdminServicesTest extends AbstractServiceTest {
     this.performTest(() -> {
       String  uriText = this.formatServerUri("version");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzVersionResponse response
           = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateVersionResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - before,
                               null,
                               this.readInitJsonFile());
 
@@ -304,18 +293,17 @@ public class AdminServicesTest extends AbstractServiceTest {
     this.performTest(() -> {
       String  uriText = this.formatServerUri("version");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzVersionResponse clientResponse
           = this.adminApi.version(null);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzVersionResponse response
           = jsonCopy(clientResponse, SzVersionResponse.class);
 
       validateVersionResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - before,
                               false,
                               this.readInitJsonFile());
     });
@@ -326,15 +314,14 @@ public class AdminServicesTest extends AbstractServiceTest {
       String  uriText = this.formatServerUri("version?withRaw=false");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long              before    = System.currentTimeMillis();
+      long              before    = System.nanoTime();
       SzVersionResponse response  = this.adminServices.version(false, uriInfo);
       response.concludeTimers();
-      long              after     = System.currentTimeMillis();
+      long              after     = System.nanoTime();
 
       validateVersionResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - before,
                               false,
                               this.readInitJsonFile());
     });
@@ -344,15 +331,14 @@ public class AdminServicesTest extends AbstractServiceTest {
     this.performTest(() -> {
       String  uriText = this.formatServerUri("version?withRaw=false");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzVersionResponse response
           = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateVersionResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - before,
                               false,
                               this.readInitJsonFile());
     });
@@ -362,18 +348,17 @@ public class AdminServicesTest extends AbstractServiceTest {
     this.performTest(() -> {
       String  uriText = this.formatServerUri("version?withRaw=false");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzVersionResponse clientResponse
           = this.adminApi.version(false);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzVersionResponse response
           = jsonCopy(clientResponse, SzVersionResponse.class);
 
       validateVersionResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - before,
                               false,
                               this.readInitJsonFile());
     });
@@ -384,15 +369,14 @@ public class AdminServicesTest extends AbstractServiceTest {
       String  uriText = this.formatServerUri("version?withRaw=true");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long              before    = System.currentTimeMillis();
+      long              before    = System.nanoTime();
       SzVersionResponse response  = this.adminServices.version(true, uriInfo);
       response.concludeTimers();
-      long              after     = System.currentTimeMillis();
+      long              after     = System.nanoTime();
 
       validateVersionResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - before,
                               true,
                               this.readInitJsonFile());
     });
@@ -402,15 +386,14 @@ public class AdminServicesTest extends AbstractServiceTest {
     this.performTest(() -> {
       String uriText = this.formatServerUri("version?withRaw=true");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzVersionResponse response
           = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateVersionResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - before,
                               true,
                               this.readInitJsonFile());
     });
@@ -420,18 +403,17 @@ public class AdminServicesTest extends AbstractServiceTest {
     this.performTest(() -> {
       String  uriText = this.formatServerUri("version?withRaw=true");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzVersionResponse clientResponse
           = this.adminApi.version(true);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzVersionResponse response
           = jsonCopy(clientResponse, SzVersionResponse.class);
 
       validateVersionResponse(response,
                               uriText,
-                              before,
-                              after,
+                              after - before,
                               true,
                               this.readInitJsonFile());
     });
