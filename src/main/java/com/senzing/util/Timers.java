@@ -3,9 +3,18 @@ package com.senzing.util;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Provides functionality to measure timing values associated with functions
+ * with {@link String} keys to assigned to identify what is being timed.
+ */
 public class Timers {
+  /**
+   * Internal method for getting {@link System#nanoTime()}.
+   *
+   * @return The current value for {@link System#nanoTime()}.
+   */
   private static long now() {
-    return System.currentTimeMillis();
+    return System.nanoTime();
   }
 
   private static class TimerInfo {
@@ -36,7 +45,7 @@ public class Timers {
     private long getDuration(long atTime) {
       if (this.start == null) return this.accumulated;
 
-      return this.accumulated + (atTime - this.start);
+      return this.accumulated + ((atTime - this.start) / 1000L);
     }
 
     private boolean isRunning() {
@@ -53,7 +62,7 @@ public class Timers {
 
     private boolean pause(long atTime) {
       if (this.start == null) return false;
-      long duration = atTime - this.start;
+      long duration = (atTime - this.start) / 1000L;
       this.accumulated += duration;
       this.start = null;
       return true;
