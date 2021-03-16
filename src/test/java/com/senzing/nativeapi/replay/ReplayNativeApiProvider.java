@@ -1611,6 +1611,30 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     }
 
     /**
+     *
+     */
+    private String invocationToString(Method method, Object[] args) {
+      StringWriter sw = new StringWriter();
+      sw.append(this.apiInterface.getSimpleName());
+      sw.append(".").append(method.getName()).append("(");
+      String prefix = "";
+      int argIndex = 0;
+      for (Class argType : method.getParameterTypes()) {
+        sw.append(prefix);
+        sw.append(argType.getSimpleName());
+        if (argType != StringBuffer.class && argType != Result.class) {
+          sw.append(" (");
+          sw.append(String.valueOf(args[argIndex]));
+          sw.append(")");
+        }
+        argIndex++;
+        prefix = ", ";
+      }
+      sw.append(")");
+      return sw.toString();
+    }
+
+    /**
      * Handles recording or replaying the results for the invocation.
      *
      * @param proxy The proxy on which it is called.
@@ -1715,7 +1739,6 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
             cache.results = new LinkedList<>();
             provider.currentCache.put(invocationHash, cache);
           }
-
           String resultsHash = provider.saveResults(resultMap);
           Object newValue = (resultsHash == null ? resultMap : resultsHash);
 
@@ -1740,25 +1763,8 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
           InvocationCache cache = provider.currentCache.get(invocationHash);
 
           if (cache == null) {
-            StringWriter sw = new StringWriter();
-            sw.append(this.apiInterface.getSimpleName());
-            sw.append(".").append(method.getName()).append("(");
-            String prefix = "";
-            int argIndex = 0;
-            for (Class argType : method.getParameterTypes()) {
-              sw.append(prefix);
-              sw.append(argType.getSimpleName());
-              if (argType != StringBuffer.class && argType != Result.class) {
-                sw.append(" (");
-                sw.append(String.valueOf(args[argIndex]));
-                sw.append(")");
-              }
-              argIndex++;
-              prefix = ", ";
-            }
-            sw.append(")");
             throw new IllegalStateException(
-                "No cache for method (" + sw.toString()
+                "No cache for method " + this.invocationToString(method, args)
                     + " with specified parameters (" + invocationHash
                     + ") -- manually remove cache: "
                     + provider.getTestCacheDir());
