@@ -276,6 +276,7 @@ public abstract class AbstractServiceTest {
    */
   protected void endTests() {
     try {
+      File testCacheZip = REPLAY_PROVIDER.getTestCacheZip();
       REPLAY_PROVIDER.endTests(this.replayTestToken);
       this.replayTestToken = null;
       if (this.getFailureCount() > 0 && REPLAY_PROVIDER.isCacheStale()) {
@@ -283,7 +284,7 @@ public abstract class AbstractServiceTest {
         System.out.println("**********************");
         System.out.println("** WARNING: DEPENDENCIES HAVE CHANGED");
         System.out.println("** CACHED TEST RESULTS MAY BE INVALID");
-        System.out.println("** " + REPLAY_PROVIDER.getTestCacheZip());
+        System.out.println("** " + testCacheZip);
         System.out.println("**********************");
         System.out.println();
       }
@@ -953,8 +954,11 @@ public abstract class AbstractServiceTest {
    * @return The version for the underlying runtime native Senzing API.
    */
   protected String getNativeApiVersion() {
-    if (this.server == null) return null;
-    return this.server.getNativeApiVersion();
+    if (this.server == null) {
+      return null;
+    }
+    String result = this.server.getNativeApiVersion();
+    return result;
   }
 
   /**
