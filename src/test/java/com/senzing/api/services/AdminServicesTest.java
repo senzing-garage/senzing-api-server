@@ -88,7 +88,7 @@ public class AdminServicesTest extends AbstractServiceTest {
 
       validateLicenseResponse(response,
                               uriText,
-                              after - after - before,
+                              after - before,
                               null,
                               null,
                               null);
@@ -107,7 +107,7 @@ public class AdminServicesTest extends AbstractServiceTest {
 
       validateLicenseResponse(response,
                               uriText,
-                              after - after - before,
+                              after - before,
                               null,
                               null,
                               null);
@@ -128,7 +128,7 @@ public class AdminServicesTest extends AbstractServiceTest {
 
       validateLicenseResponse(response,
                               uriText,
-                              after - after - before,
+                              after - before,
                               null,
                               null,
                               null);
@@ -147,7 +147,7 @@ public class AdminServicesTest extends AbstractServiceTest {
 
       validateLicenseResponse(response,
                               uriText,
-                              after - after - before,
+                              after - before,
                               false,
                               null,
                               null);
@@ -166,7 +166,7 @@ public class AdminServicesTest extends AbstractServiceTest {
 
       validateLicenseResponse(response,
                               uriText,
-                              after - after - before,
+                              after - before,
                               false,
                               null,
                               null);
@@ -187,7 +187,7 @@ public class AdminServicesTest extends AbstractServiceTest {
 
       validateLicenseResponse(response,
                               uriText,
-                              after - after - before,
+                              after - before,
                               null,
                               null,
                               null);

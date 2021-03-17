@@ -1861,7 +1861,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     boolean supportFiltering = (version == null) ? true // assume latest version
         : (MINIMUM_SEARCH_FILTERING_VERSION.compareTo(version) <= 0);
 
-    System.out.println("SUPPORTING FILTERING FOR SEARCH: " + supportFiltering);
     Map<Map<String, Set<String>>, Map<SzAttributeSearchResultType, Integer>>
         searchCountMap = new LinkedHashMap<>();
 
