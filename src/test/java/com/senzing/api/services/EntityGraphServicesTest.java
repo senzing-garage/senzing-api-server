@@ -584,7 +584,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzEntityPathResponse response = this.entityGraphServices.getEntityPath(
           fromIdentifer.toString(),
@@ -602,7 +602,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           uriInfo);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateEntityPathResponse(
           testInfo,
@@ -623,8 +623,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           withRaw,
           expectedPathLength,
           expectedPath,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -692,11 +691,11 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityPathResponse response = this.invokeServerViaHttp(
           GET, uriText, SzEntityPathResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateEntityPathResponse(
           testInfo,
@@ -717,8 +716,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           withRaw,
           expectedPathLength,
           expectedPath,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -803,7 +801,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       com.senzing.gen.api.model.SzEntityIdentifier clientTo
           = this.toClientId(toRecordId, false);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       com.senzing.gen.api.model.SzEntityPathResponse clientResponse
           = this.entityGraphApi.findEntityPath(clientFrom,
@@ -818,7 +816,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                                withInternalFeatures,
                                                forceMinimal,
                                                withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzEntityPathResponse response
           = jsonCopy(clientResponse, SzEntityPathResponse.class);
@@ -842,8 +840,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           withRaw,
           expectedPathLength,
           expectedPath,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -911,7 +908,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzEntityPathResponse response = this.entityGraphServices.getEntityPath(
           fromIdentifer.toString(),
@@ -929,7 +926,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           uriInfo);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateEntityPathResponse(
           testInfo,
@@ -950,8 +947,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           withRaw,
           expectedPathLength,
           expectedPath,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -1019,11 +1015,11 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityPathResponse response = this.invokeServerViaHttp(
           GET, uriText, SzEntityPathResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateEntityPathResponse(
           testInfo,
@@ -1044,8 +1040,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           withRaw,
           expectedPathLength,
           expectedPath,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -1130,7 +1125,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       com.senzing.gen.api.model.SzEntityIdentifier clientTo
           = this.toClientId(toRecordId, true);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       com.senzing.gen.api.model.SzEntityPathResponse clientResponse
           = this.entityGraphApi.findEntityPath(clientFrom,
@@ -1145,7 +1140,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                                withInternalFeatures,
                                                forceMinimal,
                                                withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzEntityPathResponse response
           = jsonCopy(clientResponse, SzEntityPathResponse.class);
@@ -1169,41 +1164,34 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           withRaw,
           expectedPathLength,
           expectedPath,
-          before,
-          after);
+          after - before);
     });
   }
 
 
 
   public void validateEntityPathResponse(
-      String                              testInfo,
-      SzEntityPathResponse                response,
-      SzHttpMethod                        httpMethod,
-      String                              selfLink,
-      SzEntityIdentifier                  fromIdentifer,
-      SzEntityIdentifier                  toIdentifier,
-      Integer                             maxDegrees,
-      SzEntityIdentifiers                 avoidParam,
-      SzEntityIdentifiers                 avoidList,
-      Boolean                             forbidAvoided,
-      List<String>                        sourcesParam,
-      Boolean                             forceMinimal,
-      SzFeatureMode featureMode,
-      boolean                             withFeatureStats,
-      boolean                             withInternalFeatures,
-      Boolean                             withRaw,
-      Integer                             expectedPathLength,
-      List<SzRecordId>                    expectedPath,
-      long                                beforeTimestamp,
-      long                                afterTimestamp)
+      String                testInfo,
+      SzEntityPathResponse  response,
+      SzHttpMethod          httpMethod,
+      String                selfLink,
+      SzEntityIdentifier    fromIdentifer,
+      SzEntityIdentifier    toIdentifier,
+      Integer               maxDegrees,
+      SzEntityIdentifiers   avoidParam,
+      SzEntityIdentifiers   avoidList,
+      Boolean               forbidAvoided,
+      List<String>          sourcesParam,
+      Boolean               forceMinimal,
+      SzFeatureMode         featureMode,
+      boolean               withFeatureStats,
+      boolean               withInternalFeatures,
+      Boolean               withRaw,
+      Integer               expectedPathLength,
+      List<SzRecordId>      expectedPath,
+      long                  maxDuration)
   {
-    validateBasics(testInfo,
-                   response,
-                   httpMethod,
-                   selfLink,
-                   beforeTimestamp,
-                   afterTimestamp);
+    validateBasics(testInfo, response, httpMethod, selfLink, maxDuration);
 
     SzEntityPathData pathData = response.getData();
 
@@ -1637,19 +1625,19 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getEntityNetworkParameters")
   public void getNetworkByRecordIdTest(
-      Collection<SzRecordId>   entityParam,
-      Collection<SzRecordId>   entityList,
-      Integer                  maxDegrees,
-      Integer                  buildOut,
-      Integer                  maxEntities,
-      Boolean                  forceMinimal,
-      SzFeatureMode featureMode,
-      Boolean                  withFeatureStats,
-      Boolean                  withInternalFeatures,
-      Boolean                  withRaw,
-      Integer                  expectedPathCount,
-      List<List<SzRecordId>>   expectedPaths,
-      Set<SzRecordId>          expectedEntities)
+      Collection<SzRecordId>  entityParam,
+      Collection<SzRecordId>  entityList,
+      Integer                 maxDegrees,
+      Integer                 buildOut,
+      Integer                 maxEntities,
+      Boolean                 forceMinimal,
+      SzFeatureMode           featureMode,
+      Boolean                 withFeatureStats,
+      Boolean                 withInternalFeatures,
+      Boolean                 withRaw,
+      Integer                 expectedPathCount,
+      List<List<SzRecordId>>  expectedPaths,
+      Set<SzRecordId>         expectedEntities)
   {
     this.performTest(() -> {
       String testInfo = "entityParam=[ " + entityParam
@@ -1687,7 +1675,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzEntityNetworkResponse response
           = this.entityGraphServices.getEntityNetwork(
@@ -1704,7 +1692,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           uriInfo);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateEntityNetworkResponse(
           testInfo,
@@ -1724,8 +1712,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           expectedPathCount,
           expectedPaths,
           expectedEntities,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -1781,12 +1768,12 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzEntityNetworkResponse response = this.invokeServerViaHttp(
           GET, uriText, SzEntityNetworkResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateEntityNetworkResponse(
           testInfo,
@@ -1806,8 +1793,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           expectedPathCount,
           expectedPaths,
           expectedEntities,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -2051,7 +2037,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       com.senzing.gen.api.model.SzEntityIdentifiers clientEntityList
           = this.toClientIds(entityList, false);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       com.senzing.gen.api.model.SzEntityNetworkResponse clientResponse
         = this.entityGraphApi.findEntityNetwork(clientParamIds,
@@ -2065,7 +2051,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                                 forceMinimal,
                                                 withRaw);
 
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzEntityNetworkResponse response
           = jsonCopy(clientResponse, SzEntityNetworkResponse.class);
@@ -2088,8 +2074,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           expectedPathCount,
           expectedPaths,
           expectedEntities,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -2146,7 +2131,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzEntityNetworkResponse response
           = this.entityGraphServices.getEntityNetwork(
@@ -2163,7 +2148,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           uriInfo);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateEntityNetworkResponse(
           testInfo,
@@ -2183,8 +2168,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           expectedPathCount,
           expectedPaths,
           expectedEntities,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -2240,12 +2224,12 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzEntityNetworkResponse response = this.invokeServerViaHttp(
           GET, uriText, SzEntityNetworkResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateEntityNetworkResponse(
           testInfo,
@@ -2265,8 +2249,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           expectedPathCount,
           expectedPaths,
           expectedEntities,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -2334,7 +2317,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       com.senzing.gen.api.model.SzEntityIdentifiers clientEntityList
           = this.toClientIds(entityList, true);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       com.senzing.gen.api.model.SzEntityNetworkResponse clientResponse
           = this.entityGraphApi.findEntityNetwork(clientParamIds,
@@ -2348,7 +2331,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                                   forceMinimal,
                                                   withRaw);
 
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzEntityNetworkResponse response
           = jsonCopy(clientResponse, SzEntityNetworkResponse.class);
@@ -2371,31 +2354,29 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           expectedPathCount,
           expectedPaths,
           expectedEntities,
-          before,
-          after);
+          after - before);
     });
   }
 
   private void validateEntityNetworkResponse(
-      String                              testInfo,
-      SzEntityNetworkResponse             response,
-      SzHttpMethod                        httpMethod,
-      String                              selfLink,
-      SzEntityIdentifiers                 entityParam,
-      SzEntityIdentifiers                 entityList,
-      Integer                             maxDegrees,
-      Integer                             buildOut,
-      Integer                             maxEntities,
-      Boolean                             forceMinimal,
-      SzFeatureMode                       featureMode,
-      boolean                             withFeatureStats,
-      boolean                             withInternalFeatures,
-      Boolean                             withRaw,
-      Integer                             expectedPathCount,
-      List<List<SzRecordId>>              expectedPaths,
-      Set<SzRecordId>                     expectedEntities,
-      long                                beforeTimestamp,
-      long                                afterTimestamp)
+      String                  testInfo,
+      SzEntityNetworkResponse response,
+      SzHttpMethod            httpMethod,
+      String                  selfLink,
+      SzEntityIdentifiers     entityParam,
+      SzEntityIdentifiers     entityList,
+      Integer                 maxDegrees,
+      Integer                 buildOut,
+      Integer                 maxEntities,
+      Boolean                 forceMinimal,
+      SzFeatureMode           featureMode,
+      boolean                 withFeatureStats,
+      boolean                 withInternalFeatures,
+      Boolean                 withRaw,
+      Integer                 expectedPathCount,
+      List<List<SzRecordId>>  expectedPaths,
+      Set<SzRecordId>         expectedEntities,
+      long                    maxDuration)
   {
     selfLink = this.formatServerUri(selfLink);
 
@@ -2409,12 +2390,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
     }
     int entityCount = entityIdentifiers.size();
 
-    validateBasics(testInfo,
-                   response,
-                   httpMethod,
-                   selfLink,
-                   beforeTimestamp,
-                   afterTimestamp);
+    validateBasics(testInfo, response, httpMethod, selfLink, maxDuration);
 
     SzEntityNetworkData networkData = response.getData();
 

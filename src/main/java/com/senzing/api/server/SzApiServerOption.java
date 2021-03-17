@@ -29,7 +29,8 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption> {
   AUTO_REFRESH_PERIOD("-autoRefreshPeriod", 1),
   ALLOWED_ORIGINS("-allowedOrigins", 1),
   STATS_INTERVAL("-statsInterval", 1),
-  SKIP_STARTUP_PERF("-skipStartupPerf", 0);
+  SKIP_STARTUP_PERF("-skipStartupPerf", 0),
+  SKIP_ENGINE_PRIMING("-skipEnginePriming", 0);
 
   private static Map<SzApiServerOption, Set<SzApiServerOption>> CONFLICTING_OPTIONS;
 
@@ -132,6 +133,7 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption> {
           set.add(exclOption);
         }
       }
+
       SzApiServerOption[] initOptions = { INI_FILE, INIT_ENV_VAR, INIT_FILE, INIT_JSON };
       for (SzApiServerOption option1 : initOptions) {
         for (SzApiServerOption option2 : initOptions) {

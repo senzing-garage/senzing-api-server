@@ -3,6 +3,7 @@ package com.senzing.api.services;
 import com.senzing.api.model.*;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -26,6 +27,7 @@ import static com.senzing.api.services.ResponseValidators.validateBasics;
 import static org.junit.jupiter.api.Assertions.fail;
 import static com.senzing.api.model.SzHttpMethod.POST;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
   /**
    * Sets the desired options for the {@link SzApiServer} during server
@@ -110,7 +112,7 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       }
 
       UriInfo uriInfo = this.newProxyUriInfo(uriText, queryParams);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
         SzBulkLoadResponse response
@@ -134,9 +136,9 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         validateBasics(
-            testInfo, response, 403, POST, uriText, before, after);
+            testInfo, response, 403, POST, uriText, after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
@@ -165,16 +167,16 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
           dataSourceMap, entityTypeMap, null));
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
-        long before = System.currentTimeMillis();
+        long before = System.nanoTime();
         SzErrorResponse response = this.invokeServerViaHttp(
             POST, uriText, null, mediaType.toString(),
             bulkDataFile.length(), new FileInputStream(bulkDataFile),
             SzErrorResponse.class);
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
         validateBasics(
-            testInfo, response, 403, POST, uriText, before, after);
+            testInfo, response, 403, POST, uriText, after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
@@ -203,19 +205,19 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
           dataSourceMap, entityTypeMap, null));
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
-        long before = System.currentTimeMillis();
+        long before = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = this.invokeServerViaHttp(
             POST, uriText, null, mediaType.toString(),
             bulkDataFile.length(), new FileInputStream(bulkDataFile),
             com.senzing.gen.api.model.SzErrorResponse.class);
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
         SzErrorResponse response = jsonCopy(clientResponse,
                                             SzErrorResponse.class);
 
         validateBasics(
-            testInfo, response, 403, POST, uriText, before, after);
+            testInfo, response, 403, POST, uriText, after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
@@ -253,7 +255,7 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       }
       UriInfo uriInfo = this.newProxyUriInfo(uriText, queryParams);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try (InputStream is = new FileInputStream(dataFile);
            BufferedInputStream bis = new BufferedInputStream(is)) {
         this.bulkDataServices.loadBulkRecordsViaForm(
@@ -276,9 +278,9 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         validateBasics(
-            testInfo, response, 403, POST, uriText, before, after);
+            testInfo, response, 403, POST, uriText, after - before);
 
 
       } catch (Exception e) {

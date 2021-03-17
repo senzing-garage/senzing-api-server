@@ -20,175 +20,146 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ResponseValidators {
   /**
    * Validates the basic response fields for the specified {@link
-   * SzBasicResponse} using the specified self link, timestamp from before
-   * calling the service function and timestamp from after calling the
-   * service function.
+   * SzBasicResponse} using the specified self link, and the maximum duration
+   * for the timings in nanoseconds.
    *
-   * @param response        The {@link SzBasicResponse} to validate.
-   * @param selfLink        The self link to be expected.
-   * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp  The timestamp from just after calling the service.
+   * @param response    The {@link SzBasicResponse} to validate.
+   * @param selfLink    The self link to be expected.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    */
   public static void validateBasics(SzBasicResponse response,
                                     String          selfLink,
-                                    long            beforeTimestamp,
-                                    long            afterTimestamp)
+                                    long            maxDuration)
   {
-    validateBasics(
-        null, response, GET, selfLink, beforeTimestamp, afterTimestamp);
+    validateBasics(null, response, GET, selfLink, maxDuration);
   }
 
   /**
    * Validates the basic response fields for the specified {@link
-   * SzBasicResponse} using the specified self link, timestamp from before
-   * calling the service function and timestamp from after calling the
-   * service function.
+   * SzBasicResponse} using the specified self link, and the maximum duration
+   * for the timings in nanoseconds.
    *
    * @param testInfo        Additional test information to be logged with failures.
    * @param response        The {@link SzBasicResponse} to validate.
    * @param selfLink        The self link to be expected.
-   * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp  The timestamp from just after calling the service.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    */
   public static void validateBasics(String          testInfo,
                                     SzBasicResponse response,
                                     String          selfLink,
-                                    long            beforeTimestamp,
-                                    long            afterTimestamp)
+                                    long            maxDuration)
   {
-    validateBasics(
-        testInfo, response, GET, selfLink, beforeTimestamp, afterTimestamp);
+    validateBasics(testInfo, response, GET, selfLink, maxDuration);
   }
 
   /**
    * Validates the basic response fields for the specified {@link
-   * SzBasicResponse} using the specified self link, timestamp from before
-   * calling the service function and timestamp from after calling the
-   * service function.
+   * SzBasicResponse} using the specified self link, and the maximum duration
+   * for the timings in nanoseconds.
    *
    * @param response           The {@link SzBasicResponse} to validate.
    * @param expectedHttpMethod The {@link SzHttpMethod} that was used.
    * @param selfLink           The self link to be expected.
-   * @param beforeTimestamp    The timestamp from just before calling the service.
-   * @param afterTimestamp     The timestamp from just after calling the service.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    */
   public static void validateBasics(SzBasicResponse response,
                                     SzHttpMethod    expectedHttpMethod,
                                     String          selfLink,
-                                    long            beforeTimestamp,
-                                    long            afterTimestamp)
+                                    long            maxDuration)
   {
-    validateBasics(null,
-                        response,
-                        expectedHttpMethod,
-                        selfLink,
-                        beforeTimestamp,
-                        afterTimestamp);
+    validateBasics(
+        null, response, expectedHttpMethod, selfLink, maxDuration);
   }
 
   /**
    * Validates the basic response fields for the specified {@link
-   * SzBasicResponse} using the specified self link, timestamp from before
-   * calling the service function and timestamp from after calling the
-   * service function.
+   * SzBasicResponse} using the specified self link, and the maximum duration
+   * for the timings in nanoseconds.
    *
    * @param response The {@link SzBasicResponse} to validate.
    * @param expectedResponseCode The expected HTTP response code.
    * @param expectedHttpMethod The {@link SzHttpMethod} that was used.
    * @param selfLink The self link to be expected.
-   * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp The timestamp from just after calling the service.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    */
   public static void validateBasics(SzBasicResponse response,
                                     int             expectedResponseCode,
                                     SzHttpMethod    expectedHttpMethod,
                                     String          selfLink,
-                                    long            beforeTimestamp,
-                                    long            afterTimestamp)
+                                    long            maxDuration)
   {
     validateBasics(null,
                    response,
                    expectedResponseCode,
                    expectedHttpMethod,
                    selfLink,
-                   beforeTimestamp,
-                   afterTimestamp);
+                   maxDuration);
   }
 
   /**
    * Validates the basic response fields for the specified {@link
-   * SzBasicResponse} using the specified self link, timestamp from before
-   * calling the service function and timestamp from after calling the
-   * service function.
+   * SzBasicResponse} using the specified self link, and the maximum duration
+   * for the timings in nanoseconds.
    *
    * @param testInfo           Additional test information to be logged with failures.
    * @param response           The {@link SzBasicResponse} to validate.
    * @param expectedHttpMethod The {@link SzHttpMethod} that was used.
    * @param selfLink           The self link to be expected.
-   * @param beforeTimestamp    The timestamp from just before calling the service.
-   * @param afterTimestamp     The timestamp from just after calling the service.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    */
   public static void validateBasics(String          testInfo,
                                     SzBasicResponse response,
                                     SzHttpMethod    expectedHttpMethod,
                                     String          selfLink,
-                                    long            beforeTimestamp,
-                                    long            afterTimestamp)
+                                    long            maxDuration)
   {
     validateBasics(testInfo,
                    response,
                    200,
                    expectedHttpMethod,
                    selfLink,
-                   beforeTimestamp,
-                   afterTimestamp);
+                   maxDuration);
   }
 
   /**
    * Validates the basic response fields for the specified {@link
-   * SzBasicResponse} using the specified self link, timestamp from before
-   * calling the service function and timestamp from after calling the
-   * service function.
+   * SzBasicResponse} using the specified self link, and the maximum duration
+   * for the timings in nanoseconds.
    *
    * @param testInfo Additional test information to be logged with failures.
    * @param response The {@link SzBasicResponse} to validate.
    * @param expectedResponseCode The expected HTTP responsec code.
    * @param expectedHttpMethod The {@link SzHttpMethod} that was used.
    * @param selfLink The self link to be expected.
-   * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp The timestamp from just after calling the service.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    */
   public static void validateBasics(String          testInfo,
                                     SzBasicResponse response,
                                     int             expectedResponseCode,
                                     SzHttpMethod    expectedHttpMethod,
                                     String          selfLink,
-                                    long            beforeTimestamp,
-                                    long            afterTimestamp)
+                                    long            maxDuration)
   {
     validateBasics(testInfo,
                    response,
                    expectedResponseCode,
                    expectedHttpMethod,
                    selfLink,
-                   beforeTimestamp,
-                   afterTimestamp,
+                   maxDuration,
                   1);
   }
 
   /**
    * Validates the basic response fields for the specified {@link
-   * SzBasicResponse} using the specified self link, timestamp from before
-   * calling the service function and timestamp from after calling the
-   * service function.
+   * SzBasicResponse} using the specified self link, the maximum duration
+   * for the timings in nanoseconds and the server concurrency.
    *
    * @param testInfo Additional test information to be logged with failures.
    * @param response The {@link SzBasicResponse} to validate.
    * @param expectedResponseCode The expected HTTP responsec code.
    * @param expectedHttpMethod The {@link SzHttpMethod} that was used.
    * @param selfLink The self link to be expected.
-   * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp The timestamp from just after calling the service.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    * @param serverConcurrency The concurrency for the server.
    */
   public static void validateBasics(String          testInfo,
@@ -196,8 +167,7 @@ public class ResponseValidators {
                                     int             expectedResponseCode,
                                     SzHttpMethod    expectedHttpMethod,
                                     String          selfLink,
-                                    long            beforeTimestamp,
-                                    long            afterTimestamp,
+                                    long            maxDuration,
                                     int             serverConcurrency)
   {
     String suffix = (testInfo != null && testInfo.trim().length() > 0)
@@ -215,126 +185,112 @@ public class ResponseValidators {
     assertEquals(MAVEN_VERSION, meta.getVersion(), "Unexpected server version" + suffix);
     assertEquals(REST_API_VERSION, meta.getRestApiVersion(), "Unexpected REST API version" + suffix);
     assertNotNull(meta.getTimestamp(), "Timestamp unexpectedly null" + suffix);
-    long now = meta.getTimestamp().getTime();
 
-    // check the timestamp
-    if (now < beforeTimestamp || now > afterTimestamp) {
-      fail("Timestamp (" + new Date(now) + ") should be between "
-               + new Date(beforeTimestamp) + " and "
-               + new Date(afterTimestamp) + suffix);
-    }
+    // NOTE: we do not validate the timestamp because System.currentTimeMillis()
+    // is **NOT** monotonic (adjustments to system clock to sync with NTP
+    // servers can cause the value to go backwards
+
     Map<String, Long> timings = meta.getTimings();
 
-    // determine max duration
-    long maxDuration = (afterTimestamp - beforeTimestamp) * serverConcurrency;
+    // determine max duration for concurrency and convert nanos to millis
+    final long concurrentMax = ((maxDuration * serverConcurrency) / 1000) + 1;
 
-    timings.entrySet().forEach(entry -> {
-      long duration = entry.getValue();
-      if (duration > maxDuration) {
-        fail("Timing value too large: " + entry.getKey() + " = "
-                 + duration + "ms VS " + maxDuration + "ms" + suffix);
+    timings.forEach((key, duration)-> {
+      if (duration > concurrentMax) {
+        fail("Timing value too large: " + key + " = "
+                 + duration + "ms VS " + concurrentMax + "ms" + suffix);
       }
     });
   }
 
   /**
    * Validates the basic response fields for the specified {@link
-   * SzResponseWithRawData} using the specified self link, timestamp from before
-   * calling the service function, timestamp from after calling the
-   * service function, and flag indicating if raw data should be expected.
+   * SzResponseWithRawData} using the specified self link, the maximum duration
+   * for the timings in nanoseconds, and flag indicating if raw data should be
+   * expected.
    *
-   * @param response        The {@link SzBasicResponse} to validate.
-   * @param selfLink        The self link to be expected.
-   * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp  The timestamp from just after calling the service.
-   * @param expectRawData   <tt>true</tt> if raw data should be expected,
-   *                        otherwise <tt>false</tt>
+   * @param response      The {@link SzBasicResponse} to validate.
+   * @param selfLink      The self link to be expected.
+   * @param maxDuration   The maximum duration for the timers in nanoseconds.
+   * @param expectRawData <tt>true</tt> if raw data should be expected,
+   *                      otherwise <tt>false</tt>
    */
   public static void validateBasics(SzResponseWithRawData response,
                                     String                selfLink,
-                                    long                  beforeTimestamp,
-                                    long                  afterTimestamp,
+                                    long                  maxDuration,
                                     boolean               expectRawData)
   {
     validateBasics(null,
                    response,
                    selfLink,
-                   beforeTimestamp,
-                   afterTimestamp,
+                   maxDuration,
                    expectRawData);
   }
 
   /**
    * Validates the basic response fields for the specified {@link
-   * SzResponseWithRawData} using the specified self link, timestamp from before
-   * calling the service function, timestamp from after calling the
-   * service function, and flag indicating if raw data should be expected.
+   * SzResponseWithRawData} using the specified self link, the maximum duration
+   * for the timings in nanoseconds, and flag indicating if raw data should be
+   * expected.
    *
-   * @param response        The {@link SzBasicResponse} to validate.
-   * @param selfLink        The self link to be expected.
-   * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp  The timestamp from just after calling the service.
-   * @param expectRawData   <tt>true</tt> if raw data should be expected,
-   *                        otherwise <tt>false</tt>
+   * @param response      The {@link SzBasicResponse} to validate.
+   * @param selfLink      The self link to be expected.
+   * @param maxDuration   The maximum duration for the timers in nanoseconds.
+   * @param expectRawData <tt>true</tt> if raw data should be expected,
+   *                      otherwise <tt>false</tt>
    */
   public static void validateBasics(SzResponseWithRawData response,
                                     SzHttpMethod          expectedHttpMethod,
                                     String                selfLink,
-                                    long                  beforeTimestamp,
-                                    long                  afterTimestamp,
+                                    long                  maxDuration,
                                     boolean               expectRawData)
   {
     validateBasics(null,
                    response,
                    expectedHttpMethod,
                    selfLink,
-                   beforeTimestamp,
-                   afterTimestamp,
+                   maxDuration,
                    expectRawData);
   }
 
   /**
    * Validates the basic response fields for the specified {@link
-   * SzResponseWithRawData} using the specified self link, timestamp from before
-   * calling the service function, timestamp from after calling the
-   * service function, and flag indicating if raw data should be expected.
+   * SzResponseWithRawData} using the specified self link, the maximum duration
+   * for the timings in nanoseconds, and flag indicating if raw data should be
+   * expected.
    *
-   * @param testInfo        Additional test information to be logged with failures.
-   * @param response        The {@link SzBasicResponse} to validate.
-   * @param selfLink        The self link to be expected.
-   * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp  The timestamp from just after calling the service.
-   * @param expectRawData   <tt>true</tt> if raw data should be expected,
-   *                        otherwise <tt>false</tt>
+   * @param testInfo      Additional test information to be logged with failures.
+   * @param response      The {@link SzBasicResponse} to validate.
+   * @param selfLink      The self link to be expected.
+   * @param maxDuration   The maximum duration for the timers in nanoseconds.
+   * @param expectRawData <tt>true</tt> if raw data should be expected,
+   *                      otherwise <tt>false</tt>
    */
   public static void validateBasics(String                testInfo,
                                     SzResponseWithRawData response,
                                     String                selfLink,
-                                    long                  beforeTimestamp,
-                                    long                  afterTimestamp,
+                                    long                  maxDuration,
                                     boolean               expectRawData)
   {
     validateBasics(testInfo,
                    response,
                    GET,
                    selfLink,
-                   beforeTimestamp,
-                   afterTimestamp,
+                   maxDuration,
                    expectRawData);
   }
 
   /**
    * Validates the basic response fields for the specified {@link
-   * SzResponseWithRawData} using the specified self link, timestamp from before
-   * calling the service function, timestamp from after calling the
-   * service function, and flag indicating if raw data should be expected.
+   * SzResponseWithRawData} using the specified self link, the maximum duration
+   * for the timings in nanoseconds., and flag indicating if raw data should be
+   * expected.
    *
    * @param testInfo        Additional test information to be logged with failures.
    * @param response        The {@link SzBasicResponse} to validate.
    * @param expectedHttpMethod The expected HTTP method.
    * @param selfLink        The self link to be expected.
-   * @param beforeTimestamp The timestamp from just before calling the service.
-   * @param afterTimestamp  The timestamp from just after calling the service.
+   * @param maxDuration     The maximum duration for the timers in nanoseconds.
    * @param expectRawData   <tt>true</tt> if raw data should be expected,
    *                        otherwise <tt>false</tt>
    */
@@ -342,8 +298,7 @@ public class ResponseValidators {
                                     SzResponseWithRawData response,
                                     SzHttpMethod          expectedHttpMethod,
                                     String                selfLink,
-                                    long                  beforeTimestamp,
-                                    long                  afterTimestamp,
+                                    long                  maxDuration,
                                     boolean               expectRawData)
   {
     String suffix = (testInfo != null && testInfo.trim().length() > 0)
@@ -353,8 +308,7 @@ public class ResponseValidators {
                    response,
                    expectedHttpMethod,
                    selfLink,
-                   beforeTimestamp,
-                   afterTimestamp);
+                   maxDuration);
 
     Object rawData = response.getRawData();
     if (expectRawData) {
@@ -928,9 +882,7 @@ public class ResponseValidators {
    *
    * @param response The response to validate.
    * @param selfLink The HTTP request URI
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    * @param expectRawData Whether or not to expect raw data.
    * @param expectedDataSources The expected data sources.
    */
@@ -938,8 +890,7 @@ public class ResponseValidators {
       SzDataSourcesResponse     response,
       SzHttpMethod              httpMethod,
       String                    selfLink,
-      long                      beforeTimestamp,
-      long                      afterTimestamp,
+      long                      maxDuration,
       boolean                   expectRawData,
       Map<String, SzDataSource> expectedDataSources)
   {
@@ -947,8 +898,7 @@ public class ResponseValidators {
                                 response,
                                 httpMethod,
                                 selfLink,
-                                beforeTimestamp,
-                                afterTimestamp,
+                                maxDuration,
                                 expectRawData,
                                 expectedDataSources);
   }
@@ -959,9 +909,7 @@ public class ResponseValidators {
    * @param response The response to validate.
    * @param testInfo The optional test info describing the test.
    * @param selfLink The HTTP request URI
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    * @param expectRawData Whether or not to expect raw data.
    * @param expectedDataSources The expected data sources.
    */
@@ -970,8 +918,7 @@ public class ResponseValidators {
       SzDataSourcesResponse     response,
       SzHttpMethod              httpMethod,
       String                    selfLink,
-      long                      beforeTimestamp,
-      long                      afterTimestamp,
+      long                      maxDuration,
       boolean                   expectRawData,
       Map<String, SzDataSource> expectedDataSources)
   {
@@ -979,8 +926,7 @@ public class ResponseValidators {
                    response,
                    httpMethod,
                    selfLink,
-                   beforeTimestamp,
-                   afterTimestamp,
+                   maxDuration,
                    expectRawData);
 
     String testSuffix = (testInfo == null) ? "" : ": " + testInfo;
@@ -1041,9 +987,7 @@ public class ResponseValidators {
    * @param response The response to validate.
    * @param expectedHttpMethod The expected HTTP method.
    * @param selfLink The HTTP request URI
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    * @param expectRawData Whether or not to expect raw data.
    * @param expectedDataSource The expected data source.
    */
@@ -1051,16 +995,14 @@ public class ResponseValidators {
       SzDataSourceResponse    response,
       SzHttpMethod            expectedHttpMethod,
       String                  selfLink,
-      long                    beforeTimestamp,
-      long                    afterTimestamp,
+      long                    maxDuration,
       boolean                 expectRawData,
       SzDataSource            expectedDataSource)
   {
     validateBasics(response,
                    expectedHttpMethod,
                    selfLink,
-                   beforeTimestamp,
-                   afterTimestamp,
+                   maxDuration,
                    expectRawData);
 
     SzDataSourceResponse.Data data = response.getData();
@@ -1085,9 +1027,7 @@ public class ResponseValidators {
    *
    * @param response The response to validate.
    * @param selfLink The HTTP request URI
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    * @param expectRawData Whether or not to expect raw data.
    * @param expectedEntityClasses The expected entity classes.
    */
@@ -1096,8 +1036,7 @@ public class ResponseValidators {
       SzEntityClassesResponse     response,
       SzHttpMethod                httpMethod,
       String                      selfLink,
-      long                        beforeTimestamp,
-      long                        afterTimestamp,
+      long                        maxDuration,
       boolean                     expectRawData,
       Boolean                     defaultResolving,
       Map<String, SzEntityClass>  expectedEntityClasses)
@@ -1106,8 +1045,7 @@ public class ResponseValidators {
                    response,
                    httpMethod,
                    selfLink,
-                   beforeTimestamp,
-                   afterTimestamp,
+                   maxDuration,
                    expectRawData);
 
     String testSuffix = (testInfo == null) ? "" : ": " + testInfo;
@@ -1178,22 +1116,18 @@ public class ResponseValidators {
    *
    * @param response The response to validate.
    * @param selfLink The HTTP request URI
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    * @param expectRawData Whether or not to expect raw data.
    * @param expectedEntityClass The expected entity class.
    */
   public static void validateEntityClassResponse(
       SzEntityClassResponse   response,
       String                  selfLink,
-      long                    beforeTimestamp,
-      long                    afterTimestamp,
+      long                    maxDuration,
       boolean                 expectRawData,
       SzEntityClass           expectedEntityClass)
   {
-    validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, expectRawData);
+    validateBasics(response, selfLink, maxDuration, expectRawData);
 
     SzEntityClassResponse.Data data = response.getData();
 
@@ -1218,9 +1152,7 @@ public class ResponseValidators {
    *
    * @param response The response to validate.
    * @param selfLink The HTTP request URI
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    * @param expectRawData Whether or not to expect raw data.
    * @param expectedEntityTypes The expected entity types.
    */
@@ -1229,8 +1161,7 @@ public class ResponseValidators {
       SzEntityTypesResponse       response,
       SzHttpMethod                httpMethod,
       String                      selfLink,
-      long                        beforeTimestamp,
-      long                        afterTimestamp,
+      long                        maxDuration,
       boolean                     expectRawData,
       Map<String, SzEntityType>   expectedEntityTypes)
   {
@@ -1238,8 +1169,7 @@ public class ResponseValidators {
                    response,
                    httpMethod,
                    selfLink,
-                   beforeTimestamp,
-                   afterTimestamp,
+                   maxDuration,
                    expectRawData);
 
     String testSuffix = (testInfo == null) ? "" : ": " + testInfo;
@@ -1293,22 +1223,18 @@ public class ResponseValidators {
    *
    * @param response The response to validate.
    * @param selfLink The HTTP request URI
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    * @param expectRawData Whether or not to expect raw data.
    * @param expectedEntityType The expected entity type.
    */
   public static void validateEntityTypeResponse(
       SzEntityTypeResponse    response,
       String                  selfLink,
-      long                    beforeTimestamp,
-      long                    afterTimestamp,
+      long                    maxDuration,
       boolean                 expectRawData,
       SzEntityType            expectedEntityType)
   {
-    validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, expectRawData);
+    validateBasics(response, selfLink, maxDuration, expectRawData);
 
     SzEntityTypeResponse.Data data = response.getData();
 
@@ -1339,9 +1265,7 @@ public class ResponseValidators {
    *
    * @param response The response to validate.
    * @param selfLink The expected meta data self link.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    * @param expectRawData Whether or not to expect raw data.
    * @param expectedAttrTypeCodes The expected attribute type codes.
    */
@@ -1349,8 +1273,7 @@ public class ResponseValidators {
       String                    testInfo,
       SzAttributeTypesResponse  response,
       String                    selfLink,
-      long                      beforeTimestamp,
-      long                      afterTimestamp,
+      long                      maxDuration,
       Boolean                   expectRawData,
       Set<String>               expectedAttrTypeCodes)
   {
@@ -1361,8 +1284,7 @@ public class ResponseValidators {
     validateBasics(testInfo,
                    response,
                    selfLink,
-                   beforeTimestamp,
-                   afterTimestamp,
+                   maxDuration,
                    expectRawData);
 
     SzAttributeTypesResponse.Data data = response.getData();
@@ -1413,25 +1335,21 @@ public class ResponseValidators {
    *
    * @param response The response to validate.
    * @param attributeCode The requested attribute code.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    * @param expectRawData Whether or not to expect raw data.
    */
   public static void validateAttributeTypeResponse(
       SzAttributeTypeResponse response,
       String                  selfLink,
       String                  attributeCode,
-      long                    beforeTimestamp,
-      long                    afterTimestamp,
+      long                    maxDuration,
       Boolean                 expectRawData)
   {
     if (expectRawData == null) {
       expectRawData = false;
     }
 
-    validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, expectRawData);
+    validateBasics(response, selfLink, maxDuration, expectRawData);
 
     SzAttributeTypeResponse.Data data = response.getData();
 
@@ -1463,20 +1381,16 @@ public class ResponseValidators {
    *
    * @param response The response to validate.
    * @param selfLink The expected meta data self link.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    * @param expectedDataSources The expected data sources.
    */
   public static void validateConfigResponse(
       SzConfigResponse        response,
       String                  selfLink,
-      long                    beforeTimestamp,
-      long                    afterTimestamp,
+      long                    maxDuration,
       Set<String>             expectedDataSources)
   {
-    validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, true);
+    validateBasics(response, selfLink, maxDuration, true);
 
     Object rawData = response.getRawData();
 
@@ -1527,9 +1441,7 @@ public class ResponseValidators {
    *                              if not validating the attribute data.
    * @param expectedOtherData The expected other data or <tt>null</tt>
    *                          if not validating the other data.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    * @param expectRawData Whether or not to expect raw data.
    */
   public static void validateRecordResponse(
@@ -1545,16 +1457,14 @@ public class ResponseValidators {
       Set<String>       expectedAttributeData,
       Set<String>       expectedRelationshipData,
       Set<String>       expectedOtherData,
-      long              beforeTimestamp,
-      long              afterTimestamp,
+      long              maxDuration,
       Boolean           expectRawData)
   {
     if (expectRawData == null) {
       expectRawData = false;
     }
 
-    validateBasics(
-        response, httpMethod, selfLink, beforeTimestamp, afterTimestamp);
+    validateBasics(response, httpMethod, selfLink, maxDuration);
 
     SzRecordResponse.Data data = response.getData();
 
@@ -1651,9 +1561,7 @@ public class ResponseValidators {
    *                               being validated.
    * @param expectedDataValues The expected data values by attribute class, or
    *                           <tt>null</tt> if this is not being validated.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    */
   public static void validateEntityResponse(
       String                              testInfo,
@@ -1674,15 +1582,13 @@ public class ResponseValidators {
       Map<String,Set<String>>             duplicateFeatureValues,
       Map<SzAttributeClass, Set<String>>  expectedDataValues,
       Set<String>                         expectedOtherDataValues,
-      long                                beforeTimestamp,
-      long                                afterTimestamp)
+      long                                maxDuration)
   {
     validateBasics(testInfo,
                    response,
                    httpMethod,
                    selfLink,
-                   beforeTimestamp,
-                   afterTimestamp);
+                   maxDuration);
 
     SzEntityData entityData = response.getData();
 
@@ -1811,9 +1717,7 @@ public class ResponseValidators {
    *                         otherwise <tt>false</tt>.
    * @param withInternalFeatures <tt>true</tt> if request with internal features,
    *                            otherwise <tt>false</tt>.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    * @param expectRawData Whether or not to expect raw data.
    */
   public static void validateSearchResponse(
@@ -1827,16 +1731,14 @@ public class ResponseValidators {
       SzFeatureMode featureInclusion,
       boolean                   withFeatureStats,
       boolean                   withInternalFeatures,
-      long                      beforeTimestamp,
-      long                      afterTimestamp,
+      long                      maxDuration,
       Boolean                   expectRawData)
   {
     if (expectRawData == null) {
       expectRawData = false;
     }
 
-    validateBasics(
-        testInfo, response, selfLink, beforeTimestamp, afterTimestamp);
+    validateBasics(testInfo, response, selfLink, maxDuration);
 
     SzAttributeSearchResponse.Data data = response.getData();
 
@@ -1961,9 +1863,7 @@ public class ResponseValidators {
    * @param httpMethod The HTTP method used to load the record.
    * @param dataSourceCode The data source code fo the loaded record.
    * @param expectedRecordId The record ID of the loaded record.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    */
   public static void validateLoadRecordResponse(
       SzLoadRecordResponse  response,
@@ -1976,8 +1876,7 @@ public class ResponseValidators {
       Integer               expectedAffectedCount,
       Integer               expectedFlaggedCount,
       Set<String>           expectedFlags,
-      long                  beforeTimestamp,
-      long                  afterTimestamp)
+      long                  maxDuration)
   {
     try {
       String testInfo = "method=[ " + httpMethod + " ], path=[ " + selfLink
@@ -1985,8 +1884,7 @@ public class ResponseValidators {
           + expectedRecordId + " ], withInfo=[ " + withInfo + " ], withRaw=[ "
           + withRaw + " ]";
 
-      validateBasics(
-          testInfo, response, httpMethod, selfLink, beforeTimestamp, afterTimestamp);
+      validateBasics(testInfo, response, httpMethod, selfLink, maxDuration);
 
       SzLoadRecordResponse.Data data = response.getData();
 
@@ -2117,9 +2015,7 @@ public class ResponseValidators {
    * @param response The response to validate.
    * @param httpMethod The HTTP method used to load the record.
    * @param dataSourceCode The data source code fo the loaded record.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    */
   public static void validateReevaluateResponse(
       SzReevaluateResponse  response,
@@ -2132,8 +2028,7 @@ public class ResponseValidators {
       Integer               expectedAffectedCount,
       Integer               expectedFlaggedCount,
       Set<String>           expectedFlags,
-      long                  beforeTimestamp,
-      long                  afterTimestamp)
+      long                  maxDuration)
   {
     try {
       String testInfo = "method=[ " + httpMethod + " ], path=[ " + selfLink
@@ -2141,8 +2036,7 @@ public class ResponseValidators {
           + expectedRecordId + " ], withInfo=[ " + withInfo + " ], withRaw=[ "
           + withRaw + " ]";
 
-      validateBasics(
-          testInfo, response, httpMethod, selfLink, beforeTimestamp, afterTimestamp);
+      validateBasics(testInfo, response, httpMethod, selfLink, maxDuration);
 
       SzReevaluateResponse.Data data = response.getData();
 
@@ -2265,9 +2159,7 @@ public class ResponseValidators {
    * @param response The response to validate.
    * @param httpMethod The HTTP method used to load the record.
    * @param dataSourceCode The data source code fo the loaded record.
-   * @param beforeTimestamp The timestamp before executing the request.
-   * @param afterTimestamp The timestamp after executing the request and
-   *                       concluding timers on the response.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
    */
   public static void validateDeleteRecordResponse(
       SzDeleteRecordResponse  response,
@@ -2280,8 +2172,7 @@ public class ResponseValidators {
       Integer                 expectedAffectedCount,
       Integer                 expectedFlaggedCount,
       Set<String>             expectedFlags,
-      long                    beforeTimestamp,
-      long                    afterTimestamp)
+      long                    maxDuration)
   {
     try {
       String testInfo = "method=[ " + httpMethod + " ], path=[ " + selfLink
@@ -2289,8 +2180,7 @@ public class ResponseValidators {
           + expectedRecordId + " ], withInfo=[ " + withInfo + " ], withRaw=[ "
           + withRaw + " ]";
 
-      validateBasics(
-          testInfo, response, httpMethod, selfLink, beforeTimestamp, afterTimestamp);
+      validateBasics(testInfo, response, httpMethod, selfLink, maxDuration);
 
       SzDeleteRecordResponse.Data data = response.getData();
 
@@ -2407,21 +2297,29 @@ public class ResponseValidators {
   }
 
 
+  /**
+   * Validates a license response.
+   *
+   * @param response
+   * @param selfLink
+   * @param maxDuration
+   * @param expectRawData
+   * @param expectedLicenseType
+   * @param expectedRecordLimit
+   */
   public static void validateLicenseResponse(
       SzLicenseResponse  response,
       String             selfLink,
-      long               beforeTimestamp,
-      long               afterTimestamp,
+      long               maxDuration,
       Boolean            expectRawData,
       String             expectedLicenseType,
-      long               expectedRecordLimit)
+      Long               expectedRecordLimit)
   {
     if (expectRawData == null) {
       expectRawData = false;
     }
 
-    validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, expectRawData);
+    validateBasics(response, selfLink, maxDuration, expectRawData);
 
     SzLicenseResponse.Data data = response.getData();
 
@@ -2431,13 +2329,17 @@ public class ResponseValidators {
 
     assertNotNull(licenseInfo, "License data is null");
 
-    assertEquals(expectedRecordLimit,
-                 licenseInfo.getRecordLimit(),
-                 "Record limit wrong");
+    if (expectedRecordLimit != null) {
+      assertEquals(expectedRecordLimit,
+                   licenseInfo.getRecordLimit(),
+                   "Record limit wrong");
+    }
 
-    assertEquals(expectedLicenseType,
-                 licenseInfo.getLicenseType(),
-                 "Unexpected license type");
+    if (expectedLicenseType != null) {
+      assertEquals(expectedLicenseType,
+                   licenseInfo.getLicenseType(),
+                   "Unexpected license type");
+    }
 
     if (expectRawData) {
       validateRawDataMap(
@@ -2448,11 +2350,19 @@ public class ResponseValidators {
     }
   }
 
+
+  /**
+   *
+   * @param response
+   * @param selfLink
+   * @param maxDuration
+   * @param expectRawData
+   * @param repoInitJson
+   */
   public static void validateVersionResponse(
       SzVersionResponse  response,
       String             selfLink,
-      long               beforeTimestamp,
-      long               afterTimestamp,
+      long               maxDuration,
       Boolean            expectRawData,
       String             repoInitJson)
   {
@@ -2460,8 +2370,7 @@ public class ResponseValidators {
       expectRawData = false;
     }
 
-    validateBasics(
-        response, selfLink, beforeTimestamp, afterTimestamp, expectRawData);
+    validateBasics(response, selfLink, maxDuration, expectRawData);
 
     SzVersionInfo info = response.getData();
 

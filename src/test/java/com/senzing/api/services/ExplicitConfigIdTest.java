@@ -56,18 +56,17 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
       this.requestConfigRefreshCheck();
 
       // now retry the request to get the data sources
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzDataSourcesResponse response
           = this.configServices.getDataSources(false, uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       synchronized (this.expectedDataSources) {
         validateDataSourcesResponse(response,
                                     GET,
                                     uriText,
-                                    before,
-                                    after,
+                                    after - before,
                                     false,
                                     INITIAL_DATA_SOURCES);
       }
@@ -77,7 +76,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
   @Test public void getActiveConfigTest() {
     this.performTest(() -> {
       final String newDataSource = "PHOO";
-      String  uriText = this.formatServerUri("config/current");
+      String  uriText = this.formatServerUri("config/active");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       this.addDataSource(newDataSource);
@@ -85,17 +84,16 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
       // now request a config refresh check
       this.requestConfigRefreshCheck();
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzConfigResponse response
           = this.configServices.getActiveConfig(uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       synchronized (this.expectedDataSources) {
         validateConfigResponse(response,
                                uriText,
-                               before,
-                               after,
+                               after - before,
                                INITIAL_DATA_SOURCES.keySet());
       }
     });
@@ -121,7 +119,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
       this.addDataSource(newDataSource);
 
       // now add the record -- this should succeed on retry
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataServices.loadRecord(
             newDataSource, null, false, false, uriInfo, jsonText);
@@ -131,10 +129,9 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
-        validateBasics(
-            response, 404, POST, uriText, before, after);
+        validateBasics(response, 404, POST, uriText, after - before);
       }
     });
   }
@@ -160,7 +157,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
       this.addDataSource(newDataSource);
 
       // now add the record -- this should succeed on retry
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataServices.loadRecord(
             newDataSource, recordId, null, false, false, uriInfo, jsonText);
@@ -170,10 +167,9 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
-        validateBasics(
-            response, 404, PUT, uriText, before, after);
+        validateBasics(response, 404, PUT, uriText, after - before);
       }
     });
   }

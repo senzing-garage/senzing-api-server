@@ -197,9 +197,15 @@ public abstract class AbstractServiceTest {
    */
   private static File createTempRepoDirectory(String prefix) {
     try {
-      String  workingDir  = System.getProperty("user.dir");
-      File    currentDir  = new File(workingDir);
-      File    targetDir   = new File(currentDir, "target");
+      File    targetDir     = null;
+      String  buildDirProp  = System.getProperty("project.build.directory");
+      if (buildDirProp != null) {
+        targetDir = new File(buildDirProp);
+      } else {
+        String workingDir = System.getProperty("user.dir");
+        File currentDir = new File(workingDir);
+        targetDir = new File(currentDir, "target");
+      }
 
       boolean forceTempRepos = false;
       String prop = System.getProperty("senzing.test.tmp.repos");
@@ -270,6 +276,7 @@ public abstract class AbstractServiceTest {
    */
   protected void endTests() {
     try {
+      File testCacheZip = REPLAY_PROVIDER.getTestCacheZip();
       REPLAY_PROVIDER.endTests(this.replayTestToken);
       this.replayTestToken = null;
       if (this.getFailureCount() > 0 && REPLAY_PROVIDER.isCacheStale()) {
@@ -277,7 +284,7 @@ public abstract class AbstractServiceTest {
         System.out.println("**********************");
         System.out.println("** WARNING: DEPENDENCIES HAVE CHANGED");
         System.out.println("** CACHED TEST RESULTS MAY BE INVALID");
-        System.out.println("** " + REPLAY_PROVIDER.getTestCacheZip());
+        System.out.println("** " + testCacheZip);
         System.out.println("**********************");
         System.out.println();
       }
@@ -917,6 +924,73 @@ public abstract class AbstractServiceTest {
    */
   protected int getServerConcurrency() {
     return 1;
+  }
+
+  /**
+   * Gets the version number of the REST API server implementation.
+   *
+   * @return The version number of the REST API server implementation.
+   */
+  protected String getApiServerVersion() {
+    if (this.server == null) return null;
+    return this.server.getApiProviderVersion();
+  }
+
+  /**
+   * Gets the version number of the REST API specification implemented by
+   * the underlying server.
+   *
+   * @return The version number of the REST API specification implemented by
+   *         the underlying server.
+   */
+  protected String getRestApiVersion() {
+    if (this.server == null) return null;
+    return this.server.getRestApiVersion();
+  }
+
+  /**
+   * Gets the version for the underlying runtime native Senzing API.
+   *
+   * @return The version for the underlying runtime native Senzing API.
+   */
+  protected String getNativeApiVersion() {
+    if (this.server == null) {
+      return null;
+    }
+    String result = this.server.getNativeApiVersion();
+    return result;
+  }
+
+  /**
+   * Gets the build number for the underlying runtime native Senzing API.
+   *
+   * @return The build number for the underlying runtime native Senzing API.
+   */
+  protected String getNativeApiBuildNumber() {
+    if (this.server == null) return null;
+    return this.server.getNativeApiBuildNumber();
+  }
+
+  /**
+   * Gets the build date for the underlying runtime native Senzing API.
+   *
+   * @return The build date for the underlying runtime native Senzing API.
+   */
+  protected Date getNativeApiBuildDate() {
+    if (this.server == null) return null;
+    return this.server.getNativeApiBuildDate();
+  }
+
+  /**
+   * Gets the configuration compatibility version for the underlying runtime
+   * native Senzing API.
+   *
+   * @return The configuration compatibility version for the underlying runtime
+   *         native Senzing API.
+   */
+  protected String getConfigCompatibilityVersion() {
+    if (this.server == null) return null;
+    return this.server.getConfigCompatibilityVersion();
   }
 
   /**

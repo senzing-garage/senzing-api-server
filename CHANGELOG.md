@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2021-03-11
+
+### Changed in 2.4.0
+
+- Added `includeOnly` query parameter to `GET /entities` endpoint if using 
+  the native Senzing API version 2.4.1 or later.
+- Modified `SzMeta` to include four new fields to be included in the meta
+  section of each response:
+    - `nativeApiVersion`
+    - `nativeApiBuildNumber`
+    - `nativeApiBuildDate`
+    - `configCompatibilityVersion`
+- Added `ServiceUtil.getFlags()` variant that takes a base flags parameter
+- Added automatic engine priming on startup
+- Added `-skipEnginePriming` option to skip engine priming on startup
+- Updated supported specification version to 2.4.0
+- Updated recorded test data for Senzing API versions 2.0.0 through version 2.4.0
+
 ## [2.3.2] - 2021-01-21
 
 ### Changed in 2.3.2
