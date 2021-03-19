@@ -240,6 +240,7 @@ public class SzVersionInfo {
     if (info == null) info = new SzVersionInfo();
 
     String nativeVersion = JsonUtils.getString(jsonObject, "VERSION");
+    String buildVersion  = JsonUtils.getString(jsonObject, "BUILD_VERSION");
     String buildNumber   = JsonUtils.getString(jsonObject, "BUILD_NUMBER");
 
     JsonObject compatVersion
@@ -261,7 +262,7 @@ public class SzVersionInfo {
     info.setConfigCompatibilityVersion(configCompatVersion);
     info.setNativeApiVersion(nativeVersion);
     info.setNativeApiBuildDate(buildDate);
-    info.setNativeApiBuildNumber(buildNumber);
+    info.setNativeApiBuildNumber(buildVersion + "." + buildNumber);
 
     return info;
   }

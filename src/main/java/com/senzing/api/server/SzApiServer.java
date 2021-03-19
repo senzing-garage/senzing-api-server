@@ -1006,8 +1006,21 @@ public class SzApiServer implements SzApiProvider {
   private static String getVersionString() {
     // use G2Product API without "init()" for now
     G2Product productApi = NativeApiFactory.createProductApi();
-    return JAR_FILE_NAME + " version " + BuildInfo.MAVEN_VERSION
-           + "(Senzing API version " + productApi.version() + ")";
+    String jsonText = productApi.version();
+    JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
+    SzVersionInfo info = SzVersionInfo.parseVersionInfo(null, jsonObject);
+
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    pw.println("[ " + JAR_FILE_NAME + " version " + BuildInfo.MAVEN_VERSION + " ]");
+    pw.println(" - REST API Server Version      : " + info.getApiServerVersion());
+    pw.println(" - REST Specification Version   : " + info.getRestApiVersion());
+    pw.println(" - Senzing Native API Version   : " + info.getNativeApiVersion());
+    pw.println(" - Senzing Native Build Number  : " + info.getNativeApiBuildNumber());
+    pw.println(" - Senzing Native Build Date    : " + info.getNativeApiBuildDate());
+    pw.println(" - Config Compatibility Version : " + info.getConfigCompatibilityVersion());
+    pw.flush();
+    return sw.toString();
   }
 
   /**
@@ -1251,6 +1264,7 @@ public class SzApiServer implements SzApiProvider {
       System.exit(0);
     }
     if (options.containsKey(SzApiServerOption.VERSION)) {
+      System.out.println();
       System.out.println(SzApiServer.getVersionString());
       System.exit(0);
     }
@@ -1333,6 +1347,7 @@ public class SzApiServer implements SzApiProvider {
       return false;
     }
     if (options.containsKey(SzApiServerOption.VERSION)) {
+      System.out.println();
       System.out.println(SzApiServer.getVersionString());
       return false;
     }
