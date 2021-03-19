@@ -49,7 +49,12 @@ public class TemporaryDataCache {
   /**
    * The size of the cache file part.
    */
-  private static final int CACHE_FILE_SIZE = 1024 * 1024 * 4;
+  private static final int MIN_CACHE_FILE_SIZE = 1024;
+
+  /**
+   * The size of the cache file part.
+   */
+  private static final int MAX_CACHE_FILE_SIZE = 1024 * 1024 * 4;
 
   /**
    * The default prefix to use for the file parts.
@@ -143,7 +148,8 @@ public class TemporaryDataCache {
   public TemporaryDataCache(InputStream sourceStream,
                             File directory,
                             String fileNamePrefix)
-      throws IOException {
+      throws IOException
+  {
     // figure out the base file name, suffix and directory
     if (fileNamePrefix == null) {
       fileNamePrefix = DEFAULT_PREFIX;
@@ -360,7 +366,7 @@ public class TemporaryDataCache {
 
       final int gzSize = FLUSH_THRESHOLD + 8192;
       final boolean syncFlsh = SYNC_FLUSH;
-      final int maxWrite = CACHE_FILE_SIZE;
+      int maxWrite = MIN_CACHE_FILE_SIZE;
 
       InputStream is = this.sourceStream;
 
@@ -391,7 +397,7 @@ public class TemporaryDataCache {
               gs.write(readByte);
               writeCount++;
 
-              // avoid readiing a byte that we won't write
+              // avoid reading a byte that we won't write
               if (writeCount >= maxWrite) break;
             }
             gs.flush();
@@ -411,6 +417,8 @@ public class TemporaryDataCache {
               CacheFilePart cfp = new CacheFilePart(file, offset, length);
               owner.fileParts.add(cfp);
               owner.fileParts.notifyAll();
+              maxWrite = maxWrite * 16;
+              if (maxWrite>MAX_CACHE_FILE_SIZE) maxWrite = MAX_CACHE_FILE_SIZE;
             }
           }
           if (readByte < 0) {

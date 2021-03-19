@@ -1399,7 +1399,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                    endTime,
                    this.getServerConcurrency());
 
-    final Integer ZERO = new Integer(0);
+    final Integer ZERO = 0;
 
     SzBulkLoadResult actual = response.getData();
 
@@ -1419,7 +1419,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     if (expectedStatus != null) {
       assertEquals(
           expectedStatus, actual.getStatus(),
-          "Unexpected status for bulk load result: " + testInfo);
+          "Unexpected status for bulk load result: " + testInfo
+                  + "\nRESPONSE:\n" + this.toJsonString(response));
     }
 
     // determine how many failures are expected

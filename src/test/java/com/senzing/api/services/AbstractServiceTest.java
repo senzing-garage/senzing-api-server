@@ -1900,4 +1900,20 @@ public abstract class AbstractServiceTest {
     }
     return result;
   }
+
+  /**
+   * Converts the specified object to JSON.
+   */
+  protected static String toJsonString(Object object) {
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JodaModule());
+    try {
+      String jsonText = objectMapper.writeValueAsString(object);
+      JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
+      return JsonUtils.toJsonText(jsonObject, true);
+
+    } catch (Exception e) {
+      return "FAILED TO CONVERT TO JSON: " + e.getMessage();
+    }
+  }
 }

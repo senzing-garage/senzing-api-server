@@ -718,33 +718,50 @@ public class SzApiServerOptions {
    * @return The {@link Map} of {@link SzApiServerOption} keys to {@link Object} values
    *         for initializing an {@link SzApiServer} instanc
    */
-  Map<SzApiServerOption, ?> buildOptionsMap() {
+  Map<SzApiServerOption, Object> buildOptionsMap() {
     Map<SzApiServerOption, Object> map = new HashMap<>();
-    map.put(HTTP_PORT,                    this.getHttpPort());
-    map.put(BIND_ADDRESS,                 this.getBindAddress());
-    map.put(CONCURRENCY,                  this.getConcurrency());
-    map.put(MODULE_NAME,                  this.getModuleName());
-    map.put(VERBOSE,                      this.isVerbose());
-    map.put(QUIET,                        this.isQuiet());
-    map.put(READ_ONLY,                    this.isReadOnly());
-    map.put(ENABLE_ADMIN,                 this.isAdminEnabled());
-    map.put(ALLOWED_ORIGINS,              this.getAllowedOrigins());
-    map.put(CONFIG_ID,                    this.getConfigurationId());
-    map.put(INIT_JSON,                    this.getJsonInitParameters());
-    map.put(AUTO_REFRESH_PERIOD,          this.getAutoRefreshPeriod());
-    map.put(STATS_INTERVAL,               this.getStatsInterval());
-    map.put(SKIP_STARTUP_PERF,            this.isSkippingStartupPerformance());
-    map.put(KAFKA_INFO_BOOTSTRAP_SERVER,  this.getKafkaInfoBootstrapServers());
-    map.put(KAFKA_INFO_GROUP,             this.getKafkaInfoGroupId());
-    map.put(KAFKA_INFO_TOPIC,             this.getKafkaInfoTopic());
-    map.put(RABBIT_INFO_USER,             this.getRabbitInfoUser());
-    map.put(RABBIT_INFO_PASSWORD,         this.getRabbitInfoPassword());
-    map.put(RABBIT_INFO_HOST,             this.getRabbitInfoHost());
-    map.put(RABBIT_INFO_PORT,             this.getRabbitInfoPort());
-    map.put(RABBIT_INFO_VIRTUAL_HOST,     this.getRabbitInfoVirtualHost());
-    map.put(RABBIT_INFO_EXCHANGE,         this.getRabbitInfoExchange());
-    map.put(RABBIT_INFO_ROUTING_KEY,      this.getRabbitInfoRoutingKey());
-    map.put(SQS_INFO_URL,                 this.getSqsInfoUrl());
+    put(map, HTTP_PORT,                    this.getHttpPort());
+    put(map, BIND_ADDRESS,                 this.getBindAddress());
+    put(map, CONCURRENCY,                  this.getConcurrency());
+    put(map, MODULE_NAME,                  this.getModuleName());
+    put(map, VERBOSE,                      this.isVerbose());
+    put(map, QUIET,                        this.isQuiet());
+    put(map, READ_ONLY,                    this.isReadOnly());
+    put(map, ENABLE_ADMIN,                 this.isAdminEnabled());
+    put(map, ALLOWED_ORIGINS,              this.getAllowedOrigins());
+    put(map, CONFIG_ID,                    this.getConfigurationId());
+    put(map, INIT_JSON,                    this.getJsonInitParameters());
+    put(map, AUTO_REFRESH_PERIOD,          this.getAutoRefreshPeriod());
+    put(map, STATS_INTERVAL,               this.getStatsInterval());
+    put(map, SKIP_STARTUP_PERF,            this.isSkippingStartupPerformance());
+    put(map, KAFKA_INFO_BOOTSTRAP_SERVER,  this.getKafkaInfoBootstrapServers());
+    put(map, KAFKA_INFO_GROUP,             this.getKafkaInfoGroupId());
+    put(map, KAFKA_INFO_TOPIC,             this.getKafkaInfoTopic());
+    put(map, RABBIT_INFO_USER,             this.getRabbitInfoUser());
+    put(map, RABBIT_INFO_PASSWORD,         this.getRabbitInfoPassword());
+    put(map, RABBIT_INFO_HOST,             this.getRabbitInfoHost());
+    put(map, RABBIT_INFO_PORT,             this.getRabbitInfoPort());
+    put(map, RABBIT_INFO_VIRTUAL_HOST,     this.getRabbitInfoVirtualHost());
+    put(map, RABBIT_INFO_EXCHANGE,         this.getRabbitInfoExchange());
+    put(map, RABBIT_INFO_ROUTING_KEY,      this.getRabbitInfoRoutingKey());
+    put(map, SQS_INFO_URL,                 this.getSqsInfoUrl());
     return map;
+  }
+
+  /**
+   * Utility method to only put non-null values in the specified {@link Map}
+   * with the specified {@link SzApiServerOption} key and {@link Object} value.
+   *
+   * @param map The {@link Map} to put the key-value pair into.
+   * @param option The {@link SzApiServerOption} key.
+   * @param value The {@link Object} value.
+   */
+  private static void put(Map<SzApiServerOption, Object>  map,
+                          SzApiServerOption               option,
+                          Object                          value)
+  {
+    if (value != null) {
+      map.put(option, value);
+    }
   }
 }

@@ -36,6 +36,19 @@ public class IOUtilities {
   }
 
   /**
+   * Closes an {@link AutoCloseable} and traps and ignores any exception.
+   *
+   * @param closeable The {@link AutoCloseable} to close.
+   */
+  public static void close(AutoCloseable closeable) {
+    try {
+      if (closeable != null) closeable.close();
+    } catch (Exception ignore) {
+      // ignore the exception
+    }
+  }
+
+  /**
    * Reads the contents of the file as text and returns the {@link String}
    * representing the contents.  The text is expected to be encoded in the
    * specified character encoding.  If the specified character encoding is

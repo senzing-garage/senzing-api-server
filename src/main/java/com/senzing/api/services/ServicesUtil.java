@@ -9,11 +9,17 @@ import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
 
 import javax.json.*;
+import javax.websocket.Session;
 import javax.ws.rs.*;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.util.*;
 
@@ -972,4 +978,55 @@ public class ServicesUtil {
       }
     }
   }
+
+  /**
+   * Creates a proxy {@link UriInfo} using the Web Socket {@link Session} to
+   * back it.
+   *
+   * @param webSocketSession The Web Socket {@link Session}.
+   *
+   * @return The proxied {@link UriInfo} object using the specified Web Socket
+   *                     {@link Session}.
+   */
+  protected static UriInfo newProxyUriInfo(Session webSocketSession) {
+    try {
+      InvocationHandler handler = (p, m, a) -> {
+        switch (m.getName()) {
+          case "getRequestUri":
+            return webSocketSession.getRequestURI();
+          case "getQueryParameters": {
+            MultivaluedMap<String, String> result = new MultivaluedHashMap<>();
+            Map<String, List<String>> paramMap
+                = webSocketSession.getRequestParameterMap();
+            paramMap.forEach((key, values) -> {
+              result.addAll(key, values);
+            });
+            return result;
+          }
+          case "getPathParameters": {
+            MultivaluedMap<String, String> result = new MultivaluedHashMap<>();
+            Map<String, String> paramMap = webSocketSession.getPathParameters();
+            paramMap.forEach((key, value) -> {
+              result.add(key, value);
+            });
+            return result;
+          }
+          default:
+            throw new UnsupportedOperationException(
+                "Operation not implemented on Web Socket proxy UriInfo");
+        }
+      };
+
+      ClassLoader loader = ServicesUtil.class.getClassLoader();
+      Class[] classes = {UriInfo.class};
+
+      return (UriInfo) Proxy.newProxyInstance(loader, classes, handler);
+
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
 }

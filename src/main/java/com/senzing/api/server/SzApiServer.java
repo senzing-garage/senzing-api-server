@@ -43,6 +43,9 @@ import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainer
 
 import javax.json.*;
 import javax.servlet.DispatcherType;
+import javax.websocket.DeploymentException;
+import javax.websocket.server.ServerContainer;
+import javax.websocket.server.ServerEndpointConfig;
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
 
@@ -62,6 +65,16 @@ public class SzApiServer implements SzApiProvider {
    * The period to avoid over-logging of the diagnostics.
    */
   private static final long DIAGNOSTIC_PERIOD = (1000L * 60L * 45L);
+
+  /**
+   * The maximum size for a message sent in web sockets.
+   */
+  public static final int MAX_WEB_SOCKET_MESSAGE_SIZE = 1024*1024*10;
+
+  /**
+   * Set the timeout for web socket reads.
+   */
+  public static final long WEB_SOCKET_TIMEOUT = 1000 * 60 * 60 * 24;
 
   /**
    * The number of milliseconds to provide advance warning of an expiring
@@ -367,16 +380,15 @@ public class SzApiServer implements SzApiProvider {
   private final ReadWriteLock purgeLock = new ReentrantReadWriteLock();
 
   /**
-   * The thread-local reference to the load message sink acquired on the
-   * current thread.
+   * The {@link Map} of Web Socket implementation classes to the {@link String}
+   * path endpoints.
    */
-  private ThreadLocal<SzMessageSink> acquiredLoadSink = new ThreadLocal<>();
+  private Map<Class, String> webSocketClasses = null;
 
   /**
-   * The thread-local reference to the info message sink acquired on the
-   * current thread.
+   * A general purpose object to use for synchronized locks.
    */
-  private ThreadLocal<SzMessageSink> acquiredInfoSink = new ThreadLocal<>();
+  private final Object monitor = new Object();
 
   /**
    * Returns the base URL for this instance.
@@ -861,6 +873,8 @@ public class SzApiServer implements SzApiProvider {
                   return threadCount;
                 }
 
+                case MODULE_NAME:
+                case ALLOWED_ORIGINS:
                 case KAFKA_INFO_BOOTSTRAP_SERVER:
                 case KAFKA_INFO_GROUP:
                 case KAFKA_INFO_TOPIC:
@@ -987,12 +1001,6 @@ public class SzApiServer implements SzApiProvider {
                       "The specified parameter for "
                           + option.getCommandLineFlag()
                           + " must be true or false: " + params.get(0));
-
-                case MODULE_NAME:
-                  return params.get(0);
-
-                case ALLOWED_ORIGINS:
-                  return params.get(0);
 
                 case STATS_INTERVAL:
                 {
@@ -1362,12 +1370,13 @@ public class SzApiServer implements SzApiProvider {
   private static void addWebSocketHandler(ServletContextHandler context,
                                           Class...              socketClasses)
   {
+    final int maxSize = MAX_WEB_SOCKET_MESSAGE_SIZE;
     WebSocketServerContainerInitializer.configure(
         context,
         ((servletContext, wsContainer) -> {
-          wsContainer.setDefaultMaxTextMessageBufferSize(65535);
-          wsContainer.setDefaultMaxBinaryMessageBufferSize(65535);
-
+          wsContainer.setDefaultMaxTextMessageBufferSize(maxSize);
+          wsContainer.setDefaultMaxBinaryMessageBufferSize(maxSize);
+          wsContainer.setDefaultMaxSessionIdleTimeout(WEB_SOCKET_TIMEOUT);
           for (Class socketClass: socketClasses) {
             wsContainer.addEndpoint(socketClass);
           }
@@ -1565,7 +1574,8 @@ public class SzApiServer implements SzApiProvider {
    *                    <tt>null</tt> for the default number of threads.
    *
    * @param moduleName The module name to bind to.  If <tt>null</tt> then
-   *                   the {@link #DEFAULT_MODULE_NAME} is used.
+   *                   the {@link SzApiServerConstants#DEFAULT_MODULE_NAME}
+   *                   is used.
    *
    * @param iniFile The non-null {@link File} with which to initialize.
    *
@@ -1608,7 +1618,8 @@ public class SzApiServer implements SzApiProvider {
    *                    <tt>nul</tt> for the default number of threads.
    *
    * @param moduleName The module name to bind to.  If <tt>null</tt> then
-   *                   the {@link #DEFAULT_MODULE_NAME} is used.
+   *                   the {@link SzApiServerConstants#DEFAULT_MODULE_NAME}
+   *                   is used.
    *
    * @param iniFile The non-null {@link File} with which to initialize.
    *
@@ -1915,6 +1926,7 @@ public class SzApiServer implements SzApiProvider {
 
     // organize options into option groups
     options.forEach((option, optionValue) -> {
+      if (optionValue == null) return;
       String groupName = option.getGroupName();
       if (groupName == null) return;
       Map<String, Object> groupMap = optionGroups.get(groupName);
@@ -1973,6 +1985,18 @@ public class SzApiServer implements SzApiProvider {
     // setup a servlet context handler
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath("/");
+    ServerContainer container = WebSocketServerContainerInitializer.configureContext(context);
+
+    this.getWebSocketClasses().forEach((implClass, path) -> {
+      try {
+        ServerEndpointConfig config = ServerEndpointConfig.Builder.create(
+            implClass, path).build();
+        container.addEndpoint(config);
+
+      } catch (DeploymentException e) {
+        throw new RuntimeException(e);
+      }
+    });
 
     if (this.allowedOrigins != null) {
       FilterHolder filterHolder = context.addFilter(CrossOriginFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
@@ -2007,7 +2031,11 @@ public class SzApiServer implements SzApiProvider {
     //                "www.senzing.com", initOrder++);
 
     addJerseyServlet(context, packageName, apiPath, initOrder++);
-    addWebSocketHandler(context);
+
+    Map<Class, String> webSocketMap = this.getWebSocketClasses();
+    Class[] webSocketClasses = new Class[webSocketMap.keySet().size()];
+    webSocketClasses = webSocketMap.keySet().toArray(webSocketClasses);
+    addWebSocketHandler(context, webSocketClasses);
 
     ServletHolder rootHolder = new ServletHolder("default", DefaultServlet.class);
     rootHolder.setInitParameter("dirAllowed", "false");
@@ -2765,4 +2793,39 @@ public class SzApiServer implements SzApiProvider {
     System.out.println(sw.toString());
   }
 
+  /**
+   *
+   */
+  protected Map<Class, String> getWebSocketClasses() {
+    synchronized (this.monitor) {
+      // check the web socket classes is already initialized
+      if (this.webSocketClasses != null) return this.webSocketClasses;
+
+      // if not then initialize
+      try {
+        Properties webSocketProps = new Properties();
+        webSocketProps.load(
+            this.getClass().getResourceAsStream(
+                "web-socket-endpoints.properties"));
+
+        Map<Class, String> webSocketMap = new LinkedHashMap<>();
+        webSocketProps.forEach((className, path) -> {
+          try {
+            webSocketMap.put(Class.forName(className.toString()),
+                             path.toString());
+
+          } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+          }
+        });
+
+        // set the field once complete
+        this.webSocketClasses = webSocketMap;
+        return this.webSocketClasses;
+
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
 }
