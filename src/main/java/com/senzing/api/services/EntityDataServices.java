@@ -977,7 +977,7 @@ public class EntityDataServices {
         // get the engine API
         G2Engine engineApi = provider.getEngineApi();
 
-        callingNativeAPI(timers, "engine", "searchBy AttributesV2");
+        callingNativeAPI(timers, "engine", "searchByAttributesV2");
         int result = engineApi.searchByAttributesV2(searchJson, flags, sb);
         calledNativeAPI(timers, "engine", "searchByAttributesV2");
         if (result != 0) {
