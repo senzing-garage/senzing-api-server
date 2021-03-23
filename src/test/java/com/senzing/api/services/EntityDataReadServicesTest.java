@@ -8,8 +8,6 @@ import com.senzing.gen.api.services.EntityDataApi;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.SemanticVersion;
-import com.senzing.util.Timers;
-import org.glassfish.jersey.internal.guava.Lists;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -19,7 +17,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import javax.json.Json;
-import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObjectBuilder;
 import javax.ws.rs.NotFoundException;
@@ -1029,7 +1026,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
     List<Arguments> result = new LinkedList<>();
 
-    Boolean[] booleanVariants = {null, true, false};
     List<SzFeatureMode> featureModes = new LinkedList<>();
     featureModes.add(null);
     for (SzFeatureMode featureMode : SzFeatureMode.values()) {
@@ -1040,26 +1036,40 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     for (SzRelationshipMode mode : SzRelationshipMode.values()) {
       relationshipModes.add(mode);
     }
+    List<List<Boolean>> booleanVariants = getBooleanVariants(4);
+    Iterator<List<Boolean>> booleansIter
+        = circularIterator(booleanVariants);
+
+    int numerator   = Math.max(
+        booleanVariants.size(),
+        baseArgs.size() * relationshipModes.size() * featureModes.size());
+
+    int denominator = Math.min(
+        booleanVariants.size(),
+        baseArgs.size() * relationshipModes.size() * featureModes.size());
+
+    int loopCount = ((numerator * 2) / denominator) + 1;
+
     baseArgs.forEach(baseArgList -> {
-      for (Boolean withRaw : booleanVariants) {
-        for (Boolean forceMinimal : booleanVariants) {
-          for (SzRelationshipMode withRelated : relationshipModes) {
-            for (Boolean withFeatureStats : booleanVariants) {
-              for (Boolean withInternalFeatures : booleanVariants) {
-                for (SzFeatureMode featureMode : featureModes) {
-                  Object[] argArray = baseArgList.toArray();
+      for (int index = 0; index < loopCount; index++) {
+        for (SzRelationshipMode withRelated : relationshipModes) {
+          for (SzFeatureMode featureMode : featureModes) {
+            List<Boolean> booleanList = booleansIter.next();
+            Boolean withRaw = booleanList.get(0);
+            Boolean forceMinimal = booleanList.get(1);
+            Boolean withFeatureStats = booleanList.get(2);
+            Boolean withInternalFeatures = booleanList.get(3);
 
-                  argArray[1] = withRaw;
-                  argArray[2] = withRelated;
-                  argArray[3] = forceMinimal;
-                  argArray[4] = featureMode;
-                  argArray[5] = withFeatureStats;
-                  argArray[6] = withInternalFeatures;
+            Object[] argArray = baseArgList.toArray();
 
-                  result.add(arguments(argArray));
-                }
-              }
-            }
+            argArray[1] = withRaw;
+            argArray[2] = withRelated;
+            argArray[3] = forceMinimal;
+            argArray[4] = featureMode;
+            argArray[5] = withFeatureStats;
+            argArray[6] = withInternalFeatures;
+
+            result.add(arguments(argArray));
           }
         }
       }
@@ -1922,13 +1932,21 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
     List<Arguments> list = new LinkedList<>();
 
-    Boolean[] booleanVariants = {null, true, false};
     List<SzFeatureMode> featureModes = new LinkedList<>();
     featureModes.add(null);
     for (SzFeatureMode featureMode : SzFeatureMode.values()) {
       featureModes.add(featureMode);
     }
-    boolean[] trueFalse = { true, false };
+
+    List<List<Boolean>> booleanVariants = getBooleanVariants(5);
+    Iterator<List<Boolean>> booleanIter
+        = circularIterator(booleanVariants);
+
+    int numerator   = Math.max(booleanVariants.size(),
+                               searchCountMap.size() * featureModes.size());
+    int denominator = Math.min(booleanVariants.size(),
+                               searchCountMap.size() * featureModes.size());
+    int loopCount = ((numerator * 2) / denominator) + 1;
 
     searchCountMap.entrySet().forEach(entry -> {
       Map<String, Set<String>> criteria = entry.getKey();
@@ -1994,29 +2012,28 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
       int typeSetIndex = 0;
 
-      for (Boolean withRaw : booleanVariants) {
-        for (Boolean forceMinimal : booleanVariants) {
-          for (Boolean withRelationships : booleanVariants) {
-            for (SzFeatureMode featureMode : featureModes) {
-              for (Boolean withFeatureStats: booleanVariants) {
-                for (Boolean withInternalFeatures : booleanVariants) {
-                  // try with empty set of result types
-                  list.add(arguments(criteria,
-                                     typeSetList.get(typeSetIndex),
-                                     countList.get(typeSetIndex),
-                                     forceMinimal,
-                                     featureMode,
-                                     withFeatureStats,
-                                     withInternalFeatures,
-                                     withRelationships,
-                                     withRaw));
+      for (int index = 0; index < loopCount; index++) {
+        for (SzFeatureMode featureMode : featureModes) {
+          List<Boolean> booleanList = booleanIter.next();
+          Boolean withRaw = booleanList.get(0);
+          Boolean forceMinimal = booleanList.get(1);
+          Boolean withRelationships = booleanList.get(2);
+          Boolean withFeatureStats = booleanList.get(3);
+          Boolean withInternalFeatures = booleanList.get(4);
 
-                  // increment the type set index
-                  typeSetIndex = (typeSetIndex + 1) % typeSetList.size();
-                }
-              }
-            }
-          }
+          // try with empty set of result types
+          list.add(arguments(criteria,
+                             typeSetList.get(typeSetIndex),
+                             countList.get(typeSetIndex),
+                             forceMinimal,
+                             featureMode,
+                             withFeatureStats,
+                             withInternalFeatures,
+                             withRelationships,
+                             withRaw));
+
+          // increment the type set index
+          typeSetIndex = (typeSetIndex + 1) % typeSetList.size();
         }
       }
     });

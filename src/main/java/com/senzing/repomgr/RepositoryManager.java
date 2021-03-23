@@ -2,7 +2,7 @@ package com.senzing.repomgr;
 
 import com.senzing.api.model.SzDataSource;
 import com.senzing.api.model.SzEntityType;
-import com.senzing.io.IOUtilities;
+import com.senzing.cmdline.CommandLineValue;
 import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.cmdline.CommandLineUtilities;
 import com.senzing.g2.engine.*;
@@ -21,7 +21,7 @@ import static com.senzing.util.OperatingSystemFamily.*;
 import static java.nio.file.StandardCopyOption.*;
 import static com.senzing.io.IOUtilities.*;
 import static com.senzing.cmdline.CommandLineUtilities.*;
-import static com.senzing.repomgr.RepositoryManagerOption.*;
+import static com.senzing.repomgr.RepoManagerOption.*;
 import static com.senzing.io.RecordReader.Format.*;
 
 public class RepositoryManager {
@@ -326,69 +326,79 @@ public class RepositoryManager {
    * @param args
    * @return
    */
-  private static Map<RepositoryManagerOption, Object> parseCommandLine(String[] args) {
-    return CommandLineUtilities.parseCommandLine(
-        RepositoryManagerOption.class,
-        args,
-        (option, params) -> {
-          switch (option) {
-            case HELP:
-              if (args.length > 1) {
-                throw new IllegalArgumentException(
-                    "Help option should be only option when provided.");
+  private static Map<RepoManagerOption, Object> parseCommandLine(String[] args) {
+    Map<RepoManagerOption, CommandLineValue<RepoManagerOption>> optionValues =
+        CommandLineUtilities.parseCommandLine(
+            RepoManagerOption.class,
+            args,
+            (option, params) -> {
+              switch (option) {
+                case HELP:
+                  if (args.length > 1) {
+                    throw new IllegalArgumentException(
+                        "Help option should be only option when provided.");
+                  }
+                  return Boolean.TRUE;
+
+                case VERBOSE:
+                  return Boolean.TRUE;
+
+                case CREATE_REPO: {
+                  File repoDirectory = new File(params.get(0));
+                  if (repoDirectory.exists()) {
+                    throw new IllegalArgumentException(
+                        "Specified repository directory file path "
+                            + "already exists: " + repoDirectory);
+                  }
+                  return repoDirectory;
+                }
+                case REPOSITORY: {
+                  File repoDirectory = new File(params.get(0));
+                  validateRepositoryDirectory(repoDirectory);
+                  return repoDirectory;
+                }
+                case PURGE_REPO:
+                  return Boolean.TRUE;
+
+                case LOAD_FILE:
+                  File sourceFile = new File(params.get(0));
+                  validateSourceFile(sourceFile);
+                  return sourceFile;
+
+                case ADD_RECORD:
+                  String jsonRecord = params.get(0);
+                  validateJsonRecord(jsonRecord);
+                  return jsonRecord;
+
+                case CONFIG_SOURCES:
+                  Set<String> sources = new LinkedHashSet<>(params);
+                  if (sources.size() == 0) {
+                    throw new IllegalArgumentException(
+                        "No data source names were provided for the "
+                            + option.getCommandLineFlag() + " option");
+                  }
+                  return sources;
+
+                case DATA_SOURCE:
+                  String dataSource = params.get(0);
+                  return dataSource;
+
+                default:
+                  throw new IllegalArgumentException(
+                      "Unhandled command line option: "
+                          + option.getCommandLineFlag()
+                          + " / " + option);
               }
-              return Boolean.TRUE;
+            });
 
-            case VERBOSE:
-              return Boolean.TRUE;
+    // create a result map
+    Map<RepoManagerOption, Object> result = new LinkedHashMap<>();
 
-            case CREATE_REPO: {
-              File repoDirectory = new File(params.get(0));
-              if (repoDirectory.exists()) {
-                throw new IllegalArgumentException(
-                    "Specified repository directory file path "
-                        + "already exists: " + repoDirectory);
-              }
-              return repoDirectory;
-            }
-            case REPOSITORY: {
-              File repoDirectory = new File(params.get(0));
-              validateRepositoryDirectory(repoDirectory);
-              return repoDirectory;
-            }
-            case PURGE_REPO:
-              return Boolean.TRUE;
+    // iterate over the option values and handle them
+    CommandLineUtilities.processCommandLine(optionValues, result);
 
-            case LOAD_FILE:
-              File sourceFile = new File(params.get(0));
-              validateSourceFile(sourceFile);
-              return sourceFile;
-
-            case ADD_RECORD:
-              String jsonRecord = params.get(0);
-              validateJsonRecord(jsonRecord);
-              return jsonRecord;
-
-            case CONFIG_SOURCES:
-              Set<String> sources = new LinkedHashSet<>(params);
-              if (sources.size() == 0) {
-                throw new IllegalArgumentException(
-                    "No data source names were provided for the "
-                    + option.getCommandLineFlag() + " option");
-              }
-              return sources;
-
-            case DATA_SOURCE:
-              String dataSource = params.get(0);
-              return dataSource;
-
-            default:
-              throw new IllegalArgumentException(
-                  "Unhandled command line option: "
-                      + option.getCommandLineFlag()
-                      + " / " + option);
-      }
-    });
+    // return the result
+    return result;
   }
 
   /**
@@ -446,39 +456,39 @@ public class RepositoryManager {
         "        Should be the first and only option if provided.",
         "        Displays a complete usage message describing all options.",
         "",
-        "   --createRepo <repository-directory-path>",
+        "   --create-repo <repository-directory-path>",
         "        Creates a new Senzing repository at the specified path.",
         "",
-        "   --purgeRepo",
+        "   --purge-repo",
         "        Purges the Senzing repository at the specified path.",
         "",
-        "   --configSources <data-source-1> [data-source-2 ... data-source-n]",
+        "   --config-sources <data-source-1> [data-source-2 ... data-source-n]",
         "        Configures the specified data sources for the repository",
         "        specified by the -repo option.",
         "",
-        "   --loadFile <source-file>",
+        "   --load-file <source-file>",
         "        Loads the records in the specified source CSV or JSON file.",
         "        Records are loaded to the repository specified by the -repo option.",
         "        Use the -dataSource option to specify or override a data source for",
         "        the records.",
         "",
-        "   --addRecord <json-record>",
+        "   --add-record <json-record>",
         "        Loads the specified JSON record provided on the command line.",
         "        The record is loaded to the repository specified by the -repo option.",
         "        Use the -dataSource option to specify or override the data source for ",
         "        the record.",
         "",
-        "   -repo <repository-directory-path>",
+        "   --repo <repository-directory-path>",
         "        Specifies the directory path to the repository to use when performing",
         "        other operations such as:",
         formatUsageOptionsList(
             "           ".length(),
             PURGE_REPO, CONFIG_SOURCES, LOAD_FILE, ADD_RECORD),
-        "   -dataSource <data-source>",
+        "   --data-source <data-source>",
         "        Specifies a data source to use when loading records.  If the records",
         "        already have a DATA_SOURCE property then this will override that value.",
         "",
-        "   -verbose",
+        "   --verbose",
         "        If provided then Senzing will be initialized in verbose mode"));
     pw.flush();
     sw.flush();
@@ -491,16 +501,20 @@ public class RepositoryManager {
    * @throws Exception
    */
   public static void main(String[] args) throws Exception {
-    Map<RepositoryManagerOption, Object> options = null;
+    Map<RepoManagerOption, Object> options = null;
     try {
       options = parseCommandLine(args);
     } catch (Exception e) {
-      if (!isLastLoggedException(e)) e.printStackTrace();
+      if (!(e instanceof IllegalArgumentException)
+          && !isLastLoggedException(e))
+      {
+        e.printStackTrace();
+      }
       System.out.println(RepositoryManager.getUsageString(false));
       System.exit(1);
     }
 
-    if (options.containsKey(RepositoryManagerOption.HELP)) {
+    if (options.containsKey(RepoManagerOption.HELP)) {
       System.out.println(RepositoryManager.getUsageString(true));
       System.exit(0);
     }
@@ -523,24 +537,24 @@ public class RepositoryManager {
           destroyApis();
         }
 
-      } else if (options.containsKey(RepositoryManagerOption.LOAD_FILE)) {
-        File sourceFile = (File) options.get(RepositoryManagerOption.LOAD_FILE);
+      } else if (options.containsKey(RepoManagerOption.LOAD_FILE)) {
+        File sourceFile = (File) options.get(RepoManagerOption.LOAD_FILE);
         try {
           loadFile(repository, verbose, sourceFile, dataSource, entityType);
         } finally {
           destroyApis();
         }
 
-      } else if (options.containsKey(RepositoryManagerOption.ADD_RECORD)) {
-        String jsonRecord = (String) options.get(RepositoryManagerOption.ADD_RECORD);
+      } else if (options.containsKey(RepoManagerOption.ADD_RECORD)) {
+        String jsonRecord = (String) options.get(RepoManagerOption.ADD_RECORD);
         try {
           addRecord(repository, verbose, jsonRecord, dataSource, entityType);
         } finally {
           destroyApis();
         }
 
-      } else if (options.containsKey(RepositoryManagerOption.CONFIG_SOURCES)) {
-        Set<String> dataSources = (Set<String>) options.get(RepositoryManagerOption.CONFIG_SOURCES);
+      } else if (options.containsKey(RepoManagerOption.CONFIG_SOURCES)) {
+        Set<String> dataSources = (Set<String>) options.get(RepoManagerOption.CONFIG_SOURCES);
         try {
           configSources(repository, verbose, dataSources);
         } finally {
@@ -1315,7 +1329,7 @@ public class RepositoryManager {
           System.err.println();
           System.err.println(
               "If records in the file do not have a DATA_SOURCE then "
-                  + RepositoryManagerOption.DATA_SOURCE.getCommandLineFlag()
+                  + RepoManagerOption.DATA_SOURCE.getCommandLineFlag()
                   + " is required.");
           return false;
         }

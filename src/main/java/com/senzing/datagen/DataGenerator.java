@@ -1,6 +1,7 @@
 package com.senzing.datagen;
 
 import com.senzing.cmdline.CommandLineUtilities;
+import com.senzing.cmdline.CommandLineValue;
 
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
@@ -1686,8 +1687,6 @@ public class DataGenerator {
     }
   }
 
-
-
   /**
    * Parses the command line arguments and returns a {@link Map} of those
    * arguments.  This will throw an exception if invalid command line arguments
@@ -1700,7 +1699,8 @@ public class DataGenerator {
   private static Map<DataGeneratorOption, Object> parseCommandLine(
       String[] args)
   {
-    return CommandLineUtilities.parseCommandLine(
+    Map<DataGeneratorOption, CommandLineValue<DataGeneratorOption>> optionValues
+        = CommandLineUtilities.parseCommandLine(
         DataGeneratorOption.class,
         args,
         (option, params) -> {
@@ -1732,7 +1732,7 @@ public class DataGenerator {
               } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException(
                     "The " + option.getCommandLineFlag() + " option requires "
-                    + " a non-negative integer: " + params.get(0));
+                        + " a non-negative integer: " + params.get(0));
               }
 
             case PERSON_SOURCES:
@@ -1770,6 +1770,15 @@ public class DataGenerator {
                       + " / " + option);
           }
         });
+
+    // create a result map
+    Map<DataGeneratorOption, Object> result = new LinkedHashMap<>();
+
+    // iterate over the option values and handle them
+    CommandLineUtilities.processCommandLine(optionValues, result);
+
+    // return the result
+    return result;
   }
 
   /**

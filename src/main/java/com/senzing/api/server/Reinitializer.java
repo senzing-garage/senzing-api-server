@@ -3,7 +3,7 @@ package com.senzing.api.server;
 import com.senzing.g2.engine.G2ConfigMgr;
 import com.senzing.g2.engine.G2Engine;
 
-import static com.senzing.api.server.SzApiServer.*;
+import static com.senzing.api.server.SzApiServerConstants.*;
 
 /**
  * Background thread to periodically check to see if there is a new

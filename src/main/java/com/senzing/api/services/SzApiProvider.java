@@ -159,6 +159,13 @@ public interface SzApiProvider {
   String getNativeApiVersion();
 
   /**
+   * Gets the build version for the underlying runtime native Senzing API.
+   *
+   * @return The build version for the underlying runtime native Senzing API.
+   */
+  String getNativeApiBuildVersion();
+
+  /**
    * Gets the build number for the underlying runtime native Senzing API.
    *
    * @return The build number for the underlying runtime native Senzing API.

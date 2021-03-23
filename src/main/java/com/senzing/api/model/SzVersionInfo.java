@@ -51,9 +51,14 @@ public class SzVersionInfo {
   private String nativeApiVersion = null;
 
   /**
+   * The build version for the underlying runtime native Senzing API.
+   */
+  private String nativeApiBuildVersion = null;
+
+  /**
    * The build number for the underlying runtime native Senzing API.
    */
-  private String nativeApiBuildNumber;
+  private String nativeApiBuildNumber = null;
 
   /**
    * The build date associated with the underlying runtime native API.
@@ -83,7 +88,7 @@ public class SzVersionInfo {
    * @return The version of the REST API Server implementation.
    */
   public String getApiServerVersion() {
-    return apiServerVersion;
+    return this.apiServerVersion;
   }
 
   /**
@@ -103,7 +108,7 @@ public class SzVersionInfo {
    * @return The version of the REST API Specification that is implemented.
    */
   public String getRestApiVersion() {
-    return restApiVersion;
+    return this.restApiVersion;
   }
 
   /**
@@ -124,7 +129,7 @@ public class SzVersionInfo {
    * @return The version for the underlying runtime native Senzing API.
    */
   public String getNativeApiVersion() {
-    return nativeApiVersion;
+    return this.nativeApiVersion;
   }
 
   /**
@@ -138,12 +143,31 @@ public class SzVersionInfo {
   }
 
   /**
+   * Gets the build version for the underlying runtime native Senzing API.
+   *
+   * @return The build version for the underlying runtime native Senzing API.
+   */
+  public String getNativeApiBuildVersion() {
+    return this.nativeApiBuildVersion;
+  }
+
+  /**
+   * Sets the build version for the underlying runtime native Senzing API.
+   *
+   * @param nativeApiBuildVersion The build version for the underlying runtime
+   *                              native Senzing API.
+   */
+  public void setNativeApiBuildVersion(String nativeApiBuildVersion) {
+    this.nativeApiBuildVersion = nativeApiBuildVersion;
+  }
+
+  /**
    * Gets the build number for the underlying runtime native Senzing API.
    *
    * @return The build number for the underlying runtime native Senzing API.
    */
   public String getNativeApiBuildNumber() {
-    return nativeApiBuildNumber;
+    return this.nativeApiBuildNumber;
   }
 
   /**
@@ -162,7 +186,7 @@ public class SzVersionInfo {
    * @return The build date for the underlying runtime native Senzing API.
    */
   public Date getNativeApiBuildDate() {
-    return nativeApiBuildDate;
+    return this.nativeApiBuildDate;
   }
 
   /**
@@ -183,7 +207,7 @@ public class SzVersionInfo {
    *         native Senzing API.
    */
   public String getConfigCompatibilityVersion() {
-    return configCompatibilityVersion;
+    return this.configCompatibilityVersion;
   }
 
   /**
@@ -262,7 +286,8 @@ public class SzVersionInfo {
     info.setConfigCompatibilityVersion(configCompatVersion);
     info.setNativeApiVersion(nativeVersion);
     info.setNativeApiBuildDate(buildDate);
-    info.setNativeApiBuildNumber(buildVersion + "." + buildNumber);
+    info.setNativeApiBuildVersion(buildVersion);
+    info.setNativeApiBuildNumber(buildNumber);
 
     return info;
   }

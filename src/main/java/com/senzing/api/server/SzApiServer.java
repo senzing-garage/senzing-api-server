@@ -4,6 +4,7 @@ import java.io.*;
 import java.lang.reflect.Proxy;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URLDecoder;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.Instant;
@@ -13,9 +14,11 @@ import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.regex.Pattern;
 
 import com.senzing.api.BuildInfo;
 import com.senzing.api.model.SzVersionInfo;
+import com.senzing.cmdline.CommandLineValue;
 import com.senzing.nativeapi.EngineStatsLoggingHandler;
 import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.api.services.SzApiProvider;
@@ -27,6 +30,8 @@ import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.WorkerThreadPool;
 import com.senzing.util.AccessToken;
+import org.eclipse.jetty.rewrite.handler.RewriteRegexRule;
+import org.eclipse.jetty.rewrite.handler.TerminatingRegexRule;
 import org.eclipse.jetty.server.ServerConnector;
 
 import org.eclipse.jetty.server.Server;
@@ -42,10 +47,12 @@ import javax.servlet.DispatcherType;
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
 
+import static com.senzing.api.server.SzApiServerOption.*;
 import static com.senzing.util.WorkerThreadPool.Task;
 import static com.senzing.cmdline.CommandLineUtilities.*;
 import static com.senzing.io.IOUtilities.*;
 import static com.senzing.util.LoggingUtilities.*;
+import static com.senzing.api.server.SzApiServerConstants.*;
 
 /**
  * Implements the Senzing REST API specification in Java in an HTTP server.
@@ -53,42 +60,32 @@ import static com.senzing.util.LoggingUtilities.*;
  */
 public class SzApiServer implements SzApiProvider {
   /**
+   * The pattern for legal base paths.
+   */
+  private static final Pattern LEGAL_BASE_PATH_PATTERN
+      = Pattern.compile("[A-Za-z0-9\\-_\\.\\/]+");
+
+  /**
+   * The date-time pattern for the build number.
+   */
+  private static final String BUILD_DATE_PATTERN = "yyyy-MM-dd HH:mm:ss z";
+
+  /**
+   * The time zone used for the time component of the build number.
+   */
+  private static final ZoneId BUILD_ZONE = ZoneId.of("America/Los_Angeles");
+
+  /**
+   * The {@link DateTimeFormatter} for interpretting the build number as a
+   * LocalDateTime instance.
+   */
+  private static final DateTimeFormatter BUILD_DATE_FORMATTER
+      = DateTimeFormatter.ofPattern(BUILD_DATE_PATTERN).withZone(BUILD_ZONE);
+
+  /**
    * The period to avoid over-logging of the diagnostics.
    */
   private static final long DIAGNOSTIC_PERIOD = (1000L * 60L * 45L);
-
-  /**
-   * The default port number used by the API server instances if an
-   * explicit port number is not provided.
-   */
-  public static final int DEFAULT_PORT = 2080;
-
-  /**
-   * The default concurrency setting used by API server instances if
-   * an explicit concurrency is not provided.
-   */
-  public static final int DEFAULT_CONCURRENCY = 8;
-
-  /**
-   * The default stats interval for logging stats.  This is the default
-   * minimum period of time between logging of stats.  The actual interval
-   * may be longer if the API Server is idle or not performing activities
-   * related to entity scoring (i.e.: activities that would affect stats).
-   * The default is every fifteen minutes.
-   */
-  public static final long DEFAULT_STATS_INTERVAL = 1000L * 60L * 15L;
-
-  /**
-   * The default module name to use for initialization of the Senzing native
-   * API objects.  The value is "{@value}"
-   */
-  public static final String DEFAULT_MODULE_NAME = "ApiServer";
-
-  /**
-   * The number of milliseconds to wait in between checking for changes in the
-   * configuration and automatically refreshing the configuration.
-   */
-  public static final long DEFAULT_CONFIG_REFRESH_PERIOD = 10000;
 
   /**
    * The number of milliseconds to provide advance warning of an expiring
@@ -190,6 +187,11 @@ public class SzApiServer implements SzApiProvider {
    * The HTTP port for the server.
    */
   private int httpPort;
+
+  /**
+   * The URL base path.
+   */
+  private String basePath = "/";
 
   /**
    * The {@link InetAddress} for the server.
@@ -580,6 +582,12 @@ public class SzApiServer implements SzApiProvider {
   }
 
   @Override
+  public String getNativeApiBuildVersion() {
+    if (this.versionInfo == null) return null;
+    return this.versionInfo.getNativeApiBuildVersion();
+  }
+
+  @Override
   public String getNativeApiBuildNumber() {
     if (this.versionInfo == null) return null;
     return this.versionInfo.getNativeApiBuildNumber();
@@ -809,7 +817,8 @@ public class SzApiServer implements SzApiProvider {
    * @return
    */
   private static Map<SzApiServerOption, ?> parseCommandLine(String[] args) {
-    return CommandLineUtilities.parseCommandLine(
+    Map<SzApiServerOption, CommandLineValue<SzApiServerOption>> optionValues
+      = CommandLineUtilities.parseCommandLine(
         SzApiServerOption.class,
         args,
         (option, params) -> {
@@ -859,6 +868,10 @@ public class SzApiServer implements SzApiProvider {
               }
               return addr;
 
+            case URL_BASE_PATH:
+            {
+              return validateBasePath(params.get(0));
+            }
             case CONCURRENCY:
             {
               int threadCount;
@@ -907,7 +920,7 @@ public class SzApiServer implements SzApiProvider {
               } catch (Exception e) {
                 throw new IllegalArgumentException(
                     "The initialization file does not contain valid JSON: "
-                    + initFile);
+                        + initFile);
               }
 
             case INIT_ENV_VAR:
@@ -949,7 +962,7 @@ public class SzApiServer implements SzApiProvider {
               } catch (Exception e) {
                 throw new IllegalArgumentException(
                     "The configuration ID for " + option.getCommandLineFlag()
-                    + " must be an integer: " + params.get(0));
+                        + " must be an integer: " + params.get(0));
               }
 
             case AUTO_REFRESH_PERIOD:
@@ -958,8 +971,8 @@ public class SzApiServer implements SzApiProvider {
               } catch (Exception e) {
                 throw new IllegalArgumentException(
                     "The specified refresh period for "
-                    + option.getCommandLineFlag() + " must be an integer: "
-                    + params.get(0));
+                        + option.getCommandLineFlag() + " must be an integer: "
+                        + params.get(0));
               }
 
             case READ_ONLY:
@@ -968,7 +981,18 @@ public class SzApiServer implements SzApiProvider {
             case QUIET:
             case SKIP_STARTUP_PERF:
             case SKIP_ENGINE_PRIMING:
-              return Boolean.TRUE;
+              if (params.size() == 0) return Boolean.TRUE;
+              String boolText = params.get(0);
+              if ("false".equalsIgnoreCase(boolText)) {
+                return Boolean.FALSE;
+              }
+              if ("true".equalsIgnoreCase(boolText)) {
+                return Boolean.TRUE;
+              }
+              throw new IllegalArgumentException(
+                  "The specified parameter for "
+                      + option.getCommandLineFlag()
+                      + " must be true or false: " + params.get(0));
 
             case MODULE_NAME:
             case ALLOWED_ORIGINS:
@@ -998,10 +1022,53 @@ public class SzApiServer implements SzApiProvider {
                       + " / " + option);
           }
         });
+
+    // create a result map
+    Map<SzApiServerOption, Object> result = new LinkedHashMap<>();
+
+    // iterate over the option values and handle them
+    JsonObjectBuilder job = Json.createObjectBuilder();
+    job.add("message", "Startup Options");
+
+    StringBuilder sb = new StringBuilder();
+
+    CommandLineUtilities.processCommandLine(optionValues, result, job, sb);
+
+    // log the options
+    if (!optionValues.containsKey(HELP) && !optionValues.containsKey(VERSION)) {
+      System.out.println(
+          "[" + (new Date()) + "] Senzing API Server: " + sb.toString());
+    }
+
+    // return the result
+    return result;
   }
 
   /**
-   * @return
+   * Checks if the specified base path is formatted legally.  If so the
+   * returned value is equivalent but with a leading a trailing forward slash
+   * if the specified parameter did not already have one.
+   *
+   * @param basePath The base path to validate.
+   * @return The base path with a leading and trailing forward slash.
+   *
+   * @throws IllegalArgumentException If the specified base path is not valid.
+   */
+  private static String validateBasePath(String basePath) {
+    if (!LEGAL_BASE_PATH_PATTERN.matcher(basePath).matches()) {
+      throw new IllegalArgumentException(
+          "The specified base path contains illegal characters");
+    }
+    if (!basePath.startsWith("/")) basePath = "/" + basePath;
+    if (!basePath.endsWith("/")) basePath = basePath + "/";
+    return basePath;
+  }
+
+  /**
+   * Returns a formatted string describing the version details of the
+   * API Server.
+   *
+   * @return A formatted string describing the version details.
    */
   private static String getVersionString() {
     // use G2Product API without "init()" for now
@@ -1010,14 +1077,19 @@ public class SzApiServer implements SzApiProvider {
     JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
     SzVersionInfo info = SzVersionInfo.parseVersionInfo(null, jsonObject);
 
+    String formattedBuildDate
+        = BUILD_DATE_FORMATTER.format(
+            Instant.ofEpochMilli(info.getNativeApiBuildDate().getTime()));
+
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     pw.println("[ " + JAR_FILE_NAME + " version " + BuildInfo.MAVEN_VERSION + " ]");
     pw.println(" - REST API Server Version      : " + info.getApiServerVersion());
     pw.println(" - REST Specification Version   : " + info.getRestApiVersion());
     pw.println(" - Senzing Native API Version   : " + info.getNativeApiVersion());
+    pw.println(" - Senzing Native Build Version : " + info.getNativeApiBuildVersion());
     pw.println(" - Senzing Native Build Number  : " + info.getNativeApiBuildNumber());
-    pw.println(" - Senzing Native Build Date    : " + info.getNativeApiBuildDate());
+    pw.println(" - Senzing Native Build Date    : " + formattedBuildDate);
     pw.println(" - Config Compatibility Version : " + info.getConfigCompatibilityVersion());
     pw.flush();
     return sw.toString();
@@ -1038,126 +1110,179 @@ public class SzApiServer implements SzApiProvider {
         "",
         "[ Standard Options ]",
         "",
-        "   -help",
-        "        Should be the first and only option if provided.",
+        "   --help",
+        "        Also -help.  Should be the first and only option if provided.",
         "        Causes this help message to be displayed.",
         "        NOTE: If this option is provided, the server will not start.",
         "",
-        "   -version",
-        "        Should be the first and only option if provided.",
+        "   --version",
+        "        Also -version.  Should be the first and only option if provided.",
         "        Causes the version of the G2 REST API Server to be displayed.",
         "        NOTE: If this option is provided, the server will not start.",
         "",
-        "   -readOnly",
-        "        Disables functions that would modify the entity repository data, causing",
-        "        those functions to return a 403 Forbidden response.  NOTE: this option",
-        "        will not only disable loading data to the entity repository, but will",
-        "        also disable modifications to the configuration even if the -enableAdmin",
-        "        option is provided.",
+        "   --read-only [true|false]",
+        "        Also -readOnly.  Disables functions that would modify the entity",
+        "        repository data, causing those functions to return a 403 Forbidden",
+        "        response.  The true/false parameter is optional, if not specified",
+        "        then true is assumed.  If specified as false then it is the same as",
+        "        omitting the option with the exception that omission falls back to the",
+        "        environment variable setting whereas an explicit false overrides any",
+        "        environment variable.  NOTE: this option will not only disable loading",
+        "        data to the entity repository, but will also disable modifications to",
+        "        the configuration even if the --enable-admin option is provided.",
+        "        --> VIA ENVIRONMENT: " + READ_ONLY.getEnvironmentVariable(),
         "",
-        "   -enableAdmin",
-        "        Enables administrative functions via the API server.  If not specified",
-        "        then administrative functions will return a 403 Forbidden response.",
+        "   --enable-admin [true|false]",
+        "        Also -enableAdmin.  Enables administrative functions via the API",
+        "        server.  The true/false parameter is optional, if not specified then",
+        "        true is assumed.  If specified as false then it is the same as omitting",
+        "        the option with the exception that omission falls back to the",
+        "        environment variable setting whereas an explicit false overrides any",
+        "        environment variable.  If not specified then administrative functions",
+        "        will return a 403 Forbidden response.",
+        "        --> VIA ENVIRONMENT: " + ENABLE_ADMIN.getEnvironmentVariable(),
         "",
-        "   -httpPort <port-number>",
-        "        Sets the port for HTTP communication.  Defaults to "
-            + DEFAULT_PORT + ".",
-        "        Specify 0 for a randomly selected port number.",
+        "   --http-port <port-number>",
+        "        Also -httpPort.  Sets the port for HTTP communication.  If not",
+        "        specified, then the default port (" + DEFAULT_PORT + ") is used.",
+        "        Specify 0 for a randomly selected available port number.",
+        "        --> VIA ENVIRONMENT: " + HTTP_PORT.getEnvironmentVariable(),
         "",
-        "   -bindAddr <ip-address|loopback|all>",
-        "        Sets the port for HTTP bind address communication.",
-        "        Defaults to the loopback address.",
+        "   --bind-addr <ip-address|loopback|all>",
+        "        Also -bindAddr.  Sets the bind address for HTTP communication.  If not",
+        "        provided the bind address defaults to the loopback address.",
+        "        --> VIA ENVIRONMENT: " + BIND_ADDRESS.getEnvironmentVariable(),
         "",
-        "   -allowedOrigins <url-domain>",
-        "        Sets the CORS Access-Control-Allow-Origin header for all endpoints.",
-        "        There is no default value.",
+        "   --url-base-path <base-path>",
+        "        Also -urlBasePath.  Sets the URL base path for the API Server.",
+        "        --> VIA ENVIRONMENT: " + URL_BASE_PATH.getEnvironmentVariable(),
         "",
-        "   -concurrency <thread-count>",
-        "        Sets the number of threads available for executing ",
+        "   --allowed-origins <url-domain>",
+        "        Also -allowedOrigins.  Sets the CORS Access-Control-Allow-Origin header",
+        "        for all endpoints.  There is no default value.  If not specified then",
+        "        the Access-Control-Allow-Origin is not included with responses.",
+        "        --> VIA ENVIRONMENT: " + ALLOWED_ORIGINS.getEnvironmentVariable(),
+        "",
+        "   --concurrency <thread-count>",
+        "        Also -concurrency.  Sets the number of threads available for executing ",
         "        Senzing API functions (i.e.: the number of engine threads).",
         "        If not specified, then this defaults to "
-                   + DEFAULT_CONCURRENCY + ".",
+            + DEFAULT_CONCURRENCY + ".",
+        "        --> VIA ENVIRONMENT: " + CONCURRENCY.getEnvironmentVariable(),
         "",
-        "   -moduleName <module-name>",
-        "        The module name to initialize with.  Defaults to '"
-                   + DEFAULT_MODULE_NAME + "'.",
+        "   --module-name <module-name>",
+        "        Also -moduleName.  The module name to initialize with.  If not",
+        "        specified, then the module name defaults to \""
+            + DEFAULT_MODULE_NAME + "\".",
+        "        --> VIA ENVIRONMENT: " + MODULE_NAME.getEnvironmentVariable(),
         "",
-        "   -iniFile <ini-file-path>",
-        "        The path to the Senzing INI file to with which to initialize.",
+        "   --ini-file <ini-file-path>",
+        "        Also -iniFile.  The path to the Senzing INI file to with which to",
+        "        initialize.",
         "        EXAMPLE: -iniFile /etc/opt/senzing/G2Module.ini",
+        "        --> VIA ENVIRONMENT: " + INI_FILE.getEnvironmentVariable(),
         "",
-        "   -initFile <json-init-file>",
-        "        The path to the file containing the JSON text to use for Senzing",
-        "        initialization.",
+        "   --init-file <json-init-file>",
+        "        Also -initFile.  The path to the file containing the JSON text to",
+        "        use for Senzing initialization.",
         "        EXAMPLE: -initFile ~/senzing/g2-init.json",
+        "        --> VIA ENVIRONMENT: " + INIT_FILE.getEnvironmentVariable(),
         "",
-        "   -initEnvVar <environment-variable-name>",
-        "        The environment variable from which to extract the JSON text",
-        "        to use for Senzing initialization.",
+        "   --init-env-var <environment-variable-name>",
+        "        Also -initEnvVar.  The environment variable from which to extract",
+        "        the JSON text to use for Senzing initialization.",
         "        *** SECURITY WARNING: If the JSON text contains a password",
         "        then it may be visible to other users via process monitoring.",
         "        EXAMPLE: -initEnvVar SENZING_INIT_JSON",
+        "        --> VIA ENVIRONMENT: " + INIT_ENV_VAR.getEnvironmentVariable(),
         "",
-        "   -initJson <json-init-text>",
-        "        The JSON text to use for Senzing initialization.",
+        "   --init-json <json-init-text>",
+        "        Also -initJson.  The JSON text to use for Senzing initialization.",
         "        *** SECURITY WARNING: If the JSON text contains a password",
         "        then it may be visible to other users via process monitoring.",
         "        EXAMPLE: -initJson \"{\"PIPELINE\":{ ... }}\"",
+        "        --> VIA ENVIRONMENT: " + INIT_JSON.getEnvironmentVariable(),
         "",
-        "   -configId <config-id>",
-        "        Use with the -iniFile, -initFile, -initEnvVar or -initJson options",
-        "        to force a specific configuration ID to use for initialization.",
+        "   --config-id <config-id>",
+        "        Also -configId.  Use with the -iniFile, -initFile, -initEnvVar or",
+        "        -initJson options to force a specific configuration ID to use for",
+        "        initialization.",
+        "        --> VIA ENVIRONMENT: " + CONFIG_ID.getEnvironmentVariable(),
         "",
-        "   -autoRefreshPeriod <positive-integer-seconds|0|negative-integer>",
-        "        If leveraging the default configuration stored in the database,",
-        "        this is used to specify how often the API server should background",
-        "        check that the current active config is the same as the current",
-        "        default config, and if different reinitialize with the current",
-        "        default config.  If zero is specified, then the auto-refresh",
-        "        is disabled and it will only occur when a requested configuration",
-        "        element is not found in the current active config.  Specifying",
-        "        a negative integer is allowed but is used to enable a check and ",
-        "        conditional refresh only when manually requested (programmatically).",
-        "        NOTE: This is option ignored if auto-refresh is disabled because",
-        "        the config was specified via the G2CONFIGFILE init option or if ",
-        "        -configId has been specified to lock to a specific configuration.",
+        "   --auto-refresh-period <positive-integer-seconds|0|negative-integer>",
+        "        Also -autoRefreshPeriod.  If leveraging the default configuration stored",
+        "        in the database, this is used to specify how often the API server should",
+        "        background check that the current active config is the same as the",
+        "        current default config, and if different reinitialize with the current",
+        "        default config.  If zero is specified, then the auto-refresh is disabled",
+        "        and it will only occur when a requested configuration element is not",
+        "        found in the current active config.  Specifying a negative integer is",
+        "        allowed but is used to enable a check and conditional refresh only when",
+        "        manually requested (programmatically).  NOTE: This is option ignored if",
+        "        auto-refresh is disabled because the config was specified via the",
+        "        G2CONFIGFILE init option or if --config-id has been specified to lock to",
+        "        a specific configuration.",
+        "        --> VIA ENVIRONMENT: " + AUTO_REFRESH_PERIOD.getEnvironmentVariable(),
         "",
-        "   -statsInterval <milliseconds>",
-        "        The minimum number of milliseconds between logging of stats.  This is",
-        "        minimum because stats logging is suppressed if the API Server is idle",
-        "        or active but not performing activities pertaining to entity scoring.",
-        "        In such cases, stats logging is delayed until an activity pertaining to",
-        "        entity scoring is performed.  By default this is set to the millisecond",
-        "        equivalent of 15 minutes.  If zero (0) is specified then the logging of",
-        "        stats will be suppressed.",
+        "   --stats-interval <milliseconds>",
+        "        Also -statsInterval.  The minimum number of milliseconds between logging",
+        "        of stats.  This is minimum because stats logging is suppressed if the API",
+        "        Server is idle or active but not performing activities pertaining to",
+        "        entity scoring.  In such cases, stats logging is delayed until an",
+        "        activity pertaining to entity scoring is performed.  By default this is",
+        "        set to the millisecond equivalent of 15 minutes.  If zero (0) is",
+        "        specified then the logging of stats will be suppressed.",
+        "        --> VIA ENVIRONMENT: " + STATS_INTERVAL.getEnvironmentVariable(),
         "",
-        "   -skipEnginePriming",
-        "        If specified then the engine is not primed on startup.  This makes",
-        "        startup faster, but the first request requiring engine priming will be",
-        "        much slower.",
+        "   --skip-startup-perf [true|false]",
+        "        Also -skipStartupPerf.  If specified then the performance check on",
+        "        startup is skipped.  The true/false parameter is optional, if not",
+        "        specified then true is assumed.  If specified as false then it is the",
+        "        same as omitting the option with the exception that omission falls back",
+        "        to the environment variable setting whereas an explicit false overrides",
+        "        any environment variable.",
+        "        --> VIA ENVIRONMENT: " + SKIP_STARTUP_PERF.getEnvironmentVariable(),
         "",
-        "   -skipStartupPerf",
-        "        If specified then the performance check on startup is skipped.",
+        "   --skip-engine-priming [true|false]",
+        "        Also -skipEnginePriming.  If specified then the API Server will not",
+        "        prime the engine on startup.  The true/false parameter is optional, if",
+        "        not specified then true is assumed.  If specified as false then it is",
+        "        the same as omitting the option with the exception that omission falls",
+        "        back to the environment variable setting whereas an explicit false",
+        "        overrides any environment variable.",
+        "        --> VIA ENVIRONMENT: " + SKIP_ENGINE_PRIMING.getEnvironmentVariable(),
         "",
-        "   -verbose",
-        "        If specified then initialize in verbose mode.",
+        "   --verbose [true|false]",
+        "        Also -verbose.  If specified then initialize in verbose mode.  The",
+        "        true/false parameter is optional, if not specified then true is assumed.",
+        "        If specified as false then it is the same as omitting the option with",
+        "        the exception that omission falls back to the environment variable",
+        "        setting whereas an explicit false overrides any environment variable.",
+        "        --> VIA ENVIRONMENT: " + VERBOSE.getEnvironmentVariable(),
         "",
-        "   -quiet If specified then the API server reduces the number of messages",
-        "          provided as feedback to standard output.  This applies only to",
-        "          messages generated by the API server and not by the underlying ",
-        "          API which can be quite prolific if -verbose is provided.",
+        "   --quiet [true|false]",
+        "        Also -quiet.  If specified then the API server reduces the number of",
+        "        messages provided as feedback to standard output.  This applies only to",
+        "        messages generated by the API server and not by the underlying API which",
+        "        can be quite prolific if --verbose is provided.  The true/false",
+        "        parameter is optional, if not specified then true is assumed.  If",
+        "        specified as false then it is the same as omitting the option with",
+        "        the exception that omission falls back to the environment variable",
+        "        setting whereas an explicit false overrides any environment variable.",
+        "        --> VIA ENVIRONMENT: " + QUIET.getEnvironmentVariable(),
         "",
-        "   -monitorFile [file-path]",
-        "        Specifies a file whose timestamp is monitored to determine",
-        "        when to shutdown.",
+        "   --monitor-file <file-path>",
+        "        Also -monitorFile.  Specifies a file whose timestamp is monitored to",
+        "        determine when to shutdown.",
+        "        --> VIA ENVIRONMENT: " + MONITOR_FILE.getEnvironmentVariable(),
         "",
         "[ Advanced Options ]",
         "",
-        "   --configmgr [config manager options]...",
-        "        Should be the first option if provided.  All subsequent options",
-        "        are interpreted as configuration manager options.  If this option",
-        "        is specified by itself then a help message on configuration manager",
-        "        options will be displayed.",
+        "   --config-mgr [config manager options]...",
+        "        Also --configmgr.  Should be the first option if provided.  All",
+        "        subsequent options are interpreted as configuration manager options.",
+        "        If this option is specified by itself then a help message on",
+        "        configuration manager options will be displayed.",
         "        NOTE: If this option is provided, the server will not start."));
     pw.println();
     pw.flush();
@@ -1255,7 +1380,9 @@ public class SzApiServer implements SzApiProvider {
         System.err.println(e.getMessage());
         System.err.println();
       }
-      System.err.println(SzApiServer.getUsageString());
+      System.err.println();
+      System.err.println("Try the --help option for additional help.");
+      System.err.println();
       System.exit(1);
     }
 
@@ -1383,8 +1510,8 @@ public class SzApiServer implements SzApiProvider {
    * @param concurrency The number of threads to create for the engine, or
    *                    <tt>null</tt> for the default number of threads.
    *
-   * @param moduleName The module name to bind to.  If <tt>null</tt> then
-   *                   the {@link #DEFAULT_MODULE_NAME} is used.
+   * @param moduleName The module name to bind to.  If <tt>null</tt> then the
+   *                   {@link SzApiServerConstants#DEFAULT_MODULE_NAME} is used.
    *
    * @param iniFile The non-null {@link File} with which to initialize.
    *
@@ -1426,8 +1553,8 @@ public class SzApiServer implements SzApiProvider {
    * @param concurrency The number of threads to create for the engine, or
    *                    <tt>nul</tt> for the default number of threads.
    *
-   * @param moduleName The module name to bind to.  If <tt>null</tt> then
-   *                   the {@link #DEFAULT_MODULE_NAME} is used.
+   * @param moduleName The module name to bind to.  If <tt>null</tt> then the
+   *                   {@link SzApiServerConstants#DEFAULT_MODULE_NAME} is used.
    *
    * @param iniFile The non-null {@link File} with which to initialize.
    *
@@ -1532,8 +1659,7 @@ public class SzApiServer implements SzApiProvider {
    * @throws Exception If a failure occurs.
    */
   private SzApiServer(AccessToken token, Map<SzApiServerOption, ?> options)
-      throws Exception
-    {
+      throws Exception {
     this.accessToken = token;
 
     this.httpPort = DEFAULT_PORT;
@@ -1544,6 +1670,10 @@ public class SzApiServer implements SzApiProvider {
     this.ipAddr = InetAddress.getLoopbackAddress();
     if (options.containsKey(SzApiServerOption.BIND_ADDRESS)) {
       this.ipAddr = (InetAddress) options.get(SzApiServerOption.BIND_ADDRESS);
+    }
+
+    if (options.containsKey(URL_BASE_PATH)) {
+      this.basePath = (String) options.get(URL_BASE_PATH);
     }
 
     this.concurrency = DEFAULT_CONCURRENCY;
@@ -1655,7 +1785,7 @@ public class SzApiServer implements SzApiProvider {
       String msg = sw.toString();
       System.err.println(msg);
       throw new IllegalStateException(msg);
-      
+
     } else if (this.configType == ConfigType.BOTH) {
       File configPath = extractIniConfigPath(this.initJson);
       StringWriter sw = new StringWriter();
@@ -1681,7 +1811,7 @@ public class SzApiServer implements SzApiProvider {
 
       System.err.println(msg);
       throw new IllegalStateException(msg);
-      
+
     } else if (this.configType == ConfigType.FILE_PATH && this.configId != null) {
       File configPath = extractIniConfigPath(this.initJson);
       StringWriter sw = new StringWriter();
@@ -1737,19 +1867,20 @@ public class SzApiServer implements SzApiProvider {
 
     this.allowedOrigins = (String) options.get(SzApiServerOption.ALLOWED_ORIGINS);
 
-    this.baseUrl = "http://" + ipAddr.getHostAddress() + ":" + httpPort + "/";
+    this.baseUrl = "http://" + ipAddr.getHostAddress() + ":" + httpPort
+        + this.basePath;
 
     this.initNativeApis();
 
-    String      versionJsonText = this.productApi.version();
-    JsonObject  versionJson     = JsonUtils.parseJsonObject(versionJsonText);
+    String versionJsonText = this.productApi.version();
+    JsonObject versionJson = JsonUtils.parseJsonObject(versionJsonText);
     this.versionInfo = SzVersionInfo.parseVersionInfo(null, versionJson);
 
     this.workerThreadPool
         = new WorkerThreadPool(this.getClass().getName(), this.concurrency);
 
     this.echo("Created Senzing engine thread pool with " + this.concurrency
-              + " thread(s).");
+                  + " thread(s).");
 
     if (this.configMgrApi != null) {
       // check if the auto refresh period is null
@@ -1774,7 +1905,7 @@ public class SzApiServer implements SzApiProvider {
       System.out.println("Priming engine....");
       int returnCode = this.engineApi.primeEngine();
       long end = System.currentTimeMillis();
-      System.out.println("Primed engine: " + (end-start) + "ms");
+      System.out.println("Primed engine: " + (end - start) + "ms");
 
       if (returnCode != 0) {
         throw new IllegalStateException(
@@ -1786,7 +1917,7 @@ public class SzApiServer implements SzApiProvider {
 
     // setup a servlet context handler
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-    context.setContextPath("/");
+    context.setContextPath(this.basePath);
 
     if (this.allowedOrigins != null) {
       context.addFilter(DiagnoseRequestFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
@@ -1814,7 +1945,11 @@ public class SzApiServer implements SzApiProvider {
     }
     this.jettyServer.setHandler(rewriteHandler);
     LifeCycleListener lifeCycleListener
-        = new LifeCycleListener(this.jettyServer, httpPort, ipAddr, this.fileMonitor);
+        = new LifeCycleListener(this.jettyServer,
+                                this.httpPort,
+                                this.basePath,
+                                this.ipAddr,
+                                this.fileMonitor);
     this.jettyServer.addLifeCycleListener(lifeCycleListener);
     int initOrder = 0;
     String packageName = SzApiProvider.class.getPackage().getName();

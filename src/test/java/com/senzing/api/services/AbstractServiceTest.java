@@ -22,6 +22,7 @@ import com.senzing.util.JsonUtils;
 import org.junit.jupiter.params.provider.Arguments;
 
 import javax.json.*;
+import javax.swing.text.html.HTMLDocument;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
@@ -959,6 +960,16 @@ public abstract class AbstractServiceTest {
     }
     String result = this.server.getNativeApiVersion();
     return result;
+  }
+
+  /**
+   * Gets the build version for the underlying runtime native Senzing API.
+   *
+   * @return The build version for the underlying runtime native Senzing API.
+   */
+  protected String getNativeApiBuildVersion() {
+    if (this.server == null) return null;
+    return this.server.getNativeApiBuildVersion();
   }
 
   /**
@@ -1973,5 +1984,71 @@ public abstract class AbstractServiceTest {
       result.add(arguments(argArray));
     }
     return result;
+  }
+
+  /**
+   * Gets the variant possible values of booleans for the specified
+   * parameter count.  This includes <tt>null</tt> values.
+   *
+   * @param paramCount The number of boolean parameters.
+   * @return The {@link List} of parameter value lists.
+   */
+  protected static List<List<Boolean>> getBooleanVariants(int paramCount) {
+    Boolean[] booleanValues = { null, true, false };
+    int variantCount = (int) Math.ceil(Math.pow(3, paramCount));
+    List<List<Boolean>> variants = new ArrayList<>(variantCount);
+
+    // iterate over the variants
+    for (int index1 = 0; index1 < variantCount; index1++) {
+      // create the parameter list
+      List<Boolean> params = new ArrayList<>(paramCount);
+
+      // iterate over the parameter slots
+      for (int index2 = 0; index2 < paramCount; index2++) {
+        int repeat = (int) Math.ceil(Math.pow(3, index2));
+        int valueIndex = ( index1 / repeat ) % booleanValues.length;
+         params.add(booleanValues[valueIndex]);
+      }
+
+      // add the combinatorial variant
+      variants.add(params);
+    }
+    return variants;
+  }
+
+  /**
+   * Utility class for circular iteration.
+   */
+  private static class CircularIterator<T> implements Iterator<T> {
+    private Collection<T> collection = null;
+    private Iterator<T> iterator = null;
+    private CircularIterator(Collection<T> collection) {
+      this.collection = collection;
+      this.iterator = this.collection.iterator();
+    }
+    public boolean hasNext() {
+      return (this.collection.size() > 0);
+    }
+    public T next() {
+      if (!this.iterator.hasNext()) {
+        this.iterator = this.collection.iterator();
+      }
+      return this.iterator.next();
+    }
+    public void remove() {
+      throw new UnsupportedOperationException(
+          "Cannot remove from a circular iterator.");
+    }
+  }
+
+  /**
+   * Returns an iterator that iterates over the specified {@link Collection}
+   * in a circular fashion.
+   *
+   * @param collection The {@link Collection} to iterate over.
+   * @return The circular {@link Iterator}.
+   */
+  protected static <T> Iterator<T> circularIterator(Collection<T> collection) {
+    return new CircularIterator<>(collection);
   }
 }
