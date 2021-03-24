@@ -1059,8 +1059,11 @@ public class SzApiServer implements SzApiProvider {
       throw new IllegalArgumentException(
           "The specified base path contains illegal characters");
     }
+    if (basePath.equals("/")) return basePath;
     if (!basePath.startsWith("/")) basePath = "/" + basePath;
-    if (!basePath.endsWith("/")) basePath = basePath + "/";
+    if (basePath.endsWith("/")) {
+      basePath = basePath.substring(0, basePath.length() -1);
+    }
     return basePath;
   }
 
