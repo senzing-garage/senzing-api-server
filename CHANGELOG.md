@@ -6,18 +6,36 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.4.1] - 2021-03-22
+## [2.5.0] - 2021-03-24
 
-### Changed in 2.4.1
+### Changed in 2.5.0
 
+- Added `POST /search-entities` endpoint in `EntityDataServices` along with
+  auto tests in `EntityDataReadServicesTest`
+- Converted command-line options to use `--command-line-option` format with
+  `-commandLineOption` synonyms to maintain backwards compatibility
+- Added environment variable support to command-line options so many of the
+  options can now be specified via environment variables.  This is intended to
+  primarily help with Docker deployments.
+- Added command-line option for `--url-base-path` / `-urlBasePath` (along with
+  `SENZING_API_SERVER_URL_BASE_PATH` environment variable) to set the base path
+  base path of the API server on startup
+- Updated usage string of `SzApiServer` to reflect all changes regarding 
+  command-line options
 - Updated/fixed the output when running with `-version` command-line option
-- Modified `SzVersionInfo` response so the `nativeApiBuildNumber` field is a 
-  concatenation of the `BUILD_VERSION` and `BUILD_NUMBER` from the raw data to
-  fully identify the build.
-- Fixed the `pom.xml` so the replacement of `${project.version}` in the 
-  `build-info.properties` is restored.
+- Modified `SzVersionInfo` to include `nativeApiBuildVersion` field on the
+  `GET /version` response
+- Modified `SzMeta` to include `nativeApiBuildVersion` field
+- Modified `SzApiProvider` to include `nativeApiBuildVersion` field
+
+### Fixed in 2.5.0
+
+- Fixed the `pom.xml` so the replacement of `${project.version}` in the
+  `build-info.properties` is restored
 - Fixed typo bug with the meta timings of `searchByAttributesV2` in 
-  `EntityDataServices` class.
+  `EntityDataServices` class
+- Removed extraneous debug logging code in `EntityDataServices` that caused 
+  both a security issue and a memory leak
 
 ## [2.4.0] - 2021-03-11
 
