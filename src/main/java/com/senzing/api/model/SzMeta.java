@@ -53,9 +53,14 @@ public class SzMeta {
   private String nativeApiVersion = null;
 
   /**
+   * The build version for the underlying runtime native Senzing API.
+   */
+  private String nativeApiBuildVersion = null;
+
+  /**
    * The build number for the underlying runtime native Senzing API.
    */
-  private String nativeApiBuildNumber;
+  private String nativeApiBuildNumber = null;
 
   /**
    * The build date associated with the underlying runtime native API.
@@ -108,6 +113,7 @@ public class SzMeta {
     }
     if (prov != null) {
       this.nativeApiVersion           = prov.getNativeApiVersion();
+      this.nativeApiBuildVersion      = prov.getNativeApiBuildVersion();
       this.nativeApiBuildNumber       = prov.getNativeApiBuildNumber();
       this.nativeApiBuildDate         = prov.getNativeApiBuildDate();
       this.configCompatibilityVersion = prov.getConfigCompatibilityVersion();
@@ -160,6 +166,15 @@ public class SzMeta {
    */
   public String getNativeApiVersion() {
     return this.nativeApiVersion;
+  }
+
+  /**
+   * Gets the build version for the underlying runtime native Senzing API.
+   *
+   * @return The build version for the underlying runtime native Senzing API.
+   */
+  public String getNativeApiBuildVersion() {
+    return this.nativeApiBuildVersion;
   }
 
   /**

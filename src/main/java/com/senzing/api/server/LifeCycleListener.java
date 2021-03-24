@@ -9,18 +9,21 @@ import java.net.InetAddress;
 class LifeCycleListener implements LifeCycle.Listener {
   private int httpPort;
   private InetAddress ipAddr;
+  private String basePath;
   private Server jettyServer;
   private FileMonitor fileMonitor;
 
   public LifeCycleListener(Server       jettyServer,
                            int          httpPort,
+                           String       basePath,
                            InetAddress  ipAddress,
                            FileMonitor  fileMonitor)
   {
-    this.httpPort = httpPort;
-    this.ipAddr = ipAddress;
-    this.jettyServer = jettyServer;
-    this.fileMonitor = fileMonitor;
+    this.httpPort     = httpPort;
+    this.ipAddr       = ipAddress;
+    this.basePath     = basePath;
+    this.jettyServer  = jettyServer;
+    this.fileMonitor  = fileMonitor;
   }
 
   public void lifeCycleStarting(LifeCycle event) {
@@ -43,7 +46,8 @@ class LifeCycleListener implements LifeCycle.Listener {
     System.out.println("Started Senzing REST API Server on port " + port + ".");
     System.out.println();
     System.out.println("Server running at:");
-    System.out.println("http://" + this.ipAddr.getHostAddress() + ":" + port + "/");
+    System.out.println("http://" + this.ipAddr.getHostAddress()
+                       + ":" + port + this.basePath);
     System.out.println();
     if (this.fileMonitor != null) {
       this.fileMonitor.signalReady();

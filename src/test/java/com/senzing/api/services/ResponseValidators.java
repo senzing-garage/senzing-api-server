@@ -1738,7 +1738,7 @@ public class ResponseValidators {
       expectRawData = false;
     }
 
-    validateBasics(testInfo, response, selfLink, maxDuration);
+    validateBasics(testInfo, response, httpMethod, selfLink, maxDuration);
 
     SzAttributeSearchResponse.Data data = response.getData();
 

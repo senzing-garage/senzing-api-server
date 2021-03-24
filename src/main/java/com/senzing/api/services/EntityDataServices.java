@@ -11,10 +11,6 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.*;
@@ -43,24 +39,7 @@ public class EntityDataServices {
   private static final Map<SzAttributeSearchResultType, Integer>
       RESULT_TYPE_FLAG_MAP;
 
-  private static final Set<String> SEEN_CRITERIA = new HashSet<>();
-  private static final File OUT_FILE;
   static {
-    File file = null;
-    try {
-      File userHome = new File(System.getProperty("user.home"));
-      file = File.createTempFile("search-", ".json", userHome);
-
-      PrintWriter printWriter = new PrintWriter(new FileWriter(file));
-      printWriter.println("[ ");
-      printWriter.close();
-
-    } catch (Exception ignore) {
-      ignore.printStackTrace();
-    } finally {
-      OUT_FILE = file;
-    }
-
     Map<SzAttributeSearchResultType, Integer> map = new LinkedHashMap<>();
     map.put(MATCH, G2_EXPORT_INCLUDE_RESOLVED);
     map.put(POSSIBLE_MATCH, G2_EXPORT_INCLUDE_POSSIBLY_SAME);
@@ -68,6 +47,7 @@ public class EntityDataServices {
     map.put(NAME_ONLY_MATCH, G2_EXPORT_INCLUDE_NAME_ONLY);
     RESULT_TYPE_FLAG_MAP = Collections.unmodifiableMap(map);
   }
+
   @POST
   @Path("data-sources/{dataSourceCode}/records")
   public SzLoadRecordResponse loadRecord(
@@ -832,7 +812,7 @@ public class EntityDataServices {
 
   @GET
   @Path("entities")
-  public SzAttributeSearchResponse searchByAttributes(
+  public SzAttributeSearchResponse searchEntitiesByGet(
       @QueryParam("attrs")                                        String              attrs,
       @QueryParam("attr")                                         List<String>        attrList,
       @QueryParam("includeOnly")                                  Set<String>         includeOnlySet,
@@ -846,8 +826,6 @@ public class EntityDataServices {
   {
     Timers timers = newTimers();
     try {
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
-
       JsonObject searchCriteria = null;
       if (attrs != null && attrs.trim().length() > 0) {
         try {
@@ -923,6 +901,113 @@ public class EntityDataServices {
                 + " ], attrList=[ " + attrList + " ]");
       }
 
+      // defer to the internal method
+      return this.searchByAttributes(searchCriteria,
+                                     includeOnlySet,
+                                     forceMinimal,
+                                     featureMode,
+                                     withFeatureStats,
+                                     withInternalFeatures,
+                                     withRelationships,
+                                     withRaw,
+                                     uriInfo,
+                                     GET,
+                                     timers);
+
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
+    }
+  }
+
+
+  @POST
+  @Path("search-entities")
+  public SzAttributeSearchResponse searchEntitiesByPost(
+      @QueryParam("includeOnly")                                  Set<String>     includeOnlySet,
+      @DefaultValue("false") @QueryParam("forceMinimal")          boolean         forceMinimal,
+      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode   featureMode,
+      @DefaultValue("false") @QueryParam("withFeatureStats")      boolean         withFeatureStats,
+      @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean         withInternalFeatures,
+      @DefaultValue("false") @QueryParam("withRelationships")     boolean         withRelationships,
+      @DefaultValue("false") @QueryParam("withRaw")               boolean         withRaw,
+      @Context                                                    UriInfo         uriInfo,
+      String                                                                      attrs)
+  {
+    Timers timers = newTimers();
+    try {
+      JsonObject searchCriteria = null;
+      if (attrs == null || attrs.trim().length() == 0) {
+        throw newBadRequestException(
+            POST, uriInfo, timers, "The request body must be provided");
+      }
+      try {
+        searchCriteria = JsonUtils.parseJsonObject(attrs);
+      } catch (Exception e) {
+        throw newBadRequestException(
+            POST, uriInfo, timers,
+              "The search criteria in the request body does not parse as "
+            + "valid JSON: " + attrs);
+      }
+
+      // check if we have no attributes at all
+      if (searchCriteria == null || searchCriteria.size() == 0) {
+        throw newBadRequestException(
+            POST, uriInfo, timers,
+            "At least one search criteria attribute must be provided in the "
+                + "JSON request body.  requestBody=[ " + attrs + " ]");
+      }
+
+      // defer to the internal method
+      return this.searchByAttributes(searchCriteria,
+                                     includeOnlySet,
+                                     forceMinimal,
+                                     featureMode,
+                                     withFeatureStats,
+                                     withInternalFeatures,
+                                     withRelationships,
+                                     withRaw,
+                                     uriInfo,
+                                     POST,
+                                     timers);
+
+    } catch (ServerErrorException e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw ServicesUtil.newInternalServerErrorException(
+          POST, uriInfo, timers, e);
+    }
+  }
+
+  protected SzAttributeSearchResponse searchByAttributes(
+      JsonObject          searchCriteria,
+      Set<String>         includeOnlySet,
+      boolean             forceMinimal,
+      SzFeatureMode       featureMode,
+      boolean             withFeatureStats,
+      boolean             withInternalFeatures,
+      boolean             withRelationships,
+      boolean             withRaw,
+      UriInfo             uriInfo,
+      SzHttpMethod        httpMethod,
+      Timers              timers)
+  {
+    try {
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+
       // check for the include-only parameters, convert to result types
       if (includeOnlySet == null) includeOnlySet = Collections.emptySet();
       List<SzAttributeSearchResultType> resultTypes
@@ -933,7 +1018,7 @@ public class EntityDataServices {
 
         } catch (Exception e) {
           throw newBadRequestException(
-              GET, uriInfo, timers,
+              httpMethod, uriInfo, timers,
               "At least one of the includeOnly parameter values was not "
               + "recognized: " + includeOnly);
         }
@@ -977,32 +1062,16 @@ public class EntityDataServices {
         // get the engine API
         G2Engine engineApi = provider.getEngineApi();
 
-        callingNativeAPI(timers, "engine", "searchBy AttributesV2");
+        callingNativeAPI(timers, "engine", "searchByAttributesV2");
         int result = engineApi.searchByAttributesV2(searchJson, flags, sb);
         calledNativeAPI(timers, "engine", "searchByAttributesV2");
         if (result != 0) {
-          throw newInternalServerErrorException(GET, uriInfo, timers, engineApi);
+          throw newInternalServerErrorException(
+              httpMethod, uriInfo, timers, engineApi);
         }
         return sb.toString();
       });
 
-      if (!SEEN_CRITERIA.contains(searchJson)) {
-        SEEN_CRITERIA.add(searchJson);
-        try (PrintWriter pw = new PrintWriter(new FileWriter(OUT_FILE, true))) {
-          pw.println("   {");
-          pw.println("      \"search\": ");
-          JsonObject searchObj = JsonUtils.parseJsonObject(searchJson);
-          pw.println(JsonUtils.toJsonText(searchObj, true) + ",");
-          pw.println();
-          pw.println("      \"results\": ");
-          JsonObject resultsObj = JsonUtils.parseJsonObject(sb.toString());
-          pw.println(JsonUtils.toJsonText(resultsObj, true));
-          pw.println("   },");
-          pw.flush();
-        } catch (IOException ignore) {
-          // do nothing
-        }
-      }
       processingRawData(timers);
 
       JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
@@ -1022,7 +1091,8 @@ public class EntityDataServices {
 
       // construct the response
       SzAttributeSearchResponse response
-          = new SzAttributeSearchResponse(GET, 200, uriInfo, timers);
+          = new SzAttributeSearchResponse(
+              httpMethod, 200, uriInfo, timers);
 
       response.setSearchResults(list);
 
@@ -1044,7 +1114,8 @@ public class EntityDataServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw ServicesUtil.newInternalServerErrorException(
+          httpMethod, uriInfo, timers, e);
     }
   }
 

@@ -1,6 +1,8 @@
 package com.senzing.cmdline;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -9,13 +11,76 @@ import java.util.Set;
  *
  * @param <T>
  */
-public interface CommandLineOption<T extends Enum<T>> {
+public interface CommandLineOption<T extends Enum<T> & CommandLineOption> {
   /**
    * Gets the {@link String} command line flag associated with this option.
    *
    * @return The {@link String} command line flag associated with this option.
    */
   String getCommandLineFlag();
+
+  /**
+   * Gets the <b>unmodifiable</b> {@link Set} of {@link String} synonym flags
+   * for this option.  These are alternate command-line flags that can be used
+   * instead of the primary flag specified by {@link #getCommandLineFlag()}.
+   * This is useful when a flag changes and the old version of it is
+   * deprecated but still supported.  It is <b>NOT</b> allowed to pass multiple
+   * flags for the same option.
+   *
+   * @return The <b>unmodifiable</b> {@link Set} of {@link String} synonym flags
+   *         for this optionl, or an empty set if there are no synonyms.
+   */
+  default Set<String> getSynonymFlags() {
+    return Collections.emptySet();
+  }
+
+  /**
+   * Gets the environment variable that can be used to set the value for
+   * this option, or <tt>null</tt> if the value for this option cannot be set
+   * with an environment variable.
+   *
+   * @return The  environment variable that can be used to set the value for
+   *         this option, or <tt>null</tt> if the value for this option cannot
+   *         be set with an environment variable.
+   */
+  default String getEnvironmentVariable() {
+    return null;
+  }
+
+  /**
+   * Gets the <b>unmodifiable</b> {@link Set} of {@link String} synonym
+   * environment variables for this option.  These are alternate environment
+   * variables that can be used instead of the primary environment variable
+   * specified by {@link #getEnvironmentVariable()}.  This is useful when an
+   * environment variable changes and the old version of it is deprecated but
+   * still supported.  Having multiple environment variables set in the
+   * environment for this option is allowed, however, they are taken in order
+   * of preference (first the primary environment variable and then each of
+   * those in returned {@link Set} in order).
+   *
+   * @return The <b>unmodifiable</b> {@link Set} of {@link String} synonym flags
+   *         for this optionl, or an empty set if there are no synonyms.
+   *
+   */
+  default Set<String> getEnvironmentSynonyms() {
+    return Collections.emptySet();
+  }
+
+  /**
+   * Gets the <b>unmodifiable</b> {@link List} of {@link String} fall-back
+   * environment variables for this option.  These are environment variables
+   * that are only checked if another option is specified that is dependent
+   * on this option and this option is missing.  The environment variables
+   * in the returned {@link List} are checked in order until the first one is
+   * found.  These are essentially environment synonyms that are only
+   * conditionally checked until the first is found.
+   *
+   * @return The ordered {@link List} of {@link String} fall-back environment
+   *         variables.
+   */
+  default List<String> getEnvironmentFallbacks() {
+    return Collections.emptyList();
+  }
 
   /**
    * Gets an {@link Set} of options that conflict with this option.
@@ -76,7 +141,7 @@ public interface CommandLineOption<T extends Enum<T>> {
   /**
    * Returns the minimum number of additional parameters that should follow this
    * command line option.  This should return a non-negative number and at least
-   * this mean parameters will be consumed.  By default this returns zero (0).
+   * this many parameters will be consumed.  By default this returns zero (0).
    */
   default int getMinimumParameterCount() {
     return 0;
@@ -91,5 +156,19 @@ public interface CommandLineOption<T extends Enum<T>> {
    */
   default int getMaximumParameterCount() {
     return -1;
+  }
+
+
+  /**
+   * Returns the default parameter values associated with the option.  These are
+   * the parameters that are set if none are specified.  If no default
+   * parameters then this returns <tt>null</tt>.  An empty {@link List}
+   * indicates that the option is specified by default but with no parameters.
+   * The default implementation returns <tt>null</tt>.
+   *
+   * @return The default parameter values associated with the option.
+   */
+  default List<String> getDefaultParameters() {
+    return null;
   }
 }
