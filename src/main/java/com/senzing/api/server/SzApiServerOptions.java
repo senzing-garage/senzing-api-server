@@ -19,6 +19,7 @@ import static com.senzing.api.server.SzApiServerOption.*;
 public class SzApiServerOptions {
   private int         httpPort              = DEFAULT_PORT;
   private InetAddress bindAddress           = null;
+  private String      urlBasePath           = null;
   private int         concurrency           = DEFAULT_CONCURRENCY;
   private String      moduleName            = DEFAULT_MODULE_NAME;
   private boolean     verbose               = false;
@@ -130,6 +131,24 @@ public class SzApiServerOptions {
   public SzApiServerOptions setBindAddress(InetAddress addr) {
     this.bindAddress = addr;
     return this;
+  }
+
+  /**
+   * Gets the URL base path to use for API server.
+   *
+   * @return The URL base path to use for the API server.
+   */
+  public String getUrlBasePath() {
+    return this.urlBasePath;
+  }
+
+  /**
+   * Sets the URL base path to use for the API Server.
+   *
+   * @param urlBasePath The URL base path.
+   */
+  public void setUrlBasePath(String urlBasePath) {
+    this.urlBasePath = urlBasePath;
   }
 
   /**
@@ -750,6 +769,7 @@ public class SzApiServerOptions {
     Map<SzApiServerOption, Object> map = new HashMap<>();
     put(map, HTTP_PORT,                    this.getHttpPort());
     put(map, BIND_ADDRESS,                 this.getBindAddress());
+    put(map, URL_BASE_PATH,                this.getUrlBasePath());
     put(map, CONCURRENCY,                  this.getConcurrency());
     put(map, MODULE_NAME,                  this.getModuleName());
     put(map, VERBOSE,                      this.isVerbose());
