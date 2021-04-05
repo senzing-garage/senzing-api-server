@@ -11,7 +11,6 @@ import com.senzing.util.Timers;
 import javax.json.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
-import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import java.util.*;
@@ -25,6 +24,12 @@ import static com.senzing.api.services.ServicesUtil.*;
 @Produces("application/json; charset=UTF-8")
 @Path("/")
 public class ConfigServices {
+  /**
+   * The maximum length for comments used when adding a config via the
+   * {@link G2ConfigMgr#addConfig(String, String, Result)} function.
+   */
+  private static final int MAX_CONFIG_COMMENT_LENGTH = 150;
+
   @GET
   @Path("data-sources")
   public SzDataSourcesResponse getDataSources(
@@ -944,7 +949,7 @@ public class ConfigServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw newInternalServerErrorException(PUT, uriInfo, timers, e);
+      throw newInternalServerErrorException(httpMethod, uriInfo, timers, e);
     }
   }
 
@@ -1182,7 +1187,7 @@ public class ConfigServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw newInternalServerErrorException(PUT, uriInfo, timers, e);
+      throw newInternalServerErrorException(httpMethod, uriInfo, timers, e);
     }
   }
 
@@ -1481,7 +1486,7 @@ public class ConfigServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw newInternalServerErrorException(PUT, uriInfo, timers, e);
+      throw newInternalServerErrorException(httpMethod, uriInfo, timers, e);
     }
   }
 
@@ -1530,12 +1535,18 @@ public class ConfigServices {
     StringBuffer sb     = new StringBuffer();
     Result<Long> result = new Result<>();
 
+    // check the size of the config comment
+    if (configComment.length() > MAX_CONFIG_COMMENT_LENGTH) {
+      configComment = configComment.substring(0, MAX_CONFIG_COMMENT_LENGTH - 4)
+          + "....";
+    }
+    
     // convert the config to a JSON string
     callingNativeAPI(timers, "config", "save");
     int returnCode = configApi.save(configHandle, sb);
     if (returnCode != 0) {
       throw newInternalServerErrorException(
-          PUT, uriInfo, timers, configApi);
+          httpMethod, uriInfo, timers, configApi);
     }
     calledNativeAPI(timers, "config", "save");
 
@@ -1550,7 +1561,7 @@ public class ConfigServices {
 
       if (returnCode != 0) {
         throw newInternalServerErrorException(
-            PUT, uriInfo, timers, configMgrApi);
+            httpMethod, uriInfo, timers, configMgrApi);
       }
       calledNativeAPI(timers, "configMgr", "addConfig");
 
@@ -1561,7 +1572,7 @@ public class ConfigServices {
       returnCode = configMgrApi.getDefaultConfigID(result);
       if (returnCode != 0) {
         throw newInternalServerErrorException(
-            PUT, uriInfo, timers, configMgrApi);
+            httpMethod, uriInfo, timers, configMgrApi);
       }
       calledNativeAPI(timers, "configMgr", "getDefaultConfigID");
 
@@ -1576,7 +1587,7 @@ public class ConfigServices {
       returnCode = configMgrApi.setDefaultConfigID(newConfigId);
       if (returnCode != 0) {
         throw newInternalServerErrorException(
-            PUT, uriInfo, timers, configMgrApi);
+            httpMethod, uriInfo, timers, configMgrApi);
       }
       calledNativeAPI(timers, "configMgr", "setDefaultConfigID");
     }

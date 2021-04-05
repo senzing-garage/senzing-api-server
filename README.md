@@ -177,131 +177,185 @@ to obtain a help message describing all available options.
 For example:
 
 ```console
-$ java -jar target/senzing-api-server-2.4.0.jar -help
+$ java -jar target/senzing-api-server-2.5.0.jar --help
 
-java -jar senzing-api-server-2.4.0.jar <options>
+java -jar senzing-api-server-2.5.0.jar <options>
 
 <options> includes: 
 
 [ Standard Options ]
 
-   -help
-        Should be the first and only option if provided.
+   --help
+        Also -help.  Should be the first and only option if provided.
         Causes this help message to be displayed.
         NOTE: If this option is provided, the server will not start.
 
-   -version
-        Should be the first and only option if provided.
+   --version
+        Also -version.  Should be the first and only option if provided.
         Causes the version of the G2 REST API Server to be displayed.
         NOTE: If this option is provided, the server will not start.
 
-   -readOnly
-        Disables functions that would modify the entity repository data, causing
-        those functions to return a 403 Forbidden response.  NOTE: this option
-        will not only disable loading data to the entity repository, but will
-        also disable modifications to the configuration even if the -enableAdmin
-        option is provided.
+   --read-only [true|false]
+        Also -readOnly.  Disables functions that would modify the entity
+        repository data, causing those functions to return a 403 Forbidden
+        response.  The true/false parameter is optional, if not specified
+        then true is assumed.  If specified as false then it is the same as
+        omitting the option with the exception that omission falls back to the
+        environment variable setting whereas an explicit false overrides any
+        environment variable.  NOTE: this option will not only disable loading
+        data to the entity repository, but will also disable modifications to
+        the configuration even if the --enable-admin option is provided.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_READ_ONLY
 
-   -enableAdmin
-        Enables administrative functions via the API server.  If not specified
-        then administrative functions will return a 403 Forbidden response.
+   --enable-admin [true|false]
+        Also -enableAdmin.  Enables administrative functions via the API
+        server.  The true/false parameter is optional, if not specified then
+        true is assumed.  If specified as false then it is the same as omitting
+        the option with the exception that omission falls back to the
+        environment variable setting whereas an explicit false overrides any
+        environment variable.  If not specified then administrative functions
+        will return a 403 Forbidden response.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_ENABLE_ADMIN
 
-   -httpPort <port-number>
-        Sets the port for HTTP communication.  Defaults to 2080.
-        Specify 0 for a randomly selected port number.
+   --http-port <port-number>
+        Also -httpPort.  Sets the port for HTTP communication.  If not
+        specified, then the default port (2080) is used.
+        Specify 0 for a randomly selected available port number.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_PORT
 
-   -bindAddr <ip-address|loopback|all>
-        Sets the port for HTTP bind address communication.
-        Defaults to the loopback address.
+   --bind-addr <ip-address|loopback|all>
+        Also -bindAddr.  Sets the bind address for HTTP communication.  If not
+        provided the bind address defaults to the loopback address.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_BIND_ADDR
 
-   -allowedOrigins <url-domain>
-        Sets the CORS Access-Control-Allow-Origin header for all endpoints.
-        There is no default value.
+   --url-base-path <base-path>
+        Also -urlBasePath.  Sets the URL base path for the API Server.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_URL_BASE_PATH
 
-   -concurrency <thread-count>
-        Sets the number of threads available for executing 
+   --allowed-origins <url-domain>
+        Also -allowedOrigins.  Sets the CORS Access-Control-Allow-Origin header
+        for all endpoints.  There is no default value.  If not specified then
+        the Access-Control-Allow-Origin is not included with responses.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_ALLOWED_ORIGINS
+
+   --concurrency <thread-count>
+        Also -concurrency.  Sets the number of threads available for executing 
         Senzing API functions (i.e.: the number of engine threads).
         If not specified, then this defaults to 8.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_CONCURRENCY
 
-   -moduleName <module-name>
-        The module name to initialize with.  Defaults to 'ApiServer'.
+   --module-name <module-name>
+        Also -moduleName.  The module name to initialize with.  If not
+        specified, then the module name defaults to "SzApiServer".
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_MODULE_NAME
 
-   -iniFile <ini-file-path>
-        The path to the Senzing INI file to with which to initialize.
+   --ini-file <ini-file-path>
+        Also -iniFile.  The path to the Senzing INI file to with which to
+        initialize.
         EXAMPLE: -iniFile /etc/opt/senzing/G2Module.ini
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_INI_FILE
 
-   -initFile <json-init-file>
-        The path to the file containing the JSON text to use for Senzing
-        initialization.
+   --init-file <json-init-file>
+        Also -initFile.  The path to the file containing the JSON text to
+        use for Senzing initialization.
         EXAMPLE: -initFile ~/senzing/g2-init.json
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_INIT_FILE
 
-   -initEnvVar <environment-variable-name>
-        The environment variable from which to extract the JSON text
-        to use for Senzing initialization.
+   --init-env-var <environment-variable-name>
+        Also -initEnvVar.  The environment variable from which to extract
+        the JSON text to use for Senzing initialization.
         *** SECURITY WARNING: If the JSON text contains a password
         then it may be visible to other users via process monitoring.
         EXAMPLE: -initEnvVar SENZING_INIT_JSON
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_INIT_ENV_VAR
 
-   -initJson <json-init-text>
-        The JSON text to use for Senzing initialization.
+   --init-json <json-init-text>
+        Also -initJson.  The JSON text to use for Senzing initialization.
         *** SECURITY WARNING: If the JSON text contains a password
         then it may be visible to other users via process monitoring.
         EXAMPLE: -initJson "{"PIPELINE":{ ... }}"
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_INIT_JSON
 
-   -configId <config-id>
-        Use with the -iniFile, -initFile, -initEnvVar or -initJson options
-        to force a specific configuration ID to use for initialization.
+   --config-id <config-id>
+        Also -configId.  Use with the -iniFile, -initFile, -initEnvVar or
+        -initJson options to force a specific configuration ID to use for
+        initialization.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_CONFIG_ID
 
-   -autoRefreshPeriod <positive-integer-seconds|0|negative-integer>
-        If leveraging the default configuration stored in the database,
-        this is used to specify how often the API server should background
-        check that the current active config is the same as the current
-        default config, and if different reinitialize with the current
-        default config.  If zero is specified, then the auto-refresh
-        is disabled and it will only occur when a requested configuration
-        element is not found in the current active config.  Specifying
-        a negative integer is allowed but is used to enable a check and 
-        conditional refresh only when manually requested (programmatically).
-        NOTE: This is option ignored if auto-refresh is disabled because
-        the config was specified via the G2CONFIGFILE init option or if 
-        -configId has been specified to lock to a specific configuration.
+   --auto-refresh-period <positive-integer-seconds|0|negative-integer>
+        Also -autoRefreshPeriod.  If leveraging the default configuration stored
+        in the database, this is used to specify how often the API server should
+        background check that the current active config is the same as the
+        current default config, and if different reinitialize with the current
+        default config.  If zero is specified, then the auto-refresh is disabled
+        and it will only occur when a requested configuration element is not
+        found in the current active config.  Specifying a negative integer is
+        allowed but is used to enable a check and conditional refresh only when
+        manually requested (programmatically).  NOTE: This is option ignored if
+        auto-refresh is disabled because the config was specified via the
+        G2CONFIGFILE init option or if --config-id has been specified to lock to
+        a specific configuration.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_AUTO_REFRESH_PERIOD
 
-   -statsInterval <milliseconds>
-        The minimum number of milliseconds between logging of stats.  This is
-        minimum because stats logging is suppressed if the API Server is idle
-        or active but not performing activities pertaining to entity scoring.
-        In such cases, stats logging is delayed until an activity pertaining to
-        entity scoring is performed.  By default this is set to the millisecond
-        equivalent of 15 minutes.  If zero (0) is specified then the logging of
-        stats will be suppressed.
+   --stats-interval <milliseconds>
+        Also -statsInterval.  The minimum number of milliseconds between logging
+        of stats.  This is minimum because stats logging is suppressed if the API
+        Server is idle or active but not performing activities pertaining to
+        entity scoring.  In such cases, stats logging is delayed until an
+        activity pertaining to entity scoring is performed.  By default this is
+        set to the millisecond equivalent of 15 minutes.  If zero (0) is
+        specified then the logging of stats will be suppressed.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_STATS_INTERVAL
 
-   -skipEnginePriming
-        If specified then the engine is not primed on startup.  This makes
-        startup faster, but the first request requiring engine priming will be
-        much slower.
+   --skip-startup-perf [true|false]
+        Also -skipStartupPerf.  If specified then the performance check on
+        startup is skipped.  The true/false parameter is optional, if not
+        specified then true is assumed.  If specified as false then it is the
+        same as omitting the option with the exception that omission falls back
+        to the environment variable setting whereas an explicit false overrides
+        any environment variable.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_SKIP_STARTUP_PERF
 
-   -skipStartupPerf
-        If specified then the performance check on startup is skipped.
+   --skip-engine-priming [true|false]
+        Also -skipEnginePriming.  If specified then the API Server will not
+        prime the engine on startup.  The true/false parameter is optional, if
+        not specified then true is assumed.  If specified as false then it is
+        the same as omitting the option with the exception that omission falls
+        back to the environment variable setting whereas an explicit false
+        overrides any environment variable.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_SKIP_ENGINE_PRIMING
 
-   -verbose
-        If specified then initialize in verbose mode.
+   --verbose [true|false]
+        Also -verbose.  If specified then initialize in verbose mode.  The
+        true/false parameter is optional, if not specified then true is assumed.
+        If specified as false then it is the same as omitting the option with
+        the exception that omission falls back to the environment variable
+        setting whereas an explicit false overrides any environment variable.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_VERBOSE
 
-   -quiet If specified then the API server reduces the number of messages
-          provided as feedback to standard output.  This applies only to
-          messages generated by the API server and not by the underlying 
-          API which can be quite prolific if -verbose is provided.
+   --quiet [true|false]
+        Also -quiet.  If specified then the API server reduces the number of
+        messages provided as feedback to standard output.  This applies only to
+        messages generated by the API server and not by the underlying API which
+        can be quite prolific if --verbose is provided.  The true/false
+        parameter is optional, if not specified then true is assumed.  If
+        specified as false then it is the same as omitting the option with
+        the exception that omission falls back to the environment variable
+        setting whereas an explicit false overrides any environment variable.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_QUIET
 
-   -monitorFile [file-path]
-        Specifies a file whose timestamp is monitored to determine
-        when to shutdown.
+   --monitor-file <file-path>
+        Also -monitorFile.  Specifies a file whose timestamp is monitored to
+        determine when to shutdown.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_MONITOR_FILE
 
 [ Advanced Options ]
 
-   --configmgr [config manager options]...
-        Should be the first option if provided.  All subsequent options
-        are interpreted as configuration manager options.  If this option
-        is specified by itself then a help message on configuration manager
-        options will be displayed.
+   --config-mgr [config manager options]...
+        Also --configmgr.  Should be the first option if provided.  All
+        subsequent options are interpreted as configuration manager options.
+        If this option is specified by itself then a help message on
+        configuration manager options will be displayed.
         NOTE: If this option is provided, the server will not start.
 
 ```
