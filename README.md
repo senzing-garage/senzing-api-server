@@ -177,9 +177,9 @@ to obtain a help message describing all available options.
 For example:
 
 ```console
-$ java -jar target/senzing-api-server-2.4.0.jar --help
+$ java -jar target/senzing-api-server-2.5.0.jar --help
 
-java -jar senzing-api-server-2.4.0.jar <options>
+java -jar senzing-api-server-2.5.0.jar <options>
 
 <options> includes: 
 
@@ -227,6 +227,10 @@ java -jar senzing-api-server-2.4.0.jar <options>
         Also -bindAddr.  Sets the bind address for HTTP communication.  If not
         provided the bind address defaults to the loopback address.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_BIND_ADDR
+
+   --url-base-path <base-path>
+        Also -urlBasePath.  Sets the URL base path for the API Server.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_URL_BASE_PATH
 
    --allowed-origins <url-domain>
         Also -allowedOrigins.  Sets the CORS Access-Control-Allow-Origin header
@@ -311,6 +315,15 @@ java -jar senzing-api-server-2.4.0.jar <options>
         to the environment variable setting whereas an explicit false overrides
         any environment variable.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_SKIP_STARTUP_PERF
+
+   --skip-engine-priming [true|false]
+        Also -skipEnginePriming.  If specified then the API Server will not
+        prime the engine on startup.  The true/false parameter is optional, if
+        not specified then true is assumed.  If specified as false then it is
+        the same as omitting the option with the exception that omission falls
+        back to the environment variable setting whereas an explicit false
+        overrides any environment variable.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_SKIP_ENGINE_PRIMING
 
    --verbose [true|false]
         Also -verbose.  If specified then initialize in verbose mode.  The
@@ -771,6 +784,3 @@ see [Environment Variables](https://github.com/Senzing/knowledge-base/blob/maste
 1. See [docs/errors.md](docs/errors.md).
 
 ## References
-
-
-

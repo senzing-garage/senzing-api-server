@@ -556,12 +556,12 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
-        long before = System.currentTimeMillis();
+        long before = System.nanoTime();
         SzBulkDataAnalysisResponse response
             = this.bulkDataServices.analyzeBulkRecordsViaForm(
             mediaType, fis, uriInfo);
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
         validateAnalyzeResponse(testInfo,
                                 response,
@@ -570,8 +570,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                 mediaType,
                                 bulkDataFile,
                                 expected,
-                                before,
-                                after);
+                                after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
@@ -594,13 +593,13 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri("bulk-data/analyze");
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
-        long before = System.currentTimeMillis();
+        long before = System.nanoTime();
         SzBulkDataAnalysisResponse response = this.invokeServerViaHttp(
             POST, uriText, null, mediaType.toString(),
             bulkDataFile.length(), new FileInputStream(bulkDataFile),
             SzBulkDataAnalysisResponse.class);
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
         validateAnalyzeResponse(testInfo,
                                 response,
@@ -609,8 +608,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                 mediaType,
                                 bulkDataFile,
                                 expected,
-                                before,
-                                after);
+                                after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
@@ -633,13 +631,13 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri("bulk-data/analyze");
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
-        long before = System.currentTimeMillis();
+        long before = System.nanoTime();
         com.senzing.gen.api.model.SzBulkDataAnalysisResponse clientResponse
             = this.invokeServerViaHttp(
             POST, uriText, null, mediaType.toString(),
             bulkDataFile.length(), new FileInputStream(bulkDataFile),
             com.senzing.gen.api.model.SzBulkDataAnalysisResponse.class);
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
         SzBulkDataAnalysisResponse response
             = jsonCopy(clientResponse, SzBulkDataAnalysisResponse.class);
@@ -651,8 +649,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                 mediaType,
                                 bulkDataFile,
                                 expected,
-                                before,
-                                after);
+                                after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
@@ -863,7 +860,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       UriInfo uriInfo = this.newProxyUriInfo(uriText, queryParams);
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
-        long before = System.currentTimeMillis();
+        long before = System.nanoTime();
         SzBulkLoadResponse response
             = this.bulkDataServices.loadBulkRecordsViaForm(
                 CONTACTS_DATA_SOURCE,
@@ -879,7 +876,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                 null,
                 uriInfo);
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
         Map<String,String> allDataSourceMap = new LinkedHashMap<>();
         allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
@@ -902,8 +899,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                              allEntityTypeMap,
                              null,
                              null,
-                             before,
-                             after);
+                             after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
@@ -932,13 +928,13 @@ public class BulkDataServicesTest extends AbstractServiceTest {
           dataSourceMap, entityTypeMap, null));
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
-        long before = System.currentTimeMillis();
+        long before = System.nanoTime();
         SzBulkLoadResponse response = this.invokeServerViaHttp(
             POST, uriText, null, mediaType.toString(),
             bulkDataFile.length(), new FileInputStream(bulkDataFile),
             SzBulkLoadResponse.class);
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
         Map<String,String> allDataSourceMap = new LinkedHashMap<>();
         allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
@@ -961,8 +957,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                              allEntityTypeMap,
                              null,
                              null,
-                             before,
-                             after);
+                             after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
@@ -991,14 +986,14 @@ public class BulkDataServicesTest extends AbstractServiceTest {
           dataSourceMap, entityTypeMap, null));
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
-        long before = System.currentTimeMillis();
+        long before = System.nanoTime();
         com.senzing.gen.api.model.SzBulkLoadResponse clientResponse
             = this.invokeServerViaHttp(
             POST, uriText, null, mediaType.toString(),
             bulkDataFile.length(), new FileInputStream(bulkDataFile),
             com.senzing.gen.api.model.SzBulkLoadResponse.class);
 
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
         Map<String,String> allDataSourceMap = new LinkedHashMap<>();
         allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
@@ -1024,8 +1019,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                              allEntityTypeMap,
                              null,
                              null,
-                             before,
-                             after);
+                             after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
@@ -1195,7 +1189,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       SzBulkLoadResponse response = null;
       try (InputStream is = new FileInputStream(dataFile);
            BufferedInputStream bis = new BufferedInputStream(is)) {
-        long before = System.currentTimeMillis();
+        long before = System.nanoTime();
         response = this.bulkDataServices.loadBulkRecordsViaForm(
             null,
             null,
@@ -1211,7 +1205,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
             uriInfo);
 
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
         this.validateLoadResponse(testInfo,
                                   response,
@@ -1226,8 +1220,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                   null,
                                   failuresByDataSource,
                                   failuresByEntityType,
-                                  before,
-                                  after);
+                                  after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
@@ -1248,10 +1241,9 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                        MediaType                  mediaType,
                                        File                       bulkDataFile,
                                        SzBulkDataAnalysis         expected,
-                                       long                       startTime,
-                                       long                       endTime)
+                                       long                       maxDuration)
   {
-    validateBasics(response, httpMethod, selfLink, startTime, endTime);
+    validateBasics(response, httpMethod, selfLink, maxDuration);
 
     SzBulkDataAnalysis actual = response.getData();
 
@@ -1387,16 +1379,14 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                     Map<String, String>        entityTypeMap,
                                     Map<String, Integer>       failuresBySource,
                                     Map<String, Integer>       failuresByEType,
-                                    long                       startTime,
-                                    long                       endTime)
+                                    long                       maxDuration)
   {
     validateBasics(testInfo,
                    response,
                    200,
                    httpMethod,
                    selfLink,
-                   startTime,
-                   endTime,
+                   maxDuration,
                    this.getServerConcurrency());
 
     final Integer ZERO = 0;

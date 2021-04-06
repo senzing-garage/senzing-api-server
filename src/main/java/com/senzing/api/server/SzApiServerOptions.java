@@ -19,6 +19,7 @@ import static com.senzing.api.server.SzApiServerOption.*;
 public class SzApiServerOptions {
   private int         httpPort              = DEFAULT_PORT;
   private InetAddress bindAddress           = null;
+  private String      urlBasePath           = null;
   private int         concurrency           = DEFAULT_CONCURRENCY;
   private String      moduleName            = DEFAULT_MODULE_NAME;
   private boolean     verbose               = false;
@@ -26,6 +27,7 @@ public class SzApiServerOptions {
   private boolean     readOnly              = false;
   private boolean     adminEnabled          = false;
   private boolean     skipStartupPerf       = false;
+  private boolean     skipEnginePriming     = false;
   private long        statsInterval         = DEFAULT_STATS_INTERVAL;
   private String      allowedOrigins        = null;
   private Long        configId              = null;
@@ -80,7 +82,8 @@ public class SzApiServerOptions {
   /**
    * Returns the HTTP port to bind to.  Zero (0) is returned if binding to
    * a random available port.  This is initialized to the {@linkplain
-   * SzApiServer#DEFAULT_PORT default port number} if not explicitly set.
+   * SzApiServerConstants#DEFAULT_PORT default port number} if not explicitly
+   * set.
    *
    * @return The HTTP port to bind to or zero (0) if the server will bind
    *         to a random available port.
@@ -91,8 +94,8 @@ public class SzApiServerOptions {
 
   /**
    * Sets the HTTP port to bind to.  Use zero to bind to a random port and
-   * <tt>null</tt> to bind to the {@linkplain SzApiServer#DEFAULT_PORT default
-   * port}.
+   * <tt>null</tt> to bind to the {@linkplain SzApiServerConstants#DEFAULT_PORT
+   * default port}.
    *
    * @param port The HTTP port to bind to, zero (0) if the server should bind
    *             to a random port and <tt>null</tt> if server should bind to
@@ -131,9 +134,27 @@ public class SzApiServerOptions {
   }
 
   /**
+   * Gets the URL base path to use for API server.
+   *
+   * @return The URL base path to use for the API server.
+   */
+  public String getUrlBasePath() {
+    return this.urlBasePath;
+  }
+
+  /**
+   * Sets the URL base path to use for the API Server.
+   *
+   * @param urlBasePath The URL base path.
+   */
+  public void setUrlBasePath(String urlBasePath) {
+    this.urlBasePath = urlBasePath;
+  }
+
+  /**
    * Gets the number of threads that the server will create for the engine.
    * If the value has not {@linkplain #setConcurrency(Integer) explicitly set}
-   * then {@link SzApiServer#DEFAULT_CONCURRENCY} is returned.
+   * then {@link SzApiServerConstants#DEFAULT_CONCURRENCY} is returned.
    *
    * @return The number of threads that the server will create for the engine.
    */
@@ -143,8 +164,8 @@ public class SzApiServerOptions {
 
   /**
    * Sets the number of threads that the server will create for the engine.
-   * Set to <tt>null</tt> to use the {@linkplain SzApiServer#DEFAULT_CONCURRENCY
-   * default number of threads}.
+   * Set to <tt>null</tt> to use the {@linkplain
+   * SzApiServerConstants#DEFAULT_CONCURRENCY default number of threads}.
    *
    * @param concurrency The number of threads to create for the engine, or
    *                    <tt>null</tt> for the default number of threads.
@@ -159,10 +180,10 @@ public class SzApiServerOptions {
 
   /**
    * Gets the module name to initialize with.  If <tt>null</tt> is returned
-   * then {@link SzApiServer#DEFAULT_MODULE_NAME} is used.
+   * then {@link SzApiServerConstants#DEFAULT_MODULE_NAME} is used.
    *
    * @return The module name to initialize with, or <tt>null</tt> is returned
-   *         then {@link SzApiServer#DEFAULT_MODULE_NAME} is used.
+   *         then {@link SzApiServerConstants#DEFAULT_MODULE_NAME} is used.
    */
   public String getModuleName() {
     return this.moduleName;
@@ -170,10 +191,11 @@ public class SzApiServerOptions {
 
   /**
    * Sets the module name to initialize with.  Set to <tt>null</tt> if the
-   * default value of {@link SzApiServer#DEFAULT_MODULE_NAME} is to be used.
+   * default value of {@link SzApiServerConstants#DEFAULT_MODULE_NAME} is to be
+   * used.
    *
-   * @param moduleName The module name to bind to, or <tt>null</tt> then
-   *                   the {@link SzApiServer#DEFAULT_MODULE_NAME} is used.
+   * @param moduleName The module name to bind to, or <tt>null</tt> then the
+   *                   {@link SzApiServerConstants#DEFAULT_MODULE_NAME} is used.
    *
    * @return A reference to this instance.
    */
@@ -372,7 +394,7 @@ public class SzApiServerOptions {
   /**
    * Sets the configuration auto refresh period.  Set the value to <tt>null</tt>
    * if the API server should use {@link
-   * SzApiServer#DEFAULT_CONFIG_REFRESH_PERIOD}.
+   * SzApiServerConstants#DEFAULT_CONFIG_REFRESH_PERIOD}.
    *
    * @param autoRefreshPeriod The number of seconds to automatically
    *
@@ -441,6 +463,31 @@ public class SzApiServerOptions {
    */
   public SzApiServerOptions setSkippingStartupPerformance(boolean skipping) {
     this.skipStartupPerf = skipping;
+    return this;
+  }
+
+  /**
+   * Checks whether or not the API server should skip priming the engine on
+   * startup.
+   *
+   * @return <tt>true</tt> if the API server should skip priming the engine on
+   *         startup, and <tt>false</tt> if not.
+   */
+  public boolean isSkippingEnginePriming() {
+    return this.skipEnginePriming;
+  }
+
+  /**
+   * Sets whether or not the API server should skip the priming the engine on
+   * startup.
+   *
+   * @param skipping <tt>true</tt> if the API server should skip priming the
+   *                 engine on startup, and <tt>false</tt> if not.
+   *
+   * @return A reference to this instance.
+   */
+  public SzApiServerOptions setSkippingEnginePriming(boolean skipping) {
+    this.skipEnginePriming = skipping;
     return this;
   }
 
@@ -722,6 +769,7 @@ public class SzApiServerOptions {
     Map<SzApiServerOption, Object> map = new HashMap<>();
     put(map, HTTP_PORT,                    this.getHttpPort());
     put(map, BIND_ADDRESS,                 this.getBindAddress());
+    put(map, URL_BASE_PATH,                this.getUrlBasePath());
     put(map, CONCURRENCY,                  this.getConcurrency());
     put(map, MODULE_NAME,                  this.getModuleName());
     put(map, VERBOSE,                      this.isVerbose());
@@ -734,6 +782,7 @@ public class SzApiServerOptions {
     put(map, AUTO_REFRESH_PERIOD,          this.getAutoRefreshPeriod());
     put(map, STATS_INTERVAL,               this.getStatsInterval());
     put(map, SKIP_STARTUP_PERF,            this.isSkippingStartupPerformance());
+    put(map, SKIP_ENGINE_PRIMING,          this.isSkippingEnginePriming());
     put(map, KAFKA_INFO_BOOTSTRAP_SERVER,  this.getKafkaInfoBootstrapServers());
     put(map, KAFKA_INFO_GROUP,             this.getKafkaInfoGroupId());
     put(map, KAFKA_INFO_TOPIC,             this.getKafkaInfoTopic());

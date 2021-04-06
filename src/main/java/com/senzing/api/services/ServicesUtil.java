@@ -61,7 +61,8 @@ public class ServicesUtil {
 
   /**
    * HTTP Response code for "not found".
-\   */
+   * \
+   */
   public static final int NOT_FOUND = 404;
 
   /**
@@ -99,21 +100,16 @@ public class ServicesUtil {
    * and the specified exception.
    *
    * @param httpMethod The HTTP method for the request.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param exception The exception that caused the error.
-   *
+   * @param uriInfo    The {@link UriInfo} from the request.
+   * @param timers     The {@link Timers} object for the timings that were taken.
+   * @param exception  The exception that caused the error.
    * @return The {@link InternalServerErrorException}
    */
   static InternalServerErrorException newInternalServerErrorException(
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers,
-      Exception     exception)
-  {
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers,
+      Exception exception) {
     Response.ResponseBuilder builder = Response.status(SERVER_ERROR);
     builder.entity(
         new SzErrorResponse(httpMethod, SERVER_ERROR, uriInfo, timers, exception));
@@ -126,21 +122,16 @@ public class ServicesUtil {
    * and the specified {@link G2Fallible} to get the last exception from.
    *
    * @param httpMethod The HTTP method for the request.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param fallible The {@link G2Fallible} to get the last exception from.
-   *
+   * @param uriInfo    The {@link UriInfo} from the request.
+   * @param timers     The {@link Timers} object for the timings that were taken.
+   * @param fallible   The {@link G2Fallible} to get the last exception from.
    * @return The {@link InternalServerErrorException}
    */
   static InternalServerErrorException newInternalServerErrorException(
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers,
-      G2Fallible    fallible)
-  {
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers,
+      G2Fallible fallible) {
     Response.ResponseBuilder builder = Response.status(SERVER_ERROR);
     SzErrorResponse errorResponse =
         new SzErrorResponse(httpMethod, SERVER_ERROR, uriInfo, timers, fallible);
@@ -157,21 +148,16 @@ public class ServicesUtil {
    * and the specified {@link G2Fallible} to get the last exception from.
    *
    * @param httpMethod The HTTP method for the request.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param fallible The {@link G2Fallible} to get the last exception from.
-   *
+   * @param uriInfo    The {@link UriInfo} from the request.
+   * @param timers     The {@link Timers} object for the timings that were taken.
+   * @param fallible   The {@link G2Fallible} to get the last exception from.
    * @return The {@link InternalServerErrorException}
    */
   static NotFoundException newNotFoundException(
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers,
-      G2Fallible    fallible)
-  {
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers,
+      G2Fallible fallible) {
     Response.ResponseBuilder builder = Response.status(NOT_FOUND);
     builder.entity(
         new SzErrorResponse(httpMethod, NOT_FOUND, uriInfo, timers, fallible));
@@ -184,18 +170,14 @@ public class ServicesUtil {
    * with an {@link SzErrorResponse} using the specified {@link UriInfo}.
    *
    * @param httpMethod The HTTP method for the request.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
+   * @param uriInfo    The {@link UriInfo} from the request.
+   * @param timers     The {@link Timers} object for the timings that were taken.
    * @return The {@link InternalServerErrorException}
    */
   static NotFoundException newNotFoundException(
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers)
-  {
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers) {
     Response.ResponseBuilder builder = Response.status(NOT_FOUND);
     builder.entity(
         new SzErrorResponse(httpMethod, NOT_FOUND, uriInfo, timers));
@@ -206,22 +188,17 @@ public class ServicesUtil {
    * Creates an {@link NotFoundException} and builds a response
    * with an {@link SzErrorResponse} using the specified {@link UriInfo}.
    *
-   * @param httpMethod The HTTP method for the request.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
+   * @param httpMethod   The HTTP method for the request.
+   * @param uriInfo      The {@link UriInfo} from the request.
+   * @param timers       The {@link Timers} object for the timings that were taken.
    * @param errorMessage The error message.
-   *
    * @return The {@link InternalServerErrorException}
    */
   static NotFoundException newNotFoundException(
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers,
-      String        errorMessage)
-  {
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers,
+      String errorMessage) {
     Response.ResponseBuilder builder = Response.status(NOT_FOUND);
     builder.entity(
         new SzErrorResponse(
@@ -233,22 +210,17 @@ public class ServicesUtil {
    * Creates a {@link NotAllowedException} and builds a response
    * with an {@link SzErrorResponse} using the specified {@link UriInfo}.
    *
-   * @param httpMethod The HTTP method for the request.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
+   * @param httpMethod   The HTTP method for the request.
+   * @param uriInfo      The {@link UriInfo} from the request.
+   * @param timers       The {@link Timers} object for the timings that were taken.
    * @param errorMessage The error message.
-   *
    * @return The {@link InternalServerErrorException}
    */
   static NotAllowedException newNotAllowedException(
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers,
-      String        errorMessage)
-  {
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers,
+      String errorMessage) {
     Response.ResponseBuilder builder = Response.status(NOT_ALLOWED);
     builder.entity(
         new SzErrorResponse(
@@ -262,21 +234,16 @@ public class ServicesUtil {
    * and the specified {@link G2Fallible} to get the last exception from.
    *
    * @param httpMethod The HTTP method for the request.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param fallible The {@link G2Fallible} to get the last exception from.
-   *
+   * @param uriInfo    The {@link UriInfo} from the request.
+   * @param timers     The {@link Timers} object for the timings that were taken.
+   * @param fallible   The {@link G2Fallible} to get the last exception from.
    * @return The {@link BadRequestException}
    */
   static BadRequestException newBadRequestException(
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers,
-      G2Fallible    fallible)
-  {
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers,
+      G2Fallible fallible) {
     Response.ResponseBuilder builder = Response.status(BAD_REQUEST);
     builder.entity(
         new SzErrorResponse(httpMethod, BAD_REQUEST, uriInfo, timers, fallible));
@@ -288,23 +255,18 @@ public class ServicesUtil {
    * Creates an {@link BadRequestException} and builds a response
    * with an {@link SzErrorResponse} using the specified {@link UriInfo}.
    *
-   * @param httpMethod The HTTP method for the request.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
+   * @param httpMethod   The HTTP method for the request.
+   * @param uriInfo      The {@link UriInfo} from the request.
+   * @param timers       The {@link Timers} object for the timings that were taken.
    * @param errorMessage The error message.
-   *
    * @return The {@link BadRequestException} that was created with the
-   *         specified http method and {@link UriInfo}.
+   * specified http method and {@link UriInfo}.
    */
   static BadRequestException newBadRequestException(
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers,
-      String        errorMessage)
-  {
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers,
+      String errorMessage) {
     Response.ResponseBuilder builder = Response.status(BAD_REQUEST);
     builder.entity(
         new SzErrorResponse(
@@ -318,21 +280,16 @@ public class ServicesUtil {
    * and the specified exception.
    *
    * @param httpMethod The HTTP method for the request.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param exception The exception that caused the error.
-   *
+   * @param uriInfo    The {@link UriInfo} from the request.
+   * @param timers     The {@link Timers} object for the timings that were taken.
+   * @param exception  The exception that caused the error.
    * @return The {@link InternalServerErrorException}
    */
   static BadRequestException newBadRequestException(
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers,
-      Exception     exception)
-  {
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers,
+      Exception exception) {
     Response.ResponseBuilder builder = Response.status(BAD_REQUEST);
     builder.entity(
         new SzErrorResponse(httpMethod, BAD_REQUEST, uriInfo, timers, exception));
@@ -343,23 +300,18 @@ public class ServicesUtil {
    * Creates an {@link ForbiddenException} and builds a response
    * with an {@link SzErrorResponse} using the specified {@link UriInfo}.
    *
-   * @param httpMethod The HTTP method for the request.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
+   * @param httpMethod   The HTTP method for the request.
+   * @param uriInfo      The {@link UriInfo} from the request.
+   * @param timers       The {@link Timers} object for the timings that were taken.
    * @param errorMessage The error message.
-   *
    * @return The {@link ForbiddenException} that was created with the
-   *         specified http method and {@link UriInfo}.
+   * specified http method and {@link UriInfo}.
    */
   static ForbiddenException newForbiddenException(
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers,
-      String        errorMessage)
-  {
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers,
+      String errorMessage) {
     Response.ResponseBuilder builder = Response.status(FORBIDDEN);
     builder.entity(
         new SzErrorResponse(
@@ -374,27 +326,21 @@ public class ServicesUtil {
    * {@link InternalServerErrorException}.
    *
    * @param httpMethod The HTTP method for the request.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param engineApi The {@link G2Fallible} to get the last exception from.
-   *
+   * @param uriInfo    The {@link UriInfo} from the request.
+   * @param timers     The {@link Timers} object for the timings that were taken.
+   * @param engineApi  The {@link G2Fallible} to get the last exception from.
    * @return A newly created {@link NotFoundException} or {@link
-   *         InternalServerErrorException}.
+   * InternalServerErrorException}.
    */
   static WebApplicationException newPossiblyNotFoundException(
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers,
-      G2Engine      engineApi)
-  {
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers,
+      G2Engine engineApi) {
     int errorCode = engineApi.getLastExceptionCode();
     if (errorCode == DATA_SOURCE_NOT_FOUND_CODE
         || errorCode == RECORD_NOT_FOUND_CODE
-        || errorCode == ENTITY_ID_NOT_FOUND_CODE)
-    {
+        || errorCode == ENTITY_ID_NOT_FOUND_CODE) {
       return newNotFoundException(httpMethod, uriInfo, timers, engineApi);
     }
     return newInternalServerErrorException(
@@ -408,27 +354,21 @@ public class ServicesUtil {
    * {@link InternalServerErrorException}.
    *
    * @param httpMethod The HTTP method for the request.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param engineApi The {@link G2Fallible} to get the last exception from.
-   *
+   * @param uriInfo    The {@link UriInfo} from the request.
+   * @param timers     The {@link Timers} object for the timings that were taken.
+   * @param engineApi  The {@link G2Fallible} to get the last exception from.
    * @return A newly created {@link BadRequestException} or {@link
-   *         InternalServerErrorException}.
+   * InternalServerErrorException}.
    */
   static WebApplicationException newPossiblyBadRequestException(
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers,
-      G2Engine      engineApi)
-  {
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers,
+      G2Engine engineApi) {
     int errorCode = engineApi.getLastExceptionCode();
     if (errorCode == DATA_SOURCE_NOT_FOUND_CODE
         || errorCode == RECORD_NOT_FOUND_CODE
-        || errorCode == ENTITY_ID_NOT_FOUND_CODE)
-    {
+        || errorCode == ENTITY_ID_NOT_FOUND_CODE) {
       return newBadRequestException(httpMethod, uriInfo, timers, engineApi);
     }
     return newInternalServerErrorException(
@@ -439,7 +379,6 @@ public class ServicesUtil {
    * URL encodes the specified text using UTF-8 encoding.
    *
    * @param text The text to encode.
-   *
    * @return The URL-encoded text.
    */
   static String urlEncode(String text) {
@@ -457,11 +396,9 @@ public class ServicesUtil {
    * the individual items being URL encoded.
    *
    * @param list The {@link List} of strings to encode.
-   *
    * @return The encoded string.
    */
-  static String urlEncodeStrings(List<String> list)
-  {
+  static String urlEncodeStrings(List<String> list) {
     StringBuilder sb = new StringBuilder();
     String prefix = "";
     for (String item : list) {
@@ -481,11 +418,9 @@ public class ServicesUtil {
    * string.
    *
    * @param list The {@link List} of strings to encode.
-   *
    * @return The encoded string.
    */
-  static String jsonEncodeStrings(List<String> list)
-  {
+  static String jsonEncodeStrings(List<String> list) {
     JsonArrayBuilder jab = Json.createArrayBuilder();
     for (String item : list) {
       jab.add(item);
@@ -498,11 +433,9 @@ public class ServicesUtil {
    * JSON array string.
    *
    * @param list The list of entity identifiers.
-   *
    * @return The JSON array string for the identifiers.
    */
-  static String jsonEncodeEntityIds(List<SzEntityIdentifier> list)
-  {
+  static String jsonEncodeEntityIds(List<SzEntityIdentifier> list) {
     JsonArrayBuilder jab = Json.createArrayBuilder();
     for (SzEntityIdentifier id : list) {
       if (id instanceof SzEntityId) {
@@ -523,12 +456,10 @@ public class ServicesUtil {
    * identifiers.
    *
    * @param ids The {@link Collection} of entity identifiers.
-   *
    * @return The JSON array string for the identifiers.
    */
   public static String nativeJsonEncodeEntityIds(
-      Collection<SzEntityIdentifier> ids)
-  {
+      Collection<SzEntityIdentifier> ids) {
     if (ids == null) {
       return null;
     }
@@ -559,11 +490,9 @@ public class ServicesUtil {
    * with each of the individual items in the list being URL encoded.
    *
    * @param ids The {@link Collection} of entity identifiers.
-   *
    * @return The URL-encoded JSON array string for the identifiers.
    */
-  public static String urlEncodeEntityIds(Collection<SzEntityIdentifier> ids)
-  {
+  public static String urlEncodeEntityIds(Collection<SzEntityIdentifier> ids) {
     StringBuilder sb = new StringBuilder();
     String prefix = "";
     for (SzEntityIdentifier id : ids) {
@@ -587,13 +516,11 @@ public class ServicesUtil {
    * Senzing native JSON format for specifying data sources.
    *
    * @param list The list of entity identifiers.
-   *
    * @return The JSON array string for the identifiers.
    */
-  public static String nativeJsonEncodeDataSources(List<String> list)
-  {
+  public static String nativeJsonEncodeDataSources(List<String> list) {
     JsonArrayBuilder jab = Json.createArrayBuilder();
-    for (String code: list) {
+    for (String code : list) {
       jab.add(code);
     }
     JsonObjectBuilder builder = Json.createObjectBuilder();
@@ -605,18 +532,14 @@ public class ServicesUtil {
    * Formats multiple parameter values into a URL-encoded string of
    * multi-valued URL parameters.
    *
-   * @param prefix The prefix to use (either "&" or "?").
-   *
+   * @param prefix    The prefix to use (either "&" or "?").
    * @param paramName The parameter name.
-   *
-   * @param values The {@link List} of values.
-   *
+   * @param values    The {@link List} of values.
    * @return The multi-valued query string parameter.
    */
-  static String formatMultiValuedParam(String       prefix,
-                                       String       paramName,
-                                       List<String> values)
-  {
+  static String formatMultiValuedParam(String prefix,
+                                       String paramName,
+                                       List<String> values) {
     if (values == null || values.size() == 0) return "";
     StringBuilder sb = new StringBuilder();
     for (String val : values) {
@@ -634,24 +557,19 @@ public class ServicesUtil {
    * JSON array and parses it as JSON to produce a {@link Set} of {@link
    * SzEntityIdentifier} instances.
    *
-   * @param params The paramter values to parse.
-   *
-   * @param paramName The name of the parameter.
-   *
+   * @param params     The paramter values to parse.
+   * @param paramName  The name of the parameter.
    * @param httpMethod The HTTP method.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
+   * @param uriInfo    The {@link UriInfo} from the request.
    * @return The {@link Set} of {@link SzEntityIdentifier} instances that was
-   *         parsed from the specified parameters.
+   * parsed from the specified parameters.
    */
   static Set<SzEntityIdentifier> parseEntityIdentifiers(
-      List<String>  params,
-      String        paramName,
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers)
-  {
+      List<String> params,
+      String paramName,
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers) {
     Set<SzEntityIdentifier> result = new LinkedHashSet<>();
 
     // check if the params is null or missing
@@ -669,7 +587,7 @@ public class ServicesUtil {
         throw newBadRequestException(
             httpMethod, uriInfo, timers,
             "Improperly formatted entity identifier parameter: "
-            + paramName + "=" + param);
+                + paramName + "=" + param);
       }
     }
 
@@ -698,7 +616,41 @@ public class ServicesUtil {
                       boolean             withInternalFeatures,
                       boolean             withRelationships)
   {
-    int flags = G2_ENTITY_INCLUDE_RECORD_DATA
+    return getFlags(0,
+                    forceMinimal,
+                    featureMode,
+                    withFeatureStats,
+                    withInternalFeatures,
+                    withRelationships);
+  }
+
+  /**
+   * Gets the flags to use given the specified parameters.
+   *
+   * @param baseFlags The base flags to start out with.
+   *
+   * @param forceMinimal Whether or not minimal format is forced.
+   *
+   * @param featureMode The {@link SzFeatureMode} describing how features
+   *                    are retrieved.
+   *
+   * @param withFeatureStats Whether or not feature stats should be included.
+   *
+   * @param withInternalFeatures Whether or not to include internal features.
+   *
+   * @param withRelationships Whether or not to include relationships.
+   *
+   * @return The flags to use given the parameters.
+   */
+  static int getFlags(int                 baseFlags,
+                      boolean             forceMinimal,
+                      SzFeatureMode       featureMode,
+                      boolean             withFeatureStats,
+                      boolean             withInternalFeatures,
+                      boolean             withRelationships)
+  {
+    int flags = baseFlags
+              | G2_ENTITY_INCLUDE_RECORD_DATA
               | G2_SEARCH_INCLUDE_FEATURE_SCORES; // for searches
 
     // check for relationships

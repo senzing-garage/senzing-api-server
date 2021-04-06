@@ -141,18 +141,17 @@ public class AutoReinitializeTest extends AbstractServiceTest
       this.requestConfigRefreshCheck();
 
       // now retry the request to get the data sources
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzDataSourcesResponse response
           = this.configServices.getDataSources(false, uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       synchronized (this.expectedDataSources) {
         validateDataSourcesResponse(response,
                                     GET,
                                     uriText,
-                                    before,
-                                    after,
+                                    after - before,
                                     false,
                                     this.expectedDataSources);
       }
@@ -170,17 +169,16 @@ public class AutoReinitializeTest extends AbstractServiceTest
       // now request a config refresh check
       this.requestConfigRefreshCheck();
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzConfigResponse response
           = this.configServices.getActiveConfig(uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       synchronized (this.expectedDataSources) {
         validateConfigResponse(response,
                                uriText,
-                               before,
-                               after,
+                               after - before,
                                this.expectedDataSources.keySet());
       }
     });
@@ -206,11 +204,11 @@ public class AutoReinitializeTest extends AbstractServiceTest
       this.addDataSource(newDataSource);
 
       // now add the record -- this should succeed on retry
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
           newDataSource, null, false, false, uriInfo, jsonText);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLoadRecordResponse(response,
                                  POST,
@@ -222,8 +220,7 @@ public class AutoReinitializeTest extends AbstractServiceTest
                                  null,
                                  null,
                                  null,
-                                 before,
-                                 after);
+                                 after - before);
     });
   }
 
@@ -249,11 +246,11 @@ public class AutoReinitializeTest extends AbstractServiceTest
       this.addDataSource(newDataSource);
 
       // now add the record -- this should succeed on retry
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
           newDataSource, recordId, null, false, false, uriInfo, jsonText);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateLoadRecordResponse(response,
                                  PUT,
@@ -265,8 +262,7 @@ public class AutoReinitializeTest extends AbstractServiceTest
                                  null,
                                  null,
                                  null,
-                                 before,
-                                 after);
+                                 after - before);
     });
   }
 

@@ -1,6 +1,7 @@
 package com.senzing.cmdline;
 
 import com.senzing.util.JsonUtils;
+import com.senzing.util.LoggingUtilities;
 
 import javax.json.*;
 import java.io.PrintWriter;
@@ -414,7 +415,8 @@ public class CommandLineUtilities {
    * @param enumClass The enumerated class for the {@link CommandLineOption}.
    */
   private static <T extends Enum<T> & CommandLineOption<T>> Map<String, T>
-  createFlagLookupMap(Class<T> enumClass) {
+    createFlagLookupMap(Class<T> enumClass)
+  {
     // get all the options
     EnumSet<T> enumSet = EnumSet.allOf(enumClass);
 
@@ -571,8 +573,10 @@ public class CommandLineUtilities {
         }
         System.err.println();
         System.err.println(e.getMessage());
-        if (e instanceof RuntimeException) throw (RuntimeException) e;
-        throw new RuntimeException(e);
+        if (e instanceof RuntimeException) {
+          LoggingUtilities.setLastLoggedAndThrow((RuntimeException) e);
+        }
+        LoggingUtilities.setLastLoggedAndThrow(new RuntimeException(e));
       }
       return value;
 
@@ -679,17 +683,24 @@ public class CommandLineUtilities {
       {
         // allow a zero-argument parameter to be followed by "true" or "false"
         if (args.length > (index + 1)) {
-            switch (args[index + 1].trim().toLowerCase()) {
+          // we have arguments after this one -- check the next one
+          String param = args[index+1].trim().toLowerCase();
+
+          // check if it is a parameter or a command-line flag
+          if (!param.startsWith("-")) {
+            // looks like a parameter since a flag starts with "-"
+            switch (param) {
               case "true":
               case "false":
-                params.add(args[++index]);
+                params.add(args[++index].trim().toLowerCase());
                 break;
               default:
                 throw new IllegalArgumentException(
                     "The " + flag + " command line option can be specified "
                     + "with no parameters, but if a parameter is provided it "
-                    + "must be \"true\" or \"false\": " + args[index+1]);
+                    + "must be \"true\" or \"false\": " + args[index + 1]);
             }
+          }
         }
 
       } else {

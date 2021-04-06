@@ -197,9 +197,15 @@ public abstract class AbstractServiceTest {
    */
   private static File createTempRepoDirectory(String prefix) {
     try {
-      String  workingDir  = System.getProperty("user.dir");
-      File    currentDir  = new File(workingDir);
-      File    targetDir   = new File(currentDir, "target");
+      File    targetDir     = null;
+      String  buildDirProp  = System.getProperty("project.build.directory");
+      if (buildDirProp != null) {
+        targetDir = new File(buildDirProp);
+      } else {
+        String workingDir = System.getProperty("user.dir");
+        File currentDir = new File(workingDir);
+        targetDir = new File(currentDir, "target");
+      }
 
       boolean forceTempRepos = false;
       String prop = System.getProperty("senzing.test.tmp.repos");
@@ -270,6 +276,7 @@ public abstract class AbstractServiceTest {
    */
   protected void endTests() {
     try {
+      File testCacheZip = REPLAY_PROVIDER.getTestCacheZip();
       REPLAY_PROVIDER.endTests(this.replayTestToken);
       this.replayTestToken = null;
       if (this.getFailureCount() > 0 && REPLAY_PROVIDER.isCacheStale()) {
@@ -277,7 +284,7 @@ public abstract class AbstractServiceTest {
         System.out.println("**********************");
         System.out.println("** WARNING: DEPENDENCIES HAVE CHANGED");
         System.out.println("** CACHED TEST RESULTS MAY BE INVALID");
-        System.out.println("** " + REPLAY_PROVIDER.getTestCacheZip());
+        System.out.println("** " + testCacheZip);
         System.out.println("**********************");
         System.out.println();
       }
@@ -917,6 +924,83 @@ public abstract class AbstractServiceTest {
    */
   protected int getServerConcurrency() {
     return 1;
+  }
+
+  /**
+   * Gets the version number of the REST API server implementation.
+   *
+   * @return The version number of the REST API server implementation.
+   */
+  protected String getApiServerVersion() {
+    if (this.server == null) return null;
+    return this.server.getApiProviderVersion();
+  }
+
+  /**
+   * Gets the version number of the REST API specification implemented by
+   * the underlying server.
+   *
+   * @return The version number of the REST API specification implemented by
+   *         the underlying server.
+   */
+  protected String getRestApiVersion() {
+    if (this.server == null) return null;
+    return this.server.getRestApiVersion();
+  }
+
+  /**
+   * Gets the version for the underlying runtime native Senzing API.
+   *
+   * @return The version for the underlying runtime native Senzing API.
+   */
+  protected String getNativeApiVersion() {
+    if (this.server == null) {
+      return null;
+    }
+    String result = this.server.getNativeApiVersion();
+    return result;
+  }
+
+  /**
+   * Gets the build version for the underlying runtime native Senzing API.
+   *
+   * @return The build version for the underlying runtime native Senzing API.
+   */
+  protected String getNativeApiBuildVersion() {
+    if (this.server == null) return null;
+    return this.server.getNativeApiBuildVersion();
+  }
+
+  /**
+   * Gets the build number for the underlying runtime native Senzing API.
+   *
+   * @return The build number for the underlying runtime native Senzing API.
+   */
+  protected String getNativeApiBuildNumber() {
+    if (this.server == null) return null;
+    return this.server.getNativeApiBuildNumber();
+  }
+
+  /**
+   * Gets the build date for the underlying runtime native Senzing API.
+   *
+   * @return The build date for the underlying runtime native Senzing API.
+   */
+  protected Date getNativeApiBuildDate() {
+    if (this.server == null) return null;
+    return this.server.getNativeApiBuildDate();
+  }
+
+  /**
+   * Gets the configuration compatibility version for the underlying runtime
+   * native Senzing API.
+   *
+   * @return The configuration compatibility version for the underlying runtime
+   *         native Senzing API.
+   */
+  protected String getConfigCompatibilityVersion() {
+    if (this.server == null) return null;
+    return this.server.getConfigCompatibilityVersion();
   }
 
   /**
@@ -1915,5 +1999,71 @@ public abstract class AbstractServiceTest {
     } catch (Exception e) {
       return "FAILED TO CONVERT TO JSON: " + e.getMessage();
     }
+  }
+
+  /**
+   * Gets the variant possible values of booleans for the specified
+   * parameter count.  This includes <tt>null</tt> values.
+   *
+   * @param paramCount The number of boolean parameters.
+   * @return The {@link List} of parameter value lists.
+   */
+  protected static List<List<Boolean>> getBooleanVariants(int paramCount) {
+    Boolean[] booleanValues = { null, true, false };
+    int variantCount = (int) Math.ceil(Math.pow(3, paramCount));
+    List<List<Boolean>> variants = new ArrayList<>(variantCount);
+
+    // iterate over the variants
+    for (int index1 = 0; index1 < variantCount; index1++) {
+      // create the parameter list
+      List<Boolean> params = new ArrayList<>(paramCount);
+
+      // iterate over the parameter slots
+      for (int index2 = 0; index2 < paramCount; index2++) {
+        int repeat = (int) Math.ceil(Math.pow(3, index2));
+        int valueIndex = ( index1 / repeat ) % booleanValues.length;
+         params.add(booleanValues[valueIndex]);
+      }
+
+      // add the combinatorial variant
+      variants.add(params);
+    }
+    return variants;
+  }
+
+  /**
+   * Utility class for circular iteration.
+   */
+  private static class CircularIterator<T> implements Iterator<T> {
+    private Collection<T> collection = null;
+    private Iterator<T> iterator = null;
+    private CircularIterator(Collection<T> collection) {
+      this.collection = collection;
+      this.iterator = this.collection.iterator();
+    }
+    public boolean hasNext() {
+      return (this.collection.size() > 0);
+    }
+    public T next() {
+      if (!this.iterator.hasNext()) {
+        this.iterator = this.collection.iterator();
+      }
+      return this.iterator.next();
+    }
+    public void remove() {
+      throw new UnsupportedOperationException(
+          "Cannot remove from a circular iterator.");
+    }
+  }
+
+  /**
+   * Returns an iterator that iterates over the specified {@link Collection}
+   * in a circular fashion.
+   *
+   * @param collection The {@link Collection} to iterate over.
+   * @return The circular {@link Iterator}.
+   */
+  protected static <T> Iterator<T> circularIterator(Collection<T> collection) {
+    return new CircularIterator<>(collection);
   }
 }

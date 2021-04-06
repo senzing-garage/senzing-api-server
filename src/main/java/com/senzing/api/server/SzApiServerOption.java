@@ -13,7 +13,7 @@ import static com.senzing.api.server.SzApiServerConstants.*;
 /**
  * Describes the command-line options for {@link SzApiServer}.
  */
-enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
+public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
 {
   /**
    * <p>
@@ -86,6 +86,28 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
                Set.of("-bindAddr"),
                ENV_PREFIX + "BIND_ADDR", null,
                1, DEFAULT_BIND_ADDRESS),
+
+  /**
+   * <p>
+   * Option for specifying the base path (and optional alias base paths) for the
+   * API Server.  The possible values should begin with a forward slash, but if
+   * not it will be added.  To specify one or more aliases for the base path
+   * use a comma-separated list of base paths.  The default value is
+   * <tt>"/"</tt>.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--url-base-path {base-path}</tt></li>
+   *   <li>Command Line: <tt>-urlBasePath {base-path}</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_URL_BASE_PATH="{base-path}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  URL_BASE_PATH("--url-base-path",
+            Set.of("-urlBasePath"),
+            ENV_PREFIX + "URL_BASE_PATH",
+            null, 1, "/"),
 
   /**
    * <p>
@@ -431,6 +453,23 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
   SKIP_STARTUP_PERF("--skip-startup-perf", Set.of("-skipStartupPerf"),
                     ENV_PREFIX + "SKIP_STARTUP_PERF", null,
                     0, "false"),
+
+  /**
+   * The presence of this option causes the API Server to skip priming the
+   * engine on startup, and its absence allows the engine priming to occur as
+   * is the default behavior.  A single parameter may optionally be specified as
+   * <tt>true</tt> or <tt>false</tt> with <tt>false</tt> simulating the absence
+   * of the option.
+   *   <li>Command Line: <tt>--skip-engine-priming [true|false]</tt></li>
+   *   <li>Command Line: <tt>-skipEnginePriming [true|false]</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_SKIP_ENGINE_PRIMING="{true|false}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  SKIP_ENGINE_PRIMING("--skip-engine-priming",
+                      Set.of("-skipEnginePriming"),
+                      ENV_PREFIX + "SKIP_ENGINE_PRIMING", null,
+                      0, "false"),
 
   /**
    * <p>
@@ -790,45 +829,17 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
   {
     this(cmdLineFlag,
          synonymFlags,
+         null,
+         null,
          false,
+         parameterCount < 0 ? 0 : parameterCount,
          parameterCount,
+         Collections.emptyList(),
          false,
          null,
          null,
          true);
-  }
 
-  SzApiServerOption(String        cmdLineFlag,
-                    Set<String>   synonymFlags,
-                    String        envVariable,
-                    List<String>  envFallbacks,
-                    int           parameterCount)
-  {
-    this(cmdLineFlag,
-         synonymFlags,
-         envVariable,
-         envFallbacks,
-         false,
-         parameterCount,
-         false,
-         null,
-         null,
-         true);
-  }
-
-  SzApiServerOption(String      cmdLineFlag,
-                    Set<String> synonymFlags,
-                    int         parameterCount,
-                    String...   defaultParams) {
-    this(cmdLineFlag,
-         synonymFlags,
-         false,
-         parameterCount,
-         List.of(defaultParams),
-         false,
-         null,
-         null,
-         true);
   }
 
   SzApiServerOption(String        cmdLineFlag,
@@ -850,6 +861,27 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
          true);
   }
 
+  SzApiServerOption(String        cmdLineFlag,
+                    Set<String>   synonymFlags,
+                    String        envVariable,
+                    List<String>  envFallbacks,
+                    int           minParamCount,
+                    int           maxParamCount,
+                    String...     defaultParams) {
+    this(cmdLineFlag,
+         synonymFlags,
+         envVariable,
+         envFallbacks,
+         false,
+         minParamCount,
+         maxParamCount,
+         List.of(defaultParams),
+         false,
+         null,
+         null,
+         true);
+  }
+
   SzApiServerOption(String      cmdLineFlag,
                     Set<String> synonymFlags,
                     int         parameterCount,
@@ -859,8 +891,12 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
   {
     this(cmdLineFlag,
          synonymFlags,
+         null,
+         null,
          false,
+         parameterCount < 0 ? 0 : parameterCount,
          parameterCount,
+         Collections.emptyList(),
          false,
          groupName,
          groupPropertyKey,
@@ -881,7 +917,9 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
          envVariable,
          envFallbacks,
          false,
+         parameterCount < 0 ? 0 : parameterCount,
          parameterCount,
+         Collections.emptyList(),
          false,
          groupName,
          groupPropertyKey,
@@ -895,8 +933,12 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
   {
     this(cmdLineFlag,
          synonymFlags,
+         null,
+         null,
          primary,
+         parameterCount < 0 ? 0 : parameterCount,
          parameterCount,
+         Collections.emptyList(),
          false,
          null,
          null,
@@ -915,7 +957,48 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
          envVariable,
          envFallbacks,
          primary,
+         parameterCount < 0 ? 0 : parameterCount,
          parameterCount,
+         Collections.emptyList(),
+         false,
+         null,
+         null,
+         true);
+  }
+
+  SzApiServerOption(String        cmdLineFlag,
+                    Set<String>   synonymFlags,
+                    String        envVariable,
+                    List<String>  envFallbacks,
+                    int           parameterCount)
+  {
+    this(cmdLineFlag,
+         synonymFlags,
+         envVariable,
+         envFallbacks,
+         false,
+         parameterCount < 0 ? 0 : parameterCount,
+         parameterCount,
+         Collections.emptyList(),
+         false,
+         null,
+         null,
+         true);
+  }
+
+  SzApiServerOption(String      cmdLineFlag,
+                    Set<String> synonymFlags,
+                    int         parameterCount,
+                    String...   defaultParams)
+  {
+    this(cmdLineFlag,
+         synonymFlags,
+         null,
+         null,
+         false,
+         parameterCount < 0 ? 0 : parameterCount,
+         parameterCount,
+         List.of(defaultParams),
          false,
          null,
          null,
@@ -933,9 +1016,12 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
   {
     this(cmdLineFlag,
          synonymFlags,
+         null,
+         null,
          primary,
          parameterCount < 0 ? 0 : parameterCount,
          parameterCount,
+         Collections.emptyList(),
          deprecated,
          groupName,
          groupPropertyKey,
@@ -960,30 +1046,6 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
          primary,
          parameterCount < 0 ? 0 : parameterCount,
          parameterCount,
-         deprecated,
-         groupName,
-         groupPropertyKey,
-         groupOptional);
-  }
-
-  SzApiServerOption(String        cmdLineFlag,
-                    Set<String>   synonymFlags,
-                    boolean       primary,
-                    int           parameterCount,
-                    List<String>  defaultParameters,
-                    boolean       deprecated,
-                    String        groupName,
-                    String        groupPropertyKey,
-                    boolean       groupOptional)
-  {
-    this(cmdLineFlag,
-         synonymFlags,
-         null,
-         null,
-         primary,
-         parameterCount < 0 ? 0 : parameterCount,
-         parameterCount,
-         defaultParameters,
          deprecated,
          groupName,
          groupPropertyKey,
@@ -1189,6 +1251,7 @@ enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
 
       SzApiServerOption[] initOptions
           = { INI_FILE, INIT_ENV_VAR, INIT_FILE, INIT_JSON };
+
       for (SzApiServerOption option1 : initOptions) {
         for (SzApiServerOption option2 : initOptions) {
           if (option1 != option2) {

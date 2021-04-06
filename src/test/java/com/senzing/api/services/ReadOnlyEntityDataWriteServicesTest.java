@@ -4,7 +4,6 @@ import com.senzing.api.model.SzErrorResponse;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
 import com.senzing.util.JsonUtils;
-import org.glassfish.hk2.api.messaging.MessageReceiver;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -24,7 +23,6 @@ import static com.senzing.api.model.SzHttpMethod.DELETE;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static com.senzing.api.services.ResponseValidators.*;
-import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class ReadOnlyEntityDataWriteServicesTest
@@ -57,7 +55,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataServices.loadRecord(
             WATCHLIST_DATA_SOURCE, null, false, false, uriInfo, jsonText);
@@ -67,8 +65,8 @@ public class ReadOnlyEntityDataWriteServicesTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
-        validateBasics(response, 403, POST, uriText, before, after);
+        long after = System.nanoTime();
+        validateBasics(response, 403, POST, uriText, after - before);
       }
     });
   }
@@ -87,13 +85,13 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "212-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           POST, uriText, null, recordBody, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
-      validateBasics(response, 403, POST, uriText, before, after);
+      validateBasics(response, 403, POST, uriText, after - before);
     });
   }
 
@@ -114,7 +112,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataServices.loadRecord(CUSTOMER_DATA_SOURCE,
                                            null,
@@ -129,8 +127,8 @@ public class ReadOnlyEntityDataWriteServicesTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
-        validateBasics(response, 403, POST, uriText, before, after);
+        long after = System.nanoTime();
+        validateBasics(response, 403, POST, uriText, after - before);
       }
     });
   }
@@ -150,18 +148,17 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "818-555-1212");
       recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           POST, uriText, null, recordBody, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(response,
                      403,
                      POST,
                      uriText,
-                     before,
-                     after);
+                     after - before);
     });
   }
 
@@ -191,7 +188,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataServices.loadRecord(
             WATCHLIST_DATA_SOURCE,
@@ -207,8 +204,8 @@ public class ReadOnlyEntityDataWriteServicesTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
-        validateBasics(response, 403, POST, uriText, before, after);
+        long after = System.nanoTime();
+        validateBasics(response, 403, POST, uriText, after - before);
       }
     });
   }
@@ -236,13 +233,13 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           POST, uriText, null, recordBody, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
-      validateBasics(response, 403, POST, uriText, before, after);
+      validateBasics(response, 403, POST, uriText, after - before);
     });
   }
 
@@ -269,7 +266,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataApi.addRecordWithReturnedRecordId(recordBody,
                                                          WATCHLIST_DATA_SOURCE,
@@ -277,7 +274,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                                                          withInfo,
                                                          withRaw);
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -289,8 +286,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        POST,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
 
       uriText = this.formatServerUri(
@@ -303,13 +299,13 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       try {
         this.entityDataApi.addRecordWithReturnedRecordId(
             recordBody, CUSTOMER_DATA_SOURCE, null, withInfo, withRaw);
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -321,8 +317,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        POST,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
     });
   }
@@ -345,7 +340,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataServices.loadRecord(
             WATCHLIST_DATA_SOURCE, recordId, null, false, false, uriInfo, jsonText);
@@ -355,8 +350,8 @@ public class ReadOnlyEntityDataWriteServicesTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
-        validateBasics(response, 403, PUT, uriText, before, after);
+        long after = System.nanoTime();
+        validateBasics(response, 403, PUT, uriText, after - before);
       }
     });
   }
@@ -375,13 +370,13 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "818-555-1212");
       recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           PUT, uriText, null, recordBody, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
-      validateBasics(response, 403, PUT, uriText, before, after);
+      validateBasics(response, 403, PUT, uriText, after - before);
     });
   }
 
@@ -402,7 +397,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataServices.loadRecord(CUSTOMER_DATA_SOURCE,
                                            recordId,
@@ -418,8 +413,8 @@ public class ReadOnlyEntityDataWriteServicesTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
-        validateBasics(response, 403, PUT, uriText, before, after);
+        long after = System.nanoTime();
+        validateBasics(response, 403, PUT, uriText, after - before);
       }
     });
   }
@@ -439,18 +434,17 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "818-555-1212");
       recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           PUT, uriText, null, recordBody, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(response,
                      403,
                      PUT,
                      uriText,
-                     before,
-                     after);
+                     after - before);
     });
   }
 
@@ -469,7 +463,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "818-555-1212");
       recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         com.senzing.gen.api.model.SzLoadRecordResponse clientResponse
             = this.entityDataApi.addRecord(recordBody,
@@ -486,7 +480,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                  + clientResponse + " ]");
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -498,8 +492,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        PUT,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
     });
   }
@@ -521,7 +514,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataServices.loadRecord(CUSTOMER_DATA_SOURCE,
                                            recordId,
@@ -537,8 +530,8 @@ public class ReadOnlyEntityDataWriteServicesTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
-        validateBasics(response, 403, PUT, uriText, before, after);
+        long after = System.nanoTime();
+        validateBasics(response, 403, PUT, uriText, after - before);
       }
     });
   }
@@ -558,18 +551,17 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "818-555-1212");
       recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           PUT, uriText, null, recordBody, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(response,
                      403,
                      PUT,
                      uriText,
-                     before,
-                     after);
+                     after - before);
     });
   }
 
@@ -588,7 +580,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "818-555-1212");
       recordBody.put("ADDR_FULL", "500 First Street, Los Angeles, CA 90033");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         com.senzing.gen.api.model.SzLoadRecordResponse clientResponse
             = this.entityDataApi.addRecord(recordBody,
@@ -605,7 +597,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                  + clientResponse + " ]");
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -617,8 +609,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        PUT,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
     });
   }
@@ -649,7 +640,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataServices.loadRecord(
             WATCHLIST_DATA_SOURCE,
@@ -666,8 +657,8 @@ public class ReadOnlyEntityDataWriteServicesTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
-        validateBasics(response, 403, PUT, uriText, before, after);
+        long after = System.nanoTime();
+        validateBasics(response, 403, PUT, uriText, after - before);
       }
     });
   }
@@ -695,18 +686,17 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           PUT, uriText, null, recordBody, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(response,
                      403,
                      PUT,
                      uriText,
-                     before,
-                     after);
+                     after - before);
 
     });
   }
@@ -736,7 +726,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataApi.addRecord(recordBody,
                                      WATCHLIST_DATA_SOURCE,
@@ -746,7 +736,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                                      withRaw);
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -758,8 +748,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        PUT,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
 
       uriText = this.formatServerUri(
@@ -772,7 +761,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       try {
         this.entityDataApi.addRecord(recordBody,
                                      CUSTOMER_DATA_SOURCE,
@@ -782,7 +771,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                                      withRaw);
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -794,8 +783,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        PUT,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
     });
   }
@@ -816,7 +804,7 @@ public class ReadOnlyEntityDataWriteServicesTest
               + "/records/" + recordId1 + "/reevaluate", queryParams);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataServices.reevaluateRecord(
             WATCHLIST_DATA_SOURCE,
@@ -830,8 +818,8 @@ public class ReadOnlyEntityDataWriteServicesTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
-        validateBasics(response, 403, POST, uriText, before, after);
+        long after = System.nanoTime();
+        validateBasics(response, 403, POST, uriText, after - before);
       }
     });
   }
@@ -851,18 +839,17 @@ public class ReadOnlyEntityDataWriteServicesTest
           "data-sources/" + WATCHLIST_DATA_SOURCE
               + "/records/" + recordId1 + "/reevaluate", queryParams);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           POST, uriText, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(response,
                      403,
                      POST,
                      uriText,
-                     before,
-                     after);
+                     after - before);
     });
   }
 
@@ -891,7 +878,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataApi.addRecord(recordBody,
                                      WATCHLIST_DATA_SOURCE,
@@ -901,7 +888,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                                      withRaw);
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -913,15 +900,14 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        PUT,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
 
       uriText = this.formatServerUri(
           "data-sources/" + WATCHLIST_DATA_SOURCE
               + "/records/" + recordId1 + "/reevaluate", queryParams);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       try {
         this.entityDataApi.reevaluateRecord(WATCHLIST_DATA_SOURCE,
                                             recordId1,
@@ -929,7 +915,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                                             withRaw);
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -941,8 +927,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        POST,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
 
       uriText = this.formatServerUri(
@@ -955,7 +940,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       try {
         this.entityDataApi.addRecord(recordBody,
                                      CUSTOMER_DATA_SOURCE,
@@ -965,7 +950,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                                      withRaw);
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -977,15 +962,14 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        PUT,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
 
       uriText = this.formatServerUri(
           "data-sources/" + CUSTOMER_DATA_SOURCE + "/records/"
               + recordId2 + "/reevaluate", queryParams);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       try {
         this.entityDataApi.reevaluateRecord(CUSTOMER_DATA_SOURCE,
                                             recordId2,
@@ -993,7 +977,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                                             withRaw);
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -1005,8 +989,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        POST,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
     });
   }
@@ -1027,7 +1010,7 @@ public class ReadOnlyEntityDataWriteServicesTest
               + "/records/" + recordId1, queryParams);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataServices.deleteRecord(
             WATCHLIST_DATA_SOURCE,
@@ -1042,8 +1025,8 @@ public class ReadOnlyEntityDataWriteServicesTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
-        validateBasics(response, 403, DELETE, uriText, before, after);
+        long after = System.nanoTime();
+        validateBasics(response, 403, DELETE, uriText, after - before);
       }
     });
   }
@@ -1063,18 +1046,17 @@ public class ReadOnlyEntityDataWriteServicesTest
           "data-sources/" + WATCHLIST_DATA_SOURCE
               + "/records/" + recordId1, queryParams);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           DELETE, uriText, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(response,
                      403,
                      DELETE,
                      uriText,
-                     before,
-                     after);
+                     after - before);
     });
   }
 
@@ -1102,7 +1084,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataApi.addRecord(recordBody,
                                      WATCHLIST_DATA_SOURCE,
@@ -1112,7 +1094,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                                      withRaw);
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -1124,11 +1106,10 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        PUT,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       try {
         this.entityDataApi.deleteRecord(WATCHLIST_DATA_SOURCE,
                                         recordId1,
@@ -1137,7 +1118,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                                         withRaw);
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -1149,8 +1130,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        DELETE,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
     });
   }
@@ -1170,7 +1150,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       String uriText = this.formatServerUri("reevaluate-entity", queryParams);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataServices.reevaluateEntity(
             100L,
@@ -1183,8 +1163,8 @@ public class ReadOnlyEntityDataWriteServicesTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
-        validateBasics(response, 403, POST, uriText, before, after);
+        long after = System.nanoTime();
+        validateBasics(response, 403, POST, uriText, after - before);
       }
     });
   }
@@ -1202,18 +1182,17 @@ public class ReadOnlyEntityDataWriteServicesTest
 
       String uriText = this.formatServerUri("reevaluate-entity", queryParams);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           POST, uriText, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(response,
                      403,
                      POST,
                      uriText,
-                     before,
-                     after);
+                     after - before);
     });
   }
 
@@ -1242,7 +1221,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.entityDataApi.addRecord(recordBody,
                                      WATCHLIST_DATA_SOURCE,
@@ -1252,7 +1231,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                                      withRaw);
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -1264,8 +1243,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        PUT,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
 
       Long entityId1 = 10L;
@@ -1275,12 +1253,12 @@ public class ReadOnlyEntityDataWriteServicesTest
       queryParams2.putAll(queryParams);
       uriText = this.formatServerUri("reevaluate-entity", queryParams2);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       try {
         this.entityDataApi.reevaluateEntity(entityId1, withInfo, withRaw);
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -1292,8 +1270,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        POST,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
 
       uriText = this.formatServerUri(
@@ -1306,7 +1283,7 @@ public class ReadOnlyEntityDataWriteServicesTest
       recordBody.put("PHONE_NUMBER", "702-555-1212");
       recordBody.put("ADDR_FULL", "101 Fifth Ave, Las Vegas, NV 10018");
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       try {
         this.entityDataApi.addRecord(recordBody,
                                      CUSTOMER_DATA_SOURCE,
@@ -1316,7 +1293,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                                      withRaw);
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -1328,8 +1305,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        PUT,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
 
       Long entityId2 = 20L;
@@ -1339,11 +1315,11 @@ public class ReadOnlyEntityDataWriteServicesTest
       queryParams2.putAll(queryParams);
       uriText = this.formatServerUri("reevaluate-entity", queryParams2);
 
-      before = System.currentTimeMillis();
+      before = System.nanoTime();
       try {
         this.entityDataApi.reevaluateEntity(entityId2, withInfo, withRaw);
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -1355,8 +1331,7 @@ public class ReadOnlyEntityDataWriteServicesTest
                        403,
                        POST,
                        uriText,
-                       before,
-                       after);
+                       after - before);
       }
 
     });

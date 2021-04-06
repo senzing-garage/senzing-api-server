@@ -4,10 +4,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+/**
+ * Provides build information for the API server.
+ */
 public class BuildInfo {
+  /**
+   * The Maven build version of the API Server.
+   */
   public static final String MAVEN_VERSION;
 
-  public static final String REST_API_VERSION = "2.3.0";
+  /**
+   * The REST API specification version implemented by the API Server.
+   */
+  public static final String REST_API_VERSION = "2.5.0";
 
   static {
     String resource = "/com/senzing/api/build-info.properties";

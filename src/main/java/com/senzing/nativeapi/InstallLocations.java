@@ -284,7 +284,6 @@ public class InstallLocations {
         supportDir = new File(supportPath);
       }
 
-      System.out.println("SUPPORT DIR: " + supportDir);
       if (!supportDir.exists()) {
         System.err.println("The support directory does not exist:");
         System.err.println("         " + supportDir);

@@ -105,7 +105,13 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   /**
    * The target directory of the maven build.
    */
-  private static final File TARGET_DIR = new File(CURRENT_DIR, "target");
+  private static final File TARGET_DIR;
+  static {
+    String propValue = System.getProperty("project.build.directory");
+    File file = (propValue == null) ? null : new File(propValue);
+    TARGET_DIR = (file != null && file.exists()) ? file
+        : new File(CURRENT_DIR, "target");
+  }
 
   /**
    * The source directory of the maven build..
@@ -574,6 +580,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     // parse the cache file
     if (!this.direct) {
       try {
+        this.recording = this.loadCacheFile();
         this.recording = this.loadCacheFile();
       } catch (IOException e) {
         throw new RuntimeException(e);
@@ -1604,6 +1611,30 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     }
 
     /**
+     *
+     */
+    private String invocationToString(Method method, Object[] args) {
+      StringWriter sw = new StringWriter();
+      sw.append(this.apiInterface.getSimpleName());
+      sw.append(".").append(method.getName()).append("(");
+      String prefix = "";
+      int argIndex = 0;
+      for (Class argType : method.getParameterTypes()) {
+        sw.append(prefix);
+        sw.append(argType.getSimpleName());
+        if (argType != StringBuffer.class && argType != Result.class) {
+          sw.append(" (");
+          sw.append(String.valueOf(args[argIndex]));
+          sw.append(")");
+        }
+        argIndex++;
+        prefix = ", ";
+      }
+      sw.append(")");
+      return sw.toString();
+    }
+
+    /**
      * Handles recording or replaying the results for the invocation.
      *
      * @param proxy The proxy on which it is called.
@@ -1708,7 +1739,6 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
             cache.results = new LinkedList<>();
             provider.currentCache.put(invocationHash, cache);
           }
-
           String resultsHash = provider.saveResults(resultMap);
           Object newValue = (resultsHash == null ? resultMap : resultsHash);
 
@@ -1733,25 +1763,8 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
           InvocationCache cache = provider.currentCache.get(invocationHash);
 
           if (cache == null) {
-            StringWriter sw = new StringWriter();
-            sw.append(this.apiInterface.getSimpleName());
-            sw.append(".").append(method.getName()).append("(");
-            String prefix = "";
-            int argIndex = 0;
-            for (Class argType : method.getParameterTypes()) {
-              sw.append(prefix);
-              sw.append(argType.getSimpleName());
-              if (argType != StringBuffer.class && argType != Result.class) {
-                sw.append(" (");
-                sw.append(String.valueOf(args[argIndex]));
-                sw.append(")");
-              }
-              argIndex++;
-              prefix = ", ";
-            }
-            sw.append(")");
             throw new IllegalStateException(
-                "No cache for method (" + sw.toString()
+                "No cache for method " + this.invocationToString(method, args)
                     + " with specified parameters (" + invocationHash
                     + ") -- manually remove cache: "
                     + provider.getTestCacheDir());

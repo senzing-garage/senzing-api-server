@@ -1,6 +1,5 @@
 package com.senzing.api.services;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senzing.api.model.*;
 import com.senzing.repomgr.RepositoryManager;
 import org.junit.jupiter.api.AfterAll;
@@ -170,17 +169,16 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       String  uriText = this.formatServerUri("data-sources" + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzDataSourcesResponse response
           = this.configServices.getDataSources(TRUE.equals(withRaw), uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateDataSourcesResponse(response,
                                   GET,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   this.getInitialDataSources());
     });
@@ -195,16 +193,15 @@ public class ConfigServicesReadTest extends AbstractServiceTest
         suffix = "?withRaw=" + withRaw;
       }
       String uriText = this.formatServerUri("data-sources" + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzDataSourcesResponse response
           = this.invokeServerViaHttp(GET, uriText, SzDataSourcesResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateDataSourcesResponse(response,
                                   GET,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   this.getInitialDataSources());
     });
@@ -219,10 +216,10 @@ public class ConfigServicesReadTest extends AbstractServiceTest
         suffix = "?withRaw=" + withRaw;
       }
       String uriText = this.formatServerUri("data-sources" + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzDataSourcesResponse clientResponse
           = this.configApi.getDataSources(withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzDataSourcesResponse response = jsonCopy(clientResponse,
                                                 SzDataSourcesResponse.class);
@@ -230,8 +227,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       validateDataSourcesResponse(response,
                                   GET,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   this.getInitialDataSources());
     });
@@ -267,18 +263,17 @@ public class ConfigServicesReadTest extends AbstractServiceTest
           "data-sources/" + dataSourceCode + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzDataSourceResponse response
           = this.configServices.getDataSource(
               dataSourceCode, TRUE.equals(withRaw), uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateDataSourceResponse(response,
                                  GET,
                                  uriText,
-                                 before,
-                                 after,
+                                 after - before,
                                  TRUE.equals(withRaw),
                                  expectedDataSource);
     });
@@ -297,16 +292,15 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
       String uriText = this.formatServerUri(
           "data-sources/" + dataSourceCode + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzDataSourceResponse response
           = this.invokeServerViaHttp(GET, uriText, SzDataSourceResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateDataSourceResponse(response,
                                  GET,
                                  uriText,
-                                 before,
-                                 after,
+                                 after - before,
                                  TRUE.equals(withRaw),
                                  expectedDataSource);
     });
@@ -325,10 +319,10 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
       String uriText = this.formatServerUri(
           "data-sources/" + dataSourceCode + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzDataSourceResponse clientResponse
           = this.configApi.getDataSource(dataSourceCode, withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzDataSourceResponse response = jsonCopy(clientResponse,
                                                SzDataSourceResponse.class);
@@ -336,8 +330,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       validateDataSourceResponse(response,
                                  GET,
                                  uriText,
-                                 before,
-                                 after,
+                                 after - before,
                                  TRUE.equals(withRaw),
                                  expectedDataSource);
     });
@@ -357,7 +350,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
           "data-sources/" + badDataSourceCode + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         SzDataSourceResponse response
             = this.configServices.getDataSource(
@@ -370,9 +363,9 @@ public class ConfigServicesReadTest extends AbstractServiceTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         validateBasics(
-            response, 404, GET, uriText, before, after);
+            response, 404, GET, uriText, after - before);
       }
     });
   }
@@ -389,13 +382,13 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
       String uriText = this.formatServerUri(
           "data-sources/" + badDataSourceCode + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response
           = this.invokeServerViaHttp(GET, uriText, SzErrorResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(
-          response, 404, GET, uriText, before, after);
+          response, 404, GET, uriText, after - before);
     });
   }
 
@@ -411,7 +404,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
       String uriText = this.formatServerUri(
           "data-sources/" + badDataSourceCode + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         com.senzing.gen.api.model.SzDataSourceResponse clientResponse
             = this.configApi.getDataSource(badDataSourceCode, withRaw);
@@ -421,7 +414,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
                  + clientResponse + " ]tail -");
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -429,7 +422,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
         SzErrorResponse response = jsonCopy(clientResponse,
                                             SzErrorResponse.class);
         validateBasics(
-            response, 404, GET, uriText, before, after);
+            response, 404, GET, uriText, after - before);
       }
 
     });
@@ -446,18 +439,17 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       String  uriText = this.formatServerUri("entity-classes" + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityClassesResponse response
           = this.configServices.getEntityClasses(TRUE.equals(withRaw), uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityClassesResponse(null,
                                     response,
                                     GET,
                                     uriText,
-                                    before,
-                                    after,
+                                    after - before,
                                     TRUE.equals(withRaw),
                                     null,
                                     this.getInitialEntityClasses());
@@ -473,17 +465,16 @@ public class ConfigServicesReadTest extends AbstractServiceTest
         suffix = "?withRaw=" + withRaw;
       }
       String uriText = this.formatServerUri("entity-classes" + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityClassesResponse response = this.invokeServerViaHttp(
               GET, uriText, SzEntityClassesResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityClassesResponse(null,
                                     response,
                                     GET,
                                     uriText,
-                                    before,
-                                    after,
+                                    after - before,
                                     TRUE.equals(withRaw),
                                     null,
                                     this.getInitialEntityClasses());
@@ -499,10 +490,10 @@ public class ConfigServicesReadTest extends AbstractServiceTest
         suffix = "?withRaw=" + withRaw;
       }
       String uriText = this.formatServerUri("entity-classes" + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzEntityClassesResponse clientResponse
           = this.configApi.getEntityClasses(withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzEntityClassesResponse response
           = jsonCopy(clientResponse, SzEntityClassesResponse.class);
@@ -511,8 +502,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
                                     response,
                                     GET,
                                     uriText,
-                                    before,
-                                    after,
+                                    after - before,
                                     TRUE.equals(withRaw),
                                     null,
                                     this.getInitialEntityClasses());
@@ -557,17 +547,16 @@ public class ConfigServicesReadTest extends AbstractServiceTest
           "entity-classes/" + entityClassCode + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityClassResponse response
           = this.configServices.getEntityClass(
           entityClassCode, TRUE.equals(withRaw), uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityClassResponse(response,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   expectedEntityClass);
     });
@@ -586,15 +575,14 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
       String uriText = this.formatServerUri(
           "entity-classes/" + entityClassCode + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityClassResponse response
           = this.invokeServerViaHttp(GET, uriText, SzEntityClassResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityClassResponse(response,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   expectedEntityClass);
     });
@@ -613,18 +601,17 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
       String uriText = this.formatServerUri(
           "entity-classes/" + entityClassCode + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzEntityClassResponse clientResponse
           = this.configApi.getEntityClass(entityClassCode, withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzEntityClassResponse response = jsonCopy(clientResponse,
                                                 SzEntityClassResponse.class);
 
       validateEntityClassResponse(response,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   expectedEntityClass);
     });
@@ -644,7 +631,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
           "entity-classes/" + badEntityClassCode + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         this.configServices.getEntityClass(
              badEntityClassCode, TRUE.equals(withRaw), uriInfo);
@@ -656,9 +643,9 @@ public class ConfigServicesReadTest extends AbstractServiceTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         validateBasics(
-            response, 404, GET, uriText, before, after);
+            response, 404, GET, uriText, after - before);
       }
     });
   }
@@ -675,13 +662,13 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
       String uriText = this.formatServerUri(
           "entity-classes/" + badEntityClassCode + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response
           = this.invokeServerViaHttp(GET, uriText, SzErrorResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(
-          response, 404, GET, uriText, before, after);
+          response, 404, GET, uriText, after - before);
     });
   }
 
@@ -697,7 +684,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
       String uriText = this.formatServerUri(
           "entity-classes/" + badEntityClassCode + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         com.senzing.gen.api.model.SzEntityClassResponse clientResponse
             = this.configApi.getEntityClass(badEntityClassCode, withRaw);
@@ -707,7 +694,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
                  + " ], withRaw=[ " + withRaw + " ]");
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -715,7 +702,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
         SzErrorResponse response = jsonCopy(clientResponse,
                                             SzErrorResponse.class);
         validateBasics(
-            response, 404, GET, uriText, before, after);
+            response, 404, GET, uriText, after - before);
       }
     });
   }
@@ -793,18 +780,17 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       String  uriText = this.formatServerUri("entity-types" + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityTypesResponse response = this.configServices.getEntityTypes(
               entityClass, TRUE.equals(withRaw), uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityTypesResponse(null,
                                   response,
                                   GET,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   expectedEntityTypes);
     });
@@ -820,17 +806,16 @@ public class ConfigServicesReadTest extends AbstractServiceTest
     this.performTest(() -> {
       String suffix  = this.buildEntityTypesQueryString(entityClass, withRaw);
       String uriText = this.formatServerUri("entity-types" + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityTypesResponse response = this.invokeServerViaHttp(
           GET, uriText, SzEntityTypesResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityTypesResponse(null,
                                   response,
                                   GET,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   expectedEntityTypes);
     });
@@ -846,10 +831,10 @@ public class ConfigServicesReadTest extends AbstractServiceTest
     this.performTest(() -> {
       String suffix  = this.buildEntityTypesQueryString(entityClass, withRaw);
       String uriText = this.formatServerUri("entity-types" + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzEntityTypesResponse clientResponse
           = this.configApi.getEntityTypes(entityClass, withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzEntityTypesResponse response = jsonCopy(clientResponse,
                                                 SzEntityTypesResponse.class);
@@ -858,8 +843,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
                                   response,
                                   GET,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   expectedEntityTypes);
     });
@@ -903,16 +887,15 @@ public class ConfigServicesReadTest extends AbstractServiceTest
           "entity-types/" + entityTypeCode + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityTypeResponse response = this.configServices.getEntityType(
           entityTypeCode, TRUE.equals(withRaw), uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityTypeResponse(response,
                                  uriText,
-                                 before,
-                                 after,
+                                 after - before,
                                  TRUE.equals(withRaw),
                                  expectedEntityType);
     });
@@ -931,15 +914,14 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
       String uriText = this.formatServerUri(
           "entity-types/" + entityTypeCode + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityTypeResponse response
           = this.invokeServerViaHttp(GET, uriText, SzEntityTypeResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityTypeResponse(response,
                                  uriText,
-                                 before,
-                                 after,
+                                 after - before,
                                  TRUE.equals(withRaw),
                                  expectedEntityType);
     });
@@ -959,7 +941,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
           "entity-types/" + badEntityTypeCode + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         SzEntityTypeResponse response
             = this.configServices.getEntityType(
@@ -972,9 +954,9 @@ public class ConfigServicesReadTest extends AbstractServiceTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         validateBasics(
-            response, 404, GET, uriText, before, after);
+            response, 404, GET, uriText, after - before);
       }
     });
   }
@@ -991,7 +973,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
       String uriText = this.formatServerUri(
           "entity-types/" + badEntityTypeCode + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         com.senzing.gen.api.model.SzEntityTypeResponse clientResponse
             = this.configApi.getEntityType(badEntityTypeCode, withRaw);
@@ -1001,7 +983,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
                  + " ], withRaw=[ " + withRaw + " ]");
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -1009,7 +991,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
         SzErrorResponse response = jsonCopy(clientResponse,
                                             SzErrorResponse.class);
         validateBasics(
-            response, 404, GET, uriText, before, after);
+            response, 404, GET, uriText, after - before);
       }
     });
   }
@@ -1026,13 +1008,13 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
       String uriText = this.formatServerUri(
           "entity-types/" + badEntityTypeCode + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response
           = this.invokeServerViaHttp(GET, uriText, SzErrorResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(
-          response, 404, GET, uriText, before, after);
+          response, 404, GET, uriText, after - before);
     });
   }
 
@@ -1052,18 +1034,17 @@ public class ConfigServicesReadTest extends AbstractServiceTest
           "entity-classes/" + entityClass + "/entity-types" + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityTypesResponse response = this.configServices.getEntityTypes(
           entityClass, TRUE.equals(withRaw), uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityTypesResponse(null,
                                   response,
                                   GET,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   expectedEntityTypes);
     });
@@ -1083,17 +1064,16 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
       String uriText = this.formatServerUri(
           "entity-classes/" + entityClass + "/entity-types" + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityTypesResponse response = this.invokeServerViaHttp(
           GET, uriText, SzEntityTypesResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityTypesResponse(null,
                                   response,
                                   GET,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   expectedEntityTypes);
     });
@@ -1113,10 +1093,10 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
       String uriText = this.formatServerUri(
           "entity-classes/" + entityClass + "/entity-types" + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzEntityTypesResponse clientResponse
           = this.configApi.getEntityTypesByClass(entityClass, withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzEntityTypesResponse response = jsonCopy(clientResponse,
                                                 SzEntityTypesResponse.class);
@@ -1125,8 +1105,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
                                   response,
                                   GET,
                                   uriText,
-                                  before,
-                                  after,
+                                  after - before,
                                   TRUE.equals(withRaw),
                                   expectedEntityTypes);
     });
@@ -1174,16 +1153,15 @@ public class ConfigServicesReadTest extends AbstractServiceTest
               + "/entity-types/" + entityTypeCode + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityTypeResponse response = this.configServices.getEntityType(
           entityClassCode, entityTypeCode, TRUE.equals(withRaw), uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityTypeResponse(response,
                                  uriText,
-                                 before,
-                                 after,
+                                 after - before,
                                  TRUE.equals(withRaw),
                                  expectedEntityType);
     });
@@ -1204,15 +1182,14 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       String uriText = this.formatServerUri(
           "entity-classes/" + entityClassCode
               + "/entity-types/" + entityTypeCode + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzEntityTypeResponse response
           = this.invokeServerViaHttp(GET, uriText, SzEntityTypeResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateEntityTypeResponse(response,
                                  uriText,
-                                 before,
-                                 after,
+                                 after - before,
                                  TRUE.equals(withRaw),
                                  expectedEntityType);
     });
@@ -1235,19 +1212,18 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       String uriText = this.formatServerUri(
           "entity-classes/" + entityClassCode
               + "/entity-types/" + entityTypeCode + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzEntityTypeResponse clientResponse
           = this.configApi.getEntityTypeByClass(
               entityClassCode, entityTypeCode, withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzEntityTypeResponse response = jsonCopy(clientResponse,
                                                SzEntityTypeResponse.class);
 
       validateEntityTypeResponse(response,
                                  uriText,
-                                 before,
-                                 after,
+                                 after - before,
                                  TRUE.equals(withRaw),
                                  expectedEntityType);
     });
@@ -1314,7 +1290,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
               + "/entity-types/" + entityTypeCode + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         SzEntityTypeResponse response
             = this.configServices.getEntityType(
@@ -1328,9 +1304,9 @@ public class ConfigServicesReadTest extends AbstractServiceTest
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         validateBasics(
-            response, 404, GET, uriText, before, after);
+            response, 404, GET, uriText, after - before);
       }
     });
   }
@@ -1350,13 +1326,13 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       String uriText = this.formatServerUri(
           "entity-classes/" + entityClassCode
               + "/entity-types/" + entityTypeCode + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response
           = this.invokeServerViaHttp(GET, uriText, SzErrorResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(
-          response, 404, GET, uriText, before, after);
+          response, 404, GET, uriText, after - before);
     });
   }
 
@@ -1375,7 +1351,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       String uriText = this.formatServerUri(
           "entity-classes/" + entityClassCode
               + "/entity-types/" + entityTypeCode + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       try {
         com.senzing.gen.api.model.SzEntityTypeResponse clientResponse
           = this.configApi.getEntityTypeByClass(
@@ -1386,7 +1362,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
                  + " ], withRaw=[ " + withRaw + " ]");
 
       } catch (HttpStatusCodeException expected) {
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = jsonParse(expected.getResponseBodyAsString(),
                         com.senzing.gen.api.model.SzErrorResponse.class);
@@ -1394,7 +1370,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
         SzErrorResponse response = jsonCopy(clientResponse,
                                             SzErrorResponse.class);
         validateBasics(
-            response, 404, GET, uriText, before, after);
+            response, 404, GET, uriText, after - before);
       }
     });
   }
@@ -1523,7 +1499,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       String  uriText = this.formatServerUri("attribute-types" + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzAttributeTypesResponse response
           = this.configServices.getAttributeTypes(
               TRUE.equals(withInternal),
@@ -1533,13 +1509,12 @@ public class ConfigServicesReadTest extends AbstractServiceTest
               uriInfo);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateAttributeTypesResponse(testInfo,
                                      response,
                                      uriText,
-                                     before,
-                                     after,
+                                     after - before,
                                      TRUE.equals(withRaw),
                                      expectedAttrTypeCodes);
     });
@@ -1565,16 +1540,15 @@ public class ConfigServicesReadTest extends AbstractServiceTest
                                                       featureType,
                                                       withRaw);
       String uriText = this.formatServerUri("attribute-types" + suffix);
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzAttributeTypesResponse response = this.invokeServerViaHttp(
           GET, uriText, SzAttributeTypesResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateAttributeTypesResponse(testInfo,
                                      response,
                                      uriText,
-                                     before,
-                                     after,
+                                     after - before,
                                      TRUE.equals(withRaw),
                                      expectedAttrTypeCodes);
     });
@@ -1607,11 +1581,11 @@ public class ConfigServicesReadTest extends AbstractServiceTest
             attributeClass.toString());
       }
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzAttributeTypesResponse clientResponse
           = this.configApi.getAttributeTypes(
               withInternal, attrClass, featureType, withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzAttributeTypesResponse response
           = jsonCopy(clientResponse, SzAttributeTypesResponse.class);
@@ -1619,8 +1593,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       validateAttributeTypesResponse(testInfo,
                                      response,
                                      uriText,
-                                     before,
-                                     after,
+                                     after - before,
                                      TRUE.equals(withRaw),
                                      expectedAttrTypeCodes);
     });
@@ -1639,17 +1612,16 @@ public class ConfigServicesReadTest extends AbstractServiceTest
           "attribute-types/" + attrCode);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzAttributeTypeResponse response
           = this.configServices.getAttributeType(attrCode, false, uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateAttributeTypeResponse(response,
                                     uriText,
                                     attrCode,
-                                    before,
-                                    after,
+                                    after - before,
                                     null);
     });
   }
@@ -1660,16 +1632,15 @@ public class ConfigServicesReadTest extends AbstractServiceTest
     this.performTest(() -> {
       String  uriText = this.formatServerUri(
           "attribute-types/" + attrCode);
-      long    before  = System.currentTimeMillis();
+      long    before  = System.nanoTime();
       SzAttributeTypeResponse response
           = this.invokeServerViaHttp(GET, uriText, SzAttributeTypeResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateAttributeTypeResponse(response,
                                     uriText,
                                     attrCode,
-                                    before,
-                                    after,
+                                    after - before,
                                     null);
     });
   }
@@ -1680,12 +1651,12 @@ public class ConfigServicesReadTest extends AbstractServiceTest
     this.performTest(() -> {
       String  uriText = this.formatServerUri(
           "attribute-types/" + attrCode);
-      long    before  = System.currentTimeMillis();
+      long    before  = System.nanoTime();
 
       com.senzing.gen.api.model.SzAttributeTypeResponse clientResponse
           = this.configApi.getAttributeType(attrCode, null);
 
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzAttributeTypeResponse response
           = jsonCopy(clientResponse, SzAttributeTypeResponse.class);
@@ -1693,8 +1664,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       validateAttributeTypeResponse(response,
                                     uriText,
                                     attrCode,
-                                    before,
-                                    after,
+                                    after - before,
                                     null);
     });
   }
@@ -1707,17 +1677,16 @@ public class ConfigServicesReadTest extends AbstractServiceTest
           "attribute-types/" + attrCode + "?withRaw=false");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzAttributeTypeResponse response
           = this.configServices.getAttributeType(attrCode, false, uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateAttributeTypeResponse(response,
                                     uriText,
                                     attrCode,
-                                    before,
-                                    after,
+                                    after - before,
                                     false);
     });
   }
@@ -1728,16 +1697,15 @@ public class ConfigServicesReadTest extends AbstractServiceTest
     this.performTest(() -> {
       String  uriText = this.formatServerUri(
           "attribute-types/" + attrCode + "?withRaw=false");
-      long before  = System.currentTimeMillis();
+      long before  = System.nanoTime();
       SzAttributeTypeResponse response
           = this.invokeServerViaHttp(GET, uriText, SzAttributeTypeResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateAttributeTypeResponse(response,
                                     uriText,
                                     attrCode,
-                                    before,
-                                    after,
+                                    after - before,
                                     false);
     });
   }
@@ -1748,10 +1716,10 @@ public class ConfigServicesReadTest extends AbstractServiceTest
     this.performTest(() -> {
       String  uriText = this.formatServerUri(
           "attribute-types/" + attrCode + "?withRaw=false");
-      long before  = System.currentTimeMillis();
+      long before  = System.nanoTime();
       com.senzing.gen.api.model.SzAttributeTypeResponse clientResponse
           = this.configApi.getAttributeType(attrCode, false);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzAttributeTypeResponse response
           = jsonCopy(clientResponse, SzAttributeTypeResponse.class);
@@ -1759,8 +1727,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       validateAttributeTypeResponse(response,
                                     uriText,
                                     attrCode,
-                                    before,
-                                    after,
+                                    after - before,
                                     false);
     });
   }
@@ -1773,17 +1740,16 @@ public class ConfigServicesReadTest extends AbstractServiceTest
           "attribute-types/" + attrCode + "?withRaw=true");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzAttributeTypeResponse response
           = this.configServices.getAttributeType(attrCode, true, uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateAttributeTypeResponse(response,
                                     uriText,
                                     attrCode,
-                                    before,
-                                    after,
+                                    after - before,
                                     true);
     });
   }
@@ -1794,16 +1760,15 @@ public class ConfigServicesReadTest extends AbstractServiceTest
     this.performTest(() -> {
       String  uriText = this.formatServerUri(
           "attribute-types/" + attrCode + "?withRaw=true");
-      long before  = System.currentTimeMillis();
+      long before  = System.nanoTime();
       SzAttributeTypeResponse response
           = this.invokeServerViaHttp(GET, uriText, SzAttributeTypeResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateAttributeTypeResponse(response,
                                     uriText,
                                     attrCode,
-                                    before,
-                                    after,
+                                    after - before,
                                     true);
     });
   }
@@ -1814,10 +1779,10 @@ public class ConfigServicesReadTest extends AbstractServiceTest
     this.performTest(() -> {
       String  uriText = this.formatServerUri(
           "attribute-types/" + attrCode + "?withRaw=true");
-      long before  = System.currentTimeMillis();
+      long before  = System.nanoTime();
       com.senzing.gen.api.model.SzAttributeTypeResponse clientResponse
           = this.configApi.getAttributeType(attrCode, true);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzAttributeTypeResponse response
           = jsonCopy(clientResponse, SzAttributeTypeResponse.class);
@@ -1825,8 +1790,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       validateAttributeTypeResponse(response,
                                     uriText,
                                     attrCode,
-                                    before,
-                                    after,
+                                    after - before,
                                     true);
     });
   }
@@ -1836,16 +1800,15 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       String  uriText = this.formatServerUri("configs/active");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzConfigResponse response
           = this.configServices.getActiveConfig(uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateConfigResponse(response,
                              uriText,
-                             before,
-                             after,
+                             after - before,
                              this.getInitialDataSources().keySet());
     });
   }
@@ -1853,15 +1816,14 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   @Test public void getActiveConfigViaHttpTest() {
     this.performTest(() -> {
       String  uriText = this.formatServerUri("configs/active");
-      long    before  = System.currentTimeMillis();
+      long    before  = System.nanoTime();
       SzConfigResponse response
           = this.invokeServerViaHttp(GET, uriText, SzConfigResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateConfigResponse(response,
                              uriText,
-                             before,
-                             after,
+                             after - before,
                              this.getInitialDataSources().keySet());
     });
   }
@@ -1869,18 +1831,17 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   @Test public void getActiveConfigViaJavaClientTest() {
     this.performTest(() -> {
       String  uriText = this.formatServerUri("configs/active");
-      long    before  = System.currentTimeMillis();
+      long    before  = System.nanoTime();
       com.senzing.gen.api.model.SzConfigResponse clientResponse
           = this.configApi.getActiveConfig();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzConfigResponse response = jsonCopy(clientResponse,
                                            SzConfigResponse.class);
 
       validateConfigResponse(response,
                              uriText,
-                             before,
-                             after,
+                             after - before,
                              this.getInitialDataSources().keySet());
     });
   }
@@ -1890,16 +1851,15 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       String  uriText = this.formatServerUri("configs/template");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzConfigResponse response
           = this.configServices.getTemplateConfig(uriInfo);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateConfigResponse(response,
                              uriText,
-                             before,
-                             after,
+                             after - before,
                              this.getDefaultDataSources().keySet());
     });
   }
@@ -1907,15 +1867,14 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   @Test public void getTemplateConfigViaHttpTest() {
     this.performTest(() -> {
       String  uriText = this.formatServerUri("configs/template");
-      long    before  = System.currentTimeMillis();
+      long    before  = System.nanoTime();
       SzConfigResponse response
           = this.invokeServerViaHttp(GET, uriText, SzConfigResponse.class);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateConfigResponse(response,
                              uriText,
-                             before,
-                             after,
+                             after - before,
                              this.getDefaultDataSources().keySet());
     });
   }
@@ -1923,18 +1882,17 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   @Test public void getTemplateConfigViaJavaClientTest() {
     this.performTest(() -> {
       String  uriText = this.formatServerUri("configs/template");
-      long    before  = System.currentTimeMillis();
+      long    before  = System.nanoTime();
       com.senzing.gen.api.model.SzConfigResponse clientResponse
           = this.configApi.getTemplateConfig();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzConfigResponse response = jsonCopy(clientResponse,
                                            SzConfigResponse.class);
 
       validateConfigResponse(response,
                              uriText,
-                             before,
-                             after,
+                             after - before,
                              this.getDefaultDataSources().keySet());
     });
   }

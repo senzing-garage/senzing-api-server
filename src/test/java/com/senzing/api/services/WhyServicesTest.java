@@ -13,18 +13,14 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import javax.json.Json;
-import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObjectBuilder;
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.sql.ClientInfoStatus;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
 
 import static com.senzing.api.model.SzFeatureMode.NONE;
 import static com.senzing.api.model.SzFeatureMode.WITH_DUPLICATES;
@@ -779,7 +775,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzWhyEntitiesResponse response = this.whyServices.whyEntities(
           entityIdent1.toString(),
@@ -793,7 +789,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           uriInfo);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateWhyEntitiesResponse(
           testInfo,
@@ -810,8 +806,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -864,13 +859,13 @@ public class WhyServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzWhyEntitiesResponse response = this.invokeServerViaHttp(
           GET, uriText, SzWhyEntitiesResponse.class);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateWhyEntitiesResponse(
           testInfo,
@@ -887,8 +882,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -946,7 +940,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           : com.senzing.gen.api.model.SzFeatureMode.valueOf(
           featureMode.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzWhyEntitiesResponse clientResponse
           = this.entityDataApi.whyEntities(
               entityIdent1.toString(),
@@ -958,7 +952,7 @@ public class WhyServicesTest extends AbstractServiceTest {
               forceMinimal,
               withRaw);
 
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzWhyEntitiesResponse response = jsonCopy(clientResponse,
                                                 SzWhyEntitiesResponse.class);
@@ -978,8 +972,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -1005,7 +998,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       try {
       SzWhyEntitiesResponse response = this.whyServices.whyEntities(
@@ -1027,10 +1020,9 @@ public class WhyServicesTest extends AbstractServiceTest {
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
-        validateBasics(
-            response, 400, GET, uriText, before, after);
+        validateBasics(response, 400, GET, uriText, after - before);
       }
     });
   }
@@ -1056,14 +1048,14 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           GET, uriText, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(
-          response, 400, GET, uriText, before, after);
+          response, 400, GET, uriText, after - before);
     });
 
   }
@@ -1091,7 +1083,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       try {
         SzWhyEntitiesResponse response = this.whyServices.whyEntities(
@@ -1113,10 +1105,10 @@ public class WhyServicesTest extends AbstractServiceTest {
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
         validateBasics(
-            response, 400, GET, uriText, before, after);
+            response, 400, GET, uriText, after - before);
       }
     });
   }
@@ -1143,14 +1135,14 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           GET, uriText, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(
-          response, 400, GET, uriText, before, after);
+          response, 400, GET, uriText, after - before);
     });
   }
 
@@ -1176,7 +1168,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       try {
         SzWhyEntitiesResponse response = this.whyServices.whyEntities(
@@ -1198,10 +1190,10 @@ public class WhyServicesTest extends AbstractServiceTest {
         SzErrorResponse response
             = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
-        long after = System.currentTimeMillis();
+        long after = System.nanoTime();
 
         validateBasics(
-            response, 400, GET, uriText, before, after);
+            response, 400, GET, uriText, after - before);
       }
     });
   }
@@ -1227,14 +1219,14 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzErrorResponse response = this.invokeServerViaHttp(
           GET, uriText, SzErrorResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       validateBasics(
-          response, 400, GET, uriText, before, after);
+          response, 400, GET, uriText, after - before);
     });
   }
 
@@ -1272,7 +1264,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzWhyEntityResponse response = this.whyServices.whyEntityByRecordId(
           recordId.getDataSourceCode(),
@@ -1286,7 +1278,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           uriInfo);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateWhyEntityResponse(
           testInfo,
@@ -1301,8 +1293,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -1340,11 +1331,11 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzWhyEntityResponse response = this.invokeServerViaHttp(
           GET, uriText, SzWhyEntityResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateWhyEntityResponse(
           testInfo,
@@ -1359,8 +1350,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -1404,7 +1394,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           : com.senzing.gen.api.model.SzFeatureMode.valueOf(
           featureMode.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzWhyEntityResponse clientResponse
           = this.entityDataApi.whyEntityByRecordID(
           recordId.getDataSourceCode(),
@@ -1415,7 +1405,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           clientFeatureMode,
           forceMinimal,
           withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzWhyEntityResponse response = jsonCopy(clientResponse,
                                               SzWhyEntityResponse.class);
@@ -1433,8 +1423,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -1473,7 +1462,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzWhyEntityResponse response = this.whyServices.whyEntityByRecordId(
           recordId.getDataSourceCode(),
@@ -1487,7 +1476,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           uriInfo);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateWhyEntityResponse(
           testInfo,
@@ -1502,8 +1491,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -1542,11 +1530,11 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzWhyEntityResponse response = this.invokeServerViaHttp(
           GET, uriText, SzWhyEntityResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateWhyEntityResponse(
           testInfo,
@@ -1561,8 +1549,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -1607,7 +1594,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           : com.senzing.gen.api.model.SzFeatureMode.valueOf(
           featureMode.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzWhyEntityResponse clientResponse
           = this.entityDataApi.whyEntityByEntityID(
           entityId,
@@ -1617,7 +1604,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           clientFeatureMode,
           forceMinimal,
           withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzWhyEntityResponse response = jsonCopy(clientResponse,
                                               SzWhyEntityResponse.class);
@@ -1635,35 +1622,29 @@ public class WhyServicesTest extends AbstractServiceTest {
           (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
-          before,
-          after);
+          after - before);
     });
   }
 
   public void validateWhyEntityResponse(
-      String testInfo,
+      String              testInfo,
       SzWhyEntityResponse response,
-      SzHttpMethod httpMethod,
-      String selfLink,
-      SzRecordId recordId,
-      Long entityId,
-      boolean forceMinimal,
-      SzFeatureMode featureMode,
-      boolean withFeatureStats,
-      boolean withInternalFeatures,
-      boolean withRelationships,
-      Boolean withRaw,
-      long beforeTimestamp,
-      long afterTimestamp) {
+      SzHttpMethod        httpMethod,
+      String              selfLink,
+      SzRecordId          recordId,
+      Long                entityId,
+      boolean             forceMinimal,
+      SzFeatureMode       featureMode,
+      boolean             withFeatureStats,
+      boolean             withInternalFeatures,
+      boolean             withRelationships,
+      Boolean             withRaw,
+      long                maxDuration)
+  {
     if (testInfo != null && selfLink != null) {
       testInfo = testInfo + ", selfLink=[ " + selfLink + " ]";
     }
-    validateBasics(testInfo,
-                   response,
-                   httpMethod,
-                   selfLink,
-                   beforeTimestamp,
-                   afterTimestamp);
+    validateBasics(testInfo, response, httpMethod, selfLink, maxDuration);
 
     List<SzWhyEntityResult> whyResults = response.getData().getWhyResults();
     List<SzEntityData> entities = response.getData().getEntities();
@@ -1826,31 +1807,27 @@ public class WhyServicesTest extends AbstractServiceTest {
   }
 
   public void validateWhyEntitiesResponse(
-      String testInfo,
+      String                testInfo,
       SzWhyEntitiesResponse response,
-      SzHttpMethod httpMethod,
-      String selfLink,
-      SzRecordId recordId1,
-      SzRecordId recordId2,
-      Long entityId1,
-      Long entityId2,
-      boolean forceMinimal,
-      SzFeatureMode featureMode,
-      boolean withFeatureStats,
-      boolean withInternalFeatures,
-      boolean withRelationships,
-      Boolean withRaw,
-      long beforeTimestamp,
-      long afterTimestamp) {
+      SzHttpMethod          httpMethod,
+      String                selfLink,
+      SzRecordId            recordId1,
+      SzRecordId            recordId2,
+      Long                  entityId1,
+      Long                  entityId2,
+      boolean               forceMinimal,
+      SzFeatureMode         featureMode,
+      boolean               withFeatureStats,
+      boolean               withInternalFeatures,
+      boolean               withRelationships,
+      Boolean               withRaw,
+      long                  maxDuration)
+  {
     if (testInfo != null && selfLink != null) {
       testInfo = testInfo + ", selfLink=[ " + selfLink + " ]";
     }
-    validateBasics(testInfo,
-                   response,
-                   httpMethod,
-                   selfLink,
-                   beforeTimestamp,
-                   afterTimestamp);
+
+    validateBasics(testInfo, response, httpMethod, selfLink, maxDuration);
 
     SzWhyEntitiesResult whyResult = response.getData().getWhyResult();
     List<SzEntityData> entities = response.getData().getEntities();
@@ -2042,7 +2019,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
 
       SzWhyRecordsResponse response = this.whyServices.whyRecords(
           recordId1.getDataSourceCode(),
@@ -2058,7 +2035,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           uriInfo);
 
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateWhyRecordsResponse(
           testInfo,
@@ -2073,8 +2050,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -2114,11 +2090,11 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       SzWhyRecordsResponse response = this.invokeServerViaHttp(
           GET, uriText, SzWhyRecordsResponse.class);
       response.concludeTimers();
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       this.validateWhyRecordsResponse(
           testInfo,
@@ -2133,8 +2109,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
-          before,
-          after);
+          after - before);
     });
   }
 
@@ -2180,7 +2155,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           : com.senzing.gen.api.model.SzFeatureMode.valueOf(
           featureMode.toString());
 
-      long before = System.currentTimeMillis();
+      long before = System.nanoTime();
       com.senzing.gen.api.model.SzWhyRecordsResponse clientResponse
           = this.entityDataApi.whyRecords(recordId1.getDataSourceCode(),
                                           recordId1.getRecordId(),
@@ -2192,7 +2167,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                           clientFeatureMode,
                                           forceMinimal,
                                           withRaw);
-      long after = System.currentTimeMillis();
+      long after = System.nanoTime();
 
       SzWhyRecordsResponse response = jsonCopy(clientResponse,
                                                SzWhyRecordsResponse.class);
@@ -2210,36 +2185,30 @@ public class WhyServicesTest extends AbstractServiceTest {
           (withInternalFeatures == null ? true : withInternalFeatures),
           (withRelationships == null ? false : withRelationships),
           withRaw,
-          before,
-          after);
+          after - before);
     });
   }
 
   public void validateWhyRecordsResponse(
-      String testInfo,
-      SzWhyRecordsResponse response,
-      SzHttpMethod httpMethod,
-      String selfLink,
-      SzRecordId recordId1,
-      SzRecordId recordId2,
-      boolean forceMinimal,
-      SzFeatureMode featureMode,
-      boolean withFeatureStats,
-      boolean withInternalFeatures,
-      boolean withRelationships,
-      Boolean withRaw,
-      long beforeTimestamp,
-      long afterTimestamp) {
+      String                testInfo,
+      SzWhyRecordsResponse  response,
+      SzHttpMethod          httpMethod,
+      String                selfLink,
+      SzRecordId            recordId1,
+      SzRecordId            recordId2,
+      boolean               forceMinimal,
+      SzFeatureMode         featureMode,
+      boolean               withFeatureStats,
+      boolean               withInternalFeatures,
+      boolean               withRelationships,
+      Boolean               withRaw,
+      long                  maxDuration)
+  {
     if (testInfo != null && selfLink != null) {
       testInfo = testInfo + ", selfLink=[ " + selfLink + " ]";
     }
 
-    validateBasics(testInfo,
-                   response,
-                   httpMethod,
-                   selfLink,
-                   beforeTimestamp,
-                   afterTimestamp);
+    validateBasics(testInfo, response, httpMethod, selfLink, maxDuration);
 
     SzWhyRecordsResult whyResult = response.getData().getWhyResult();
     List<SzEntityData> entities = response.getData().getEntities();

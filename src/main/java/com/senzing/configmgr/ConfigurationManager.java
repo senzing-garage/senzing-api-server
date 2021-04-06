@@ -141,7 +141,18 @@ public class ConfigurationManager {
                   return Boolean.TRUE;
 
                 case VERBOSE:
-                  return Boolean.TRUE;
+                  if (params.size() == 0) return Boolean.TRUE;
+                  String boolText = params.get(0);
+                  if ("false".equalsIgnoreCase(boolText)) {
+                    return Boolean.FALSE;
+                  }
+                  if ("true".equalsIgnoreCase(boolText)) {
+                    return Boolean.TRUE;
+                  }
+                  throw new IllegalArgumentException(
+                      "The specified parameter for "
+                          + option.getCommandLineFlag()
+                          + " must be true or false: " + params.get(0));
 
                 case INIT_FILE:
                   File initFile = new File(params.get(0));
