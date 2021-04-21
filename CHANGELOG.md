@@ -12,7 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Modified `SzApiServer` to enable Web Sockets connectivity
 - Modified `SzApiServer`, `SzApiServerOption` and `SzApiServerOptions` to enable
-  configurability of the Jetty Web Server HTTP Thread pool
+  configurability of the Jetty Web Server HTTP Thread pool via the
+  `--http-concurrency` option (and `SENZING_API_SERVER_HTTP_CONCURRENCY
+  environment variable)
 - Modified `SzApiServer` to enable support for limitations on concurrent
   prolonged operations to prevent exhaustion of Jetty Web Server HTTP pool
 - Added Web Sockets and SSE tests in `BulkDataServicesTests` for
