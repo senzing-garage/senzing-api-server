@@ -6,6 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2021-04-23
+
+### Changed in 2.6.0
+
+- Modified `SzApiServer` to enable Web Sockets connectivity
+- Modified `SzApiServer`, `SzApiServerOption` and `SzApiServerOptions` to enable
+  configurability of the Jetty Web Server HTTP Thread pool
+- Modified `SzApiServer` to enable support for limitations on concurrent
+  prolonged operations to prevent exhaustion of Jetty Web Server HTTP pool
+- Added Web Sockets and SSE tests in `BulkDataServicesTests` for
+  `POST /bulk-data/analyze` and `POST /bulk-data/load`
+- Modified `ServicesUtil` to provide utility method for producing 503 responses
+- Modified `BulkDataServices` to limit the number of concurrent executions of
+  `POST /bulk-data/analyze` and `POST /bulk-data/load` as "prolonged" operations
+  when executed over HTTP rather than Web Sockets.  These operations produce a
+  "503 Service Unavailable" response if too many concurrent HTTP executions.
+- Modified `BulkDataServices` to add Web Sockets support to
+  `POST /bulk-data/analyze` and `POST /bulk-data/load`
+- Modified `AdminServices` to set the `webSocketsMessageMaxSize` property on
+  the `SzServerInfo` as part of the `GET /server-info` implementation.
+- Modified `SzApiProvider` to add a means to get the `webSocketsMessageMaxSize`
+  and to provide a means to track and limit prolonged operations.
+- Added `webSocketsMessageMaxSize` property to `SzServerInfo`
+- Added HTTP concurrency and Web Sockets message size constants to
+  `SzApiServerConstants`
+- Added `com.senzin.io.ChunkedEncodingInputStream` to aid in SSE auto tests.
+  This class provides decoding of chunked transfer encoding.
+- Minor changes to `RecordReader` to make it more robust when auto-detecting the
+  file format.
+- Modified `TemporaryDataCache` to more aggressively create file parts to make
+  them available for reading rather than waiting for a specific number of bytes
+  to be read from the source stream.
+- Added `readAsciiLine()` function to `IOUtilities`
+- Updated REST API Specification version to 2.6.0 in `BuildInfo` class.
+
 ## [2.5.0] - 2021-03-24
 
 ### Changed in 2.5.0
@@ -41,8 +76,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed in 2.4.0
 
-- Added `includeOnly` query parameter to `GET /entities` endpoint if using 
-  the native Senzing API version 2.4.1 or later.
+- Added `includeOnly` query parameter to `GET /entities` endpoint.  NOTE: this
+  parameter is only recognized if the underlying native Senzing API Product is
+  version 2.4.1 or later.
 - Modified `SzMeta` to include four new fields to be included in the meta
   section of each response:
     - `nativeApiVersion`

@@ -73,11 +73,11 @@ In order to install `g2.jar` you must:
 
         ```console
         {
-            "PLATFORM": "Linux",
-            "VERSION": "2.0.0",
-            "BUILD_VERSION": "2.0.0.20192",
-            "BUILD_NUMBER": "2020_07_08__02_00",
-            "DATA_VERSION": "1.0.0"
+           "PLATFORM": "Linux",
+           "VERSION": "2.4.1",
+           "BUILD_VERSION": "2.4.1.21064",
+           "BUILD_NUMBER": "2021_03_05__02_00",
+           "DATA_VERSION": "1.0.0"
         }
         ```
 
@@ -88,7 +88,7 @@ In order to install `g2.jar` you must:
 
         ```console
         export SENZING_G2_DIR=/opt/senzing/g2
-        export SENZING_G2_JAR_VERSION=2.0.0
+        export SENZING_G2_JAR_VERSION=2.4.1
 
         mvn install:install-file \
             -Dfile=${SENZING_G2_DIR}/lib/g2.jar \
@@ -102,7 +102,7 @@ In order to install `g2.jar` you must:
 
         ```console
         set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
-        set SENZING_G2_JAR_VERSION=2.0.0
+        set SENZING_G2_JAR_VERSION=2.4.1
 
         mvn install:install-file \
             -Dfile="%SENZING_G2_DIR%\lib\g2.jar" \
@@ -170,16 +170,16 @@ in sync across multiple processes that may be using it.
 Other command-line options may be useful to you as well.  Execute
 
 ```console
-java -jar target/senzing-api-server-2.4.0.jar --help
+java -jar target/senzing-api-server-2.6.0.jar --help
 ```
 
 to obtain a help message describing all available options.
 For example:
 
 ```console
-$ java -jar target/senzing-api-server-2.5.0.jar --help
+$ java -jar target/senzing-api-server-2.6.0.jar --help
 
-java -jar senzing-api-server-2.5.0.jar <options>
+java -jar senzing-api-server-2.6.0.jar <options>
 
 <options> includes: 
 
@@ -244,6 +244,13 @@ java -jar senzing-api-server-2.5.0.jar <options>
         If not specified, then this defaults to 8.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_CONCURRENCY
 
+   --http-concurrency <thread-count>
+        Also -httpConcurrency.  Sets the maximum number of threads available
+        for the HTTP server.  The single parameter to this option should be
+        a positive integer.  If not specified, then this defaults to 200.  If
+        the specified thread count is less than 10 then an error is reported
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_HTTP_CONCURRENCY
+
    --module-name <module-name>
         Also -moduleName.  The module name to initialize with.  If not
         specified, then the module name defaults to "SzApiServer".
@@ -283,28 +290,29 @@ java -jar senzing-api-server-2.5.0.jar <options>
         --> VIA ENVIRONMENT: SENZING_API_SERVER_CONFIG_ID
 
    --auto-refresh-period <positive-integer-seconds|0|negative-integer>
-        Also -autoRefreshPeriod.  If leveraging the default configuration stored
-        in the database, this is used to specify how often the API server should
-        background check that the current active config is the same as the
-        current default config, and if different reinitialize with the current
-        default config.  If zero is specified, then the auto-refresh is disabled
-        and it will only occur when a requested configuration element is not
-        found in the current active config.  Specifying a negative integer is
-        allowed but is used to enable a check and conditional refresh only when
-        manually requested (programmatically).  NOTE: This is option ignored if
-        auto-refresh is disabled because the config was specified via the
-        G2CONFIGFILE init option or if --config-id has been specified to lock to
-        a specific configuration.
+        Also -autoRefreshPeriod.  If leveraging the default configuration
+        stored in the database, this is used to specify how often the API
+        server should background check that the current active config is the
+        same as the current default config, and if different reinitialize
+        with the current default config.  If zero is specified, then the
+        auto-refresh is disabled and it will only occur when a requested
+        configuration element is not found in the current active config.
+        Specifying a negative integer is allowed but is used to enable a
+        check and conditional refresh only when manually requested
+        (programmatically).  NOTE: This is option ignored if auto-refresh is
+        disabled because the config was specified via the G2CONFIGFILE init
+        option or if --config-id has been specified to lock to a specific
+        configuration.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_AUTO_REFRESH_PERIOD
 
    --stats-interval <milliseconds>
-        Also -statsInterval.  The minimum number of milliseconds between logging
-        of stats.  This is minimum because stats logging is suppressed if the API
-        Server is idle or active but not performing activities pertaining to
-        entity scoring.  In such cases, stats logging is delayed until an
-        activity pertaining to entity scoring is performed.  By default this is
-        set to the millisecond equivalent of 15 minutes.  If zero (0) is
-        specified then the logging of stats will be suppressed.
+        Also -statsInterval.  The minimum number of milliseconds between
+        logging of stats.  This is minimum because stats logging is suppressed
+        if the API Server is idle or active but not performing activities
+        pertaining to entity scoring.  In such cases, stats logging is delayed
+        until an activity pertaining to entity scoring is performed.  By
+        default this is set to the millisecond equivalent of 15 minutes.  If
+        zero (0) is specified then the logging of stats will be suppressed.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_STATS_INTERVAL
 
    --skip-startup-perf [true|false]
@@ -336,8 +344,8 @@ java -jar senzing-api-server-2.5.0.jar <options>
    --quiet [true|false]
         Also -quiet.  If specified then the API server reduces the number of
         messages provided as feedback to standard output.  This applies only to
-        messages generated by the API server and not by the underlying API which
-        can be quite prolific if --verbose is provided.  The true/false
+        messages generated by the API server and not by the underlying API
+        which can be quite prolific if --verbose is provided.  The true/false
         parameter is optional, if not specified then true is assumed.  If
         specified as false then it is the same as omitting the option with
         the exception that omission falls back to the environment variable
