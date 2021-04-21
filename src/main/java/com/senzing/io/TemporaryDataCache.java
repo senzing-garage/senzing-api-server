@@ -22,6 +22,11 @@ import static com.senzing.text.TextUtilities.*;
  */
 public class TemporaryDataCache {
   /**
+   * How long to wait for more data before closing out a file part.
+   */
+  private static final long FILE_PART_TIMEOUT = 500L;
+
+  /**
    * The random number generator to use for generating encryption keys.
    */
   private static final SecureRandom PRNG = new SecureRandom();
@@ -327,6 +332,284 @@ public class TemporaryDataCache {
   }
 
   /**
+   * Provides the sink for the consumed data that will break the consumed data
+   * into file parts rather than store them in memory to avoid exceeding
+   * memory limitations.
+   */
+  private class FilePartSink extends Thread {
+    /**
+     * The current file.
+     */
+    private File currentFile = null;
+
+    /**
+     * The current file output stream.
+     */
+    private FileOutputStream currentFOS = null;
+
+    /**
+     * The current cipher output stream.
+     */
+    private CipherOutputStream currentCOS = null;
+
+    /**
+     * The current GZIP output stream.
+     */
+    private GZIPOutputStream currentGOS = null;
+
+    /**
+     * The offset relative to the whole for the current file part.
+     */
+    private int currentOffset = 0;
+
+    /**
+     * The number of bytes written to the current file part.
+     */
+    private int currentWriteCount = 0;
+
+    /**
+     * The total number of bytes written.
+     */
+    private int totalWriteCount = 0;
+
+    /**
+     * The timestamp of the last write operation.
+     */
+    private long lastWriteTime = -1L;
+
+    /**
+     * Flag indicating if this thread has been shutdown.
+     */
+    private boolean closed = false;
+
+    /**
+     * The current file part index.
+     */
+    private int partIndex = 0;
+
+    /**
+     * The current maximum length for a file part.
+     */
+    private int maxPartLength = MIN_CACHE_FILE_SIZE;
+
+    /**
+     * Default constructor.
+     */
+    private FilePartSink() {
+      // do nothing
+    }
+
+    /**
+     * Flags this instance for shutdown.
+     */
+    private void close() {
+      TemporaryDataCache owner = TemporaryDataCache.this;
+      synchronized (owner.fileParts) {
+        this.closed = true;
+        this.completeCurrentFilePart();
+      }
+    }
+
+    /**
+     * Checks if the file sink has been shutdown.
+     */
+    private boolean isClosed() {
+      TemporaryDataCache owner = TemporaryDataCache.this;
+      synchronized (owner.fileParts) {
+        return this.closed;
+      }
+    }
+
+    /**
+     * Closes the current file and adds the file part to the queue.
+     */
+    private void completeCurrentFilePart() {
+      TemporaryDataCache owner = TemporaryDataCache.this;
+
+      synchronized (owner.fileParts) {
+        try {
+          File  completedFile   = null;
+          int   completedLength = 0;
+          int   completedOffset = 0;
+
+          // check if we do not have a current file
+          if ((this.currentFOS == null) || (this.currentCOS == null)
+              || (this.currentGOS == null) || (this.currentFile == null)) {
+            return;
+          }
+
+          // keep track of the current file information
+          completedFile   = this.currentFile;
+          completedOffset = this.currentOffset;
+          completedLength = this.currentWriteCount;
+
+          // if we have written at least one byte then flush/finish
+          if (this.currentWriteCount > 0) {
+            this.currentGOS.flush();
+            this.currentGOS.finish();
+            this.currentGOS.flush();
+            this.currentCOS.flush();
+          }
+
+          // close (don't cross) the streams
+          IOUtilities.close(this.currentGOS);
+          IOUtilities.close(this.currentCOS);
+          IOUtilities.close(this.currentFOS);
+
+          // reinitialize the current file fields
+          this.currentGOS         = null;
+          this.currentCOS         = null;
+          this.currentFOS         = null;
+          this.currentFile        = null;
+          this.currentOffset      = 0;
+          this.currentWriteCount  = 0;
+          this.lastWriteTime      = -1L;
+
+          this.partIndex++;
+
+          // increment the size of the next file part
+          if (completedLength > 0) {
+            this.maxPartLength = this.maxPartLength * 16;
+            if (this.maxPartLength > MAX_CACHE_FILE_SIZE) {
+              this.maxPartLength = MAX_CACHE_FILE_SIZE;
+            }
+          }
+
+          // push the file part
+          if (completedLength > 0) {
+            if (!owner.isDeleted()) {
+              CacheFilePart cfp = new CacheFilePart(completedFile,
+                                                    completedOffset,
+                                                    completedLength);
+              owner.fileParts.add(cfp);
+              owner.fileParts.notifyAll();
+            }
+          }
+
+        } catch (IOException e) {
+          owner.setFailure(e);
+          throw new RuntimeException(e);
+        }
+      }
+    }
+
+    /**
+     * Creates the next file part.
+     */
+    private void beginNextFilePart() {
+      final TemporaryDataCache  owner     = TemporaryDataCache.this;
+      final int                 gzSize    = FLUSH_THRESHOLD + 8192;
+      final boolean             syncFlush = SYNC_FLUSH;
+
+      synchronized (owner.fileParts) {
+        try {
+          if ((this.currentFOS != null) || (this.currentCOS != null)
+              || (this.currentGOS != null) || (this.currentFile != null)) {
+            throw new IllegalStateException("A current file is already open.");
+          }
+          File directory = owner.directory;
+          String baseFileName = owner.baseFileName;
+          String fileName = baseFileName + "-" + this.partIndex + ".dat";
+
+          Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
+          cipher.init(Cipher.ENCRYPT_MODE, owner.keySpec, owner.ivSpec);
+
+          this.currentOffset      = this.totalWriteCount;
+          this.currentWriteCount  = 0;
+          this.lastWriteTime      = System.nanoTime();
+          this.currentFile        = new File(directory, fileName);
+          this.currentFOS         = new FileOutputStream(this.currentFile);
+          this.currentCOS         = new CipherOutputStream(this.currentFOS,
+                                                           cipher);
+          this.currentGOS         = new GZIPOutputStream(this.currentCOS,
+                                                         gzSize,
+                                                         syncFlush);
+
+          // flag the file for deletion on exit
+          this.currentFile.deleteOnExit();
+
+        } catch (RuntimeException e) {
+          owner.setFailure(e);
+          throw e;
+
+        } catch (Exception e) {
+          owner.setFailure(e);
+          throw new RuntimeException(e);
+        }
+      }
+    }
+
+    /**
+     * Writes the next byte to the current file part.
+     *
+     * @param data The byte to write.
+     */
+    public void writeByte(byte data) throws IOException {
+      final TemporaryDataCache owner = TemporaryDataCache.this;
+      synchronized (owner.fileParts) {
+        // check if shutdown
+        if (this.closed) {
+          throw new IllegalStateException("Sink thread is already shutdown");
+        }
+
+        // check if there is a current file open and if not, open one
+        if (this.currentGOS == null) {
+          this.beginNextFilePart();
+        }
+
+        // write the byte and increment the counters
+        this.currentGOS.write(data);
+        this.totalWriteCount++;
+        this.currentWriteCount++;
+        this.lastWriteTime = System.nanoTime();
+
+        // check the write count
+        if (this.currentWriteCount >= this.maxPartLength) {
+          this.completeCurrentFilePart();
+        }
+      }
+    }
+
+    /**
+     * Periodically checks if we have a partial
+     */
+    public void run() {
+      final TemporaryDataCache owner = TemporaryDataCache.this;
+      long waitTime = FILE_PART_TIMEOUT;
+      while (!this.isClosed()) {
+        synchronized (owner.fileParts) {
+          try {
+            owner.fileParts.wait(waitTime);
+          } catch (InterruptedException ignore) {
+            // ignore
+          }
+          // check if shutdown
+          if (!this.isClosed()) {
+            // get the current nano time
+            long now = System.nanoTime();
+
+            // check if there is a current file part and the last write time
+            if (this.lastWriteTime > 0L && this.currentWriteCount > 0) {
+              // calculate the duration from nanoseconds to milliseconds
+              long duration = (now - this.lastWriteTime) / 1000000L;
+
+              // check if the duration exceeds the timeout
+              if (duration >= FILE_PART_TIMEOUT) {
+                // if it the timeout is exceeded then complete the file part
+                this.completeCurrentFilePart();
+                waitTime = FILE_PART_TIMEOUT;
+              } else {
+                // otherwise wait for at least the remaining amount of time
+                waitTime = FILE_PART_TIMEOUT - duration;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
    * The consumer thread for consuming the data from the source stream.
    */
   private class ConsumerThread extends Thread {
@@ -364,78 +647,30 @@ public class TemporaryDataCache {
     public void run() {
       TemporaryDataCache owner = TemporaryDataCache.this;
 
-      final int gzSize = FLUSH_THRESHOLD + 8192;
-      final boolean syncFlsh = SYNC_FLUSH;
-      int maxWrite = MIN_CACHE_FILE_SIZE;
-
       InputStream is = this.sourceStream;
 
+      FilePartSink sink = new FilePartSink();
+      sink.start();
+
+      int byteCount = 0;
       try (InputStream bis = new BufferedInputStream(is,8192)) {
-        File    directory     = owner.directory;
-        String  baseFileName  = owner.baseFileName;
-        File    file          = new File(directory, baseFileName + "-0.dat");
+        int readByte = 0;
+        for (readByte = bis.read();
+             readByte >= 0 && !owner.isDeleted();
+             readByte = bis.read())
+        {
+          sink.writeByte((byte) readByte);
+          byteCount++;
+        }
 
-        int readByte = 0, partIndex = 0;
-        long readCount = 0L;
-        do {
-          long offset = readCount;
-          Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
-          cipher.init(Cipher.ENCRYPT_MODE, owner.keySpec, owner.ivSpec);
+        // close the sink
+        sink.close();
 
-          try (FileOutputStream fos = new FileOutputStream(file);
-               CipherOutputStream cs = new CipherOutputStream(fos, cipher);
-               GZIPOutputStream gs = new GZIPOutputStream(cs, gzSize, syncFlsh))
-          {
-            int writeCount = 0;
-            file.deleteOnExit();
-
-            for (readByte = bis.read();
-                 readByte >= 0 && !owner.isDeleted();
-                 readByte = bis.read())
-            {
-              readCount++;
-              gs.write(readByte);
-              writeCount++;
-
-              // avoid reading a byte that we won't write
-              if (writeCount >= maxWrite) break;
-            }
-            gs.flush();
-            gs.finish();
-            gs.flush();
-            cs.flush();
+        if (readByte < 0) {
+          synchronized (this) {
+            this.appending = false;
           }
-
-          if ((readCount-offset) > 0 && file.length() == 0) {
-            throw new IllegalStateException(
-                "NO BYTES WRITTEN TO ENCRYPTED FILE: " + file);
-          }
-
-          synchronized (owner.fileParts) {
-            if (!owner.isDeleted()) {
-              long length = readCount - offset;
-              CacheFilePart cfp = new CacheFilePart(file, offset, length);
-              owner.fileParts.add(cfp);
-              owner.fileParts.notifyAll();
-              maxWrite = maxWrite * 16;
-              if (maxWrite>MAX_CACHE_FILE_SIZE) maxWrite = MAX_CACHE_FILE_SIZE;
-            }
-          }
-          if (readByte < 0) {
-            synchronized (this) {
-              this.appending = false;
-            }
-          }
-
-          String fileName = file.toString();
-          String oldSuffix = "-" + partIndex + ".dat";
-          String newSuffix = "-" + (++partIndex) + ".dat";
-          int length = fileName.length();
-          fileName = fileName.substring(0, length - oldSuffix.length())
-              + newSuffix;
-          file = new File(fileName);
-
-        } while (readByte >= 0 && !owner.isDeleted());
+        }
 
       } catch (RuntimeException e) {
         owner.setFailure(e);
