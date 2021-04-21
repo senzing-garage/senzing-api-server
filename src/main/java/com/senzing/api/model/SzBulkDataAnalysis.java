@@ -1,7 +1,11 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.*;
 
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 import static com.senzing.api.model.SzBulkDataStatus.IN_PROGRESS;
 import static com.senzing.api.model.SzBulkDataStatus.NOT_STARTED;
 
@@ -109,6 +113,7 @@ public class SzBulkDataAnalysis {
    *
    * @return The media type of the bulk record data.
    */
+  @JsonInclude(NON_NULL)
   public String getMediaType() {
     return this.mediaType;
   }
@@ -311,6 +316,7 @@ public class SzBulkDataAnalysis {
    * @return A {@link List} of {@link SzDataSourceRecordAnalysis} instances
    *         describing the statistics for the bulk data.
    */
+  @JsonInclude(NON_EMPTY)
   public List<SzDataSourceRecordAnalysis> getAnalysisByDataSource() {
     List<SzDataSourceRecordAnalysis> list
         = new ArrayList<>(this.analysisByDataSource.values());
@@ -372,6 +378,7 @@ public class SzBulkDataAnalysis {
    * @return A {@link List} of {@link SzEntityTypeRecordAnalysis} instances
    *         describing the statistics for the bulk data.
    */
+  @JsonInclude(NON_EMPTY)
   public List<SzEntityTypeRecordAnalysis> getAnalysisByEntityType() {
     List<SzEntityTypeRecordAnalysis> list
         = new ArrayList<>(this.analysisByEntityType.values());
