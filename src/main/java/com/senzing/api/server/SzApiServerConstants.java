@@ -40,6 +40,23 @@ public final class SzApiServerConstants {
   static final String DEFAULT_CONCURRENCY_PARAM
       = String.valueOf(DEFAULT_CONCURRENCY);
 
+
+  /**
+   * The default number of threads for the web server thread pool.
+   */
+  public static final int DEFAULT_HTTP_CONCURRENCY = 200;
+
+  /**
+   * The minimum number of threads for the web server thread pool.
+   */
+  public static final int MINIMUM_HTTP_CONCURRENCY = 10;
+
+  /**
+   * THe default HTTP concurrency as a string.
+   */
+  static final String DEFAULT_HTTP_CONCURRENCY_PARAM
+      = String.valueOf(DEFAULT_HTTP_CONCURRENCY);
+
   /**
    * The default stats interval for logging stats.  This is the default
    * minimum period of time between logging of stats.  The actual interval
@@ -60,6 +77,11 @@ public final class SzApiServerConstants {
    * configuration and automatically refreshing the configuration.
    */
   public static final long DEFAULT_CONFIG_REFRESH_PERIOD = 10000;
+
+  /**
+   * The maximum size for a message sent in web sockets.
+   */
+  public static final int WEB_SOCKETS_MESSAGE_MAX_SIZE = 1024*1024*10;
 
   /**
    * The config auto refresh period as a string.
