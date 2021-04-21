@@ -199,6 +199,15 @@ public interface SzApiProvider {
   int getConcurrency();
 
   /**
+   * Gets the maximum number of bytes for both text and binary web sockets
+   * messages.
+   *
+   * @return The maximum number of bytes for both text and binary web sockets
+   *         messages.
+   */
+  int getWebSocketsMessageMaxSize();
+
+  /**
    * Executes the specified task with the proper thread for utilizing the
    * various G2 API implementations.
    *
@@ -211,6 +220,35 @@ public interface SzApiProvider {
    */
   <T, E extends Exception> T executeInThread(WorkerThreadPool.Task<T, E> task)
       throws E;
+
+  /**
+   * Called before beginning an operation that may require a prolonged amount of
+   * time to complete.  If this returns <tt>null</tt> then the caller should
+   * <b>not</b> continue with the operation.  If this returns an {@link
+   * AccessToken} instance then the operation is authorized to continue and the
+   * caller should call {@link #concludeProlongedOperation(AccessToken)} with
+   * the result when the operation is complete.
+   *
+   * @return The {@link AccessToken} that authorizes the operation or
+   *         <tt>null</tt> if the operation is not authorized.
+   */
+  AccessToken authorizeProlongedOperation();
+
+  /**
+   * Called when completing a prolonged operation that was previously
+   * {@linkplain #authorizeProlongedOperation() authorized}.  The specified
+   * {@link AccessToken} cannot be null.
+   *
+   * @param token The {@link AccessToken} from the previous {@linkplain
+   *              #authorizeProlongedOperation() authorization}.
+   *
+   * @throws NullPointerException If the specified {@link AccessToken} is
+   *                              <tt>null</tt>.
+   * @throws IllegalArgumentException If the specified {@link AccessToken} is
+   *                                  not recognized from a previous
+   *                                  authorization.
+   */
+  void concludeProlongedOperation(AccessToken token);
 
   /**
    * Gets the <b>unmodifiable</b> {@Link Set} of Data Source codes that

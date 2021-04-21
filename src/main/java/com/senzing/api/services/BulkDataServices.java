@@ -1,5 +1,7 @@
 package com.senzing.api.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.senzing.api.model.*;
 import com.senzing.api.websocket.JsonEncoder;
 import com.senzing.api.websocket.StringDecoder;
@@ -7,6 +9,7 @@ import com.senzing.g2.engine.G2Engine;
 import com.senzing.io.IOUtilities;
 import com.senzing.io.RecordReader;
 import com.senzing.io.TemporaryDataCache;
+import com.senzing.util.AccessToken;
 import com.senzing.util.AsyncWorkerPool;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
@@ -14,6 +17,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import javax.json.*;
+import javax.servlet.http.HttpServletRequest;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import javax.ws.rs.*;
@@ -64,11 +68,11 @@ public class BulkDataServices {
   private static final String FILE_DATE_PATTERN = "yyyyMMdd_HHmmssX";
 
   /**
-   * The default maximum amount of time timeout to wait between receiving
+   * The default maximum number of seconds to wait between receiving
    * Web Socket messages from the client before triggering EOF on the
    * incoming stream.
    */
-  public static final Long DEFAULT_EOF_SEND_TIMEOUT = 30000L;
+  public static final Long DEFAULT_EOF_SEND_TIMEOUT = 3L;
 
   /**
    * The default progress period as the number of milliseconds between sending
@@ -122,8 +126,19 @@ public class BulkDataServices {
       @FormDataParam("data") InputStream dataInputStream,
       @Context UriInfo uriInfo)
   {
+    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+    Timers        timers      = newTimers();
+    AccessToken   accessToken = null;
+    accessToken = provider.authorizeProlongedOperation();
+    if (accessToken == null) {
+      throw newServiceUnavailableErrorException(
+          POST, uriInfo, timers,
+          "Too many prolonged operations running.  Try again later.");
+    }
     try {
-      return analyzeBulkRecords(mediaType,
+      return analyzeBulkRecords(provider,
+                                timers,
+                                mediaType,
                                 dataInputStream,
                                 uriInfo,
                                 null,
@@ -136,6 +151,8 @@ public class BulkDataServices {
 
     } catch (Exception e) {
       throw logOnceAndThrow(new RuntimeException(e));
+    } finally {
+      provider.concludeProlongedOperation(accessToken);
     }
   }
 
@@ -153,19 +170,33 @@ public class BulkDataServices {
       InputStream dataInputStream,
       @Context UriInfo uriInfo)
   {
+    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+    Timers        timers      = newTimers();
+    AccessToken   accessToken = provider.authorizeProlongedOperation();
+    if (accessToken == null) {
+      throw newServiceUnavailableErrorException(
+          POST, uriInfo, timers,
+          "Too many prolonged operations running.  Try again later.");
+    }
     try {
-      return analyzeBulkRecords(mediaType,
+      return analyzeBulkRecords(provider,
+                                timers,
+                                mediaType,
                                 dataInputStream,
                                 uriInfo,
                                 null,
                                 null,
                                 null,
                                 null);
+
     } catch (RuntimeException e) {
       throw logOnceAndThrow(e);
 
     } catch (Exception e) {
       throw logOnceAndThrow(new RuntimeException(e));
+
+    } finally {
+      provider.concludeProlongedOperation(accessToken);
     }
   }
 
@@ -232,8 +263,18 @@ public class BulkDataServices {
       @Context SseEventSink sseEventSink,
       @Context Sse sse)
   {
+    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+    Timers        timers      = newTimers();
+    AccessToken   accessToken = provider.authorizeProlongedOperation();
+    if (accessToken == null) {
+      throw newServiceUnavailableErrorException(
+          POST, uriInfo, timers,
+          "Too many prolonged operations running.  Try again later.");
+    }
     try {
-      analyzeBulkRecords(mediaType,
+      analyzeBulkRecords(provider,
+                         timers,
+                         mediaType,
                          dataInputStream,
                          uriInfo,
                          progressPeriod,
@@ -247,6 +288,8 @@ public class BulkDataServices {
     } catch (Exception e) {
       throw logOnceAndThrow(new RuntimeException(e));
 
+    } finally {
+      provider.concludeProlongedOperation(accessToken);
     }
   }
 
@@ -274,8 +317,18 @@ public class BulkDataServices {
       @Context SseEventSink sseEventSink,
       @Context Sse sse)
   {
+    Timers        timers      = newTimers();
+    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+    AccessToken   accessToken = provider.authorizeProlongedOperation();
+    if (accessToken == null) {
+      throw newServiceUnavailableErrorException(
+          POST, uriInfo, timers,
+          "Too many prolonged operations running.  Try again later.");
+    }
     try {
-      analyzeBulkRecords(mediaType,
+      analyzeBulkRecords(provider,
+                         timers,
+                         mediaType,
                          dataInputStream,
                          uriInfo,
                          progressPeriod,
@@ -288,6 +341,8 @@ public class BulkDataServices {
 
     } catch (Exception e) {
       throw logOnceAndThrow(new RuntimeException(e));
+    } finally {
+      provider.concludeProlongedOperation(accessToken);
     }
   }
 
@@ -336,8 +391,18 @@ public class BulkDataServices {
       @FormDataParam("data") FormDataContentDisposition fileMetaData,
       @Context UriInfo uriInfo)
   {
+    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+    Timers        timers      = newTimers();
+    AccessToken   accessToken = provider.authorizeProlongedOperation();
+    if (accessToken == null) {
+      throw newServiceUnavailableErrorException(
+          POST, uriInfo, timers,
+          "Too many prolonged operations running.  Try again later.");
+    }
     try {
-      return loadBulkRecords(dataSource,
+      return loadBulkRecords(provider,
+                             timers,
+                             dataSource,
                              mapDataSources,
                              mapDataSourceList,
                              entityType,
@@ -363,6 +428,8 @@ public class BulkDataServices {
     } catch (Exception e) {
       throw logOnceAndThrow(new RuntimeException(e));
 
+    } finally {
+      provider.concludeProlongedOperation(accessToken);
     }
   }
 
@@ -410,8 +477,18 @@ public class BulkDataServices {
       InputStream dataInputStream,
       @Context UriInfo uriInfo)
   {
+    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+    Timers        timers      = newTimers();
+    AccessToken   accessToken = provider.authorizeProlongedOperation();
+    if (accessToken == null) {
+      throw newServiceUnavailableErrorException(
+          POST, uriInfo, timers,
+          "Too many prolonged operations running.  Try again later.");
+    }
     try {
-      return loadBulkRecords(dataSource,
+      return loadBulkRecords(provider,
+                             timers,
+                             dataSource,
                              mapDataSources,
                              mapDataSourceList,
                              entityType,
@@ -437,6 +514,8 @@ public class BulkDataServices {
     } catch (Exception e) {
       throw logOnceAndThrow(new RuntimeException(e));
 
+    } finally {
+      provider.concludeProlongedOperation(accessToken);
     }
   }
 
@@ -495,8 +574,18 @@ public class BulkDataServices {
       @Context Sse sse)
 
   {
+    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+    Timers        timers      = newTimers();
+    AccessToken   accessToken = provider.authorizeProlongedOperation();
+    if (accessToken == null) {
+      throw newServiceUnavailableErrorException(
+          POST, uriInfo, timers,
+          "Too many prolonged operations running.  Try again later.");
+    }
     try {
-      loadBulkRecords(dataSource,
+      loadBulkRecords(provider,
+                      timers,
+                      dataSource,
                       mapDataSources,
                       mapDataSourceList,
                       entityType,
@@ -522,6 +611,8 @@ public class BulkDataServices {
     } catch (Exception e) {
       throw logOnceAndThrow(new RuntimeException(e));
 
+    } finally {
+      provider.concludeProlongedOperation(accessToken);
     }
   }
 
@@ -582,8 +673,18 @@ public class BulkDataServices {
       @Context SseEventSink sseEventSink,
       @Context Sse sse)
   {
+    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+    Timers        timers      = newTimers();
+    AccessToken   accessToken = provider.authorizeProlongedOperation();
+    if (accessToken == null) {
+      throw newServiceUnavailableErrorException(
+          POST, uriInfo, timers,
+          "Too many prolonged operations running.  Try again later.");
+    }
     try {
-      loadBulkRecords(dataSource,
+      loadBulkRecords(provider,
+                      timers,
+                      dataSource,
                       mapDataSources,
                       mapDataSourceList,
                       entityType,
@@ -609,6 +710,8 @@ public class BulkDataServices {
     } catch (Exception e) {
       throw logOnceAndThrow(new RuntimeException(e));
 
+    } finally {
+      provider.concludeProlongedOperation(accessToken);
     }
   }
 
@@ -638,8 +741,9 @@ public class BulkDataServices {
      * specified timeout for the web socket thread.
      */
     public void run() {
+      long nanoTimeout = this.webSocketThread.eofSendTimeout * 1000000L;
       synchronized (this.webSocketThread) {
-        long waitTime = this.webSocketThread.eofSendTimeout;
+        long waitTime = this.webSocketThread.eofSendTimeout * 1000L;
         while (!this.completed) {
           // wait for a period
           try {
@@ -650,9 +754,9 @@ public class BulkDataServices {
           }
 
           // check the time
-          long now = System.currentTimeMillis();
+          long now = System.nanoTime();
           long duration = (now - this.webSocketThread.lastMessageTime);
-          boolean timedOut = (duration > this.webSocketThread.eofSendTimeout);
+          boolean timedOut = (duration > nanoTimeout);
 
           if (this.completed || timedOut) {
             // signal EOF
@@ -663,7 +767,8 @@ public class BulkDataServices {
           }
 
           // now check how long to wait next time
-          waitTime = this.webSocketThread.eofSendTimeout - duration;
+          waitTime = (this.webSocketThread.eofSendTimeout * 1000L);
+          waitTime -= (duration/1000000L);
         }
       }
     }
@@ -728,17 +833,21 @@ public class BulkDataServices {
      */
     protected boolean started = false;
 
+    /**
+     * Flag indicating if we have begun shutting down.
+     */
+    protected boolean closing = false;
+
     @OnOpen
     public void onOpen(Session session)
         throws IOException, IllegalArgumentException
     {
-      System.err.println("OPENING WEB SOCKET");
       this.session            = session;
       this.pipedInputStream   = new PipedInputStream(PIPE_SIZE);
       this.pipedOutputStream  = new PipedOutputStream(this.pipedInputStream);
       this.uriInfo            = newProxyUriInfo(this.session);
       this.started            = false;
-      this.lastMessageTime    = System.currentTimeMillis();
+      this.lastMessageTime    = System.nanoTime();
 
       Map<String, List<String>> params = this.session.getRequestParameterMap();
 
@@ -778,18 +887,20 @@ public class BulkDataServices {
     public void onMessage(byte[] bytes) throws IOException
     {
       if (this.pipedOutputStream == null) {
+        // if session closed, ignore the message
+        synchronized (this) {
+          if (!this.session.isOpen() || this.closing) return;
+        }
+        // if session is not closed then throw an exception
         throw new IllegalStateException(
             "Output stream is already closed.");
       }
 
-      System.err.println();
-      System.err.println("BINARY MESSAGE RECEIVED: " + bytes.length);
-      System.err.println();
       synchronized (this) {
         if (this.pipedOutputStream != null) {
           this.pipedOutputStream.write(bytes);
           this.pipedOutputStream.flush();
-          this.lastMessageTime = System.currentTimeMillis();
+          this.lastMessageTime = System.nanoTime();
           this.notifyAll();
         }
       }
@@ -799,18 +910,18 @@ public class BulkDataServices {
     public void onMessage(String text)  throws IOException
     {
       if (this.pipedOutputStream == null) {
+        synchronized (this) {
+          if (!this.session.isOpen() || this.closing) return;
+        }
         throw new IllegalStateException(
             "Output stream is already closed.");
       }
 
-      System.err.println();
-      System.err.println("TEXT MESSAGE RECEIVED: " + text.length());
-      System.err.println();
       synchronized (this) {
         if (this.pipedInputStream != null) {
           this.pipedOutputStream.write(text.getBytes(UTF_8));
           this.pipedOutputStream.flush();
-          this.lastMessageTime = System.currentTimeMillis();
+          this.lastMessageTime = System.nanoTime();
           this.notifyAll();
         }
       }
@@ -818,7 +929,6 @@ public class BulkDataServices {
 
     @OnClose
     public void onClose(Session session) throws IOException {
-      System.err.println("CLOSING WEB SOCKET");
       synchronized (this) {
         IOUtilities.close(this.pipedOutputStream);
         this.pipedOutputStream = null;
@@ -830,7 +940,6 @@ public class BulkDataServices {
     public void onError(Session session, Throwable throwable)
         throws IOException
     {
-      System.err.println("ERROR ON WEB SOCKET");
       throwable.printStackTrace();
       synchronized (this) {
         IOUtilities.close(this.pipedOutputStream);
@@ -841,6 +950,7 @@ public class BulkDataServices {
             ? CloseReason.CloseCodes.PROTOCOL_ERROR
             : CloseReason.CloseCodes.UNEXPECTED_CONDITION;
 
+        this.closing = true;
         this.session.close(new CloseReason(closeCode, throwable.getMessage()));
       }
     }
@@ -889,8 +999,11 @@ public class BulkDataServices {
      * Implemented to load the records once the thread is started.
      */
     protected void doRun() {
-      System.out.println("ANALYZING BULK RECORDS....");
-      analyzeBulkRecords(TEXT_PLAIN_UTF8,
+      SzApiProvider provider  = SzApiProvider.Factory.getProvider();
+      Timers        timers    = newTimers();
+      analyzeBulkRecords(provider,
+                         timers,
+                         TEXT_PLAIN_UTF8,
                          this.pipedInputStream,
                          this.uriInfo,
                          this.progressPeriod,
@@ -898,19 +1011,23 @@ public class BulkDataServices {
                          null,
                          this.session);
 
+      // close the web sockets session
+      try {
+        synchronized (this) {
+          this.closing = true;
+          this.session.close();
+        }
+      } catch (IOException e) {
+        e.printStackTrace();
+        throw new RuntimeException(e);
+      }
+
       synchronized (this) {
         IOUtilities.close(this.pipedInputStream);
         this.pipedInputStream = null;
         IOUtilities.close(this.pipedOutputStream);
         this.pipedOutputStream = null;
         this.notifyAll();
-      }
-
-      try {
-        this.session.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-        throw new RuntimeException(e);
       }
     }
   }
@@ -1006,7 +1123,7 @@ public class BulkDataServices {
       paramList = params.get("maxFailures");
       if (paramList != null && paramList.size() > 0) {
         try {
-          this.progressPeriod = Long.parseLong(paramList.get(0));
+          this.maxFailures = Integer.parseInt(paramList.get(0));
 
         } catch (IllegalArgumentException e) {
           throw new BadRequestException(
@@ -1020,7 +1137,12 @@ public class BulkDataServices {
      * Implemented to load the records once the thread is started.
      */
     protected void doRun() {
-      loadBulkRecords(this.dataSource,
+      SzApiProvider provider  = SzApiProvider.Factory.getProvider();
+      Timers        timers    = newTimers();
+
+      loadBulkRecords(provider,
+                      timers,
+                      this.dataSource,
                       this.mapDataSources,
                       this.mapDataSourceList,
                       this.entityType,
@@ -1037,6 +1159,16 @@ public class BulkDataServices {
                       null,
                       this.session);
 
+      // close the web sockets session
+      try {
+        synchronized (this) {
+          this.closing = true;
+          this.session.close();
+        }
+      } catch (IOException e) {
+        e.printStackTrace();
+        throw new RuntimeException(e);
+      }
       synchronized (this) {
         IOUtilities.close(this.pipedInputStream);
         IOUtilities.close(this.pipedOutputStream);
@@ -1045,12 +1177,6 @@ public class BulkDataServices {
         this.notifyAll();
       }
 
-      try {
-        this.session.close();
-      } catch (IOException e) {
-        e.printStackTrace();
-        throw new RuntimeException(e);
-      }
     }
 
   }
@@ -1059,6 +1185,8 @@ public class BulkDataServices {
    * Analyzes the bulk data and returns information about it.
    */
   private static SzBulkDataAnalysisResponse analyzeBulkRecords(
+      SzApiProvider               provider,
+      Timers                      timers,
       MediaType                   mediaType,
       InputStream                 dataInputStream,
       UriInfo                     uriInfo,
@@ -1067,14 +1195,15 @@ public class BulkDataServices {
       Sse                         sse,
       Session                     webSocketSession)
   {
-    System.out.println("ANALYZING BULK RECORDS: " + progressPeriod);
+    // convert progress period to nanoseconds
+    Long progressNanos = (progressPeriod == null)
+        ? null : progressPeriod * 1000000L;
 
     OutboundSseEvent.Builder eventBuilder
         = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
     int eventId = 0;
 
     SzBulkDataAnalysis dataAnalysis = new SzBulkDataAnalysis();
-    Timers timers = newTimers();
 
     // check the progress period
     validateProgressPeriod(progressPeriod,
@@ -1085,16 +1214,14 @@ public class BulkDataServices {
                            webSocketSession);
 
     try {
-      System.out.println("CREATING BULK DATA SET....");
       BulkDataSet bulkDataSet = new BulkDataSet(mediaType, dataInputStream);
-      System.out.println("CREATED BULK DATA SET.");
       TemporaryDataCache dataCache = bulkDataSet.dataCache;
 
       // if charset is unknown then try to detect
       String charset = bulkDataSet.characterEncoding;
       dataAnalysis.setCharacterEncoding(charset);
 
-      long start = System.currentTimeMillis();
+      long start = System.nanoTime();
       // check if we need to auto-detect the media type
       try (InputStream        is  = dataCache.getInputStream(true);
            InputStreamReader  isr = new InputStreamReader(is, charset);
@@ -1103,7 +1230,11 @@ public class BulkDataServices {
         // if format is null then RecordReader will auto-detect
         RecordReader recordReader = new RecordReader(bulkDataSet.format, br);
         bulkDataSet.format = recordReader.getFormat();
-        dataAnalysis.setMediaType(bulkDataSet.format.getMediaType());
+        if (bulkDataSet.format != null) {
+          dataAnalysis.setMediaType(bulkDataSet.format.getMediaType());
+        } else {
+          dataAnalysis.setMediaType(null);
+        }
 
         for (JsonObject record = recordReader.readRecord();
              (record != null);
@@ -1114,10 +1245,10 @@ public class BulkDataServices {
           String recordId   = JsonUtils.getString(record, "RECORD_ID");
           dataAnalysis.trackRecord(dataSrc, entityType, recordId);
 
-          long now = System.currentTimeMillis();
+          long now = System.nanoTime();
           long duration = now - start;
           // check if the progress period has expired
-          if ((progressPeriod != null) && (now - start > progressPeriod)) {
+          if ((progressNanos != null) && (duration > progressNanos)) {
             // reset the start time
             start = now;
 
@@ -1180,9 +1311,28 @@ public class BulkDataServices {
   }
 
   /**
+   * Converts the specified object to JSON.
+   */
+  protected static String toJsonString(Object object) {
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JodaModule());
+    try {
+      String jsonText = objectMapper.writeValueAsString(object);
+      JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
+      return JsonUtils.toJsonText(jsonObject, true);
+
+    } catch (Exception e) {
+      return "FAILED TO CONVERT TO JSON: " + e.getMessage();
+    }
+  }
+
+
+  /**
    * Analyzes the bulk data and returns information about it.
    */
   private static SzBulkLoadResponse loadBulkRecords(
+      SzApiProvider               provider,
+      Timers                      timers,
       String                      dataSource,
       String                      mapDataSources,
       List<String>                mapDataSourceList,
@@ -1200,14 +1350,16 @@ public class BulkDataServices {
       Sse                         sse,
       Session                     webSocketSession)
   {
+    // convert the progress period to nanoseconds
+    Long progressNanos = (progressPeriod == null)
+        ? null : progressPeriod * 1000000L;
+
     OutboundSseEvent.Builder eventBuilder
         = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
     int eventId = 0;
 
     SzBulkLoadResult bulkLoadResult = new SzBulkLoadResult();
 
-    Timers timers = newTimers();
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
     ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
 
     // normalize and validate the data source
@@ -1274,7 +1426,7 @@ public class BulkDataServices {
         timerPool.add(new Timers());
       }
 
-      long start = System.currentTimeMillis();
+      long start = System.nanoTime();
 
       // check if we need to auto-detect the media type
       try (InputStream        is  = dataCache.getInputStream(true);
@@ -1356,10 +1508,11 @@ public class BulkDataServices {
             break;
           }
 
-          long now = System.currentTimeMillis();
+          long now = System.nanoTime();
+          long duration = now - start;
 
           // check if the timing has gone beyond the specified progress period
-          if ((progressPeriod != null) && (now - start > progressPeriod)) {
+          if ((progressNanos != null) && (duration > progressNanos)) {
             // create the update response if there is a client expecting it
             SzBulkLoadResponse update = null;
             if (eventBuilder != null || webSocketSession != null) {

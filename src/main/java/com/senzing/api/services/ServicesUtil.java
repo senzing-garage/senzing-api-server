@@ -50,6 +50,11 @@ public class ServicesUtil {
   public static final int SERVER_ERROR = 500;
 
   /**
+   * HTTP Response code for service unavailable error.
+   */
+  public static final int SERVICE_UNAVAILABLE = 503;
+
+  /**
    * HTTP Response code for bad request.
    */
   public static final int BAD_REQUEST = 400;
@@ -114,6 +119,32 @@ public class ServicesUtil {
     builder.entity(
         new SzErrorResponse(httpMethod, SERVER_ERROR, uriInfo, timers, exception));
     return new InternalServerErrorException(builder.build());
+  }
+
+  /**
+   * Creates an {@link ServiceUnavailableException} and builds a response
+   * with an {@link SzErrorResponse} using the specified {@link UriInfo}
+   * and the specified exception.
+   *
+   * @param httpMethod The HTTP method for the request.
+   * @param uriInfo    The {@link UriInfo} from the request.
+   * @param timers     The {@link Timers} object for the timings that were taken.
+   * @param message    The message describing the error.
+   * @return The {@link ServiceUnavailableException}
+   */
+  static ServiceUnavailableException newServiceUnavailableErrorException(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      Timers        timers,
+      String        message)
+  {
+    Response.ResponseBuilder builder = Response.status(SERVICE_UNAVAILABLE);
+
+    builder.entity(
+        new SzErrorResponse(
+            httpMethod, SERVICE_UNAVAILABLE, uriInfo, timers, message));
+
+    return new ServiceUnavailableException(builder.build());
   }
 
   /**
@@ -894,7 +925,7 @@ public class ServicesUtil {
    * Logs an error related to sending asynchronous info messages.
    *
    * @param e The {@link Exception} that occurred.
-   * @param info The info message that failed.
+   * @param message The info message that failed.
    */
   public static final void logFailedAsyncInfo(Exception e, SzMessage message) {
     // check what was previously logged and avoid double-logging

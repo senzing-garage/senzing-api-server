@@ -17,35 +17,37 @@ import static com.senzing.api.server.SzApiServerOption.*;
  *
  */
 public class SzApiServerOptions {
-  private int         httpPort              = DEFAULT_PORT;
-  private InetAddress bindAddress           = null;
-  private String      urlBasePath           = null;
-  private int         concurrency           = DEFAULT_CONCURRENCY;
-  private String      moduleName            = DEFAULT_MODULE_NAME;
-  private boolean     verbose               = false;
-  private boolean     quiet                 = false;
-  private boolean     readOnly              = false;
-  private boolean     adminEnabled          = false;
-  private boolean     skipStartupPerf       = false;
-  private boolean     skipEnginePriming     = false;
-  private long        statsInterval         = DEFAULT_STATS_INTERVAL;
-  private String      allowedOrigins        = null;
-  private Long        configId              = null;
-  private Long        autoRefreshPeriod     = null;
-  private JsonObject  jsonInit              = null;
-  private String      asyncLoadQueueUrl     = null;
-  private String      asyncInfoQueueUrl     = null;
-  private String      kafkaInfoServers      = null;
-  private String      kafkaInfoGroupId      = null;
-  private String      kafkaInfoTopic        = null;
-  private String      rabbitInfoUser        = null;
-  private String      rabbitInfoPassword    = null;
-  private String      rabbitInfoHost        = null;
-  private Integer     rabbitInfoPort        = null;
-  private String      rabbitInfoVHost       = null;
-  private String      rabbitInfoExchange    = null;
-  private String      rabbitInfoRoutingKey  = null;
-  private String      sqsInfoUrl            = null;
+  private int         httpPort                  = DEFAULT_PORT;
+  private InetAddress bindAddress               = null;
+  private String      urlBasePath               = null;
+  private int         concurrency               = DEFAULT_CONCURRENCY;
+  private int         httpConcurrency           = DEFAULT_HTTP_CONCURRENCY;
+  private String      moduleName                = DEFAULT_MODULE_NAME;
+  private boolean     verbose                   = false;
+  private boolean     quiet                     = false;
+  private boolean     readOnly                  = false;
+  private boolean     adminEnabled              = false;
+  private boolean     skipStartupPerf           = false;
+  private boolean     skipEnginePriming         = false;
+  private long        statsInterval             = DEFAULT_STATS_INTERVAL;
+  private String      allowedOrigins            = null;
+  private Long        configId                  = null;
+  private Integer     webSocketsMessageMaxSize  = null;
+  private Long        autoRefreshPeriod         = null;
+  private JsonObject  jsonInit                  = null;
+  private String      asyncLoadQueueUrl         = null;
+  private String      asyncInfoQueueUrl         = null;
+  private String      kafkaInfoServers          = null;
+  private String      kafkaInfoGroupId          = null;
+  private String      kafkaInfoTopic            = null;
+  private String      rabbitInfoUser            = null;
+  private String      rabbitInfoPassword        = null;
+  private String      rabbitInfoHost            = null;
+  private Integer     rabbitInfoPort            = null;
+  private String      rabbitInfoVHost           = null;
+  private String      rabbitInfoExchange        = null;
+  private String      rabbitInfoRoutingKey      = null;
+  private String      sqsInfoUrl                = null;
 
   /**
    * Constructs with the JSON initialization parameters as a {@link
@@ -175,6 +177,45 @@ public class SzApiServerOptions {
   public SzApiServerOptions setConcurrency(Integer concurrency) {
     this.concurrency = (concurrency != null)
         ? concurrency : DEFAULT_CONCURRENCY;
+    return this;
+  }
+
+  /**
+   * Gets the maximum number of threads that will be used for the web server
+   * thread pool.  If the value is not {@linkplain #setHttpConcurrency(Integer)
+   * explicitly set} then {@link SzApiServerConstants#DEFAULT_HTTP_CONCURRENCY}
+   * is returned.
+   *
+   * @return The maximum number of threads for the web server thread pool.
+   */
+  public int getHttpConcurrency() {
+    return this.httpConcurrency;
+  }
+
+  /**
+   * Sets the maximum number of threads that will be used for the web server
+   * thread pool.  Set to <tt>null</tt> to use the {@linkplain
+   * SzApiServerConstants#DEFAULT_HTTP_CONCURRENCY default number of threads}.
+   * If set less than {@link SzApiServerConstants#MINIMUM_HTTP_CONCURRENCY} then
+   * an {@link IllegalArgumentException} is thrown.
+   *
+   * @param concurrency The maximum number of threads for the web server thread
+   *                    pool, or <tt>null</tt> for the default number of
+   *                    threads.
+   *
+   * @return A reference to this instance.
+   *
+   * @throws IllegalArgumentException If the specified concurrency is less than
+   *                                  {@link SzApiServerConstants#MINIMUM_HTTP_CONCURRENCY}.
+   */
+  public SzApiServerOptions setHttpConcurrency(Integer concurrency) {
+    concurrency = (concurrency!=null) ? concurrency : DEFAULT_HTTP_CONCURRENCY;
+    if (concurrency < MINIMUM_HTTP_CONCURRENCY) {
+      throw new IllegalArgumentException(
+          "The specified HTTP concurrency cannot be less than "
+          + MINIMUM_HTTP_CONCURRENCY);
+    }
+    this.httpConcurrency = concurrency;
     return this;
   }
 
@@ -439,6 +480,28 @@ public class SzApiServerOptions {
   public SzApiServerOptions setStatsInterval(long statsInterval) {
     this.statsInterval = (statsInterval < 0L) ? 0L : statsInterval;
     return this;
+  }
+
+  /**
+   * Gets the maximum number of bytes for both text and binary web sockets
+   * messages.
+   *
+   * @return The maximum number of bytes for both text and binary web sockets
+   *         messages.
+   */
+  public int getWebSocketsMessageMaxSize() {
+    return this.webSocketsMessageMaxSize;
+  }
+
+  /**
+   * Sets the maximum number of bytes for both text and binary web sockets
+   * messages.
+   *
+   * @param webSocketsMessageMaxSize The maximum number of bytes for both text
+   *                                 and binary web sockets messages.
+   */
+  public void setWebSocketsMessageMaxSize(int webSocketsMessageMaxSize) {
+    this.webSocketsMessageMaxSize = webSocketsMessageMaxSize;
   }
 
   /**
@@ -771,6 +834,7 @@ public class SzApiServerOptions {
     put(map, BIND_ADDRESS,                 this.getBindAddress());
     put(map, URL_BASE_PATH,                this.getUrlBasePath());
     put(map, CONCURRENCY,                  this.getConcurrency());
+    put(map, HTTP_CONCURRENCY,             this.getHttpConcurrency());
     put(map, MODULE_NAME,                  this.getModuleName());
     put(map, VERBOSE,                      this.isVerbose());
     put(map, QUIET,                        this.isQuiet());

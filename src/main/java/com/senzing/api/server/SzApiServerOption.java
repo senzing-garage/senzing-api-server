@@ -364,6 +364,28 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
 
   /**
    * <p>
+   * This option sets the maximum number of threads available for the HTTP
+   * server.  The single parameter to this option should be a positive integer.
+   * If not specified, then this defaults to {@link
+   * SzApiServerConstants#DEFAULT_HTTP_CONCURRENCY}.  If the specified thread
+   * count is less than {@link SzApiServerConstants#MINIMUM_HTTP_CONCURRENCY}
+   * then an error is reported.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--http-concurrency {thread-count}</tt></li>
+   *   <li>Command Line: <tt>-httpConcurrency {thread-count}</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_HTTP_CONCURRENCY="{thread-count}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  HTTP_CONCURRENCY("--http-concurrency", Set.of("-httpConcurrency"),
+              ENV_PREFIX + "HTTP_CONCURRENCY", null,
+              1, DEFAULT_HTTP_CONCURRENCY_PARAM),
+
+  /**
+   * <p>
    * If leveraging the default configuration stored in the database, this option
    * is used to specify how often the API server should background check that
    * the current active config is the same as the current default config and

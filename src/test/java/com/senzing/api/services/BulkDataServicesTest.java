@@ -1,7 +1,11 @@
 package com.senzing.api.services;
 
 import com.senzing.api.model.*;
+import com.senzing.api.websocket.JsonEncoder;
+import com.senzing.api.websocket.StringDecoder;
 import com.senzing.datagen.*;
+import com.senzing.io.ChunkedEncodingInputStream;
+import com.senzing.io.IOUtilities;
 import com.senzing.repomgr.RepositoryManager;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -11,12 +15,16 @@ import org.junit.jupiter.params.provider.MethodSource;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.websocket.*;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
+import java.beans.IntrospectionException;
 import java.io.*;
-import java.net.URLEncoder;
+import java.net.*;
+import java.nio.ByteBuffer;
 import java.util.*;
 
 import static com.senzing.io.IOUtilities.*;
@@ -583,7 +591,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getAnalyzeBulkRecordsParameters")
-  public void analyzeBulkRecordsViaFormHttpTest(
+  public void analyzeBulkRecordsViaDirectHttpTest(
       String              testInfo,
       MediaType           mediaType,
       File                bulkDataFile,
@@ -644,6 +652,550 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
         validateAnalyzeResponse(testInfo,
                                 response,
+                                POST,
+                                uriText,
+                                mediaType,
+                                bulkDataFile,
+                                expected,
+                                after - before);
+
+      } catch (Exception e) {
+        System.err.println("********** FAILED TEST: " + testInfo);
+        e.printStackTrace();
+        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  @ClientEndpoint
+  public static class BulkDataWebSocketClient extends Thread {
+    private Session   webSocketSession;
+    private File      bulkDataFile;
+    private MediaType mediaType;
+    private List      queue;
+
+    /**
+     * Constructs with the bulk data file and media type.
+     * @param file The file containing the bulk data.
+     * @param mediaType The media type describing the file format.
+     */
+    public BulkDataWebSocketClient(File file, MediaType mediaType) {
+      this.webSocketSession = null;
+      this.bulkDataFile     = file;
+      this.mediaType        = mediaType;
+      this.queue            = new LinkedList<>();
+    }
+
+    @OnOpen
+    public synchronized void onOpen(Session session, EndpointConfig config) {
+      this.webSocketSession = session;
+      this.notifyAll();
+    }
+
+    @OnMessage
+    public synchronized void onMessage(String jsonText) {
+      this.queue.add(jsonText);
+      this.notifyAll();
+    }
+
+    @OnError
+    public void onError(Throwable throwable)
+        throws IOException
+    {
+      this.queue.add(throwable);
+      this.notifyAll();
+    }
+
+    /**
+     * Gets the next response (or error) that was generated.
+     * @return The next response (or error) that was generated.
+     */
+    public Object getNextResponse() {
+      synchronized (this) {
+        while (this.isOpen() && this.queue.size() == 0) {
+          try {
+            this.wait(5000L);
+          } catch (InterruptedException ignore) {
+            // do nothing
+          }
+        }
+        if (this.queue.size() > 0) {
+          return this.queue.remove(0);
+        }
+        return null;
+      }
+    }
+
+    /**
+     * Checks if the web socket session is still open.
+     * @return <tt>true</tt> if the session is still open, otherwise
+     *         <tt>false</tt>.
+     */
+    public synchronized boolean isOpen() {
+      return this.webSocketSession.isOpen();
+    }
+
+    @Override
+    public void run() {
+      synchronized (this) {
+        // wait for web socket session to open
+        while (this.webSocketSession == null) {
+          try {
+            this.wait(5000L);
+          } catch (InterruptedException ignore) {
+            // ignore
+          }
+        }
+      }
+
+      // check if we should send the file as text
+      boolean asText = ((this.mediaType != null)
+          && (this.mediaType.getParameters().get("charset") != null));
+
+      try {
+        if (asText) {
+          this.sendText();
+        } else {
+          this.sendBinary();
+        }
+
+      } catch (IOException e) {
+        synchronized (this) {
+          this.queue.add(e);
+          this.notifyAll();
+        }
+      }
+    }
+
+    /**
+     * Sends the file as text.
+     * @throws IOException If an I/O failure occurs.
+     */
+    private void sendText() throws IOException {
+      String encoding = this.mediaType.getParameters().get("charset");
+      char[] buffer = new char[1024];
+      try (FileInputStream fis = new FileInputStream(this.bulkDataFile);
+           BufferedInputStream bis = new BufferedInputStream(fis);
+           InputStreamReader isr = new InputStreamReader(bis, encoding))
+      {
+        for (int readCount = isr.read(buffer);
+             readCount >= 0;
+             readCount = isr.read(buffer))
+        {
+          String text = new String(buffer, 0, readCount);
+          this.webSocketSession.getBasicRemote().sendText(text);
+        }
+      }
+    }
+
+    /**
+     * Sends the file as binary.
+     * @throws IOException If an I/O failure occurs.
+     */
+    private void sendBinary() throws IOException {
+      byte[] buffer = new byte[1024];
+      try (FileInputStream fis = new FileInputStream(this.bulkDataFile);
+           BufferedInputStream bis = new BufferedInputStream(fis))
+      {
+        for (int readCount = bis.read(buffer);
+             readCount >= 0;
+             readCount = bis.read(buffer))
+        {
+          ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 0, readCount);
+          this.webSocketSession.getBasicRemote().sendBinary(byteBuffer);
+        }
+      }
+
+    }
+  }
+
+  @ClientEndpoint
+  public static class BulkDataSSEClient extends Thread {
+    private URL               url;
+    private Socket            socket;
+    private OutputStream      outputStream;
+    private InputStream       inputStream;
+    private File              bulkDataFile;
+    private MediaType         mediaType;
+    private List              queue;
+    private boolean           open = true;
+
+    /**
+     * Constructs with the bulk data file and media type.
+     * @param url The URL to connect to.
+     * @param file The file containing the bulk data.
+     * @param mediaType The media type describing the file format.
+     */
+    public BulkDataSSEClient(URL                url,
+                             File               file,
+                             MediaType          mediaType) {
+      this.bulkDataFile = file;
+      this.mediaType    = mediaType;
+      this.queue        = new LinkedList<>();
+      this.open         = true;
+
+      // setup the headers
+      try {
+        String host = url.getHost();
+        int port = url.getPort();
+        this.socket = new Socket(host, port);
+        this.outputStream = this.socket.getOutputStream();
+        this.inputStream  = this.socket.getInputStream();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("POST ").append(url.getPath());
+        if (url.getQuery() != null) {
+          sb.append("?").append(url.getQuery());
+        }
+        sb.append(" HTTP/1.1\r\n");
+        sb.append("Host: ").append(url.getHost()).append(":")
+            .append(url.getPort()).append("\r\n");
+        sb.append("Accept: text/event-stream\r\n");
+        sb.append("Accept-Charset: utf-8\r\n");
+        sb.append("Accept-Encoding: identity\r\n");
+        sb.append("Accept-Transfer-Encoding: identity\r\n");
+        sb.append("Content-Length: ").append(this.bulkDataFile.length())
+            .append("\r\n");
+        sb.append("Content-Type: ");
+        if (this.mediaType != null) {
+          sb.append(this.mediaType.toString());
+        } else {
+          sb.append(MediaType.TEXT_PLAIN);
+        }
+        sb.append("\r\n\r\n");
+        this.outputStream.write(sb.toString().getBytes("ASCII"));
+        this.outputStream.flush();
+
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    /**
+     * Checks if the connection is still open.
+     */
+    public synchronized boolean isOpen() {
+      return this.open;
+    }
+
+    /**
+     * Closes the connection.
+     */
+    public synchronized void close() {
+      this.open = false;
+      IOUtilities.close(this.outputStream);
+      IOUtilities.close(this.inputStream);
+      IOUtilities.close(this.socket);
+      this.outputStream = null;
+      this.inputStream = null;
+      this.socket = null;
+      this.notifyAll();
+    }
+
+    /**
+     * Gets the next response (or error) that was generated.
+     * @return The next response (or error) that was generated.
+     */
+    public Object getNextResponse() {
+      synchronized (this) {
+        while (this.isOpen() && this.queue.size() == 0) {
+          try {
+            this.wait(5000L);
+          } catch (InterruptedException ignore) {
+            // do nothing
+          }
+        }
+        if (this.queue.size() > 0) {
+          return this.queue.remove(0);
+        }
+        return null;
+      }
+    }
+
+    public void readRun() {
+      boolean completed = false;
+      boolean chunked = false;
+      try (BufferedInputStream bis = new BufferedInputStream(this.inputStream))
+      {
+        for (String line = readAsciiLine(bis);
+             (line != null);
+             line = readAsciiLine(bis))
+        {
+          // check if headers are complete
+          if (line.trim().length() == 0) {
+            break;
+          }
+
+          // check if chunked encoding
+          if (line.toLowerCase().trim().startsWith("transfer-encoding:")) {
+            chunked = (line.toLowerCase().trim().indexOf("chunked") > 0);
+          }
+        }
+
+        // create the input stream to read the remaining data
+        InputStream is = (chunked) ? new ChunkedEncodingInputStream(bis) : bis;
+
+        // create a reader
+        InputStreamReader isr = new InputStreamReader(is, UTF_8);
+        BufferedReader    br  = new BufferedReader(isr);
+
+        for (String line = br.readLine(); line != null; line = br.readLine()) {
+          // skip empty lines
+          if (line.trim().length() == 0) continue;
+
+          // check if we get data after completed
+          if (completed) {
+            throw new IllegalStateException(
+                "Received additional data after completed event: " + line);
+          }
+
+          // check if NOT an event
+          if (!line.startsWith("event:")) {
+            throw new IllegalStateException(
+                "Received a line that was NOT an event: " + line);
+          }
+
+          // check if completed
+          completed = line.equals("event: completed");
+
+          StringWriter  sw = new StringWriter();
+          PrintWriter   pw = new PrintWriter(sw);
+          pw.println(line);
+          line = br.readLine();
+          if (!line.startsWith("id:")) {
+            throw new IllegalStateException(
+                "Unexpected text/event-stream output line.  "
+                    + "Expected 'id:' property: " + sw.toString());
+          }
+          pw.println(line);
+          line = br.readLine();
+          if (!line.startsWith("retry:")) {
+            throw new IllegalStateException(
+                "Unexpected text/event-stream output line.  "
+                    + "Expected 'retry:' property: " + sw.toString());
+          }
+          pw.println(line);
+          line = br.readLine();
+          if (!line.startsWith("data:")) {
+            throw new IllegalStateException(
+                "Unexpected text/event-stream output line.  "
+                    + "Expected 'retry:' property: " + sw.toString());
+          }
+          pw.println(line);
+          synchronized (this) {
+            this.queue.add(line.substring("data:".length()));
+            this.notifyAll();
+          }
+        }
+
+        // if we reached the end of input mark as closed
+        this.close();
+
+      } catch (IOException e) {
+        e.printStackTrace();
+        synchronized (this) {
+          this.queue.add(e);
+          this.notifyAll();
+        }
+      }
+    }
+
+    @Override
+    public void run() {
+      byte[] buffer = new byte[8192];
+      int writeCount = 0;
+      Thread readerThread = null;
+      long start = System.nanoTime();
+      try (FileInputStream fis = new FileInputStream(this.bulkDataFile))
+      {
+        for (int readCount = fis.read(buffer);
+             readCount >= 0;
+             readCount = fis.read(buffer))
+        {
+          this.outputStream.write(buffer, 0, readCount);
+          this.outputStream.flush();
+          writeCount += readCount;
+          if (readerThread == null) {
+            readerThread = new Thread(() -> this.readRun());
+            readerThread.start();
+          }
+        }
+      } catch (IOException e) {
+        synchronized (this) {
+          this.queue.add(e);
+          this.notifyAll();
+        }
+      }
+      long end = System.nanoTime();
+
+      // wrap things up by joining with the reader thread and closing
+      if (readerThread != null) {
+        try {
+          readerThread.join();
+        } catch (InterruptedException ignore) {
+          // do nothing
+        }
+        this.close();
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @MethodSource("getAnalyzeBulkRecordsParameters")
+  public void analyzeBulkRecordsViaWebSocketsTest(
+      String              testInfo,
+      MediaType           mediaType,
+      File                bulkDataFile,
+      SzBulkDataAnalysis  expected)
+  {
+    this.performTest(() -> {
+      String uriText = this.formatServerUri("bulk-data/analyze");
+      uriText = uriText.replaceAll("^http:(.*)","ws:$1");
+
+      try {
+        long before = System.nanoTime();
+
+        BulkDataWebSocketClient client = new BulkDataWebSocketClient(bulkDataFile, mediaType);
+        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+        Session session = container.connectToServer(client, URI.create(uriText));
+        client.start();
+
+        SzBulkDataAnalysisResponse finalResponse = null;
+        // grab the results
+        for (Object next = client.getNextResponse();
+             next != null;
+             next = client.getNextResponse())
+        {
+          // check if there was a failure
+          if (next instanceof Throwable) {
+            try {
+              session.close();
+            } catch (Exception ignore) {
+              // ignore
+            }
+            fail((Throwable) next);
+          }
+
+          // get as a string
+          String jsonText = next.toString();
+          if (jsonText.matches(".*\"httpStatusCode\":\\s*200.*") ) {
+            SzBulkDataAnalysisResponse response
+                = jsonParse(jsonText, SzBulkDataAnalysisResponse.class);
+            response.concludeTimers();
+            SzBulkDataStatus status = response.getData().getStatus();
+            switch (status) {
+              case COMPLETED:
+                finalResponse = response;
+                break;
+              case ABORTED:
+                finalResponse = response;
+                fail("Aborted analyze: " + jsonText);
+                break;
+              case NOT_STARTED:
+              case IN_PROGRESS:
+                // do nothing
+                break;
+              default:
+                fail("Unrecognized status: " + status + " / "  + jsonText);
+            }
+
+          } else {
+            SzErrorResponse response
+                = jsonParse(jsonText, SzErrorResponse.class);
+            response.concludeTimers();
+            fail("Failed analyze: " + jsonText);
+          }
+        }
+
+        long after = System.nanoTime();
+
+        validateAnalyzeResponse(testInfo,
+                                finalResponse,
+                                POST,
+                                uriText,
+                                mediaType,
+                                bulkDataFile,
+                                expected,
+                                after - before);
+
+      } catch (Exception e) {
+        System.err.println("********** FAILED TEST: " + testInfo);
+        e.printStackTrace();
+        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+
+  @ParameterizedTest
+  @MethodSource("getAnalyzeBulkRecordsParameters")
+  public void analyzeBulkRecordsViaSSETest(
+      String              testInfo,
+      MediaType           mediaType,
+      File                bulkDataFile,
+      SzBulkDataAnalysis  expected)
+  {
+    this.performTest(() -> {
+      String uriText = this.formatServerUri("bulk-data/analyze");
+
+      try {
+        long before = System.nanoTime();
+
+        URL url = new URL(uriText);
+
+        BulkDataSSEClient client = new BulkDataSSEClient(url,
+                                                         bulkDataFile,
+                                                         mediaType);
+        client.start();
+
+        SzBulkDataAnalysisResponse finalResponse = null;
+        // grab the results
+        for (Object next = client.getNextResponse();
+             next != null;
+             next = client.getNextResponse())
+        {
+          // check if there was a failure
+          if (next instanceof Throwable) {
+            fail((Throwable) next);
+          }
+
+          // get as a string
+          String jsonText = next.toString();
+          if (jsonText.matches(".*\"httpStatusCode\":\\s*200.*") ) {
+            SzBulkDataAnalysisResponse response
+                = jsonParse(jsonText, SzBulkDataAnalysisResponse.class);
+            response.concludeTimers();
+            SzBulkDataStatus status = response.getData().getStatus();
+            switch (status) {
+              case COMPLETED:
+                finalResponse = response;
+                break;
+              case ABORTED:
+                finalResponse = response;
+                fail("Aborted analyze: " + jsonText);
+                break;
+              case NOT_STARTED:
+              case IN_PROGRESS:
+                // do nothing
+                break;
+              default:
+                fail("Unrecognized status: " + status + " / "  + jsonText);
+            }
+
+          } else {
+            SzErrorResponse response
+                = jsonParse(jsonText, SzErrorResponse.class);
+            response.concludeTimers();
+            fail("Failed analyze: " + jsonText);
+          }
+        }
+
+        long after = System.nanoTime();
+
+        validateAnalyzeResponse(testInfo,
+                                finalResponse,
                                 POST,
                                 uriText,
                                 mediaType,
@@ -912,7 +1464,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getLoadBulkRecordsParameters")
-  public void loadBulkRecordsDirectHttpTest(
+  public void loadBulkRecordsViaDirectHttpTest(
       String              testInfo,
       MediaType           mediaType,
       File                bulkDataFile,
@@ -1008,6 +1560,216 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
         validateLoadResponse(testInfo,
                              response,
+                             POST,
+                             uriText,
+                             COMPLETED,
+                             mediaType,
+                             bulkDataFile,
+                             analysis,
+                             analysis.getRecordCount(),
+                             allDataSourceMap,
+                             allEntityTypeMap,
+                             null,
+                             null,
+                             after - before);
+
+      } catch (Exception e) {
+        System.err.println("********** FAILED TEST: " + testInfo);
+        e.printStackTrace();
+        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("getLoadBulkRecordsParameters")
+  public void loadBulkRecordsViaWebSocketsTest(
+      String              testInfo,
+      MediaType           mediaType,
+      File                bulkDataFile,
+      SzBulkDataAnalysis  analysis,
+      Map<String,String>  dataSourceMap,
+      Map<String,String>  entityTypeMap)
+  {
+    this.performTest(() -> {
+      this.livePurgeRepository();
+
+      String uriText = this.formatServerUri(formatLoadURL(
+          CONTACTS_DATA_SOURCE, GENERIC_ENTITY_TYPE, null, null,
+          dataSourceMap, entityTypeMap, null));
+      uriText = uriText.replaceAll("^http:(.*)","ws:$1");
+
+      try {
+        long before = System.nanoTime();
+        BulkDataWebSocketClient client = new BulkDataWebSocketClient(bulkDataFile, mediaType);
+        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+        Session session = container.connectToServer(client, URI.create(uriText));
+        client.start();
+
+        SzBulkLoadResponse finalResponse = null;
+        // grab the results
+        for (Object next = client.getNextResponse();
+             next != null;
+             next = client.getNextResponse())
+        {
+          // check if there was a failure
+          if (next instanceof Throwable) {
+            try {
+              session.close();
+            } catch (Exception ignore) {
+              // ignore
+            }
+            fail((Throwable) next);
+          }
+
+          // get as a string
+          String jsonText = next.toString();
+          if (jsonText.matches(".*\"httpStatusCode\":\\s*200.*") ) {
+            SzBulkLoadResponse response
+                = jsonParse(jsonText, SzBulkLoadResponse.class);
+            response.concludeTimers();
+            SzBulkDataStatus status = response.getData().getStatus();
+            switch (status) {
+              case COMPLETED:
+                finalResponse = response;
+                break;
+              case ABORTED:
+                finalResponse = response;
+                fail("Aborted bulk load: " + jsonText);
+                break;
+              case NOT_STARTED:
+              case IN_PROGRESS:
+                // do nothing
+                break;
+              default:
+                fail("Unrecognized status: " + status + " / "  + jsonText);
+            }
+
+          } else {
+            SzErrorResponse response
+                = jsonParse(jsonText, SzErrorResponse.class);
+            response.concludeTimers();
+            fail("Failed bulk load: " + jsonText);
+          }
+        }
+
+        long after = System.nanoTime();
+
+        Map<String,String> allDataSourceMap = new LinkedHashMap<>();
+        allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
+        if (dataSourceMap != null) allDataSourceMap.putAll(dataSourceMap);
+
+        Map<String,String> allEntityTypeMap = new LinkedHashMap<>();
+        allEntityTypeMap.put(null, GENERIC_ENTITY_TYPE);
+        if (entityTypeMap != null) allEntityTypeMap.putAll(entityTypeMap);
+
+        validateLoadResponse(testInfo,
+                             finalResponse,
+                             POST,
+                             uriText,
+                             COMPLETED,
+                             mediaType,
+                             bulkDataFile,
+                             analysis,
+                             analysis.getRecordCount(),
+                             allDataSourceMap,
+                             allEntityTypeMap,
+                             null,
+                             null,
+                             after - before);
+
+      } catch (Exception e) {
+        System.err.println("********** FAILED TEST: " + testInfo);
+        e.printStackTrace();
+        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("getLoadBulkRecordsParameters")
+  public void loadBulkRecordsViaSSETest(
+      String              testInfo,
+      MediaType           mediaType,
+      File                bulkDataFile,
+      SzBulkDataAnalysis  analysis,
+      Map<String,String>  dataSourceMap,
+      Map<String,String>  entityTypeMap)
+  {
+    this.performTest(() -> {
+      this.livePurgeRepository();
+
+      String uriText = this.formatServerUri(formatLoadURL(
+          CONTACTS_DATA_SOURCE, GENERIC_ENTITY_TYPE, null, null,
+          dataSourceMap, entityTypeMap, null));
+
+      try {
+        long before = System.nanoTime();
+
+        URL url = new URL(uriText);
+
+        BulkDataSSEClient client = new BulkDataSSEClient(url,
+                                                         bulkDataFile,
+                                                         mediaType);
+
+        client.start();
+
+        SzBulkLoadResponse finalResponse = null;
+        // grab the results
+        for (Object next = client.getNextResponse();
+             next != null;
+             next = client.getNextResponse())
+        {
+          // check if there was a failure
+          if (next instanceof Throwable) {
+            fail((Throwable) next);
+          }
+
+          // get as a string
+          String jsonText = next.toString();
+          if (jsonText.matches(".*\"httpStatusCode\":\\s*200.*") ) {
+            SzBulkLoadResponse response
+                = jsonParse(jsonText, SzBulkLoadResponse.class);
+            response.concludeTimers();
+            SzBulkDataStatus status = response.getData().getStatus();
+            switch (status) {
+              case COMPLETED:
+                finalResponse = response;
+                break;
+              case ABORTED:
+                finalResponse = response;
+                fail("Aborted bulk load: " + jsonText);
+                break;
+              case NOT_STARTED:
+              case IN_PROGRESS:
+                // do nothing
+                break;
+              default:
+                fail("Unrecognized status: " + status + " / "  + jsonText);
+            }
+
+          } else {
+            SzErrorResponse response
+                = jsonParse(jsonText, SzErrorResponse.class);
+            response.concludeTimers();
+            fail("Failed bulk load: " + jsonText);
+          }
+        }
+
+        long after = System.nanoTime();
+
+        Map<String,String> allDataSourceMap = new LinkedHashMap<>();
+        allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
+        if (dataSourceMap != null) allDataSourceMap.putAll(dataSourceMap);
+
+        Map<String,String> allEntityTypeMap = new LinkedHashMap<>();
+        allEntityTypeMap.put(null, GENERIC_ENTITY_TYPE);
+        if (entityTypeMap != null) allEntityTypeMap.putAll(entityTypeMap);
+
+        validateLoadResponse(testInfo,
+                             finalResponse,
                              POST,
                              uriText,
                              COMPLETED,

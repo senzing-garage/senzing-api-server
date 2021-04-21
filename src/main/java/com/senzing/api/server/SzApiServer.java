@@ -4,7 +4,6 @@ import java.io.*;
 import java.lang.reflect.Proxy;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URLDecoder;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.Instant;
@@ -33,8 +32,7 @@ import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.WorkerThreadPool;
 import com.senzing.util.AccessToken;
-import org.eclipse.jetty.rewrite.handler.RewriteRegexRule;
-import org.eclipse.jetty.rewrite.handler.TerminatingRegexRule;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.ServerConnector;
 
 import org.eclipse.jetty.server.Server;
@@ -44,6 +42,8 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.rewrite.handler.RewriteHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.thread.ThreadPool;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
 
 import javax.json.*;
@@ -71,11 +71,6 @@ public class SzApiServer implements SzApiProvider {
    * The period to avoid over-logging of the diagnostics.
    */
   private static final long DIAGNOSTIC_PERIOD = (1000L * 60L * 45L);
-
-  /**
-   * The maximum size for a message sent in web sockets.
-   */
-  public static final int MAX_WEB_SOCKET_MESSAGE_SIZE = 1024*1024*10;
 
   /**
    * Set the timeout for web socket reads.
@@ -221,6 +216,11 @@ public class SzApiServer implements SzApiProvider {
    * engine thread pool).
    */
   private int concurrency;
+
+  /**
+   * The maximum number of threads for the HTTP server thread pool.
+   */
+  private int httpConcurrency;
 
   /**
    * The {@link G2Config} config API.
@@ -379,6 +379,12 @@ public class SzApiServer implements SzApiProvider {
    * The {@link WorkerThreadPool} for executing Senzing API calls.
    */
   private WorkerThreadPool workerThreadPool;
+
+  /**
+   * The {@link Set} of {@link AccessToken} instances for authorized
+   * prolonged operations.
+   */
+  private final Set<AccessToken> prolongedAuthSet = new LinkedHashSet<>();
 
   /**
    * The {@link Reinitializer} to periodically check if the configuration
@@ -600,6 +606,11 @@ public class SzApiServer implements SzApiProvider {
   @Override
   public int getConcurrency() {
     return this.workerThreadPool.size();
+  }
+
+  @Override
+  public int getWebSocketsMessageMaxSize() {
+    return WEB_SOCKETS_MESSAGE_MAX_SIZE;
   }
 
   @Override
@@ -958,6 +969,21 @@ public class SzApiServer implements SzApiProvider {
                     "Thread count must be an integer: " + params.get(0));
               }
               if (threadCount <= 0) {
+                throw new IllegalArgumentException(
+                    "Negative thread counts are not allowed: " + threadCount);
+              }
+              return threadCount;
+            }
+
+            case HTTP_CONCURRENCY: {
+              int threadCount;
+              try {
+                threadCount = Integer.parseInt(params.get(0));
+              } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException(
+                    "Thread count must be an integer: " + params.get(0));
+              }
+              if (threadCount < MINIMUM_HTTP_CONCURRENCY) {
                 throw new IllegalArgumentException(
                     "Negative thread counts are not allowed: " + threadCount);
               }
@@ -1518,7 +1544,7 @@ public class SzApiServer implements SzApiProvider {
   private static void addWebSocketHandler(ServletContextHandler context,
                                           Class...              socketClasses)
   {
-    final int maxSize = MAX_WEB_SOCKET_MESSAGE_SIZE;
+    final int maxSize = WEB_SOCKETS_MESSAGE_MAX_SIZE;
     WebSocketServerContainerInitializer.configure(
         context,
         ((servletContext, wsContainer) -> {
@@ -1897,6 +1923,11 @@ public class SzApiServer implements SzApiProvider {
       this.concurrency = (Integer) options.get(CONCURRENCY);
     }
 
+    this.httpConcurrency = DEFAULT_HTTP_CONCURRENCY;
+    if (options.containsKey(HTTP_CONCURRENCY)) {
+      this.httpConcurrency = (Integer) options.get(HTTP_CONCURRENCY);
+    }
+
     this.moduleName = DEFAULT_MODULE_NAME;
     if (options.containsKey(MODULE_NAME)) {
       this.moduleName = (String) options.get(MODULE_NAME);
@@ -2194,7 +2225,13 @@ public class SzApiServer implements SzApiProvider {
     rewriteHandler.setHandler(context);
 
     // create our server (TODO: add connectors for HTTP + HTTPS)
-    this.jettyServer = new Server(new InetSocketAddress(ipAddr, httpPort));
+    ThreadPool threadPool       = new QueuedThreadPool(this.httpConcurrency);
+    InetSocketAddress inetAddr  = new InetSocketAddress(ipAddr, httpPort);
+    this.jettyServer            = new Server(threadPool);
+    ServerConnector connector   = new ServerConnector(this.jettyServer);
+    connector.setHost(inetAddr.getHostName());
+    connector.setPort(inetAddr.getPort());
+    this.jettyServer.setConnectors(new Connector[]{ connector });
 
     this.fileMonitor = null;
     if (options.containsKey(MONITOR_FILE)) {
@@ -2662,6 +2699,41 @@ public class SzApiServer implements SzApiProvider {
 
     } finally {
       this.purgeLock.readLock().unlock();
+    }
+  }
+
+  @Override
+  public AccessToken authorizeProlongedOperation() {
+    synchronized (this.prolongedAuthSet) {
+      // get the number of concurrent prolonged operations
+      int prolongedCount = this.prolongedAuthSet.size();
+
+      // check if too many concurrent prolonged operations and return null if so
+      if (prolongedCount >= ((this.httpConcurrency - 4) / 2)) return null;
+
+      // create the access token
+      AccessToken accessToken = new AccessToken();
+
+      // store it in the set
+      this.prolongedAuthSet.add(accessToken);
+
+      // return it to authorize the operation
+      return accessToken;
+    }
+  }
+
+  @Override
+  public void concludeProlongedOperation(AccessToken token) {
+    // check for null
+    Objects.requireNonNull(token, "The specified token cannot be null");
+
+    // synchronize
+    synchronized (this.prolongedAuthSet) {
+      // check if unrecognized
+      if (!this.prolongedAuthSet.remove(token)) {
+        throw new IllegalArgumentException(
+            "The specified token is not recognized");
+      }
     }
   }
 
