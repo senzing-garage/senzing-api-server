@@ -19,12 +19,13 @@ import static com.senzing.api.model.SzRelationshipMode.*;
 import static com.senzing.api.model.SzAttributeSearchResultType.*;
 import static com.senzing.api.services.ServicesUtil.*;
 import static com.senzing.g2.engine.G2Engine.*;
+import static javax.ws.rs.core.MediaType.*;
 
 /**
  * Provides entity data related API services.
  */
 @Path("/")
-@Produces("application/json; charset=UTF-8")
+@Produces(APPLICATION_JSON)
 public class EntityDataServices {
   /**
    * The minimum native API version to support search filtering.

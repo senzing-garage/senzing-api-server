@@ -9,6 +9,7 @@ import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
 
 import javax.json.*;
+import javax.servlet.http.HttpServletRequest;
 import javax.websocket.Session;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MultivaluedHashMap;
@@ -25,8 +26,7 @@ import java.util.*;
 
 import static com.senzing.api.model.SzFeatureMode.*;
 import static com.senzing.g2.engine.G2Engine.*;
-import static com.senzing.util.ErrorLogSuppressor.State.*;
-
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 /**
  * Utility functions for services.
  */
@@ -118,6 +118,7 @@ public class ServicesUtil {
     Response.ResponseBuilder builder = Response.status(SERVER_ERROR);
     builder.entity(
         new SzErrorResponse(httpMethod, SERVER_ERROR, uriInfo, timers, exception));
+    builder.type(APPLICATION_JSON);
     return new InternalServerErrorException(builder.build());
   }
 
@@ -143,7 +144,7 @@ public class ServicesUtil {
     builder.entity(
         new SzErrorResponse(
             httpMethod, SERVICE_UNAVAILABLE, uriInfo, timers, message));
-
+    builder.type(APPLICATION_JSON);
     return new ServiceUnavailableException(builder.build());
   }
 
@@ -167,6 +168,7 @@ public class ServicesUtil {
     SzErrorResponse errorResponse =
         new SzErrorResponse(httpMethod, SERVER_ERROR, uriInfo, timers, fallible);
     builder.entity(errorResponse);
+    builder.type(APPLICATION_JSON);
     fallible.clearLastException();
     return new InternalServerErrorException(
         errorResponse.getErrors().toString(),
@@ -192,6 +194,7 @@ public class ServicesUtil {
     Response.ResponseBuilder builder = Response.status(NOT_FOUND);
     builder.entity(
         new SzErrorResponse(httpMethod, NOT_FOUND, uriInfo, timers, fallible));
+    builder.type(APPLICATION_JSON);
     fallible.clearLastException();
     return new NotFoundException(builder.build());
   }
@@ -212,6 +215,7 @@ public class ServicesUtil {
     Response.ResponseBuilder builder = Response.status(NOT_FOUND);
     builder.entity(
         new SzErrorResponse(httpMethod, NOT_FOUND, uriInfo, timers));
+    builder.type(APPLICATION_JSON);
     return new NotFoundException(builder.build());
   }
 
@@ -234,6 +238,7 @@ public class ServicesUtil {
     builder.entity(
         new SzErrorResponse(
             httpMethod, NOT_FOUND, uriInfo, timers, errorMessage));
+    builder.type(APPLICATION_JSON);
     return new NotFoundException(builder.build());
   }
 
@@ -256,6 +261,7 @@ public class ServicesUtil {
     builder.entity(
         new SzErrorResponse(
             httpMethod, NOT_ALLOWED, uriInfo, timers, errorMessage));
+    builder.type(APPLICATION_JSON);
     return new NotAllowedException(builder.build());
   }
 
@@ -278,6 +284,7 @@ public class ServicesUtil {
     Response.ResponseBuilder builder = Response.status(BAD_REQUEST);
     builder.entity(
         new SzErrorResponse(httpMethod, BAD_REQUEST, uriInfo, timers, fallible));
+    builder.type(APPLICATION_JSON);
     fallible.clearLastException();
     return new BadRequestException(builder.build());
   }
@@ -302,6 +309,7 @@ public class ServicesUtil {
     builder.entity(
         new SzErrorResponse(
             httpMethod, BAD_REQUEST, uriInfo, timers, errorMessage));
+    builder.type(APPLICATION_JSON);
     return new BadRequestException(builder.build());
   }
 
@@ -324,6 +332,7 @@ public class ServicesUtil {
     Response.ResponseBuilder builder = Response.status(BAD_REQUEST);
     builder.entity(
         new SzErrorResponse(httpMethod, BAD_REQUEST, uriInfo, timers, exception));
+    builder.type(APPLICATION_JSON);
     return new BadRequestException(builder.build());
   }
 
@@ -344,9 +353,11 @@ public class ServicesUtil {
       Timers timers,
       String errorMessage) {
     Response.ResponseBuilder builder = Response.status(FORBIDDEN);
+    builder.header("Content-Type", APPLICATION_JSON);
     builder.entity(
         new SzErrorResponse(
             httpMethod, FORBIDDEN, uriInfo, timers, errorMessage));
+    builder.type(APPLICATION_JSON);
     return new ForbiddenException(builder.build());
   }
 
@@ -1011,5 +1022,4 @@ public class ServicesUtil {
       throw new RuntimeException(e);
     }
   }
-
 }

@@ -1,6 +1,7 @@
 package com.senzing.api.server;
 
 import java.io.*;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -20,6 +21,7 @@ import com.senzing.api.server.mq.SzMessagingEndpoint;
 import com.senzing.api.server.mq.SzMessagingEndpointFactory;
 import com.senzing.api.services.SzMessageSink;
 import com.senzing.api.model.SzVersionInfo;
+import com.senzing.api.websocket.WebSocketFilter;
 import com.senzing.cmdline.CommandLineValue;
 import com.senzing.nativeapi.EngineStatsLoggingHandler;
 import com.senzing.nativeapi.NativeApiFactory;
@@ -2204,6 +2206,20 @@ public class SzApiServer implements SzApiProvider {
     // setup a servlet context handler
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath(this.basePath);
+
+    // add web socket filters first
+    EnumSet<DispatcherType> requestDispatch
+        = EnumSet.of(DispatcherType.REQUEST);
+    this.getWebSocketClasses().forEach((implClass, path) -> {
+      // check if we have a pre-flight OnUpgrade annotation
+      WebSocketFilter filter = WebSocketFilter.createIfOnUpgrade(implClass);
+      if (filter != null) {
+        FilterHolder filterHolder = new FilterHolder(filter);
+        context.addFilter(filterHolder, path, requestDispatch);
+      }
+    });
+
+    // configure web sockets
     ServerContainer container = WebSocketServerContainerInitializer.configureContext(context);
 
     this.getWebSocketClasses().forEach((implClass, path) -> {
@@ -2218,8 +2234,8 @@ public class SzApiServer implements SzApiProvider {
     });
 
     if (this.allowedOrigins != null) {
-      context.addFilter(DiagnoseRequestFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
-      FilterHolder filterHolder = context.addFilter(CrossOriginFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
+      context.addFilter(DiagnoseRequestFilter.class, "/*", requestDispatch);
+      FilterHolder filterHolder = context.addFilter(CrossOriginFilter.class, "/*", requestDispatch);
       filterHolder.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, this.allowedOrigins);
       filterHolder.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,POST,PUT,DELETE,PATCH,HEAD,OPTIONS");
       //filterHolder.setInitParameter(CrossOriginFilter.PREFLIGHT_MAX_AGE_PARAM, "10"); // for testing to see OPTIONS requests

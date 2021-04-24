@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.senzing.api.model.*;
 import com.senzing.api.websocket.JsonEncoder;
+import com.senzing.api.websocket.OnUpgrade;
 import com.senzing.api.websocket.StringDecoder;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.io.IOUtilities;
@@ -18,6 +19,7 @@ import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import javax.json.*;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.websocket.*;
 import javax.websocket.server.ServerEndpoint;
 import javax.ws.rs.*;
@@ -28,7 +30,6 @@ import javax.ws.rs.sse.OutboundSseEvent;
 import javax.ws.rs.sse.Sse;
 import javax.ws.rs.sse.SseEventSink;
 import java.io.*;
-import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -36,6 +37,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.POST;
+import static com.senzing.api.model.SzHttpMethod.GET;
 import static com.senzing.api.services.ServicesUtil.*;
 import static com.senzing.text.TextUtilities.*;
 import static com.senzing.util.AsyncWorkerPool.*;
@@ -43,13 +45,12 @@ import static com.senzing.api.model.SzBulkDataStatus.*;
 import static javax.ws.rs.core.MediaType.*;
 import static com.senzing.util.LoggingUtilities.*;
 import static com.senzing.io.IOUtilities.*;
-import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 
 /**
  * Bulk data REST services.
  */
 @Path("/bulk-data")
-@Produces("application/json; charset=UTF-8; qs=1.0")
+@Produces(APPLICATION_JSON)
 public class BulkDataServices {
   /**
    * The size of the piped input stream buffer size (10MB).
@@ -59,8 +60,23 @@ public class BulkDataServices {
   /**
    * The {@link MediaType} with text/plain and charset=utf8
    */
-  private static final MediaType TEXT_PLAIN_UTF8 = new MediaType(
+  private static final MediaType TEXT_PLAIN_UTF8_TYPE = new MediaType(
       TEXT_PLAIN_TYPE.getType(), TEXT_PLAIN_TYPE.getSubtype(), UTF_8);
+
+  /**
+   * The <tt>"text/csv"</tt> media type string.
+   */
+  private static final String TEXT_CSV = "text/csv";
+
+  /**
+   * The <tt>"application/x-jsonlines"</tt> media type string.
+   */
+  private static final String APPLICATION_JSONLINES = "application/x-jsonlines";
+
+  /**
+   * The <tt>"text/event-stream"</tt> media type string.
+   */
+  private static final String TEXT_EVENT_STREAM = "text/event-stream";
 
   /**
    * The file date pattern.
@@ -161,10 +177,10 @@ public class BulkDataServices {
    */
   @POST
   @Path("/analyze")
-  @Consumes({ MediaType.APPLICATION_JSON,
-      MediaType.TEXT_PLAIN,
-      "text/csv",
-      "application/x-jsonlines"})
+  @Consumes({ APPLICATION_JSON,
+              TEXT_PLAIN,
+              TEXT_CSV,
+              APPLICATION_JSONLINES })
   public SzBulkDataAnalysisResponse analyzeBulkRecordsDirect(
       @HeaderParam("Content-Type") MediaType mediaType,
       InputStream dataInputStream,
@@ -250,11 +266,11 @@ public class BulkDataServices {
    */
   @POST
   @Path("/analyze")
-  @Consumes({ MediaType.APPLICATION_JSON,
-              MediaType.TEXT_PLAIN,
-              "text/csv",
-              "application/x-jsonlines"})
-  @Produces("text/event-stream;qs=0.9")
+  @Consumes({ APPLICATION_JSON,
+              TEXT_PLAIN,
+              TEXT_CSV,
+              APPLICATION_JSONLINES })
+  @Produces(TEXT_EVENT_STREAM)
   public void analyzeBulkRecordsDirect(
       @HeaderParam("Content-Type") MediaType mediaType,
       InputStream dataInputStream,
@@ -263,33 +279,46 @@ public class BulkDataServices {
       @Context SseEventSink sseEventSink,
       @Context Sse sse)
   {
-    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
-    Timers        timers      = newTimers();
-    AccessToken   accessToken = provider.authorizeProlongedOperation();
-    if (accessToken == null) {
-      throw newServiceUnavailableErrorException(
-          POST, uriInfo, timers,
-          "Too many prolonged operations running.  Try again later.");
-    }
     try {
-      analyzeBulkRecords(provider,
-                         timers,
-                         mediaType,
-                         dataInputStream,
-                         uriInfo,
-                         progressPeriod,
-                         sseEventSink,
-                         sse,
-                         null);
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      Timers timers = newTimers();
+      AccessToken accessToken = provider.authorizeProlongedOperation();
+      if (accessToken == null) {
+        throw newServiceUnavailableErrorException(
+            POST, uriInfo, timers,
+            "Too many prolonged operations running.  Try again later.");
+      }
+      try {
+        analyzeBulkRecords(provider,
+                           timers,
+                           mediaType,
+                           dataInputStream,
+                           uriInfo,
+                           progressPeriod,
+                           sseEventSink,
+                           sse,
+                           null);
 
-    } catch (RuntimeException e) {
-      throw logOnceAndThrow(e);
+      } catch (RuntimeException e) {
+        throw logOnceAndThrow(e);
 
-    } catch (Exception e) {
-      throw logOnceAndThrow(new RuntimeException(e));
+      } catch (Exception e) {
+        throw logOnceAndThrow(new RuntimeException(e));
 
-    } finally {
-      provider.concludeProlongedOperation(accessToken);
+      } finally {
+        provider.concludeProlongedOperation(accessToken);
+      }
+
+    } catch (WebApplicationException e) {
+      OutboundSseEvent.Builder eventBuilder = sse.newEventBuilder();
+      OutboundSseEvent event =
+          eventBuilder.name(FAILED_EVENT)
+              .id(String.valueOf(0))
+              .mediaType(APPLICATION_JSON_TYPE)
+              .data(e.getResponse().getEntity())
+              .reconnectDelay(RECONNECT_DELAY)
+              .build();
+      sseEventSink.send(event);
     }
   }
 
@@ -308,7 +337,7 @@ public class BulkDataServices {
    */
   @POST
   @Path("/analyze")
-  @Produces("text/event-stream;qs=0.9")
+  @Produces(TEXT_EVENT_STREAM)
   public void analyzeBulkRecordsViaForm(
       @HeaderParam("Content-Type") MediaType mediaType,
       @FormDataParam("data") InputStream dataInputStream,
@@ -317,32 +346,44 @@ public class BulkDataServices {
       @Context SseEventSink sseEventSink,
       @Context Sse sse)
   {
-    Timers        timers      = newTimers();
-    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
-    AccessToken   accessToken = provider.authorizeProlongedOperation();
-    if (accessToken == null) {
-      throw newServiceUnavailableErrorException(
-          POST, uriInfo, timers,
-          "Too many prolonged operations running.  Try again later.");
-    }
     try {
-      analyzeBulkRecords(provider,
-                         timers,
-                         mediaType,
-                         dataInputStream,
-                         uriInfo,
-                         progressPeriod,
-                         sseEventSink,
-                         sse,
-                         null);
+      Timers        timers      = newTimers();
+      SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+      AccessToken   accessToken = provider.authorizeProlongedOperation();
+      if (accessToken == null) {
+        throw newServiceUnavailableErrorException(
+            POST, uriInfo, timers,
+            "Too many prolonged operations running.  Try again later.");
+      }
+      try {
+        analyzeBulkRecords(provider,
+                           timers,
+                           mediaType,
+                           dataInputStream,
+                           uriInfo,
+                           progressPeriod,
+                           sseEventSink,
+                           sse,
+                           null);
 
-    } catch (RuntimeException e) {
-      throw logOnceAndThrow(e);
+      } catch (RuntimeException e) {
+        throw logOnceAndThrow(e);
 
-    } catch (Exception e) {
-      throw logOnceAndThrow(new RuntimeException(e));
-    } finally {
-      provider.concludeProlongedOperation(accessToken);
+      } catch (Exception e) {
+        throw logOnceAndThrow(new RuntimeException(e));
+      } finally {
+        provider.concludeProlongedOperation(accessToken);
+      }
+    } catch (WebApplicationException e) {
+      OutboundSseEvent.Builder eventBuilder = sse.newEventBuilder();
+      OutboundSseEvent event =
+          eventBuilder.name(FAILED_EVENT)
+              .id(String.valueOf(0))
+              .mediaType(APPLICATION_JSON_TYPE)
+              .data(e.getResponse().getEntity())
+              .reconnectDelay(RECONNECT_DELAY)
+              .build();
+      sseEventSink.send(event);
     }
   }
 
@@ -555,7 +596,7 @@ public class BulkDataServices {
    */
   @POST
   @Path("/load")
-  @Produces("text/event-stream;qs=0.9")
+  @Produces(TEXT_EVENT_STREAM)
   public void loadBulkRecordsViaForm(
       @QueryParam("dataSource") String dataSource,
       @QueryParam("mapDataSources") String mapDataSources,
@@ -652,11 +693,11 @@ public class BulkDataServices {
    */
   @POST
   @Path("/load")
-  @Consumes({ MediaType.APPLICATION_JSON,
-      MediaType.TEXT_PLAIN,
-      "text/csv",
-      "application/x-jsonlines"})
-  @Produces("text/event-stream;qs=0.9")
+  @Consumes({ APPLICATION_JSON,
+              TEXT_PLAIN,
+              TEXT_CSV,
+              APPLICATION_JSONLINES })
+  @Produces(TEXT_EVENT_STREAM)
   public void loadBulkRecordsDirect(
       @QueryParam("dataSource") String dataSource,
       @QueryParam("mapDataSources") String mapDataSources,
@@ -838,8 +879,14 @@ public class BulkDataServices {
      */
     protected boolean closing = false;
 
+    /**
+     * The {@link MediaType} to assume -- if text is sent rather than binary
+     * then {@link BulkDataServices#TEXT_PLAIN_UTF8_TYPE} will be used.
+     */
+    protected MediaType mediaType = TEXT_PLAIN_TYPE;
+
     @OnOpen
-    public void onOpen(Session session)
+    public synchronized void onOpen(Session session)
         throws IOException, IllegalArgumentException
     {
       this.session            = session;
@@ -879,80 +926,83 @@ public class BulkDataServices {
         }
       }
 
-      // start the thread
-      this.start();
+      // create the EOF thread
+      this.eofDetector = new EOFDetector(this);
+      this.eofDetector.start();
     }
 
     @OnMessage
-    public void onMessage(byte[] bytes) throws IOException
+    public synchronized void onMessage(byte[] bytes) throws IOException
     {
       if (this.pipedOutputStream == null) {
         // if session closed, ignore the message
-        synchronized (this) {
-          if (!this.session.isOpen() || this.closing) return;
-        }
+        if (!this.session.isOpen() || this.closing) return;
+
         // if session is not closed then throw an exception
         throw new IllegalStateException(
             "Output stream is already closed.");
       }
 
-      synchronized (this) {
-        if (this.pipedOutputStream != null) {
-          this.pipedOutputStream.write(bytes);
-          this.pipedOutputStream.flush();
-          this.lastMessageTime = System.nanoTime();
-          this.notifyAll();
-        }
+
+      // check if started, and if not then start the thread
+      if (!this.started) {
+        this.started = true;
+        this.start();
       }
+
+      this.pipedOutputStream.write(bytes);
+      this.pipedOutputStream.flush();
+      this.lastMessageTime = System.nanoTime();
+      this.notifyAll();
     }
 
     @OnMessage
-    public void onMessage(String text)  throws IOException
+    public synchronized void onMessage(String text)  throws IOException
     {
       if (this.pipedOutputStream == null) {
-        synchronized (this) {
-          if (!this.session.isOpen() || this.closing) return;
-        }
+        if (!this.session.isOpen() || this.closing) return;
         throw new IllegalStateException(
             "Output stream is already closed.");
       }
 
-      synchronized (this) {
-        if (this.pipedInputStream != null) {
-          this.pipedOutputStream.write(text.getBytes(UTF_8));
-          this.pipedOutputStream.flush();
-          this.lastMessageTime = System.nanoTime();
-          this.notifyAll();
-        }
+      // check if started, and if not then start the thread
+      if (!this.started) {
+        // text is being sent so set the media type to use UTF-8 charset
+        this.mediaType = TEXT_PLAIN_UTF8_TYPE;
+        this.started = true;
+        this.start();
       }
-    }
 
-    @OnClose
-    public void onClose(Session session) throws IOException {
-      synchronized (this) {
-        IOUtilities.close(this.pipedOutputStream);
-        this.pipedOutputStream = null;
+      if (this.pipedInputStream != null) {
+        this.pipedOutputStream.write(text.getBytes(UTF_8));
+        this.pipedOutputStream.flush();
+        this.lastMessageTime = System.nanoTime();
         this.notifyAll();
       }
     }
 
+    @OnClose
+    public synchronized void onClose(Session session) throws IOException {
+      IOUtilities.close(this.pipedOutputStream);
+      this.pipedOutputStream = null;
+      this.notifyAll();
+    }
+
     @OnError
-    public void onError(Session session, Throwable throwable)
+    public synchronized void onError(Session session, Throwable throwable)
         throws IOException
     {
       throwable.printStackTrace();
-      synchronized (this) {
-        IOUtilities.close(this.pipedOutputStream);
-        this.pipedOutputStream = null;
+      IOUtilities.close(this.pipedOutputStream);
+      this.pipedOutputStream = null;
 
-        CloseReason.CloseCode closeCode
-            = (throwable instanceof BadRequestException)
-            ? CloseReason.CloseCodes.PROTOCOL_ERROR
-            : CloseReason.CloseCodes.UNEXPECTED_CONDITION;
+      CloseReason.CloseCode closeCode
+          = (throwable instanceof BadRequestException)
+          ? CloseReason.CloseCodes.PROTOCOL_ERROR
+          : CloseReason.CloseCodes.UNEXPECTED_CONDITION;
 
-        this.closing = true;
-        this.session.close(new CloseReason(closeCode, throwable.getMessage()));
-      }
+      this.closing = true;
+      this.session.close(new CloseReason(closeCode, throwable.getMessage()));
     }
 
     /**
@@ -960,10 +1010,6 @@ public class BulkDataServices {
      * #doRun()} method.
      */
     public final void run() {
-      // create the EOF thread
-      this.eofDetector = new EOFDetector(this);
-      this.eofDetector.start();
-
       // defer the run
       try {
         this.doRun();
@@ -1003,7 +1049,7 @@ public class BulkDataServices {
       Timers        timers    = newTimers();
       analyzeBulkRecords(provider,
                          timers,
-                         TEXT_PLAIN_UTF8,
+                         this.mediaType,
                          this.pipedInputStream,
                          this.uriInfo,
                          this.progressPeriod,
@@ -1088,6 +1134,52 @@ public class BulkDataServices {
      */
     private int maxFailures;
 
+    /**
+     * Provides a pre-flight check to make sure the server is not in read-only
+     * mode before opening the web socket.
+     *
+     * @param request The {@link HttpServletRequest}.
+     * @param response The {@link HttpServletResponse}.
+     *
+     * @return <tt>true</tt> if not read-only and <tt>false</tt> if so.
+     */
+    @OnUpgrade
+    public static boolean onUpgrade(HttpServletRequest  request,
+                                    HttpServletResponse response)
+      throws IOException
+    {
+      // get the provider
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+
+      // if not read only then simply return true
+      if (!provider.isReadOnly()) return true;
+
+      // create the timers and construct an error response
+      Timers timers = newTimers();
+      SzErrorResponse errorResponse = new SzErrorResponse(
+          GET,403, request.getRequestURI(), timers,
+          "Loading data is not allowed if Senzing API Server started "
+              + "in read-only mode");
+      errorResponse.concludeTimers();
+
+      response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+      response.setContentType("application/json; charset=utf-8");
+
+      String  jsonText  = toJsonString(errorResponse);
+      byte[]  jsonBytes = jsonText.getBytes(UTF_8);
+      int     length    = jsonBytes.length;
+
+      response.setContentLength(length);
+
+      OutputStream os = response.getOutputStream();
+      os.write(jsonBytes);
+      os.flush();
+
+      // return false
+      return false;
+    }
+
+    @Override
     public void onOpen(Session session)
         throws IOException, IllegalArgumentException
     {
@@ -1150,7 +1242,7 @@ public class BulkDataServices {
                       this.mapEntityTypeList,
                       this.loadId,
                       this.maxFailures,
-                      TEXT_PLAIN_UTF8,
+                      this.mediaType,
                       this.pipedInputStream,
                       null,
                       this.uriInfo,
@@ -1176,9 +1268,7 @@ public class BulkDataServices {
         this.pipedOutputStream = null;
         this.notifyAll();
       }
-
     }
-
   }
 
   /**
@@ -1314,10 +1404,20 @@ public class BulkDataServices {
    * Converts the specified object to JSON.
    */
   protected static String toJsonString(Object object) {
+    return toJsonString(object, false);
+  }
+
+  /**
+   * Converts the specified object to JSON.
+   */
+  protected static String toJsonString(Object object, boolean prettyPrint) {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JodaModule());
     try {
       String jsonText = objectMapper.writeValueAsString(object);
+
+      if (!prettyPrint) return jsonText;
+
       JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
       return JsonUtils.toJsonText(jsonObject, true);
 
@@ -1325,7 +1425,6 @@ public class BulkDataServices {
       return "FAILED TO CONVERT TO JSON: " + e.getMessage();
     }
   }
-
 
   /**
    * Analyzes the bulk data and returns information about it.

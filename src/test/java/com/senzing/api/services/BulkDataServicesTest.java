@@ -700,7 +700,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     }
 
     @OnError
-    public void onError(Throwable throwable)
+    public synchronized void onError(Throwable throwable)
         throws IOException
     {
       this.queue.add(throwable);
@@ -733,7 +733,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
      *         <tt>false</tt>.
      */
     public synchronized boolean isOpen() {
-      return this.webSocketSession.isOpen();
+      return (this.webSocketSession != null && this.webSocketSession.isOpen());
     }
 
     @Override
@@ -820,6 +820,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     private MediaType         mediaType;
     private List              queue;
     private boolean           open = true;
+    private Thread            readerThread = null;
 
     /**
      * Constructs with the bulk data file and media type.
@@ -866,6 +867,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         sb.append("\r\n\r\n");
         this.outputStream.write(sb.toString().getBytes("ASCII"));
         this.outputStream.flush();
+
+        if (this.readerThread == null) {
+          this.readerThread = new Thread(() -> this.readRun());
+          this.readerThread.start();
+        }
 
       } catch (IOException e) {
         throw new RuntimeException(e);
@@ -916,6 +922,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     public void readRun() {
       boolean completed = false;
       boolean chunked = false;
+      boolean sse     = false;
       try (BufferedInputStream bis = new BufferedInputStream(this.inputStream))
       {
         for (String line = readAsciiLine(bis);
@@ -929,7 +936,12 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
           // check if chunked encoding
           if (line.toLowerCase().trim().startsWith("transfer-encoding:")) {
-            chunked = (line.toLowerCase().trim().indexOf("chunked") > 0);
+            chunked = (line.toLowerCase().trim().contains("chunked"));
+          }
+
+          // check if the response is SSE
+          if (line.toLowerCase().trim().startsWith("content-type")) {
+            sse = (line.toLowerCase().trim().contains("text/event-stream"));
           }
         }
 
@@ -940,6 +952,21 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         InputStreamReader isr = new InputStreamReader(is, UTF_8);
         BufferedReader    br  = new BufferedReader(isr);
 
+        // if not SSE then read text
+        if (!sse) {
+          StringBuilder sb = new StringBuilder();
+          for (int readChar = br.read(); readChar >= 0; readChar = br.read()) {
+            sb.append((char) readChar);
+          }
+          synchronized (this) {
+            this.queue.add(sb.toString());
+            this.notifyAll();
+          }
+          this.close();
+          return;
+        }
+
+        // if SSE then read events
         for (String line = br.readLine(); line != null; line = br.readLine()) {
           // skip empty lines
           if (line.trim().length() == 0) continue;
@@ -1005,7 +1032,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     public void run() {
       byte[] buffer = new byte[8192];
       int writeCount = 0;
-      Thread readerThread = null;
       long start = System.nanoTime();
       try (FileInputStream fis = new FileInputStream(this.bulkDataFile))
       {
@@ -1013,12 +1039,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
              readCount >= 0;
              readCount = fis.read(buffer))
         {
-          this.outputStream.write(buffer, 0, readCount);
-          this.outputStream.flush();
-          writeCount += readCount;
-          if (readerThread == null) {
-            readerThread = new Thread(() -> this.readRun());
-            readerThread.start();
+          synchronized (this) {
+            if (!this.isOpen()) break;
+            this.outputStream.write(buffer, 0, readCount);
+            this.outputStream.flush();
+            writeCount += readCount;
           }
         }
       } catch (IOException e) {
@@ -1030,9 +1055,9 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       long end = System.nanoTime();
 
       // wrap things up by joining with the reader thread and closing
-      if (readerThread != null) {
+      if (this.readerThread != null) {
         try {
-          readerThread.join();
+          this.readerThread.join();
         } catch (InterruptedException ignore) {
           // do nothing
         }
