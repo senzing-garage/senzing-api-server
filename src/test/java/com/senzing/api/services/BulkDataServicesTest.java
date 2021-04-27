@@ -798,12 +798,18 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       try (FileInputStream fis = new FileInputStream(this.bulkDataFile);
            BufferedInputStream bis = new BufferedInputStream(fis))
       {
+        long start = -1;
         for (int readCount = bis.read(buffer);
              readCount >= 0;
              readCount = bis.read(buffer))
         {
           ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 0, readCount);
+          long end = System.nanoTime();
+          if ((start > 0) && (end-start > 3000000000L)) {
+            System.out.println("EXCESSIVE TIME BETWEEN SENDS: " + ((end-start)/1000000L));
+          }
           this.webSocketSession.getBasicRemote().sendBinary(byteBuffer);
+          start = end;
         }
       }
 

@@ -782,10 +782,13 @@ public class BulkDataServices {
      * specified timeout for the web socket thread.
      */
     public void run() {
-      long nanoTimeout = this.webSocketThread.eofSendTimeout * 1000000L;
+      long nanoTimeout = this.webSocketThread.eofSendTimeout * 1000000000L;
+
       synchronized (this.webSocketThread) {
         long waitTime = this.webSocketThread.eofSendTimeout * 1000L;
-        while (!this.completed) {
+        while (!this.completed
+                && this.webSocketThread.pipedOutputStream != null)
+        {
           // wait for a period
           try {
             this.webSocketThread.wait(waitTime);
@@ -934,13 +937,16 @@ public class BulkDataServices {
     @OnMessage
     public synchronized void onMessage(byte[] bytes) throws IOException
     {
+      long now = System.nanoTime();
       if (this.pipedOutputStream == null) {
         // if session closed, ignore the message
         if (!this.session.isOpen() || this.closing) return;
 
         // if session is not closed then throw an exception
         throw new IllegalStateException(
-            "Output stream is already closed.");
+            "Output stream is already closed: "
+                + ((now-this.lastMessageTime)/1000000L)
+                + "ms since last message");
       }
 
 
@@ -950,8 +956,10 @@ public class BulkDataServices {
         this.start();
       }
 
-      this.pipedOutputStream.write(bytes);
-      this.pipedOutputStream.flush();
+      if (this.pipedOutputStream != null) {
+        this.pipedOutputStream.write(bytes);
+        this.pipedOutputStream.flush();
+      }
       this.lastMessageTime = System.nanoTime();
       this.notifyAll();
     }
@@ -959,10 +967,13 @@ public class BulkDataServices {
     @OnMessage
     public synchronized void onMessage(String text)  throws IOException
     {
+      long now = System.nanoTime();
       if (this.pipedOutputStream == null) {
         if (!this.session.isOpen() || this.closing) return;
         throw new IllegalStateException(
-            "Output stream is already closed.");
+            "Output stream is already closed: "
+                + ((now-this.lastMessageTime)/1000000L)
+                + "ms since last message");
       }
 
       // check if started, and if not then start the thread
@@ -973,12 +984,12 @@ public class BulkDataServices {
         this.start();
       }
 
-      if (this.pipedInputStream != null) {
+      if (this.pipedOutputStream != null) {
         this.pipedOutputStream.write(text.getBytes(UTF_8));
         this.pipedOutputStream.flush();
-        this.lastMessageTime = System.nanoTime();
-        this.notifyAll();
       }
+      this.lastMessageTime = System.nanoTime();
+      this.notifyAll();
     }
 
     @OnClose
