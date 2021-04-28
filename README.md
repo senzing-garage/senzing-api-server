@@ -181,7 +181,7 @@ $ java -jar target/senzing-api-server-2.6.0.jar --help
 
 java -jar senzing-api-server-2.6.0.jar <options>
 
-<options> includes: 
+<options> includes:
 
 [ Standard Options ]
 
@@ -239,7 +239,7 @@ java -jar senzing-api-server-2.6.0.jar <options>
         --> VIA ENVIRONMENT: SENZING_API_SERVER_ALLOWED_ORIGINS
 
    --concurrency <thread-count>
-        Also -concurrency.  Sets the number of threads available for executing 
+        Also -concurrency.  Sets the number of threads available for executing
         Senzing API functions (i.e.: the number of engine threads).
         If not specified, then this defaults to 8.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_CONCURRENCY
@@ -540,7 +540,7 @@ Configuration values specified by environment variable or command line parameter
 
         ```console
         cat ${SENZING_VOLUME}/g2/g2BuildVersion.json
-        cat ${SENZING_VOLUME}/data/1.0.0/libpostal/data_version
+        cat ${SENZING_VOLUME}/data/2.0.0/libpostal/data_version
         ```
 
     1. :warning:
@@ -554,7 +554,7 @@ Configuration values specified by environment variable or command line parameter
    Example:
 
     ```console
-    export SENZING_DATA_VERSION_DIR=${SENZING_VOLUME}/data/1.0.0
+    export SENZING_DATA_VERSION_DIR=${SENZING_VOLUME}/data/2.0.0
     export SENZING_ETC_DIR=${SENZING_VOLUME}/etc
     export SENZING_G2_DIR=${SENZING_VOLUME}/g2
     export SENZING_VAR_DIR=${SENZING_VOLUME}/var
