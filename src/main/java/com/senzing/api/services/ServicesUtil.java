@@ -4,29 +4,55 @@ import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2ConfigMgr;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.g2.engine.G2Fallible;
+import com.senzing.util.ErrorLogSuppressor;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
 
 import javax.json.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.websocket.Session;
 import javax.ws.rs.*;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.util.*;
 
 import static com.senzing.api.model.SzFeatureMode.*;
 import static com.senzing.g2.engine.G2Engine.*;
-
+import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 /**
  * Utility functions for services.
  */
 public class ServicesUtil {
   /**
+   * The suppression state for info errors.
+   */
+  private static final ErrorLogSuppressor INFO_ERROR_SUPPRESSOR
+      = new ErrorLogSuppressor();
+
+  /**
+   * The hash of the system identity codes of the last info message exception
+   * as well as the the message object that was sent.
+   */
+  private static final ThreadLocal<Long> LAST_INFO_ERROR_HASH
+      = new ThreadLocal<>();
+
+  /**
    * HTTP Response code for server error.
    */
   public static final int SERVER_ERROR = 500;
+
+  /**
+   * HTTP Response code for service unavailable error.
+   */
+  public static final int SERVICE_UNAVAILABLE = 503;
 
   /**
    * HTTP Response code for bad request.
@@ -92,7 +118,34 @@ public class ServicesUtil {
     Response.ResponseBuilder builder = Response.status(SERVER_ERROR);
     builder.entity(
         new SzErrorResponse(httpMethod, SERVER_ERROR, uriInfo, timers, exception));
+    builder.type(APPLICATION_JSON);
     return new InternalServerErrorException(builder.build());
+  }
+
+  /**
+   * Creates an {@link ServiceUnavailableException} and builds a response
+   * with an {@link SzErrorResponse} using the specified {@link UriInfo}
+   * and the specified exception.
+   *
+   * @param httpMethod The HTTP method for the request.
+   * @param uriInfo    The {@link UriInfo} from the request.
+   * @param timers     The {@link Timers} object for the timings that were taken.
+   * @param message    The message describing the error.
+   * @return The {@link ServiceUnavailableException}
+   */
+  static ServiceUnavailableException newServiceUnavailableErrorException(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      Timers        timers,
+      String        message)
+  {
+    Response.ResponseBuilder builder = Response.status(SERVICE_UNAVAILABLE);
+
+    builder.entity(
+        new SzErrorResponse(
+            httpMethod, SERVICE_UNAVAILABLE, uriInfo, timers, message));
+    builder.type(APPLICATION_JSON);
+    return new ServiceUnavailableException(builder.build());
   }
 
   /**
@@ -115,6 +168,7 @@ public class ServicesUtil {
     SzErrorResponse errorResponse =
         new SzErrorResponse(httpMethod, SERVER_ERROR, uriInfo, timers, fallible);
     builder.entity(errorResponse);
+    builder.type(APPLICATION_JSON);
     fallible.clearLastException();
     return new InternalServerErrorException(
         errorResponse.getErrors().toString(),
@@ -140,6 +194,7 @@ public class ServicesUtil {
     Response.ResponseBuilder builder = Response.status(NOT_FOUND);
     builder.entity(
         new SzErrorResponse(httpMethod, NOT_FOUND, uriInfo, timers, fallible));
+    builder.type(APPLICATION_JSON);
     fallible.clearLastException();
     return new NotFoundException(builder.build());
   }
@@ -160,6 +215,7 @@ public class ServicesUtil {
     Response.ResponseBuilder builder = Response.status(NOT_FOUND);
     builder.entity(
         new SzErrorResponse(httpMethod, NOT_FOUND, uriInfo, timers));
+    builder.type(APPLICATION_JSON);
     return new NotFoundException(builder.build());
   }
 
@@ -182,6 +238,7 @@ public class ServicesUtil {
     builder.entity(
         new SzErrorResponse(
             httpMethod, NOT_FOUND, uriInfo, timers, errorMessage));
+    builder.type(APPLICATION_JSON);
     return new NotFoundException(builder.build());
   }
 
@@ -204,6 +261,7 @@ public class ServicesUtil {
     builder.entity(
         new SzErrorResponse(
             httpMethod, NOT_ALLOWED, uriInfo, timers, errorMessage));
+    builder.type(APPLICATION_JSON);
     return new NotAllowedException(builder.build());
   }
 
@@ -226,6 +284,7 @@ public class ServicesUtil {
     Response.ResponseBuilder builder = Response.status(BAD_REQUEST);
     builder.entity(
         new SzErrorResponse(httpMethod, BAD_REQUEST, uriInfo, timers, fallible));
+    builder.type(APPLICATION_JSON);
     fallible.clearLastException();
     return new BadRequestException(builder.build());
   }
@@ -250,6 +309,7 @@ public class ServicesUtil {
     builder.entity(
         new SzErrorResponse(
             httpMethod, BAD_REQUEST, uriInfo, timers, errorMessage));
+    builder.type(APPLICATION_JSON);
     return new BadRequestException(builder.build());
   }
 
@@ -272,6 +332,7 @@ public class ServicesUtil {
     Response.ResponseBuilder builder = Response.status(BAD_REQUEST);
     builder.entity(
         new SzErrorResponse(httpMethod, BAD_REQUEST, uriInfo, timers, exception));
+    builder.type(APPLICATION_JSON);
     return new BadRequestException(builder.build());
   }
 
@@ -292,9 +353,11 @@ public class ServicesUtil {
       Timers timers,
       String errorMessage) {
     Response.ResponseBuilder builder = Response.status(FORBIDDEN);
+    builder.header("Content-Type", APPLICATION_JSON);
     builder.entity(
         new SzErrorResponse(
             httpMethod, FORBIDDEN, uriInfo, timers, errorMessage));
+    builder.type(APPLICATION_JSON);
     return new ForbiddenException(builder.build());
   }
 
@@ -850,5 +913,113 @@ public class ServicesUtil {
   public static String formatTestInfo(String uriText, String bodyContent)
   {
     return "uriText=[ " + uriText + " ], bodyContent=[ " + bodyContent + " ]";
+  }
+
+  /**
+   * Generates a 64-bit hash from the system identity hash codes of the two
+   * specified objects.
+   *
+   * @param obj1 The first object whose identity hash code goes to the high-order
+   *             bits.
+   * @param obj2 The second object whose identity hash code goes to the low-order
+   *             bits.
+   *
+   * @return The <tt>long</tt> hash code of the object pair.
+   */
+  public static long identityPairHash(Object obj1, Object obj2) {
+    long high = (long) ((obj1 == null) ? 0 : System.identityHashCode(obj1));
+    long low = (long) ((obj2 == null) ? 0 : System.identityHashCode(obj2));
+    return (high << 32) | low;
+  }
+
+  /**
+   * Logs an error related to sending asynchronous info messages.
+   *
+   * @param e The {@link Exception} that occurred.
+   * @param message The info message that failed.
+   */
+  public static final void logFailedAsyncInfo(Exception e, SzMessage message) {
+    // check what was previously logged and avoid double-logging
+    Long previous = LAST_INFO_ERROR_HASH.get();
+    long hash = identityPairHash(e, message);
+    if (previous != null && previous == hash) return;
+    LAST_INFO_ERROR_HASH.set(hash);
+
+    Date timestamp = new Date();
+    String info = message.getBody();
+    System.err.println(
+        timestamp + ": FAILED TO SEND ASYNC INFO MESSAGE: " + info);
+    synchronized (INFO_ERROR_SUPPRESSOR) {
+      boolean suppressing = INFO_ERROR_SUPPRESSOR.isSuppressing();
+      ErrorLogSuppressor.Result result = INFO_ERROR_SUPPRESSOR.updateOnError();
+      switch (result.getState()) {
+        case SUPPRESSED:
+          if (!suppressing) {
+            System.err.println(
+                timestamp + ": SUPPRESSING ASYNC INFO MESSAGE ERRORS FOR "
+                    + INFO_ERROR_SUPPRESSOR.getSuppressDuration() + "ms");
+          }
+          break;
+        case REACTIVATED:
+          if (result.getSuppressedCount() > 0) {
+            System.err.println(
+                timestamp + ": RESUMING ASYNC INFO MESSAGE ERRORS ("
+                    + result.getSuppressedCount() + " SUPPRESSED)");
+          }
+        case ACTIVE:
+          e.printStackTrace();
+          break;
+      }
+    }
+  }
+
+  /**
+   * Creates a proxy {@link UriInfo} using the Web Socket {@link Session} to
+   * back it.
+   *
+   * @param webSocketSession The Web Socket {@link Session}.
+   *
+   * @return The proxied {@link UriInfo} object using the specified Web Socket
+   *                     {@link Session}.
+   */
+  protected static UriInfo newProxyUriInfo(Session webSocketSession) {
+    try {
+      InvocationHandler handler = (p, m, a) -> {
+        switch (m.getName()) {
+          case "getRequestUri":
+            return webSocketSession.getRequestURI();
+          case "getQueryParameters": {
+            MultivaluedMap<String, String> result = new MultivaluedHashMap<>();
+            Map<String, List<String>> paramMap
+                = webSocketSession.getRequestParameterMap();
+            paramMap.forEach((key, values) -> {
+              result.addAll(key, values);
+            });
+            return result;
+          }
+          case "getPathParameters": {
+            MultivaluedMap<String, String> result = new MultivaluedHashMap<>();
+            Map<String, String> paramMap = webSocketSession.getPathParameters();
+            paramMap.forEach((key, value) -> {
+              result.add(key, value);
+            });
+            return result;
+          }
+          default:
+            throw new UnsupportedOperationException(
+                "Operation not implemented on Web Socket proxy UriInfo");
+        }
+      };
+
+      ClassLoader loader = ServicesUtil.class.getClassLoader();
+      Class[] classes = {UriInfo.class};
+
+      return (UriInfo) Proxy.newProxyInstance(loader, classes, handler);
+
+    } catch (RuntimeException e) {
+      throw e;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

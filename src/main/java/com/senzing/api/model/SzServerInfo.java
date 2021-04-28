@@ -34,14 +34,20 @@ public class SzServerInfo {
   private boolean adminEnabled;
 
   /**
+   * The maximum size for web sockets messages.
+   */
+  private int webSocketsMessageMaxSize;
+
+  /**
    * Default constructor.
    */
   public SzServerInfo() {
-    this.concurrency      = 0;
-    this.activeConfigId   = 0;
-    this.dynamicConfig    = false;
-    this.readOnly         = false;
-    this.adminEnabled     = false;
+    this.concurrency              = 0;
+    this.activeConfigId           = 0;
+    this.dynamicConfig            = false;
+    this.readOnly                 = false;
+    this.adminEnabled             = false;
+    this.webSocketsMessageMaxSize = 0;
   }
 
   /**
@@ -50,7 +56,7 @@ public class SzServerInfo {
    * @return The number of Senzing worker threads pooled for handling requests.
    */
   public int getConcurrency() {
-    return concurrency;
+    return this.concurrency;
   }
 
   /**
@@ -71,7 +77,7 @@ public class SzServerInfo {
    * @return The active configuration ID being used b the API server.
    */
   public long getActiveConfigId() {
-    return activeConfigId;
+    return this.activeConfigId;
   }
 
   /**
@@ -82,7 +88,7 @@ public class SzServerInfo {
    * @param activeConfigId The active configuration ID being used by the
    *                       API server.
    */
-  public void setActiveConfigId(Long activeConfigId) {
+  public void setActiveConfigId(long activeConfigId) {
     this.activeConfigId = activeConfigId;
   }
 
@@ -95,7 +101,7 @@ public class SzServerInfo {
    *         configuration is static and the server will not recognize changes.
    */
   public boolean isDynamicConfig() {
-    return dynamicConfig;
+    return this.dynamicConfig;
   }
 
   /**
@@ -120,7 +126,7 @@ public class SzServerInfo {
    *         and <tt>false</tt> if write operations are allowed.
    */
   public boolean isReadOnly() {
-    return readOnly;
+    return this.readOnly;
   }
 
   /**
@@ -143,7 +149,7 @@ public class SzServerInfo {
    *         <tt>false</tt>.
    */
   public boolean isAdminEnabled() {
-    return adminEnabled;
+    return this.adminEnabled;
   }
 
   /**
@@ -155,5 +161,27 @@ public class SzServerInfo {
    */
   public void setAdminEnabled(boolean adminEnabled) {
     this.adminEnabled = adminEnabled;
+  }
+
+  /**
+   * Gets the maximum number of bytes for both text and binary web sockets
+   * messages.
+   *
+   * @return The maximum number of bytes for both text and binary web sockets
+   *         messages.
+   */
+  public int getWebSocketsMessageMaxSize() {
+    return this.webSocketsMessageMaxSize;
+  }
+
+  /**
+   * Sets the maximum number of bytes for both text and binary web sockets
+   * messages.
+   *
+   * @param webSocketsMessageMaxSize The maximum number of bytes for both text
+   *                                 and binary web sockets messages.
+   */
+  public void setWebSocketsMessageMaxSize(int webSocketsMessageMaxSize) {
+    this.webSocketsMessageMaxSize = webSocketsMessageMaxSize;
   }
 }

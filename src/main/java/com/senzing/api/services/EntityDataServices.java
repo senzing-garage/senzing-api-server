@@ -19,12 +19,13 @@ import static com.senzing.api.model.SzRelationshipMode.*;
 import static com.senzing.api.model.SzAttributeSearchResultType.*;
 import static com.senzing.api.services.ServicesUtil.*;
 import static com.senzing.g2.engine.G2Engine.*;
+import static javax.ws.rs.core.MediaType.*;
 
 /**
  * Provides entity data related API services.
  */
 @Path("/")
-@Produces("application/json; charset=UTF-8")
+@Produces(APPLICATION_JSON)
 public class EntityDataServices {
   /**
    * The minimum native API version to support search filtering.
@@ -96,6 +97,9 @@ public class EntityDataServices {
 
       StringBuffer sb = new StringBuffer();
 
+      // get the asynchronous info queue
+      boolean asyncInfo = provider.hasInfoSink();
+
       enteringQueue(timers);
       String text = provider.executeInThread(() -> {
         exitingQueue(timers);
@@ -104,7 +108,7 @@ public class EntityDataServices {
         G2Engine engineApi = provider.getEngineApi();
 
         int result;
-        if (withInfo) {
+        if (withInfo || asyncInfo) {
           callingNativeAPI(timers, "engine", "addRecordWithInfo");
           result = engineApi.addRecordWithInfo(
               dataSource,
@@ -142,11 +146,40 @@ public class EntityDataServices {
       String            recordId  = inRecordId;
       SzResolutionInfo  info      = null;
       String            rawData   = null;
-      if (withInfo) {
+
+      if (withInfo || asyncInfo) {
         rawData = text;
         JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
-        info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+
+        // if info was requested or we need to return the record ID then we need
+        // to parse the info so we can return it or extract the record ID
+        if (withInfo || inRecordId == null) {
+          info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+        }
+
+        // check if the info sink is configured
+        if (asyncInfo && rawData != null && rawData.trim().length() > 0) {
+          SzMessageSink infoSink = provider.acquireInfoSink();
+          SzMessage message = new SzMessage(rawData);
+          try {
+            // send the info on the async queue
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
+
+          } catch (Exception e) {
+            // failed async logger will not double-log
+            logFailedAsyncInfo(e, message);
+
+          } finally {
+            provider.releaseInfoSink(infoSink);
+          }
+        }
+
+        // if the record ID is generated, we need to return it
         if (inRecordId == null) recordId = info.getRecordId();
+
+        // nullify the info object reference if the info was not requested
+        if (!withInfo) info = null;
+
       } else if (inRecordId == null) {
         recordId = text;
       }
@@ -216,6 +249,9 @@ public class EntityDataServices {
             "The specified data source is not recognized: " + dataSource);
       }
 
+      // get the asynchronous info sink
+      boolean asyncInfo = provider.hasInfoSink();
+
       enteringQueue(timers);
       String rawInfo = provider.executeInThread(() -> {
         exitingQueue(timers);
@@ -225,7 +261,7 @@ public class EntityDataServices {
 
         int result;
         String rawData = null;
-        if (withInfo) {
+        if (withInfo || asyncInfo) {
           StringBuffer sb = new StringBuffer();
           callingNativeAPI(timers, "engine", "addRecordWithInfo");
           result = engineApi.addRecordWithInfo(dataSource,
@@ -252,9 +288,28 @@ public class EntityDataServices {
       });
 
       SzResolutionInfo info = null;
-      if (rawInfo != null) {
-        JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
-        info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+      if (rawInfo != null && rawInfo.trim().length() > 0) {
+        // check if the info sink is configured
+        if (asyncInfo) {
+          SzMessageSink infoSink = provider.acquireInfoSink();
+          SzMessage message = new SzMessage(rawInfo);
+          try {
+            // send the info on the async queue
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
+
+          } catch (Exception e) {
+            logFailedAsyncInfo(e, message);
+
+          } finally {
+            provider.releaseInfoSink(infoSink);
+          }
+        }
+
+        // check if the info was requested
+        if (withInfo) {
+          JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
+          info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+        }
       }
 
       // construct the response
@@ -310,6 +365,9 @@ public class EntityDataServices {
 
       final String normalizedLoadId = normalizeString(loadId);
 
+      // get the asynchronous info sink (if configured)
+      boolean asyncInfo = provider.hasInfoSink();
+
       enteringQueue(timers);
       String rawInfo = provider.executeInThread(() -> {
         exitingQueue(timers);
@@ -319,7 +377,7 @@ public class EntityDataServices {
 
         int returnCode;
         String rawData = null;
-        if (withInfo) {
+        if (withInfo || asyncInfo) {
           StringBuffer sb = new StringBuffer();
             callingNativeAPI(timers, "engine", "deleteRecordWithInfo");
           returnCode = engineApi.deleteRecordWithInfo(
@@ -348,14 +406,33 @@ public class EntityDataServices {
       });
 
       SzResolutionInfo info = null;
-      if (rawInfo != null) {
-        JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
-        info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
-        if ((normalizeString(info.getDataSource()) == null)
-            && (normalizeString(info.getRecordId()) == null)
-            && (info.getAffectedEntities().size() == 0)
-            && (info.getFlaggedEntities().size() == 0)) {
-          info = null;
+      if (rawInfo != null && rawInfo.trim().length() > 0) {
+        // check if the info sink is configured
+        if (asyncInfo) {
+          SzMessageSink infoSink = provider.acquireInfoSink();
+          SzMessage message = new SzMessage(rawInfo);
+          try {
+            // send the info on the async queue
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
+
+          } catch (Exception e) {
+            logFailedAsyncInfo(e, message);
+
+          } finally {
+            provider.releaseInfoSink(infoSink);
+          }
+        }
+
+        // check if the info was explicitly requested
+        if (withInfo) {
+          JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
+          info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+          if ((normalizeString(info.getDataSource()) == null)
+              && (normalizeString(info.getRecordId()) == null)
+              && (info.getAffectedEntities().size() == 0)
+              && (info.getFlaggedEntities().size() == 0)) {
+            info = null;
+          }
         }
       }
 
@@ -410,6 +487,9 @@ public class EntityDataServices {
             "The specified data source is not recognized: " + dataSource);
       }
 
+      // get the configured info message sink (if any)
+      boolean asyncInfo = provider.hasInfoSink();
+
       enteringQueue(timers);
       String rawInfo = provider.executeInThread(() -> {
         exitingQueue(timers);
@@ -419,7 +499,7 @@ public class EntityDataServices {
 
         int returnCode;
         String rawData = null;
-        if (withInfo) {
+        if (withInfo || asyncInfo) {
           StringBuffer sb = new StringBuffer();
           callingNativeAPI(timers, "engine", "reevaluateRecordWithInfo");
           returnCode = engineApi.reevaluateRecordWithInfo(
@@ -439,9 +519,27 @@ public class EntityDataServices {
       });
 
       SzResolutionInfo info = null;
-      if (rawInfo != null) {
-        JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
-        info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+      if (rawInfo != null && rawInfo.trim().length() > 0) {
+        // check if the info sink is configured
+        if (asyncInfo) {
+          SzMessageSink infoSink = provider.acquireInfoSink();
+          SzMessage message = new SzMessage(rawInfo);
+          try {
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
+
+          } catch (Exception e) {
+            logFailedAsyncInfo(e, message);
+
+          } finally {
+            provider.releaseInfoSink(infoSink);
+          }
+        }
+
+        // check if the info was explicitly requested
+        if (withInfo) {
+          JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
+          info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+        }
       }
 
       // construct the response
@@ -1137,16 +1235,19 @@ public class EntityDataServices {
             POST, uriInfo, timers, "The entityId parameter is required.");
       }
 
+      // get the info sink (if configured)
+      boolean asyncInfo = provider.hasInfoSink();
+
       enteringQueue(timers);
       String rawInfo = provider.executeInThread(() -> {
         exitingQueue(timers);
 
         // get the engine API
-        G2Engine engineApi = provider.getEngineApi();
+        G2Engine      engineApi = provider.getEngineApi();
 
         int returnCode;
         String rawData = null;
-        if (withInfo) {
+        if (withInfo || asyncInfo) {
           StringBuffer sb = new StringBuffer();
           callingNativeAPI(timers, "engine", "reevaluateEntityWithInfo");
           returnCode = engineApi.reevaluateEntityWithInfo(entityId,0, sb);
@@ -1173,9 +1274,28 @@ public class EntityDataServices {
       });
 
       SzResolutionInfo info = null;
-      if (rawInfo != null) {
-        info = SzResolutionInfo.parseResolutionInfo(
-            null, JsonUtils.parseJsonObject(rawInfo));
+      if (rawInfo != null && rawInfo.trim().length() > 0) {
+        // check if the info sink is configured
+        if (asyncInfo) {
+          SzMessageSink infoSink = provider.acquireInfoSink();
+          SzMessage message = new SzMessage(rawInfo);
+          try {
+            // send the info on the async queue
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
+
+          } catch (Exception e) {
+            logFailedAsyncInfo(e, message);
+
+          } finally {
+            provider.releaseInfoSink(infoSink);
+          }
+        }
+
+        // if the info was requested, then we also want to parse and return it
+        if (withInfo) {
+          info = SzResolutionInfo.parseResolutionInfo(
+              null, JsonUtils.parseJsonObject(rawInfo));
+        }
       }
 
       // construct the response

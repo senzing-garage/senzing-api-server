@@ -29,7 +29,7 @@ jobs:
           rm -rf senzingrepo_1.0.0-1_amd64.deb
           sudo apt-get update -y
           sudo chown _apt /home/runner/work/senzing-api-server/senzing-api-server/
-          sudo apt-get download -o=dir::cache=${HOME} senzingapi senzingdata-v1
+          sudo apt-get download -o=dir::cache=${HOME} senzingapi senzingdata-v2
           sudo chown runner /home/runner/work/senzing-api-server/senzing-api-server/
       - name: Install Senzing Data Without Sqlite Dependency
         id: install_senzing_data

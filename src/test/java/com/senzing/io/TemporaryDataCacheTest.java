@@ -248,13 +248,16 @@ public class TemporaryDataCacheTest {
            BufferedInputStream  bis = new BufferedInputStream(is))
       {
         for (int byteRead = bis.read(); byteRead >= 0; byteRead = bis.read()) {
-          int count = tempDir.listFiles(
-              f -> f.getName().startsWith("TempDataCache-")).length;
-          if (count > maxCount) {
-            fail("File count increased when consuming TemporaryDataCache: "
-                  + tempDir);
-          }
+          // do nothing
         }
+        int count = tempDir.listFiles(
+            f -> f.getName().startsWith("TempDataCache-")).length;
+        if (count > maxCount) {
+          fail("File count increased after consuming TemporaryDataCache: "
+                   + tempDir);
+        }
+        assertEquals(0,count,
+                     "File count did not reduce to zero after consuming.");
 
       } finally {
         int count = tempDir.listFiles(
@@ -301,6 +304,83 @@ public class TemporaryDataCacheTest {
 
       if (!appended) {
         fail("Never transitioned to 'appending' state.");
+      }
+
+    } catch (RuntimeException|IOException e) {
+      e.printStackTrace();
+      throw e;
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   *
+   * @throws IOException
+   */
+  private void backgroundRead(InputStream         is,
+                              TemporaryDataCache  tdc,
+                              int                 byteCount,
+                              long                waitTime)
+  {
+    // read the bytes
+    Thread thread = new Thread(() -> {
+      try {
+        for (int index = 0; index < byteCount; index++) {
+          is.read();
+        }
+      } catch (IOException ignore) {
+        // ignore
+      }
+    });
+    thread.start();
+    try {
+      // give it 5 seconds to complete
+      thread.join(waitTime);
+    } catch (InterruptedException ignore) {
+      // do nothing
+    }
+    boolean stillAlive = thread.isAlive();
+    if (stillAlive) {
+      tdc.delete();
+      thread.interrupt();
+      fail("Reader thread is still blocked in reading "
+               + byteCount + " bytes after " + waitTime + "ms.");
+    }
+  }
+
+  @Test
+  public void testSplitAppending() throws IOException {
+    PipedInputStream  pis = new PipedInputStream();
+    PipedOutputStream pos = new PipedOutputStream(pis);
+
+    try {
+      TemporaryDataCache tdc = new TemporaryDataCache(pis);
+      int writeCount = 128;
+
+      // write a small number of bytes
+      for (int index = 0; index < writeCount; index++) {
+        pos.write('A');
+      }
+      pos.flush();
+      Thread.sleep(3000L);
+
+      try (InputStream is = tdc.getInputStream()) {
+        // read the bytes
+        backgroundRead(is, tdc, writeCount, 5000L);
+
+        // write more bytes
+        for (int index = 0; index < writeCount; index++) {
+          pos.write('A');
+        }
+        pos.flush();
+        pos.close(); // close the pipe
+
+        backgroundRead(is, tdc, writeCount, 5000L);
+
+      } finally {
+        tdc.delete();
       }
 
     } catch (RuntimeException|IOException e) {

@@ -167,6 +167,8 @@ public class AdminServices {
       serverInfo.setReadOnly(provider.isReadOnly());
       serverInfo.setAdminEnabled(provider.isAdminEnabled());
       serverInfo.setActiveConfigId(activeConfigId);
+      serverInfo.setWebSocketsMessageMaxSize(
+          provider.getWebSocketsMessageMaxSize());
 
       return new SzServerInfoResponse(
           GET, 200, uriInfo, timers, serverInfo);

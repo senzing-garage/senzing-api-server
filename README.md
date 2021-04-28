@@ -73,11 +73,11 @@ In order to install `g2.jar` you must:
 
         ```console
         {
-            "PLATFORM": "Linux",
-            "VERSION": "2.0.0",
-            "BUILD_VERSION": "2.0.0.20192",
-            "BUILD_NUMBER": "2020_07_08__02_00",
-            "DATA_VERSION": "1.0.0"
+           "PLATFORM": "Linux",
+           "VERSION": "2.4.1",
+           "BUILD_VERSION": "2.4.1.21064",
+           "BUILD_NUMBER": "2021_03_05__02_00",
+           "DATA_VERSION": "1.0.0"
         }
         ```
 
@@ -88,7 +88,7 @@ In order to install `g2.jar` you must:
 
         ```console
         export SENZING_G2_DIR=/opt/senzing/g2
-        export SENZING_G2_JAR_VERSION=2.0.0
+        export SENZING_G2_JAR_VERSION=2.4.1
 
         mvn install:install-file \
             -Dfile=${SENZING_G2_DIR}/lib/g2.jar \
@@ -102,7 +102,7 @@ In order to install `g2.jar` you must:
 
         ```console
         set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
-        set SENZING_G2_JAR_VERSION=2.0.0
+        set SENZING_G2_JAR_VERSION=2.4.1
 
         mvn install:install-file \
             -Dfile="%SENZING_G2_DIR%\lib\g2.jar" \
@@ -170,16 +170,16 @@ in sync across multiple processes that may be using it.
 Other command-line options may be useful to you as well.  Execute
 
 ```console
-java -jar target/senzing-api-server-2.0.0.jar -help
+java -jar target/senzing-api-server-2.6.0.jar --help
 ```
 
 to obtain a help message describing all available options.
 For example:
 
 ```console
-$ java -jar target/senzing-api-server-2.5.0.jar --help
+$ java -jar target/senzing-api-server-2.6.0.jar --help
 
-java -jar senzing-api-server-2.5.0.jar <options>
+java -jar senzing-api-server-2.6.0.jar <options>
 
 <options> includes:
 
@@ -244,6 +244,13 @@ java -jar senzing-api-server-2.5.0.jar <options>
         If not specified, then this defaults to 8.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_CONCURRENCY
 
+   --http-concurrency <thread-count>
+        Also -httpConcurrency.  Sets the maximum number of threads available
+        for the HTTP server.  The single parameter to this option should be
+        a positive integer.  If not specified, then this defaults to 200.  If
+        the specified thread count is less than 10 then an error is reported
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_HTTP_CONCURRENCY
+
    --module-name <module-name>
         Also -moduleName.  The module name to initialize with.  If not
         specified, then the module name defaults to "SzApiServer".
@@ -283,28 +290,29 @@ java -jar senzing-api-server-2.5.0.jar <options>
         --> VIA ENVIRONMENT: SENZING_API_SERVER_CONFIG_ID
 
    --auto-refresh-period <positive-integer-seconds|0|negative-integer>
-        Also -autoRefreshPeriod.  If leveraging the default configuration stored
-        in the database, this is used to specify how often the API server should
-        background check that the current active config is the same as the
-        current default config, and if different reinitialize with the current
-        default config.  If zero is specified, then the auto-refresh is disabled
-        and it will only occur when a requested configuration element is not
-        found in the current active config.  Specifying a negative integer is
-        allowed but is used to enable a check and conditional refresh only when
-        manually requested (programmatically).  NOTE: This is option ignored if
-        auto-refresh is disabled because the config was specified via the
-        G2CONFIGFILE init option or if --config-id has been specified to lock to
-        a specific configuration.
+        Also -autoRefreshPeriod.  If leveraging the default configuration
+        stored in the database, this is used to specify how often the API
+        server should background check that the current active config is the
+        same as the current default config, and if different reinitialize
+        with the current default config.  If zero is specified, then the
+        auto-refresh is disabled and it will only occur when a requested
+        configuration element is not found in the current active config.
+        Specifying a negative integer is allowed but is used to enable a
+        check and conditional refresh only when manually requested
+        (programmatically).  NOTE: This is option ignored if auto-refresh is
+        disabled because the config was specified via the G2CONFIGFILE init
+        option or if --config-id has been specified to lock to a specific
+        configuration.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_AUTO_REFRESH_PERIOD
 
    --stats-interval <milliseconds>
-        Also -statsInterval.  The minimum number of milliseconds between logging
-        of stats.  This is minimum because stats logging is suppressed if the API
-        Server is idle or active but not performing activities pertaining to
-        entity scoring.  In such cases, stats logging is delayed until an
-        activity pertaining to entity scoring is performed.  By default this is
-        set to the millisecond equivalent of 15 minutes.  If zero (0) is
-        specified then the logging of stats will be suppressed.
+        Also -statsInterval.  The minimum number of milliseconds between
+        logging of stats.  This is minimum because stats logging is suppressed
+        if the API Server is idle or active but not performing activities
+        pertaining to entity scoring.  In such cases, stats logging is delayed
+        until an activity pertaining to entity scoring is performed.  By
+        default this is set to the millisecond equivalent of 15 minutes.  If
+        zero (0) is specified then the logging of stats will be suppressed.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_STATS_INTERVAL
 
    --skip-startup-perf [true|false]
@@ -336,8 +344,8 @@ java -jar senzing-api-server-2.5.0.jar <options>
    --quiet [true|false]
         Also -quiet.  If specified then the API server reduces the number of
         messages provided as feedback to standard output.  This applies only to
-        messages generated by the API server and not by the underlying API which
-        can be quite prolific if --verbose is provided.  The true/false
+        messages generated by the API server and not by the underlying API
+        which can be quite prolific if --verbose is provided.  The true/false
         parameter is optional, if not specified then true is assumed.  If
         specified as false then it is the same as omitting the option with
         the exception that omission falls back to the environment variable
@@ -348,6 +356,77 @@ java -jar senzing-api-server-2.5.0.jar <options>
         Also -monitorFile.  Specifies a file whose timestamp is monitored to
         determine when to shutdown.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_MONITOR_FILE
+
+[ Asynchronous Info Queue Options ]
+   The following options pertain to configuring an asynchronous message
+   queue on which to send "info" messages generated when records are
+   loaded, deleted or entities are re-evaluated.  At most one such queue
+   can be configured.  If an "info" queue is configured then every load,
+   delete and re-evaluate operation is performed with the variant to
+   generate an info message.  The info messages that are sent on the queue
+   (or topic) are the relevant "raw data" JSON segments.
+
+   --sqs-info-url <url>
+        Also -sqsInfoUrl.  Specifies an Amazon SQS queue URL as the info queue.
+        --> VIA ENVIRONMENT: SENZING_SQS_INFO_QUEUE_URL
+
+   --rabbit-info-host <hostname>
+        Also -rabbitInfoHost.  Used to specify the hostname for connecting to
+        RabbitMQ as part of specifying a RabbitMQ info queue.
+        --> VIA ENVIRONMENT: SENZING_RABBITMQ_INFO_HOST
+                             SENZING_RABBITMQ_HOST (fallback)
+
+   --rabbit-info-port <port>
+        Also -rabbitInfoPort.  Used to specify the port number for connecting
+        to RabbitMQ as part of specifying a RabbitMQ info queue.
+        --> VIA ENVIRONMENT: SENZING_RABBITMQ_INFO_PORT
+                             SENZING_RABBITMQ_PORT (fallback)
+
+   --rabbit-info-user <user name>
+        Also -rabbitInfoUser.  Used to specify the user name for connecting to
+        RabbitMQ as part of specifying a RabbitMQ info queue.
+        --> VIA ENVIRONMENT: SENZING_RABBITMQ_INFO_USERNAME
+                             SENZING_RABBITMQ_USERNAME (fallback)
+
+   --rabbit-info-password <password>
+        Also -rabbitInfoPassword.  Used to specify the password for connecting
+        to RabbitMQ as part of specifying a RabbitMQ info queue.
+        --> VIA ENVIRONMENT: SENZING_RABBITMQ_INFO_PASSWORD
+                             SENZING_RABBITMQ_PASSWORD (fallback)
+
+   --rabbit-info-virtual-host <virtual host>
+        Also -rabbitInfoVirtualHost.  Used to specify the virtual host for
+        connecting to RabbitMQ as part of specifying a RabbitMQ info queue.
+        --> VIA ENVIRONMENT: SENZING_RABBITMQ_INFO_VIRTUAL_HOST
+                             SENZING_RABBITMQ_VIRTUAL_HOST (fallback)
+
+   --rabbit-info-exchange <exchange>
+        Also -rabbitInfoExchange.  Used to specify the exchange for connecting
+        to RabbitMQ as part of specifying a RabbitMQ info queue.
+        --> VIA ENVIRONMENT: SENZING_RABBITMQ_INFO_EXCHANGE
+                             SENZING_RABBITMQ_EXCHANGE (fallback)
+
+   --rabbit-info-routing-key <routing key>
+        Also -rabbitInfoRoutingKey.  Used to specify the routing key for
+        connecting to RabbitMQ as part of specifying a RabbitMQ info queue.
+        --> VIA ENVIRONMENT: SENZING_RABBITMQ_INFO_ROUTING_KEY
+
+   --kafka-info-bootstrap-server <bootstrap servers>
+        Also -kafkaInfoBootstrapServer.  Used to specify the bootstrap servers
+        for connecting to Kafka as part of specifying a Kafka info topic.
+        --> VIA ENVIRONMENT: SENZING_KAFKA_INFO_BOOTSTRAP_SERVER
+                             SENZING_KAFKA_BOOTSTRAP_SERVER (fallback)
+
+   --kafka-info-group <group id>
+        Also -kafkaInfoGroupId.  Used to specify the group ID for connecting to
+        Kafka as part of specifying a Kafka info topic.
+        --> VIA ENVIRONMENT: SENZING_KAFKA_INFO_GROUP
+                             SENZING_KAFKA_GROUP (fallback)
+
+   --kafka-info-topic <topic>
+        Also -kafkaInfoTopic.  Used to specify the topic name for connecting to
+        Kafka as part of specifying a Kafka info topic.
+        --> VIA ENVIRONMENT: SENZING_KAFKA_INFO_TOPIC
 
 [ Advanced Options ]
 
@@ -365,10 +444,10 @@ network interfaces with a concurrency of 16 you would use:
 
 ```console
 java -jar target/senzing-api-server-[version].jar \
-  -concurrency 16 \
-  -httpPort 8080 \
-  -bindAddr all \
-  -initFile ~/senzing/data/g2-init.json
+  --concurrency 16 \
+  --http-port 8080 \
+  --bind-addr all \
+  --init-file ~/senzing/data/g2-init.json
 ```
 
 ## Demonstrate using Docker
@@ -398,7 +477,43 @@ This repository assumes a working knowledge of:
 
 Configuration values specified by environment variable or command line parameter.
 
-- **[SENZING_API_SERVICE_PORT](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_BIND_ADDR](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_PORT](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_ENABLE_ADMIN](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_READ_ONLY](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_CONCURRENCY](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_ALLOWED_ORIGINS](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_MODULE_NAME](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_INI_FILE](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_INIT_FILE](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_INIT_ENV_VAR](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_INIT_JSON](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_CONFIG_ID](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_AUTO_REFRESH_PERIOD](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_STATS_INTERVAL](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_SKIP_STARTUP_PERF](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_VERBOSE](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_QUIET](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_MONITOR_FILE](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_SQS_INFO_QUEUE_URL](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_RABBITMQ_INFO_HOST](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_RABBITMQ_HOST](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_RABBITMQ_INFO_PORT](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_RABBITMQ_PORT](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_RABBITMQ_INFO_USERNAME](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_RABBITMQ_USERNAME](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_RABBITMQ_INFO_PASSWORD](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_RABBITMQ_PASSWORD](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_RABBITMQ_INFO_VIRTUAL_HOST](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_RABBITMQ_VIRTUAL_HOST](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_RABBITMQ_INFO_EXCHANGE](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_RABBITMQ_EXCHANGE](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_RABBITMQ_INFO_ROUTING_KEY](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_KAFKA_INFO_BOOTSTRAP_SERVER](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_KAFKA_BOOTSTRAP_SERVER](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_KAFKA_INFO_GROUP](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_KAFKA_GROUP](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_KAFKA_INFO_TOPIC](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_api_service_port)**
 - **[SENZING_DATA_VERSION_DIR](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_data_version_dir)**
 - **[SENZING_DATABASE_URL](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_database_url)**
 - **[SENZING_DEBUG](https://github.com/Senzing/knowledge-base/blob/master/lists/environment-variables.md#senzing_debug)**

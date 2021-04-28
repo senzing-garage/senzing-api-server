@@ -505,7 +505,9 @@ public class RepositoryManager {
     try {
       options = parseCommandLine(args);
     } catch (Exception e) {
-      if (!isLastLoggedException(e)) {
+      if (!(e instanceof IllegalArgumentException)
+          && !isLastLoggedException(e))
+      {
         e.printStackTrace();
       }
       System.out.println(RepositoryManager.getUsageString(false));

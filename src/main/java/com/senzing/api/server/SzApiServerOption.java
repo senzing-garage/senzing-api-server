@@ -5,6 +5,9 @@ import com.senzing.cmdline.CommandLineOption;
 import java.util.*;
 
 import static com.senzing.util.CollectionUtilities.recursivelyUnmodifiableMap;
+import static com.senzing.api.server.mq.KafkaEndpoint.*;
+import static com.senzing.api.server.mq.SqsEndpoint.*;
+import static com.senzing.api.server.mq.RabbitEndpoint.*;
 import static com.senzing.api.server.SzApiServerConstants.*;
 
 /**
@@ -20,7 +23,7 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--help</tt></li>q
+   *   <li>Command Line: <tt>--help</tt></li>
    *   <li>Command Line: <tt>-help</tt></li>
    * </ul>
    * </p>
@@ -361,6 +364,28 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
 
   /**
    * <p>
+   * This option sets the maximum number of threads available for the HTTP
+   * server.  The single parameter to this option should be a positive integer.
+   * If not specified, then this defaults to {@link
+   * SzApiServerConstants#DEFAULT_HTTP_CONCURRENCY}.  If the specified thread
+   * count is less than {@link SzApiServerConstants#MINIMUM_HTTP_CONCURRENCY}
+   * then an error is reported.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--http-concurrency {thread-count}</tt></li>
+   *   <li>Command Line: <tt>-httpConcurrency {thread-count}</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_HTTP_CONCURRENCY="{thread-count}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  HTTP_CONCURRENCY("--http-concurrency", Set.of("-httpConcurrency"),
+              ENV_PREFIX + "HTTP_CONCURRENCY", null,
+              1, DEFAULT_HTTP_CONCURRENCY_PARAM),
+
+  /**
+   * <p>
    * If leveraging the default configuration stored in the database, this option
    * is used to specify how often the API server should background check that
    * the current active config is the same as the current default config and
@@ -452,16 +477,11 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
                     0, "false"),
 
   /**
-   * <p>
    * The presence of this option causes the API Server to skip priming the
    * engine on startup, and its absence allows the engine priming to occur as
    * is the default behavior.  A single parameter may optionally be specified as
    * <tt>true</tt> or <tt>false</tt> with <tt>false</tt> simulating the absence
    * of the option.
-   * </p>
-   * <p>
-   * This option can be specified in the following ways:
-   * <ul>
    *   <li>Command Line: <tt>--skip-engine-priming [true|false]</tt></li>
    *   <li>Command Line: <tt>-skipEnginePriming [true|false]</tt></li>
    *   <li>Environment: <tt>SENZING_API_SERVER_SKIP_ENGINE_PRIMING="{true|false}"</tt></tt></li>
@@ -470,8 +490,269 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    */
   SKIP_ENGINE_PRIMING("--skip-engine-priming",
                       Set.of("-skipEnginePriming"),
-                    ENV_PREFIX + "SKIP_ENGINE_PRIMING", null,
-                    0, "false");
+                      ENV_PREFIX + "SKIP_ENGINE_PRIMING", null,
+                      0, "false"),
+
+  /**
+   * <p>
+   * This option is used to specify the URL to an Amazon SQS queue to be used
+   * for info messages.  The single parameter to this option is the URL.  If
+   * this option is specified then the info queue parameters for RabbitMQ and
+   * Kafka are not allowed.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--sqs-info-url {url}</tt></li>
+   *   <li>Command Line: <tt>-sqsInfoUrl {url}</tt></li>
+   *   <li>Environment: <tt>SENZING_SQS_INFO_URL="{url}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  SQS_INFO_URL(
+      "--sqs-info-url", Set.of("-sqsInfoUrl"),
+      "SENZING_SQS_INFO_QUEUE_URL", null, 1,
+      SQS_INFO_QUEUE_GROUP, URL_PROPERTY_KEY, false),
+
+  /**
+   * <p>
+   * This option is used to specify the user name for connecting to RabbitMQ as
+   * part of specifying a RabbitMQ info queue.  The single parameter to this
+   * option is a user name.  If this option is specified then the other options
+   * required for a RabbitMQ info queue are required and the info queue
+   * parameters pertaining to SQS and Kafka are not allowed.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--rabbit-info-host {username}</tt></li>
+   *   <li>Command Line: <tt>-rabbitInfoHost {username}</tt></li>
+   *   <li>Environment: <tt>SENZING_RABBITMQ_INFO_USERNAME="{username}"</tt></tt></li>
+   *   <li>Environment: <tt>SENZING_RABBITMQ_USERNAME="{username}" (fallback)</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  RABBIT_INFO_USER(
+      "--rabbit-info-user", Set.of("-rabbitInfoUser"),
+      "SENZING_RABBITMQ_INFO_USERNAME",
+      List.of("SENZING_RABBITMQ_USERNAME"), 1,
+      RABBITMQ_INFO_QUEUE_GROUP, USER_PROPERTY_KEY, false),
+
+  /**
+   * <p>
+   * This option is used to specify the password for connecting to RabbitMQ as
+   * part of specifying a RabbitMQ info queue.  The single parameter to this
+   * option is a password.  If this option is specified then the other options
+   * required for a RabbitMQ info queue are required and the info queue
+   * parameters pertaining to SQS and Kafka are not allowed.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--rabbit-info-password {password}</tt></li>
+   *   <li>Command Line: <tt>-rabbitInfoPassword {password}</tt></li>
+   *   <li>Environment: <tt>SENZING_RABBITMQ_INFO_PASSWORD="{password}"</tt></tt></li>
+   *   <li>Environment: <tt>SENZING_RABBITMQ_PASSWORD="{password}" (fallback)</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  RABBIT_INFO_PASSWORD(
+      "--rabbit-info-password", Set.of("-rabbitInfoPassword"),
+      "SENZING_RABBITMQ_INFO_PASSWORD",
+      List.of("SENZING_RABBITMQ_PASSWORD"), 1,
+      RABBITMQ_INFO_QUEUE_GROUP, PASSWORD_PROPERTY_KEY, false),
+
+  /**
+   * <p>
+   * This option is used to specify the hostname for connecting to RabbitMQ as
+   * part of specifying a RabbitMQ info queue.  The single parameter to this
+   * option is a hostname or IP address.  If this option is specified then the
+   * other options required for a RabbitMQ info queue are required and the
+   * info queue parameters pertaining to SQS and Kafka are not allowed.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--rabbit-info-host {hostname}</tt></li>
+   *   <li>Command Line: <tt>-rabbitInfoHost {hostname}</tt></li>
+   *   <li>Environment: <tt>SENZING_RABBITMQ_INFO_HOST="{hostname}"</tt></tt></li>
+   *   <li>Environment: <tt>SENZING_RABBITMQ_HOST="{hostname}" (fallback)</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  RABBIT_INFO_HOST(
+      "--rabbit-info-host", Set.of("-rabbitInfoHost"),
+      "SENZING_RABBITMQ_INFO_HOST",
+      List.of("SENZING_RABBITMQ_HOST"), 1,
+      RABBITMQ_INFO_QUEUE_GROUP, HOST_PROPERTY_KEY, false),
+
+  /**
+   * <p>
+   * This option is used to specify the port number for connecting to RabbitMQ
+   * as part of specifying a RabbitMQ info queue.  The single parameter to this
+   * option is a port number.  If this option is specified then the other
+   * options required for a RabbitMQ info queue are required and the info queue
+   * parameters pertaining to SQS and Kafka are not allowed.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--rabbit-info-port {port}</tt></li>
+   *   <li>Command Line: <tt>-rabbitInfoPort {port}</tt></li>
+   *   <li>Environment: <tt>SENZING_RABBITMQ_INFO_PORT="{port}"</tt></tt></li>
+   *   <li>Environment: <tt>SENZING_RABBITMQ_PORT="{port}" (fallback)</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  RABBIT_INFO_PORT(
+      "--rabbit-info-port", Set.of("-rabbitInfoPort"),
+      "SENZING_RABBITMQ_INFO_PORT",
+      List.of("SENZING_RABBITMQ_PORT"), 1,
+      RABBITMQ_INFO_QUEUE_GROUP, PORT_PROPERTY_KEY, false),
+
+  /**
+   * <p>
+   * This option is used to specify the virtual host for connecting to RabbitMQ
+   * as part of specifying a RabbitMQ info queue.  The single parameter to this
+   * option is a virtual host name.  If this option is specified then the other
+   * options required for a RabbitMQ info queue are required and the info queue
+   * parameters pertaining to SQS and Kafka are not allowed.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--rabbit-info-virtual-host {virtual-host}</tt></li>
+   *   <li>Command Line: <tt>-rabbitInfoVirtualHost {virtual-host}</tt></li>
+   *   <li>Environment: <tt>SENZING_RABBITMQ_INFO_VIRTUAL_HOST="{virtual-host}"</tt></tt></li>
+   *   <li>Environment: <tt>SENZING_RABBITMQ_VIRTUAL_HOST="{virtual-host}" (fallback)</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  RABBIT_INFO_VIRTUAL_HOST(
+      "--rabbit-info-virtual-host", Set.of("-rabbitInfoVirtualHost"),
+      "SENZING_RABBITMQ_INFO_VIRTUAL_HOST",
+      List.of("SENZING_RABBITMQ_VIRTUAL_HOST"), 1,
+      RABBITMQ_INFO_QUEUE_GROUP, VIRTUAL_HOST_PROPERTY_KEY, false),
+
+  /**
+   * <p>
+   * This option is used to specify the exchange for connecting to RabbitMQ
+   * as part of specifying a RabbitMQ info queue.  The single parameter to this
+   * option is an exchange name.  If this option is specified then the other
+   * options required for a RabbitMQ info queue are required and the info queue
+   * parameters pertaining to SQS and Kafka are not allowed.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--rabbit-info-exchange {exchange}</tt></li>
+   *   <li>Command Line: <tt>-rabbitInfoExchange {exchange}</tt></li>
+   *   <li>Environment: <tt>SENZING_RABBITMQ_INFO_EXCHANGE="{exchange}"</tt></tt></li>
+   *   <li>Environment: <tt>SENZING_RABBITMQ_EXCHANGE="{exchange}" (fallback)</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  RABBIT_INFO_EXCHANGE(
+      "--rabbit-info-exchange", Set.of("-rabbitInfoExchange"),
+      "SENZING_RABBITMQ_INFO_EXCHANGE",
+      List.of("SENZING_RABBITMQ_EXCHANGE"), 1,
+      RABBITMQ_INFO_QUEUE_GROUP, EXCHANGE_PROPERTY_KEY, false),
+
+  /**
+   * <p>
+   * This option is used to specify the routing key for connecting to RabbitMQ
+   * as part of specifying a RabbitMQ info queue.  The single parameter to this
+   * option is a routing key.  If this option is specified then the other
+   * options required for a RabbitMQ info queue are required and the info queue
+   * parameters pertaining to SQS and Kafka are not allowed.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--rabbit-info-routing-key {routing-key}</tt></li>
+   *   <li>Command Line: <tt>-rabbitInfoRoutingKey {routing-key}</tt></li>
+   *   <li>Environment: <tt>SENZING_RABBITMQ_INFO_ROUTING_KEY="{routing-key}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  RABBIT_INFO_ROUTING_KEY(
+      "--rabbit-info-routing-key", Set.of("-rabbitInfoRoutingKey"),
+      "SENZING_RABBITMQ_INFO_ROUTING_KEY",
+      null, 1,
+      RABBITMQ_INFO_QUEUE_GROUP, ROUTING_KEY_PROPERTY_KEY, false),
+
+  /**
+   * <p>
+   * This option is used to specify the bootstrap servers for connecting to
+   * Kafka as part of specifying a Kafka info topic.  The single parameter to
+   * this option is the Kafka bootstrap servers specification (typically a
+   * hostname or IP address and port number separated by a colon).  If this
+   * option is specified then the {@link #KAFKA_INFO_TOPIC} option is required
+   * and the info queue parameters pertaining to RabbitMQ and SQS are not
+   * allowed.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--kafka-info-bootstrap-servers {bootstrap-servers}</tt></li>
+   *   <li>Command Line: <tt>-kafkaInfoBootstrapServers {bootstrap-servers}</tt></li>
+   *   <li>Environment: <tt>SENZING_KAFKA_INFO_BOOTSTRAP_SERVER="{bootstrap-servers}"</tt></tt></li>
+   *   <li>Environment: <tt>SENZING_KAFKA_BOOTSTRAP_SERVER="{bootstrap-servers}" (fallback)</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  KAFKA_INFO_BOOTSTRAP_SERVER(
+      "--kafka-info-bootstrap-server", Set.of("-kafkaInfoBootstrapServer"),
+      "SENZING_KAFKA_INFO_BOOTSTRAP_SERVER",
+      List.of("SENZING_KAFKA_BOOTSTRAP_SERVER"), 1,
+      KAFKA_INFO_QUEUE_GROUP, BOOTSTRAP_SERVERS_PROPERTY_KEY, false),
+
+  /**
+   * <p>
+   * This option is used to specify the <b>optional</b> group ID to set when
+   * connecting to Kafka as part of specifying a Kafka info topic.  The single
+   * parameter to this option is the Kafka group ID.  If this option is
+   * specified then the {@link #KAFKA_INFO_BOOTSTRAP_SERVER} and {@link
+   * #KAFKA_INFO_TOPIC} options are required and the info queue parameters
+   * pertaining to RabbitMQ and SQS are not allowed.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--kafka-info-group {group-id}</tt></li>
+   *   <li>Command Line: <tt>-kafkaInfoGroup {group-id}</tt></li>
+   *   <li>Environment: <tt>SENZING_KAFKA_INFO_GROUP="{group-id}"</tt></tt></li>
+   *   <li>Environment: <tt>SENZING_KAFKA_GROUP="{group-id}" (fallback)</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  KAFKA_INFO_GROUP(
+      "--kafka-info-group", Set.of("-kafkaInfoGroup"),
+      "SENZING_KAFKA_INFO_GROUP",
+      List.of("SENZING_KAFKA_GROUP"), 1, KAFKA_INFO_QUEUE_GROUP,
+      GROUP_ID_PROPERTY_KEY, true),
+
+  /**
+   * <p>
+   * This option is used to specify the topic when connecting to Kafka as part
+   * of specifying a Kafka info topic.  The single parameter to this option is
+   * the Kafka topic.  If this option is specified then the {@link
+   * #KAFKA_INFO_BOOTSTRAP_SERVER} option is required and the info queue
+   * parameters pertaining to RabbitMQ and SQS are not allowed.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--kafka-info-topic {topic-name}</tt></li>
+   *   <li>Command Line: <tt>-kafkaInfoTopic {topic-name}</tt></li>
+   *   <li>Environment: <tt>SENZING_KAFKA_INFO_TOPIC="{topic-name}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  KAFKA_INFO_TOPIC(
+      "--kafka-info-topic", Set.of("-kafkaInfoTopic"),
+      "SENZING_KAFKA_INFO_TOPIC", null, 1,
+      KAFKA_INFO_QUEUE_GROUP, TOPIC_PROPERTY_KEY, false);
 
   /**
    * The {@link Map} of {@link SzApiServerOption} keys to unmodifiable
@@ -570,45 +851,17 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
   {
     this(cmdLineFlag,
          synonymFlags,
+         null,
+         null,
          false,
+         parameterCount < 0 ? 0 : parameterCount,
          parameterCount,
+         Collections.emptyList(),
          false,
          null,
          null,
          true);
-  }
 
-  SzApiServerOption(String        cmdLineFlag,
-                    Set<String>   synonymFlags,
-                    String        envVariable,
-                    List<String>  envFallbacks,
-                    int           parameterCount)
-  {
-    this(cmdLineFlag,
-         synonymFlags,
-         envVariable,
-         envFallbacks,
-         false,
-         parameterCount,
-         false,
-         null,
-         null,
-         true);
-  }
-
-  SzApiServerOption(String      cmdLineFlag,
-                    Set<String> synonymFlags,
-                    int         parameterCount,
-                    String...   defaultParams) {
-    this(cmdLineFlag,
-         synonymFlags,
-         false,
-         parameterCount,
-         List.of(defaultParams),
-         false,
-         null,
-         null,
-         true);
   }
 
   SzApiServerOption(String        cmdLineFlag,
@@ -660,8 +913,12 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
   {
     this(cmdLineFlag,
          synonymFlags,
+         null,
+         null,
          false,
+         parameterCount < 0 ? 0 : parameterCount,
          parameterCount,
+         Collections.emptyList(),
          false,
          groupName,
          groupPropertyKey,
@@ -682,7 +939,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
          envVariable,
          envFallbacks,
          false,
+         parameterCount < 0 ? 0 : parameterCount,
          parameterCount,
+         Collections.emptyList(),
          false,
          groupName,
          groupPropertyKey,
@@ -696,8 +955,12 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
   {
     this(cmdLineFlag,
          synonymFlags,
+         null,
+         null,
          primary,
+         parameterCount < 0 ? 0 : parameterCount,
          parameterCount,
+         Collections.emptyList(),
          false,
          null,
          null,
@@ -716,7 +979,48 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
          envVariable,
          envFallbacks,
          primary,
+         parameterCount < 0 ? 0 : parameterCount,
          parameterCount,
+         Collections.emptyList(),
+         false,
+         null,
+         null,
+         true);
+  }
+
+  SzApiServerOption(String        cmdLineFlag,
+                    Set<String>   synonymFlags,
+                    String        envVariable,
+                    List<String>  envFallbacks,
+                    int           parameterCount)
+  {
+    this(cmdLineFlag,
+         synonymFlags,
+         envVariable,
+         envFallbacks,
+         false,
+         parameterCount < 0 ? 0 : parameterCount,
+         parameterCount,
+         Collections.emptyList(),
+         false,
+         null,
+         null,
+         true);
+  }
+
+  SzApiServerOption(String      cmdLineFlag,
+                    Set<String> synonymFlags,
+                    int         parameterCount,
+                    String...   defaultParams)
+  {
+    this(cmdLineFlag,
+         synonymFlags,
+         null,
+         null,
+         false,
+         parameterCount < 0 ? 0 : parameterCount,
+         parameterCount,
+         List.of(defaultParams),
          false,
          null,
          null,
@@ -734,9 +1038,12 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
   {
     this(cmdLineFlag,
          synonymFlags,
+         null,
+         null,
          primary,
          parameterCount < 0 ? 0 : parameterCount,
          parameterCount,
+         Collections.emptyList(),
          deprecated,
          groupName,
          groupPropertyKey,
@@ -761,30 +1068,6 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
          primary,
          parameterCount < 0 ? 0 : parameterCount,
          parameterCount,
-         deprecated,
-         groupName,
-         groupPropertyKey,
-         groupOptional);
-  }
-
-  SzApiServerOption(String        cmdLineFlag,
-                    Set<String>   synonymFlags,
-                    boolean       primary,
-                    int           parameterCount,
-                    List<String>  defaultParameters,
-                    boolean       deprecated,
-                    String        groupName,
-                    String        groupPropertyKey,
-                    boolean       groupOptional)
-  {
-    this(cmdLineFlag,
-         synonymFlags,
-         null,
-         null,
-         primary,
-         parameterCount < 0 ? 0 : parameterCount,
-         parameterCount,
-         defaultParameters,
          deprecated,
          groupName,
          groupPropertyKey,
@@ -988,7 +1271,8 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
         }
       }
 
-      SzApiServerOption[] initOptions = { INI_FILE, INIT_ENV_VAR, INIT_FILE, INIT_JSON };
+      SzApiServerOption[] initOptions
+          = { INI_FILE, INIT_ENV_VAR, INIT_FILE, INIT_JSON };
 
       for (SzApiServerOption option1 : initOptions) {
         for (SzApiServerOption option2 : initOptions) {
@@ -998,6 +1282,44 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
           }
         }
       }
+
+      Set<SzApiServerOption> kafkaInfoOptions = Set.of(
+          KAFKA_INFO_BOOTSTRAP_SERVER,
+          KAFKA_INFO_GROUP,
+          KAFKA_INFO_TOPIC);
+
+      Set<SzApiServerOption> rabbitInfoOptions = Set.of(
+          RABBIT_INFO_USER,
+          RABBIT_INFO_PASSWORD,
+          RABBIT_INFO_HOST,
+          RABBIT_INFO_PORT,
+          RABBIT_INFO_VIRTUAL_HOST,
+          RABBIT_INFO_EXCHANGE,
+          RABBIT_INFO_ROUTING_KEY);
+
+      Set<SzApiServerOption> sqsInfoOptions = Set.of(SQS_INFO_URL);
+
+      // enforce that we only have one info queue
+      for (SzApiServerOption option: kafkaInfoOptions) {
+        Set<SzApiServerOption> conflictSet = conflictMap.get(option);
+        conflictSet.addAll(rabbitInfoOptions);
+        conflictSet.addAll(sqsInfoOptions);
+      }
+      for (SzApiServerOption option: rabbitInfoOptions) {
+        Set<SzApiServerOption> conflictSet = conflictMap.get(option);
+        conflictSet.addAll(kafkaInfoOptions);
+        conflictSet.addAll(sqsInfoOptions);
+      }
+      for (SzApiServerOption option: sqsInfoOptions) {
+        Set<SzApiServerOption> conflictSet = conflictMap.get(option);
+        conflictSet.addAll(kafkaInfoOptions);
+        conflictSet.addAll(rabbitInfoOptions);
+      }
+
+      Set<SzApiServerOption> readOnlyConflicts = conflictMap.get(READ_ONLY);
+      readOnlyConflicts.addAll(kafkaInfoOptions);
+      readOnlyConflicts.addAll(rabbitInfoOptions);
+      readOnlyConflicts.addAll(sqsInfoOptions);
 
       Set<SzApiServerOption> iniAlts = altMap.get(INI_FILE);
       iniAlts.add(INIT_ENV_VAR);

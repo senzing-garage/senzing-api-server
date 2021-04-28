@@ -1,10 +1,16 @@
 package com.senzing.api.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.senzing.api.model.*;
+import com.senzing.api.websocket.JsonEncoder;
+import com.senzing.api.websocket.OnUpgrade;
+import com.senzing.api.websocket.StringDecoder;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.io.IOUtilities;
 import com.senzing.io.RecordReader;
 import com.senzing.io.TemporaryDataCache;
+import com.senzing.util.AccessToken;
 import com.senzing.util.AsyncWorkerPool;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
@@ -12,6 +18,10 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
 import javax.json.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.websocket.*;
+import javax.websocket.server.ServerEndpoint;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -27,23 +37,64 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.POST;
+import static com.senzing.api.model.SzHttpMethod.GET;
 import static com.senzing.api.services.ServicesUtil.*;
 import static com.senzing.text.TextUtilities.*;
 import static com.senzing.util.AsyncWorkerPool.*;
 import static com.senzing.api.model.SzBulkDataStatus.*;
 import static javax.ws.rs.core.MediaType.*;
 import static com.senzing.util.LoggingUtilities.*;
+import static com.senzing.io.IOUtilities.*;
 
 /**
  * Bulk data REST services.
  */
 @Path("/bulk-data")
-@Produces("application/json; charset=UTF-8; qs=1.0")
+@Produces(APPLICATION_JSON)
 public class BulkDataServices {
+  /**
+   * The size of the piped input stream buffer size (10MB).
+   */
+  public static final int PIPE_SIZE = 1024 * 1024 * 10;
+
+  /**
+   * The {@link MediaType} with text/plain and charset=utf8
+   */
+  private static final MediaType TEXT_PLAIN_UTF8_TYPE = new MediaType(
+      TEXT_PLAIN_TYPE.getType(), TEXT_PLAIN_TYPE.getSubtype(), UTF_8);
+
+  /**
+   * The <tt>"text/csv"</tt> media type string.
+   */
+  private static final String TEXT_CSV = "text/csv";
+
+  /**
+   * The <tt>"application/x-jsonlines"</tt> media type string.
+   */
+  private static final String APPLICATION_JSONLINES = "application/x-jsonlines";
+
+  /**
+   * The <tt>"text/event-stream"</tt> media type string.
+   */
+  private static final String TEXT_EVENT_STREAM = "text/event-stream";
+
   /**
    * The file date pattern.
    */
   private static final String FILE_DATE_PATTERN = "yyyyMMdd_HHmmssX";
+
+  /**
+   * The default maximum number of seconds to wait between receiving
+   * Web Socket messages from the client before triggering EOF on the
+   * incoming stream.
+   */
+  public static final Long DEFAULT_EOF_SEND_TIMEOUT = 3L;
+
+  /**
+   * The default progress period as the number of milliseconds between sending
+   * progress responses to the client for SSE and Web Sockets.
+   */
+  public static final Long DEFAULT_PROGRESS_PERIOD = 3000L;
 
   /**
    * The time zone used for the time component of the build number.
@@ -77,6 +128,11 @@ public class BulkDataServices {
   public static final String COMPLETED_EVENT = "completed";
 
   /**
+   * A private instance of the {@link BulkDataServices} class.
+   */
+  private static final BulkDataServices INSTANCE = new BulkDataServices();
+
+  /**
    * Analyzes the bulk data records.
    */
   @POST
@@ -86,18 +142,33 @@ public class BulkDataServices {
       @FormDataParam("data") InputStream dataInputStream,
       @Context UriInfo uriInfo)
   {
+    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+    Timers        timers      = newTimers();
+    AccessToken   accessToken = null;
+    accessToken = provider.authorizeProlongedOperation();
+    if (accessToken == null) {
+      throw newServiceUnavailableErrorException(
+          POST, uriInfo, timers,
+          "Too many prolonged operations running.  Try again later.");
+    }
     try {
-      return this.analyzeBulkRecords(mediaType,
-                                     dataInputStream,
-                                     uriInfo,
-                                     null,
-                                     null,
-                                     null);
+      return analyzeBulkRecords(provider,
+                                timers,
+                                mediaType,
+                                dataInputStream,
+                                uriInfo,
+                                null,
+                                null,
+                                null,
+                                null);
+
     } catch (RuntimeException e) {
       throw logOnceAndThrow(e);
 
     } catch (Exception e) {
       throw logOnceAndThrow(new RuntimeException(e));
+    } finally {
+      provider.concludeProlongedOperation(accessToken);
     }
   }
 
@@ -106,40 +177,100 @@ public class BulkDataServices {
    */
   @POST
   @Path("/analyze")
-  @Consumes({ MediaType.APPLICATION_JSON,
-      MediaType.TEXT_PLAIN,
-      "text/csv",
-      "application/x-jsonlines"})
+  @Consumes({ APPLICATION_JSON,
+              TEXT_PLAIN,
+              TEXT_CSV,
+              APPLICATION_JSONLINES })
   public SzBulkDataAnalysisResponse analyzeBulkRecordsDirect(
       @HeaderParam("Content-Type") MediaType mediaType,
       InputStream dataInputStream,
       @Context UriInfo uriInfo)
   {
+    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+    Timers        timers      = newTimers();
+    AccessToken   accessToken = provider.authorizeProlongedOperation();
+    if (accessToken == null) {
+      throw newServiceUnavailableErrorException(
+          POST, uriInfo, timers,
+          "Too many prolonged operations running.  Try again later.");
+    }
     try {
-      return this.analyzeBulkRecords(mediaType,
-                                     dataInputStream,
-                                     uriInfo,
-                                     null,
-                                     null,
-                                     null);
+      return analyzeBulkRecords(provider,
+                                timers,
+                                mediaType,
+                                dataInputStream,
+                                uriInfo,
+                                null,
+                                null,
+                                null,
+                                null);
+
     } catch (RuntimeException e) {
       throw logOnceAndThrow(e);
 
     } catch (Exception e) {
       throw logOnceAndThrow(new RuntimeException(e));
+
+    } finally {
+      provider.concludeProlongedOperation(accessToken);
     }
   }
 
   /**
-   * Analyzes the bulk data records.
+   * Validates the progress period parameter for SSE or Web Socket requests.
+   *
+   * @param progressPeriod The specified progress period.
+   * @param timers The {@link Timers} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param sseEventSink The {@link SseEventSink} or <tt>null</tt> if not an
+   *                     SSE request.
+   * @param sse The {@link Sse} or <tt>null</tt> if not an SSE request.
+   * @param webSocketSession The Web Socket {@link Session} for the request.
+   *
+   * @throws BadRequestException If the progress period is negative, but we are
+   *                             handling an SSE request.
+   */
+  private static void validateProgressPeriod(Long         progressPeriod,
+                                             Timers       timers,
+                                             UriInfo      uriInfo,
+                                             SseEventSink sseEventSink,
+                                             Sse          sse,
+                                             Session      webSocketSession)
+    throws BadRequestException
+  {
+    // check if the progress period parameter is being ignored
+    if (sseEventSink == null && sse == null && webSocketSession == null) {
+      return;
+    }
+
+    // check the parameters
+    if (progressPeriod != null && progressPeriod < 0L) {
+      throw newBadRequestException(
+          POST, uriInfo, timers,
+          "The progressPeriod parameter cannot be negative: " + progressPeriod);
+    }
+  }
+
+  /**
+   * Analyzes the bulk data records via direct upload using SSE.
+   *
+   * @param mediaType The media type for the content.
+   * @param dataInputStream The input stream to read the uploaded data.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param progressPeriod The suggested maximum time between SSE `progress`
+   *                       events specified in milliseconds.  If not specified
+   *                       then the default of `3000` milliseconds (i.e.: 3
+   *                       seconds) is used.
+   * @param sseEventSink The {@link SseEventSink} for the SSE protocol.
+   * @param sse The {@link Sse} instance for the SSE protocol.
    */
   @POST
   @Path("/analyze")
-  @Consumes({ MediaType.APPLICATION_JSON,
-              MediaType.TEXT_PLAIN,
-              "text/csv",
-              "application/x-jsonlines"})
-  @Produces("text/event-stream;qs=0.9")
+  @Consumes({ APPLICATION_JSON,
+              TEXT_PLAIN,
+              TEXT_CSV,
+              APPLICATION_JSONLINES })
+  @Produces(TEXT_EVENT_STREAM)
   public void analyzeBulkRecordsDirect(
       @HeaderParam("Content-Type") MediaType mediaType,
       InputStream dataInputStream,
@@ -149,27 +280,64 @@ public class BulkDataServices {
       @Context Sse sse)
   {
     try {
-      this.analyzeBulkRecords(mediaType,
-                              dataInputStream,
-                              uriInfo,
-                              progressPeriod,
-                              sseEventSink,
-                              sse);
-    } catch (RuntimeException e) {
-      throw logOnceAndThrow(e);
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      Timers timers = newTimers();
+      AccessToken accessToken = provider.authorizeProlongedOperation();
+      if (accessToken == null) {
+        throw newServiceUnavailableErrorException(
+            POST, uriInfo, timers,
+            "Too many prolonged operations running.  Try again later.");
+      }
+      try {
+        analyzeBulkRecords(provider,
+                           timers,
+                           mediaType,
+                           dataInputStream,
+                           uriInfo,
+                           progressPeriod,
+                           sseEventSink,
+                           sse,
+                           null);
 
-    } catch (Exception e) {
-      throw logOnceAndThrow(new RuntimeException(e));
+      } catch (RuntimeException e) {
+        throw logOnceAndThrow(e);
 
+      } catch (Exception e) {
+        throw logOnceAndThrow(new RuntimeException(e));
+
+      } finally {
+        provider.concludeProlongedOperation(accessToken);
+      }
+
+    } catch (WebApplicationException e) {
+      OutboundSseEvent.Builder eventBuilder = sse.newEventBuilder();
+      OutboundSseEvent event =
+          eventBuilder.name(FAILED_EVENT)
+              .id(String.valueOf(0))
+              .mediaType(APPLICATION_JSON_TYPE)
+              .data(e.getResponse().getEntity())
+              .reconnectDelay(RECONNECT_DELAY)
+              .build();
+      sseEventSink.send(event);
     }
   }
 
   /**
-   * Analyzes the bulk data records.
+   * Analyzes the bulk data records via form data using SSE.
+   *
+   * @param mediaType The media type for the content.
+   * @param dataInputStream The input stream to read the uploaded data.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param progressPeriod The suggested maximum time between SSE `progress`
+   *                       events specified in milliseconds.  If not specified
+   *                       then the default of `3000` milliseconds (i.e.: 3
+   *                       seconds) is used.
+   * @param sseEventSink The {@link SseEventSink} for the SSE protocol.
+   * @param sse The {@link Sse} instance for the SSE protocol.
    */
   @POST
   @Path("/analyze")
-  @Produces("text/event-stream;qs=0.9")
+  @Produces(TEXT_EVENT_STREAM)
   public void analyzeBulkRecordsViaForm(
       @HeaderParam("Content-Type") MediaType mediaType,
       @FormDataParam("data") InputStream dataInputStream,
@@ -179,23 +347,74 @@ public class BulkDataServices {
       @Context Sse sse)
   {
     try {
-      this.analyzeBulkRecords(mediaType,
-                              dataInputStream,
-                              uriInfo,
-                              progressPeriod,
-                              sseEventSink,
-                              sse);
+      Timers        timers      = newTimers();
+      SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+      AccessToken   accessToken = provider.authorizeProlongedOperation();
+      if (accessToken == null) {
+        throw newServiceUnavailableErrorException(
+            POST, uriInfo, timers,
+            "Too many prolonged operations running.  Try again later.");
+      }
+      try {
+        analyzeBulkRecords(provider,
+                           timers,
+                           mediaType,
+                           dataInputStream,
+                           uriInfo,
+                           progressPeriod,
+                           sseEventSink,
+                           sse,
+                           null);
 
-    } catch (RuntimeException e) {
-      throw logOnceAndThrow(e);
+      } catch (RuntimeException e) {
+        throw logOnceAndThrow(e);
 
-    } catch (Exception e) {
-      throw logOnceAndThrow(new RuntimeException(e));
+      } catch (Exception e) {
+        throw logOnceAndThrow(new RuntimeException(e));
+      } finally {
+        provider.concludeProlongedOperation(accessToken);
+      }
+    } catch (WebApplicationException e) {
+      OutboundSseEvent.Builder eventBuilder = sse.newEventBuilder();
+      OutboundSseEvent event =
+          eventBuilder.name(FAILED_EVENT)
+              .id(String.valueOf(0))
+              .mediaType(APPLICATION_JSON_TYPE)
+              .data(e.getResponse().getEntity())
+              .reconnectDelay(RECONNECT_DELAY)
+              .build();
+      sseEventSink.send(event);
     }
   }
 
   /**
-   * Analyzes the bulk data records.
+   * Loads the bulk data records via form.
+   *
+   * @param dataSource The data source to assign to the loaded records unless
+   *                   another data source mapping supercedes this default.
+   * @param mapDataSources The JSON string mapping specific data sources to
+   *                       alternate data source names.  A mapping from
+   *                       empty-string is used for mapping records with no
+   *                       data source specified.
+   * @param mapDataSourceList The {@link List} of delimited strings that begin
+   *                          the delimiter, followed by the "from" data source
+   *                          then the delimiter then the target data source.
+   * @param entityType The entity type to assign to the loaded records unless
+   *                   another entity type mapping supercedes this default.
+   * @param mapEntityTypes The JSON string mapping specific entity types to
+   *                       alternate entity type names.  A mapping from
+   *                       empty-string is used for mapping records with no
+   *                       entity type specified.
+   * @param mapEntityTypeList The {@link List} of delimited strings that begin
+   *                          the delimiter, followed by the "from" entity type
+   *                          then the delimiter then the target entity type.
+   * @param loadId The optional load ID to use for loading the records.
+   * @param maxFailures The maximum number of failures or a negative number if
+   *                    no maximum.
+   * @param mediaType The media type for the content.
+   * @param dataInputStream The input stream to read the uploaded data.
+   * @param fileMetaData The form meta data for the uploaded file.
+   * @param uriInfo The {@link UriInfo} for the request.
    */
   @POST
   @Path("/load")
@@ -213,22 +432,33 @@ public class BulkDataServices {
       @FormDataParam("data") FormDataContentDisposition fileMetaData,
       @Context UriInfo uriInfo)
   {
+    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+    Timers        timers      = newTimers();
+    AccessToken   accessToken = provider.authorizeProlongedOperation();
+    if (accessToken == null) {
+      throw newServiceUnavailableErrorException(
+          POST, uriInfo, timers,
+          "Too many prolonged operations running.  Try again later.");
+    }
     try {
-      return this.loadBulkRecords(dataSource,
-                                  mapDataSources,
-                                  mapDataSourceList,
-                                  entityType,
-                                  mapEntityTypes,
-                                  mapEntityTypeList,
-                                  loadId,
-                                  maxFailures,
-                                  mediaType,
-                                  dataInputStream,
-                                  fileMetaData,
-                                  uriInfo,
-                                  null,
-                                  null,
-                                  null);
+      return loadBulkRecords(provider,
+                             timers,
+                             dataSource,
+                             mapDataSources,
+                             mapDataSourceList,
+                             entityType,
+                             mapEntityTypes,
+                             mapEntityTypeList,
+                             loadId,
+                             maxFailures,
+                             mediaType,
+                             dataInputStream,
+                             fileMetaData,
+                             uriInfo,
+                             null,
+                             null,
+                             null,
+                             null);
 
     } catch (ForbiddenException e) {
       throw e;
@@ -239,11 +469,35 @@ public class BulkDataServices {
     } catch (Exception e) {
       throw logOnceAndThrow(new RuntimeException(e));
 
+    } finally {
+      provider.concludeProlongedOperation(accessToken);
     }
   }
 
   /**
-   * Analyzes the bulk data records.
+   * Loads the bulk data records via direct upload.
+   *
+   * @param dataSource The data source to assign to the loaded records unless
+   *                   another data source mapping supercedes this default.
+   * @param mapDataSources The JSON string mapping specific data sources to
+   *                       alternate data source names.  A mapping from
+   *                       empty-string is used for mapping records with no
+   *                       data source specified.
+   * @param mapDataSourceList The {@link List} of delimited strings that begin
+   *                          the delimiter, followed by the "from" data source
+   *                          then the delimiter then the target data source.
+   * @param entityType The entity type to assign to the loaded records unless
+   *                   another entity type mapping supercedes this default.
+   * @param mapEntityTypes The JSON string mapping specific entity types to
+   *                       alternate entity type names.  A mapping from
+   *                       empty-string is used for mapping records with no
+   *                       entity type specified.
+   * @param mapEntityTypeList The {@link List} of delimited strings that begin
+   *                          the delimiter, followed by the "from" entity type
+   *                          then the delimiter then the target entity type.
+   * @param loadId The optional load ID to use for loading the records.
+   * @param maxFailures The maximum number of failures or a negative number if
+   *                    no maximum.
    */
   @POST
   @Path("/load")
@@ -264,22 +518,33 @@ public class BulkDataServices {
       InputStream dataInputStream,
       @Context UriInfo uriInfo)
   {
+    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+    Timers        timers      = newTimers();
+    AccessToken   accessToken = provider.authorizeProlongedOperation();
+    if (accessToken == null) {
+      throw newServiceUnavailableErrorException(
+          POST, uriInfo, timers,
+          "Too many prolonged operations running.  Try again later.");
+    }
     try {
-      return this.loadBulkRecords(dataSource,
-                                  mapDataSources,
-                                  mapDataSourceList,
-                                  entityType,
-                                  mapEntityTypes,
-                                  mapEntityTypeList,
-                                  loadId,
-                                  maxFailures,
-                                  mediaType,
-                                  dataInputStream,
-                                  null,
-                                  uriInfo,
-                                  null,
-                                  null,
-                                  null);
+      return loadBulkRecords(provider,
+                             timers,
+                             dataSource,
+                             mapDataSources,
+                             mapDataSourceList,
+                             entityType,
+                             mapEntityTypes,
+                             mapEntityTypeList,
+                             loadId,
+                             maxFailures,
+                             mediaType,
+                             dataInputStream,
+                             null,
+                             uriInfo,
+                             null,
+                             null,
+                             null,
+                             null);
 
     } catch (ForbiddenException e) {
       throw e;
@@ -290,15 +555,48 @@ public class BulkDataServices {
     } catch (Exception e) {
       throw logOnceAndThrow(new RuntimeException(e));
 
+    } finally {
+      provider.concludeProlongedOperation(accessToken);
     }
   }
 
   /**
-   * Analyzes the bulk data records.
+   * Loads bulk data records via form using SSE.
+   *
+   * @param dataSource The data source to assign to the loaded records unless
+   *                   another data source mapping supercedes this default.
+   * @param mapDataSources The JSON string mapping specific data sources to
+   *                       alternate data source names.  A mapping from
+   *                       empty-string is used for mapping records with no
+   *                       data source specified.
+   * @param mapDataSourceList The {@link List} of delimited strings that begin
+   *                          the delimiter, followed by the "from" data source
+   *                          then the delimiter then the target data source.
+   * @param entityType The entity type to assign to the loaded records unless
+   *                   another entity type mapping supercedes this default.
+   * @param mapEntityTypes The JSON string mapping specific entity types to
+   *                       alternate entity type names.  A mapping from
+   *                       empty-string is used for mapping records with no
+   *                       entity type specified.
+   * @param mapEntityTypeList The {@link List} of delimited strings that begin
+   *                          the delimiter, followed by the "from" entity type
+   *                          then the delimiter then the target entity type.
+   * @param loadId The optional load ID to use for loading the records.
+   * @param maxFailures The maximum number of failures or a negative number if
+   *                    no maximum.
+   * @param progressPeriod The suggested maximum time between SSE `progress`
+   *                       events specified in milliseconds.  If not specified
+   *                       then the default of `3000` milliseconds (i.e.: 3
+   *                       seconds) is used.
+   * @param mediaType The media type for the content.
+   * @param dataInputStream The input stream to read the uploaded data.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param sseEventSink The {@link SseEventSink} for the SSE protocol.
+   * @param sse The {@link Sse} instance for the SSE protocol.
    */
   @POST
   @Path("/load")
-  @Produces("text/event-stream;qs=0.9")
+  @Produces(TEXT_EVENT_STREAM)
   public void loadBulkRecordsViaForm(
       @QueryParam("dataSource") String dataSource,
       @QueryParam("mapDataSources") String mapDataSources,
@@ -317,22 +615,33 @@ public class BulkDataServices {
       @Context Sse sse)
 
   {
+    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+    Timers        timers      = newTimers();
+    AccessToken   accessToken = provider.authorizeProlongedOperation();
+    if (accessToken == null) {
+      throw newServiceUnavailableErrorException(
+          POST, uriInfo, timers,
+          "Too many prolonged operations running.  Try again later.");
+    }
     try {
-      this.loadBulkRecords(dataSource,
-                           mapDataSources,
-                           mapDataSourceList,
-                           entityType,
-                           mapEntityTypes,
-                           mapEntityTypeList,
-                           loadId,
-                           maxFailures,
-                           mediaType,
-                           dataInputStream,
-                           fileMetaData,
-                           uriInfo,
-                           progressPeriod,
-                           sseEventSink,
-                           sse);
+      loadBulkRecords(provider,
+                      timers,
+                      dataSource,
+                      mapDataSources,
+                      mapDataSourceList,
+                      entityType,
+                      mapEntityTypes,
+                      mapEntityTypeList,
+                      loadId,
+                      maxFailures,
+                      mediaType,
+                      dataInputStream,
+                      fileMetaData,
+                      uriInfo,
+                      progressPeriod,
+                      sseEventSink,
+                      sse,
+                      null);
 
     } catch (ForbiddenException e) {
       throw e;
@@ -343,19 +652,52 @@ public class BulkDataServices {
     } catch (Exception e) {
       throw logOnceAndThrow(new RuntimeException(e));
 
+    } finally {
+      provider.concludeProlongedOperation(accessToken);
     }
   }
 
   /**
-   * Analyzes the bulk data records.
+   * Loads the bulk data records via direct upload using SSE.
+   *
+   * @param dataSource The data source to assign to the loaded records unless
+   *                   another data source mapping supercedes this default.
+   * @param mapDataSources The JSON string mapping specific data sources to
+   *                       alternate data source names.  A mapping from
+   *                       empty-string is used for mapping records with no
+   *                       data source specified.
+   * @param mapDataSourceList The {@link List} of delimited strings that begin
+   *                          the delimiter, followed by the "from" data source
+   *                          then the delimiter then the target data source.
+   * @param entityType The entity type to assign to the loaded records unless
+   *                   another entity type mapping supercedes this default.
+   * @param mapEntityTypes The JSON string mapping specific entity types to
+   *                       alternate entity type names.  A mapping from
+   *                       empty-string is used for mapping records with no
+   *                       entity type specified.
+   * @param mapEntityTypeList The {@link List} of delimited strings that begin
+   *                          the delimiter, followed by the "from" entity type
+   *                          then the delimiter then the target entity type.
+   * @param loadId The optional load ID to use for loading the records.
+   * @param maxFailures The maximum number of failures or a negative number if
+   *                    no maximum.
+   * @param progressPeriod The suggested maximum time between SSE `progress`
+   *                       events specified in milliseconds.  If not specified
+   *                       then the default of `3000` milliseconds (i.e.: 3
+   *                       seconds) is used.
+   * @param mediaType The media type for the content.
+   * @param dataInputStream The input stream to read the uploaded data.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param sseEventSink The {@link SseEventSink} for the SSE protocol.
+   * @param sse The {@link Sse} instance for the SSE protocol.
    */
   @POST
   @Path("/load")
-  @Consumes({ MediaType.APPLICATION_JSON,
-      MediaType.TEXT_PLAIN,
-      "text/csv",
-      "application/x-jsonlines"})
-  @Produces("text/event-stream;qs=0.9")
+  @Consumes({ APPLICATION_JSON,
+              TEXT_PLAIN,
+              TEXT_CSV,
+              APPLICATION_JSONLINES })
+  @Produces(TEXT_EVENT_STREAM)
   public void loadBulkRecordsDirect(
       @QueryParam("dataSource") String dataSource,
       @QueryParam("mapDataSources") String mapDataSources,
@@ -372,22 +714,33 @@ public class BulkDataServices {
       @Context SseEventSink sseEventSink,
       @Context Sse sse)
   {
+    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+    Timers        timers      = newTimers();
+    AccessToken   accessToken = provider.authorizeProlongedOperation();
+    if (accessToken == null) {
+      throw newServiceUnavailableErrorException(
+          POST, uriInfo, timers,
+          "Too many prolonged operations running.  Try again later.");
+    }
     try {
-      this.loadBulkRecords(dataSource,
-                           mapDataSources,
-                           mapDataSourceList,
-                           entityType,
-                           mapEntityTypes,
-                           mapEntityTypeList,
-                           loadId,
-                           maxFailures,
-                           mediaType,
-                           dataInputStream,
-                           null,
-                           uriInfo,
-                           progressPeriod,
-                           sseEventSink,
-                           sse);
+      loadBulkRecords(provider,
+                      timers,
+                      dataSource,
+                      mapDataSources,
+                      mapDataSourceList,
+                      entityType,
+                      mapEntityTypes,
+                      mapEntityTypeList,
+                      loadId,
+                      maxFailures,
+                      mediaType,
+                      dataInputStream,
+                      null,
+                      uriInfo,
+                      progressPeriod,
+                      sseEventSink,
+                      sse,
+                      null);
 
     } catch (ForbiddenException e) {
       throw e;
@@ -398,26 +751,569 @@ public class BulkDataServices {
     } catch (Exception e) {
       throw logOnceAndThrow(new RuntimeException(e));
 
+    } finally {
+      provider.concludeProlongedOperation(accessToken);
+    }
+  }
+
+  /**
+   * The EOF detector thread.
+   */
+  private static class EOFDetector extends Thread {
+    /**
+     * The {@link WebSocketThread} being monitored.
+     */
+    private WebSocketThread webSocketThread = null;
+
+    /**
+     * Checks if this instance is completed.
+     */
+    private boolean completed = false;
+
+    /**
+     * Constructs with the {@link WebSocketThread} to monitor.
+     */
+    private EOFDetector(WebSocketThread thread) {
+      this.webSocketThread = thread;
+    }
+
+    /**
+     * Implemented to close the stream when we have not received in the
+     * specified timeout for the web socket thread.
+     */
+    public void run() {
+      long nanoTimeout = this.webSocketThread.eofSendTimeout * 1000000000L;
+
+      synchronized (this.webSocketThread) {
+        long waitTime = this.webSocketThread.eofSendTimeout * 1000L;
+        while (!this.completed
+                && this.webSocketThread.pipedOutputStream != null)
+        {
+          // wait for a period
+          try {
+            this.webSocketThread.wait(waitTime);
+
+          } catch (InterruptedException ignore) {
+            // ignore
+          }
+
+          // check the time
+          long now = System.nanoTime();
+          long duration = (now - this.webSocketThread.lastMessageTime);
+          boolean timedOut = (duration > nanoTimeout);
+
+          if (this.completed || timedOut) {
+            // signal EOF
+            IOUtilities.close(this.webSocketThread.pipedOutputStream);
+            this.webSocketThread.pipedOutputStream = null;
+            this.webSocketThread.notifyAll();
+            break;
+          }
+
+          // now check how long to wait next time
+          waitTime = (this.webSocketThread.eofSendTimeout * 1000L);
+          waitTime -= (duration/1000000L);
+        }
+      }
+    }
+
+    /**
+     * Method to mark this instance as completed.
+     */
+    private void complete() {
+      synchronized (this.webSocketThread) {
+        this.completed = true;
+        this.webSocketThread.notifyAll();
+      }
+    }
+  }
+
+  /**
+   * An abstract base class for the Web Socket endpoints.
+   */
+  public static abstract class WebSocketThread extends Thread {
+    /**
+     * The Web Socket {@link Session} for this instance.
+     */
+    protected Session session = null;
+
+    /**
+     * The {@link PipedInputStream} to attach to the {@link PipedOutputStream}.
+     */
+    protected PipedInputStream pipedInputStream = null;
+
+    /**
+     * The {@link PipedOutputStream} to attach to the {@link PipedInputStream}.
+     */
+    protected PipedOutputStream pipedOutputStream = null;
+
+    /**
+     * Define the progress period for reporting progress on the web socket.
+     */
+    protected Long progressPeriod = DEFAULT_PROGRESS_PERIOD;
+
+    /**
+     * The EOF send timeout.
+     */
+    protected Long eofSendTimeout = DEFAULT_EOF_SEND_TIMEOUT;
+
+    /**
+     * The time in milliseconds that the last message was received.
+     */
+    protected long lastMessageTime = -1L;
+
+    /**
+     * The {@link UriInfo} for the request.
+     */
+    protected UriInfo uriInfo = null;
+
+    /**
+     * The {@link EOFDetector} thread for monitoring for EOF.
+     */
+    protected EOFDetector eofDetector = null;
+
+    /**
+     * Flag indicating if we have started processing.
+     */
+    protected boolean started = false;
+
+    /**
+     * Flag indicating if we have begun shutting down.
+     */
+    protected boolean closing = false;
+
+    /**
+     * The {@link MediaType} to assume -- if text is sent rather than binary
+     * then {@link BulkDataServices#TEXT_PLAIN_UTF8_TYPE} will be used.
+     */
+    protected MediaType mediaType = TEXT_PLAIN_TYPE;
+
+    @OnOpen
+    public synchronized void onOpen(Session session)
+        throws IOException, IllegalArgumentException
+    {
+      this.session            = session;
+      this.pipedInputStream   = new PipedInputStream(PIPE_SIZE);
+      this.pipedOutputStream  = new PipedOutputStream(this.pipedInputStream);
+      this.uriInfo            = newProxyUriInfo(this.session);
+      this.started            = false;
+      this.lastMessageTime    = System.nanoTime();
+
+      Map<String, List<String>> params = this.session.getRequestParameterMap();
+
+      // get the progress period
+      List<String> paramValues = params.get("progressPeriod");
+      if (paramValues != null && paramValues.size() > 0) {
+        try {
+          this.progressPeriod = Long.parseLong(paramValues.get(0));
+          if (this.progressPeriod < 0L) throw new IllegalArgumentException();
+
+        } catch (IllegalArgumentException e) {
+          throw new BadRequestException(
+              "The specified progress period (progressPeriod) must be a "
+              + "non-negative long integer: " + paramValues.get(0));
+        }
+      }
+
+      // get the EOF send timeout
+      paramValues = params.get("eofSendTimeout");
+      if (paramValues != null && paramValues.size() > 0) {
+        try {
+          this.eofSendTimeout = Long.parseLong(paramValues.get(0));
+          if (this.eofSendTimeout < 0L) throw new IllegalArgumentException();
+
+        } catch (IllegalArgumentException e) {
+          throw new BadRequestException(
+              "The specified EOF send timeout (eofSendTimeout) must be a "
+                  + "non-negative long integer: " + paramValues.get(0));
+        }
+      }
+
+      // create the EOF thread
+      this.eofDetector = new EOFDetector(this);
+      this.eofDetector.start();
+    }
+
+    @OnMessage
+    public synchronized void onMessage(byte[] bytes) throws IOException
+    {
+      long now = System.nanoTime();
+      if (this.pipedOutputStream == null) {
+        // if session closed, ignore the message
+        if (!this.session.isOpen() || this.closing) return;
+
+        // if session is not closed then throw an exception
+        throw new IllegalStateException(
+            "Output stream is already closed: "
+                + ((now-this.lastMessageTime)/1000000L)
+                + "ms since last message");
+      }
+
+
+      // check if started, and if not then start the thread
+      if (!this.started) {
+        this.started = true;
+        this.start();
+      }
+
+      if (this.pipedOutputStream != null) {
+        this.pipedOutputStream.write(bytes);
+        this.pipedOutputStream.flush();
+      }
+      this.lastMessageTime = System.nanoTime();
+      this.notifyAll();
+    }
+
+    @OnMessage
+    public synchronized void onMessage(String text)  throws IOException
+    {
+      long now = System.nanoTime();
+      if (this.pipedOutputStream == null) {
+        if (!this.session.isOpen() || this.closing) return;
+        throw new IllegalStateException(
+            "Output stream is already closed: "
+                + ((now-this.lastMessageTime)/1000000L)
+                + "ms since last message");
+      }
+
+      // check if started, and if not then start the thread
+      if (!this.started) {
+        // text is being sent so set the media type to use UTF-8 charset
+        this.mediaType = TEXT_PLAIN_UTF8_TYPE;
+        this.started = true;
+        this.start();
+      }
+
+      if (this.pipedOutputStream != null) {
+        this.pipedOutputStream.write(text.getBytes(UTF_8));
+        this.pipedOutputStream.flush();
+      }
+      this.lastMessageTime = System.nanoTime();
+      this.notifyAll();
+    }
+
+    @OnClose
+    public synchronized void onClose(Session session) throws IOException {
+      IOUtilities.close(this.pipedOutputStream);
+      this.pipedOutputStream = null;
+      this.notifyAll();
+    }
+
+    @OnError
+    public synchronized void onError(Session session, Throwable throwable)
+        throws IOException
+    {
+      throwable.printStackTrace();
+      IOUtilities.close(this.pipedOutputStream);
+      this.pipedOutputStream = null;
+
+      CloseReason.CloseCode closeCode
+          = (throwable instanceof BadRequestException)
+          ? CloseReason.CloseCodes.PROTOCOL_ERROR
+          : CloseReason.CloseCodes.UNEXPECTED_CONDITION;
+
+      this.closing = true;
+      this.session.close(new CloseReason(closeCode, throwable.getMessage()));
+    }
+
+    /**
+     * Implemented to start the EOF detector and then defer to the {@link
+     * #doRun()} method.
+     */
+    public final void run() {
+      // defer the run
+      try {
+        this.doRun();
+
+      } finally {
+        // notify completion
+        this.eofDetector.complete();
+        try {
+          this.eofDetector.join();
+
+        } catch (InterruptedException ignore) {
+          // ignore
+        }
+      }
+    }
+
+    /**
+     * Override this to handle running the web socket functionality.
+     */
+    protected abstract void doRun();
+  }
+
+  /**
+   * Provides a nested class to handle analyzing bulk data records via
+   * web sockets.
+   */
+  @ServerEndpoint(value="/bulk-data/analyze",
+                  decoders = StringDecoder.class,
+                  encoders = JsonEncoder.class)
+  public static class AnalyzeWebSocket extends WebSocketThread {
+
+    /**
+     * Implemented to load the records once the thread is started.
+     */
+    protected void doRun() {
+      SzApiProvider provider  = SzApiProvider.Factory.getProvider();
+      Timers        timers    = newTimers();
+      analyzeBulkRecords(provider,
+                         timers,
+                         this.mediaType,
+                         this.pipedInputStream,
+                         this.uriInfo,
+                         this.progressPeriod,
+                         null,
+                         null,
+                         this.session);
+
+      // close the web sockets session
+      try {
+        synchronized (this) {
+          this.closing = true;
+          this.session.close();
+        }
+      } catch (IOException e) {
+        e.printStackTrace();
+        throw new RuntimeException(e);
+      }
+
+      synchronized (this) {
+        IOUtilities.close(this.pipedInputStream);
+        this.pipedInputStream = null;
+        IOUtilities.close(this.pipedOutputStream);
+        this.pipedOutputStream = null;
+        this.notifyAll();
+      }
+    }
+  }
+
+  /**
+   * Provides a nested class to handle loading bulk data records via
+   * web sockets.
+   */
+  @ServerEndpoint(value="/bulk-data/load",
+                  decoders = StringDecoder.class,
+                  encoders = JsonEncoder.class)
+  public static class LoadWebSocket extends WebSocketThread {
+    /**
+     * The data source to assign to the records loaded unless there is another
+     * mapping that supercedes this one.
+     */
+    private String dataSource;
+
+    /**
+     * The JSON string mapping specific data sources to alternate data source
+     * names.  A mapping from empty-string is used for mapping records with no
+     * data source specified.
+     */
+    private String mapDataSources;
+
+    /**
+     * The {@link List} of delimited strings that begin the delimiter, followed
+     * by the "from" data source then the delimiter then the target data source.
+     */
+    private List<String> mapDataSourceList;
+
+    /**
+     * The entity type to assign to the loaded records unless another entity
+     * type mapping supercedes this default.
+     */
+    private String entityType;
+
+    /**
+     * The JSON string mapping specific entity types to alternate entity type
+     * names.  A mapping from empty-string is used for mapping records with no
+     * entity type specified.
+     */
+    private String mapEntityTypes;
+
+    /**
+     * The {@link List} of delimited strings that begin the delimiter, followed
+     * by the "from" entity type then the delimiter then the target entity type.
+     */
+    private List<String> mapEntityTypeList;
+
+    /**
+     * The optional load ID to use for loading the records.
+     */
+    private String loadId;
+
+    /**
+     * The maximum number of failures or a negative number if no maximum.
+     */
+    private int maxFailures;
+
+    /**
+     * Provides a pre-flight check to make sure the server is not in read-only
+     * mode before opening the web socket.
+     *
+     * @param request The {@link HttpServletRequest}.
+     * @param response The {@link HttpServletResponse}.
+     *
+     * @return <tt>true</tt> if not read-only and <tt>false</tt> if so.
+     */
+    @OnUpgrade
+    public static boolean onUpgrade(HttpServletRequest  request,
+                                    HttpServletResponse response)
+      throws IOException
+    {
+      // get the provider
+      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+
+      // if not read only then simply return true
+      if (!provider.isReadOnly()) return true;
+
+      // create the timers and construct an error response
+      Timers timers = newTimers();
+      SzErrorResponse errorResponse = new SzErrorResponse(
+          GET,403, request.getRequestURI(), timers,
+          "Loading data is not allowed if Senzing API Server started "
+              + "in read-only mode");
+      errorResponse.concludeTimers();
+
+      response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+      response.setContentType("application/json; charset=utf-8");
+
+      String  jsonText  = toJsonString(errorResponse);
+      byte[]  jsonBytes = jsonText.getBytes(UTF_8);
+      int     length    = jsonBytes.length;
+
+      response.setContentLength(length);
+
+      OutputStream os = response.getOutputStream();
+      os.write(jsonBytes);
+      os.flush();
+
+      // return false
+      return false;
+    }
+
+    @Override
+    public void onOpen(Session session)
+        throws IOException, IllegalArgumentException
+    {
+      super.onOpen(session);
+
+      // get the other query parameters
+      Map<String, List<String>> params = this.session.getRequestParameterMap();
+      List<String> paramList = params.get("dataSource");
+
+      this.dataSource = (paramList == null || paramList.size() == 0) ? null
+          : paramList.get(0);
+
+      paramList = params.get("mapDataSources");
+      this.mapDataSources = (paramList == null || paramList.size() == 0) ? null
+          : paramList.get(0);
+
+      this.mapDataSourceList = params.get("mapDataSource");
+
+      paramList = params.get("entityType");
+      this.entityType = (paramList == null || paramList.size() == 0) ? null
+          : paramList.get(0);
+
+      paramList = params.get("mapEntityTypes");
+      this.mapEntityTypes = (paramList == null || paramList.size() == 0) ? null
+          : paramList.get(0);
+
+      this.mapEntityTypeList = params.get("mapEntityType");
+
+      paramList = params.get("loadId");
+      this.loadId = (paramList == null || paramList.size() == 0) ? null
+          : paramList.get(0);
+
+      paramList = params.get("maxFailures");
+      if (paramList != null && paramList.size() > 0) {
+        try {
+          this.maxFailures = Integer.parseInt(paramList.get(0));
+
+        } catch (IllegalArgumentException e) {
+          throw new BadRequestException(
+              "The specified maximum number of failures (maxFailures) must be "
+              + "an integer: " + paramList.get(0));
+        }
+      }
+    }
+
+    /**
+     * Implemented to load the records once the thread is started.
+     */
+    protected void doRun() {
+      SzApiProvider provider  = SzApiProvider.Factory.getProvider();
+      Timers        timers    = newTimers();
+
+      loadBulkRecords(provider,
+                      timers,
+                      this.dataSource,
+                      this.mapDataSources,
+                      this.mapDataSourceList,
+                      this.entityType,
+                      this.mapEntityTypes,
+                      this.mapEntityTypeList,
+                      this.loadId,
+                      this.maxFailures,
+                      this.mediaType,
+                      this.pipedInputStream,
+                      null,
+                      this.uriInfo,
+                      this.progressPeriod,
+                      null,
+                      null,
+                      this.session);
+
+      // close the web sockets session
+      try {
+        synchronized (this) {
+          this.closing = true;
+          this.session.close();
+        }
+      } catch (IOException e) {
+        e.printStackTrace();
+        throw new RuntimeException(e);
+      }
+      synchronized (this) {
+        IOUtilities.close(this.pipedInputStream);
+        IOUtilities.close(this.pipedOutputStream);
+        this.pipedInputStream = null;
+        this.pipedOutputStream = null;
+        this.notifyAll();
+      }
     }
   }
 
   /**
    * Analyzes the bulk data and returns information about it.
    */
-  private SzBulkDataAnalysisResponse analyzeBulkRecords(
+  private static SzBulkDataAnalysisResponse analyzeBulkRecords(
+      SzApiProvider               provider,
+      Timers                      timers,
       MediaType                   mediaType,
       InputStream                 dataInputStream,
       UriInfo                     uriInfo,
-      Long                        sseProgressPeriod,
+      Long                        progressPeriod,
       SseEventSink                sseEventSink,
-      Sse                         sse)
+      Sse                         sse,
+      Session                     webSocketSession)
   {
+    // convert progress period to nanoseconds
+    Long progressNanos = (progressPeriod == null)
+        ? null : progressPeriod * 1000000L;
+
     OutboundSseEvent.Builder eventBuilder
         = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
     int eventId = 0;
 
     SzBulkDataAnalysis dataAnalysis = new SzBulkDataAnalysis();
-    Timers timers = newTimers();
+
+    // check the progress period
+    validateProgressPeriod(progressPeriod,
+                           timers,
+                           uriInfo,
+                           sseEventSink,
+                           sse,
+                           webSocketSession);
+
     try {
       BulkDataSet bulkDataSet = new BulkDataSet(mediaType, dataInputStream);
       TemporaryDataCache dataCache = bulkDataSet.dataCache;
@@ -426,7 +1322,7 @@ public class BulkDataServices {
       String charset = bulkDataSet.characterEncoding;
       dataAnalysis.setCharacterEncoding(charset);
 
-      long start = System.currentTimeMillis();
+      long start = System.nanoTime();
       // check if we need to auto-detect the media type
       try (InputStream        is  = dataCache.getInputStream(true);
            InputStreamReader  isr = new InputStreamReader(is, charset);
@@ -435,7 +1331,11 @@ public class BulkDataServices {
         // if format is null then RecordReader will auto-detect
         RecordReader recordReader = new RecordReader(bulkDataSet.format, br);
         bulkDataSet.format = recordReader.getFormat();
-        dataAnalysis.setMediaType(bulkDataSet.format.getMediaType());
+        if (bulkDataSet.format != null) {
+          dataAnalysis.setMediaType(bulkDataSet.format.getMediaType());
+        } else {
+          dataAnalysis.setMediaType(null);
+        }
 
         for (JsonObject record = recordReader.readRecord();
              (record != null);
@@ -446,23 +1346,44 @@ public class BulkDataServices {
           String recordId   = JsonUtils.getString(record, "RECORD_ID");
           dataAnalysis.trackRecord(dataSrc, entityType, recordId);
 
-          long now = System.currentTimeMillis();
-          if (eventBuilder != null && (now - start > sseProgressPeriod)) {
+          long now = System.nanoTime();
+          long duration = now - start;
+          // check if the progress period has expired
+          if ((progressNanos != null) && (duration > progressNanos)) {
+            // reset the start time
             start = now;
-            OutboundSseEvent event =
-                eventBuilder.name(PROGRESS_EVENT)
-                    .id(String.valueOf(eventId++))
-                    .mediaType(APPLICATION_JSON_TYPE)
-                    .data(new SzBulkDataAnalysisResponse(
-                        POST, 200, uriInfo, timers, dataAnalysis))
-                    .reconnectDelay(RECONNECT_DELAY)
-                    .build();
-            sseEventSink.send(event);
+
+            // check if we are sending a response message
+            SzBulkDataAnalysisResponse response = null;
+            if (eventBuilder != null || webSocketSession != null) {
+              // build the response message
+              response = new SzBulkDataAnalysisResponse(
+                  POST, 200, uriInfo, timers, dataAnalysis);
+            }
+
+            // check if sending SSE events
+            if (eventBuilder != null) {
+              // send an SSE event message
+              OutboundSseEvent event =
+                  eventBuilder.name(PROGRESS_EVENT)
+                      .id(String.valueOf(eventId++))
+                      .mediaType(APPLICATION_JSON_TYPE)
+                      .data(response)
+                      .reconnectDelay(RECONNECT_DELAY)
+                      .build();
+              sseEventSink.send(event);
+            }
+
+            // check if sending WebSocket messages
+            if (webSocketSession != null) {
+              // send a message no the web socket
+              webSocketSession.getBasicRemote().sendObject(response);
+            }
           }
         }
       }
 
-    } catch (IOException e) {
+    } catch (EncodeException|IOException e) {
       e.printStackTrace();
       dataAnalysis.setStatus(ABORTED);
 
@@ -475,7 +1396,10 @@ public class BulkDataServices {
                      timers,
                      eventId,
                      eventBuilder,
-                     sseEventSink);
+                     sseEventSink,
+                     webSocketSession);
+
+      return response;
     }
 
     dataAnalysis.setStatus(COMPLETED);
@@ -484,13 +1408,41 @@ public class BulkDataServices {
         POST,200, uriInfo, timers, dataAnalysis);
 
     return completeOperation(
-        eventBuilder, sseEventSink, eventId, response);
+        eventBuilder, sseEventSink, eventId, webSocketSession, response);
+  }
+
+  /**
+   * Converts the specified object to JSON.
+   */
+  protected static String toJsonString(Object object) {
+    return toJsonString(object, false);
+  }
+
+  /**
+   * Converts the specified object to JSON.
+   */
+  protected static String toJsonString(Object object, boolean prettyPrint) {
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JodaModule());
+    try {
+      String jsonText = objectMapper.writeValueAsString(object);
+
+      if (!prettyPrint) return jsonText;
+
+      JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
+      return JsonUtils.toJsonText(jsonObject, true);
+
+    } catch (Exception e) {
+      return "FAILED TO CONVERT TO JSON: " + e.getMessage();
+    }
   }
 
   /**
    * Analyzes the bulk data and returns information about it.
    */
-  private SzBulkLoadResponse loadBulkRecords(
+  private static SzBulkLoadResponse loadBulkRecords(
+      SzApiProvider               provider,
+      Timers                      timers,
       String                      dataSource,
       String                      mapDataSources,
       List<String>                mapDataSourceList,
@@ -503,18 +1455,21 @@ public class BulkDataServices {
       InputStream                 dataInputStream,
       FormDataContentDisposition  fileMetaData,
       UriInfo                     uriInfo,
-      Long                        sseProgressPeriod,
+      Long                        progressPeriod,
       SseEventSink                sseEventSink,
-      Sse                         sse)
+      Sse                         sse,
+      Session                     webSocketSession)
   {
+    // convert the progress period to nanoseconds
+    Long progressNanos = (progressPeriod == null)
+        ? null : progressPeriod * 1000000L;
+
     OutboundSseEvent.Builder eventBuilder
         = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
     int eventId = 0;
 
     SzBulkLoadResult bulkLoadResult = new SzBulkLoadResult();
 
-    Timers timers = newTimers();
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
     ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
 
     // normalize and validate the data source
@@ -581,7 +1536,7 @@ public class BulkDataServices {
         timerPool.add(new Timers());
       }
 
-      long start = System.currentTimeMillis();
+      long start = System.nanoTime();
 
       // check if we need to auto-detect the media type
       try (InputStream        is  = dataCache.getInputStream(true);
@@ -642,13 +1597,14 @@ public class BulkDataServices {
             Timers subTimers  = timerPool.remove(0);
             AsyncResult<EngineResult> asyncResult = null;
             try {
-              asyncResult = this.asyncProcessRecord(asyncPool,
-                                                    provider,
-                                                    subTimers,
-                                                    record,
-                                                    loadId);
+              asyncResult = asyncProcessRecord(asyncPool,
+                                               provider,
+                                               subTimers,
+                                               record,
+                                               loadId);
+
             } finally {
-              this.trackLoadResult(asyncResult, bulkLoadResult);
+              trackLoadResult(asyncResult, bulkLoadResult);
               timerPool.add(subTimers);
             }
           }
@@ -662,37 +1618,64 @@ public class BulkDataServices {
             break;
           }
 
-          long now = System.currentTimeMillis();
+          long now = System.nanoTime();
+          long duration = now - start;
 
-          if (eventBuilder != null && (now - start > sseProgressPeriod)) {
-            start = now;
-            OutboundSseEvent event =
-                eventBuilder.name(PROGRESS_EVENT)
-                    .id(String.valueOf(eventId++))
-                    .mediaType(APPLICATION_JSON_TYPE)
-                    .data(new SzBulkLoadResponse(
-                        POST, 200, uriInfo, timers, bulkLoadResult))
-                    .reconnectDelay(RECONNECT_DELAY)
-                    .build();
-            sseEventSink.send(event);
+          // check if the timing has gone beyond the specified progress period
+          if ((progressNanos != null) && (duration > progressNanos)) {
+            // create the update response if there is a client expecting it
+            SzBulkLoadResponse update = null;
+            if (eventBuilder != null || webSocketSession != null) {
+              start = now;
+              update = new SzBulkLoadResponse(
+                  POST, 200, uriInfo, timers, bulkLoadResult);
+            }
+
+            // check if sending an SSE response
+            if (eventBuilder != null) {
+              OutboundSseEvent event =
+                  eventBuilder.name(PROGRESS_EVENT)
+                      .id(String.valueOf(eventId++))
+                      .mediaType(APPLICATION_JSON_TYPE)
+                      .data(update)
+                      .reconnectDelay(RECONNECT_DELAY)
+                      .build();
+              sseEventSink.send(event);
+            }
+
+            // check if sending a web socket response
+            if (webSocketSession != null) {
+              try {
+                // send the web socket message and handle exceptions
+                webSocketSession.getBasicRemote().sendObject(update);
+
+              } catch (RuntimeException e) {
+                e.printStackTrace();
+                throw e;
+
+              } catch (Exception e) {
+                e.printStackTrace();
+                throw new RuntimeException(e);
+              }
+            }
           }
         }
 
         // check if we have less than 1000 records
         if (first1000Records.size()>0 && bulkLoadResult.getStatus()!=ABORTED)
         {
-          this.processRecords(provider,
-                              timers,
-                              first1000Records,
-                              loadId,
-                              bulkLoadResult,
-                              maxFailures);
+          processRecords(provider,
+                         timers,
+                         first1000Records,
+                         loadId,
+                         bulkLoadResult,
+                         maxFailures);
         }
 
         // close out any in-flight loads from the asynchronous pool
         List<AsyncResult<EngineResult>> results = asyncPool.close();
         for (AsyncResult<EngineResult> asyncResult : results) {
-          this.trackLoadResult(asyncResult, bulkLoadResult);
+          trackLoadResult(asyncResult, bulkLoadResult);
         }
 
         // merge the timers
@@ -722,7 +1705,8 @@ public class BulkDataServices {
                      timers,
                      eventId,
                      eventBuilder,
-                     sseEventSink);
+                     sseEventSink,
+                     webSocketSession);
     }
 
     SzBulkLoadResponse response
@@ -733,7 +1717,7 @@ public class BulkDataServices {
                                  bulkLoadResult);
 
     return completeOperation(
-        eventBuilder, sseEventSink, eventId, response);
+        eventBuilder, sseEventSink, eventId, webSocketSession, response);
   }
 
   /**
@@ -742,7 +1726,7 @@ public class BulkDataServices {
    * a previously executed task on the same thread or <tt>null</tt> if the
    * worker thread employed has not previously executed a task.
    */
-  private AsyncResult<EngineResult> asyncProcessRecord(
+  private static AsyncResult<EngineResult> asyncProcessRecord(
       AsyncWorkerPool<EngineResult> asyncPool,
       SzApiProvider                 provider,
       Timers                        timers,
@@ -761,12 +1745,13 @@ public class BulkDataServices {
         enteringQueue(timers);
         return provider.executeInThread(() -> {
           exitingQueue(timers);
-          int returnCode = this.addRecord(engineApi,
-                                          dataSource,
-                                          recordId,
-                                          recordJSON,
-                                          loadId,
-                                          timers);
+          int returnCode = addRecord(engineApi,
+                                     provider,
+                                     dataSource,
+                                     recordId,
+                                     recordJSON,
+                                     loadId,
+                                     timers);
 
           return new EngineResult(
               dataSource, entityType, timers, returnCode, engineApi);
@@ -788,7 +1773,7 @@ public class BulkDataServices {
    * a previously executed task on the same thread or <tt>null</tt> if the
    * worker thread employed has not previously executed a task.
    */
-  private void processRecords(
+  private static void processRecords(
       SzApiProvider     provider,
       Timers            timers,
       List<JsonObject>  records,
@@ -814,17 +1799,18 @@ public class BulkDataServices {
           bulkLoadResult.trackIncompleteRecord(dataSource, entityType);
 
         } else {
-          int returnCode = this.addRecord(engineApi,
-                                          dataSource,
-                                          recordId,
-                                          recordJSON,
-                                          loadId,
-                                          timers);
+          int returnCode = addRecord(engineApi,
+                                     provider,
+                                     dataSource,
+                                     recordId,
+                                     recordJSON,
+                                     loadId,
+                                     timers);
 
           EngineResult engineResult = new EngineResult(
               dataSource, entityType, timers, returnCode, engineApi);
 
-          this.trackLoadResult(engineResult, bulkLoadResult);
+          trackLoadResult(engineResult, bulkLoadResult);
         }
 
         // count the number of failures
@@ -845,15 +1831,49 @@ public class BulkDataServices {
   /**
    * Adds the record either with or without a record ID and tracks the timing.
    */
-  private int addRecord(G2Engine    engineApi,
-                        String      dataSource,
-                        String      recordId,
-                        String      recordJSON,
-                        String      loadId,
-                        Timers      timers)
+  private static int addRecord(G2Engine      engineApi,
+                               SzApiProvider provider,
+                               String        dataSource,
+                               String        recordId,
+                               String        recordJSON,
+                               String        loadId,
+                               Timers        timers)
   {
     int returnCode;
-    if (recordId != null) {
+    boolean asyncInfo = provider.hasInfoSink();
+    if (asyncInfo) {
+      StringBuffer sb = new StringBuffer();
+      callingNativeAPI(timers, "engine", "addRecordWithInfo");
+      returnCode = engineApi.addRecordWithInfo(
+          dataSource,
+          (recordId == null) ? "" : recordId, // empty record ID
+          recordJSON,
+          loadId,
+          0,
+          sb);
+      calledNativeAPI(timers, "engine", "addRecordWithInfo");
+
+      // check the return code before trying to send out the info
+      if (returnCode == 0) {
+        String rawInfo = sb.toString();
+
+        // check if we have raw info to send
+        if (rawInfo != null && rawInfo.trim().length() > 0) {
+          SzMessageSink infoSink = provider.acquireInfoSink();
+          SzMessage message = new SzMessage(rawInfo);
+          try {
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
+
+          } catch (Exception e) {
+            logFailedAsyncInfo(e, message);
+
+          } finally {
+            provider.releaseInfoSink(infoSink);
+          }
+        }
+      }
+
+    } else if (recordId != null) {
       callingNativeAPI(timers, "engine", "addRecord");
       returnCode = engineApi.addRecord(dataSource,
                                        recordId,
@@ -876,8 +1896,8 @@ public class BulkDataServices {
   /**
    * Tracks the asynchronous record load result in the {@link SzBulkLoadResult}.
    */
-  private void trackLoadResult(AsyncResult<EngineResult> asyncResult,
-                               SzBulkLoadResult          bulkLoadResult)
+  private static void trackLoadResult(AsyncResult<EngineResult> asyncResult,
+                                      SzBulkLoadResult          bulkLoadResult)
   {
     // check the result
     if (asyncResult != null) {
@@ -900,7 +1920,7 @@ public class BulkDataServices {
 
       // track the result
       if (engineResult != null) {
-        this.trackLoadResult(engineResult, bulkLoadResult);
+        trackLoadResult(engineResult, bulkLoadResult);
       }
     }
   }
@@ -908,8 +1928,8 @@ public class BulkDataServices {
   /**
    * Tracks the asynchronous record load result in the {@link SzBulkLoadResult}.
    */
-  private void trackLoadResult(EngineResult       engineResult,
-                               SzBulkLoadResult   bulkLoadResult)
+  private static void trackLoadResult(EngineResult       engineResult,
+                                      SzBulkLoadResult   bulkLoadResult)
   {
     // check if the add failed or succeeded
     if (engineResult.isFailed()) {
@@ -1054,21 +2074,39 @@ public class BulkDataServices {
       OutboundSseEvent.Builder  eventBuilder,
       SseEventSink              sseEventSink,
       int                       eventId,
+      Session                   webSocketSession,
       T                         response)
   {
-    if (eventBuilder != null) {
-      OutboundSseEvent event
-          = eventBuilder.name(COMPLETED_EVENT)
-          .id(String.valueOf(eventId++))
-          .mediaType(APPLICATION_JSON_TYPE)
-          .data(response)
-          .reconnectDelay(RECONNECT_DELAY)
-          .build();
-      sseEventSink.send(event);
-      sseEventSink.close();
+    if (eventBuilder != null || webSocketSession != null) {
+      // check if sending an SSE event
+      if (eventBuilder != null) {
+        OutboundSseEvent event
+            = eventBuilder.name(COMPLETED_EVENT)
+            .id(String.valueOf(eventId++))
+            .mediaType(APPLICATION_JSON_TYPE)
+            .data(response)
+            .reconnectDelay(RECONNECT_DELAY)
+            .build();
+        sseEventSink.send(event);
+        sseEventSink.close();
+      }
+
+      // check if sending a message on the web socket session
+      if (webSocketSession != null) {
+        try {
+          webSocketSession.getBasicRemote().sendObject(response);
+          webSocketSession.close();
+
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+
+      // return null here if we sent the response
       return null;
     }
 
+    // return the response
     return response;
   }
 
@@ -1079,17 +2117,29 @@ public class BulkDataServices {
       Timers                    timers,
       int                       eventId,
       OutboundSseEvent.Builder  eventBuilder,
-      SseEventSink              sseEventSink)
+      SseEventSink              sseEventSink,
+      Session                   webSocketSession)
       throws WebApplicationException
   {
     if (!isLastLoggedException(failure)) {
       failure.printStackTrace();
     }
     setLastLoggedException(failure);
-    if (eventBuilder == null) {
-      throw newInternalServerErrorException(POST, uriInfo, timers, failure);
 
-    } else {
+    // determine if we need to construct an error response
+    SzErrorResponse errorResponse = null;
+    if (eventBuilder != null || webSocketSession != null) {
+      errorResponse
+          = new SzErrorResponse(POST, 500, uriInfo, timers, failure);
+    }
+
+    // check if this is a standard HTTP request
+    if (eventBuilder == null && webSocketSession == null) {
+      throw newInternalServerErrorException(POST, uriInfo, timers, failure);
+    }
+
+    if (eventBuilder != null) {
+      // handle SSE response
       OutboundSseEvent abortEvent
           = eventBuilder.name(PROGRESS_EVENT)
           .id(String.valueOf(eventId++))
@@ -1098,9 +2148,6 @@ public class BulkDataServices {
           .reconnectDelay(RECONNECT_DELAY)
           .build();
       sseEventSink.send(abortEvent);
-
-      SzErrorResponse errorResponse
-          = new SzErrorResponse(POST, 500, uriInfo, timers, failure);
 
       OutboundSseEvent failEvent
           = eventBuilder.name(FAILED_EVENT)
@@ -1112,8 +2159,26 @@ public class BulkDataServices {
       sseEventSink.send(failEvent);
       sseEventSink.close();
 
-      return null;
     }
+
+    // check if we have a web socket session
+    if (webSocketSession != null) {
+      try {
+        webSocketSession.getBasicRemote().sendObject(response);
+        webSocketSession.getBasicRemote().sendObject(errorResponse);
+
+      } catch (RuntimeException e) {
+        e.printStackTrace();
+        throw e;
+
+      } catch (Exception e) {
+        e.printStackTrace();
+        throw new RuntimeException(e);
+      }
+    }
+
+    // return null
+    return null;
   }
 
   private static void processDataSources(Map<String, String> dataSourceMap,

@@ -22,7 +22,6 @@ import com.senzing.util.JsonUtils;
 import org.junit.jupiter.params.provider.Arguments;
 
 import javax.json.*;
-import javax.swing.text.html.HTMLDocument;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
 
@@ -1984,6 +1983,22 @@ public abstract class AbstractServiceTest {
       result.add(arguments(argArray));
     }
     return result;
+  }
+
+  /**
+   * Converts the specified object to JSON.
+   */
+  protected static String toJsonString(Object object) {
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JodaModule());
+    try {
+      String jsonText = objectMapper.writeValueAsString(object);
+      JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
+      return JsonUtils.toJsonText(jsonObject, true);
+
+    } catch (Exception e) {
+      return "FAILED TO CONVERT TO JSON: " + e.getMessage();
+    }
   }
 
   /**

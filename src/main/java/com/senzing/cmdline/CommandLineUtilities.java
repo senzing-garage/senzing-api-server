@@ -415,7 +415,8 @@ public class CommandLineUtilities {
    * @param enumClass The enumerated class for the {@link CommandLineOption}.
    */
   private static <T extends Enum<T> & CommandLineOption<T>> Map<String, T>
-  createFlagLookupMap(Class<T> enumClass) {
+    createFlagLookupMap(Class<T> enumClass)
+  {
     // get all the options
     EnumSet<T> enumSet = EnumSet.allOf(enumClass);
 

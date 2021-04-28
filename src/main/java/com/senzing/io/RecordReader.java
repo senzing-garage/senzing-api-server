@@ -417,7 +417,9 @@ public class RecordReader {
         int nextChar = pushbackReader.read();
 
         // check for EOF
-        if (nextChar < 0) break;
+        if (nextChar < 0) {
+          break;
+        }
 
         // if whitespace then skip it
         if (Character.isWhitespace((char) nextChar)) continue;
@@ -443,19 +445,28 @@ public class RecordReader {
       this.reader = reader;
     }
 
-    switch (this.format) {
-      case JSON:
-        this.recordProvider = new JsonArrayRecordProvider(this.reader);
-        break;
-      case JSON_LINES:
-        this.recordProvider = new JsonLinesRecordProvider(this.reader);
-        break;
-      case CSV:
-        this.recordProvider = new CsvRecordProvider(this.reader);
-        break;
-      default:
-        throw new IllegalStateException(
-            "Unrecognized RecordReader.Format; " + this.format);
+    // default to JSON format if EOF detected
+    if (this.format != null) {
+      switch (this.format) {
+        case JSON:
+          this.recordProvider = new JsonArrayRecordProvider(this.reader);
+          break;
+        case JSON_LINES:
+          this.recordProvider = new JsonLinesRecordProvider(this.reader);
+          break;
+        case CSV:
+          this.recordProvider = new CsvRecordProvider(this.reader);
+          break;
+        default:
+          throw new IllegalStateException(
+              "Unrecognized RecordReader.Format; " + this.format);
+      }
+    } else {
+      // set the format to JSON-Lines
+      this.format = Format.JSON_LINES;
+
+      // use a JSON-lines record provider if the format is null
+      this.recordProvider = new JsonLinesRecordProvider(this.reader);
     }
 
     // initialize the data source map with upper-case keys

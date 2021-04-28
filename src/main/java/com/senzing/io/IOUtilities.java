@@ -36,6 +36,44 @@ public class IOUtilities {
   }
 
   /**
+   * Reads an ASCII line of text from the specified {@link InputStream} until
+   * a linefeed character is encountered.
+   *
+   * @param inputStream The input stream to read from.
+   *
+   * @return The line that was read or <tt>null</tt> if EOF was reached.
+   */
+  public static String readAsciiLine(InputStream inputStream)
+      throws IOException
+  {
+    StringBuilder sb = new StringBuilder();
+    int readCount = 0;
+    for (int readByte = inputStream.read();
+         readByte >= 0;
+         readByte = inputStream.read())
+    {
+      readCount++;
+      if (readByte == '\n') break;
+      sb.append((char) readByte);
+    }
+    if (readCount == 0) return null;
+    return sb.toString().trim();
+  }
+
+  /**
+   * Closes an {@link AutoCloseable} and traps and ignores any exception.
+   *
+   * @param closeable The {@link AutoCloseable} to close.
+   */
+  public static void close(AutoCloseable closeable) {
+    try {
+      if (closeable != null) closeable.close();
+    } catch (Exception ignore) {
+      // ignore the exception
+    }
+  }
+
+  /**
    * Reads the contents of the file as text and returns the {@link String}
    * representing the contents.  The text is expected to be encoded in the
    * specified character encoding.  If the specified character encoding is

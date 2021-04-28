@@ -10,6 +10,9 @@ import org.junit.jupiter.params.provider.MethodSource;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.websocket.ContainerProvider;
+import javax.websocket.Session;
+import javax.websocket.WebSocketContainer;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
@@ -19,6 +22,8 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +31,7 @@ import java.util.Map;
 import static com.senzing.api.services.ResponseValidators.validateBasics;
 import static org.junit.jupiter.api.Assertions.fail;
 import static com.senzing.api.model.SzHttpMethod.POST;
+import static com.senzing.api.model.SzHttpMethod.GET;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
@@ -43,6 +49,7 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
 
   @ParameterizedTest
   @MethodSource("getLoadBulkRecordsParameters")
+  @Override
   public void loadBulkRecordsViaFormTest(
       String              testInfo,
       MediaType mediaType,
@@ -151,7 +158,8 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
 
   @ParameterizedTest
   @MethodSource("getLoadBulkRecordsParameters")
-  public void loadBulkRecordsDirectHttpTest(
+  @Override
+  public void loadBulkRecordsViaDirectHttpTest(
       String              testInfo,
       MediaType           mediaType,
       File                bulkDataFile,
@@ -189,6 +197,7 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
 
   @ParameterizedTest
   @MethodSource("getLoadBulkRecordsParameters")
+  @Override
   public void loadBulkRecordsDirectJavaClientTest(
       String              testInfo,
       MediaType           mediaType,
@@ -229,7 +238,128 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
   }
 
   @ParameterizedTest
+  @MethodSource("getLoadBulkRecordsParameters")
+  @Override
+  public void loadBulkRecordsViaWebSocketsTest(
+      String              testInfo,
+      MediaType           mediaType,
+      File                bulkDataFile,
+      SzBulkDataAnalysis  analysis,
+      Map<String,String>  dataSourceMap,
+      Map<String,String>  entityTypeMap)
+  {
+    this.performTest(() -> {
+      this.livePurgeRepository();
+
+      String uriText = this.formatServerUri(formatLoadURL(
+          CONTACTS_DATA_SOURCE, GENERIC_ENTITY_TYPE, null, null,
+          dataSourceMap, entityTypeMap, null));
+      uriText = uriText.replaceAll("^http:(.*)", "ws:$1");
+
+      BulkDataWebSocketClient client = null;
+      try {
+        client = new BulkDataWebSocketClient(bulkDataFile, mediaType);
+        WebSocketContainer container = ContainerProvider.getWebSocketContainer();
+        container.connectToServer(client, URI.create(uriText));
+
+        fail("Successfully connected to web socket for bulk load when started "
+             + "in read-only mode: " + testInfo);
+
+      } catch (Exception expected) {
+        if (client != null) {
+          Object next = client.getNextResponse();
+          if (next != null) {
+            if (! (next instanceof Throwable)) {
+              fail("Expected failure on Web Socket connection to read-only "
+                   + "server, but got a non-failure response instead: " + next);
+            }
+            Throwable throwable = (Throwable) next;
+            String message = throwable.getMessage();
+            if (!message.contains("403")) {
+              fail("Got an exception on Web Socket connection to "
+                   + "read-only server, but it was not a 403 failure",
+                   throwable);
+            }
+          }
+        }
+      }
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("getLoadBulkRecordsParameters")
+  @Override
+  public void loadBulkRecordsViaSSETest(
+      String              testInfo,
+      MediaType           mediaType,
+      File                bulkDataFile,
+      SzBulkDataAnalysis  analysis,
+      Map<String,String>  dataSourceMap,
+      Map<String,String>  entityTypeMap)
+  {
+    this.performTest(() -> {
+      this.livePurgeRepository();
+
+      String uriText = this.formatServerUri(formatLoadURL(
+          CONTACTS_DATA_SOURCE, GENERIC_ENTITY_TYPE, null, null,
+          dataSourceMap, entityTypeMap, null));
+
+      try {
+        long before = System.nanoTime();
+
+        URL url = new URL(uriText);
+
+        BulkDataSSEClient client = new BulkDataSSEClient(url,
+                                                         bulkDataFile,
+                                                         mediaType);
+
+        client.start();
+
+        SzErrorResponse errorResponse = null;
+        // grab the results
+        for (Object next = client.getNextResponse();
+             next != null;
+             next = client.getNextResponse())
+        {
+          // check if there was a failure
+          if (next instanceof Throwable) {
+            fail((Throwable) next);
+          }
+
+          // get as a string
+          String jsonText = next.toString();
+          if (jsonText.matches(".*\"httpStatusCode\":\\s*200.*") ) {
+            fail("Received 200 response for read-only: " + jsonText);
+
+          } else {
+            errorResponse = jsonParse(jsonText, SzErrorResponse.class);
+            errorResponse.concludeTimers();
+            break;
+          }
+        }
+        long after = System.nanoTime();
+
+        if (errorResponse == null) {
+          fail("Did not receive an error response for SSE bulk-load test "
+               + "against a read-only API Server: " + testInfo);
+        }
+
+        validateBasics(
+            testInfo, errorResponse, 403, POST,
+            uriText, after - before);
+
+      } catch (Exception e) {
+        System.err.println("********** FAILED TEST: " + testInfo);
+        e.printStackTrace();
+        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
+  @ParameterizedTest
   @MethodSource("getMaxFailureArgs")
+  @Override
   public void testMaxFailuresOnLoad(
       int                   recordCount,
       Integer               maxFailures,

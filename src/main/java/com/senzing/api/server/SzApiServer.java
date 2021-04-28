@@ -1,10 +1,10 @@
 package com.senzing.api.server;
 
 import java.io.*;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.URLDecoder;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.Instant;
@@ -17,7 +17,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.regex.Pattern;
 
 import com.senzing.api.BuildInfo;
+import com.senzing.api.server.mq.SzMessagingEndpoint;
+import com.senzing.api.server.mq.SzMessagingEndpointFactory;
+import com.senzing.api.services.SzMessageSink;
 import com.senzing.api.model.SzVersionInfo;
+import com.senzing.api.websocket.WebSocketFilter;
 import com.senzing.cmdline.CommandLineValue;
 import com.senzing.nativeapi.EngineStatsLoggingHandler;
 import com.senzing.nativeapi.NativeApiFactory;
@@ -30,8 +34,7 @@ import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.WorkerThreadPool;
 import com.senzing.util.AccessToken;
-import org.eclipse.jetty.rewrite.handler.RewriteRegexRule;
-import org.eclipse.jetty.rewrite.handler.TerminatingRegexRule;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.ServerConnector;
 
 import org.eclipse.jetty.server.Server;
@@ -41,9 +44,15 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.rewrite.handler.RewriteHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
+import org.eclipse.jetty.util.thread.ThreadPool;
+import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
 
 import javax.json.*;
 import javax.servlet.DispatcherType;
+import javax.websocket.DeploymentException;
+import javax.websocket.server.ServerContainer;
+import javax.websocket.server.ServerEndpointConfig;
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
 
@@ -52,6 +61,7 @@ import static com.senzing.util.WorkerThreadPool.Task;
 import static com.senzing.cmdline.CommandLineUtilities.*;
 import static com.senzing.io.IOUtilities.*;
 import static com.senzing.util.LoggingUtilities.*;
+import static com.senzing.api.server.SzApiServerOption.*;
 import static com.senzing.api.server.SzApiServerConstants.*;
 
 /**
@@ -59,6 +69,16 @@ import static com.senzing.api.server.SzApiServerConstants.*;
  *
  */
 public class SzApiServer implements SzApiProvider {
+  /**
+   * The period to avoid over-logging of the diagnostics.
+   */
+  private static final long DIAGNOSTIC_PERIOD = (1000L * 60L * 45L);
+
+  /**
+   * Set the timeout for web socket reads.
+   */
+  public static final long WEB_SOCKET_TIMEOUT = 1000 * 60 * 60 * 24;
+
   /**
    * The pattern for legal base paths.
    */
@@ -81,11 +101,6 @@ public class SzApiServer implements SzApiProvider {
    */
   private static final DateTimeFormatter BUILD_DATE_FORMATTER
       = DateTimeFormatter.ofPattern(BUILD_DATE_PATTERN).withZone(BUILD_ZONE);
-
-  /**
-   * The period to avoid over-logging of the diagnostics.
-   */
-  private static final long DIAGNOSTIC_PERIOD = (1000L * 60L * 45L);
 
   /**
    * The number of milliseconds to provide advance warning of an expiring
@@ -205,6 +220,11 @@ public class SzApiServer implements SzApiProvider {
   private int concurrency;
 
   /**
+   * The maximum number of threads for the HTTP server thread pool.
+   */
+  private int httpConcurrency;
+
+  /**
    * The {@link G2Config} config API.
    */
   private G2Config configApi;
@@ -223,6 +243,16 @@ public class SzApiServer implements SzApiProvider {
    * The {@link G2Diagnostic} diagnostics API.
    */
   private G2Diagnostic diagnosticApi;
+
+  /**
+   * The {@link SzMessagingEndpoint} to use for asynchronous info messages.
+   */
+  private SzMessagingEndpoint infoEndpoint;
+
+  /**
+   * The {@link SzMessagingEndpoint} to use for asynchronous load messages.
+   */
+  private SzMessagingEndpoint loadEndpoint;
 
   /**
    * The {@link G2EngineRetryHandler} backing the proxied
@@ -353,6 +383,12 @@ public class SzApiServer implements SzApiProvider {
   private WorkerThreadPool workerThreadPool;
 
   /**
+   * The {@link Set} of {@link AccessToken} instances for authorized
+   * prolonged operations.
+   */
+  private final Set<AccessToken> prolongedAuthSet = new LinkedHashSet<>();
+
+  /**
    * The {@link Reinitializer} to periodically check if the configuration
    * has changed.
    */
@@ -389,6 +425,17 @@ public class SzApiServer implements SzApiProvider {
    * purging.
    */
   private final ReadWriteLock purgeLock = new ReentrantReadWriteLock();
+
+  /**
+   * The {@link Map} of Web Socket implementation classes to the {@link String}
+   * path endpoints.
+   */
+  private Map<Class, String> webSocketClasses = null;
+
+  /**
+   * A general purpose object to use for synchronized locks.
+   */
+  private final Object monitor = new Object();
 
   /**
    * Returns the base URL for this instance.
@@ -561,6 +608,51 @@ public class SzApiServer implements SzApiProvider {
   @Override
   public int getConcurrency() {
     return this.workerThreadPool.size();
+  }
+
+  @Override
+  public int getWebSocketsMessageMaxSize() {
+    return WEB_SOCKETS_MESSAGE_MAX_SIZE;
+  }
+
+  @Override
+  public boolean hasLoadSink() {
+    return (this.loadEndpoint != null);
+  }
+
+  @Override
+  public SzMessageSink acquireLoadSink() {
+    return (this.loadEndpoint == null) ? null
+        : this.loadEndpoint.acquireMessageSink();
+  }
+
+  @Override
+  public void releaseLoadSink(SzMessageSink sink) {
+    if (this.loadEndpoint == null) {
+      throw new IllegalStateException(
+          "No load message endpoint exists for releasing the sink");
+    }
+    this.loadEndpoint.releaseMessageSink(sink);
+  }
+
+  @Override
+  public boolean hasInfoSink() {
+    return (this.infoEndpoint != null);
+  }
+
+  @Override
+  public SzMessageSink acquireInfoSink() {
+    return (this.infoEndpoint == null) ? null
+        : this.infoEndpoint.acquireMessageSink();
+  }
+
+  @Override
+  public void releaseInfoSink(SzMessageSink sink) {
+    if (this.infoEndpoint == null) {
+      throw new IllegalStateException(
+          "No load message endpoint exists for releasing the sink");
+    }
+    this.infoEndpoint.releaseMessageSink(sink);
   }
 
   @Override
@@ -841,8 +933,7 @@ public class SzApiServer implements SzApiProvider {
               File f = new File(params.get(0));
               return new FileMonitor(f);
 
-            case HTTP_PORT:
-            {
+            case HTTP_PORT: {
               int port = Integer.parseInt(params.get(0));
               if (port < 0) {
                 throw new IllegalArgumentException(
@@ -868,12 +959,10 @@ public class SzApiServer implements SzApiProvider {
               }
               return addr;
 
-            case URL_BASE_PATH:
-            {
+            case URL_BASE_PATH: {
               return validateBasePath(params.get(0));
             }
-            case CONCURRENCY:
-            {
+            case CONCURRENCY: {
               int threadCount;
               try {
                 threadCount = Integer.parseInt(params.get(0));
@@ -886,6 +975,44 @@ public class SzApiServer implements SzApiProvider {
                     "Negative thread counts are not allowed: " + threadCount);
               }
               return threadCount;
+            }
+
+            case HTTP_CONCURRENCY: {
+              int threadCount;
+              try {
+                threadCount = Integer.parseInt(params.get(0));
+              } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException(
+                    "Thread count must be an integer: " + params.get(0));
+              }
+              if (threadCount < MINIMUM_HTTP_CONCURRENCY) {
+                throw new IllegalArgumentException(
+                    "Negative thread counts are not allowed: " + threadCount);
+              }
+              return threadCount;
+            }
+
+            case MODULE_NAME:
+            case ALLOWED_ORIGINS:
+            case KAFKA_INFO_BOOTSTRAP_SERVER:
+            case KAFKA_INFO_GROUP:
+            case KAFKA_INFO_TOPIC:
+            case RABBIT_INFO_HOST:
+            case RABBIT_INFO_USER:
+            case RABBIT_INFO_PASSWORD:
+            case RABBIT_INFO_VIRTUAL_HOST:
+            case RABBIT_INFO_EXCHANGE:
+            case RABBIT_INFO_ROUTING_KEY:
+            case SQS_INFO_URL:
+              return params.get(0);
+
+            case RABBIT_INFO_PORT: {
+              int port = Integer.parseInt(params.get(0));
+              if (port < 0) {
+                throw new IllegalArgumentException(
+                    "Negative RabbitMQ port numbers are not allowed: " + port);
+              }
+              return port;
             }
 
             case INI_FILE:
@@ -994,12 +1121,8 @@ public class SzApiServer implements SzApiProvider {
                       + option.getCommandLineFlag()
                       + " must be true or false: " + params.get(0));
 
-            case MODULE_NAME:
-            case ALLOWED_ORIGINS:
-              return params.get(0);
 
-            case STATS_INTERVAL:
-            {
+            case STATS_INTERVAL: {
               long statsInterval;
               try {
                 statsInterval = Long.parseLong(params.get(0));
@@ -1173,6 +1296,15 @@ public class SzApiServer implements SzApiProvider {
             + DEFAULT_CONCURRENCY + ".",
         "        --> VIA ENVIRONMENT: " + CONCURRENCY.getEnvironmentVariable(),
         "",
+        "   --http-concurrency <thread-count>",
+        "        Also -httpConcurrency.  Sets the maximum number of threads available",
+        "        for the HTTP server.  The single parameter to this option should be",
+        "        a positive integer.  If not specified, then this defaults to "
+            + DEFAULT_HTTP_CONCURRENCY + ".  If",
+        "        the specified thread count is less than " + MINIMUM_HTTP_CONCURRENCY
+            + " then an error is reported",
+        "        --> VIA ENVIRONMENT: " + HTTP_CONCURRENCY.getEnvironmentVariable(),
+        "",
         "   --module-name <module-name>",
         "        Also -moduleName.  The module name to initialize with.  If not",
         "        specified, then the module name defaults to \""
@@ -1213,28 +1345,29 @@ public class SzApiServer implements SzApiProvider {
         "        --> VIA ENVIRONMENT: " + CONFIG_ID.getEnvironmentVariable(),
         "",
         "   --auto-refresh-period <positive-integer-seconds|0|negative-integer>",
-        "        Also -autoRefreshPeriod.  If leveraging the default configuration stored",
-        "        in the database, this is used to specify how often the API server should",
-        "        background check that the current active config is the same as the",
-        "        current default config, and if different reinitialize with the current",
-        "        default config.  If zero is specified, then the auto-refresh is disabled",
-        "        and it will only occur when a requested configuration element is not",
-        "        found in the current active config.  Specifying a negative integer is",
-        "        allowed but is used to enable a check and conditional refresh only when",
-        "        manually requested (programmatically).  NOTE: This is option ignored if",
-        "        auto-refresh is disabled because the config was specified via the",
-        "        G2CONFIGFILE init option or if --config-id has been specified to lock to",
-        "        a specific configuration.",
+        "        Also -autoRefreshPeriod.  If leveraging the default configuration",
+        "        stored in the database, this is used to specify how often the API",
+        "        server should background check that the current active config is the",
+        "        same as the current default config, and if different reinitialize",
+        "        with the current default config.  If zero is specified, then the",
+        "        auto-refresh is disabled and it will only occur when a requested",
+        "        configuration element is not found in the current active config.",
+        "        Specifying a negative integer is allowed but is used to enable a",
+        "        check and conditional refresh only when manually requested",
+        "        (programmatically).  NOTE: This is option ignored if auto-refresh is",
+        "        disabled because the config was specified via the G2CONFIGFILE init",
+        "        option or if --config-id has been specified to lock to a specific",
+        "        configuration.",
         "        --> VIA ENVIRONMENT: " + AUTO_REFRESH_PERIOD.getEnvironmentVariable(),
         "",
         "   --stats-interval <milliseconds>",
-        "        Also -statsInterval.  The minimum number of milliseconds between logging",
-        "        of stats.  This is minimum because stats logging is suppressed if the API",
-        "        Server is idle or active but not performing activities pertaining to",
-        "        entity scoring.  In such cases, stats logging is delayed until an",
-        "        activity pertaining to entity scoring is performed.  By default this is",
-        "        set to the millisecond equivalent of 15 minutes.  If zero (0) is",
-        "        specified then the logging of stats will be suppressed.",
+        "        Also -statsInterval.  The minimum number of milliseconds between",
+        "        logging of stats.  This is minimum because stats logging is suppressed",
+        "        if the API Server is idle or active but not performing activities",
+        "        pertaining to entity scoring.  In such cases, stats logging is delayed",
+        "        until an activity pertaining to entity scoring is performed.  By",
+        "        default this is set to the millisecond equivalent of 15 minutes.  If",
+        "        zero (0) is specified then the logging of stats will be suppressed.",
         "        --> VIA ENVIRONMENT: " + STATS_INTERVAL.getEnvironmentVariable(),
         "",
         "   --skip-startup-perf [true|false]",
@@ -1266,8 +1399,8 @@ public class SzApiServer implements SzApiProvider {
         "   --quiet [true|false]",
         "        Also -quiet.  If specified then the API server reduces the number of",
         "        messages provided as feedback to standard output.  This applies only to",
-        "        messages generated by the API server and not by the underlying API which",
-        "        can be quite prolific if --verbose is provided.  The true/false",
+        "        messages generated by the API server and not by the underlying API",
+        "        which can be quite prolific if --verbose is provided.  The true/false",
         "        parameter is optional, if not specified then true is assumed.  If",
         "        specified as false then it is the same as omitting the option with",
         "        the exception that omission falls back to the environment variable",
@@ -1278,6 +1411,93 @@ public class SzApiServer implements SzApiProvider {
         "        Also -monitorFile.  Specifies a file whose timestamp is monitored to",
         "        determine when to shutdown.",
         "        --> VIA ENVIRONMENT: " + MONITOR_FILE.getEnvironmentVariable(),
+        "",
+        "[ Asynchronous Info Queue Options ]",
+        "   The following options pertain to configuring an asynchronous message",
+        "   queue on which to send \"info\" messages generated when records are",
+        "   loaded, deleted or entities are re-evaluated.  At most one such queue",
+        "   can be configured.  If an \"info\" queue is configured then every load,",
+        "   delete and re-evaluate operation is performed with the variant to",
+        "   generate an info message.  The info messages that are sent on the queue",
+        "   (or topic) are the relevant \"raw data\" JSON segments.",
+        "",
+        "   --sqs-info-url <url>",
+        "        Also -sqsInfoUrl.  Specifies an Amazon SQS queue URL as the info queue.",
+        "        --> VIA ENVIRONMENT: " + SQS_INFO_URL.getEnvironmentVariable(),
+        "",
+        "   --rabbit-info-host <hostname>",
+        "        Also -rabbitInfoHost.  Used to specify the hostname for connecting to",
+        "        RabbitMQ as part of specifying a RabbitMQ info queue.",
+        "        --> VIA ENVIRONMENT: " + RABBIT_INFO_HOST.getEnvironmentVariable(),
+        "                             "
+            + RABBIT_INFO_HOST.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
+        "",
+        "   --rabbit-info-port <port>",
+        "        Also -rabbitInfoPort.  Used to specify the port number for connecting",
+        "        to RabbitMQ as part of specifying a RabbitMQ info queue.",
+        "        --> VIA ENVIRONMENT: " + RABBIT_INFO_PORT.getEnvironmentVariable(),
+        "                             "
+            + RABBIT_INFO_PORT.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
+        "",
+        "   --rabbit-info-user <user name>",
+        "        Also -rabbitInfoUser.  Used to specify the user name for connecting to",
+        "        RabbitMQ as part of specifying a RabbitMQ info queue.",
+        "        --> VIA ENVIRONMENT: " + RABBIT_INFO_USER.getEnvironmentVariable(),
+        "                             "
+            + RABBIT_INFO_USER.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
+        "",
+        "   --rabbit-info-password <password>",
+        "        Also -rabbitInfoPassword.  Used to specify the password for connecting",
+        "        to RabbitMQ as part of specifying a RabbitMQ info queue.",
+        "        --> VIA ENVIRONMENT: " + RABBIT_INFO_PASSWORD.getEnvironmentVariable(),
+        "                             "
+            + RABBIT_INFO_PASSWORD.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
+        "",
+        "   --rabbit-info-virtual-host <virtual host>",
+        "        Also -rabbitInfoVirtualHost.  Used to specify the virtual host for",
+        "        connecting to RabbitMQ as part of specifying a RabbitMQ info queue.",
+        "        --> VIA ENVIRONMENT: " + RABBIT_INFO_VIRTUAL_HOST.getEnvironmentVariable(),
+        "                             "
+            + RABBIT_INFO_VIRTUAL_HOST.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
+        "",
+        "   --rabbit-info-exchange <exchange>",
+        "        Also -rabbitInfoExchange.  Used to specify the exchange for connecting",
+        "        to RabbitMQ as part of specifying a RabbitMQ info queue.",
+        "        --> VIA ENVIRONMENT: " + RABBIT_INFO_EXCHANGE.getEnvironmentVariable(),
+        "                             "
+            + RABBIT_INFO_EXCHANGE.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
+        "",
+        "   --rabbit-info-routing-key <routing key>",
+        "        Also -rabbitInfoRoutingKey.  Used to specify the routing key for",
+        "        connecting to RabbitMQ as part of specifying a RabbitMQ info queue.",
+        "        --> VIA ENVIRONMENT: " + RABBIT_INFO_ROUTING_KEY.getEnvironmentVariable(),
+        "",
+        "   --kafka-info-bootstrap-server <bootstrap servers>",
+        "        Also -kafkaInfoBootstrapServer.  Used to specify the bootstrap servers",
+        "        for connecting to Kafka as part of specifying a Kafka info topic.",
+        "        --> VIA ENVIRONMENT: " + KAFKA_INFO_BOOTSTRAP_SERVER.getEnvironmentVariable(),
+        "                             "
+            + KAFKA_INFO_BOOTSTRAP_SERVER.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
+        "",
+        "   --kafka-info-group <group id>",
+        "        Also -kafkaInfoGroupId.  Used to specify the group ID for connecting to",
+        "        Kafka as part of specifying a Kafka info topic.",
+        "        --> VIA ENVIRONMENT: " + KAFKA_INFO_GROUP.getEnvironmentVariable(),
+        "                             "
+            + KAFKA_INFO_GROUP.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
+        "",
+        "   --kafka-info-topic <topic>",
+        "        Also -kafkaInfoTopic.  Used to specify the topic name for connecting to",
+        "        Kafka as part of specifying a Kafka info topic.",
+        "        --> VIA ENVIRONMENT: " + KAFKA_INFO_TOPIC.getEnvironmentVariable(),
         "",
         "[ Advanced Options ]",
         "",
@@ -1329,6 +1549,27 @@ public class SzApiServer implements SzApiProvider {
   }
 
   /**
+   *
+   * @param context
+   * @param socketClasses
+   */
+  private static void addWebSocketHandler(ServletContextHandler context,
+                                          Class...              socketClasses)
+  {
+    final int maxSize = WEB_SOCKETS_MESSAGE_MAX_SIZE;
+    WebSocketServerContainerInitializer.configure(
+        context,
+        ((servletContext, wsContainer) -> {
+          wsContainer.setDefaultMaxTextMessageBufferSize(maxSize);
+          wsContainer.setDefaultMaxBinaryMessageBufferSize(maxSize);
+          wsContainer.setDefaultMaxSessionIdleTimeout(WEB_SOCKET_TIMEOUT);
+          for (Class socketClass: socketClasses) {
+            wsContainer.addEndpoint(socketClass);
+          }
+        }));
+  }
+
+  /**
    * @param context
    * @param path
    * @param viaHost
@@ -1362,12 +1603,16 @@ public class SzApiServer implements SzApiProvider {
    */
   public static void main(String[] args)
       throws Exception {
-    if (args.length > 0 && args[0].equals("--repomgr")) {
+    if (args.length > 0 && (args[0].equals("--repomgr")
+        || args[0].equals("--repo-mgr")))
+    {
       String[] args2 = shiftArguments(args, 1);
       RepositoryManager.main(args2);
       return;
     }
-    if (args.length > 0 && args[0].equals("--configmgr")) {
+    if (args.length > 0 && (args[0].equals("--configmgr")
+        || args[0].equals("--config-mgr")))
+    {
       String[] args2 = shiftArguments(args, 1);
       ConfigurationManager.main(args2);
       return;
@@ -1378,22 +1623,26 @@ public class SzApiServer implements SzApiProvider {
       options = parseCommandLine(args);
 
     } catch (Exception e) {
+      if (e instanceof NullPointerException) {
+        e.printStackTrace();
+      }
       if (!isLastLoggedException(e)) {
         System.err.println();
         System.err.println(e.getMessage());
         System.err.println();
       }
       System.err.println();
-      System.err.println("Try the --help option for additional help.");
+      System.err.println(
+          "Try the " + HELP.getCommandLineFlag() + " option for help.");
       System.err.println();
       System.exit(1);
     }
 
-    if (options.containsKey(SzApiServerOption.HELP)) {
+    if (options.containsKey(HELP)) {
       System.out.println(SzApiServer.getUsageString());
       System.exit(0);
     }
-    if (options.containsKey(SzApiServerOption.VERSION)) {
+    if (options.containsKey(VERSION)) {
       System.out.println();
       System.out.println(SzApiServer.getVersionString());
       System.exit(0);
@@ -1472,11 +1721,11 @@ public class SzApiServer implements SzApiProvider {
    * @return
    */
   private static boolean initialize(Map<SzApiServerOption, ?> options) {
-    if (options.containsKey(SzApiServerOption.HELP)) {
+    if (options.containsKey(HELP)) {
       System.out.println(SzApiServer.getUsageString());
       return false;
     }
-    if (options.containsKey(SzApiServerOption.VERSION)) {
+    if (options.containsKey(VERSION)) {
       System.out.println();
       System.out.println(SzApiServer.getVersionString());
       return false;
@@ -1522,6 +1771,7 @@ public class SzApiServer implements SzApiProvider {
    *                <tt>null</tt> then the default setting is invoked.
    *
    * @throws Exception If a failure occurs.
+   *
    * @deprecated Use {@link #SzApiServer(SzApiServerOptions)} instead.
    */
   public SzApiServer(Integer      httpPort,
@@ -1565,6 +1815,7 @@ public class SzApiServer implements SzApiProvider {
    *                <tt>null</tt> then the default setting is invoked.
    *
    * @throws Exception If a failure occurs.
+   *
    * @deprecated Use {@link #SzApiServer(SzApiServerOptions)} instead.
    */
   public SzApiServer(AccessToken  accessToken,
@@ -1642,12 +1893,12 @@ public class SzApiServer implements SzApiProvider {
                                                            Boolean      verbose)
   {
     Map<SzApiServerOption, Object> map = new HashMap<>();
-    if (httpPort != null)     map.put(SzApiServerOption.HTTP_PORT, httpPort);
-    if (bindAddress != null)  map.put(SzApiServerOption.BIND_ADDRESS, bindAddress);
-    if (concurrency != null)  map.put(SzApiServerOption.CONCURRENCY, concurrency);
-    if (moduleName != null)   map.put(SzApiServerOption.MODULE_NAME, moduleName);
-    if (iniFile != null)      map.put(SzApiServerOption.INI_FILE, iniFile);
-    if (verbose != null)      map.put(SzApiServerOption.VERBOSE, verbose);
+    if (httpPort != null)     map.put(HTTP_PORT, httpPort);
+    if (bindAddress != null)  map.put(BIND_ADDRESS, bindAddress);
+    if (concurrency != null)  map.put(CONCURRENCY, concurrency);
+    if (moduleName != null)   map.put(MODULE_NAME, moduleName);
+    if (iniFile != null)      map.put(INI_FILE, iniFile);
+    if (verbose != null)      map.put(VERBOSE, verbose);
     return map;
   }
 
@@ -1666,13 +1917,13 @@ public class SzApiServer implements SzApiProvider {
     this.accessToken = token;
 
     this.httpPort = DEFAULT_PORT;
-    if (options.containsKey(SzApiServerOption.HTTP_PORT)) {
-      this.httpPort = (Integer) options.get(SzApiServerOption.HTTP_PORT);
+    if (options.containsKey(HTTP_PORT)) {
+      this.httpPort = (Integer) options.get(HTTP_PORT);
     }
 
     this.ipAddr = InetAddress.getLoopbackAddress();
-    if (options.containsKey(SzApiServerOption.BIND_ADDRESS)) {
-      this.ipAddr = (InetAddress) options.get(SzApiServerOption.BIND_ADDRESS);
+    if (options.containsKey(BIND_ADDRESS)) {
+      this.ipAddr = (InetAddress) options.get(BIND_ADDRESS);
     }
 
     if (options.containsKey(URL_BASE_PATH)) {
@@ -1680,63 +1931,68 @@ public class SzApiServer implements SzApiProvider {
     }
 
     this.concurrency = DEFAULT_CONCURRENCY;
-    if (options.containsKey(SzApiServerOption.CONCURRENCY)) {
-      this.concurrency = (Integer) options.get(SzApiServerOption.CONCURRENCY);
+    if (options.containsKey(CONCURRENCY)) {
+      this.concurrency = (Integer) options.get(CONCURRENCY);
+    }
+
+    this.httpConcurrency = DEFAULT_HTTP_CONCURRENCY;
+    if (options.containsKey(HTTP_CONCURRENCY)) {
+      this.httpConcurrency = (Integer) options.get(HTTP_CONCURRENCY);
     }
 
     this.moduleName = DEFAULT_MODULE_NAME;
-    if (options.containsKey(SzApiServerOption.MODULE_NAME)) {
-      this.moduleName = (String) options.get(SzApiServerOption.MODULE_NAME);
+    if (options.containsKey(MODULE_NAME)) {
+      this.moduleName = (String) options.get(MODULE_NAME);
     }
 
     this.verbose = false;
-    if (options.containsKey(SzApiServerOption.VERBOSE)) {
-      this.verbose = (Boolean) options.get(SzApiServerOption.VERBOSE);
+    if (options.containsKey(VERBOSE)) {
+      this.verbose = (Boolean) options.get(VERBOSE);
     }
 
     this.quiet = false;
-    if (options.containsKey(SzApiServerOption.QUIET)) {
-      this.quiet = (Boolean) options.get(SzApiServerOption.QUIET);
+    if (options.containsKey(QUIET)) {
+      this.quiet = (Boolean) options.get(QUIET);
     }
 
     this.readOnly = false;
-    if (options.containsKey(SzApiServerOption.READ_ONLY)) {
-      this.readOnly = (Boolean) options.get(SzApiServerOption.READ_ONLY);
+    if (options.containsKey(READ_ONLY)) {
+      this.readOnly = (Boolean) options.get(READ_ONLY);
     }
 
     this.adminEnabled = false;
-    if (options.containsKey(SzApiServerOption.ENABLE_ADMIN)) {
-      this.adminEnabled = (Boolean) options.get(SzApiServerOption.ENABLE_ADMIN);
+    if (options.containsKey(ENABLE_ADMIN)) {
+      this.adminEnabled = (Boolean) options.get(ENABLE_ADMIN);
     }
 
     this.statsInterval = DEFAULT_STATS_INTERVAL;
-    if (options.containsKey(SzApiServerOption.STATS_INTERVAL)) {
+    if (options.containsKey(STATS_INTERVAL)) {
       this.statsInterval
-          = (Long) options.get(SzApiServerOption.STATS_INTERVAL);
+          = (Long) options.get(STATS_INTERVAL);
     }
 
     this.skipStartupPerf = false;
-    if (options.containsKey(SzApiServerOption.SKIP_STARTUP_PERF)) {
+    if (options.containsKey(SKIP_STARTUP_PERF)) {
       this.skipStartupPerf
-          = (Boolean) options.get(SzApiServerOption.SKIP_STARTUP_PERF);
+          = (Boolean) options.get(SKIP_STARTUP_PERF);
     }
 
     // determine the init JSON
-    this.initJson = (JsonObject) options.get(SzApiServerOption.INIT_FILE);
+    this.initJson = (JsonObject) options.get(INIT_FILE);
     if (this.initJson == null) {
-      this.initJson = (JsonObject) options.get(SzApiServerOption.INIT_ENV_VAR);
+      this.initJson = (JsonObject) options.get(INIT_ENV_VAR);
     }
     if (this.initJson == null) {
-      this.initJson = (JsonObject) options.get(SzApiServerOption.INIT_JSON);
+      this.initJson = (JsonObject) options.get(INIT_JSON);
     }
     if (this.initJson == null) {
-      this.iniFile = (File) options.get(SzApiServerOption.INI_FILE);
+      this.iniFile = (File) options.get(INI_FILE);
       if (this.iniFile != null) {
         this.initJson = JsonUtils.iniToJson(this.iniFile);
       }
     }
 
-    this.configId = (Long) options.get(SzApiServerOption.CONFIG_ID);
+    this.configId = (Long) options.get(CONFIG_ID);
 
     // validate the init JSON
     this.configType = getConfigType(this.moduleName, this.initJson);
@@ -1863,12 +2119,41 @@ public class SzApiServer implements SzApiProvider {
       System.err.println(msg);
     }
 
-    this.autoRefreshPeriod = (Long) options.get(SzApiServerOption.AUTO_REFRESH_PERIOD);
+    Map<String, Map<String, Object>> optionGroups = new LinkedHashMap<>();
+
+    // organize options into option groups
+    options.forEach((option, optionValue) -> {
+      if (optionValue == null) return;
+      String groupName = option.getGroupName();
+      if (groupName == null) return;
+      Map<String, Object> groupMap = optionGroups.get(groupName);
+      if (groupMap == null) {
+        groupMap = new LinkedHashMap<>();
+        optionGroups.put(groupName, groupMap);
+      }
+      String groupProp = option.getGroupPropertyKey();
+      groupMap.put(groupProp, optionValue);
+    });
+
+    // count the number of specified info queues
+    Map<String, Object> infoQueueProps = null;
+    for (String key: INFO_QUEUE_GROUPS) {
+      if (!optionGroups.containsKey(key)) continue;
+      infoQueueProps = optionGroups.get(key);
+      break;
+    }
+
+    // build the info endpoint
+    this.infoEndpoint = (infoQueueProps == null) ? null
+      : SzMessagingEndpointFactory.createEndpoint(infoQueueProps,
+                                                  this.concurrency);
+
+    this.autoRefreshPeriod = (Long) options.get(AUTO_REFRESH_PERIOD);
     if (this.autoRefreshPeriod != null) {
       this.autoRefreshPeriod *= 1000;
     }
 
-    this.allowedOrigins = (String) options.get(SzApiServerOption.ALLOWED_ORIGINS);
+    this.allowedOrigins = (String) options.get(ALLOWED_ORIGINS);
 
     this.baseUrl = "http://" + ipAddr.getHostAddress() + ":" + httpPort
         + this.basePath;
@@ -1922,9 +2207,35 @@ public class SzApiServer implements SzApiProvider {
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
     context.setContextPath(this.basePath);
 
+    // add web socket filters first
+    EnumSet<DispatcherType> requestDispatch
+        = EnumSet.of(DispatcherType.REQUEST);
+    this.getWebSocketClasses().forEach((implClass, path) -> {
+      // check if we have a pre-flight OnUpgrade annotation
+      WebSocketFilter filter = WebSocketFilter.createIfOnUpgrade(implClass);
+      if (filter != null) {
+        FilterHolder filterHolder = new FilterHolder(filter);
+        context.addFilter(filterHolder, path, requestDispatch);
+      }
+    });
+
+    // configure web sockets
+    ServerContainer container = WebSocketServerContainerInitializer.configureContext(context);
+
+    this.getWebSocketClasses().forEach((implClass, path) -> {
+      try {
+        ServerEndpointConfig config = ServerEndpointConfig.Builder.create(
+            implClass, path).build();
+        container.addEndpoint(config);
+
+      } catch (DeploymentException e) {
+        throw new RuntimeException(e);
+      }
+    });
+
     if (this.allowedOrigins != null) {
-      context.addFilter(DiagnoseRequestFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
-      FilterHolder filterHolder = context.addFilter(CrossOriginFilter.class, "/*", EnumSet.of(DispatcherType.REQUEST));
+      context.addFilter(DiagnoseRequestFilter.class, "/*", requestDispatch);
+      FilterHolder filterHolder = context.addFilter(CrossOriginFilter.class, "/*", requestDispatch);
       filterHolder.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, this.allowedOrigins);
       filterHolder.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,POST,PUT,DELETE,PATCH,HEAD,OPTIONS");
       //filterHolder.setInitParameter(CrossOriginFilter.PREFLIGHT_MAX_AGE_PARAM, "10"); // for testing to see OPTIONS requests
@@ -1940,11 +2251,17 @@ public class SzApiServer implements SzApiProvider {
     rewriteHandler.setHandler(context);
 
     // create our server (TODO: add connectors for HTTP + HTTPS)
-    this.jettyServer = new Server(new InetSocketAddress(ipAddr, httpPort));
+    ThreadPool threadPool       = new QueuedThreadPool(this.httpConcurrency);
+    InetSocketAddress inetAddr  = new InetSocketAddress(ipAddr, httpPort);
+    this.jettyServer            = new Server(threadPool);
+    ServerConnector connector   = new ServerConnector(this.jettyServer);
+    connector.setHost(inetAddr.getHostName());
+    connector.setPort(inetAddr.getPort());
+    this.jettyServer.setConnectors(new Connector[]{ connector });
 
     this.fileMonitor = null;
-    if (options.containsKey(SzApiServerOption.MONITOR_FILE)) {
-      this.fileMonitor = (FileMonitor) options.get(SzApiServerOption.MONITOR_FILE);
+    if (options.containsKey(MONITOR_FILE)) {
+      this.fileMonitor = (FileMonitor) options.get(MONITOR_FILE);
     }
     this.jettyServer.setHandler(rewriteHandler);
     LifeCycleListener lifeCycleListener
@@ -1963,6 +2280,11 @@ public class SzApiServer implements SzApiProvider {
 
     addJerseyServlet(context, packageName, apiPath, initOrder++);
 
+    Map<Class, String> webSocketMap = this.getWebSocketClasses();
+    Class[] webSocketClasses = new Class[webSocketMap.keySet().size()];
+    webSocketClasses = webSocketMap.keySet().toArray(webSocketClasses);
+    addWebSocketHandler(context, webSocketClasses);
+
     ServletHolder rootHolder = new ServletHolder("default", DefaultServlet.class);
     rootHolder.setInitParameter("dirAllowed", "false");
     context.addServlet(rootHolder, "/");
@@ -1977,7 +2299,7 @@ public class SzApiServer implements SzApiProvider {
       int actualPort = this.httpPort
           = ((ServerConnector) (this.jettyServer.getConnectors()[0])).getLocalPort();
 
-      if (options.containsKey(SzApiServerOption.MONITOR_FILE)) {
+      if (options.containsKey(MONITOR_FILE)) {
         this.fileMonitor.initialize(actualPort);
         this.fileMonitor.start();
       }
@@ -2406,6 +2728,41 @@ public class SzApiServer implements SzApiProvider {
     }
   }
 
+  @Override
+  public AccessToken authorizeProlongedOperation() {
+    synchronized (this.prolongedAuthSet) {
+      // get the number of concurrent prolonged operations
+      int prolongedCount = this.prolongedAuthSet.size();
+
+      // check if too many concurrent prolonged operations and return null if so
+      if (prolongedCount >= ((this.httpConcurrency - 4) / 2)) return null;
+
+      // create the access token
+      AccessToken accessToken = new AccessToken();
+
+      // store it in the set
+      this.prolongedAuthSet.add(accessToken);
+
+      // return it to authorize the operation
+      return accessToken;
+    }
+  }
+
+  @Override
+  public void concludeProlongedOperation(AccessToken token) {
+    // check for null
+    Objects.requireNonNull(token, "The specified token cannot be null");
+
+    // synchronize
+    synchronized (this.prolongedAuthSet) {
+      // check if unrecognized
+      if (!this.prolongedAuthSet.remove(token)) {
+        throw new IllegalArgumentException(
+            "The specified token is not recognized");
+      }
+    }
+  }
+
   /**
    * Waits for the API server to complete.
    *
@@ -2719,4 +3076,39 @@ public class SzApiServer implements SzApiProvider {
     System.out.println(sw.toString());
   }
 
+  /**
+   *
+   */
+  protected Map<Class, String> getWebSocketClasses() {
+    synchronized (this.monitor) {
+      // check the web socket classes is already initialized
+      if (this.webSocketClasses != null) return this.webSocketClasses;
+
+      // if not then initialize
+      try {
+        Properties webSocketProps = new Properties();
+        webSocketProps.load(
+            this.getClass().getResourceAsStream(
+                "web-socket-endpoints.properties"));
+
+        Map<Class, String> webSocketMap = new LinkedHashMap<>();
+        webSocketProps.forEach((className, path) -> {
+          try {
+            webSocketMap.put(Class.forName(className.toString()),
+                             path.toString());
+
+          } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+          }
+        });
+
+        // set the field once complete
+        this.webSocketClasses = webSocketMap;
+        return this.webSocketClasses;
+
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
 }
