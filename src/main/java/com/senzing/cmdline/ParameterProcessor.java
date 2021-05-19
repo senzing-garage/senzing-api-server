@@ -2,8 +2,7 @@ package com.senzing.cmdline;
 
 import java.util.List;
 
-public interface ParameterProcessor<T extends Enum<T> & CommandLineOption<T>>
-{
+public interface ParameterProcessor {
   /**
    * Converts the specified command-line {@link String} parameters to a
    * {@link CommandLineOption} into an {@link Object} or array of
@@ -20,6 +19,6 @@ public interface ParameterProcessor<T extends Enum<T> & CommandLineOption<T>>
    * @throws IllegalArgumentException If the parameters are illegal in some
    *                                  way.
    */
-  Object process(T commandLineOption, List<String> params)
+  Object process(CommandLineOption commandLineOption, List<String> params)
     throws IllegalArgumentException;
 }

@@ -25,74 +25,30 @@ public class SzVersionResponse extends SzResponseWithRawData {
    * Constructs with only the HTTP method and the self link, leaving the
    * license info data to be initialized later.
    *
-   * @param httpMethod The {@link SzHttpMethod}.
-   * @param httpStatusCode The HTTP response code.
-   * @param selfLink The string URL link to generate this response.
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * @param meta The response meta data.
+   *
+   * @param links The links for the response.
    */
-  public SzVersionResponse(SzHttpMethod httpMethod,
-                           int          httpStatusCode,
-                           String       selfLink,
-                           Timers       timers)
+  public SzVersionResponse(SzMeta meta, SzLinks links)
   {
-    this(httpMethod, httpStatusCode, selfLink, timers, null);
+    this(meta, links, null);
   }
 
   /**
    * Constructs with the HTTP method, self link and the {@link SzVersionInfo}
    * describing the version.
    *
-   * @param httpMethod The {@link SzHttpMethod}.
-   * @param httpStatusCode The HTTP response status code.
-   * @param selfLink The string URL link to generate this response.
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * @param meta The response meta data.
+   *
+   * @param links The links for the response.
+   *
    * @param versionInfo The {@link SzVersionInfo} describing the version.
    */
-  public SzVersionResponse(SzHttpMethod   httpMethod,
-                           int            httpStatusCode,
-                           String         selfLink,
-                           Timers         timers,
+  public SzVersionResponse(SzMeta         meta,
+                           SzLinks        links,
                            SzVersionInfo  versionInfo)
   {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-    this.versionInfo = versionInfo;
-  }
-
-  /**
-   * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
-   * version info data to be initialized later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   * @param httpStatusCode The HTTP response code.
-   * @param uriInfo The {@link UriInfo} from the request.
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   */
-  public SzVersionResponse(SzHttpMethod httpMethod,
-                           int          httpStatusCode,
-                           UriInfo      uriInfo,
-                           Timers       timers)
-  {
-    this(httpMethod, httpStatusCode, uriInfo, timers, null);
-  }
-
-  /**
-   * Constructs with the HTTP method, {@link UriInfo} and the
-   * {@link SzVersionInfo} describing the version.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   * @param httpStatusCode The HTTP response status code.
-   * @param uriInfo The {@link UriInfo} from the request.
-   * @param timers The {@link Timers} object for the timings that were taken.
-   * @param versionInfo The {@link SzVersionInfo} describing the version.
-   */
-  public SzVersionResponse(SzHttpMethod   httpMethod,
-                           int            httpStatusCode,
-                           UriInfo        uriInfo,
-                           Timers         timers,
-                           SzVersionInfo  versionInfo)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
+    super(meta, links);
     this.versionInfo = versionInfo;
   }
 

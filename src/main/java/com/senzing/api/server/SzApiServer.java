@@ -1,7 +1,6 @@
 package com.senzing.api.server;
 
 import java.io.*;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -14,7 +13,7 @@ import java.time.format.FormatStyle;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.regex.Pattern;
+import java.util.function.Supplier;
 
 import com.senzing.api.BuildInfo;
 import com.senzing.api.server.mq.SzMessagingEndpoint;
@@ -22,12 +21,11 @@ import com.senzing.api.server.mq.SzMessagingEndpointFactory;
 import com.senzing.api.services.SzMessageSink;
 import com.senzing.api.model.SzVersionInfo;
 import com.senzing.api.websocket.WebSocketFilter;
-import com.senzing.cmdline.CommandLineValue;
+import com.senzing.cmdline.*;
 import com.senzing.nativeapi.EngineStatsLoggingHandler;
 import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.api.services.SzApiProvider;
 import com.senzing.api.model.SzLicenseInfo;
-import com.senzing.cmdline.CommandLineUtilities;
 import com.senzing.configmgr.ConfigurationManager;
 import com.senzing.g2.engine.*;
 import com.senzing.repomgr.RepositoryManager;
@@ -59,9 +57,7 @@ import javax.ws.rs.WebApplicationException;
 import static com.senzing.api.server.SzApiServerOption.*;
 import static com.senzing.util.WorkerThreadPool.Task;
 import static com.senzing.cmdline.CommandLineUtilities.*;
-import static com.senzing.io.IOUtilities.*;
 import static com.senzing.util.LoggingUtilities.*;
-import static com.senzing.api.server.SzApiServerOption.*;
 import static com.senzing.api.server.SzApiServerConstants.*;
 
 /**
@@ -69,6 +65,20 @@ import static com.senzing.api.server.SzApiServerConstants.*;
  *
  */
 public class SzApiServer implements SzApiProvider {
+  /**
+   * The resource file for the service endpoint classes.  The value of this is
+   * {@value}.
+   */
+  public static final String SERVICES_RESOURCE_FILE
+      = "service-endpoints.properties";
+
+  /**
+   * The resource file for the Web Socket endpoint classes.  The value of this
+   * is {@value}.
+   */
+  public static final String WEB_SOCKETS_RESOURCE_FILE
+      = "web-socket-endpoints.properties";
+
   /**
    * The period to avoid over-logging of the diagnostics.
    */
@@ -78,12 +88,6 @@ public class SzApiServer implements SzApiProvider {
    * Set the timeout for web socket reads.
    */
   public static final long WEB_SOCKET_TIMEOUT = 1000 * 60 * 60 * 24;
-
-  /**
-   * The pattern for legal base paths.
-   */
-  private static final Pattern LEGAL_BASE_PATH_PATTERN
-      = Pattern.compile("[A-Za-z0-9\\-_\\.\\/]+");
 
   /**
    * The date-time pattern for the build number.
@@ -109,11 +113,9 @@ public class SzApiServer implements SzApiProvider {
   private static final long EXPIRATION_WARNING_PERIOD
       = 1000L * 60L * 60L * 24L * 30L;
 
-  private static final String JAR_FILE_NAME;
+  private static final String JAR_FILE_NAME = getJarName(SzApiServer.class);
 
-  private static final String JAR_BASE_URL;
-
-  private static final String PATH_TO_JAR;
+  private static final String JAR_BASE_URL = getJarBaseUrl(SzApiServer.class);
 
   private static SzApiServer INSTANCE = null;
 
@@ -128,55 +130,16 @@ public class SzApiServer implements SzApiProvider {
     private boolean filePath;
 
     ConfigType(boolean managed, boolean filePath) {
-      this.managed  = managed;
+      this.managed = managed;
       this.filePath = filePath;
     }
 
     public boolean isManaged() {
       return this.managed;
     }
+
     public boolean isFilePath() {
       return this.filePath;
-    }
-  }
-
-  static {
-    String jarBaseUrl   = null;
-    String jarFileName  = null;
-    String pathToJar    = null;
-    Set<SzApiServerOption> requisites = new LinkedHashSet<>();
-    try {
-
-      String url = SzApiServer.class.getResource(
-          SzApiServer.class.getSimpleName() + ".class").toString();
-
-      int index = url.lastIndexOf(
-          SzApiServer.class.getName().replace(".", "/") + ".class");
-      jarBaseUrl = url.substring(0, index);
-
-      if (jarBaseUrl.indexOf(".jar") >= 0) {
-        index = jarBaseUrl.lastIndexOf("!");
-        if (index >= 0) {
-          url = url.substring(0, index);
-          index = url.lastIndexOf("/");
-          if (index >= 0) {
-            jarFileName = url.substring(index + 1);
-            url = url.substring(0, index);
-            index = url.indexOf("/");
-            if (index >= 0) {
-              pathToJar = url.substring(index);
-            }
-          }
-        }
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-      throw new ExceptionInInitializerError(e);
-
-    } finally {
-      JAR_BASE_URL      = jarBaseUrl;
-      JAR_FILE_NAME     = jarFileName;
-      PATH_TO_JAR       = pathToJar;
     }
   }
 
@@ -248,11 +211,6 @@ public class SzApiServer implements SzApiProvider {
    * The {@link SzMessagingEndpoint} to use for asynchronous info messages.
    */
   private SzMessagingEndpoint infoEndpoint;
-
-  /**
-   * The {@link SzMessagingEndpoint} to use for asynchronous load messages.
-   */
-  private SzMessagingEndpoint loadEndpoint;
 
   /**
    * The {@link G2EngineRetryHandler} backing the proxied
@@ -520,7 +478,7 @@ public class SzApiServer implements SzApiProvider {
   public G2Engine getEngineApi() {
     this.assertNotShutdown();
     return (this.retryEngineApi == null)
-            ? this.engineApi : this.retryEngineApi;
+        ? this.engineApi : this.retryEngineApi;
   }
 
   /**
@@ -529,8 +487,8 @@ public class SzApiServer implements SzApiProvider {
    * default configuration.
    *
    * @return The {@link G2ConfigMgr} API interface, or <tt>null</tt> if the
-   *         configuration is not automatically being picked up as the current
-   *         default configuration.
+   * configuration is not automatically being picked up as the current
+   * default configuration.
    */
   @Override
   public G2ConfigMgr getConfigMgrApi() {
@@ -552,7 +510,7 @@ public class SzApiServer implements SzApiProvider {
    * Checks whether or not only read operations are being allowed.
    *
    * @return <tt>true</tt> if only read operations are allowed, and
-   *         <tt>false</tt> if all operations are being supported.
+   * <tt>false</tt> if all operations are being supported.
    */
   @Override
   public boolean isReadOnly() {
@@ -564,7 +522,7 @@ public class SzApiServer implements SzApiProvider {
    * Checks whether or not admin operations are enabled.
    *
    * @return <tt>true</tt> if admin operations are enabled, and
-   *         <tt>false</tt> if admin operations are disabled.
+   * <tt>false</tt> if admin operations are disabled.
    */
   @Override
   public boolean isAdminEnabled() {
@@ -582,7 +540,7 @@ public class SzApiServer implements SzApiProvider {
    * then stats logging will be suppressed.
    *
    * @return The interval for logging stats, or zero (0) if stats logging is
-   *         suppressed.
+   * suppressed.
    */
   public long getStatsInterval() {
     return this.statsInterval;
@@ -592,7 +550,7 @@ public class SzApiServer implements SzApiProvider {
    * Checks if we are skipping the performance check on startup.
    *
    * @return <tt>true</tt> if skipping the performance check, and
-   *         <tt>false</tt> otherwise.
+   * <tt>false</tt> otherwise.
    */
   public boolean isSkippingStartupPerformance() {
     return this.skipStartupPerf;
@@ -603,7 +561,7 @@ public class SzApiServer implements SzApiProvider {
    * the Senzing repository.
    *
    * @return The number of worker threads initialized to do work against
-   *         the Senzing repository.
+   * the Senzing repository.
    */
   @Override
   public int getConcurrency() {
@@ -613,26 +571,6 @@ public class SzApiServer implements SzApiProvider {
   @Override
   public int getWebSocketsMessageMaxSize() {
     return WEB_SOCKETS_MESSAGE_MAX_SIZE;
-  }
-
-  @Override
-  public boolean hasLoadSink() {
-    return (this.loadEndpoint != null);
-  }
-
-  @Override
-  public SzMessageSink acquireLoadSink() {
-    return (this.loadEndpoint == null) ? null
-        : this.loadEndpoint.acquireMessageSink();
-  }
-
-  @Override
-  public void releaseLoadSink(SzMessageSink sink) {
-    if (this.loadEndpoint == null) {
-      throw new IllegalStateException(
-          "No load message endpoint exists for releasing the sink");
-    }
-    this.loadEndpoint.releaseMessageSink(sink);
   }
 
   @Override
@@ -709,13 +647,12 @@ public class SzApiServer implements SzApiProvider {
    * @param attrCodeMap  The {@link Map} of attribute code to attribute classes
    *                     to populate.
    */
-  private static void evaluateConfig(JsonObject           config,
-                                     Set<String>          dataSources,
-                                     Set<String>          entityClasses,
-                                     Set<String>          entityTypes,
-                                     Map<String, String>  ftypeCodeMap,
-                                     Map<String, String>  attrCodeMap)
-  {
+  private static void evaluateConfig(JsonObject config,
+                                     Set<String> dataSources,
+                                     Set<String> entityClasses,
+                                     Set<String> entityTypes,
+                                     Map<String, String> ftypeCodeMap,
+                                     Map<String, String> attrCodeMap) {
     // get the data sources from the config
     JsonValue jsonValue = config.getValue("/G2_CONFIG/CFG_DSRC");
     JsonArray jsonArray = jsonValue.asJsonArray();
@@ -781,14 +718,13 @@ public class SzApiServer implements SzApiProvider {
    *
    * @param expectedDataSources The zero or more data source codes that the
    *                            caller expects to exist.
-   *
    * @return The unmodifiable {@link Set} of configured data source codes.
    */
   public Set<String> getDataSources(String... expectedDataSources) {
     synchronized (this.reinitMonitor) {
       this.assertNotShutdown();
       for (String dataSource : expectedDataSources) {
-        if (! this.dataSources.contains(dataSource)) {
+        if (!this.dataSources.contains(dataSource)) {
           this.ensureConfigCurrent(false);
           break;
         }
@@ -802,14 +738,13 @@ public class SzApiServer implements SzApiProvider {
    *
    * @param expectedEntityClasses The zero or more entity class codes that the
    *                              caller expects to exist.
-   *
    * @return The unmodifiable {@link Set} of configured entity class codes.
    */
   public Set<String> getEntityClasses(String... expectedEntityClasses) {
     synchronized (this.reinitMonitor) {
       this.assertNotShutdown();
       for (String entityClass : expectedEntityClasses) {
-        if (! this.entityClasses.contains(entityClass)) {
+        if (!this.entityClasses.contains(entityClass)) {
           this.ensureConfigCurrent(false);
           break;
         }
@@ -823,14 +758,13 @@ public class SzApiServer implements SzApiProvider {
    *
    * @param expectedEntityTypes The zero or more entity type codes that the
    *                            caller expects to exist.
-   *
    * @return The unmodifiable {@link Set} of configured entity type codes.
    */
   public Set<String> getEntityTypes(String... expectedEntityTypes) {
     synchronized (this.reinitMonitor) {
       this.assertNotShutdown();
       for (String entityType : expectedEntityTypes) {
-        if (! this.entityTypes.contains(entityType)) {
+        if (!this.entityTypes.contains(entityType)) {
           this.ensureConfigCurrent(false);
           break;
         }
@@ -905,249 +839,23 @@ public class SzApiServer implements SzApiProvider {
   }
 
   /**
-   * @param args
-   * @return
+   * Parses the {@link SzApiServer} command line arguments and produces a
+   * {@link Map} of {@link CommandLineOption} keys to {@link Object} command
+   * line values.
+   *
+   * @param args The arguments to parse.
+   *
+   * @return The {@link Map} describing the command-line arguments.
    */
-  private static Map<SzApiServerOption, ?> parseCommandLine(String[] args) {
-    Map<SzApiServerOption, CommandLineValue<SzApiServerOption>> optionValues
-      = CommandLineUtilities.parseCommandLine(
+  protected static Map<CommandLineOption, Object> parseCommandLine(String[] args) {
+    Map<CommandLineOption, CommandLineValue> optionValues
+        = CommandLineUtilities.parseCommandLine(
         SzApiServerOption.class,
         args,
-        (option, params) -> {
-          switch (option) {
-            case HELP:
-              if (args.length > 1) {
-                throw new IllegalArgumentException(
-                    "Help option should be only option when provided.");
-              }
-              return Boolean.TRUE;
-
-            case VERSION:
-              if (args.length > 1) {
-                throw new IllegalArgumentException(
-                    "Version option should be only option when provided.");
-              }
-              return Boolean.TRUE;
-
-            case MONITOR_FILE:
-              File f = new File(params.get(0));
-              return new FileMonitor(f);
-
-            case HTTP_PORT: {
-              int port = Integer.parseInt(params.get(0));
-              if (port < 0) {
-                throw new IllegalArgumentException(
-                    "Negative port numbers are not allowed: " + port);
-              }
-              return port;
-            }
-            case BIND_ADDRESS:
-              String addrArg = params.get(0);
-              InetAddress addr = null;
-              try {
-                if ("all".equals(addrArg)) {
-                  addr = InetAddress.getByName("0.0.0.0");
-                } else if ("loopback".equals(addrArg)) {
-                  addr = InetAddress.getLoopbackAddress();
-                } else {
-                  addr = InetAddress.getByName(addrArg);
-                }
-              } catch (RuntimeException e) {
-                throw e;
-              } catch (Exception e) {
-                throw new IllegalArgumentException(e);
-              }
-              return addr;
-
-            case URL_BASE_PATH: {
-              return validateBasePath(params.get(0));
-            }
-            case CONCURRENCY: {
-              int threadCount;
-              try {
-                threadCount = Integer.parseInt(params.get(0));
-              } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException(
-                    "Thread count must be an integer: " + params.get(0));
-              }
-              if (threadCount <= 0) {
-                throw new IllegalArgumentException(
-                    "Negative thread counts are not allowed: " + threadCount);
-              }
-              return threadCount;
-            }
-
-            case HTTP_CONCURRENCY: {
-              int threadCount;
-              try {
-                threadCount = Integer.parseInt(params.get(0));
-              } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException(
-                    "Thread count must be an integer: " + params.get(0));
-              }
-              if (threadCount < MINIMUM_HTTP_CONCURRENCY) {
-                throw new IllegalArgumentException(
-                    "Negative thread counts are not allowed: " + threadCount);
-              }
-              return threadCount;
-            }
-
-            case MODULE_NAME:
-            case ALLOWED_ORIGINS:
-            case KAFKA_INFO_BOOTSTRAP_SERVER:
-            case KAFKA_INFO_GROUP:
-            case KAFKA_INFO_TOPIC:
-            case RABBIT_INFO_HOST:
-            case RABBIT_INFO_USER:
-            case RABBIT_INFO_PASSWORD:
-            case RABBIT_INFO_VIRTUAL_HOST:
-            case RABBIT_INFO_EXCHANGE:
-            case RABBIT_INFO_ROUTING_KEY:
-            case SQS_INFO_URL:
-              return params.get(0);
-
-            case RABBIT_INFO_PORT: {
-              int port = Integer.parseInt(params.get(0));
-              if (port < 0) {
-                throw new IllegalArgumentException(
-                    "Negative RabbitMQ port numbers are not allowed: " + port);
-              }
-              return port;
-            }
-
-            case INI_FILE:
-              File iniFile = new File(params.get(0));
-              if (!iniFile.exists()) {
-                throw new IllegalArgumentException(
-                    "Specified INI file does not exist: " + iniFile);
-              }
-              return iniFile;
-
-            case INIT_FILE:
-              File initFile = new File(params.get(0));
-              if (!initFile.exists()) {
-                throw new IllegalArgumentException(
-                    "Specified JSON init file does not exist: " + initFile);
-              }
-              String jsonText;
-              try {
-                jsonText = readTextFileAsString(initFile, "UTF-8");
-
-              } catch (IOException e) {
-                throw new RuntimeException(
-                    multilineFormat(
-                        "Failed to read JSON initialization file: "
-                            + initFile,
-                        "",
-                        "Cause: " + e.getMessage()));
-              }
-              try {
-                return JsonUtils.parseJsonObject(jsonText);
-
-              } catch (Exception e) {
-                throw new IllegalArgumentException(
-                    "The initialization file does not contain valid JSON: "
-                        + initFile);
-              }
-
-            case INIT_ENV_VAR:
-              String envVar = params.get(0);
-              String envValue = System.getenv(envVar);
-              if (envValue == null || envValue.trim().length() == 0) {
-                throw new IllegalArgumentException(
-                    "Environment variable is missing or empty: " + envVar);
-              }
-              try {
-                return JsonUtils.parseJsonObject(envValue);
-
-              } catch (Exception e) {
-                throw new IllegalArgumentException(
-                    multilineFormat(
-                        "Environment variable value is not valid JSON: ",
-                        envValue));
-              }
-
-            case INIT_JSON:
-              String initJson = params.get(0);
-              if (initJson.trim().length() == 0) {
-                throw new IllegalArgumentException(
-                    "Initialization JSON is missing or empty.");
-              }
-              try {
-                return JsonUtils.parseJsonObject(initJson);
-
-              } catch (Exception e) {
-                throw new IllegalArgumentException(
-                    multilineFormat(
-                        "Initialization JSON is not valid JSON: ",
-                        initJson));
-              }
-
-            case CONFIG_ID:
-              try {
-                return Long.parseLong(params.get(0));
-              } catch (Exception e) {
-                throw new IllegalArgumentException(
-                    "The configuration ID for " + option.getCommandLineFlag()
-                        + " must be an integer: " + params.get(0));
-              }
-
-            case AUTO_REFRESH_PERIOD:
-              try {
-                return Long.parseLong(params.get(0));
-              } catch (Exception e) {
-                throw new IllegalArgumentException(
-                    "The specified refresh period for "
-                        + option.getCommandLineFlag() + " must be an integer: "
-                        + params.get(0));
-              }
-
-            case READ_ONLY:
-            case ENABLE_ADMIN:
-            case VERBOSE:
-            case QUIET:
-            case SKIP_STARTUP_PERF:
-            case SKIP_ENGINE_PRIMING:
-              if (params.size() == 0) return Boolean.TRUE;
-              String boolText = params.get(0);
-              if ("false".equalsIgnoreCase(boolText)) {
-                return Boolean.FALSE;
-              }
-              if ("true".equalsIgnoreCase(boolText)) {
-                return Boolean.TRUE;
-              }
-              throw new IllegalArgumentException(
-                  "The specified parameter for "
-                      + option.getCommandLineFlag()
-                      + " must be true or false: " + params.get(0));
-
-
-            case STATS_INTERVAL: {
-              long statsInterval;
-              try {
-                statsInterval = Long.parseLong(params.get(0));
-              } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException(
-                    "Stats interval must be a long integer: " + params.get(0));
-              }
-              if (statsInterval < 0) {
-                throw new IllegalArgumentException(
-                    "Negative stats intervals are not allowed: "
-                        + statsInterval);
-              }
-              return statsInterval;
-            }
-
-            default:
-              throw new IllegalArgumentException(
-                  "Unhandled command line option: "
-                      + option.getCommandLineFlag()
-                      + " / " + option);
-          }
-        });
+        SzApiServerOption.PARAMETER_PROCESSOR);
 
     // create a result map
-    Map<SzApiServerOption, Object> result = new LinkedHashMap<>();
+    Map<CommandLineOption, Object> result = new LinkedHashMap<>();
 
     // iterate over the option values and handle them
     JsonObjectBuilder job = Json.createObjectBuilder();
@@ -1168,35 +876,37 @@ public class SzApiServer implements SzApiProvider {
   }
 
   /**
-   * Checks if the specified base path is formatted legally.  If so the
-   * returned value is equivalent but with a leading a trailing forward slash
-   * if the specified parameter did not already have one.
-   *
-   * @param basePath The base path to validate.
-   * @return The base path with a leading and trailing forward slash.
-   *
-   * @throws IllegalArgumentException If the specified base path is not valid.
-   */
-  private static String validateBasePath(String basePath) {
-    if (!LEGAL_BASE_PATH_PATTERN.matcher(basePath).matches()) {
-      throw new IllegalArgumentException(
-          "The specified base path contains illegal characters");
-    }
-    if (basePath.equals("/")) return basePath;
-    if (!basePath.startsWith("/")) basePath = "/" + basePath;
-    if (basePath.endsWith("/")) {
-      basePath = basePath.substring(0, basePath.length() -1);
-    }
-    return basePath;
-  }
-
-  /**
    * Returns a formatted string describing the version details of the
    * API Server.
    *
    * @return A formatted string describing the version details.
    */
-  private static String getVersionString() {
+  protected static String getVersionString() {
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    printJarVersion(pw);
+    printSenzingVersions(pw);
+    return sw.toString();
+  }
+
+  /**
+   * Prints the JAR version header for the version string to the specified
+   * {@link PrintWriter}.
+   *
+   * @param pw The {@link PrintWriter} to print the version information to.
+   */
+  protected static void printJarVersion(PrintWriter pw) {
+    pw.println("[ " + JAR_FILE_NAME + " version "
+                   + BuildInfo.MAVEN_VERSION + " ]");
+  }
+
+  /**
+   * Prints the Senzing version information to the specified {@link
+   * PrintWriter}.
+   *
+   * @param pw The {@link PrintWriter} to print the version information to.
+   */
+  protected static void printSenzingVersions(PrintWriter pw) {
     // use G2Product API without "init()" for now
     G2Product productApi = NativeApiFactory.createProductApi();
     String jsonText = productApi.version();
@@ -1205,11 +915,8 @@ public class SzApiServer implements SzApiProvider {
 
     String formattedBuildDate
         = BUILD_DATE_FORMATTER.format(
-            Instant.ofEpochMilli(info.getNativeApiBuildDate().getTime()));
+        Instant.ofEpochMilli(info.getNativeApiBuildDate().getTime()));
 
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    pw.println("[ " + JAR_FILE_NAME + " version " + BuildInfo.MAVEN_VERSION + " ]");
     pw.println(" - REST API Server Version      : " + info.getApiServerVersion());
     pw.println(" - REST Specification Version   : " + info.getRestApiVersion());
     pw.println(" - Senzing Native API Version   : " + info.getNativeApiVersion());
@@ -1218,22 +925,30 @@ public class SzApiServer implements SzApiProvider {
     pw.println(" - Senzing Native Build Date    : " + formattedBuildDate);
     pw.println(" - Config Compatibility Version : " + info.getConfigCompatibilityVersion());
     pw.flush();
-    return sw.toString();
   }
 
   /**
-   * @return
+   * Prints the introduction to the usage message to the specified {@link
+   * PrintWriter}.
+   *
+   * @param pw The {@link PrintWriter} to write the usage introduction to.
    */
-  public static String getUsageString() {
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-
-    pw.println();
+  protected static void printUsageIntro(PrintWriter pw) {
     pw.println(multilineFormat(
         "java -jar " + JAR_FILE_NAME + " <options>",
         "",
         "<options> includes: ",
-        "",
+        ""));
+  }
+
+  /**
+   * Prints the usage for the standard options to the specified {@link
+   * PrintWriter}.
+   *
+   * @param pw The {@link PrintWriter} to write the standard options usage.
+   */
+  protected static void printStandardOptionsUsage(PrintWriter pw) {
+    pw.println(multilineFormat(
         "[ Standard Options ]",
         "",
         "   --help",
@@ -1411,7 +1126,16 @@ public class SzApiServer implements SzApiProvider {
         "        Also -monitorFile.  Specifies a file whose timestamp is monitored to",
         "        determine when to shutdown.",
         "        --> VIA ENVIRONMENT: " + MONITOR_FILE.getEnvironmentVariable(),
-        "",
+        ""));
+  }
+
+  /**
+   * Prints the info-queue options usage to the specified {@link PrintWriter}.
+   *
+   * @param pw The {@link PrintWriter} to write the info-queue options usage.
+   */
+  protected static void printInfoQueueOptionsUsage(PrintWriter pw) {
+    pw.println(multilineFormat(
         "[ Asynchronous Info Queue Options ]",
         "   The following options pertain to configuring an asynchronous message",
         "   queue on which to send \"info\" messages generated when records are",
@@ -1498,7 +1222,16 @@ public class SzApiServer implements SzApiProvider {
         "        Also -kafkaInfoTopic.  Used to specify the topic name for connecting to",
         "        Kafka as part of specifying a Kafka info topic.",
         "        --> VIA ENVIRONMENT: " + KAFKA_INFO_TOPIC.getEnvironmentVariable(),
-        "",
+        ""));
+  }
+
+  /**
+   * Prints the advanced options usage to the specified {@link PrintWriter}.
+   *
+   * @param pw The {@link PrintWriter} to write the advanced options usage.
+   */
+  protected static void printAdvancedOptionsUsage(PrintWriter pw) {
+    pw.println(multilineFormat(
         "[ Advanced Options ]",
         "",
         "   --config-mgr [config manager options]...",
@@ -1506,7 +1239,21 @@ public class SzApiServer implements SzApiProvider {
         "        subsequent options are interpreted as configuration manager options.",
         "        If this option is specified by itself then a help message on",
         "        configuration manager options will be displayed.",
-        "        NOTE: If this option is provided, the server will not start."));
+        "        NOTE: If this option is provided, the server will not start."));  }
+
+  /**
+   * @return
+   */
+  public static String getUsageString() {
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+
+    pw.println();
+    printUsageIntro(pw);
+    printStandardOptionsUsage(pw);
+    printInfoQueueOptionsUsage(pw);
+    printAdvancedOptionsUsage(pw);
+
     pw.println();
     pw.flush();
     sw.flush();
@@ -1514,21 +1261,112 @@ public class SzApiServer implements SzApiProvider {
     return sw.toString();
   }
 
-  private void echo(String message) {
+  /**
+   * Outputs the specified {@link String} unless running in quiet mode.
+   *
+   * @param message
+   */
+  protected void echo(String message) {
     if (this.quiet) return;
     System.out.println(message);
   }
 
   /**
-   * @param context
-   * @param packageName
-   * @param path
-   * @param initOrder
+   * Gets the {@link List} of {@link Class} instances containing the endpoints
+   * to be added to the REST API Server.  The returned {@link List} may be
+   * modified directly.
+   *
+   * @return The {@link List} of {@link Class} instances containing the
+   *         endpoints to be added to the REST API Server.
    */
-  private static void addJerseyServlet(ServletContextHandler context,
-                                       String packageName,
-                                       String path,
-                                       int initOrder) {
+  protected List<Class> getServicesClassList() {
+    try {
+      // get the properties file
+      Properties serviceProps = new Properties();
+      serviceProps.load(
+          SzApiServer.class.getResourceAsStream(SERVICES_RESOURCE_FILE));
+
+      // create the result list
+      List<Class> result = new ArrayList<>(serviceProps.size());
+
+      // loop through the keys and treat them as class names
+      for (Object key : serviceProps.keySet()) {
+        String className = key.toString();
+        Class c = Class.forName(className);
+        result.add(c);
+      }
+
+      // return the list
+      return result;
+
+    } catch (ClassNotFoundException|IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Filters the specified {@link List} of {@link Class} instances to remove
+   * classes that are base classes to others.  The derived classes will contain
+   * the same methods and annotations as the base ones and therefore the base
+   * ones are redundant.
+   *
+   * @param classes The {@link List} of classes.
+   *
+   * @return The newly created filtered {@link List} of classes or the specified
+   *         parameter if no classes were filtered.
+   */
+  protected List<Class> filterBaseServiceClasses(List<Class> classes) {
+    // create the result
+    Set<Class> removeSet = new HashSet<>();
+
+    // loop through the classes
+    for (Class c1 : classes) {
+      // check if the class is an interface
+      if (c1.isInterface()) {
+        System.err.println(
+            "WARNING: Interface found in services class list: " + c1);
+        removeSet.add(c1);
+        continue; // there should be no interfaces
+      }
+
+      // loop through the other classes
+      for (Class c2 : classes) {
+        // if the same class then skip this one
+        if (c1 == c2) continue;
+
+        // check if the second class is assignable to the first
+        if (c1.isAssignableFrom(c2)) {
+          removeSet.add(c1);
+          break;
+        }
+      }
+    }
+
+    // check if none are to be removed
+    if (removeSet.size() == 0) return classes;
+
+    // create the result list
+    List<Class> result = new ArrayList<>(classes.size() - removeSet.size());
+    for (Class c: classes) {
+      if (! removeSet.contains(c)) {
+        result.add(c);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Adds the Jersey servlet to the specified {@link ServletContextHandler}
+   * using the specified package name, path and init order.
+   *
+   * @param context     The context to add the servlet to.
+   * @param path        The path to bind the servlet to.
+   * @param initOrder   The init order for the servlet.
+   */
+  protected void addJerseyServlet(ServletContextHandler context,
+                                  String                path,
+                                  int                   initOrder)
+  {
     ServletHolder jerseyServlet = context.addServlet(
         org.glassfish.jersey.servlet.ServletContainer.class, path);
 
@@ -1536,34 +1374,45 @@ public class SzApiServer implements SzApiProvider {
 
     jerseyServlet.setInitParameter(
         "jersey.config.server.provider.packages",
-        packageName + ";"
-            + "org.codehaus.jackson.jaxrs;"
+            "org.codehaus.jackson.jaxrs;"
             + "org.glassfish.jersey.media.multipart");
 
+    // get the class list and filter it
+    List<Class> classList = this.getServicesClassList();
+    classList = this.filterBaseServiceClasses(classList);
+    StringBuilder sb = new StringBuilder();
+    for (Class c: classList) {
+      sb.append(c.getName()).append(";");
+    }
+    sb.append("org.glassfish.jersey.media.multipart.MultiPartFeature");
+
     jerseyServlet.setInitParameter(
-        "jersey.config.server.provider.classnames",
-        "org.glassfish.jersey.media.multipart.MultiPartFeature");
+        "jersey.config.server.provider.classnames", sb.toString());
 
     jerseyServlet.setInitParameter(
         "jersey.api.json.POJOMappingFeature", "true");
   }
 
   /**
+   * Adds the specified zero or more web socket classes to the specified
+   * {@link ServletContextHandler}.
    *
-   * @param context
-   * @param socketClasses
+   * @param context       The {@link ServletContextHandler} to add the web socket
+   *                      endpoints to.
+   * @param socketClasses The zero or more Web Socket endpoint classes to add
+   *                      to the context.
    */
-  private static void addWebSocketHandler(ServletContextHandler context,
-                                          Class...              socketClasses)
-  {
+  protected static void addWebSocketHandler(ServletContextHandler context,
+                                            Class... socketClasses) {
     final int maxSize = WEB_SOCKETS_MESSAGE_MAX_SIZE;
     WebSocketServerContainerInitializer.configure(
         context,
-        ((servletContext, wsContainer) -> {
+        ((servletContext, wsContainer) ->
+        {
           wsContainer.setDefaultMaxTextMessageBufferSize(maxSize);
           wsContainer.setDefaultMaxBinaryMessageBufferSize(maxSize);
           wsContainer.setDefaultMaxSessionIdleTimeout(WEB_SOCKET_TIMEOUT);
-          for (Class socketClass: socketClasses) {
+          for (Class socketClass : socketClasses) {
             wsContainer.addEndpoint(socketClass);
           }
         }));
@@ -1577,12 +1426,12 @@ public class SzApiServer implements SzApiProvider {
    * @param hostHeader
    * @param initOrder
    */
-  private static void addProxyServlet(ServletContextHandler context,
-                                      String path,
-                                      String viaHost,
-                                      boolean preserveHost,
-                                      String hostHeader,
-                                      int initOrder) {
+  protected static void addProxyServlet(ServletContextHandler context,
+                                        String path,
+                                        String viaHost,
+                                        boolean preserveHost,
+                                        String hostHeader,
+                                        int initOrder) {
     ServletHolder proxyServlet = context.addServlet(
         org.eclipse.jetty.proxy.ProxyServlet.class, path);
 
@@ -1598,11 +1447,53 @@ public class SzApiServer implements SzApiProvider {
   }
 
   /**
-   * @param args
+   * Creates a new instance of {@link SzApiServer} from the specified options.
+   * @param options The {@link Map} of {@link CommandLineOption} keys to
+   *                {@link Object} values.
+   * @return The created instance of {@link SzApiServer}.
+   * @throws Exception If a failure occurs.
+   */
+  private static SzApiServer build(Map<CommandLineOption, Object> options)
+    throws Exception
+  {
+    return new SzApiServer(options);
+  }
+
+  /**
+   * Handles execution from the command line.
+   *
+   * @param args The command line arguments.
    * @throws Exception
    */
-  public static void main(String[] args)
-      throws Exception {
+  public static void main(String[] args) throws Exception {
+    commandLineStart(args,
+                     SzApiServer::parseCommandLine,
+                     SzApiServer::getUsageString,
+                     SzApiServer::getVersionString,
+                     SzApiServer::build);
+  }
+
+  /**
+   * Starts an instance of the server from the command line using the specified
+   * arguments and the specified function helpers.
+   *
+   * @param args The command-line arguments.
+   * @param cmdLineParser The {@link CommandLineParser} to parse the command
+   *                      line arguments.
+   * @param usageMessage The {@link Supplier} for the usage message.
+   * @param versionMessage The {@link Supplier} for the version message.
+   * @param serverBuilder The {@link CommandLineBuilder} to create the server
+   *                      instance from the command line options.
+   * @throws Exception
+   */
+  protected static void commandLineStart(
+      String[]                        args,
+      CommandLineParser               cmdLineParser,
+      Supplier<String>                usageMessage,
+      Supplier<String>                versionMessage,
+      CommandLineBuilder<SzApiServer> serverBuilder)
+      throws Exception
+  {
     if (args.length > 0 && (args[0].equals("--repomgr")
         || args[0].equals("--repo-mgr")))
     {
@@ -1618,9 +1509,9 @@ public class SzApiServer implements SzApiProvider {
       return;
     }
 
-    Map<SzApiServerOption, ?> options = null;
+    Map<CommandLineOption, Object> options = null;
     try {
-      options = parseCommandLine(args);
+      options = cmdLineParser.parseCommandLine(args);
 
     } catch (Exception e) {
       if (e instanceof NullPointerException) {
@@ -1639,12 +1530,12 @@ public class SzApiServer implements SzApiProvider {
     }
 
     if (options.containsKey(HELP)) {
-      System.out.println(SzApiServer.getUsageString());
+      System.out.println(usageMessage.get());
       System.exit(0);
     }
     if (options.containsKey(VERSION)) {
       System.out.println();
-      System.out.println(SzApiServer.getVersionString());
+      System.out.println(versionMessage.get());
       System.exit(0);
     }
 
@@ -1655,7 +1546,7 @@ public class SzApiServer implements SzApiProvider {
     System.out.println("java.io.tmpdir = " + System.getProperty("java.io.tmpdir"));
 
     try {
-      if (!SzApiServer.initialize(options)) {
+      if (!SzApiServer.initialize(options, serverBuilder)) {
         System.err.println("FAILED TO INITIALIZE");
         System.exit(0);
       }
@@ -1720,7 +1611,10 @@ public class SzApiServer implements SzApiProvider {
    * @param options
    * @return
    */
-  private static boolean initialize(Map<SzApiServerOption, ?> options) {
+  protected static boolean initialize(
+      Map<CommandLineOption, Object>            options,
+      CommandLineBuilder<? extends SzApiServer> serverBuilder)
+  {
     if (options.containsKey(HELP)) {
       System.out.println(SzApiServer.getUsageString());
       return false;
@@ -1736,7 +1630,7 @@ public class SzApiServer implements SzApiProvider {
       }
 
       try {
-        SzApiServer.INSTANCE = new SzApiServer(options);
+        SzApiServer.INSTANCE = serverBuilder.build(options);
         SzApiServer.PROVIDER_TOKEN
             = SzApiProvider.Factory.installProvider(SzApiServer.INSTANCE);
 
@@ -1858,7 +1752,7 @@ public class SzApiServer implements SzApiProvider {
    *
    * @throws Exception If a failure occurs.
    */
-  private SzApiServer(Map<SzApiServerOption, ?> options)
+  protected SzApiServer(Map<CommandLineOption, Object> options)
       throws Exception {
 
     this(null, options);
@@ -1885,14 +1779,15 @@ public class SzApiServer implements SzApiProvider {
   /**
    * Internal method to build an options map.
    */
-  private static Map<SzApiServerOption, ?> buildOptionsMap(Integer      httpPort,
-                                                           InetAddress  bindAddress,
-                                                           Integer      concurrency,
-                                                           String       moduleName,
-                                                           File         iniFile,
-                                                           Boolean      verbose)
+  protected static Map<CommandLineOption, Object> buildOptionsMap(
+      Integer     httpPort,
+      InetAddress bindAddress,
+      Integer     concurrency,
+      String      moduleName,
+      File        iniFile,
+      Boolean     verbose)
   {
-    Map<SzApiServerOption, Object> map = new HashMap<>();
+    Map<CommandLineOption, Object> map = new HashMap<>();
     if (httpPort != null)     map.put(HTTP_PORT, httpPort);
     if (bindAddress != null)  map.put(BIND_ADDRESS, bindAddress);
     if (concurrency != null)  map.put(CONCURRENCY, concurrency);
@@ -1912,8 +1807,10 @@ public class SzApiServer implements SzApiProvider {
    *
    * @throws Exception If a failure occurs.
    */
-  private SzApiServer(AccessToken token, Map<SzApiServerOption, ?> options)
-      throws Exception {
+  protected SzApiServer(AccessToken                     token,
+                        Map<CommandLineOption, Object>  options)
+      throws Exception
+  {
     this.accessToken = token;
 
     this.httpPort = DEFAULT_PORT;
@@ -2123,15 +2020,18 @@ public class SzApiServer implements SzApiProvider {
 
     // organize options into option groups
     options.forEach((option, optionValue) -> {
+      // check if its an API server option
       if (optionValue == null) return;
-      String groupName = option.getGroupName();
+      if (!(option instanceof SzApiServerOption)) return;
+      SzApiServerOption serverOption = (SzApiServerOption) option;
+      String groupName = serverOption.getGroupName();
       if (groupName == null) return;
       Map<String, Object> groupMap = optionGroups.get(groupName);
       if (groupMap == null) {
         groupMap = new LinkedHashMap<>();
         optionGroups.put(groupName, groupMap);
       }
-      String groupProp = option.getGroupPropertyKey();
+      String groupProp = serverOption.getGroupPropertyKey();
       groupMap.put(groupProp, optionValue);
     });
 
@@ -2272,13 +2172,12 @@ public class SzApiServer implements SzApiProvider {
                                 this.fileMonitor);
     this.jettyServer.addLifeCycleListener(lifeCycleListener);
     int initOrder = 0;
-    String packageName = SzApiProvider.class.getPackage().getName();
     String apiPath = "/*";
 
     //addProxyServlet(context, "/www/*", "https://www.senzing.com", false,
     //                "www.senzing.com", initOrder++);
 
-    addJerseyServlet(context, packageName, apiPath, initOrder++);
+    this.addJerseyServlet(context, apiPath, initOrder++);
 
     Map<Class, String> webSocketMap = this.getWebSocketClasses();
     Class[] webSocketClasses = new Class[webSocketMap.keySet().size()];
@@ -2389,7 +2288,7 @@ public class SzApiServer implements SzApiProvider {
    *         obtained from the G2CONFIGFILE initialization parameter, or
    *         <tt>null</tt> if the G2CONFIGFILE parameter is not present.
    */
-  private static File extractIniConfigPath(JsonObject initJson) {
+  protected static File extractIniConfigPath(JsonObject initJson) {
     JsonObject sqlSection = JsonUtils.getJsonObject(initJson, "SQL");
     if (sqlSection == null) return null;
     String configFile = JsonUtils.getString(sqlSection, "G2CONFIGFILE");
@@ -2408,7 +2307,7 @@ public class SzApiServer implements SzApiProvider {
    * @return The {@link JsonObject} representation of the INI parameters, sans
    *         any reference to "G2CONFIGFILE" property.
    */
-  private static JsonObject stripIniConfigPath(JsonObject initJson) {
+  protected static JsonObject stripIniConfigPath(JsonObject initJson) {
     JsonObject sqlSection = JsonUtils.getJsonObject(initJson, "SQL");
     if (sqlSection == null) return initJson;
     String configFile = JsonUtils.getString(sqlSection, "G2CONFIGFILE");
@@ -2444,8 +2343,8 @@ public class SzApiServer implements SzApiProvider {
    *         is configured and negative one (-1) if a configuration file is
    *         provided and there is a default configuration configured.
    */
-  private static ConfigType getConfigType(String      moduleName,
-                                          JsonObject  initJson)
+  protected static ConfigType getConfigType(String      moduleName,
+                                            JsonObject  initJson)
   {
     if (moduleName == null) {
       moduleName = SzApiServer.class.getSimpleName();
@@ -2504,7 +2403,10 @@ public class SzApiServer implements SzApiProvider {
     }
   }
 
-  private void initNativeApis()
+  /**
+   * Initializes the native Senzing API's for this instance.
+   */
+  protected void initNativeApis()
   {
     String  initJsonText  = JsonUtils.toJsonText(this.initJson);
     String  iniFilePath   = null;
@@ -2605,7 +2507,7 @@ public class SzApiServer implements SzApiProvider {
   /**
    *
    */
-  private void assertNotShutdown() {
+  protected void assertNotShutdown() {
     if (this.isShutdown()) {
       throw new IllegalStateException(
           "This API server instance is already shutdown.");
@@ -2653,7 +2555,7 @@ public class SzApiServer implements SzApiProvider {
   /**
    * Internal method for handling cleanup on shutdown.
    */
-  private void shutdown() {
+  protected void shutdown() {
     if (this.jettyServer != null) {
       synchronized (this.jettyServer) {
         try {
@@ -2784,7 +2686,7 @@ public class SzApiServer implements SzApiProvider {
   /**
    * Shuts down and joins with the reinitializer (if any)
    */
-  private void joinReinitializer() {
+  protected void joinReinitializer() {
     if (this.reinitializer != null) {
       this.reinitializer.complete();
       while (this.reinitializer.isAlive()) {
@@ -2800,7 +2702,7 @@ public class SzApiServer implements SzApiProvider {
   /**
    * Shuts down and joins with the file monitor (if any)
    */
-  private void joinFileMonitor() {
+  protected void joinFileMonitor() {
     if (this.fileMonitor != null) {
       this.fileMonitor.signalShutdown();
       while (this.fileMonitor.isAlive()) {
@@ -2851,7 +2753,7 @@ public class SzApiServer implements SzApiProvider {
    *         the configuration was already current and <tt>null</tt> if an
    *         error occurred in attempting to ensure it is current.
    */
-  Boolean ensureConfigCurrent(boolean pauseWorkers) {
+  protected Boolean ensureConfigCurrent(boolean pauseWorkers) {
     this.purgeLock.readLock().lock();
     try {
       // if not capable of reinitialization then return alse
@@ -2937,7 +2839,7 @@ public class SzApiServer implements SzApiProvider {
    *
    * @throws IllegalStateException If an engine failure occurs.
    */
-  private Long getNewConfigurationID() throws IllegalStateException {
+  protected Long getNewConfigurationID() throws IllegalStateException {
     G2ConfigMgr configMgrApi = this.getConfigMgrApi();
 
     // get the active configuration ID
@@ -2983,7 +2885,7 @@ public class SzApiServer implements SzApiProvider {
    * Initializes the configuration data cached by this instance. This is done
    * on startup and on reinitialization.
    */
-  void initializeConfigData() {
+  protected void initializeConfigData() {
     synchronized (this.reinitMonitor) {
       StringBuffer sb = new StringBuffer();
       this.engineApi.exportConfig(sb);
@@ -3011,8 +2913,10 @@ public class SzApiServer implements SzApiProvider {
     }
   }
 
-
-  private void logDiagnostics() {
+  /**
+   * Logs diagnostics.
+   */
+  protected void logDiagnostics() {
     long now = System.currentTimeMillis();
     if ((now - this.lastDiagnosticsRun) <= DIAGNOSTIC_PERIOD) return;
     boolean firstRun = (this.lastDiagnosticsRun < 0L);
@@ -3077,7 +2981,11 @@ public class SzApiServer implements SzApiProvider {
   }
 
   /**
+   * Obtains the list of Web Socket implementations from the resource properties
+   * file by the name given by {@link #WEB_SOCKETS_RESOURCE_FILE}.
    *
+   * @return The {@link Map} of {@link Class} objects to URL paths that they
+   *         should be mapped to.
    */
   protected Map<Class, String> getWebSocketClasses() {
     synchronized (this.monitor) {
@@ -3088,8 +2996,7 @@ public class SzApiServer implements SzApiProvider {
       try {
         Properties webSocketProps = new Properties();
         webSocketProps.load(
-            this.getClass().getResourceAsStream(
-                "web-socket-endpoints.properties"));
+            SzApiServer.class.getResourceAsStream(WEB_SOCKETS_RESOURCE_FILE));
 
         Map<Class, String> webSocketMap = new LinkedHashMap<>();
         webSocketProps.forEach((className, path) -> {

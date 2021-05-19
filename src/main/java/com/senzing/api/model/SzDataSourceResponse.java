@@ -28,41 +28,13 @@ public class SzDataSourceResponse extends SzResponseWithRawData
    * Constructs with only the HTTP method and the self link, leaving the
    * data sources to be added later.
    *
-   * @param httpMethod The {@link SzHttpMethod}.
+   * @param meta The response meta data.
    *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The string URL link to generate this response.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * @param links The links for the response.
    *
    */
-  public SzDataSourceResponse(SzHttpMethod httpMethod,
-                              int          httpStatusCode,
-                              String       selfLink,
-                              Timers       timers) {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-  }
-
-  /**
-   * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
-   * data sources to be added later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   */
-  public SzDataSourceResponse(SzHttpMethod httpMethod,
-                              int          httpStatusCode,
-                              UriInfo      uriInfo,
-                              Timers       timers)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
+  public SzDataSourceResponse(SzMeta meta, SzLinks links) {
+    super(meta, links);
   }
 
   /**

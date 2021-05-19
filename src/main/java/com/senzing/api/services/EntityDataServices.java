@@ -12,12 +12,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
 import java.util.*;
+import java.util.function.Function;
 
 import static com.senzing.api.model.SzHttpMethod.*;
 import static com.senzing.api.model.SzFeatureMode.*;
 import static com.senzing.api.model.SzRelationshipMode.*;
 import static com.senzing.api.model.SzAttributeSearchResultType.*;
-import static com.senzing.api.services.ServicesUtil.*;
 import static com.senzing.g2.engine.G2Engine.*;
 import static javax.ws.rs.core.MediaType.*;
 
@@ -26,7 +26,7 @@ import static javax.ws.rs.core.MediaType.*;
  */
 @Path("/")
 @Produces(APPLICATION_JSON)
-public class EntityDataServices {
+public class EntityDataServices extends ServicesSupport {
   /**
    * The minimum native API version to support search filtering.
    */
@@ -49,6 +49,20 @@ public class EntityDataServices {
     RESULT_TYPE_FLAG_MAP = Collections.unmodifiableMap(map);
   }
 
+  /**
+   * Provides the implementation for
+   * <tt>POST /data-sources/{dataSourceCode}/records</tt>.
+   *
+   * @param dataSourceCode The data source code from the URI path.
+   * @param loadId The optional load ID query parameter for the record.
+   * @param withInfo Flag indicating if resolution info should be produced
+   *                 when loading the record (from the query parameter).
+   * @param withRaw Whether or not the raw JSON should be included with the
+   *                response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param recordJsonData The Senzing-format JSON text describing the record.
+   * @return The {@link SzLoadRecordResponse} describing the response.
+   */
   @POST
   @Path("data-sources/{dataSourceCode}/records")
   public SzLoadRecordResponse loadRecord(
@@ -59,18 +73,18 @@ public class EntityDataServices {
       @Context                                        UriInfo uriInfo,
       String                                                  recordJsonData)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
 
     try {
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      SzApiProvider provider = this.getApiProvider();
       dataSourceCode = dataSourceCode.trim().toUpperCase();
-      ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
+      this.ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
 
       final String dataSource = dataSourceCode;
 
       final String normalizedLoadId = normalizeString(loadId);
 
-      String recordText = ensureJsonFields(
+      String recordText = this.ensureJsonFields(
           POST,
           uriInfo,
           timers,
@@ -93,23 +107,23 @@ public class EntityDataServices {
 
       final String inRecordId     = jsonRecordId;
       final String recordJsonText = recordText;
-      checkDataSource(POST, uriInfo, timers, dataSource, provider);
+      this.checkDataSource(POST, uriInfo, timers, dataSource, provider);
 
       StringBuffer sb = new StringBuffer();
 
       // get the asynchronous info queue
       boolean asyncInfo = provider.hasInfoSink();
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String text = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get the engine API and the config API
         G2Engine engineApi = provider.getEngineApi();
 
         int result;
         if (withInfo || asyncInfo) {
-          callingNativeAPI(timers, "engine", "addRecordWithInfo");
+          this.callingNativeAPI(timers, "engine", "addRecordWithInfo");
           result = engineApi.addRecordWithInfo(
               dataSource,
               (inRecordId == null) ? "" : inRecordId, // empty record ID
@@ -117,27 +131,28 @@ public class EntityDataServices {
               normalizedLoadId,
               0,
               sb);
-          calledNativeAPI(timers, "engine", "addRecordWithInfo");
+          this.calledNativeAPI(timers, "engine", "addRecordWithInfo");
 
         } else if (inRecordId == null) {
-          callingNativeAPI(timers, "engine", "addRecordWithReturnedRecordID");
+          this.callingNativeAPI(timers, "engine", "addRecordWithReturnedRecordID");
           result = engineApi.addRecordWithReturnedRecordID(dataSource,
                                                            sb,
                                                            recordJsonText,
                                                            normalizedLoadId);
-          calledNativeAPI(timers, "engine", "addRecordWithReturnedRecordID");
+          this.calledNativeAPI(timers, "engine", "addRecordWithReturnedRecordID");
 
         } else {
-          callingNativeAPI(timers, "engine", "addRecord");
+          this.callingNativeAPI(timers, "engine", "addRecord");
           result = engineApi.addRecord(dataSource,
                                        inRecordId,
                                        recordJsonText,
                                        normalizedLoadId);
-          calledNativeAPI(timers, "engine", "addRecord");
+          this.calledNativeAPI(timers, "engine", "addRecord");
         }
 
         if (result != 0) {
-          throw newPossiblyNotFoundException(POST, uriInfo, timers, engineApi);
+          throw this.newPossiblyNotFoundException(
+              POST, uriInfo, timers, engineApi);
         }
 
         return sb.toString().trim();
@@ -154,7 +169,7 @@ public class EntityDataServices {
         // if info was requested or we need to return the record ID then we need
         // to parse the info so we can return it or extract the record ID
         if (withInfo || inRecordId == null) {
-          info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+          info = this.parseResolutionInfo(jsonObject);
         }
 
         // check if the info sink is configured
@@ -163,7 +178,7 @@ public class EntityDataServices {
           SzMessage message = new SzMessage(rawData);
           try {
             // send the info on the async queue
-            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
+            infoSink.send(message, this::logFailedAsyncInfo);
 
           } catch (Exception e) {
             // failed async logger will not double-log
@@ -185,7 +200,7 @@ public class EntityDataServices {
       }
 
       // construct the response
-      SzLoadRecordResponse response = new SzLoadRecordResponse(
+      SzLoadRecordResponse response = this.newLoadRecordResponse(
           POST, 200, uriInfo, timers, recordId, info);
 
       if (withRaw && withInfo) {
@@ -204,10 +219,62 @@ public class EntityDataServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(POST, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(POST, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Parses the raw JSON described by the specified {@link JsonObject} and
+   * produces an instance of {@link SzResolutionInfo}.
+   *
+   * @param jsonObject The {@link JsonObject} describing the resolution info
+   *                   in the raw JSON format.
+   * @return The {@link SzResolutionInfo} created form the {@link JsonObject}.
+   */
+  protected SzResolutionInfo parseResolutionInfo(JsonObject jsonObject) {
+    return SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+  }
+
+  /**
+   * Creates a new instance of {@link SzLoadRecordResponse} with the specified
+   * parameters.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param recordId The record ID of the record that was loaded.
+   * @param info The optional {@link SzResolutionInfo} for the response.
+   * @return The newly created {@link SzLoadRecordResponse} instance.
+   */
+  protected SzLoadRecordResponse newLoadRecordResponse(
+      SzHttpMethod      httpMethod,
+      int               httpStatusCode,
+      UriInfo           uriInfo,
+      Timers            timers,
+      String            recordId,
+      SzResolutionInfo  info)
+  {
+    return new SzLoadRecordResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo), recordId, info);
+  }
+
+  /**
+   * Provides the implementation for
+   * <tt>PUT /data-sources/{dataSourceCode}/records/{recordId}</tt>.
+   *
+   * @param dataSourceCode The data source code from the URI path.
+   * @param recordId The record ID of the record being loaded.
+   * @param loadId The optional load ID query parameter for the record.
+   * @param withInfo Flag indicating if resolution info should be produced
+   *                 when loading the record (from the query parameter).
+   * @param withRaw Whether or not the raw JSON should be included with the
+   *                response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param recordJsonData The Senzing-format JSON text describing the record.
+   * @return The {@link SzLoadRecordResponse} describing the response.
+   */
   @PUT
   @Path("data-sources/{dataSourceCode}/records/{recordId}")
   public SzLoadRecordResponse loadRecord(
@@ -219,10 +286,10 @@ public class EntityDataServices {
       @Context                                        UriInfo uriInfo,
       String                                                  recordJsonData)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
     try {
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
-      ensureLoadingIsAllowed(provider, PUT, uriInfo, timers);
+      SzApiProvider provider = this.getApiProvider();
+      this.ensureLoadingIsAllowed(provider, PUT, uriInfo, timers);
       dataSourceCode = dataSourceCode.trim().toUpperCase();
 
       final String dataSource = dataSourceCode;
@@ -234,17 +301,17 @@ public class EntityDataServices {
 
       Map<String,String> defaultMap = Map.of("ENTITY_TYPE", "GENERIC");
 
-      String recordText = ensureJsonFields(PUT,
-                                           uriInfo,
-                                           timers,
-                                           recordJsonData,
-                                           map,
-                                           defaultMap);
+      String recordText = this.ensureJsonFields(PUT,
+                                                uriInfo,
+                                                timers,
+                                                recordJsonData,
+                                                map,
+                                                defaultMap);
 
       Set<String> dataSources = provider.getDataSources(dataSource);
 
       if (!dataSources.contains(dataSource)) {
-        throw newNotFoundException(
+        throw this.newNotFoundException(
             PUT, uriInfo, timers,
             "The specified data source is not recognized: " + dataSource);
       }
@@ -252,9 +319,9 @@ public class EntityDataServices {
       // get the asynchronous info sink
       boolean asyncInfo = provider.hasInfoSink();
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawInfo = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get the engine API
         G2Engine engineApi = provider.getEngineApi();
@@ -263,25 +330,26 @@ public class EntityDataServices {
         String rawData = null;
         if (withInfo || asyncInfo) {
           StringBuffer sb = new StringBuffer();
-          callingNativeAPI(timers, "engine", "addRecordWithInfo");
+          this.callingNativeAPI(timers, "engine", "addRecordWithInfo");
           result = engineApi.addRecordWithInfo(dataSource,
                                                recordId,
                                                recordText,
                                                normalizedLoadId,
                                                0,
                                                sb);
-          calledNativeAPI(timers, "engine", "addRecordWithInfo");
+          this.calledNativeAPI(timers, "engine", "addRecordWithInfo");
           rawData = sb.toString();
         } else {
-          callingNativeAPI(timers, "engine", "addRecord");
+          this.callingNativeAPI(timers, "engine", "addRecord");
           result = engineApi.addRecord(dataSource,
                                        recordId,
                                        recordText,
                                        normalizedLoadId);
-          calledNativeAPI(timers, "engine", "addRecord");
+          this.calledNativeAPI(timers, "engine", "addRecord");
         }
         if (result != 0) {
-          throw newPossiblyNotFoundException(PUT, uriInfo, timers, engineApi);
+          throw this.newPossiblyNotFoundException(
+              PUT, uriInfo, timers, engineApi);
         }
 
         return rawData;
@@ -295,7 +363,7 @@ public class EntityDataServices {
           SzMessage message = new SzMessage(rawInfo);
           try {
             // send the info on the async queue
-            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
+            infoSink.send(message, this::logFailedAsyncInfo);
 
           } catch (Exception e) {
             logFailedAsyncInfo(e, message);
@@ -308,12 +376,12 @@ public class EntityDataServices {
         // check if the info was requested
         if (withInfo) {
           JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
-          info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+          info = this.parseResolutionInfo(jsonObject);
         }
       }
 
       // construct the response
-      SzLoadRecordResponse response = new SzLoadRecordResponse(
+      SzLoadRecordResponse response = this.newLoadRecordResponse(
           PUT, 200, uriInfo, timers, recordId, info);
 
       // check if we have info and raw data was requested
@@ -333,10 +401,24 @@ public class EntityDataServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(PUT, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(PUT, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Provides the implementation for
+   * <tt>DELETE /data-sources/{dataSourceCode}/records/{recordId}</tt>.
+   *
+   * @param dataSourceCode The data source code from the URI path.
+   * @param recordId The record ID of the record being deleted.
+   * @param loadId The optional load ID query parameter for the record.
+   * @param withInfo Flag indicating if resolution info should be produced
+   *                 when loading the record (from the query parameter).
+   * @param withRaw Whether or not the raw JSON should be included with the
+   *                response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @return The {@link SzDeleteRecordResponse} describing the response.
+   */
   @DELETE
   @Path("data-sources/{dataSourceCode}/records/{recordId}")
   public SzDeleteRecordResponse deleteRecord(
@@ -347,10 +429,10 @@ public class EntityDataServices {
       @QueryParam("withRaw")  @DefaultValue("false")  boolean withRaw,
       @Context                                        UriInfo uriInfo)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
     try {
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
-      ensureLoadingIsAllowed(provider, DELETE, uriInfo, timers);
+      SzApiProvider provider = this.getApiProvider();
+      this.ensureLoadingIsAllowed(provider, DELETE, uriInfo, timers);
       dataSourceCode = dataSourceCode.trim().toUpperCase();
 
       final String dataSource = dataSourceCode;
@@ -358,7 +440,7 @@ public class EntityDataServices {
       Set<String> dataSources = provider.getDataSources(dataSource);
 
       if (!dataSources.contains(dataSource)) {
-        throw newNotFoundException(
+        throw this.newNotFoundException(
             DELETE, uriInfo, timers,
             "The specified data source is not recognized: " + dataSource);
       }
@@ -379,16 +461,16 @@ public class EntityDataServices {
         String rawData = null;
         if (withInfo || asyncInfo) {
           StringBuffer sb = new StringBuffer();
-            callingNativeAPI(timers, "engine", "deleteRecordWithInfo");
+          this.callingNativeAPI(timers, "engine", "deleteRecordWithInfo");
           returnCode = engineApi.deleteRecordWithInfo(
               dataSource, recordId, normalizedLoadId,0, sb);
-          calledNativeAPI(timers, "engine", "deleteRecordWithInfo");
+          this.calledNativeAPI(timers, "engine", "deleteRecordWithInfo");
           rawData = sb.toString();
         } else {
-          callingNativeAPI(timers, "engine", "deleteRecord");
+          this.callingNativeAPI(timers, "engine", "deleteRecord");
           returnCode = engineApi.deleteRecord(
               dataSource, recordId, normalizedLoadId);
-          calledNativeAPI(timers, "engine", "deleteRecord");
+          this.calledNativeAPI(timers, "engine", "deleteRecord");
         }
         if (returnCode != 0) {
           int errorCode = engineApi.getLastExceptionCode();
@@ -398,7 +480,7 @@ public class EntityDataServices {
             return null;
           }
           // otherwise throw a server error
-          throw newInternalServerErrorException(
+          throw this.newInternalServerErrorException(
               DELETE, uriInfo, timers, engineApi);
         }
 
@@ -413,7 +495,7 @@ public class EntityDataServices {
           SzMessage message = new SzMessage(rawInfo);
           try {
             // send the info on the async queue
-            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
+            infoSink.send(message, this::logFailedAsyncInfo);
 
           } catch (Exception e) {
             logFailedAsyncInfo(e, message);
@@ -426,7 +508,7 @@ public class EntityDataServices {
         // check if the info was explicitly requested
         if (withInfo) {
           JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
-          info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+          info = this.parseResolutionInfo(jsonObject);
           if ((normalizeString(info.getDataSource()) == null)
               && (normalizeString(info.getRecordId()) == null)
               && (info.getAffectedEntities().size() == 0)
@@ -437,7 +519,7 @@ public class EntityDataServices {
       }
 
       // construct the response
-      SzDeleteRecordResponse response = new SzDeleteRecordResponse(
+      SzDeleteRecordResponse response = this.newDeleteRecordResponse(
           DELETE, 200, uriInfo, timers, info);
 
       // check if we have info and raw data was requested
@@ -457,11 +539,46 @@ public class EntityDataServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(
-          DELETE, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(DELETE, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Creates a new instance of {@link SzDeleteRecordResponse} with the specified
+   * parameters.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param info The optional {@link SzResolutionInfo} for the response.
+   * @return The newly created {@link SzDeleteRecordResponse} instance.
+   */
+  protected SzDeleteRecordResponse newDeleteRecordResponse(
+      SzHttpMethod      httpMethod,
+      int               httpStatusCode,
+      UriInfo           uriInfo,
+      Timers            timers,
+      SzResolutionInfo  info)
+  {
+    return new SzDeleteRecordResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo), info);
+  }
+
+  /**
+   * Provides the implementation for
+   * <tt>POST /data-sources/{dataSourceCode}/records/{recordId}/reevaluate</tt>.
+   *
+   * @param dataSourceCode The data source code from the URI path.
+   * @param recordId The record ID of the record being reevaluated.
+   * @param withInfo Flag indicating if resolution info should be produced
+   *                 when loading the record (from the query parameter).
+   * @param withRaw Whether or not the raw JSON should be included with the
+   *                response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @return The {@link SzReevaluateResponse} describing the response.
+   */
   @POST
   @Path("data-sources/{dataSourceCode}/records/{recordId}/reevaluate")
   public SzReevaluateResponse reevaluateRecord(
@@ -471,10 +588,10 @@ public class EntityDataServices {
       @QueryParam("withRaw")  @DefaultValue("false")  boolean withRaw,
       @Context                                        UriInfo uriInfo)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
     try {
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
-      ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
+      SzApiProvider provider = this.getApiProvider();
+      this.ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
       dataSourceCode = dataSourceCode.trim().toUpperCase();
 
       final String dataSource = dataSourceCode;
@@ -482,7 +599,7 @@ public class EntityDataServices {
       Set<String> dataSources = provider.getDataSources(dataSource);
 
       if (!dataSources.contains(dataSource)) {
-        throw newNotFoundException(
+        throw this.newNotFoundException(
             POST, uriInfo, timers,
             "The specified data source is not recognized: " + dataSource);
       }
@@ -490,9 +607,9 @@ public class EntityDataServices {
       // get the configured info message sink (if any)
       boolean asyncInfo = provider.hasInfoSink();
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawInfo = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get the engine API
         G2Engine engineApi = provider.getEngineApi();
@@ -501,18 +618,19 @@ public class EntityDataServices {
         String rawData = null;
         if (withInfo || asyncInfo) {
           StringBuffer sb = new StringBuffer();
-          callingNativeAPI(timers, "engine", "reevaluateRecordWithInfo");
+          this.callingNativeAPI(timers, "engine", "reevaluateRecordWithInfo");
           returnCode = engineApi.reevaluateRecordWithInfo(
               dataSource, recordId,0, sb);
-          calledNativeAPI(timers, "engine", "reevaluateRecordWithInfo");
+          this.calledNativeAPI(timers, "engine", "reevaluateRecordWithInfo");
           rawData = sb.toString();
         } else {
-          callingNativeAPI(timers, "engine", "reevaluateRecord");
+          this.callingNativeAPI(timers, "engine", "reevaluateRecord");
           returnCode = engineApi.reevaluateRecord(dataSource, recordId,0);
-          calledNativeAPI(timers, "engine", "reevaluateRecord");
+          this.calledNativeAPI(timers, "engine", "reevaluateRecord");
         }
         if (returnCode != 0) {
-          throw newPossiblyNotFoundException(POST, uriInfo, timers, engineApi);
+          throw this.newPossiblyNotFoundException(
+              POST, uriInfo, timers, engineApi);
         }
 
         return rawData;
@@ -525,7 +643,7 @@ public class EntityDataServices {
           SzMessageSink infoSink = provider.acquireInfoSink();
           SzMessage message = new SzMessage(rawInfo);
           try {
-            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
+            infoSink.send(message, this::logFailedAsyncInfo);
 
           } catch (Exception e) {
             logFailedAsyncInfo(e, message);
@@ -538,12 +656,12 @@ public class EntityDataServices {
         // check if the info was explicitly requested
         if (withInfo) {
           JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
-          info = SzResolutionInfo.parseResolutionInfo(null, jsonObject);
+          info = this.parseResolutionInfo(jsonObject);
         }
       }
 
       // construct the response
-      SzReevaluateResponse response = new SzReevaluateResponse(
+      SzReevaluateResponse response = this.newReevaluateResponse(
           POST, 200, uriInfo, timers, info);
 
       // check if we have info and raw data was requested
@@ -563,10 +681,44 @@ public class EntityDataServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(POST, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(POST, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Creates a new instance of {@link SzDeleteRecordResponse} with the specified
+   * parameters.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param info The optional {@link SzResolutionInfo} for the response.
+   * @return The newly created {@link SzDeleteRecordResponse} instance.
+   */
+  protected SzReevaluateResponse newReevaluateResponse(
+      SzHttpMethod      httpMethod,
+      int               httpStatusCode,
+      UriInfo           uriInfo,
+      Timers            timers,
+      SzResolutionInfo  info)
+  {
+    return new SzReevaluateResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo), info);
+  }
+
+  /**
+   * Provides the implementation for
+   * <tt>GET /data-sources/{dataSourceCode}/records/{recordId}</tt>.
+   *
+   * @param dataSourceCode The data source code from the URI path.
+   * @param recordId The record ID of the record being requested.
+   * @param withRaw Whether or not the raw JSON should be included with the
+   *                response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @return The {@link SzRecordResponse} describing the response.
+   */
   @GET
   @Path("data-sources/{dataSourceCode}/records/{recordId}")
   public SzRecordResponse getRecord(
@@ -575,51 +727,48 @@ public class EntityDataServices {
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
       @Context                                      UriInfo uriInfo)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
 
     try {
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      SzApiProvider provider = this.getApiProvider();
       dataSourceCode = dataSourceCode.trim().toUpperCase();
 
       StringBuffer sb = new StringBuffer();
 
       final String dataSource = dataSourceCode;
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get the engine API
         G2Engine engineApi = provider.getEngineApi();
 
-        callingNativeAPI(timers, "engine", "getRecord");
+        this.callingNativeAPI(timers, "engine", "getRecord");
         int result = engineApi.getRecordV2(
             dataSource, recordId, DEFAULT_RECORD_FLAGS, sb);
-        calledNativeAPI(timers, "engine", "getRecord");
+        this.calledNativeAPI(timers, "engine", "getRecord");
 
         if (result != 0) {
-          throw newPossiblyNotFoundException(GET, uriInfo, timers, engineApi);
+          throw this.newPossiblyNotFoundException(
+              GET, uriInfo, timers, engineApi);
         }
 
         return sb.toString();
       });
 
-      processingRawData(timers);
+      this.processingRawData(timers);
 
       // parse the raw data
       JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
 
-      SzEntityRecord entityRecord
-          = SzEntityRecord.parseEntityRecord(null, jsonObject);
+      SzEntityRecord entityRecord = this.parseEntityRecord(jsonObject);
 
-      processedRawData(timers);
+      this.processedRawData(timers);
 
       // construct the response
-      SzRecordResponse response = new SzRecordResponse(GET,
-                                                       200,
-                                                       uriInfo,
-                                                       timers,
-                                                       entityRecord);
+      SzRecordResponse response = this.newRecordResponse(
+          GET, 200, uriInfo, timers, entityRecord);
 
       // if including raw data then add it
       if (withRaw) response.setRawData(rawData);
@@ -636,10 +785,65 @@ public class EntityDataServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Parses the raw JSON described by the specified {@link JsonObject} and
+   * produces an instance of {@link SzEntityRecord}.
+   *
+   * @param jsonObject The {@link JsonObject} describing the resolution info
+   *                   in the raw JSON format.
+   * @return The {@link SzEntityRecord} created form the {@link JsonObject}.
+   */
+  protected SzEntityRecord parseEntityRecord(JsonObject jsonObject) {
+    return SzEntityRecord.parseEntityRecord(null, jsonObject);
+  }
+
+  /**
+   * Creates a new instance of {@link SzRecordResponse} with the specified
+   * parameters.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param entityRecord The {@link SzEntityRecord} describing the record.
+   * @return The newly created {@link SzRecordResponse} instance.
+   */
+  protected SzRecordResponse newRecordResponse(
+      SzHttpMethod      httpMethod,
+      int               httpStatusCode,
+      UriInfo           uriInfo,
+      Timers            timers,
+      SzEntityRecord    entityRecord)
+  {
+    return new SzRecordResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo), entityRecord);
+  }
+
+  /**
+   * Provides the implementation for
+   * <tt>GET /data-sources/{dataSourceCode}/records/{recordId}/entity</tt>.
+   *
+   * @param dataSourceCode The data source code from the URI path.
+   * @param recordId The record ID of the record for entity being requested.
+   * @param withRaw Whether or not the raw JSON should be included with the
+   *                response.
+   * @param withRelated Flag indicating if related entities should be included.
+   * @param forceMinimal Flag indicating if the minimal response format is
+   *                     requested.
+   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
+   *                    the features should be returned.
+   * @param withFeatureStats Flag indicating if feature stats should be included
+   *                         in the response.
+   * @param withInternalFeatures Flag indicating if internal features should be
+   *                             included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @return The {@link SzEntityResponse} describing the response.
+   */
   @GET
   @Path("data-sources/{dataSourceCode}/records/{recordId}/entity")
   public SzEntityResponse getEntityByRecordId(
@@ -653,10 +857,10 @@ public class EntityDataServices {
       @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean             withInternalFeatures,
       @Context                                                    UriInfo             uriInfo)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
 
     try {
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      SzApiProvider provider = this.getApiProvider();
       dataSourceCode = dataSourceCode.trim().toUpperCase();
 
       final String dataSource = dataSourceCode;
@@ -665,11 +869,11 @@ public class EntityDataServices {
 
       SzEntityData entityData = null;
 
-      int flags = getFlags(forceMinimal,
-                           featureMode,
-                           withFeatureStats,
-                           withInternalFeatures,
-                           (withRelated != SzRelationshipMode.NONE));
+      int flags = this.getFlags(forceMinimal,
+                                featureMode,
+                                withFeatureStats,
+                                withInternalFeatures,
+                                (withRelated != SzRelationshipMode.NONE));
 
       String rawData = null;
 
@@ -691,32 +895,33 @@ public class EntityDataServices {
         final int buildOutDegrees = 1;
         final int maxEntityCount = 1000;
 
-        enteringQueue(timers);
+        this.enteringQueue(timers);
         rawData = provider.executeInThread(() -> {
-          exitingQueue(timers);
+          this.exitingQueue(timers);
 
           // get the engine API and the config API
           G2Engine engineApi = provider.getEngineApi();
 
-          callingNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
+          this.callingNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
           // find the network and check the result
           int result = engineApi.findNetworkByRecordIDV2(
               recordIds, maxDegrees, buildOutDegrees, maxEntityCount, flags, sb);
 
-          calledNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
+          this.calledNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
 
           if (result != 0) {
-            throw newPossiblyNotFoundException(GET, uriInfo, timers, engineApi);
+            throw this.newPossiblyNotFoundException(
+                GET, uriInfo, timers, engineApi);
           }
 
           return sb.toString();
         });
 
-        processingRawData(timers);
+        this.processingRawData(timers);
 
         // organize all the entities into a map for lookup
         Map<Long, SzEntityData> dataMap
-            = parseEntityDataList(sb.toString(), provider);
+            = this.parseEntityDataList(sb.toString(), provider);
 
         // find the entity ID matching the data source and record ID
         Long entityId = null;
@@ -735,41 +940,47 @@ public class EntityDataServices {
         }
 
         // get the result entity data
-        entityData = getAugmentedEntityData(entityId, dataMap, provider);
+        entityData = this.getAugmentedEntityData(entityId, dataMap, provider);
 
       } else {
-        enteringQueue(timers);
+        this.enteringQueue(timers);
         rawData = provider.executeInThread(() -> {
-          exitingQueue(timers);
+          this.exitingQueue(timers);
 
           // get the engine API and the config API
           G2Engine engineApi = provider.getEngineApi();
 
-          callingNativeAPI(timers, "engine", "getEntityByRecordIDV2");
+          this.callingNativeAPI(timers, "engine", "getEntityByRecordIDV2");
           // 1-degree relations are not required, so do a standard lookup
           int result = engineApi.getEntityByRecordIDV2(dataSource, recordId, flags, sb);
-          calledNativeAPI(timers, "engine", "getEntityByRecordIDV2");
+          this.calledNativeAPI(timers, "engine", "getEntityByRecordIDV2");
 
           String engineJSON = sb.toString();
-          checkEntityResult(result, engineJSON, uriInfo, timers, engineApi);
+          this.checkEntityResult(result, engineJSON, uriInfo, timers, engineApi);
 
           return engineJSON;
         });
 
-        processingRawData(timers);
+        this.processingRawData(timers);
         // parse the result
-        entityData = SzEntityData.parseEntityData(
-            null,
+        entityData = this.parseEntityData(
             JsonUtils.parseJsonObject(rawData),
             (f) -> provider.getAttributeClassForFeature(f));
       }
 
-      postProcessEntityData(entityData, forceMinimal, featureMode);
+      this.postProcessEntityData(entityData, forceMinimal, featureMode);
 
-      processedRawData(timers);
+      this.processedRawData(timers);
+
       // construct the response
-      return newEntityResponse(
-          uriInfo, timers, entityData, (withRaw ? rawData : null));
+      SzEntityResponse response = this.newEntityResponse(
+          GET, 200, uriInfo, timers, entityData);
+
+      if (withRaw) {
+        response.setRawData(rawData);
+      }
+
+      return response;
 
     } catch (ServerErrorException e) {
       e.printStackTrace();
@@ -780,10 +991,50 @@ public class EntityDataServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Parses the entity data from a {@link JsonObject} describing JSON
+   * for the Senzing native API format for an entity data and populates
+   * the specified {@link SzEntityData} or creates a new instance.
+   *
+   * @param jsonObject The {@link JsonObject} describing the JSON in the
+   *                   Senzing native API format.
+   *
+   * @param featureToAttrClassMapper Mapping function to map feature names to
+   *                                 attribute classes.
+   *
+   * @return The populated (or created) {@link SzEntityData}.
+   *
+   */
+  protected SzEntityData parseEntityData(
+      JsonObject                jsonObject,
+      Function<String, String>  featureToAttrClassMapper)
+  {
+    return SzEntityData.parseEntityData(
+        null, jsonObject, featureToAttrClassMapper);
+  }
+
+  /**
+   * Provides the implementation for <tt>GET /entities/{entityId}</tt>.
+   *
+   * @param entityId The entity ID of the entity being requested.
+   * @param withRaw Whether or not the raw JSON should be included with the
+   *                response.
+   * @param withRelated Flag indicating if related entities should be included.
+   * @param forceMinimal Flag indicating if the minimal response format is
+   *                     requested.
+   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
+   *                    the features should be returned.
+   * @param withFeatureStats Flag indicating if feature stats should be included
+   *                         in the response.
+   * @param withInternalFeatures Flag indicating if internal features should be
+   *                             included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @return The {@link SzEntityResponse} describing the response.
+   */
   @GET
   @Path("entities/{entityId}")
   public SzEntityResponse getEntityByEntityId(
@@ -796,10 +1047,10 @@ public class EntityDataServices {
       @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean             withInternalFeatures,
       @Context                                                    UriInfo             uriInfo)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
 
     try {
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      SzApiProvider provider = this.getApiProvider();
 
       StringBuffer sb = new StringBuffer();
 
@@ -807,11 +1058,11 @@ public class EntityDataServices {
 
       String rawData = null;
 
-      int flags = getFlags(forceMinimal,
-                           featureMode,
-                           withFeatureStats,
-                           withInternalFeatures,
-                           (withRelated != SzRelationshipMode.NONE));
+      int flags = this.getFlags(forceMinimal,
+                                featureMode,
+                                withFeatureStats,
+                                withInternalFeatures,
+                                (withRelated != SzRelationshipMode.NONE));
 
       // check if we want 1-degree relations as well -- if so we need to
       // find the network instead of a simple lookup
@@ -830,70 +1081,76 @@ public class EntityDataServices {
         final int maxEntityCount = 1000;
         final int buildOutDegrees = 1;
 
-        enteringQueue(timers);
+        this.enteringQueue(timers);
         rawData = provider.executeInThread(() -> {
-          exitingQueue(timers);
+          this.exitingQueue(timers);
           // get the engine API
           G2Engine engineApi = provider.getEngineApi();
 
-          callingNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
+          this.callingNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
           // find the network and check the result
           int result = engineApi.findNetworkByEntityIDV2(
               entityIds, maxDegrees, buildOutDegrees, maxEntityCount, flags, sb);
 
-          calledNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
+          this.calledNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
 
           if (result != 0) {
-            throw newPossiblyNotFoundException(GET, uriInfo, timers, engineApi);
+            throw this.newPossiblyNotFoundException(
+                GET, uriInfo, timers, engineApi);
           }
           return sb.toString();
         });
 
-        processingRawData(timers);
+        this.processingRawData(timers);
 
         // organize all the entities into a map for lookup
         Map<Long, SzEntityData> dataMap
-            = parseEntityDataList(rawData, provider);
+            = this.parseEntityDataList(rawData, provider);
 
         // get the result entity data
-        entityData = getAugmentedEntityData(entityId, dataMap, provider);
+        entityData = this.getAugmentedEntityData(entityId, dataMap, provider);
 
       } else {
-        enteringQueue(timers);
+        this.enteringQueue(timers);
         rawData = provider.executeInThread(() -> {
-          exitingQueue(timers);
+          this.exitingQueue(timers);
 
           // get the engine API
           G2Engine engineApi = provider.getEngineApi();
 
-          callingNativeAPI(timers, "engine", "getEntityByEntityIDV2");
+          this.callingNativeAPI(timers, "engine", "getEntityByEntityIDV2");
           // 1-degree relations are not required, so do a standard lookup
           int result = engineApi.getEntityByEntityIDV2(entityId, flags, sb);
-          calledNativeAPI(timers, "engine", "getEntityByEntityIDV2");
+          this.calledNativeAPI(timers, "engine", "getEntityByEntityIDV2");
 
           String engineJSON = sb.toString();
 
-          checkEntityResult(result, engineJSON, uriInfo, timers, engineApi);
+          this.checkEntityResult(result, engineJSON, uriInfo, timers, engineApi);
 
           return engineJSON;
         });
 
-        processingRawData(timers);
+        this.processingRawData(timers);
 
         // parse the result
-        entityData = SzEntityData.parseEntityData(
-            null,
+        entityData = this.parseEntityData(
             JsonUtils.parseJsonObject(rawData),
             (f) -> provider.getAttributeClassForFeature(f));
       }
 
-      postProcessEntityData(entityData, forceMinimal, featureMode);
+      this.postProcessEntityData(entityData, forceMinimal, featureMode);
 
-      processedRawData(timers);
+      this.processedRawData(timers);
 
       // construct the response
-      return newEntityResponse(
-          uriInfo, timers, entityData, (withRaw ? sb.toString() : null));
+      SzEntityResponse response = this.newEntityResponse(
+          GET, 200, uriInfo, timers, entityData);
+
+      if (withRaw) {
+        response.setRawData(rawData);
+      }
+
+      return response;
 
     } catch (ServerErrorException e) {
       e.printStackTrace();
@@ -904,10 +1161,32 @@ public class EntityDataServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Provides the implementation for <tt>GET /entities</tt>.
+   *
+   * @param attrs The senzing JSON describing the attributes to search on.
+   * @param attrList The list of encoded {@link String} attributes to search on.
+   * @param includeOnlySet The {@link Set} of search match levels to only be
+   *                       included in the response.
+   * @param forceMinimal Flag indicating if the minimal response format is
+   *                     requested.
+   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
+   *                    the features should be returned.
+   * @param withFeatureStats Flag indicating if feature stats should be included
+   *                         in the response.
+   * @param withInternalFeatures Flag indicating if internal features should be
+   *                             included in the response.
+   * @param withRelationships Flag indicating if entity relationships should be
+   *                          included in the response.
+   * @param withRaw Whether or not the raw JSON should be included with the
+   *                response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @return The {@link SzAttributeSearchResponse} describing the response.
+   */
   @GET
   @Path("entities")
   public SzAttributeSearchResponse searchEntitiesByGet(
@@ -922,14 +1201,14 @@ public class EntityDataServices {
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
       @Context                                                    UriInfo             uriInfo)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
     try {
       JsonObject searchCriteria = null;
       if (attrs != null && attrs.trim().length() > 0) {
         try {
           searchCriteria = JsonUtils.parseJsonObject(attrs);
         } catch (Exception e) {
-          throw newBadRequestException(
+          throw this.newBadRequestException(
               GET, uriInfo, timers,
               "The search criteria specified via the \"attrs\" parameter "
                   + "does not parse as valid JSON: " + attrs);
@@ -943,13 +1222,13 @@ public class EntityDataServices {
 
           // if not found that is a problem
           if (index < 0) {
-            throw newBadRequestException(
+            throw this.newBadRequestException(
                 GET, uriInfo, timers,
                 "The attr param value must be a colon-delimited string, "
                     + "but no colon character was found: " + attrParam);
           }
           if (index == 0) {
-            throw newBadRequestException(
+            throw this.newBadRequestException(
                 GET, uriInfo, timers,
                 "The attr param value must contain a property name followed by "
                     + "a colon, but no property was provided before the colon: "
@@ -992,7 +1271,7 @@ public class EntityDataServices {
 
       // check if we have no attributes at all
       if (searchCriteria == null || searchCriteria.size() == 0) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers,
             "At least one search criteria attribute must be provided via the "
                 + "\"attrs\" or \"attr\" parameter.  attrs=[ " + attrs
@@ -1021,11 +1300,31 @@ public class EntityDataServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
-
+  /**
+   * Provides the implementation for <tt>POST /search-entities</tt>.
+   *
+   * @param includeOnlySet The {@link Set} of search match levels to only be
+   *                       included in the response.
+   * @param forceMinimal Flag indicating if the minimal response format is
+   *                     requested.
+   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
+   *                    the features should be returned.
+   * @param withFeatureStats Flag indicating if feature stats should be included
+   *                         in the response.
+   * @param withInternalFeatures Flag indicating if internal features should be
+   *                             included in the response.
+   * @param withRelationships Flag indicating if entity relationships should be
+   *                          included in the response.
+   * @param withRaw Whether or not the raw JSON should be included with the
+   *                response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param attrs The JSON request body describing the attributes to search on.
+   * @return The {@link SzAttributeSearchResponse} describing the response.
+   */
   @POST
   @Path("search-entities")
   public SzAttributeSearchResponse searchEntitiesByPost(
@@ -1039,17 +1338,17 @@ public class EntityDataServices {
       @Context                                                    UriInfo         uriInfo,
       String                                                                      attrs)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
     try {
       JsonObject searchCriteria = null;
       if (attrs == null || attrs.trim().length() == 0) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             POST, uriInfo, timers, "The request body must be provided");
       }
       try {
         searchCriteria = JsonUtils.parseJsonObject(attrs);
       } catch (Exception e) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             POST, uriInfo, timers,
               "The search criteria in the request body does not parse as "
             + "valid JSON: " + attrs);
@@ -1057,7 +1356,7 @@ public class EntityDataServices {
 
       // check if we have no attributes at all
       if (searchCriteria == null || searchCriteria.size() == 0) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             POST, uriInfo, timers,
             "At least one search criteria attribute must be provided in the "
                 + "JSON request body.  requestBody=[ " + attrs + " ]");
@@ -1085,11 +1384,33 @@ public class EntityDataServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(
-          POST, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(POST, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Consolidates the search-by-attributes functionality into a common function.
+   * Searching is possible via multiple endpoints (e.g.: one GET and one POST).
+   *
+   * @param searchCriteria The {@link JsonObject} describing the search criteria
+   *                       attributes.
+   * @param includeOnlySet The {@link Set} of search match levels to only be
+   *                       included in the response.
+   * @param forceMinimal Flag indicating if the minimal response format is
+   *                     requested.
+   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
+   *                    the features should be returned.
+   * @param withFeatureStats Flag indicating if feature stats should be included
+   *                         in the response.
+   * @param withInternalFeatures Flag indicating if internal features should be
+   *                             included in the response.
+   * @param withRelationships Flag indicating if entity relationships should be
+   *                          included in the response.
+   * @param withRaw Whether or not the raw JSON should be included with the
+   *                response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @return The {@link SzAttributeSearchResponse} describing the response.
+   */
   protected SzAttributeSearchResponse searchByAttributes(
       JsonObject          searchCriteria,
       Set<String>         includeOnlySet,
@@ -1104,7 +1425,7 @@ public class EntityDataServices {
       Timers              timers)
   {
     try {
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      SzApiProvider provider = this.getApiProvider();
 
       // check for the include-only parameters, convert to result types
       if (includeOnlySet == null) includeOnlySet = Collections.emptySet();
@@ -1115,7 +1436,7 @@ public class EntityDataServices {
           resultTypes.add(SzAttributeSearchResultType.valueOf(includeOnly));
 
         } catch (Exception e) {
-          throw newBadRequestException(
+          throw this.newBadRequestException(
               httpMethod, uriInfo, timers,
               "At least one of the includeOnly parameter values was not "
               + "recognized: " + includeOnly);
@@ -1143,62 +1464,56 @@ public class EntityDataServices {
       StringBuffer sb = new StringBuffer();
 
       // get the flags
-      int flags = getFlags(includeFlags,
-                           forceMinimal,
-                           featureMode,
-                           withFeatureStats,
-                           withInternalFeatures,
-                           withRelationships);
+      int flags = this.getFlags(includeFlags,
+                                forceMinimal,
+                                featureMode,
+                                withFeatureStats,
+                                withInternalFeatures,
+                                withRelationships);
 
       // format the search JSON
       final String searchJson = JsonUtils.toJsonText(searchCriteria);
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get the engine API
         G2Engine engineApi = provider.getEngineApi();
 
-        callingNativeAPI(timers, "engine", "searchByAttributesV2");
+        this.callingNativeAPI(timers, "engine", "searchByAttributesV2");
         int result = engineApi.searchByAttributesV2(searchJson, flags, sb);
-        calledNativeAPI(timers, "engine", "searchByAttributesV2");
+        this.calledNativeAPI(timers, "engine", "searchByAttributesV2");
         if (result != 0) {
-          throw newInternalServerErrorException(
+          throw this.newInternalServerErrorException(
               httpMethod, uriInfo, timers, engineApi);
         }
         return sb.toString();
       });
 
-      processingRawData(timers);
+      this.processingRawData(timers);
 
       JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
       JsonArray jsonResults = jsonObject.getValue(
           "/RESOLVED_ENTITIES").asJsonArray();
 
       // parse the result
-      List<SzAttributeSearchResult> list
-          = SzAttributeSearchResult.parseSearchResultList(
-          null,
-          jsonResults,
-          (f) -> provider.getAttributeClassForFeature(f));
+      List<SzAttributeSearchResult> list = this.parseSearchResultList(
+          jsonResults, (f) -> provider.getAttributeClassForFeature(f));
 
 
-      postProcessSearchResults(
+      this.postProcessSearchResults(
           list, forceMinimal, featureMode, withRelationships);
 
       // construct the response
-      SzAttributeSearchResponse response
-          = new SzAttributeSearchResponse(
-              httpMethod, 200, uriInfo, timers);
-
-      response.setSearchResults(list);
+      SzAttributeSearchResponse response = this.newAttributeSearchResponse(
+           httpMethod, 200, uriInfo, timers, list);
 
       if (withRaw) {
         response.setRawData(sb.toString());
       }
 
-      processedRawData(timers);
+      this.processedRawData(timers);
 
       // return the response
       return response;
@@ -1212,11 +1527,71 @@ public class EntityDataServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(
-          httpMethod, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(httpMethod, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Parses a list of resolved entities from a {@link JsonArray} describing a
+   * JSON array in the Senzing native API format for entity features and
+   * a new {@link List} of {@link SzAttributeSearchResult}.
+   *
+   * @param jsonArray The {@link JsonArray} describing the JSON in the
+   *                  Senzing native API format.
+   *
+   * @param featureToAttrClassMapper Mapping function to map feature names to
+   *                                 attribute classes.
+   *
+   * @return The populated (or created) {@link List} of {@link
+   *         SzAttributeSearchResult} instances.
+   */
+  protected List<SzAttributeSearchResult> parseSearchResultList(
+      JsonArray                     jsonArray,
+      Function<String,String>       featureToAttrClassMapper)
+  {
+    // parse the result
+    return SzAttributeSearchResult.parseSearchResultList(
+        null, jsonArray, featureToAttrClassMapper);
+  }
+
+  /**
+   * Creates a new instance of {@link SzAttributeSearchResponse} from the
+   * specified parameters.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param searchResults The {@link List} of {@link SzAttributeSearchResult}
+   *                      instances.
+   * @return The newly created {@link SzAttributeSearchResponse} instance.
+   */
+  protected SzAttributeSearchResponse newAttributeSearchResponse(
+      SzHttpMethod                  httpMethod,
+      int                           httpStatusCode,
+      UriInfo                       uriInfo,
+      Timers                        timers,
+      List<SzAttributeSearchResult> searchResults)
+  {
+    SzAttributeSearchResponse response = new SzAttributeSearchResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo));
+
+    response.setSearchResults(searchResults);
+    return response;
+  }
+
+  /**
+   * Provides the implementation for <tt>POST /reevaluate-entity</tt>.
+   *
+   * @param entityId The entity ID of the entity to be reevaluated.
+   * @param withInfo Whether or not resolution info should be included in the
+   *                 response.
+   * @param withRaw Whether or not the raw JSON should be included with the
+   *                response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @return The {@link SzReevaluateResponse} describing the response.
+   */
   @POST
   @Path("reevaluate-entity")
   public SzReevaluateResponse reevaluateEntity(
@@ -1225,48 +1600,49 @@ public class EntityDataServices {
       @QueryParam("withRaw")  @DefaultValue("false")  boolean withRaw,
       @Context                                        UriInfo uriInfo)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
     try {
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
-      ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
+      SzApiProvider provider = this.getApiProvider();
+      this.ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
 
       if (entityId == null) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             POST, uriInfo, timers, "The entityId parameter is required.");
       }
 
       // get the info sink (if configured)
       boolean asyncInfo = provider.hasInfoSink();
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawInfo = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get the engine API
-        G2Engine      engineApi = provider.getEngineApi();
+        G2Engine engineApi = provider.getEngineApi();
 
         int returnCode;
         String rawData = null;
         if (withInfo || asyncInfo) {
           StringBuffer sb = new StringBuffer();
-          callingNativeAPI(timers, "engine", "reevaluateEntityWithInfo");
+          this.callingNativeAPI(timers, "engine", "reevaluateEntityWithInfo");
           returnCode = engineApi.reevaluateEntityWithInfo(entityId,0, sb);
-          calledNativeAPI(timers, "engine", "reevaluateEntityWithInfo");
+          this.calledNativeAPI(timers, "engine", "reevaluateEntityWithInfo");
           rawData = sb.toString();
         } else {
-          callingNativeAPI(timers, "engine", "reevaluateEntity");
+          this.callingNativeAPI(timers, "engine", "reevaluateEntity");
           returnCode = engineApi.reevaluateEntity(entityId,0);
-          calledNativeAPI(timers, "engine", "reevaluateEntity");
+          this.calledNativeAPI(timers, "engine", "reevaluateEntity");
         }
 
         if (returnCode != 0) {
           int errorCode = engineApi.getLastExceptionCode();
-          if (errorCode == ENTITY_ID_NOT_FOUND_CODE) {
-            throw newBadRequestException(
+          if (errorCode == ENTITY_NOT_FOUND_CODE) {
+            throw this.newBadRequestException(
                 POST, uriInfo, timers, "The specified entityId was not found: "
                     + entityId);
           } else {
-            throw newPossiblyNotFoundException(POST, uriInfo, timers, engineApi);
+            throw this.newPossiblyNotFoundException(
+                POST, uriInfo, timers, engineApi);
           }
         }
 
@@ -1281,7 +1657,7 @@ public class EntityDataServices {
           SzMessage message = new SzMessage(rawInfo);
           try {
             // send the info on the async queue
-            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
+            infoSink.send(message, this::logFailedAsyncInfo);
 
           } catch (Exception e) {
             logFailedAsyncInfo(e, message);
@@ -1293,13 +1669,12 @@ public class EntityDataServices {
 
         // if the info was requested, then we also want to parse and return it
         if (withInfo) {
-          info = SzResolutionInfo.parseResolutionInfo(
-              null, JsonUtils.parseJsonObject(rawInfo));
+          info = this.parseResolutionInfo(JsonUtils.parseJsonObject(rawInfo));
         }
       }
 
       // construct the response
-      SzReevaluateResponse response = new SzReevaluateResponse(
+      SzReevaluateResponse response = this.newReevaluateResponse(
           POST, 200, uriInfo, timers, info);
 
       // check if we have info and raw data was requested
@@ -1319,18 +1694,25 @@ public class EntityDataServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(POST, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(POST, uriInfo, timers, e);
     }
   }
 
   /**
+   * For each of the entities in the specified {@link Map} of entity ID keys to
+   * {@link SzEntityData} values, the related entities are obtained and for each
+   * if the same partial entity exists as a fully-populated entity in the map
+   * then it is replaced with the fully-populated non-partial entity.
    *
-   * @param entityId
-   * @param dataMap
-   * @param provider
-   * @return
+   * @param entityId The main entity ID for which this is being done.
+   * @param dataMap The {@link Map} of entity ID keys to {@link SzEntityData}
+   *                values.
+   * @param provider The {@link SzApiProvider} to use.
+   * @return Return the {@link SzEntityData} instance for the specified entity
+   *         ID after its partial related entities have been replaced with the
+   *         fully-populated entities.
    */
-  private static SzEntityData getAugmentedEntityData(
+  protected SzEntityData getAugmentedEntityData(
       long                      entityId,
       Map<Long, SzEntityData>   dataMap,
       SzApiProvider             provider)
@@ -1379,17 +1761,25 @@ public class EntityDataServices {
   }
 
   /**
+   * Parses the specified raw data using the specified {@link SzApiProvider} to
+   * produce a {@link Map} of {@link Long} entity ID keys to {@link
+   * SzEntityData} instances.
    *
+   * @param rawData The JSON raw data to parse.
+   * @param provider The {@link SzApiProvider} providing the mapping of features
+   *                 to attribute classes.
+   * @return The {@link Map} of of {@link Long} entity ID keys to {@link
+   *         SzEntityData} instances.
    */
-  private static Map<Long, SzEntityData> parseEntityDataList(
+  protected Map<Long, SzEntityData> parseEntityDataList(
       String rawData, SzApiProvider provider)
   {
     // parse the raw response and extract the entities that were found
     JsonObject jsonObj = JsonUtils.parseJsonObject(rawData);
     JsonArray jsonArr = jsonObj.getJsonArray("ENTITIES");
 
-    List<SzEntityData> list = SzEntityData.parseEntityDataList(
-        null, jsonArr, (f) -> provider.getAttributeClassForFeature(f));
+    List<SzEntityData> list = this.parseEntityDataList(
+        jsonArr, (f) -> provider.getAttributeClassForFeature(f));
 
     // organize all the entities into a map for lookup
     Map<Long, SzEntityData> dataMap = new LinkedHashMap<>();
@@ -1402,39 +1792,60 @@ public class EntityDataServices {
   }
 
   /**
+   * Creates a new instance of {@link SzEntityResponse} with the specified
+   * parameters.
    *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param entityData The {@link SzEntityData} for the response.
+   * @return The newly created and configured {@link SzEntityResponse}.
    */
-  private static SzEntityResponse newEntityResponse(UriInfo       uriInfo,
-                                                    Timers        timers,
-                                                    SzEntityData  entityData,
-                                                    String        rawData)
+  protected SzEntityResponse newEntityResponse(SzHttpMethod httpMethod,
+                                               int          httpStatusCode,
+                                               UriInfo      uriInfo,
+                                               Timers       timers,
+                                               SzEntityData entityData)
   {
     // construct the response
-    SzEntityResponse response = new SzEntityResponse(GET,
-                                                     200,
-                                                     uriInfo,
-                                                     timers,
-                                                     entityData);
-
-    // if including raw data then add it
-    if (rawData != null) response.setRawData(rawData);
+    SzEntityResponse response = new SzEntityResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo), entityData);
 
     // return the response
     return response;
-
   }
 
   /**
+   * Checks the result of a {@link G2Engine} API function that would retrieve an
+   * entity or record.  If successful and the Senzing native JSON response was
+   * obtained, then this method does nothing.  If unsuccessful, then checks if
+   * the error code indicates a "404 Not Found" error or a
+   * "500 Internal Server Error" and throws the appropriate exception.  If
+   * specified JSON text is empty then a {@link NotFoundException} is thrown
+   * even if the return code indicates success (zero).
    *
+   * @param returnCode The return code from the {@link G2Engine} API function.
+   * @param nativeJson The native Senzing JSON that was returned by the
+   *                   function, if empty then a {@link NotFoundException} is
+   *                   thrown.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the request.
+   * @param engineApi The {@link G2Engine} instance for obtaining the error code
+   *                  and error message.
+   * @throws NotFoundException If the record or entity was not found.
+   * @throws InternalServerErrorException If an internal server error was
+   *                                      detected.
    */
-  private static void checkEntityResult(int       result,
-                                        String    nativeJson,
-                                        UriInfo   uriInfo,
-                                        Timers    timers,
-                                        G2Engine  engineApi)
+  protected void checkEntityResult(int      returnCode,
+                                   String   nativeJson,
+                                   UriInfo  uriInfo,
+                                   Timers   timers,
+                                   G2Engine engineApi)
   {
     // check if failed to find result
-    if (result != 0) {
+    if (returnCode != 0) {
       throw newPossiblyNotFoundException(GET, uriInfo, timers, engineApi);
     }
     if (nativeJson.trim().length() == 0) {
@@ -1443,9 +1854,15 @@ public class EntityDataServices {
   }
 
   /**
+   * Normalizes the specified {@link String}.  If <tt>null</tt> then
+   * <tt>null</tt> is returned.  Otherwise, the {@link String} is trimmed of
+   * leading and trailing whitespace and if empty-string then <tt>null</tt>
+   * is returned, otherwise the trimmed {@link String} is returned.
    *
+   * @param text The {@link String} to be normalized.
+   * @return The normalized {@link String}.
    */
-  private static String normalizeString(String text) {
+  protected String normalizeString(String text) {
     if (text == null) return null;
     if (text.trim().length() == 0) return null;
     return text.trim();
@@ -1453,36 +1870,58 @@ public class EntityDataServices {
 
   /**
    * Ensures the specified data source exists for the provider and thows a
-   * NotFoundException if not.
+   * {@link NotFoundException} if not found.
    *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param dataSource The data source code to check.
+   * @param apiProvider The {@link SzApiProvider} to validate against.
    * @throws NotFoundException If the data source is not found.
    */
-  private static void checkDataSource(SzHttpMethod  httpMethod,
-                                      UriInfo       uriInfo,
-                                      Timers        timers,
-                                      String        dataSource,
-                                      SzApiProvider apiProvider)
+  private void checkDataSource(SzHttpMethod  httpMethod,
+                               UriInfo       uriInfo,
+                               Timers        timers,
+                               String        dataSource,
+                               SzApiProvider apiProvider)
     throws NotFoundException
   {
     Set<String> dataSources = apiProvider.getDataSources(dataSource);
 
     if (!dataSources.contains(dataSource)) {
-      throw newNotFoundException(
-          POST, uriInfo, timers,
+      throw this.newNotFoundException(
+          httpMethod, uriInfo, timers,
           "The specified data source is not recognized: " + dataSource);
     }
   }
 
   /**
-   * Ensures the JSON fields in the map are in the specified JSON text.
-   * This is a utility method.
+   * Utility method to ensure the JSON fields in the specified JSON text are
+   * valid and augments the JSON with missing defaults.  The first {@link Map}
+   * of key/value pairs is used to ensure the specified JSON either is missing
+   * those keys and if so adds them with the associated value, and if not
+   * absent, then ensures the values are equal and if not throws a {@link
+   * BadRequestException}.  The second {@link Map} of key/value pairs is used
+   * to specify default values that if missing from the JSON are added to the
+   * JSON, but if already present with non-empty values are left as-is.  This
+   * method returns the modified JSON text.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} the timers for the operation.
+   * @param jsonText The JSON text to validate and possibly modify.
+   * @param map The {@link Map} of values to ensure are either absent and should
+   *            be added or if present have the specified values.
+   * @param defaultMap The {@link Map} of values to augment the JSON with if
+   *                   they are missing as default values.
+   * @return The modified JSON text.
    */
-  private static String ensureJsonFields(SzHttpMethod         httpMethod,
-                                         UriInfo              uriInfo,
-                                         Timers               timers,
-                                         String               jsonText,
-                                         Map<String, String>  map,
-                                         Map<String, String>  defaultMap)
+  protected String ensureJsonFields(SzHttpMethod        httpMethod,
+                                    UriInfo             uriInfo,
+                                    Timers              timers,
+                                    String              jsonText,
+                                    Map<String, String> map,
+                                    Map<String, String> defaultMap)
   {
     try {
       JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
@@ -1498,7 +1937,7 @@ public class EntityDataServices {
         }
         if (jsonVal != null && jsonVal.trim().length() > 0) {
           if (!jsonVal.equalsIgnoreCase(val)) {
-            throw ServicesUtil.newBadRequestException(
+            throw this.newBadRequestException(
                 httpMethod, uriInfo, timers,
                 key + " from path and from request body do not match.  "
                     + "fromPath=[ " + val + " ], fromRequestBody=[ "
@@ -1534,15 +1973,21 @@ public class EntityDataServices {
       throw e;
 
     } catch (Exception e) {
-      throw ServicesUtil.newBadRequestException(httpMethod,
-                                                uriInfo,
-                                                timers,
-                                                e.getMessage());
+      throw this.newBadRequestException(httpMethod,
+                                        uriInfo,
+                                        timers,
+                                        e.getMessage());
     }
   }
 
   /**
-   * Post-processes the search results according to the specified parameters.
+   * Post-processes the search results.  This handles potentially removing
+   * elements from the response according to the parameters.  This method
+   * leverages the following methods conditionally:
+   * <ul>
+   *   <li>{@link #setEntitiesPartial(List)}</li>
+   *   <li>{@link #stripDuplicateFeatureValues(List)}</li>
+   * </ul>
    *
    * @param searchResults The {@link List} of {@link SzAttributeSearchResult}
    *                      to modify.
@@ -1554,7 +1999,7 @@ public class EntityDataServices {
    *
    * @param withRelationships Whether or not to include relationships.
    */
-  private static void postProcessSearchResults(
+  protected void postProcessSearchResults(
       List<SzAttributeSearchResult>   searchResults,
       boolean                         forceMinimal,
       SzFeatureMode                   featureMode,
@@ -1573,9 +2018,14 @@ public class EntityDataServices {
 
   /**
    * Sets the partial flags for the resolved entity and related
-   * entities in the {@link SzEntityData}.
+   * entities in the {@link SzEntityData}.  Call this method only if it is
+   * known that the entities only contain partial data.  This method is called
+   * by {@link #postProcessSearchResults(List, boolean, SzFeatureMode, boolean)}
+   *
+   * @param searchResults The {@link List} of {@link SzAttributeSearchResult}
+   *                      instances to mark as partial.
    */
-  private static void setEntitiesPartial(
+  protected void setEntitiesPartial(
       List<SzAttributeSearchResult> searchResults)
   {
     searchResults.forEach(e -> {
@@ -1591,15 +2041,18 @@ public class EntityDataServices {
    * Strips out duplicate feature values for each feature in the search
    * result entities of the specified {@link List} of {@link
    * SzAttributeSearchResult} instances.
+   *
+   * @param searchResults The {@link List} of {@link SzAttributeSearchResult}
+   *                      instances to modify.
    */
-  private static void stripDuplicateFeatureValues(
+  protected void stripDuplicateFeatureValues(
       List<SzAttributeSearchResult> searchResults)
   {
     searchResults.forEach(e -> {
-      ServicesUtil.stripDuplicateFeatureValues(e);
+      this.stripDuplicateFeatureValues(e);
 
       e.getRelatedEntities().forEach(e2 -> {
-        ServicesUtil.stripDuplicateFeatureValues(e2);
+        this.stripDuplicateFeatureValues(e2);
       });
     });
   }

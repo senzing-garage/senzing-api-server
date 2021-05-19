@@ -1,8 +1,5 @@
 package com.senzing.api.model;
 
-import com.senzing.util.Timers;
-
-import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
 /**
@@ -28,41 +25,13 @@ public class SzAttributeSearchResponse extends SzResponseWithRawData
    * Constructs with only the HTTP method and the self link, leaving the
    * license info data to be initialized later.
    *
-   * @param httpMethod The {@link SzHttpMethod}.
+   * @param meta The response meta data.
    *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The string URL link to generate this response.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * @param links The links for the response.
    */
-  public SzAttributeSearchResponse(SzHttpMethod httpMethod,
-                                   int          httpStatusCode,
-                                   String       selfLink,
-                                   Timers       timers)
+  public SzAttributeSearchResponse(SzMeta meta, SzLinks links)
   {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-    this.data.searchResults = new LinkedList<>();
-  }
-
-  /**
-   * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
-   * license info data to be initialized later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} associated with the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   */
-  public SzAttributeSearchResponse(SzHttpMethod httpMethod,
-                                   int          httpStatusCode,
-                                   UriInfo      uriInfo,
-                                   Timers       timers)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
+    super(meta, links);
     this.data.searchResults = new LinkedList<>();
   }
 

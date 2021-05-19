@@ -29,85 +29,28 @@ public class SzReevaluateResponse extends SzResponseWithRawData
    * Constructs with only the HTTP method and the self link, leaving the
    * record ID to be initialized later.
    *
-   * @param httpMethod The {@link SzHttpMethod}.
+   * @param meta The response meta data.
    *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The string URL link to generate this response.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * @param links The links for the response.
    */
-  public SzReevaluateResponse(SzHttpMethod httpMethod,
-                              int          httpStatusCode,
-                              String       selfLink,
-                              Timers       timers)
+  public SzReevaluateResponse(SzMeta meta, SzLinks links)
   {
-    super(httpMethod, httpStatusCode, selfLink, timers);
+    super(meta, links);
   }
 
   /**
    * Constructs with the HTTP method, the self link, and the record ID.
    *
-   * @param httpMethod The {@link SzHttpMethod}.
+   * @param meta The response meta data.
    *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The string URL link to generate this response.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * @param links The links for the response.
    *
    * @param info The {@link SzResolutionInfo} providing the information
    *             associated with the resolution of the record.
    */
-  public SzReevaluateResponse(SzHttpMethod      httpMethod,
-                              int               httpStatusCode,
-                              String            selfLink,
-                              Timers            timers,
-                              SzResolutionInfo  info)
+  public SzReevaluateResponse(SzMeta meta, SzLinks links, SzResolutionInfo info)
   {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-    this.data.info = info;
-  }
-
-  /**
-   * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
-   * record ID to be initialized later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   */
-  public SzReevaluateResponse(SzHttpMethod httpMethod,
-                              int          httpStatusCode,
-                              UriInfo      uriInfo,
-                              Timers       timers)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
-  }
-
-  /**
-   * Constructs with the HTTP method, the {@link UriInfo}, and the record ID.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param info The {@link SzResolutionInfo} providing the information
-   *             associated with the resolution of the record.
-   */
-  public SzReevaluateResponse(SzHttpMethod      httpMethod,
-                              int               httpStatusCode,
-                              UriInfo           uriInfo,
-                              Timers            timers,
-                              SzResolutionInfo  info)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
+    super(meta, links);
     this.data.info = info;
   }
 

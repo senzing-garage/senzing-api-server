@@ -28,44 +28,31 @@ public class SzErrorResponse extends SzBasicResponse {
   /**
    * Constructs with the specified HTTP method and self link.
    *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
+   * @param meta The response meta data.
    *
-   * @param httpStatusCode The HTTP response code.
-   *
-   * @param selfLink The self link from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * @param links The links for the response.
    *
    */
-  public SzErrorResponse(SzHttpMethod httpMethod,
-                         int          httpStatusCode,
-                         String       selfLink,
-                         Timers       timers)
+  public SzErrorResponse(SzMeta meta, SzLinks links)
   {
-    this(httpMethod, httpStatusCode, selfLink, timers, (SzError) null);
+    this(meta, links, (SzError) null);
   }
 
   /**
    * Constructs with the specified HTTP method and self link and the first
    * error.
    *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
+   * @param meta The response meta data.
    *
-   * @param httpStatusCode The HTTP response code.
-   *
-   * @param selfLink The self link from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * @param links The links for the response.
    *
    * @param firstError The {@link SzError} describing the first error.
    */
-  public SzErrorResponse(SzHttpMethod httpMethod,
-                         int          httpStatusCode,
-                         String       selfLink,
-                         Timers       timers,
+  public SzErrorResponse(SzMeta       meta,
+                         SzLinks      links,
                          SzError      firstError)
   {
-    super(httpMethod, httpStatusCode, selfLink, timers);
+    super(meta, links);
     this.errors = new LinkedList<>();
     if (firstError != null) this.errors.add(firstError);
   }
@@ -74,209 +61,51 @@ public class SzErrorResponse extends SzBasicResponse {
    * Constructs with the specified HTTP method and self link and the first
    * error message.
    *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
+   * @param meta The response meta data.
    *
-   * @param httpStatusCode The HTTP response code.
-   *
-   * @param selfLink The self link from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * @param links The links for the response.
    *
    * @param firstError The error message for the first error.
    */
-  public SzErrorResponse(SzHttpMethod httpMethod,
-                         int          httpStatusCode,
-                         String       selfLink,
-                         Timers       timers,
-                         String       firstError)
+  public SzErrorResponse(SzMeta meta, SzLinks links, String firstError)
   {
-    this(httpMethod,
-         httpStatusCode,
-         selfLink,
-         timers,
-         firstError != null ? new SzError(firstError) : null);
+    this(meta, links, firstError != null ? new SzError(firstError) : null);
   }
 
   /**
    * Constructs with the specified HTTP method and self link and the first
    * error.
    *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
+   * @param meta The response meta data.
    *
-   * @param httpStatusCode The HTTP response code.
-   *
-   * @param selfLink The self link from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * @param links The links for the response.
    *
    * @param firstError The {@link Throwable} describing the first error.
    */
-  public SzErrorResponse(SzHttpMethod httpMethod,
-                         int          httpStatusCode,
-                         String       selfLink,
-                         Timers       timers,
+  public SzErrorResponse(SzMeta       meta,
+                         SzLinks      links,
                          Throwable    firstError)
   {
-    this(httpMethod,
-         httpStatusCode,
-         selfLink,
-         timers,
-         firstError != null ? new SzError(firstError) : null);
+    this(meta, links, firstError != null ? new SzError(firstError) : null);
   }
 
   /**
    * Constructs with the specified HTTP method and self link and the first
    * error.
    *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
+   * @param meta The response meta data.
    *
-   * @param httpStatusCode The HTTP response code.
-   *
-   * @param selfLink The self link from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * @param links The links for the response.
    *
    * @param firstErrorFallible The {@link G2Fallible} from which to extract the
    *                           error code and exception message.
    */
-  public SzErrorResponse(SzHttpMethod httpMethod,
-                         int          httpStatusCode,
-                         String       selfLink,
-                         Timers       timers,
-                         G2Fallible   firstErrorFallible)
+  public SzErrorResponse(SzMeta     meta,
+                         SzLinks    links,
+                         G2Fallible firstErrorFallible)
   {
-    this(httpMethod,
-         httpStatusCode,
-         selfLink,
-         timers,
-         ((firstErrorFallible != null)
-             ? new SzError(firstErrorFallible) : null));
-  }
-
-  /**
-   * Constructs with the specified HTTP method and {@link UriInfo}.
-   *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
-   *
-   * @param httpStatusCode The HTTP response code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   */
-  public SzErrorResponse(SzHttpMethod httpMethod,
-                         int          httpStatusCode,
-                         UriInfo      uriInfo,
-                         Timers       timers)
-  {
-    this(httpMethod, httpStatusCode, uriInfo, timers, (SzError) null);
-  }
-
-  /**
-   * Constructs with the specified HTTP method and {@link UriInfo} and the
-   * first error.
-   *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
-   *
-   * @param httpStatusCode The HTTP response code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param firstError The {@link SzError} describing the first error.
-   */
-  public SzErrorResponse(SzHttpMethod httpMethod,
-                         int          httpStatusCode,
-                         UriInfo      uriInfo,
-                         Timers       timers,
-                         SzError      firstError)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.errors = new LinkedList<>();
-    if (firstError != null) this.errors.add(firstError);
-  }
-
-  /**
-   * Constructs with the specified HTTP method and {@link UriInfo} and the
-   * first error message.
-   *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
-   *
-   * @param httpStatusCode The HTTP response code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param firstError The error message for the first error.
-   */
-  public SzErrorResponse(SzHttpMethod httpMethod,
-                         int          httpStatusCode,
-                         UriInfo      uriInfo,
-                         Timers       timers,
-                         String       firstError)
-  {
-    this(httpMethod,
-         httpStatusCode,
-         uriInfo,
-         timers,
-         firstError != null ? new SzError(firstError) : null);
-  }
-
-  /**
-   * Constructs with the specified HTTP method and {@link UriInfo} and the first
-   * error.
-   *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
-   *
-   * @param httpStatusCode The HTTP response code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param firstError The {@link Throwable} describing the first error.
-   */
-  public SzErrorResponse(SzHttpMethod httpMethod,
-                         int          httpStatusCode,
-                         UriInfo      uriInfo,
-                         Timers       timers,
-                         Throwable    firstError)
-  {
-    this(httpMethod,
-         httpStatusCode,
-         uriInfo,
-         timers,
-         firstError != null ? new SzError(firstError) : null);
-  }
-
-  /**
-   * Constructs with the specified HTTP method and {@link UriInfo} link and
-   * the first error.
-   *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
-   *
-   * @param httpStatusCode The HTTP response code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param firstErrorFallible The {@link G2Fallible} from which to extract the
-   *                           error code and exception message.
-   */
-  public SzErrorResponse(SzHttpMethod httpMethod,
-                         int          httpStatusCode,
-                         UriInfo      uriInfo,
-                         Timers       timers,
-                         G2Fallible   firstErrorFallible)
-  {
-    this(httpMethod,
-         httpStatusCode,
-         uriInfo,
-         timers,
+    this(meta,
+         links,
          ((firstErrorFallible != null)
              ? new SzError(firstErrorFallible) : null));
   }

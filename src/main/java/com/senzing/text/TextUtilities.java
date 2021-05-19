@@ -2,16 +2,24 @@ package com.senzing.text;
 
 import com.senzing.api.model.SzRecordId;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class TextUtilities {
   /**
    * The random number generator to use for generating encryption keys.
    */
   private static final SecureRandom PRNG = new SecureRandom();
+
+  /**
+   * The minimum line length for formatting multi-line text.
+   */
+  public static final int MINIMUM_LINE_LENGTH = 30;
 
   /**
    * The minimum character in the range for generating random characters.

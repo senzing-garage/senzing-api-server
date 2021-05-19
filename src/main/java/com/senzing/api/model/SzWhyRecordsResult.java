@@ -7,6 +7,7 @@ import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 

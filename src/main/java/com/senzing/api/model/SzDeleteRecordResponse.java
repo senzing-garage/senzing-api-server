@@ -28,84 +28,29 @@ public class SzDeleteRecordResponse extends SzResponseWithRawData
   /**
    * Constructs with only the HTTP method and the self link.
    *
-   * @param httpMethod The {@link SzHttpMethod}.
+   * @param meta The response meta data.
    *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The string URL link to generate this response.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * @param links The links for the response.
    */
-  public SzDeleteRecordResponse(SzHttpMethod httpMethod,
-                                int          httpStatusCode,
-                                String       selfLink,
-                                Timers       timers)
-  {
-    super(httpMethod, httpStatusCode, selfLink, timers);
+  public SzDeleteRecordResponse(SzMeta meta, SzLinks links) {
+    super(meta, links);
   }
 
   /**
    * Constructs with the HTTP method, the self link and the info.
    *
-   * @param httpMethod The {@link SzHttpMethod}.
+   * @param meta The response meta data.
    *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The string URL link to generate this response.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * @param links The links for the response.
    *
    * @param info The {@link SzResolutionInfo} providing the information
    *             associated with the resolution of the record.
    */
-  public SzDeleteRecordResponse(SzHttpMethod      httpMethod,
-                                int               httpStatusCode,
-                                String            selfLink,
-                                Timers            timers,
+  public SzDeleteRecordResponse(SzMeta            meta,
+                                SzLinks           links,
                                 SzResolutionInfo  info)
   {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-    this.data.info = info;
-  }
-
-  /**
-   * Constructs with only the HTTP method and the {@link UriInfo}.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   */
-  public SzDeleteRecordResponse(SzHttpMethod httpMethod,
-                                int          httpStatusCode,
-                                UriInfo      uriInfo,
-                                Timers       timers)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
-  }
-
-  /**
-   * Constructs with the HTTP method, the {@link UriInfo}, and the info.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param info The {@link SzResolutionInfo} providing the information
-   *             associated with the resolution of the record.
-   */
-  public SzDeleteRecordResponse(SzHttpMethod      httpMethod,
-                                int               httpStatusCode,
-                                UriInfo           uriInfo,
-                                Timers            timers,
-                                SzResolutionInfo  info)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
+    super(meta, links);
     this.data.info = info;
   }
 

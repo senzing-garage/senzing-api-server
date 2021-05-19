@@ -26,7 +26,7 @@ public final class SzApiServerConstants {
   /**
    * The default module name ({@value}).
    */
-  public static final String DEFAULT_MODULE_NAME = "SzApiServer";
+  public static final String DEFAULT_MODULE_NAME = "senzing-api-server";
 
   /**
    * The default concurrency setting used by API server instances if

@@ -37,90 +37,29 @@ public class SzResponseWithRawData extends SzBasicResponse {
   /**
    * Constructs with the specified HTTP method and self link.
    *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
+   * @param meta The response meta data.
    *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The self link from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * @param links The links for the response.
    *
    */
-  public SzResponseWithRawData(SzHttpMethod httpMethod,
-                               int          httpStatusCode,
-                               String       selfLink,
-                               Timers       timers)
+  public SzResponseWithRawData(SzMeta meta, SzLinks links)
   {
-    this(httpMethod, httpStatusCode, selfLink, timers, null);
+    this(meta, links, null);
   }
 
   /**
    * Constructs with the specified HTTP method, self link string and
    * object representing the raw data response from the engine.
    *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
+   * @param meta The response meta data.
    *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The self link from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * @param links The links for the response.
    *
    * @param rawData The raw data to associate with the response.
    */
-  public SzResponseWithRawData(SzHttpMethod httpMethod,
-                               int          httpStatusCode,
-                               String       selfLink,
-                               Timers       timers,
-                               String       rawData)
+  public SzResponseWithRawData(SzMeta meta, SzLinks links, String rawData)
   {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-
-    this.rawData = JsonUtils.normalizeJsonText(rawData);
-  }
-
-  /**
-   * Constructs with the specified HTTP method and {@link UriInfo}.
-   *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   */
-  public SzResponseWithRawData(SzHttpMethod httpMethod,
-                               int          httpStatusCode,
-                               UriInfo      uriInfo,
-                               Timers       timers)
-  {
-    this(httpMethod, httpStatusCode, uriInfo, timers, null);
-  }
-
-  /**
-   * Constructs with the specified HTTP method, {@link UriInfo} and
-   * object representing the raw data response from the engine.
-   *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param rawData The raw data to associate with the response.
-   */
-  public SzResponseWithRawData(SzHttpMethod httpMethod,
-                               int          httpStatusCode,
-                               UriInfo      uriInfo,
-                               Timers       timers,
-                               String       rawData)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
-
+    super(meta, links);
     this.rawData = JsonUtils.normalizeJsonText(rawData);
   }
 

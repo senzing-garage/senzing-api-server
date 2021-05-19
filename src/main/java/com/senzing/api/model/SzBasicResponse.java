@@ -1,8 +1,8 @@
 package com.senzing.api.model;
 
-import com.senzing.util.Timers;
+import com.fasterxml.jackson.databind.annotation.JsonTypeResolver;
 
-import javax.ws.rs.core.UriInfo;
+import java.util.Objects;
 
 /**
  * The most basic response from the Senzing REST API.  Also servers as a basis
@@ -22,7 +22,7 @@ public class SzBasicResponse {
   /**
    * Default constructor.
    */
-  SzBasicResponse() {
+  protected SzBasicResponse() {
     this.meta = null;
     this.links = null;
   }
@@ -30,37 +30,15 @@ public class SzBasicResponse {
   /**
    * Constructs with the specified HTTP method and self link.
    *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
+   * @param meta The response meta data.
    *
-   * @param httpStatusCode The HTTP response code.
-   *
-   * @param selfLink The self link from the request.
+   * @param links The links for the response.
    */
-  public SzBasicResponse(SzHttpMethod httpMethod,
-                         int          httpStatusCode,
-                         String       selfLink,
-                         Timers       timers)
-  {
-    this.meta = new SzMeta(httpMethod, httpStatusCode, timers);
-    this.links = new SzLinks(selfLink);
-  }
-
-  /**
-   * Constructs with the specified HTTP method and {@link UriInfo}.
-   *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
-   *
-   * @param httpStatusCode The HTTP response code.
-   *
-   * @param uriInfo The {@link UriInfo} for the self link.
-   */
-  public SzBasicResponse(SzHttpMethod httpMethod,
-                         int          httpStatusCode,
-                         UriInfo      uriInfo,
-                         Timers       timers)
-  {
-    this.meta = new SzMeta(httpMethod, httpStatusCode, timers);
-    this.links = new SzLinks(uriInfo);
+  public SzBasicResponse(SzMeta meta, SzLinks links) {
+    Objects.requireNonNull(meta, "The meta data cannot be null");
+    Objects.requireNonNull(links, "The links cannot be null");
+    this.meta   = meta;
+    this.links  = links;
   }
 
   /**

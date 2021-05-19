@@ -1,6 +1,8 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzLicenseInfoImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -10,162 +12,93 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-public class SzLicenseInfo {
-  /**
-   * The customer associated with the license.
-   */
-  private String customer = null;
-
-  /**
-   * The constract associated with the license.
-   */
-  private String contract = null;
-
-  /**
-   * The license type associated with the license.
-   */
-  private String licenseType = null;
-
-  /**
-   * The license level associated with the license.
-   */
-  private String licenseLevel = null;
-
-  /**
-   * The billing string associated with the license.
-   */
-  private String billing = null;
-
-  /**
-   * The issuance date associated with the license.
-   */
-  @JsonFormat(shape   = JsonFormat.Shape.STRING,
-              pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-              locale  = "en_GB")
-  private Date issuanceDate = null;
-
-  /**
-   * The expiration date associated with the license.
-   */
-  @JsonFormat(shape   = JsonFormat.Shape.STRING,
-              pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-              locale  = "en_GB")
-  private Date expirationDate = null;
-
-  /**
-   * The record limit associated with the license.
-   */
-  private long recordLimit = 0L;
-
-  /**
-   * Default constructor.
-   */
-  public SzLicenseInfo() {
-    // do nothing
-  }
-
+/**
+ * Describes a Senzing license.
+ */
+@JsonDeserialize(using=com.senzing.api.model.SzLicenseInfo.Factory.class)
+public interface SzLicenseInfo {
   /**
    * Gets the customer string associated with the license.
    *
    * @return The customer string associated with the license.
    */
-  public String getCustomer() {
-    return customer;
-  }
+  String getCustomer();
 
   /**
    * Sets the customer string associated with the license.
    *
    * @param customer The customer string associated with the license.
    */
-  public void setCustomer(String customer) {
-    this.customer = customer;
-  }
+  void setCustomer(String customer);
 
   /**
    * Gets the contract string associated with the license.
    *
    * @return The contract string associated with the license.
    */
-  public String getContract() {
-    return contract;
-  }
+  String getContract();
 
   /**
    * Sets the contract string associated with the license.
    *
    * @param contract The contract string associated with the license.
    */
-  public void setContract(String contract) {
-    this.contract = contract;
-  }
+  void setContract(String contract);
 
   /**
    * Gets the license type associated with the license.
    *
    * @return The license type associated with the license.
    */
-  public String getLicenseType() {
-    return licenseType;
-  }
+  String getLicenseType();
 
   /**
    * Sets the license type associated with the license.
    *
    * @param licenseType The license type associated with the license.
    */
-  public void setLicenseType(String licenseType) {
-    this.licenseType = licenseType;
-  }
+  void setLicenseType(String licenseType);
 
   /**
    * Gets the license level associated with the license.
    *
    * @return The license level associated with the license.
    */
-  public String getLicenseLevel() {
-    return licenseLevel;
-  }
+  String getLicenseLevel();
 
   /**
    * Sets the license level associated with the licenese.
    *
    * @param licenseLevel The license level associated with the license.
    */
-  public void setLicenseLevel(String licenseLevel) {
-    this.licenseLevel = licenseLevel;
-  }
+  void setLicenseLevel(String licenseLevel);
 
   /**
    * Gets the billing string associated with the license.
    *
    * @return The billing string associated with the license.
    */
-  public String getBilling() {
-    return billing;
-  }
+  String getBilling();
 
   /**
    * Sets the billing string associated with the license.
    *
    * @param billing The billing string associated with the license.
    */
-  public void setBilling(String billing) {
-    this.billing = billing;
-  }
+  void setBilling(String billing);
 
   /**
    * Gets the issuance {@link Date} associated with the license.
    *
    * @return The issuance date associated with the license.
    */
-  public Date getIssuanceDate() {
-    return issuanceDate;
-  }
+  @JsonFormat(shape   = JsonFormat.Shape.STRING,
+      pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+      locale  = "en_GB")
+  Date getIssuanceDate();
 
   /**
    * Sets the issuance {@link Date} associated with the license.
@@ -173,49 +106,111 @@ public class SzLicenseInfo {
    * @param issuanceDate The issuance {@link Date} to be associated with the
    *                     license.
    */
-  public void setIssuanceDate(Date issuanceDate) {
-    this.issuanceDate = issuanceDate;
-  }
+  void setIssuanceDate(Date issuanceDate);
 
   /**
    * Gets the expiration {@link Date} associated with the license.
    *
    * @return The expiration {@link Date} associated with the license.
    */
-  public Date getExpirationDate() {
-    return expirationDate;
-  }
+  @JsonFormat(shape   = JsonFormat.Shape.STRING,
+      pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+      locale  = "en_GB")
+  Date getExpirationDate();
 
   /**
    * Sets the expiration date associated with the license.
    *
    * @param expirationDate The expiration date associated with the license.
    */
-  public void setExpirationDate(Date expirationDate) {
-    this.expirationDate = expirationDate;
-  }
+  void setExpirationDate(Date expirationDate);
 
   /**
    * Gets the record limit associated with the license.
    *
    * @return The record limit associated with the license.
    */
-  public long getRecordLimit() {
-    return recordLimit;
-  }
+  long getRecordLimit();
 
   /**
    * Sets the record limit associated with the license.
    *
    * @param recordLimit The record limit associated with the license.
    */
-  public void setRecordLimit(long recordLimit) {
-    this.recordLimit = recordLimit;
+  void setRecordLimit(long recordLimit);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzLicenseInfo}.
+   */
+  interface Provider extends ModelProvider<SzLicenseInfo> {
+    /**
+     * Creates a new instance of {@link SzLicenseInfo}.
+     *
+     * @return The new instance of {@link SzLicenseInfo}
+     */
+    SzLicenseInfo create();
   }
 
   /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzLicenseInfo} that produces instances of {@link SzLicenseInfoImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzLicenseInfo>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzLicenseInfo.class, SzLicenseInfoImpl.class);
+    }
+
+    @Override
+    public SzLicenseInfo create() {
+      return new SzLicenseInfoImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link SzLicenseInfo}.
+   */
+  class Factory extends ModelFactory<SzLicenseInfo, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super();
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzLicenseInfo}.
+     * @return The new instance of {@link SzLicenseInfo}.
+     */
+    public SzLicenseInfo create()
+    {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
+
+  /**
    * Parses a JSON array of the engine API JSON to create or populate a
-   * {@link List} of {@link SzLicenseInfo} instances.
+   * {@link List} of {@link com.senzing.api.model.SzLicenseInfo} instances.
    *
    * @param list The {@link List} to populate or <tt>null</tt> if a new
    *             {@link List} should be created.
@@ -224,14 +219,13 @@ public class SzLicenseInfo {
    *                  to parse from the engine API.
    *
    * @return An unmodifiable view of the specified (or newly created) {@link
-   *         List} of {@link SzLicenseInfo} instances.
+   *         List} of {@link com.senzing.api.model.SzLicenseInfo} instances.
    */
-  public static List<SzLicenseInfo> parseLicenseInfoList(
-      List<SzLicenseInfo>   list,
-      JsonArray             jsonArray)
+  static List<SzLicenseInfo> parseLicenseInfoList(List<SzLicenseInfo> list,
+                                                  JsonArray           jsonArray)
   {
     if (list == null) {
-      list = new ArrayList<SzLicenseInfo>(jsonArray.size());
+      list = new ArrayList<>(jsonArray.size());
     }
     for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
       list.add(parseLicenseInfo(null, jsonObject));
@@ -240,19 +234,19 @@ public class SzLicenseInfo {
   }
 
   /**
-   * Parses the engine API JSON to create an instance of {@link SzLicenseInfo}.
+   * Parses the engine API JSON to create an instance of {@link com.senzing.api.model.SzLicenseInfo}.
    *
-   * @param info The {@link SzLicenseInfo} object to initialize or <tt>null</tt>
+   * @param info The {@link com.senzing.api.model.SzLicenseInfo} object to initialize or <tt>null</tt>
    *             if a new one should be created.
    *
    * @param jsonObject The {@link JsonObject} to parse from the engine API.
    *
-   * @return The specified (or newly created) {@link SzLicenseInfo}
+   * @return The specified (or newly created) {@link com.senzing.api.model.SzLicenseInfo}
    */
-  public static SzLicenseInfo parseLicenseInfo(SzLicenseInfo  info,
-                                               JsonObject     jsonObject)
+  static SzLicenseInfo parseLicenseInfo(SzLicenseInfo info,
+                                        JsonObject    jsonObject)
   {
-    if (info == null) info = new SzLicenseInfo();
+    if (info == null) info = SzLicenseInfo.FACTORY.create();
 
     String customer     = JsonUtils.getString(jsonObject, "customer");
     String contract     = JsonUtils.getString(jsonObject, "contract");

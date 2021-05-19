@@ -16,36 +16,44 @@ import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.*;
-import static com.senzing.api.services.ServicesUtil.*;
 
 /**
  * Provides config related API services.
  */
 @Produces("application/json; charset=UTF-8")
 @Path("/")
-public class ConfigServices {
+public class ConfigServices extends ServicesSupport {
   /**
    * The maximum length for comments used when adding a config via the
    * {@link G2ConfigMgr#addConfig(String, String, Result)} function.
    */
   private static final int MAX_CONFIG_COMMENT_LENGTH = 150;
 
+  /**
+   * Provides the implementation of <tt>GET /data-sources</tt>.
+   *
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The {@link SzDataSourcesResponse} describing the response.
+   */
   @GET
   @Path("data-sources")
   public SzDataSourcesResponse getDataSources(
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
       @Context UriInfo uriInfo) {
-    Timers timers = newTimers();
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    Timers timers = this.newTimers();
+    SzApiProvider provider = this.getApiProvider();
 
     try {
       // get the engine API and the config API
       G2Engine engineApi = provider.getEngineApi();
       G2Config configApi = provider.getConfigApi();
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
         return this.doGetDataSources(GET, uriInfo, timers, engineApi, configApi);
       });
 
@@ -65,6 +73,16 @@ public class ConfigServices {
     }
   }
 
+  /**
+   * Provides the implementation of <tt>GET /data-sources/{dataSourceCode}</tt>.
+   *
+   * @param dataSourceCode The data source code from the URL path.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The {@link SzDataSourceResponse} describing the response.
+   */
   @GET
   @Path("data-sources/{dataSourceCode}")
   public SzDataSourceResponse getDataSource(
@@ -72,21 +90,20 @@ public class ConfigServices {
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
       @Context UriInfo uriInfo)
   {
-    Timers timers = newTimers();
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
-
+    Timers timers = this.newTimers();
+    SzApiProvider provider = this.getApiProvider();
 
     try {
       // get the engine API and the config API
       G2Engine engineApi = provider.getEngineApi();
       G2Config configApi = provider.getConfigApi();
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
         String code = dataSourceCode.trim().toUpperCase();
         if (!provider.getDataSources(code).contains(code)) {
-          throw newNotFoundException(
+          throw this.newNotFoundException(
               GET, uriInfo, timers,
               "The specified data source code was not recognized: " + code);
         }
@@ -109,34 +126,47 @@ public class ConfigServices {
     }
   }
 
-  private String doGetDataSources(SzHttpMethod httpMethod,
-                                  UriInfo uriInfo,
-                                  Timers timers,
-                                  G2Engine engineApi,
-                                  G2Config configApi) {
-    String config = exportConfig(GET, uriInfo, timers, engineApi);
+  /**
+   * Handles getting the data sources for an operation.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param engineApi The {@link G2Engine} instance to use.
+   * @param configApi The {@link G2Config} instance to use.
+   *
+   * @return The raw data describing the data sources.
+   */
+  protected String doGetDataSources(SzHttpMethod httpMethod,
+                                    UriInfo uriInfo,
+                                    Timers timers,
+                                    G2Engine engineApi,
+                                    G2Config configApi)
+  {
+    String config = this.exportConfig(GET, uriInfo, timers, engineApi);
 
     Long configId = null;
     try {
       // load into a config object by ID
-      callingNativeAPI(timers, "config", "load");
+      this.callingNativeAPI(timers, "config", "load");
       configId = configApi.load(config);
-      calledNativeAPI(timers, "config", "load");
+      this.calledNativeAPI(timers, "config", "load");
 
       if (configId < 0) {
-        throw newInternalServerErrorException(GET, uriInfo, timers, configApi);
+        throw this.newInternalServerErrorException(
+            GET, uriInfo, timers, configApi);
       }
 
       StringBuffer sb = new StringBuffer();
 
       // list the data sources on the config
-      callingNativeAPI(timers, "config", "listDataSourcesV2");
+      this.callingNativeAPI(timers, "config", "listDataSourcesV2");
       int returnCode = configApi.listDataSourcesV2(configId, sb);
       if (returnCode != 0) {
-        throw newInternalServerErrorException(
+        throw this.newInternalServerErrorException(
             GET, uriInfo, timers, configApi);
       }
-      calledNativeAPI(timers, "config", "listDataSourcesV2");
+      this.calledNativeAPI(timers, "config", "listDataSourcesV2");
 
       return sb.toString();
 
@@ -147,26 +177,38 @@ public class ConfigServices {
     }
   }
 
-  private SzDataSourcesResponse buildDataSourcesResponse(
+  /**
+   * Builds an {@link SzDataSourcesResponse} from the specified raw data using
+   * the specified parameters of the request.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param rawData The raw data JSON text describing the data sources.
+   * @param withRaw <tt>true</tt> if the raw data should be included in the
+   *                response, and <tt>false</tt> if it should be excluded.
+   *
+   * @return The {@link SzDataSourcesResponse} created with the specified
+   *         parameters.
+   */
+  protected SzDataSourcesResponse buildDataSourcesResponse(
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
       String rawData,
-      boolean withRaw) {
-    processingRawData(timers);
+      boolean withRaw)
+  {
+    this.processingRawData(timers);
     // parse the raw data
     JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
 
     // get the array and construct the response
     JsonArray jsonArray = jsonObject.getJsonArray("DATA_SOURCES");
-    List<SzDataSource> dataSources
-        = SzDataSource.parseDataSourceList(null, jsonArray);
+    List<SzDataSource> dataSources = this.parseDataSourceList(jsonArray);
 
-    SzDataSourcesResponse response = new SzDataSourcesResponse(
-        httpMethod, 200, uriInfo, timers);
-
-    response.setDataSources(dataSources);
-    processedRawData(timers);
+    SzDataSourcesResponse response = this.newDataSourcesResponse(
+        httpMethod, 200, uriInfo, timers, dataSources);
+    this.processedRawData(timers);
 
     // if including raw data then add it
     if (withRaw) response.setRawData(rawData);
@@ -174,15 +216,68 @@ public class ConfigServices {
     return response;
   }
 
-  private SzDataSourceResponse buildDataSourceResponse(
-      SzHttpMethod httpMethod,
-      UriInfo uriInfo,
-      Timers timers,
-      String dataSourceCode,
-      String rawData,
-      boolean withRaw)
+  /**
+   * Parses the specified {@link JsonArray} describing the data sources in the
+   * raw format and produces a {@link List} of {@link SzDataSource} instances.
+   *
+   * @param jsonArray The {@link JsonArray} describing the data sources.
+   *
+   * @return The created {@link List} of {@link SzDataSource} instances.
+   */
+  protected List<SzDataSource> parseDataSourceList(JsonArray jsonArray) {
+    return SzDataSource.parseDataSourceList(null, jsonArray);
+  }
+
+  /**
+   * Creates a new instance of {@link SzDataSourceResponse} and configures it
+   * with the specified {@link List} of {@link SzDataSource} instances.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param dataSources The {@link List} of {@link SzDataSource} instances.
+   *
+   * @return The newly created {@link SzDataSourcesResponse}.
+   */
+  protected SzDataSourcesResponse newDataSourcesResponse(
+      SzHttpMethod        httpMethod,
+      int                 httpStatusCode,
+      UriInfo             uriInfo,
+      Timers              timers,
+      List<SzDataSource>  dataSources)
   {
-    processingRawData(timers);
+    SzDataSourcesResponse response = new SzDataSourcesResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo));
+    response.setDataSources(dataSources);
+    return response;
+  }
+
+  /**
+   * Builds an {@link SzDataSourceResponse} from the specified raw data using
+   * the specified parameters of the request.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param dataSourceCode The data source code for the data source.
+   * @param rawData The raw data JSON text describing the data sources.
+   * @param withRaw <tt>true</tt> if the raw data should be included in the
+   *                response, and <tt>false</tt> if it should be excluded.
+   *
+   * @return The {@link SzDataSourceResponse} created with the specified
+   *         parameters.
+   */
+  protected SzDataSourceResponse buildDataSourceResponse(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      Timers        timers,
+      String        dataSourceCode,
+      String        rawData,
+      boolean       withRaw)
+  {
+    this.processingRawData(timers);
     dataSourceCode = dataSourceCode.trim().toUpperCase();
 
     // parse the raw data
@@ -203,21 +298,19 @@ public class ConfigServices {
 
     // check if not found
     if (jsonObject == null) {
-      throw newNotFoundException(
+      throw this.newNotFoundException(
           httpMethod, uriInfo, timers,
           "The specified data source was not recognized: " + dataSourceCode);
     }
 
     // parse the data source
-    SzDataSource dataSource
-        = SzDataSource.parseDataSource(null, jsonObject);
+    SzDataSource dataSource = this.parseDataSource(jsonObject);
 
     // build the response
-    SzDataSourceResponse response = new SzDataSourceResponse(
-        httpMethod, 200, uriInfo, timers);
+    SzDataSourceResponse response = this.newDataSourceResponse(
+        httpMethod, 200, uriInfo, timers, dataSource);
 
-    response.setDataSource(dataSource);
-    processedRawData(timers);
+    this.processedRawData(timers);
 
     // if including raw data then add it
     if (withRaw) response.setRawData(JsonUtils.toJsonText(jsonObject));
@@ -225,22 +318,70 @@ public class ConfigServices {
     return response;
   }
 
+  /**
+   * Parses the JSON described by the specified {@link JsonObject} as a
+   * data source in the raw format and produces an instance of {@link
+   * SzDataSource}.
+   *
+   * @param jsonObject The {@link JsonObject} describing the data source in
+   *                   the raw format.
+   *
+   * @return The newly created and configured {@link SzDataSource}.
+   */
+  protected SzDataSource parseDataSource(JsonObject jsonObject) {
+    return SzDataSource.parseDataSource(null, jsonObject);
+  }
+
+  /**
+   * Creates a new {@link SzDataSourceResponse} with the specified parameters.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param dataSource The {@link SzDataSource} instance.
+   *
+   * @return The newly created {@link SzDataSourceResponse}.
+   */
+  protected SzDataSourceResponse newDataSourceResponse(
+      SzHttpMethod  httpMethod,
+      int           httpStatusCode,
+      UriInfo       uriInfo,
+      Timers        timers,
+      SzDataSource  dataSource)
+  {
+    SzDataSourceResponse response = new SzDataSourceResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo));
+    response.setDataSource(dataSource);
+    return response;
+  }
+
+  /**
+   * Provides the implementation of <tt>GET /entity-classes</tt>.
+   *
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The {@link SzEntityClassesResponse} describing the response.
+   */
   @GET
   @Path("entity-classes")
   public SzEntityClassesResponse getEntityClasses(
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
       @Context UriInfo uriInfo) {
-    Timers timers = newTimers();
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    Timers timers = this.newTimers();
+    SzApiProvider provider = this.getApiProvider();
 
     try {
       // get the engine API and the config API
       G2Engine engineApi = provider.getEngineApi();
       G2Config configApi = provider.getConfigApi();
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
         return this.doGetEntityClasses(
             GET, uriInfo, timers, engineApi, configApi);
       });
@@ -281,15 +422,25 @@ public class ConfigServices {
     }
   }
 
-  @GET
+  /**
+   * Provides the implementation of
+   * <tt>GET /entity-classes/{entityClassCode}</tt>.
+   *
+   * @param entityClassCode The entity class code from the URI path.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The {@link SzEntityClassResponse} describing the response.
+   */  @GET
   @Path("entity-classes/{entityClassCode}")
   public SzEntityClassResponse getEntityClass(
       @PathParam("entityClassCode") String entityClassCode,
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
       @Context UriInfo uriInfo)
   {
-    Timers timers = newTimers();
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    Timers timers = this.newTimers();
+    SzApiProvider provider = this.getApiProvider();
 
     try {
       // get the engine API and the config API
@@ -301,19 +452,19 @@ public class ConfigServices {
       // TODO(bcaceres) -- remove this code when entity classes other than
       // ACTOR are supported ** OR ** when the API server no longer supports
       // product versions that ship with alternate entity classes
-      if (!entityClassCode.trim().toUpperCase().equals("ACTOR")) {
-        throw newNotFoundException(
+      if (!entityClassCode.trim().equalsIgnoreCase("ACTOR")) {
+        throw this.newNotFoundException(
             GET, uriInfo, timers,
             "The entity class code was not recognized: " + entityClassCode);
       }
       //---------------------------------------------------------------------
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
         String code = entityClassCode.trim().toUpperCase();
         if (!provider.getEntityClasses(code).contains(code)) {
-          throw newNotFoundException(
+          throw this.newNotFoundException(
               GET, uriInfo, timers,
               "The specified entity class code was not recognized: " + code);
         }
@@ -337,34 +488,47 @@ public class ConfigServices {
     }
   }
 
-  private String doGetEntityClasses(SzHttpMethod httpMethod,
-                                    UriInfo uriInfo,
-                                    Timers timers,
-                                    G2Engine engineApi,
-                                    G2Config configApi) {
-    String config = exportConfig(GET, uriInfo, timers, engineApi);
+  /**
+   * Handles getting the entity classes for an operation.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param engineApi The {@link G2Engine} instance to use.
+   * @param configApi The {@link G2Config} instance to use.
+   *
+   * @return The raw data describing the data sources.
+   */
+  protected String doGetEntityClasses(SzHttpMethod  httpMethod,
+                                      UriInfo       uriInfo,
+                                      Timers        timers,
+                                      G2Engine      engineApi,
+                                      G2Config      configApi)
+  {
+    String config = this.exportConfig(httpMethod, uriInfo, timers, engineApi);
 
     Long configId = null;
     try {
       // load into a config object by ID
-      callingNativeAPI(timers, "config", "load");
+      this.callingNativeAPI(timers, "config", "load");
       configId = configApi.load(config);
-      calledNativeAPI(timers, "config", "load");
+      this.calledNativeAPI(timers, "config", "load");
 
       if (configId < 0) {
-        throw newInternalServerErrorException(GET, uriInfo, timers, configApi);
+        throw this.newInternalServerErrorException(
+            httpMethod, uriInfo, timers, configApi);
       }
 
       StringBuffer sb = new StringBuffer();
 
       // list the data sources on the config
-      callingNativeAPI(timers, "config", "listEntityClassesV2");
+      this.callingNativeAPI(timers, "config", "listEntityClassesV2");
       int returnCode = configApi.listEntityClassesV2(configId, sb);
+      this.calledNativeAPI(timers, "config", "listEntityClassesV2");
       if (returnCode != 0) {
-        throw newInternalServerErrorException(
+        throw this.newInternalServerErrorException(
             GET, uriInfo, timers, configApi);
       }
-      calledNativeAPI(timers, "config", "listEntityClassesV2");
 
       return sb.toString();
 
@@ -375,25 +539,38 @@ public class ConfigServices {
     }
   }
 
-  private SzEntityClassesResponse buildEntityClassesResponse(
-      SzHttpMethod httpMethod,
-      UriInfo uriInfo,
-      Timers timers,
-      String rawData,
-      boolean withRaw) {
-    processingRawData(timers);
+  /**
+   * Builds an {@link SzEntityClassesResponse} from the specified raw data using
+   * the specified parameters of the request.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param rawData The raw data JSON text describing the entity classes.
+   * @param withRaw <tt>true</tt> if the raw data should be included in the
+   *                response, and <tt>false</tt> if it should be excluded.
+   *
+   * @return The {@link SzEntityClassesResponse} created with the specified
+   *         parameters.
+   */
+  protected SzEntityClassesResponse buildEntityClassesResponse(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      Timers        timers,
+      String        rawData,
+      boolean       withRaw)
+  {
+    this.processingRawData(timers);
     // parse the raw data
     JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
 
     // get the array and construct the response
     JsonArray jsonArray = jsonObject.getJsonArray("ENTITY_CLASSES");
-    List<SzEntityClass> entityClasses
-        = SzEntityClass.parseEntityClassList(null, jsonArray);
+    List<SzEntityClass> entityClasses = this.parseEntityClassList(jsonArray);
 
-    SzEntityClassesResponse response = new SzEntityClassesResponse(
-        httpMethod, 200, uriInfo, timers);
+    SzEntityClassesResponse response = this.newEntityClassesResponse(
+        httpMethod, 200, uriInfo, timers, entityClasses);
 
-    response.setEntityClasses(entityClasses);
     processedRawData(timers);
 
     // if including raw data then add it
@@ -402,15 +579,68 @@ public class ConfigServices {
     return response;
   }
 
-  private SzEntityClassResponse buildEntityClassResponse(
-      SzHttpMethod httpMethod,
-      UriInfo uriInfo,
-      Timers timers,
-      String entityClassCode,
-      String rawData,
-      boolean withRaw)
+  /**
+   * Parses the specified {@link JsonArray} describing the entity classes in the
+   * raw format and produces a {@link List} of {@link SzEntityClass} instances.
+   *
+   * @param jsonArray The {@link JsonArray} describing the data sources.
+   *
+   * @return The created {@link List} of {@link SzEntityClass} instances.
+   */
+  protected List<SzEntityClass> parseEntityClassList(JsonArray jsonArray) {
+    return SzEntityClass.parseEntityClassList(null, jsonArray);
+  }
+
+  /**
+   * Creates a new instance of {@link SzEntityClassesResponse} and configures
+   * it with the specified {@link List} of {@link SzEntityClass} instances.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param entityClasses The {@link List} of {@link SzEntityClass} instances.
+   *
+   * @return The newly created {@link SzEntityClassesResponse}.
+   */
+  protected SzEntityClassesResponse newEntityClassesResponse(
+      SzHttpMethod        httpMethod,
+      int                 httpStatusCode,
+      UriInfo             uriInfo,
+      Timers              timers,
+      List<SzEntityClass> entityClasses)
   {
-    processingRawData(timers);
+    SzEntityClassesResponse response = new SzEntityClassesResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo));
+    response.setEntityClasses(entityClasses);
+    return response;
+  }
+
+  /**
+   * Builds an {@link SzEntityClassResponse} from the specified raw data using
+   * the specified parameters of the request.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param entityClassCode The entity class code for the entity class.
+   * @param rawData The raw data JSON text describing the data sources.
+   * @param withRaw <tt>true</tt> if the raw data should be included in the
+   *                response, and <tt>false</tt> if it should be excluded.
+   *
+   * @return The {@link SzEntityClassResponse} created with the specified
+   *         parameters.
+   */
+  protected SzEntityClassResponse buildEntityClassResponse(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      Timers        timers,
+      String        entityClassCode,
+      String        rawData,
+      boolean       withRaw)
+  {
+    this.processingRawData(timers);
     entityClassCode = entityClassCode.trim().toUpperCase();
 
     // parse the raw data
@@ -431,21 +661,19 @@ public class ConfigServices {
 
     // check if not found
     if (jsonObject == null) {
-      throw newNotFoundException(
+      throw this.newNotFoundException(
           httpMethod, uriInfo, timers,
           "The specified entity class was not recognized: " + entityClassCode);
     }
 
     // parse the data source
-    SzEntityClass entityClass
-        = SzEntityClass.parseEntityClass(null, jsonObject);
+    SzEntityClass entityClass = this.parseEntityClass(jsonObject);
 
     // build the response
-    SzEntityClassResponse response = new SzEntityClassResponse(
-        httpMethod, 200, uriInfo, timers);
+    SzEntityClassResponse response = this.newEntityClassResponse(
+        httpMethod, 200, uriInfo, timers, entityClass);
 
-    response.setEntityClass(entityClass);
-    processedRawData(timers);
+    this.processedRawData(timers);
 
     // if including raw data then add it
     if (withRaw) response.setRawData(JsonUtils.toJsonText(jsonObject));
@@ -453,23 +681,84 @@ public class ConfigServices {
     return response;
   }
 
+  /**
+   * Parses the JSON described by the specified {@link JsonObject} as a
+   * entity class in the raw format and produces an instance of {@link
+   * SzEntityClass}.
+   *
+   * @param jsonObject The {@link JsonObject} describing the data source in
+   *                   the raw format.
+   *
+   * @return The newly created and configured {@link SzEntityClass}.
+   */
+  protected SzEntityClass parseEntityClass(JsonObject jsonObject) {
+    return SzEntityClass.parseEntityClass(null, jsonObject);
+  }
+
+  /**
+   * Creates a new {@link SzEntityClassResponse} with the specified parameters.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param entityClass The {@link SzEntityClass} instance.
+   *
+   * @return The newly created {@link SzEntityClassResponse}.
+   */
+  protected SzEntityClassResponse newEntityClassResponse(
+      SzHttpMethod  httpMethod,
+      int           httpStatusCode,
+      UriInfo       uriInfo,
+      Timers        timers,
+      SzEntityClass entityClass)
+  {
+    SzEntityClassResponse response = new SzEntityClassResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo));
+    response.setEntityClass(entityClass);
+    return response;
+  }
+
+  /**
+   * Provides the implementation of
+   * <tt>GET /entity-classes/{entityClassCode}/entity-types</tt>.
+   *
+   * @param entityClass The entity class code from the URI path.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The {@link SzEntityTypesResponse} describing the response.
+   */
   @GET
   @Path("entity-classes/{entityClass}/entity-types")
   public SzEntityTypesResponse getEntityTypesByClass(
       @PathParam("entityClass") String entityClass,
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
-      @Context UriInfo uriInfo) {
+      @Context UriInfo uriInfo)
+  {
     return this.getEntityTypes(entityClass, withRaw, uriInfo);
   }
 
+  /**
+   * Provides the implementation of <tt>GET /entity-types</tt>.
+   *
+   * @param entityClass The optional entity class query parameter.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The {@link SzEntityTypesResponse} describing the response.
+   */
   @GET
   @Path("entity-types")
   public SzEntityTypesResponse getEntityTypes(
       @QueryParam("entityClass") String entityClass,
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
       @Context UriInfo uriInfo) {
-    Timers timers = newTimers();
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    Timers timers = this.newTimers();
+    SzApiProvider provider = this.getApiProvider();
 
     try {
       // get the engine API and the config API
@@ -484,15 +773,15 @@ public class ConfigServices {
       if (entityClass != null
           && !entityClass.trim().toUpperCase().equals("ACTOR"))
       {
-        throw newNotFoundException(
+        throw this.newNotFoundException(
             GET, uriInfo, timers,
             "The entity class code was not recognized: " + entityClass);
       }
       //---------------------------------------------------------------------
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
         return this.doGetEntityTypes(
             GET, uriInfo, timers, engineApi, configApi);
       });
@@ -509,10 +798,20 @@ public class ConfigServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Provides the implementation of <tt>GET /entity-types/{entityTypeCode}</tt>.
+   *
+   * @param entityTypeCode The entity type code path parameter.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The {@link SzEntityTypesResponse} describing the response.
+   */
   @GET
   @Path("entity-types/{entityTypeCode}")
   public SzEntityTypeResponse getEntityType(
@@ -520,20 +819,20 @@ public class ConfigServices {
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
       @Context UriInfo uriInfo)
   {
-    Timers timers = newTimers();
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    Timers timers = this.newTimers();
+    SzApiProvider provider = this.getApiProvider();
 
     try {
       // get the engine API and the config API
       G2Engine engineApi = provider.getEngineApi();
       G2Config configApi = provider.getConfigApi();
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
         String code = entityTypeCode.trim().toUpperCase();
         if (!provider.getEntityTypes(code).contains(code)) {
-          throw newNotFoundException(
+          throw this.newNotFoundException(
               GET, uriInfo, timers,
               "The specified entity type code was not recognized: " + code);
         }
@@ -554,10 +853,22 @@ public class ConfigServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Provides the implementation of
+   * <tt>GET /entity-classes/{entityClassCode}/entity-types/{entityTypeCode}</tt>.
+   *
+   * @param entityClassCode The entity class code path parameter.
+   * @param entityTypeCode The entity type code path parameter.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The {@link SzEntityTypeResponse} describing the response.
+   */
   @GET
   @Path("entity-classes/{entityClassCode}/entity-types/{entityTypeCode}")
   public SzEntityTypeResponse getEntityType(
@@ -566,8 +877,8 @@ public class ConfigServices {
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
       @Context UriInfo uriInfo)
   {
-    Timers timers = newTimers();
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    Timers timers = this.newTimers();
+    SzApiProvider provider = this.getApiProvider();
 
     //---------------------------------------------------------------------
     // check the entity class code to ensure it is ACTOR
@@ -586,19 +897,19 @@ public class ConfigServices {
       G2Engine engineApi = provider.getEngineApi();
       G2Config configApi = provider.getConfigApi();
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
         String classCode = entityClassCode.trim().toUpperCase();
         if (!provider.getEntityClasses(classCode).contains(classCode)) {
-          throw newNotFoundException(
+          throw this.newNotFoundException(
               GET, uriInfo, timers,
               "The specified entity class code was not recognized: "
                   + classCode);
         }
         String typeCode = entityTypeCode.trim().toUpperCase();
         if (!provider.getEntityTypes(typeCode).contains(typeCode)) {
-          throw newNotFoundException(
+          throw this.newNotFoundException(
               GET, uriInfo, timers,
               "The specified entity type code was not recognized: " + typeCode);
         }
@@ -619,38 +930,51 @@ public class ConfigServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
-  private String doGetEntityTypes(SzHttpMethod httpMethod,
-                                  UriInfo uriInfo,
-                                  Timers timers,
-                                  G2Engine engineApi,
-                                  G2Config configApi) {
-    String config = exportConfig(GET, uriInfo, timers, engineApi);
+  /**
+   * Handles getting the entity types for an operation.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param engineApi The {@link G2Engine} instance to use.
+   * @param configApi The {@link G2Config} instance to use.
+   *
+   * @return The raw data describing the entity types.
+   */
+  protected String doGetEntityTypes(SzHttpMethod  httpMethod,
+                                    UriInfo       uriInfo,
+                                    Timers        timers,
+                                    G2Engine      engineApi,
+                                    G2Config      configApi)
+  {
+    String config = this.exportConfig(httpMethod, uriInfo, timers, engineApi);
 
     Long configId = null;
     try {
       // load into a config object by ID
-      callingNativeAPI(timers, "config", "load");
+      this.callingNativeAPI(timers, "config", "load");
       configId = configApi.load(config);
-      calledNativeAPI(timers, "config", "load");
+      this.calledNativeAPI(timers, "config", "load");
 
       if (configId < 0) {
-        throw newInternalServerErrorException(GET, uriInfo, timers, configApi);
+        throw this.newInternalServerErrorException(
+            httpMethod, uriInfo, timers, configApi);
       }
 
       StringBuffer sb = new StringBuffer();
 
       // list the data sources on the config
-      callingNativeAPI(timers, "config", "listEntityTypesV2");
+      this.callingNativeAPI(timers, "config", "listEntityTypesV2");
       int returnCode = configApi.listEntityTypesV2(configId, sb);
       if (returnCode != 0) {
-        throw newInternalServerErrorException(
+        throw this.newInternalServerErrorException(
             GET, uriInfo, timers, configApi);
       }
-      calledNativeAPI(timers, "config", "listEntityTypesV2");
+      this.calledNativeAPI(timers, "config", "listEntityTypesV2");
 
       return sb.toString();
 
@@ -661,24 +985,37 @@ public class ConfigServices {
     }
   }
 
-  private SzEntityTypesResponse buildEntityTypesResponse(
-      SzHttpMethod httpMethod,
-      UriInfo uriInfo,
-      Timers timers,
-      String entityClass,
-      String rawData,
-      boolean withRaw) {
-    processingRawData(timers);
+  /**
+   * Builds an {@link SzEntityTypesResponse} from the specified raw data using
+   * the specified parameters of the request.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param entityClass The entity class code for the entity types, or
+   *                    <tt>null</tt> if not filtering.
+   * @param rawData The raw data JSON text describing the entity types.
+   * @param withRaw <tt>true</tt> if the raw data should be included in the
+   *                response, and <tt>false</tt> if it should be excluded.
+   *
+   * @return The {@link SzEntityTypesResponse} created with the specified
+   *         parameters.
+   */
+  protected SzEntityTypesResponse buildEntityTypesResponse(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      Timers        timers,
+      String        entityClass,
+      String        rawData,
+      boolean       withRaw)
+  {
+    this.processingRawData(timers);
     // parse the raw data
     JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
 
     // get the array and construct the response
     JsonArray jsonArray = jsonObject.getJsonArray("ENTITY_TYPES");
-    List<SzEntityType> entityTypes
-        = SzEntityType.parseEntityTypeList(null, jsonArray);
-
-    SzEntityTypesResponse response = new SzEntityTypesResponse(
-        httpMethod, 200, uriInfo, timers);
+    List<SzEntityType> entityTypes = this.parseEntityTypeList(jsonArray);
 
     // check if we are filtering on entity class
     if (entityClass != null) {
@@ -686,9 +1023,12 @@ public class ConfigServices {
       entityTypes.removeIf(et -> !et.getEntityClassCode().equalsIgnoreCase(ec));
     }
 
-    // set the entity types
-    response.setEntityTypes(entityTypes);
-    processedRawData(timers);
+    // creat the response with the entity types
+    SzEntityTypesResponse response = this.newEntityTypesResponse(
+        httpMethod, 200, uriInfo, timers, entityTypes);
+
+    // conclude the raw data processing
+    this.processedRawData(timers);
 
     // if including raw data then add it
     if (withRaw) response.setRawData(rawData);
@@ -696,16 +1036,70 @@ public class ConfigServices {
     return response;
   }
 
-  private SzEntityTypeResponse buildEntityTypeResponse(
-      SzHttpMethod httpMethod,
-      UriInfo uriInfo,
-      Timers timers,
-      String entityClassCode,
-      String entityTypeCode,
-      String rawData,
-      boolean withRaw)
+  /**
+   * Parses the specified {@link JsonArray} describing the entity types in the
+   * raw format and produces a {@link List} of {@link SzEntityType} instances.
+   *
+   * @param jsonArray The {@link JsonArray} describing the data sources.
+   *
+   * @return The created {@link List} of {@link SzEntityType} instances.
+   */
+  protected List<SzEntityType> parseEntityTypeList(JsonArray jsonArray) {
+    return SzEntityType.parseEntityTypeList(null, jsonArray);
+  }
+
+  /**
+   * Creates a new instance of {@link SzEntityTypesResponse} and configures
+   * it with the specified {@link List} of {@link SzEntityType} instances.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param entityTypes The {@link List} of {@link SzEntityType} instances.
+   *
+   * @return The newly created {@link SzEntityTypesResponse}.
+   */
+  protected SzEntityTypesResponse newEntityTypesResponse(
+      SzHttpMethod        httpMethod,
+      int                 httpStatusCode,
+      UriInfo             uriInfo,
+      Timers              timers,
+      List<SzEntityType>  entityTypes)
   {
-    processingRawData(timers);
+    SzEntityTypesResponse response = new SzEntityTypesResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo));
+    response.setEntityTypes(entityTypes);
+    return response;
+  }
+
+  /**
+   * Builds an {@link SzEntityTypeResponse} from the specified raw data using
+   * the specified parameters of the request.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param entityClassCode The entity class code for the entity class.
+   * @param entityTypeCode The entity type code for the entity type.
+   * @param rawData The raw data JSON text describing the data sources.
+   * @param withRaw <tt>true</tt> if the raw data should be included in the
+   *                response, and <tt>false</tt> if it should be excluded.
+   *
+   * @return The {@link SzEntityTypeResponse} created with the specified
+   *         parameters.
+   */
+  protected SzEntityTypeResponse buildEntityTypeResponse(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      Timers        timers,
+      String        entityClassCode,
+      String        entityTypeCode,
+      String        rawData,
+      boolean       withRaw)
+  {
+    this.processingRawData(timers);
     entityTypeCode = entityTypeCode.trim().toUpperCase();
 
     // parse the raw data
@@ -727,19 +1121,18 @@ public class ConfigServices {
     // check if not found
     if (jsonObject == null) {
       System.out.println("ENTITY TYPE CODE NOT FOUND: " + rawData);
-      throw newNotFoundException(
+      throw this.newNotFoundException(
           httpMethod, uriInfo, timers,
           "The specified entity type was not recognized: " + entityTypeCode);
     }
 
     // parse the data source
-    SzEntityType entityType
-        = SzEntityType.parseEntityType(null, jsonObject);
+    SzEntityType entityType = this.parseEntityType(jsonObject);
 
     // check if being found for a specific entity class and verify
     if (entityClassCode != null
         && !entityType.getEntityClassCode().equalsIgnoreCase(entityClassCode)) {
-      throw newNotFoundException(
+      throw this.newNotFoundException(
           httpMethod, uriInfo, timers,
           "The specified entity type code (" + entityTypeCode
               + ") does not have the specified entity class code: "
@@ -747,11 +1140,10 @@ public class ConfigServices {
     }
 
     // build the response
-    SzEntityTypeResponse response = new SzEntityTypeResponse(
-        httpMethod, 200, uriInfo, timers);
+    SzEntityTypeResponse response = this.newEntityTypeResponse(
+        httpMethod, 200, uriInfo, timers, entityType);
 
-    response.setEntityType(entityType);
-    processedRawData(timers);
+    this.processedRawData(timers);
 
     // if including raw data then add it
     if (withRaw) response.setRawData(JsonUtils.toJsonText(jsonObject));
@@ -759,6 +1151,56 @@ public class ConfigServices {
     return response;
   }
 
+  /**
+   * Parses the JSON described by the specified {@link JsonObject} as a
+   * entity type in the raw format and produces an instance of {@link
+   * SzEntityType}.
+   *
+   * @param jsonObject The {@link JsonObject} describing the data source in
+   *                   the raw format.
+   *
+   * @return The newly created and configured {@link SzEntityType}.
+   */
+  protected SzEntityType parseEntityType(JsonObject jsonObject) {
+    return SzEntityType.parseEntityType(null, jsonObject);
+  }
+
+  /**
+   * Creates a new {@link SzEntityTypeResponse} with the specified parameters.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param entityType The {@link SzEntityType} instance.
+   *
+   * @return The newly created {@link SzEntityTypeResponse}.
+   */
+  protected SzEntityTypeResponse newEntityTypeResponse(
+      SzHttpMethod  httpMethod,
+      int           httpStatusCode,
+      UriInfo       uriInfo,
+      Timers        timers,
+      SzEntityType  entityType)
+  {
+    SzEntityTypeResponse response = new SzEntityTypeResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo));
+    response.setEntityType(entityType);
+    return response;
+  }
+
+  /**
+   * Provides the implementation of <tt>POST /data-sources</tt>.
+   *
+   * @param dataSourceCodes The {@link List} of data source codes from the
+   *                        query parameters.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The {@link SzDataSourcesResponse} describing the response.
+   */
   @POST
   @Path("data-sources")
   public SzDataSourcesResponse addDataSources(
@@ -767,14 +1209,15 @@ public class ConfigServices {
       @Context UriInfo uriInfo,
       String dataSourcesInBody)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
 
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
-    ensureConfigChangesAllowed(provider, POST, uriInfo, timers);
+    SzApiProvider provider = this.getApiProvider();
+
+    this.ensureConfigChangesAllowed(provider, POST, uriInfo, timers);
 
     Map<String, SzDataSource> map = new LinkedHashMap<>();
     for (String code : dataSourceCodes) {
-      SzDataSource dataSource = new SzDataSource(code);
+      SzDataSource dataSource = this.newDataSource(code, null);
       map.put(dataSource.getDataSourceCode(), dataSource);
     }
 
@@ -787,10 +1230,10 @@ public class ConfigServices {
       SzDataSourceDescriptors descriptors = null;
 
       try {
-        descriptors = SzDataSourceDescriptors.valueOf(dataSourcesInBody);
+        descriptors = this.parseDataSourceDescriptors(dataSourcesInBody);
 
       } catch (Exception e) {
-        throw newBadRequestException(POST, uriInfo, timers, e);
+        throw this.newBadRequestException(POST, uriInfo, timers, e);
       }
 
       // loop through the data sources and put them in the map
@@ -804,17 +1247,86 @@ public class ConfigServices {
   }
 
   /**
+   * Constructs a new instance of {@link SzDataSource} with specified
+   * data source code and optional data source ID.
+   *
+   * @param dataSourceCode The data source code to construct the instance with.
+   * @param dataSourceId The data source ID to construct with or <tt>null</tt>
+   *                     not known.
+   *
+   * @return The newly created instance of {@link SzDataSource}.
+   */
+  protected SzDataSource newDataSource(String   dataSourceCode,
+                                       Integer  dataSourceId)
+  {
+    return new SzDataSource(dataSourceCode, dataSourceId);
+  }
+
+  /**
+   * Constructs a new instance of {@link SzEntityClass} with the specified
+   * parameters.
+   *
+   * @param entityClassCode The entity class code for the entity class.
+   * @param entityClassId The optional entity class ID for the entity class.
+   * @param resolving The flag indicating if the entity class resolves.
+   *
+   * @return The new {@link SzEntityClass} instance.
+   */
+  protected SzEntityClass newEntityClass(String   entityClassCode,
+                                         Integer  entityClassId,
+                                         Boolean  resolving)
+  {
+    return new SzEntityClass(entityClassCode, entityClassId, resolving);
+  }
+
+  /**
+   * Constructs a new instance of {@link SzEntityType} with the specified
+   * parameters.
+   *
+   * @param entityTypeCode The entity type code for the entity type.
+   * @param entityTypeId The optional entity class ID for the entity type.
+   * @param entityClassCode The entity class code for the entity type.
+   *
+   * @return The new {@link SzEntityClass} instance.
+   */
+  protected SzEntityType newEntityType(String   entityTypeCode,
+                                       Integer  entityTypeId,
+                                       String   entityClassCode)
+  {
+    return new SzEntityType(entityTypeCode, entityTypeId, entityClassCode);
+  }
+
+  /**
+   * Parses the specified text as an instance of {@link
+   * SzDataSourceDescriptors}.
+   *
+   * @param text The text to parse.
+   *
+   * @return The parsed instance of {@link SzDataSourceDescriptors}.
+   */
+  protected SzDataSourceDescriptors parseDataSourceDescriptors(String text) {
+    return SzDataSourceDescriptors.valueOf(text);
+  }
+
+  /**
    * Internal method for adding one or more data sources.
    *
+   * @param httpMethod The {@link SzHttpMethod} for the operation.
+   * @param dataSources The {@link Collection} of {@link SzDataSource} instances
+   *                    describing the data sources to be added.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param withRaw Whether or not raw data is being requested.
+   * @param timers The {@link Timers} for the operation.
    * @return An SzDataSourcesResponse with all the configured data sources.
    */
-  private SzDataSourcesResponse doAddDataSources(
-      SzHttpMethod httpMethod,
-      Collection<SzDataSource> dataSources,
-      UriInfo uriInfo,
-      boolean withRaw,
-      Timers timers) {
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+  protected SzDataSourcesResponse doAddDataSources(
+      SzHttpMethod              httpMethod,
+      Collection<SzDataSource>  dataSources,
+      UriInfo                   uriInfo,
+      boolean                   withRaw,
+      Timers                    timers)
+  {
+    SzApiProvider provider = this.getApiProvider();
 
     try {
       // get the engine API and the config API
@@ -824,14 +1336,14 @@ public class ConfigServices {
       Set<String> createdSet    = new LinkedHashSet<>();
 
       if (configMgrApi == null) {
-        throw newForbiddenException(
+        throw this.newForbiddenException(
             httpMethod, uriInfo, timers, "Configuration changes not permitted.");
       }
 
       // loop until the provider has the data source code we are looking for
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get an array of the data source codes
         String[] arr = dataSources.stream()
@@ -857,12 +1369,12 @@ public class ConfigServices {
           Long configHandle = null;
           try {
             // load into a config object by ID
-            callingNativeAPI(timers, "config", "load");
+            this.callingNativeAPI(timers, "config", "load");
             configHandle = configApi.load(configJSON);
-            calledNativeAPI(timers, "config", "load");
+            this.calledNativeAPI(timers, "config", "load");
 
             if (configHandle <= 0) {
-              throw newInternalServerErrorException(
+              throw this.newInternalServerErrorException(
                   httpMethod, uriInfo, timers, configApi);
             }
 
@@ -882,7 +1394,7 @@ public class ConfigServices {
               if (existingDS != null && dataSourceId != null
                   && !dataSourceId.equals(existingDS.getDataSourceId()))
               {
-                throw newBadRequestException(
+                throw this.newBadRequestException(
                     httpMethod, uriInfo, timers,
                     "At least one data source already exists, but "
                     + "with a different data source ID.  specified=[ "
@@ -898,13 +1410,13 @@ public class ConfigServices {
               }
 
               // add the data source to the config without a data source ID
-              callingNativeAPI(timers, "config", "addDataSourceV2");
+              this.callingNativeAPI(timers, "config", "addDataSourceV2");
               int returnCode = configApi.addDataSourceV2(
                   configHandle, dataSource.toNativeJson(), new StringBuffer());
-              calledNativeAPI(timers, "config", "addDataSourceV2");
+              this.calledNativeAPI(timers, "config", "addDataSourceV2");
 
               if (returnCode != 0) {
-                throw newInternalServerErrorException(
+                throw this.newInternalServerErrorException(
                     httpMethod, uriInfo, timers, configApi);
               }
 
@@ -912,7 +1424,7 @@ public class ConfigServices {
             }
 
             if (createdSet.size() > 0) {
-              this.updateCurrentConfig(
+              this.updateDefaultConfig(
                   httpMethod,
                   uriInfo,
                   configApi,
@@ -949,10 +1461,27 @@ public class ConfigServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw newInternalServerErrorException(httpMethod, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(
+          httpMethod, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Provides the implementation of <tt>POST /entity-classes</tt>.
+   *
+   * @param entityClassCodes The {@link List} of entity class codes from the
+   *                         query parameters.
+   * @param resolving The flag indicating the resolving state for entity class
+   *                  codes specified via query parameters or those missing
+   *                  the resolving flag in the body.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param entityClassesInBody The request body text (usually JSON) describing
+   *                            the entity classes to be created.
+   *
+   * @return The {@link SzEntityClassesResponse} describing the response.
+   */
   @POST
   @Path("entity-classes")
   public SzEntityClassesResponse addEntityClasses(
@@ -962,7 +1491,7 @@ public class ConfigServices {
       @Context UriInfo uriInfo,
       String entityClassesInBody)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
 
     //---------------------------------------------------------------------
     // TODO(bcaceres) -- remove this code when entity classes other than
@@ -977,14 +1506,15 @@ public class ConfigServices {
     }
     //---------------------------------------------------------------------
 
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
-    ensureConfigChangesAllowed(provider, POST, uriInfo, timers);
+    SzApiProvider provider = this.getApiProvider();
+    this.ensureConfigChangesAllowed(provider, POST, uriInfo, timers);
 
     Map<String, SzEntityClass> map = new LinkedHashMap<>();
 
     // add the entity class codes from the query to the map
     for (String code : entityClassCodes) {
-      SzEntityClass entityClass = new SzEntityClass(code, null, resolving);
+      SzEntityClass entityClass
+          = this.newEntityClass(code, null, resolving);
       map.put(entityClass.getEntityClassCode(), entityClass);
     }
 
@@ -1009,7 +1539,7 @@ public class ConfigServices {
         }
 
       } catch (Exception e) {
-        throw newBadRequestException(POST, uriInfo, timers, e);
+        throw this.newBadRequestException(POST, uriInfo, timers, e);
       }
 
       // loop through the entity classes and put them in the map
@@ -1027,7 +1557,8 @@ public class ConfigServices {
     }
 
     // add the entity classes in the map
-    return this.doAddEntityClasses(POST, map.values(), uriInfo, withRaw, timers);
+    return this.doAddEntityClasses(
+        POST, map.values(), uriInfo, withRaw, timers);
   }
 
   /**
@@ -1035,13 +1566,13 @@ public class ConfigServices {
    *
    * @return An SzEntityClassesResponse with all the configured entity classes.
    */
-  private SzEntityClassesResponse doAddEntityClasses(
+  protected SzEntityClassesResponse doAddEntityClasses(
       SzHttpMethod httpMethod,
       Collection<SzEntityClass> entityClasses,
       UriInfo uriInfo,
       boolean withRaw,
       Timers timers) {
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    SzApiProvider provider = this.getApiProvider();
 
     try {
       // get the engine API and the config API
@@ -1051,14 +1582,14 @@ public class ConfigServices {
       Set<String> createdSet    = new LinkedHashSet<>();
 
       if (configMgrApi == null) {
-        throw newForbiddenException(
+        throw this.newForbiddenException(
             httpMethod, uriInfo, timers, "Configuration changes not permitted.");
       }
 
       // loop until the provider has the data source code we are looking for
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get an array of the data source codes
         String[] arr = entityClasses.stream()
@@ -1083,12 +1614,12 @@ public class ConfigServices {
           Long configHandle = null;
           try {
             // load into a config object by ID
-            callingNativeAPI(timers, "config", "load");
+            this.callingNativeAPI(timers, "config", "load");
             configHandle = configApi.load(configJSON);
-            calledNativeAPI(timers, "config", "load");
+            this.calledNativeAPI(timers, "config", "load");
 
             if (configHandle <= 0) {
-              throw newInternalServerErrorException(
+              throw this.newInternalServerErrorException(
                   httpMethod, uriInfo, timers, configApi);
             }
 
@@ -1109,7 +1640,7 @@ public class ConfigServices {
               if (existingEC != null && classId != null
                   && !classId.equals(existingEC.getEntityClassId()))
               {
-                throw newBadRequestException(
+                throw this.newBadRequestException(
                     httpMethod, uriInfo, timers,
                     "At least one entity class already exists, but "
                         + "with a different entity class ID.  specified=[ "
@@ -1118,7 +1649,7 @@ public class ConfigServices {
               if (existingEC != null && resolving != null
                   && !resolving.equals(existingEC.isResolving()))
               {
-                throw newBadRequestException(
+                throw this.newBadRequestException(
                     httpMethod, uriInfo, timers,
                     "At least one entity class already exists, but "
                         + "with a different resolving flag.  specified=[ "
@@ -1136,13 +1667,13 @@ public class ConfigServices {
               String nativeJson = entityClass.toNativeJson();
 
               // add the data source to the config without a data source ID
-              callingNativeAPI(timers, "config", "addEntityClassV2");
+              this.callingNativeAPI(timers, "config", "addEntityClassV2");
               int returnCode = configApi.addEntityClassV2(
                   configHandle, nativeJson, new StringBuffer());
-              calledNativeAPI(timers, "config", "addEntityClassV2");
+              this.calledNativeAPI(timers, "config", "addEntityClassV2");
 
               if (returnCode != 0) {
-                throw newInternalServerErrorException(
+                throw this.newInternalServerErrorException(
                     httpMethod, uriInfo, timers, configApi);
               }
 
@@ -1150,7 +1681,7 @@ public class ConfigServices {
             }
 
             if (createdSet.size() > 0) {
-              this.updateCurrentConfig(
+              this.updateDefaultConfig(
                   httpMethod,
                   uriInfo,
                   configApi,
@@ -1187,10 +1718,26 @@ public class ConfigServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw newInternalServerErrorException(httpMethod, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(
+          httpMethod, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Provides the implementation of
+   * <tt>POST /entity-classes/{entityClassCode}/entity-types</tt>.
+   *
+   * @param entityClassCode The entity class code from the URI path.
+   * @param entityTypeCodes The {@link List} of entity type codes from the
+   *                        query parameters.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param entityTypesInBody The request body text (usually JSON) describing
+   *                          the entity types to be created.
+   *
+   * @return The {@link SzEntityTypesResponse} describing the response.
+   */
   @POST
   @Path("entity-classes/{entityClassCode}/entity-types")
   public SzEntityTypesResponse addEntityTypesForClass(
@@ -1201,22 +1748,38 @@ public class ConfigServices {
       String entityTypesInBody)
       throws BadRequestException, NotFoundException
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
 
     // normalize the entity class
     entityClassCode = entityClassCode.trim().toUpperCase();
 
     this.checkEntityClassNotFound(POST, uriInfo, timers, entityClassCode);
 
-    return this.postEntityTypes(entityClassCode,
-                                true,
-                                entityTypeCodes,
-                                withRaw,
-                                uriInfo,
-                                entityTypesInBody,
-                                timers);
+    return this.createEntityTypes(POST,
+                                  entityClassCode,
+                                  true,
+                                  entityTypeCodes,
+                                  withRaw,
+                                  uriInfo,
+                                  entityTypesInBody,
+                                  timers);
   }
 
+  /**
+   * Provides the implementation of <tt>POST /entity-types</tt>.
+   *
+   * @param entityClassCode The optional entity class code from the query
+   *                        parameters.
+   * @param entityTypeCodes The {@link List} of entity type codes from the
+   *                        query parameters.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param entityTypesInBody The request body text (usually JSON) describing
+   *                          the entity types to be created.
+   *
+   * @return The {@link SzEntityTypesResponse} describing the response.
+   */
   @POST
   @Path("entity-types")
   public SzEntityTypesResponse addEntityTypes(
@@ -1226,7 +1789,7 @@ public class ConfigServices {
       @Context UriInfo uriInfo,
       String entityTypesInBody)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
 
     // normalize the entity class
     if (entityClassCode != null) {
@@ -1235,32 +1798,58 @@ public class ConfigServices {
 
     this.checkEntityClassInvalid(POST, uriInfo, timers, entityClassCode);
 
-    return this.postEntityTypes(entityClassCode,
-                                false,
-                                entityTypeCodes,
-                                withRaw,
-                                uriInfo,
-                                entityTypesInBody,
-                                timers);
+    return this.createEntityTypes(POST,
+                                  entityClassCode,
+                                  false,
+                                  entityTypeCodes,
+                                  withRaw,
+                                  uriInfo,
+                                  entityTypesInBody,
+                                  timers);
   }
 
-  private SzEntityTypesResponse postEntityTypes(String        entityClassCode,
-                                                boolean       enforceSameClass,
-                                                List<String>  entityTypeCodes,
-                                                boolean       withRaw,
-                                                UriInfo       uriInfo,
-                                                String        entityTypesInBody,
-                                                Timers        timers)
+  /**
+   * Common method for handling the creation of entity types.  This
+   * method aggregates the various query parameters and the body content to
+   * create a list of {@link SzEntityType} instances and then call {@link
+   * #doAddEntityTypes(SzHttpMethod, Collection, UriInfo, boolean, Timers)}.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param entityClassCode The entity class code for the created entity types
+   *                        (this may be the one specified in the URL or may be
+   *                        a query parameter that is the default for those that
+   *                        don't have an entity class in the body definitions).
+   * @param enforceSameClass Whether or not to enforce the same entity class
+   *                         for all created entity types (e.g.: all must match
+   *                         the one in the specified URL).
+   * @param entityTypeCodes The entity type codes for the entity types to create
+   * @param withRaw Whether or not the raw JSON is being requested in the
+   *                response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param entityTypesInBody The JSON text describing any entity types in the
+   *                          body of the request.
+   * @param timers The {@link Timers} for the operation.
+   * @return The {@link SzEntityTypesResponse} that was created.
+   */
+  protected SzEntityTypesResponse createEntityTypes(
+      SzHttpMethod  httpMethod,
+      String        entityClassCode,
+      boolean       enforceSameClass,
+      List<String>  entityTypeCodes,
+      boolean       withRaw,
+      UriInfo       uriInfo,
+      String        entityTypesInBody,
+      Timers        timers)
   {
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
-    ensureConfigChangesAllowed(provider, POST, uriInfo, timers);
+    SzApiProvider provider = this.getApiProvider();
+    this.ensureConfigChangesAllowed(provider, httpMethod, uriInfo, timers);
 
     Map<String, SzEntityType> map = new LinkedHashMap<>();
 
     // add the entity class codes from the query to the map
     for (String code : entityTypeCodes) {
       SzEntityType entityType
-          = new SzEntityType(code,null, entityClassCode);
+          = this.newEntityType(code,null, entityClassCode);
       map.put(entityType.getEntityTypeCode(), entityType);
     }
 
@@ -1288,8 +1877,8 @@ public class ConfigServices {
                 && entityClassCode != null
                 && !entityClassCode.equals(entityType.getEntityClassCode()))
             {
-              throw newBadRequestException(
-                  POST, uriInfo, timers,
+              throw this.newBadRequestException(
+                  httpMethod, uriInfo, timers,
                   "Entity class code in URL (" + entityClassCode + ") does not "
                       + "match entity class code in at least one of the "
                       + "specified entity types: " + entityType);
@@ -1306,7 +1895,7 @@ public class ConfigServices {
       } catch (WebApplicationException e) {
         throw e;
       } catch (Exception e) {
-        throw newBadRequestException(POST, uriInfo, timers, e);
+        throw this.newBadRequestException(httpMethod, uriInfo, timers, e);
       }
 
       // loop through the entity types and put them in the map
@@ -1316,22 +1905,30 @@ public class ConfigServices {
     }
 
     // add the entity types
-    return this.doAddEntityTypes(POST, map.values(), uriInfo, withRaw, timers);
+    return this.doAddEntityTypes(
+        httpMethod, map.values(), uriInfo, withRaw, timers);
   }
 
   /**
-   * Internal method for adding one or more entity classes.
+   * Internal method for adding one or more entity types.
    *
-   * @return An SzEntityClassesResponse with all the configured entity classes.
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param entityTypes The {@link Collection} of {@link SzEntityType} instances
+   *                    for the entity types to be created.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param withRaw Whether or not the raw JSON is being requested in the
+   *                response.
+   * @param timers The {@link Timers} for the operation.
+   * @return The {@link SzEntityTypesResponse} that was created.
    */
-  private SzEntityTypesResponse doAddEntityTypes(
-      SzHttpMethod httpMethod,
-      Collection<SzEntityType> entityTypes,
-      UriInfo uriInfo,
-      boolean withRaw,
-      Timers timers)
+  protected SzEntityTypesResponse doAddEntityTypes(
+      SzHttpMethod              httpMethod,
+      Collection<SzEntityType>  entityTypes,
+      UriInfo                   uriInfo,
+      boolean                   withRaw,
+      Timers                    timers)
   {
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    SzApiProvider provider = this.getApiProvider();
 
     try {
       // get the engine API and the config API
@@ -1341,14 +1938,15 @@ public class ConfigServices {
       Set<String> createdSet    = new LinkedHashSet<>();
 
       if (configMgrApi == null) {
-        throw newForbiddenException(
-            httpMethod, uriInfo, timers, "Configuration changes not permitted.");
+        throw this.newForbiddenException(
+            httpMethod, uriInfo, timers,
+            "Configuration changes not permitted.");
       }
 
       // loop until the provider has the data source code we are looking for
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get an array of the data source codes
         String[] arr = entityTypes.stream()
@@ -1373,12 +1971,12 @@ public class ConfigServices {
           Long configHandle = null;
           try {
             // load into a config object by ID
-            callingNativeAPI(timers, "config", "load");
+            this.callingNativeAPI(timers, "config", "load");
             configHandle = configApi.load(configJSON);
-            calledNativeAPI(timers, "config", "load");
+            this.calledNativeAPI(timers, "config", "load");
 
             if (configHandle <= 0) {
-              throw newInternalServerErrorException(
+              throw this.newInternalServerErrorException(
                   httpMethod, uriInfo, timers, configApi);
             }
 
@@ -1401,7 +1999,7 @@ public class ConfigServices {
               if (existingET != null && typeId != null
                   && !typeId.equals(existingET.getEntityTypeId()))
               {
-                throw newBadRequestException(
+                throw this.newBadRequestException(
                     httpMethod, uriInfo, timers,
                     "At least one entity type already exists, but "
                         + "with a different entity type ID.  specified=[ "
@@ -1412,7 +2010,7 @@ public class ConfigServices {
               if (existingET != null && classCode != null
                   && !classCode.equals(existingET.getEntityClassCode()))
               {
-                throw newBadRequestException(
+                throw this.newBadRequestException(
                     httpMethod, uriInfo, timers,
                     "At least one entity type already exists, but "
                         + "with a different entity class code.  specified=[ "
@@ -1421,7 +2019,7 @@ public class ConfigServices {
 
               // check if the entity class code is not recognized
               if (!provider.getEntityClasses(classCode).contains(classCode)) {
-                throw newBadRequestException(
+                throw this.newBadRequestException(
                     httpMethod, uriInfo, timers,
                     "Entity type (" + typeCode + ") specified with "
                     + "unrecognized entity class: " + classCode);
@@ -1435,13 +2033,13 @@ public class ConfigServices {
               }
 
               // add the data source to the config without a data source ID
-              callingNativeAPI(timers, "config", "addEntityTypeV2");
+              this.callingNativeAPI(timers, "config", "addEntityTypeV2");
               int returnCode = configApi.addEntityTypeV2(
                   configHandle, entityType.toNativeJson(), new StringBuffer());
-              calledNativeAPI(timers, "config", "addEntityTypeV2");
+              this.calledNativeAPI(timers, "config", "addEntityTypeV2");
 
               if (returnCode != 0) {
-                throw newInternalServerErrorException(
+                throw this.newInternalServerErrorException(
                     httpMethod, uriInfo, timers, configApi);
               }
 
@@ -1449,7 +2047,7 @@ public class ConfigServices {
             }
 
             if (createdSet.size() > 0) {
-              this.updateCurrentConfig(
+              this.updateDefaultConfig(
                   httpMethod,
                   uriInfo,
                   configApi,
@@ -1490,31 +2088,42 @@ public class ConfigServices {
     }
   }
 
-  private String getDefaultConfig(SzHttpMethod  httpMethod,
-                                  UriInfo       uriInfo,
-                                  G2ConfigMgr   configMgrApi,
-                                  Timers        timers,
-                                  Result<Long>  result)
+  /**
+   * Obtains the JSON text for the configuration that is currently
+   * designated as the default configuration.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param configMgrApi The {@link G2ConfigMgr} instance to use.
+   * @param timers The {@link Timers} for the operation.
+   * @param configId The {@link Result} object to populate with the config ID.
+   * @return The JSON text for the default configuration.
+   */
+  protected String getDefaultConfig(SzHttpMethod  httpMethod,
+                                    UriInfo       uriInfo,
+                                    G2ConfigMgr   configMgrApi,
+                                    Timers        timers,
+                                    Result<Long>  configId)
   {
     synchronized (configMgrApi) {
-      callingNativeAPI(timers, "configMgr", "getDefaultConfigID");
-      int returnCode = configMgrApi.getDefaultConfigID(result);
-      calledNativeAPI(timers, "configMgr", "getDefaultConfigID");
+      this.callingNativeAPI(timers, "configMgr", "getDefaultConfigID");
+      int returnCode = configMgrApi.getDefaultConfigID(configId);
+      this.calledNativeAPI(timers, "configMgr", "getDefaultConfigID");
       // check the return code
       if (returnCode != 0) {
-        throw newInternalServerErrorException(
+        throw this.newInternalServerErrorException(
             httpMethod, uriInfo, timers, configMgrApi);
       }
 
-      long defaultConfigId = result.getValue();
+      long defaultConfigId = configId.getValue();
       StringBuffer sb = new StringBuffer();
 
       // get the config
-      callingNativeAPI(timers, "configMgr", "getConfig");
+      this.callingNativeAPI(timers, "configMgr", "getConfig");
       returnCode = configMgrApi.getConfig(defaultConfigId, sb);
-      calledNativeAPI(timers, "configMgr", "getConfig");
+      this.calledNativeAPI(timers, "configMgr", "getConfig");
       if (returnCode != 0) {
-        throw newInternalServerErrorException(
+        throw this.newInternalServerErrorException(
             httpMethod, uriInfo, timers, configMgrApi);
       }
 
@@ -1523,14 +2132,34 @@ public class ConfigServices {
     }
   }
 
-  private boolean updateCurrentConfig(SzHttpMethod httpMethod,
-                                      UriInfo      uriInfo,
-                                      G2Config     configApi,
-                                      G2ConfigMgr  configMgrApi,
-                                      Timers       timers,
-                                      long         defaultConfigId,
-                                      long         configHandle,
-                                      String       configComment)
+  /**
+   * Replaces the current default configuration with the newly updated
+   * default configuration assuming the default configuration has not changed
+   * since the updates were made.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} the request.
+   * @param configApi The {@link G2Config} instance to use.
+   * @param configMgrApi The {@link G2ConfigMgr} instance to use.
+   * @param timers The {@link Timers} for the operation.
+   * @param defaultConfigId The default configuration ID that was configured
+   *                        prior to the modifications.
+   * @param configHandle The configuration handle for the modified
+   *                     configuration that will be set as the new default.
+   * @param configComment The comments to associate with the modified
+   *                      configuration.
+   * @return <tt>true</tt> if the current default configuration ID is the same
+   *         as the specified configuration ID, and <tt>false</tt> if it has
+   *         changed and the update was aborted.
+   */
+  protected boolean updateDefaultConfig(SzHttpMethod  httpMethod,
+                                        UriInfo       uriInfo,
+                                        G2Config      configApi,
+                                        G2ConfigMgr   configMgrApi,
+                                        Timers        timers,
+                                        long          defaultConfigId,
+                                        long          configHandle,
+                                        String        configComment)
   {
     StringBuffer sb     = new StringBuffer();
     Result<Long> result = new Result<>();
@@ -1542,39 +2171,39 @@ public class ConfigServices {
     }
     
     // convert the config to a JSON string
-    callingNativeAPI(timers, "config", "save");
+    this.callingNativeAPI(timers, "config", "save");
     int returnCode = configApi.save(configHandle, sb);
     if (returnCode != 0) {
-      throw newInternalServerErrorException(
+      throw this.newInternalServerErrorException(
           httpMethod, uriInfo, timers, configApi);
     }
-    calledNativeAPI(timers, "config", "save");
+    this.calledNativeAPI(timers, "config", "save");
 
     String configJSON = sb.toString();
 
     // save the configuration
-    obtainingLock(timers, "configMgrApi");
+    this.obtainingLock(timers, "configMgrApi");
     synchronized (configMgrApi) {
-      obtainedLock(timers, "configMgrApi");
-      callingNativeAPI(timers, "configMgr", "addConfig");
+      this.obtainedLock(timers, "configMgrApi");
+      this.callingNativeAPI(timers, "configMgr", "addConfig");
       returnCode = configMgrApi.addConfig(configJSON, configComment, result);
 
       if (returnCode != 0) {
-        throw newInternalServerErrorException(
+        throw this.newInternalServerErrorException(
             httpMethod, uriInfo, timers, configMgrApi);
       }
-      calledNativeAPI(timers, "configMgr", "addConfig");
+      this.calledNativeAPI(timers, "configMgr", "addConfig");
 
       // get the config ID for the newly saved config
       long newConfigId = result.getValue();
 
-      callingNativeAPI(timers, "configMgr", "getDefaultConfigID");
+      this.callingNativeAPI(timers, "configMgr", "getDefaultConfigID");
       returnCode = configMgrApi.getDefaultConfigID(result);
       if (returnCode != 0) {
-        throw newInternalServerErrorException(
+        throw this.newInternalServerErrorException(
             httpMethod, uriInfo, timers, configMgrApi);
       }
-      calledNativeAPI(timers, "configMgr", "getDefaultConfigID");
+      this.calledNativeAPI(timers, "configMgr", "getDefaultConfigID");
 
       // check if the default configuration ID has changed
       if (!result.getValue().equals(defaultConfigId)) {
@@ -1583,18 +2212,32 @@ public class ConfigServices {
         return false;
       }
 
-      callingNativeAPI(timers, "configMgr", "setDefaultConfigID");
+      this.callingNativeAPI(timers, "configMgr", "setDefaultConfigID");
       returnCode = configMgrApi.setDefaultConfigID(newConfigId);
       if (returnCode != 0) {
-        throw newInternalServerErrorException(
+        throw this.newInternalServerErrorException(
             httpMethod, uriInfo, timers, configMgrApi);
       }
-      calledNativeAPI(timers, "configMgr", "setDefaultConfigID");
+      this.calledNativeAPI(timers, "configMgr", "setDefaultConfigID");
     }
     return true;
   }
 
-  private Map<String, SzDataSource> getDataSourcesMap(
+  /**
+   * Parses the data sources in the configuration with the specified
+   * configuration handle as {@link SzDataSource} instances and returns a map
+   * of data source code keys to {@link SzDataSource} instances.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param configApi The {@link G2Config} instance to use.
+   * @param timers The {@link Timers} for the operation.
+   * @param configHandle The configuration handle for the config to get the
+   *                     data sources from.
+   * @return The {@link Map} of {@link String} data source code keys to
+   *         {@link SzDataSource} instances.
+   */
+  protected Map<String, SzDataSource> getDataSourcesMap(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
       G2Config      configApi,
@@ -1602,18 +2245,19 @@ public class ConfigServices {
       long          configHandle)
   {
     StringBuffer sb = new StringBuffer();
-    callingNativeAPI(timers, "config", "listDataSourcesV2");
+    this.callingNativeAPI(timers, "config", "listDataSourcesV2");
     int returnCode = configApi.listDataSourcesV2(configHandle, sb);
-    calledNativeAPI(timers, "config", "listDataSourcesV2");
+    this.calledNativeAPI(timers, "config", "listDataSourcesV2");
 
     if (returnCode != 0) {
-      throw newInternalServerErrorException(
+      throw this.newInternalServerErrorException(
           httpMethod, uriInfo, timers, configApi);
     }
     JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
     JsonArray jsonArray = jsonObject.getJsonArray("DATA_SOURCES");
-    List<SzDataSource> dataSources
-        = SzDataSource.parseDataSourceList(null, jsonArray);
+
+    List<SzDataSource> dataSources = this.parseDataSourceList(jsonArray);
+
     Map<String, SzDataSource> dataSourceMap = new LinkedHashMap<>();
     dataSources.forEach(dataSource -> {
       dataSourceMap.put(dataSource.getDataSourceCode(), dataSource);
@@ -1622,7 +2266,21 @@ public class ConfigServices {
     return dataSourceMap;
   }
 
-  private Map<String, SzEntityClass> getEntityClassesMap(
+  /**
+   * Parses the entity classes in the configuration with the specified
+   * configuration handle as {@link SzEntityClass} instances and returns a map
+   * of entity class code keys to {@link SzEntityClass} instances.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param configApi The {@link G2Config} instance to use.
+   * @param timers The {@link Timers} for the operation.
+   * @param configHandle The configuration handle for the config to get the
+   *                     entity classes from.
+   * @return The {@link Map} of {@link String} entity class code keys to
+   *         {@link SzEntityClass} instances.
+   */
+  protected Map<String, SzEntityClass> getEntityClassesMap(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
       G2Config      configApi,
@@ -1630,18 +2288,19 @@ public class ConfigServices {
       long          configHandle)
   {
     StringBuffer sb = new StringBuffer();
-    callingNativeAPI(timers, "config", "listEntityClassesV2");
+    this.callingNativeAPI(timers, "config", "listEntityClassesV2");
     int returnCode = configApi.listEntityClassesV2(configHandle, sb);
-    calledNativeAPI(timers, "config", "listEntityClassesV2");
+    this.calledNativeAPI(timers, "config", "listEntityClassesV2");
 
     if (returnCode != 0) {
-      throw newInternalServerErrorException(
+      throw this.newInternalServerErrorException(
           httpMethod, uriInfo, timers, configApi);
     }
     JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
     JsonArray jsonArray = jsonObject.getJsonArray("ENTITY_CLASSES");
-    List<SzEntityClass> entityClasses
-        = SzEntityClass.parseEntityClassList(null, jsonArray);
+
+    List<SzEntityClass> entityClasses = this.parseEntityClassList(jsonArray);
+
     Map<String, SzEntityClass> entityClassMap = new LinkedHashMap<>();
     entityClasses.forEach(entityClass -> {
       entityClassMap.put(entityClass.getEntityClassCode(), entityClass);
@@ -1650,7 +2309,21 @@ public class ConfigServices {
     return entityClassMap;
   }
 
-  private Map<String, SzEntityType> getEntityTypesMap(
+  /**
+   * Parses the entity types in the configuration with the specified
+   * configuration handle as {@link SzEntityType} instances and returns a map
+   * of entity type code keys to {@link SzEntityType} instances.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param configApi The {@link G2Config} instance to use.
+   * @param timers The {@link Timers} for the operation.
+   * @param configHandle The configuration handle for the config to get the
+   *                     entity types from.
+   * @return The {@link Map} of {@link String} entity type code keys to
+   *         {@link SzEntityType} instances.
+   */
+  protected Map<String, SzEntityType> getEntityTypesMap(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
       G2Config      configApi,
@@ -1658,18 +2331,19 @@ public class ConfigServices {
       long          configHandle)
   {
     StringBuffer sb = new StringBuffer();
-    callingNativeAPI(timers, "config", "listEntityTypesV2");
+    this.callingNativeAPI(timers, "config", "listEntityTypesV2");
     int returnCode = configApi.listEntityTypesV2(configHandle, sb);
-    calledNativeAPI(timers, "config", "listEntityTypesV2");
+    this.calledNativeAPI(timers, "config", "listEntityTypesV2");
 
     if (returnCode != 0) {
-      throw newInternalServerErrorException(
+      throw this.newInternalServerErrorException(
           httpMethod, uriInfo, timers, configApi);
     }
     JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
     JsonArray jsonArray = jsonObject.getJsonArray("ENTITY_TYPES");
-    List<SzEntityType> entityTypes
-        = SzEntityType.parseEntityTypeList(null, jsonArray);
+
+    List<SzEntityType> entityTypes = this.parseEntityTypeList(jsonArray);
+
     Map<String, SzEntityType> entityTypeMap = new LinkedHashMap<>();
     entityTypes.forEach(entityType -> {
       entityTypeMap.put(entityType.getEntityTypeCode(), entityType);
@@ -1678,6 +2352,22 @@ public class ConfigServices {
     return entityTypeMap;
   }
 
+  /**
+   * Provides the implementation of <tt>GET /attribute-types</tt>.
+   *
+   * @param withInternal Boolean flag from the query parameter indicating if
+   *                     internal attribute types should be included in the
+   *                     response.
+   * @param attributeClass The optional attribute class for filtering the
+   *                       attribute types to be include in the response.
+   * @param featureType The optional feature type for filtering the attribute
+   *                    types to be include in the response.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The {@link SzAttributeTypesResponse} describing the response.
+   */
   @GET
   @Path("attribute-types")
   public SzAttributeTypesResponse getAttributeTypes(
@@ -1687,8 +2377,8 @@ public class ConfigServices {
       @DefaultValue("false") @QueryParam("withRaw")      boolean withRaw,
       @Context                                           UriInfo uriInfo)
   {
-    Timers timers = newTimers();
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    Timers timers = this.newTimers();
+    SzApiProvider provider = this.getApiProvider();
 
     SzAttributeClass ac = null;
     if (attributeClass != null && attributeClass.trim().length() > 0) {
@@ -1696,7 +2386,7 @@ public class ConfigServices {
         ac = SzAttributeClass.valueOf(attributeClass.trim().toUpperCase());
 
       } catch (IllegalArgumentException e) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers, "Unrecognized attribute class: " + attributeClass);
       }
     }
@@ -1706,22 +2396,21 @@ public class ConfigServices {
         ? featureType.trim() : null);
 
     try {
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       JsonObject configRoot = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get the engine API and the config API
         G2Engine engineApi = provider.getEngineApi();
 
-        return getCurrentConfigRoot(GET, uriInfo, timers, engineApi);
+        return this.getCurrentConfigRoot(GET, uriInfo, timers, engineApi);
       });
       
-      processingRawData(timers);
+      this.processingRawData(timers);
       // get the array and construct the response
       JsonArray jsonArray = configRoot.getJsonArray("CFG_ATTR");
 
-      List<SzAttributeType> attrTypes
-          = SzAttributeType.parseAttributeTypeList(null, jsonArray);
+      List<SzAttributeType> attrTypes = this.parseAttributeTypeList(jsonArray);
 
       // check if filtering out internal attribute types
       if (!withInternal) {
@@ -1742,14 +2431,12 @@ public class ConfigServices {
       processedRawData(timers);
 
       // build the response
-      SzAttributeTypesResponse response
-          = new SzAttributeTypesResponse(GET, 200, uriInfo, timers);
-
-      response.setAttributeTypes(attrTypes);
+      SzAttributeTypesResponse response = this.newAttributeTypesResponse(
+          GET, 200, uriInfo, timers, attrTypes);
 
       // if including raw data then add it
       if (withRaw) {
-        processingRawData(timers);
+        this.processingRawData(timers);
         // check if we need to filter the raw value as well
         if (!withInternal || attrClass != null || featType != null) {
           JsonArrayBuilder jab = Json.createArrayBuilder();
@@ -1774,7 +2461,7 @@ public class ConfigServices {
         JsonObjectBuilder job = Json.createObjectBuilder();
         job.add("CFG_ATTR", jsonArray);
         String rawData = JsonUtils.toJsonText(job.build());
-        processedRawData(timers);
+        this.processedRawData(timers);
         response.setRawData(rawData);
       }
 
@@ -1794,6 +2481,58 @@ public class ConfigServices {
     }
   }
 
+  /**
+   * Parses the specified {@link JsonArray} describing the attribute types in
+   * the raw format and produces a {@link List} of {@link SzAttributeType}
+   * instances.
+   *
+   * @param jsonArray The {@link JsonArray} describing the data sources.
+   *
+   * @return The created {@link List} of {@link SzAttributeType} instances.
+   */
+  protected List<SzAttributeType> parseAttributeTypeList(JsonArray jsonArray) {
+    return SzAttributeType.parseAttributeTypeList(null, jsonArray);
+  }
+
+  /**
+   * Creates a new instance of {@link SzAttributeTypesResponse} and configures
+   * it with the specified {@link List} of {@link SzAttributeType} instances.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param attributeTypes The {@link List} of {@link SzAttributeType}
+   *                       instances.
+   *
+   * @return The newly created {@link SzAttributeTypesResponse}.
+   */
+  protected SzAttributeTypesResponse newAttributeTypesResponse(
+      SzHttpMethod          httpMethod,
+      int                   httpStatusCode,
+      UriInfo               uriInfo,
+      Timers                timers,
+      List<SzAttributeType> attributeTypes)
+  {
+    SzAttributeTypesResponse response = new SzAttributeTypesResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo));
+    response.setAttributeTypes(attributeTypes);
+    return response;
+  }
+
+  /**
+   * Provides the implementation of
+   * <tt>GET /attribute-types/{attributeTypeCode}</tt>.
+   *
+   * @param attributeCode The attribute code from the URI path identifying the
+   *                      attribute type.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included in the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The {@link SzAttributeTypeResponse} describing the response.
+   */
   @GET
   @Path("attribute-types/{attributeCode}")
   public SzAttributeTypeResponse getAttributeType(
@@ -1801,22 +2540,23 @@ public class ConfigServices {
       @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
       @Context                                      UriInfo uriInfo)
   {
-    Timers timers = newTimers();
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    Timers timers = this.newTimers();
+    SzApiProvider provider = this.getApiProvider();
 
     try {
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       JsonObject configRoot = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
         // get the engine API and the config API
         G2Engine engineApi = provider.getEngineApi();
 
-        JsonObject obj = getCurrentConfigRoot(GET, uriInfo, timers, engineApi);
+        JsonObject obj = this.getCurrentConfigRoot(
+            GET, uriInfo, timers, engineApi);
 
         return obj;
       });
 
-      processingRawData(timers);
+      this.processingRawData(timers);
 
       // get the array and construct the response
       JsonArray jsonArray = configRoot.getJsonArray("CFG_ATTR");
@@ -1834,14 +2574,14 @@ public class ConfigServices {
       }
 
       if (jsonAttrType == null) {
-        throw newNotFoundException(
-            GET, uriInfo, timers, "Attribute code not recognized: " + attributeCode);
+        throw this.newNotFoundException(
+            GET, uriInfo, timers,
+            "Attribute code not recognized: " + attributeCode);
       }
 
-      SzAttributeType attrType
-          = SzAttributeType.parseAttributeType(null, jsonAttrType);
+      SzAttributeType attrType = this.parseAttributeType(jsonAttrType);
 
-      SzAttributeTypeResponse response = new SzAttributeTypeResponse(
+      SzAttributeTypeResponse response = this.newAttributeTypeResponse(
           GET, 200, uriInfo, timers, attrType);
 
       // if including raw data then add it
@@ -1850,7 +2590,7 @@ public class ConfigServices {
 
         response.setRawData(rawData);
       }
-      processedRawData(timers);
+      this.processedRawData(timers);
 
       // return the response
       return response;
@@ -1864,40 +2604,87 @@ public class ConfigServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Parses the JSON described by the specified {@link JsonObject} as an
+   * attribute type in the raw format and produces an instance of {@link
+   * SzAttributeType}.
+   *
+   * @param jsonObject The {@link JsonObject} describing the attribute type in
+   *                   the raw format.
+   *
+   * @return The newly created and configured {@link SzAttributeType}.
+   */
+  protected SzAttributeType parseAttributeType(JsonObject jsonObject) {
+    return SzAttributeType.parseAttributeType(null, jsonObject);
+  }
+
+  /**
+   * Creates a new {@link SzAttributeTypeResponse} with the specified
+   * parameters.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param attributeType The {@link SzAttributeType} instance.
+   *
+   * @return The newly created {@link SzAttributeTypeResponse}.
+   */
+  protected SzAttributeTypeResponse newAttributeTypeResponse(
+      SzHttpMethod    httpMethod,
+      int             httpStatusCode,
+      UriInfo         uriInfo,
+      Timers          timers,
+      SzAttributeType attributeType)
+  {
+    SzAttributeTypeResponse response = new SzAttributeTypeResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo));
+    response.setAttributeType(attributeType);
+    return response;
+  }
+
+  /**
+   * Provides the implementation of <tt>GET /configs/active</tt>.
+   *
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The {@link SzConfigResponse} describing the response.
+   */
   @GET
   @Path("configs/active")
   public SzConfigResponse getActiveConfig(@Context UriInfo uriInfo)
   {
-    Timers timers = newTimers();
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    Timers timers = this.newTimers();
+    SzApiProvider provider = this.getApiProvider();
 
     try {
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       JsonObject configObject = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
         // get the engine API and the config API
         G2Engine engineApi = provider.getEngineApi();
 
         // export the config
-        String config = exportConfig(GET, uriInfo, timers, engineApi);
+        String config = this.exportConfig(GET, uriInfo, timers, engineApi);
 
         // parse the raw data
-        processingRawData(timers);
+        this.processingRawData(timers);
         JsonObject configObj = JsonUtils.parseJsonObject(config);
-        processedRawData(timers);
+        this.processedRawData(timers);
 
         return configObj;
       });
 
-      processingRawData(timers);
+      this.processingRawData(timers);
       String rawData = JsonUtils.toJsonText(configObject);
-      SzConfigResponse response = new SzConfigResponse(
+      SzConfigResponse response = this.newConfigResponse(
           GET, 200, uriInfo, timers, rawData);
-      processedRawData(timers);
+      this.processedRawData(timers);
 
       // return the response
       return response;
@@ -1915,59 +2702,88 @@ public class ConfigServices {
     }
   }
 
+  /**
+   * Creates a new {@link SzConfigResponse} with the specified parameters.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param configRawData The JSON text for the config.
+   *
+   * @return The newly created {@link SzDataSourceResponse}.
+   */
+  protected SzConfigResponse newConfigResponse(SzHttpMethod httpMethod,
+                                               int          httpStatusCode,
+                                               UriInfo      uriInfo,
+                                               Timers       timers,
+                                               String       configRawData)
+  {
+    return new SzConfigResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo),
+        configRawData);
+  }
+
+  /**
+   * Provides the implementation of <tt>GET /configs/template</tt>.
+   *
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The {@link SzConfigResponse} describing the response.
+   */
   @GET
   @Path("configs/template")
   public SzConfigResponse getTemplateConfig(@Context UriInfo uriInfo)
   {
-    Timers timers = newTimers();
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    Timers timers = this.newTimers();
+    SzApiProvider provider = this.getApiProvider();
 
     try {
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       JsonObject configObject = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
         // get the engine API and the config API
         G2Config configApi = provider.getConfigApi();
 
         // create the default config
         StringBuffer sb = new StringBuffer();
-        callingNativeAPI(timers, "config", "create");
+        this.callingNativeAPI(timers, "config", "create");
         long configId = configApi.create();
         if (configId <= 0L) {
-          throw newInternalServerErrorException(
+          throw this.newInternalServerErrorException(
               GET, uriInfo, timers, configApi);
         }
-        calledNativeAPI(timers, "config", "create");
+        this.calledNativeAPI(timers, "config", "create");
         try {
-          callingNativeAPI(timers, "config", "save");
+          this.callingNativeAPI(timers, "config", "save");
           int returnCode = configApi.save(configId, sb);
           if (returnCode != 0) {
-            throw newInternalServerErrorException(
+            throw this.newInternalServerErrorException(
                 GET, uriInfo, timers, configApi);
           }
-          calledNativeAPI(timers, "config", "save");
+          this.calledNativeAPI(timers, "config", "save");
         } finally {
-          callingNativeAPI(timers, "config", "close");
+          this.callingNativeAPI(timers, "config", "close");
           configApi.close(configId);
-          calledNativeAPI(timers, "config", "close");
+          this.calledNativeAPI(timers, "config", "close");
         }
 
         String config = sb.toString();
 
         // parse the raw data
-        processingRawData(timers);
+        this.processingRawData(timers);
         JsonObject configObj = JsonUtils.parseJsonObject(config);
-        processedRawData(timers);
+        this.processedRawData(timers);
 
         return configObj;
       });
 
-      processingRawData(timers);
+      this.processingRawData(timers);
       String rawData = JsonUtils.toJsonText(configObject);
-      SzConfigResponse response = new SzConfigResponse(
-          GET, 200, uriInfo, timers);
-      response.setRawData(rawData);
-      processedRawData(timers);
+      SzConfigResponse response = this.newConfigResponse(
+          GET, 200, uriInfo, timers, rawData);
+      this.processedRawData(timers);
 
       // return the response
       return response;
@@ -1981,45 +2797,56 @@ public class ConfigServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
 
   /**
    * Exports the config using the specified {@link G2Engine} instance.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param engineApi The {@link G2Engine} instance to use.
    */
-  private static String exportConfig(SzHttpMethod   httpMethod,
-                                     UriInfo        uriInfo,
-                                     Timers         timers,
-                                     G2Engine       engineApi)
+  protected String exportConfig(SzHttpMethod  httpMethod,
+                                UriInfo       uriInfo,
+                                Timers        timers,
+                                G2Engine      engineApi)
   {
     StringBuffer sb = new StringBuffer();
-    callingNativeAPI(timers, "engine", "exportConfig");
+    this.callingNativeAPI(timers, "engine", "exportConfig");
     int result = engineApi.exportConfig(sb);
+    this.calledNativeAPI(timers, "engine", "exportConfig");
     if (result != 0) {
-      throw newInternalServerErrorException(httpMethod, uriInfo, timers, engineApi);
+      throw this.newInternalServerErrorException(
+          httpMethod, uriInfo, timers, engineApi);
     }
-    calledNativeAPI(timers, "engine", "exportConfig");
     return sb.toString();
   }
 
   /**
    * From an exported config, this pulls the <tt>"G2_CONFIG"</tt>
    * {@link JsonObject} from it.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param engineApi The {@link G2Engine} instance to use.
    */
-  private JsonObject getCurrentConfigRoot(SzHttpMethod  httpMethod,
-                                          UriInfo       uriInfo,
-                                          Timers        timers,
-                                          G2Engine      engineApi)
+  protected JsonObject getCurrentConfigRoot(SzHttpMethod  httpMethod,
+                                            UriInfo       uriInfo,
+                                            Timers        timers,
+                                            G2Engine      engineApi)
   {
     // export the config
-    String config = exportConfig(httpMethod, uriInfo, timers, engineApi);
+    String config = this.exportConfig(httpMethod, uriInfo, timers, engineApi);
 
     // parse the raw data
-    processingRawData(timers);
+    this.processingRawData(timers);
     JsonObject configObj = JsonUtils.parseJsonObject(config);
-    processedRawData(timers);
+    this.processedRawData(timers);
     return configObj.getJsonObject("G2_CONFIG");
   }
 
@@ -2037,10 +2864,10 @@ public class ConfigServices {
    * @throws NotFoundException If the entity class code is not recognized.
    * @throws NullPointerException If the specified entity class code is null.
    */
-  private void checkEntityClassNotFound(SzHttpMethod  httpMethod,
-                                        UriInfo       uriInfo,
-                                        Timers        timers,
-                                        String        entityClassCode)
+  protected void checkEntityClassNotFound(SzHttpMethod  httpMethod,
+                                          UriInfo       uriInfo,
+                                          Timers        timers,
+                                          String        entityClassCode)
   {
     // normalize the entity class
     entityClassCode = entityClassCode.trim().toUpperCase();
@@ -2058,10 +2885,10 @@ public class ConfigServices {
     //---------------------------------------------------------------------
 
     // check that the entity class exists
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    SzApiProvider provider = this.getApiProvider();
     Set<String> entityClasses = provider.getEntityClasses(entityClassCode);
     if (!entityClasses.contains(entityClassCode)) {
-      throw newNotFoundException(
+      throw this.newNotFoundException(
           httpMethod, uriInfo, timers,
           "The entity class code was not recognized: " + entityClassCode);
     }
@@ -2079,10 +2906,10 @@ public class ConfigServices {
    *
    * @throws BadRequestException If the entity class code is not recognized.
    */
-  private void checkEntityClassInvalid(SzHttpMethod   httpMethod,
-                                       UriInfo        uriInfo,
-                                       Timers         timers,
-                                       String         entityClassCode)
+  protected void checkEntityClassInvalid(SzHttpMethod httpMethod,
+                                         UriInfo      uriInfo,
+                                         Timers       timers,
+                                         String       entityClassCode)
     throws BadRequestException
   {
     // if null then it is simply missing, not invalid
@@ -2104,10 +2931,10 @@ public class ConfigServices {
     //---------------------------------------------------------------------
 
     // check that the entity class exists
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    SzApiProvider provider = this.getApiProvider();
     Set<String> entityClasses = provider.getEntityClasses(entityClassCode);
     if (!entityClasses.contains(entityClassCode)) {
-      throw newBadRequestException(
+      throw this.newBadRequestException(
           httpMethod, uriInfo, timers,
           "The entity class code was not recognized: " + entityClassCode);
     }

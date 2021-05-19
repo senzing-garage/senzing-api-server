@@ -1,7 +1,5 @@
 package com.senzing.api.services;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.senzing.api.model.*;
 import com.senzing.api.websocket.JsonEncoder;
 import com.senzing.api.websocket.OnUpgrade;
@@ -38,7 +36,6 @@ import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.POST;
 import static com.senzing.api.model.SzHttpMethod.GET;
-import static com.senzing.api.services.ServicesUtil.*;
 import static com.senzing.text.TextUtilities.*;
 import static com.senzing.util.AsyncWorkerPool.*;
 import static com.senzing.api.model.SzBulkDataStatus.*;
@@ -51,7 +48,7 @@ import static com.senzing.io.IOUtilities.*;
  */
 @Path("/bulk-data")
 @Produces(APPLICATION_JSON)
-public class BulkDataServices {
+public class BulkDataServices extends ServicesSupport {
   /**
    * The size of the piped input stream buffer size (10MB).
    */
@@ -142,25 +139,25 @@ public class BulkDataServices {
       @FormDataParam("data") InputStream dataInputStream,
       @Context UriInfo uriInfo)
   {
-    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
-    Timers        timers      = newTimers();
+    SzApiProvider provider    = this.getApiProvider();
+    Timers        timers      = this.newTimers();
     AccessToken   accessToken = null;
     accessToken = provider.authorizeProlongedOperation();
     if (accessToken == null) {
-      throw newServiceUnavailableErrorException(
+      throw this.newServiceUnavailableErrorException(
           POST, uriInfo, timers,
           "Too many prolonged operations running.  Try again later.");
     }
     try {
-      return analyzeBulkRecords(provider,
-                                timers,
-                                mediaType,
-                                dataInputStream,
-                                uriInfo,
-                                null,
-                                null,
-                                null,
-                                null);
+      return this.analyzeBulkRecords(provider,
+                                     timers,
+                                     mediaType,
+                                     dataInputStream,
+                                     uriInfo,
+                                     null,
+                                     null,
+                                     null,
+                                     null);
 
     } catch (RuntimeException e) {
       throw logOnceAndThrow(e);
@@ -186,24 +183,24 @@ public class BulkDataServices {
       InputStream dataInputStream,
       @Context UriInfo uriInfo)
   {
-    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
-    Timers        timers      = newTimers();
+    SzApiProvider provider    = this.getApiProvider();
+    Timers        timers      = this.newTimers();
     AccessToken   accessToken = provider.authorizeProlongedOperation();
     if (accessToken == null) {
-      throw newServiceUnavailableErrorException(
+      throw this.newServiceUnavailableErrorException(
           POST, uriInfo, timers,
           "Too many prolonged operations running.  Try again later.");
     }
     try {
-      return analyzeBulkRecords(provider,
-                                timers,
-                                mediaType,
-                                dataInputStream,
-                                uriInfo,
-                                null,
-                                null,
-                                null,
-                                null);
+      return this.analyzeBulkRecords(provider,
+                                     timers,
+                                     mediaType,
+                                     dataInputStream,
+                                     uriInfo,
+                                     null,
+                                     null,
+                                     null,
+                                     null);
 
     } catch (RuntimeException e) {
       throw logOnceAndThrow(e);
@@ -230,12 +227,12 @@ public class BulkDataServices {
    * @throws BadRequestException If the progress period is negative, but we are
    *                             handling an SSE request.
    */
-  private static void validateProgressPeriod(Long         progressPeriod,
-                                             Timers       timers,
-                                             UriInfo      uriInfo,
-                                             SseEventSink sseEventSink,
-                                             Sse          sse,
-                                             Session      webSocketSession)
+  private void validateProgressPeriod(Long         progressPeriod,
+                                      Timers       timers,
+                                      UriInfo      uriInfo,
+                                      SseEventSink sseEventSink,
+                                      Sse          sse,
+                                      Session      webSocketSession)
     throws BadRequestException
   {
     // check if the progress period parameter is being ignored
@@ -245,7 +242,7 @@ public class BulkDataServices {
 
     // check the parameters
     if (progressPeriod != null && progressPeriod < 0L) {
-      throw newBadRequestException(
+      throw this.newBadRequestException(
           POST, uriInfo, timers,
           "The progressPeriod parameter cannot be negative: " + progressPeriod);
     }
@@ -280,24 +277,24 @@ public class BulkDataServices {
       @Context Sse sse)
   {
     try {
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
-      Timers timers = newTimers();
+      SzApiProvider provider = this.getApiProvider();
+      Timers timers = this.newTimers();
       AccessToken accessToken = provider.authorizeProlongedOperation();
       if (accessToken == null) {
-        throw newServiceUnavailableErrorException(
+        throw this.newServiceUnavailableErrorException(
             POST, uriInfo, timers,
             "Too many prolonged operations running.  Try again later.");
       }
       try {
-        analyzeBulkRecords(provider,
-                           timers,
-                           mediaType,
-                           dataInputStream,
-                           uriInfo,
-                           progressPeriod,
-                           sseEventSink,
-                           sse,
-                           null);
+        this.analyzeBulkRecords(provider,
+                                timers,
+                                mediaType,
+                                dataInputStream,
+                                uriInfo,
+                                progressPeriod,
+                                sseEventSink,
+                                sse,
+                                null);
 
       } catch (RuntimeException e) {
         throw logOnceAndThrow(e);
@@ -347,24 +344,24 @@ public class BulkDataServices {
       @Context Sse sse)
   {
     try {
-      Timers        timers      = newTimers();
-      SzApiProvider provider    = SzApiProvider.Factory.getProvider();
+      Timers        timers      = this.newTimers();
+      SzApiProvider provider    = this.getApiProvider();
       AccessToken   accessToken = provider.authorizeProlongedOperation();
       if (accessToken == null) {
-        throw newServiceUnavailableErrorException(
+        throw this.newServiceUnavailableErrorException(
             POST, uriInfo, timers,
             "Too many prolonged operations running.  Try again later.");
       }
       try {
-        analyzeBulkRecords(provider,
-                           timers,
-                           mediaType,
-                           dataInputStream,
-                           uriInfo,
-                           progressPeriod,
-                           sseEventSink,
-                           sse,
-                           null);
+        this.analyzeBulkRecords(provider,
+                                timers,
+                                mediaType,
+                                dataInputStream,
+                                uriInfo,
+                                progressPeriod,
+                                sseEventSink,
+                                sse,
+                                null);
 
       } catch (RuntimeException e) {
         throw logOnceAndThrow(e);
@@ -432,33 +429,33 @@ public class BulkDataServices {
       @FormDataParam("data") FormDataContentDisposition fileMetaData,
       @Context UriInfo uriInfo)
   {
-    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
-    Timers        timers      = newTimers();
+    SzApiProvider provider    = this.getApiProvider();
+    Timers        timers      = this.newTimers();
     AccessToken   accessToken = provider.authorizeProlongedOperation();
     if (accessToken == null) {
-      throw newServiceUnavailableErrorException(
+      throw this.newServiceUnavailableErrorException(
           POST, uriInfo, timers,
           "Too many prolonged operations running.  Try again later.");
     }
     try {
-      return loadBulkRecords(provider,
-                             timers,
-                             dataSource,
-                             mapDataSources,
-                             mapDataSourceList,
-                             entityType,
-                             mapEntityTypes,
-                             mapEntityTypeList,
-                             loadId,
-                             maxFailures,
-                             mediaType,
-                             dataInputStream,
-                             fileMetaData,
-                             uriInfo,
-                             null,
-                             null,
-                             null,
-                             null);
+      return this.loadBulkRecords(provider,
+                                  timers,
+                                  dataSource,
+                                  mapDataSources,
+                                  mapDataSourceList,
+                                  entityType,
+                                  mapEntityTypes,
+                                  mapEntityTypeList,
+                                  loadId,
+                                  maxFailures,
+                                  mediaType,
+                                  dataInputStream,
+                                  fileMetaData,
+                                  uriInfo,
+                                  null,
+                                  null,
+                                  null,
+                                  null);
 
     } catch (ForbiddenException e) {
       throw e;
@@ -518,33 +515,33 @@ public class BulkDataServices {
       InputStream dataInputStream,
       @Context UriInfo uriInfo)
   {
-    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
-    Timers        timers      = newTimers();
+    SzApiProvider provider    = this.getApiProvider();
+    Timers        timers      = this.newTimers();
     AccessToken   accessToken = provider.authorizeProlongedOperation();
     if (accessToken == null) {
-      throw newServiceUnavailableErrorException(
+      throw this.newServiceUnavailableErrorException(
           POST, uriInfo, timers,
           "Too many prolonged operations running.  Try again later.");
     }
     try {
-      return loadBulkRecords(provider,
-                             timers,
-                             dataSource,
-                             mapDataSources,
-                             mapDataSourceList,
-                             entityType,
-                             mapEntityTypes,
-                             mapEntityTypeList,
-                             loadId,
-                             maxFailures,
-                             mediaType,
-                             dataInputStream,
-                             null,
-                             uriInfo,
-                             null,
-                             null,
-                             null,
-                             null);
+      return this.loadBulkRecords(provider,
+                                  timers,
+                                  dataSource,
+                                  mapDataSources,
+                                  mapDataSourceList,
+                                  entityType,
+                                  mapEntityTypes,
+                                  mapEntityTypeList,
+                                  loadId,
+                                  maxFailures,
+                                  mediaType,
+                                  dataInputStream,
+                                  null,
+                                  uriInfo,
+                                  null,
+                                  null,
+                                  null,
+                                  null);
 
     } catch (ForbiddenException e) {
       throw e;
@@ -615,33 +612,33 @@ public class BulkDataServices {
       @Context Sse sse)
 
   {
-    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
-    Timers        timers      = newTimers();
+    SzApiProvider provider    = this.getApiProvider();
+    Timers        timers      = this.newTimers();
     AccessToken   accessToken = provider.authorizeProlongedOperation();
     if (accessToken == null) {
-      throw newServiceUnavailableErrorException(
+      throw this.newServiceUnavailableErrorException(
           POST, uriInfo, timers,
           "Too many prolonged operations running.  Try again later.");
     }
     try {
-      loadBulkRecords(provider,
-                      timers,
-                      dataSource,
-                      mapDataSources,
-                      mapDataSourceList,
-                      entityType,
-                      mapEntityTypes,
-                      mapEntityTypeList,
-                      loadId,
-                      maxFailures,
-                      mediaType,
-                      dataInputStream,
-                      fileMetaData,
-                      uriInfo,
-                      progressPeriod,
-                      sseEventSink,
-                      sse,
-                      null);
+      this.loadBulkRecords(provider,
+                           timers,
+                           dataSource,
+                           mapDataSources,
+                           mapDataSourceList,
+                           entityType,
+                           mapEntityTypes,
+                           mapEntityTypeList,
+                           loadId,
+                           maxFailures,
+                           mediaType,
+                           dataInputStream,
+                           fileMetaData,
+                           uriInfo,
+                           progressPeriod,
+                           sseEventSink,
+                           sse,
+                           null);
 
     } catch (ForbiddenException e) {
       throw e;
@@ -714,33 +711,33 @@ public class BulkDataServices {
       @Context SseEventSink sseEventSink,
       @Context Sse sse)
   {
-    SzApiProvider provider    = SzApiProvider.Factory.getProvider();
-    Timers        timers      = newTimers();
+    SzApiProvider provider    = this.getApiProvider();
+    Timers        timers      = this.newTimers();
     AccessToken   accessToken = provider.authorizeProlongedOperation();
     if (accessToken == null) {
-      throw newServiceUnavailableErrorException(
+      throw this.newServiceUnavailableErrorException(
           POST, uriInfo, timers,
           "Too many prolonged operations running.  Try again later.");
     }
     try {
-      loadBulkRecords(provider,
-                      timers,
-                      dataSource,
-                      mapDataSources,
-                      mapDataSourceList,
-                      entityType,
-                      mapEntityTypes,
-                      mapEntityTypeList,
-                      loadId,
-                      maxFailures,
-                      mediaType,
-                      dataInputStream,
-                      null,
-                      uriInfo,
-                      progressPeriod,
-                      sseEventSink,
-                      sse,
-                      null);
+      this.loadBulkRecords(provider,
+                           timers,
+                           dataSource,
+                           mapDataSources,
+                           mapDataSourceList,
+                           entityType,
+                           mapEntityTypes,
+                           mapEntityTypeList,
+                           loadId,
+                           maxFailures,
+                           mediaType,
+                           dataInputStream,
+                           null,
+                           uriInfo,
+                           progressPeriod,
+                           sseEventSink,
+                           sse,
+                           null);
 
     } catch (ForbiddenException e) {
       throw e;
@@ -888,14 +885,28 @@ public class BulkDataServices {
      */
     protected MediaType mediaType = TEXT_PLAIN_TYPE;
 
+    /**
+     * Gets the {@link BulkDataServices} instance that will be used by
+     * this thread.  The default implementation returns the result from
+     * {@link #getDefaultInstance()}.
+     *
+     * @return The {@link BulkDataServices} instance that will be used by this
+     *         thread.
+     */
+    protected BulkDataServices getBulkDataServices() {
+      return BulkDataServices.getDefaultInstance();
+    }
+
     @OnOpen
     public synchronized void onOpen(Session session)
         throws IOException, IllegalArgumentException
     {
+      BulkDataServices services = this.getBulkDataServices();
+
       this.session            = session;
       this.pipedInputStream   = new PipedInputStream(PIPE_SIZE);
       this.pipedOutputStream  = new PipedOutputStream(this.pipedInputStream);
-      this.uriInfo            = newProxyUriInfo(this.session);
+      this.uriInfo            = services.newProxyUriInfo(this.session);
       this.started            = false;
       this.lastMessageTime    = System.nanoTime();
 
@@ -1051,22 +1062,23 @@ public class BulkDataServices {
                   decoders = StringDecoder.class,
                   encoders = JsonEncoder.class)
   public static class AnalyzeWebSocket extends WebSocketThread {
-
     /**
      * Implemented to load the records once the thread is started.
      */
     protected void doRun() {
-      SzApiProvider provider  = SzApiProvider.Factory.getProvider();
-      Timers        timers    = newTimers();
-      analyzeBulkRecords(provider,
-                         timers,
-                         this.mediaType,
-                         this.pipedInputStream,
-                         this.uriInfo,
-                         this.progressPeriod,
-                         null,
-                         null,
-                         this.session);
+      BulkDataServices services = this.getBulkDataServices();
+
+      SzApiProvider provider  = services.getApiProvider();
+      Timers        timers    = services.newTimers();
+      services.analyzeBulkRecords(provider,
+                                  timers,
+                                  this.mediaType,
+                                  this.pipedInputStream,
+                                  this.uriInfo,
+                                  this.progressPeriod,
+                                  null,
+                                  null,
+                                  this.session);
 
       // close the web sockets session
       try {
@@ -1159,16 +1171,19 @@ public class BulkDataServices {
                                     HttpServletResponse response)
       throws IOException
     {
+      BulkDataServices services = BulkDataServices.getDefaultInstance();
+
       // get the provider
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      SzApiProvider provider = services.getApiProvider();
 
       // if not read only then simply return true
       if (!provider.isReadOnly()) return true;
 
       // create the timers and construct an error response
-      Timers timers = newTimers();
-      SzErrorResponse errorResponse = new SzErrorResponse(
-          GET,403, request.getRequestURI(), timers,
+      Timers timers = services.newTimers();
+      SzErrorResponse errorResponse = services.newErrorResponse(
+          services.newMeta(GET, 403, timers),
+          services.newLinks(request.getRequestURI()),
           "Loading data is not allowed if Senzing API Server started "
               + "in read-only mode");
       errorResponse.concludeTimers();
@@ -1176,7 +1191,7 @@ public class BulkDataServices {
       response.setStatus(HttpServletResponse.SC_FORBIDDEN);
       response.setContentType("application/json; charset=utf-8");
 
-      String  jsonText  = toJsonString(errorResponse);
+      String  jsonText  = services.toJsonString(errorResponse);
       byte[]  jsonBytes = jsonText.getBytes(UTF_8);
       int     length    = jsonBytes.length;
 
@@ -1240,27 +1255,28 @@ public class BulkDataServices {
      * Implemented to load the records once the thread is started.
      */
     protected void doRun() {
-      SzApiProvider provider  = SzApiProvider.Factory.getProvider();
-      Timers        timers    = newTimers();
+      BulkDataServices  services  = this.getBulkDataServices();
+      SzApiProvider     provider  = SzApiProvider.Factory.getProvider();
+      Timers            timers    = services.newTimers();
 
-      loadBulkRecords(provider,
-                      timers,
-                      this.dataSource,
-                      this.mapDataSources,
-                      this.mapDataSourceList,
-                      this.entityType,
-                      this.mapEntityTypes,
-                      this.mapEntityTypeList,
-                      this.loadId,
-                      this.maxFailures,
-                      this.mediaType,
-                      this.pipedInputStream,
-                      null,
-                      this.uriInfo,
-                      this.progressPeriod,
-                      null,
-                      null,
-                      this.session);
+      services.loadBulkRecords(provider,
+                               timers,
+                               this.dataSource,
+                               this.mapDataSources,
+                               this.mapDataSourceList,
+                               this.entityType,
+                               this.mapEntityTypes,
+                               this.mapEntityTypeList,
+                               this.loadId,
+                               this.maxFailures,
+                               this.mediaType,
+                               this.pipedInputStream,
+                               null,
+                               this.uriInfo,
+                               this.progressPeriod,
+                               null,
+                               null,
+                               this.session);
 
       // close the web sockets session
       try {
@@ -1283,9 +1299,18 @@ public class BulkDataServices {
   }
 
   /**
+   * Creates a new instance of {@link SzBulkDataAnalysis} and returns it.
+   *
+   * @return The new instance of {@link SzBulkDataAnalysis}.
+   */
+  protected SzBulkDataAnalysis newBulkDataAnalysis() {
+    return new SzBulkDataAnalysis();
+  }
+
+  /**
    * Analyzes the bulk data and returns information about it.
    */
-  private static SzBulkDataAnalysisResponse analyzeBulkRecords(
+  private SzBulkDataAnalysisResponse analyzeBulkRecords(
       SzApiProvider               provider,
       Timers                      timers,
       MediaType                   mediaType,
@@ -1304,22 +1329,22 @@ public class BulkDataServices {
         = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
     int eventId = 0;
 
-    SzBulkDataAnalysis dataAnalysis = new SzBulkDataAnalysis();
+    SzBulkDataAnalysis dataAnalysis = this.newBulkDataAnalysis();
 
     // check the progress period
-    validateProgressPeriod(progressPeriod,
-                           timers,
-                           uriInfo,
-                           sseEventSink,
-                           sse,
-                           webSocketSession);
+    this.validateProgressPeriod(progressPeriod,
+                                timers,
+                                uriInfo,
+                                sseEventSink,
+                                sse,
+                                webSocketSession);
 
     try {
       BulkDataSet bulkDataSet = new BulkDataSet(mediaType, dataInputStream);
-      TemporaryDataCache dataCache = bulkDataSet.dataCache;
+      TemporaryDataCache dataCache = bulkDataSet.getDataCache();
 
       // if charset is unknown then try to detect
-      String charset = bulkDataSet.characterEncoding;
+      String charset = bulkDataSet.getCharacterEncoding();
       dataAnalysis.setCharacterEncoding(charset);
 
       long start = System.nanoTime();
@@ -1329,10 +1354,11 @@ public class BulkDataServices {
            BufferedReader     br  = new BufferedReader(isr))
       {
         // if format is null then RecordReader will auto-detect
-        RecordReader recordReader = new RecordReader(bulkDataSet.format, br);
-        bulkDataSet.format = recordReader.getFormat();
-        if (bulkDataSet.format != null) {
-          dataAnalysis.setMediaType(bulkDataSet.format.getMediaType());
+        RecordReader recordReader
+            = new RecordReader(bulkDataSet.getFormat(), br);
+        bulkDataSet.setFormat(recordReader.getFormat());
+        if (bulkDataSet.getFormat() != null) {
+          dataAnalysis.setMediaType(bulkDataSet.getFormat().getMediaType());
         } else {
           dataAnalysis.setMediaType(null);
         }
@@ -1357,7 +1383,7 @@ public class BulkDataServices {
             SzBulkDataAnalysisResponse response = null;
             if (eventBuilder != null || webSocketSession != null) {
               // build the response message
-              response = new SzBulkDataAnalysisResponse(
+              response = this.newBulkDataAnalysisResponse(
                   POST, 200, uriInfo, timers, dataAnalysis);
             }
 
@@ -1387,60 +1413,65 @@ public class BulkDataServices {
       e.printStackTrace();
       dataAnalysis.setStatus(ABORTED);
 
-      SzBulkDataAnalysisResponse response = new SzBulkDataAnalysisResponse(
+      SzBulkDataAnalysisResponse response = this.newBulkDataAnalysisResponse(
           POST,200, uriInfo, timers, dataAnalysis);
 
-      abortOperation(e,
-                     response,
-                     uriInfo,
-                     timers,
-                     eventId,
-                     eventBuilder,
-                     sseEventSink,
-                     webSocketSession);
+      this.abortOperation(e,
+                          response,
+                          uriInfo,
+                          timers,
+                          eventId,
+                          eventBuilder,
+                          sseEventSink,
+                          webSocketSession);
 
       return response;
     }
 
     dataAnalysis.setStatus(COMPLETED);
 
-    SzBulkDataAnalysisResponse response = new SzBulkDataAnalysisResponse(
-        POST,200, uriInfo, timers, dataAnalysis);
+    SzBulkDataAnalysisResponse response = this.newBulkDataAnalysisResponse(
+        POST, 200, uriInfo, timers, dataAnalysis);
 
-    return completeOperation(
+    return this.completeOperation(
         eventBuilder, sseEventSink, eventId, webSocketSession, response);
   }
 
   /**
-   * Converts the specified object to JSON.
+   * Creates a new instance of {@link SzBulkDataAnalysisResponse} with the
+   * following parameters.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the response.
+   * @param httpStatusCode The status code for the response.
+   * @param uriInfo The {@link UriInfo} for the operation.
+   * @param timers The {@link Timers} tracking the timing for the operation.
+   * @param dataAnalysis The {@link SzBulkDataAnalysis} describing the analysis.
    */
-  protected static String toJsonString(Object object) {
-    return toJsonString(object, false);
+  protected SzBulkDataAnalysisResponse newBulkDataAnalysisResponse(
+      SzHttpMethod        httpMethod,
+      int                 httpStatusCode,
+      UriInfo             uriInfo,
+      Timers              timers,
+      SzBulkDataAnalysis  dataAnalysis)
+  {
+    return new SzBulkDataAnalysisResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo), dataAnalysis);
   }
 
   /**
-   * Converts the specified object to JSON.
+   * Creates a new instance of {@link SzBulkLoadResult} and returns it.
+   *
+   * @return The new instance of {@link SzBulkLoadResult}.
    */
-  protected static String toJsonString(Object object, boolean prettyPrint) {
-    ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.registerModule(new JodaModule());
-    try {
-      String jsonText = objectMapper.writeValueAsString(object);
-
-      if (!prettyPrint) return jsonText;
-
-      JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
-      return JsonUtils.toJsonText(jsonObject, true);
-
-    } catch (Exception e) {
-      return "FAILED TO CONVERT TO JSON: " + e.getMessage();
-    }
+  protected SzBulkLoadResult newBulkLoadResult() {
+    return new SzBulkLoadResult();
   }
 
   /**
    * Analyzes the bulk data and returns information about it.
    */
-  private static SzBulkLoadResponse loadBulkRecords(
+  protected SzBulkLoadResponse loadBulkRecords(
       SzApiProvider               provider,
       Timers                      timers,
       String                      dataSource,
@@ -1468,16 +1499,16 @@ public class BulkDataServices {
         = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
     int eventId = 0;
 
-    SzBulkLoadResult bulkLoadResult = new SzBulkLoadResult();
+    SzBulkLoadResult bulkLoadResult = this.newBulkLoadResult();
 
-    ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
+    this.ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
 
     // normalize and validate the data source
     if (dataSource != null) {
       dataSource = dataSource.trim().toUpperCase();
 
       if (!provider.getDataSources(dataSource).contains(dataSource)) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             POST, uriInfo, timers,
             "The value for the specified \"dataSource\" parameter is not a "
             + "configured data source: " + dataSource);
@@ -1489,7 +1520,7 @@ public class BulkDataServices {
       entityType = entityType.trim().toUpperCase();
 
       if (!provider.getEntityTypes(entityType).contains(entityType)) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             POST, uriInfo, timers,
             "The value for the specified \"entityType\" parameter is not a "
             + "configured entity type: " + entityType);
@@ -1504,13 +1535,13 @@ public class BulkDataServices {
     // get overridden after processing the entity types)
     entityTypeMap.put("", "GENERIC");
 
-    processDataSources(
+    this.processDataSources(
         dataSourceMap, mapDataSources, provider, timers, uriInfo);
-    processDataSources(
+    this.processDataSources(
         dataSourceMap, mapDataSourceList, provider, timers, uriInfo);
-    processEntityTypes(
+    this.processEntityTypes(
         entityTypeMap, mapEntityTypes, provider, timers, uriInfo);
-    processEntityTypes(
+    this.processEntityTypes(
         entityTypeMap, mapEntityTypeList, provider, timers, uriInfo);
 
     // put the default overrides in the map with the null key
@@ -1528,7 +1559,7 @@ public class BulkDataServices {
           ? formatLoadId(dataCache, fileMetaData) : explicitLoadId;
 
       int concurrency = provider.getConcurrency();
-      AsyncWorkerPool<EngineResult> asyncPool
+      AsyncWorkerPool<AddRecordResult> asyncPool
           = new AsyncWorkerPool<>(loadId, concurrency);
 
       List<Timers> timerPool = new ArrayList<>(concurrency);
@@ -1549,9 +1580,9 @@ public class BulkDataServices {
                                                      dataSourceMap,
                                                      entityTypeMap,
                                                      loadId);
-        bulkDataSet.format = recordReader.getFormat();
+        bulkDataSet.setFormat(recordReader.getFormat());
         bulkLoadResult.setCharacterEncoding(charset);
-        bulkLoadResult.setMediaType(bulkDataSet.format.getMediaType());
+        bulkLoadResult.setMediaType(bulkDataSet.getFormat().getMediaType());
 
         boolean           concurrent       = false;
         boolean           done             = false;
@@ -1595,16 +1626,16 @@ public class BulkDataServices {
 
           } else {
             Timers subTimers  = timerPool.remove(0);
-            AsyncResult<EngineResult> asyncResult = null;
+            AsyncResult<AddRecordResult> asyncResult = null;
             try {
-              asyncResult = asyncProcessRecord(asyncPool,
-                                               provider,
-                                               subTimers,
-                                               record,
-                                               loadId);
+              asyncResult = this.asyncProcessRecord(asyncPool,
+                                                    provider,
+                                                    subTimers,
+                                                    record,
+                                                    loadId);
 
             } finally {
-              trackLoadResult(asyncResult, bulkLoadResult);
+              this.trackLoadResult(asyncResult, bulkLoadResult);
               timerPool.add(subTimers);
             }
           }
@@ -1627,7 +1658,7 @@ public class BulkDataServices {
             SzBulkLoadResponse update = null;
             if (eventBuilder != null || webSocketSession != null) {
               start = now;
-              update = new SzBulkLoadResponse(
+              update = this.newBulkLoadResponse(
                   POST, 200, uriInfo, timers, bulkLoadResult);
             }
 
@@ -1664,18 +1695,18 @@ public class BulkDataServices {
         // check if we have less than 1000 records
         if (first1000Records.size()>0 && bulkLoadResult.getStatus()!=ABORTED)
         {
-          processRecords(provider,
-                         timers,
-                         first1000Records,
-                         loadId,
-                         bulkLoadResult,
-                         maxFailures);
+          this.processRecords(provider,
+                              timers,
+                              first1000Records,
+                              loadId,
+                              bulkLoadResult,
+                              maxFailures);
         }
 
         // close out any in-flight loads from the asynchronous pool
-        List<AsyncResult<EngineResult>> results = asyncPool.close();
-        for (AsyncResult<EngineResult> asyncResult : results) {
-          trackLoadResult(asyncResult, bulkLoadResult);
+        List<AsyncResult<AddRecordResult>> results = asyncPool.close();
+        for (AsyncResult<AddRecordResult> asyncResult : results) {
+          this.trackLoadResult(asyncResult, bulkLoadResult);
         }
 
         // merge the timers
@@ -1693,31 +1724,51 @@ public class BulkDataServices {
 
     } catch (IOException e) {
       bulkLoadResult.setStatus(ABORTED);
-      SzBulkLoadResponse response
-          = new SzBulkLoadResponse(POST,
-                                   200,
-                                   uriInfo,
-                                   timers,
-                                   bulkLoadResult);
-      abortOperation(e,
-                     response,
-                     uriInfo,
-                     timers,
-                     eventId,
-                     eventBuilder,
-                     sseEventSink,
-                     webSocketSession);
+      SzBulkLoadResponse response = this.newBulkLoadResponse(POST,
+                                                             200,
+                                                             uriInfo,
+                                                             timers,
+                                                             bulkLoadResult);
+      this.abortOperation(e,
+                          response,
+                          uriInfo,
+                          timers,
+                          eventId,
+                          eventBuilder,
+                          sseEventSink,
+                          webSocketSession);
     }
 
-    SzBulkLoadResponse response
-        = new SzBulkLoadResponse(POST,
-                                 200,
-                                 uriInfo,
-                                 timers,
-                                 bulkLoadResult);
+    SzBulkLoadResponse response = this.newBulkLoadResponse(POST,
+                                                           200,
+                                                           uriInfo,
+                                                           timers,
+                                                           bulkLoadResult);
 
-    return completeOperation(
+    return this.completeOperation(
         eventBuilder, sseEventSink, eventId, webSocketSession, response);
+  }
+
+  /**
+   * Creates a new instance of {@link SzBulkDataAnalysisResponse} with the
+   * following parameters.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the response.
+   * @param httpStatusCode The status code for the response.
+   * @param uriInfo The {@link UriInfo} for the operation.
+   * @param timers The {@link Timers} tracking the timing for the operation.
+   * @param bulkLoadResult The {@link SzBulkLoadResult} describing the analysis.
+   */
+  protected SzBulkLoadResponse newBulkLoadResponse(
+      SzHttpMethod        httpMethod,
+      int                 httpStatusCode,
+      UriInfo             uriInfo,
+      Timers              timers,
+      SzBulkLoadResult    bulkLoadResult)
+  {
+    return new SzBulkLoadResponse(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo), bulkLoadResult);
   }
 
   /**
@@ -1726,8 +1777,8 @@ public class BulkDataServices {
    * a previously executed task on the same thread or <tt>null</tt> if the
    * worker thread employed has not previously executed a task.
    */
-  private static AsyncResult<EngineResult> asyncProcessRecord(
-      AsyncWorkerPool<EngineResult> asyncPool,
+  protected AsyncResult<AddRecordResult> asyncProcessRecord(
+      AsyncWorkerPool<AddRecordResult> asyncPool,
       SzApiProvider                 provider,
       Timers                        timers,
       JsonObject                    record,
@@ -1742,18 +1793,18 @@ public class BulkDataServices {
     return asyncPool.execute(() -> {
       try {
         // otherwise try to load the record
-        enteringQueue(timers);
+        this.enteringQueue(timers);
         return provider.executeInThread(() -> {
-          exitingQueue(timers);
-          int returnCode = addRecord(engineApi,
-                                     provider,
-                                     dataSource,
-                                     recordId,
-                                     recordJSON,
-                                     loadId,
-                                     timers);
+          this.exitingQueue(timers);
+          int returnCode = this.addRecord(engineApi,
+                                          provider,
+                                          dataSource,
+                                          recordId,
+                                          recordJSON,
+                                          loadId,
+                                          timers);
 
-          return new EngineResult(
+          return this.newAddRecordResult(
               dataSource, entityType, timers, returnCode, engineApi);
         });
 
@@ -1773,7 +1824,7 @@ public class BulkDataServices {
    * a previously executed task on the same thread or <tt>null</tt> if the
    * worker thread employed has not previously executed a task.
    */
-  private static void processRecords(
+  protected void processRecords(
       SzApiProvider     provider,
       Timers            timers,
       List<JsonObject>  records,
@@ -1783,9 +1834,9 @@ public class BulkDataServices {
   {
     G2Engine engineApi = provider.getEngineApi();
     // otherwise try to load the record
-    enteringQueue(timers);
+    this.enteringQueue(timers);
     provider.executeInThread(() -> {
-      exitingQueue(timers);
+      this.exitingQueue(timers);
       for (JsonObject record : records) {
 
         String dataSource = JsonUtils.getString(record, "DATA_SOURCE");
@@ -1799,18 +1850,18 @@ public class BulkDataServices {
           bulkLoadResult.trackIncompleteRecord(dataSource, entityType);
 
         } else {
-          int returnCode = addRecord(engineApi,
-                                     provider,
-                                     dataSource,
-                                     recordId,
-                                     recordJSON,
-                                     loadId,
-                                     timers);
+          int returnCode = this.addRecord(engineApi,
+                                          provider,
+                                          dataSource,
+                                          recordId,
+                                          recordJSON,
+                                          loadId,
+                                          timers);
 
-          EngineResult engineResult = new EngineResult(
+          AddRecordResult addRecordResult = this.newAddRecordResult(
               dataSource, entityType, timers, returnCode, engineApi);
 
-          trackLoadResult(engineResult, bulkLoadResult);
+          this.trackLoadResult(addRecordResult, bulkLoadResult);
         }
 
         // count the number of failures
@@ -1829,21 +1880,45 @@ public class BulkDataServices {
   }
 
   /**
+   * Constructs with the specified parameters.
+   *
+   * @param dataSource The data source for the record.
+   * @param entityType The entity type for the record.
+   * @param timers The {@link Timers} for the operation.
+   * @param returnCode The return code from native add-record function.
+   * @param engine The {@link G2Engine} instance that was used.
+   *
+   * @return The newly created instance of {@link AddRecordResult}.
+   */
+  protected AddRecordResult newAddRecordResult(String    dataSource,
+                                               String    entityType,
+                                               Timers    timers,
+                                               int       returnCode,
+                                               G2Engine  engine)
+  {
+    return new AddRecordResult(dataSource,
+                               entityType,
+                               timers,
+                               returnCode,
+                               engine);
+  }
+
+  /**
    * Adds the record either with or without a record ID and tracks the timing.
    */
-  private static int addRecord(G2Engine      engineApi,
-                               SzApiProvider provider,
-                               String        dataSource,
-                               String        recordId,
-                               String        recordJSON,
-                               String        loadId,
-                               Timers        timers)
+  protected int addRecord(G2Engine      engineApi,
+                          SzApiProvider provider,
+                          String        dataSource,
+                          String        recordId,
+                          String        recordJSON,
+                          String        loadId,
+                          Timers        timers)
   {
     int returnCode;
     boolean asyncInfo = provider.hasInfoSink();
     if (asyncInfo) {
       StringBuffer sb = new StringBuffer();
-      callingNativeAPI(timers, "engine", "addRecordWithInfo");
+      this.callingNativeAPI(timers, "engine", "addRecordWithInfo");
       returnCode = engineApi.addRecordWithInfo(
           dataSource,
           (recordId == null) ? "" : recordId, // empty record ID
@@ -1851,7 +1926,7 @@ public class BulkDataServices {
           loadId,
           0,
           sb);
-      calledNativeAPI(timers, "engine", "addRecordWithInfo");
+      this.calledNativeAPI(timers, "engine", "addRecordWithInfo");
 
       // check the return code before trying to send out the info
       if (returnCode == 0) {
@@ -1862,10 +1937,10 @@ public class BulkDataServices {
           SzMessageSink infoSink = provider.acquireInfoSink();
           SzMessage message = new SzMessage(rawInfo);
           try {
-            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
+            infoSink.send(message, this::logFailedAsyncInfo);
 
           } catch (Exception e) {
-            logFailedAsyncInfo(e, message);
+            this.logFailedAsyncInfo(e, message);
 
           } finally {
             provider.releaseInfoSink(infoSink);
@@ -1874,20 +1949,20 @@ public class BulkDataServices {
       }
 
     } else if (recordId != null) {
-      callingNativeAPI(timers, "engine", "addRecord");
+      this.callingNativeAPI(timers, "engine", "addRecord");
       returnCode = engineApi.addRecord(dataSource,
                                        recordId,
                                        recordJSON,
                                        loadId);
-      calledNativeAPI(timers, "engine", "addRecord");
+      this.calledNativeAPI(timers, "engine", "addRecord");
 
     } else {
-      callingNativeAPI(timers, "engine",
+      this.callingNativeAPI(timers, "engine",
                        "addRecordWithReturnedRecordID");
       StringBuffer sb = new StringBuffer();
       returnCode = engineApi.addRecordWithReturnedRecordID(
           dataSource, sb, recordJSON, loadId);
-      calledNativeAPI(timers, "engine",
+      this.calledNativeAPI(timers, "engine",
                       "addRecordWithReturnedRecordID");
     }
     return returnCode;
@@ -1896,15 +1971,15 @@ public class BulkDataServices {
   /**
    * Tracks the asynchronous record load result in the {@link SzBulkLoadResult}.
    */
-  private static void trackLoadResult(AsyncResult<EngineResult> asyncResult,
-                                      SzBulkLoadResult          bulkLoadResult)
+  protected void trackLoadResult(AsyncResult<AddRecordResult>  asyncResult,
+                                 SzBulkLoadResult           bulkLoadResult)
   {
     // check the result
     if (asyncResult != null) {
-      EngineResult engineResult = null;
+      AddRecordResult addRecordResult = null;
       try {
         // get the value from the async result (may throw an exception)
-        engineResult = asyncResult.getValue();
+        addRecordResult = asyncResult.getValue();
 
       } catch (Exception e) {
         // an exception was thrown in trying to get the result
@@ -1915,12 +1990,12 @@ public class BulkDataServices {
         String failEntityType = JsonUtils.getString(jsonObj, "entityType");
         Throwable cause = e.getCause();
         bulkLoadResult.trackFailedRecord(
-            failDataSource, failEntityType, new SzError(cause.getMessage()));
+            failDataSource, failEntityType, this.newError(cause.getMessage()));
       }
 
       // track the result
-      if (engineResult != null) {
-        trackLoadResult(engineResult, bulkLoadResult);
+      if (addRecordResult != null) {
+        this.trackLoadResult(addRecordResult, bulkLoadResult);
       }
     }
   }
@@ -1928,29 +2003,29 @@ public class BulkDataServices {
   /**
    * Tracks the asynchronous record load result in the {@link SzBulkLoadResult}.
    */
-  private static void trackLoadResult(EngineResult       engineResult,
-                                      SzBulkLoadResult   bulkLoadResult)
+  protected void trackLoadResult(AddRecordResult addRecordResult,
+                                 SzBulkLoadResult bulkLoadResult)
   {
     // check if the add failed or succeeded
-    if (engineResult.isFailed()) {
+    if (addRecordResult.isFailed()) {
       // adding the record failed, record the failure
       bulkLoadResult.trackFailedRecord(
-          engineResult.dataSource,
-          engineResult.entityType,
-          engineResult.errorCode,
-          engineResult.errorMsg);
+          addRecordResult.getDataSource(),
+          addRecordResult.getEntityType(),
+          addRecordResult.getErrorCode(),
+          addRecordResult.getErrorMessage());
     } else {
       // adding the record succeeded, record the loaded record
-      bulkLoadResult.trackLoadedRecord(engineResult.dataSource,
-                                       engineResult.entityType);
+      bulkLoadResult.trackLoadedRecord(addRecordResult.getDataSource(),
+                                       addRecordResult.getEntityType());
     }
   }
 
   /**
    * Formats load ID using the specified data cache
    */
-  private static String formatLoadId(TemporaryDataCache         dataCache,
-                                     FormDataContentDisposition fileMetaData)
+  protected String formatLoadId(TemporaryDataCache          dataCache,
+                                FormDataContentDisposition  fileMetaData)
   {
     String fileKey = (fileMetaData != null) ? fileMetaData.getName() : null;
     if (fileKey == null) {
@@ -1989,12 +2064,23 @@ public class BulkDataServices {
   /**
    * Encapsulates a bulk data set.
    */
-  private static class BulkDataSet {
-    private String characterEncoding;
-    private String mediaType = null;
-    private RecordReader.Format format;
-    private TemporaryDataCache dataCache;
+  protected static class BulkDataSet {
+    protected String characterEncoding;
+    protected String mediaType = null;
+    protected RecordReader.Format format;
+    protected TemporaryDataCache dataCache;
 
+    /**
+     * Constructs with the specified media type (if known) and the specified
+     * {@link InputStream}.  If the media type is not known it will be
+     * automatically detected.
+     *
+     * @param mediaType The media type for the data that will be read, or
+     *                  <tt>null</tt> if not known and it should be
+     *                  automatically detected.
+     * @param inputStream The {@link InputStream} to read the data.
+     * @throws IOException If an I/O failure occurs.
+     */
     public BulkDataSet(MediaType mediaType, InputStream inputStream)
         throws IOException
     {
@@ -2030,23 +2116,80 @@ public class BulkDataServices {
         setLastLoggedAndThrow(e);
       }
     }
+
+    /**
+     * Gets the character encoding for this instance.
+     *
+     * @return The character encoding for this instance.
+     */
+    public String getCharacterEncoding() {
+      return this.characterEncoding;
+    }
+
+    /**
+     * Gets the media type for this instance.
+     *
+     * @return The media type for this instance.
+     */
+    public String getMediaType() {
+      return this.mediaType;
+    }
+
+    /**
+     * Gets the format for this instance.
+     *
+     * @return The format for this instance.
+     */
+    public RecordReader.Format getFormat() {
+      return this.format;
+    }
+
+    /**
+     * Sets the format for this instance.
+     *
+     * @param format The format to set.
+     */
+    public void setFormat(RecordReader.Format format) {
+      this.format = format;
+    }
+
+    /**
+     * Gets the {@link TemporaryDataCache} for this instance to read the data.
+     *
+     * @return The {@link TemporaryDataCache} for this instance to read the
+     *         data.
+     */
+    public TemporaryDataCache getDataCache() {
+      return dataCache;
+    }
   }
 
   /**
-   * The result from the engine.
+   * Describes the result from the engine to track the result of attempting to
+   * add a record.  This is used
    */
-  public static class EngineResult {
-    private int     returnCode  = 0;
-    private String  dataSource  = null;
-    private String  entityType  = null;
-    private String  errorCode   = null;
-    private String  errorMsg    = null;
-    private Timers  timers      = null;
-    private EngineResult(String   dataSource,
-                         String   entityType,
-                         Timers   timers,
-                         int      returnCode,
-                         G2Engine engine)
+  public static class AddRecordResult {
+    protected int     returnCode  = 0;
+    protected String  dataSource  = null;
+    protected String  entityType  = null;
+    protected String  errorCode   = null;
+    protected String  errorMsg    = null;
+    protected Timers  timers      = null;
+
+    /**
+     * Constructs with the specified parameters.
+     *
+     * @param dataSource The data source for the record.
+     * @param entityType The entity type for the record.
+     * @param timers The {@link Timers} for the operation.
+     * @param returnCode The return code from native add-record function.
+     * @param engine The {@link G2Engine} instance that was used.
+     */
+    public AddRecordResult(String    dataSource,
+                           String    entityType,
+                           Timers    timers,
+                           int       returnCode,
+                           G2Engine  engine)
     {
       this.dataSource = dataSource;
       this.entityType = entityType;
@@ -2057,9 +2200,82 @@ public class BulkDataServices {
         this.errorMsg   = engine.getLastException();
       }
     }
-    private boolean isFailed() {
+
+    /**
+     * Gets the return code from add-record operation.
+     *
+     * @return The return code form the add-record operation.
+     */
+    public int getReturnCode() {
+      return this.returnCode;
+    }
+
+    /**
+     * Gets the data source for the record that was being added.
+     *
+     * @return The data source for the record that was being added.
+     */
+    public String getDataSource() {
+      return this.dataSource;
+    }
+
+    /**
+     * Gets the entity type for the record that was being added.
+     *
+     * @return The entity type for the record that was being added.
+     */
+    public String getEntityType() {
+      return this.entityType;
+    }
+
+    /**
+     * Gets the error code (if any) from the {@link G2Engine} with which this
+     * instance was constructed.
+     *
+     * @return The error code (if any) from the {@link G2Engine} with which this
+     *         instance was constructed.
+     */
+    public String getErrorCode() {
+      return this.errorCode;
+    }
+
+    /**
+     * Gets the error message (if any) from the {@link G2Engine} with which this
+     * instance was constructed.
+     *
+     * @return The error message (if any) from the {@link G2Engine} with which
+     *         this instance was constructed.
+     */
+    public String getErrorMessage() {
+      return this.errorMsg;
+    }
+
+    /**
+     * Gets the {@link Timers} instance for the add-record operation.
+     *
+     * @return The {@link Timers} instance for the add-record operation.
+     */
+    public Timers getTimers() {
+      return this.timers;
+    }
+
+    /**
+     * Checks if this instance describes a failure when performing the
+     * add-record operation.  If this returns <tt>true</tt> then details can
+     * be obtained from {@link #getErrorCode()} and {@link #getErrorMessage()}.
+     *
+     * @return <tt>true</tt> if the add-record operation failed, and
+     *         <tt>false</tt> if it succeeded.
+     */
+    public boolean isFailed() {
       return (this.returnCode != 0);
     }
+
+    /**
+     * Produces a diagnostic {@link String} describing this instance.
+     *
+     * @return A diagnostic {@link String} describing this instance.
+     */
     public String toString() {
       return "{ returnCode=[ " + this.returnCode
               + " ], dataSource=[ " + this.dataSource
@@ -2070,7 +2286,20 @@ public class BulkDataServices {
     }
   }
 
-  private static <T extends SzBasicResponse> T completeOperation(
+  /**
+   * Completes the operation using the specified parameters to determine what
+   * sort of request was made.
+   *
+   * @param eventBuilder The event builder if an SSE request.
+   * @param sseEventSink The event sink if an SSE request.
+   * @param eventId The event ID if an SSE request.
+   * @param webSocketSession The web socket session if a web socket request.
+   * @param response The response object to be sent.
+   * @param <T> The type of the response object.
+   *
+   * @return The specified response object.
+   */
+  protected <T extends SzBasicResponse> T completeOperation(
       OutboundSseEvent.Builder  eventBuilder,
       SseEventSink              sseEventSink,
       int                       eventId,
@@ -2110,7 +2339,23 @@ public class BulkDataServices {
     return response;
   }
 
-  private static <T extends SzBasicResponse> T abortOperation(
+  /**
+   * Aborts the operation using the specified parameters to determine what
+   * sort of request was made.
+   *
+   * @param failure The failure that triggered the abort.
+   * @param response The response object to send.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} associated with the operation.
+   * @param eventId The event ID if an SSE request.
+   * @param eventBuilder The event builder if an SSE request.
+   * @param sseEventSink The event sink if an SSE request.
+   * @param webSocketSession The web socket session if a web sockets request.
+   * @param <T> The type of the response object.
+   * @return The specified response object.
+   * @throws WebApplicationException If a web application failure occurs.
+   */
+  protected <T extends SzBasicResponse> T abortOperation(
       Exception                 failure,
       T                         response,
       UriInfo                   uriInfo,
@@ -2129,13 +2374,15 @@ public class BulkDataServices {
     // determine if we need to construct an error response
     SzErrorResponse errorResponse = null;
     if (eventBuilder != null || webSocketSession != null) {
-      errorResponse
-          = new SzErrorResponse(POST, 500, uriInfo, timers, failure);
+      errorResponse = this.newErrorResponse(
+          this.newMeta(POST, 500, timers),
+          this.newLinks(uriInfo), failure);
     }
 
     // check if this is a standard HTTP request
     if (eventBuilder == null && webSocketSession == null) {
-      throw newInternalServerErrorException(POST, uriInfo, timers, failure);
+      throw this.newInternalServerErrorException(
+          POST, uriInfo, timers, failure);
     }
 
     if (eventBuilder != null) {
@@ -2158,7 +2405,6 @@ public class BulkDataServices {
           .build();
       sseEventSink.send(failEvent);
       sseEventSink.close();
-
     }
 
     // check if we have a web socket session
@@ -2181,11 +2427,21 @@ public class BulkDataServices {
     return null;
   }
 
-  private static void processDataSources(Map<String, String> dataSourceMap,
-                                         String              mapDataSources,
-                                         SzApiProvider       provider,
-                                         Timers              timers,
-                                         UriInfo             uriInfo)
+  /**
+   * Populates the specified {@link Map} with the data source mappings found
+   * in the specified JSON text.
+   *
+   * @param dataSourceMap The {@link Map} to be populated.
+   * @param mapDataSources The JSON text describing the data source mappings.
+   * @param provider The {@link SzApiProvider} to use.
+   * @param timers The {@link Timers} for the operation.
+   * @param uriInfo The {@link UriInfo} for the operation.
+   */
+  protected void processDataSources(Map<String, String> dataSourceMap,
+                                    String              mapDataSources,
+                                    SzApiProvider       provider,
+                                    Timers              timers,
+                                    UriInfo             uriInfo)
   {
     // check if the mapDataSources parameter is provided
     if (mapDataSources != null && mapDataSources.trim().length() > 0) {
@@ -2195,7 +2451,7 @@ public class BulkDataServices {
           String key = entry.getKey();
           JsonValue value = entry.getValue();
           if (value.getValueType() != JsonValue.ValueType.STRING) {
-            throw newBadRequestException(
+            throw this.newBadRequestException(
                 POST, uriInfo, timers,
                 "At least one JSON property (\"" + key + "\") in the "
                     + "\"mapDataSources\" parameter does NOT have a "
@@ -2223,12 +2479,22 @@ public class BulkDataServices {
     }
   }
 
-
-  private static void processDataSources(Map<String, String> dataSourceMap,
-                                         List<String>        mapDataSourceList,
-                                         SzApiProvider       provider,
-                                         Timers              timers,
-                                         UriInfo             uriInfo)
+  /**
+   * Populates the specified {@link Map} with the data source mappings found
+   * in the specified {@link List} of encoded strings.
+   *
+   * @param dataSourceMap The {@link Map} to be populated.
+   * @param mapDataSourceList The {@link List} of encoded strings describing the
+   *                          data source mappings.
+   * @param provider The {@link SzApiProvider} to use.
+   * @param timers The {@link Timers} for the operation.
+   * @param uriInfo The {@link UriInfo} for the operation.
+   */
+  protected void processDataSources(Map<String, String> dataSourceMap,
+                                    List<String>        mapDataSourceList,
+                                    SzApiProvider       provider,
+                                    Timers              timers,
+                                    UriInfo             uriInfo)
   {
     // check if the mapDataSources parameter is provided
     if (mapDataSourceList != null && mapDataSourceList.size() > 0) {
@@ -2257,11 +2523,21 @@ public class BulkDataServices {
     }
   }
 
-  private static void processEntityTypes(Map<String, String> entityTypeMap,
-                                         String              mapEntityTypes,
-                                         SzApiProvider       provider,
-                                         Timers              timers,
-                                         UriInfo             uriInfo)
+  /**
+   * Populates the specified {@link Map} with the entity type mappings found
+   * in the specified JSON text.
+   *
+   * @param entityTypeMap The {@link Map} to be populated.
+   * @param mapEntityTypes The JSON text describing the entity type mappings.
+   * @param provider The {@link SzApiProvider} to use.
+   * @param timers The {@link Timers} for the operation.
+   * @param uriInfo The {@link UriInfo} for the operation.
+   */
+  protected void processEntityTypes(Map<String, String> entityTypeMap,
+                                    String              mapEntityTypes,
+                                    SzApiProvider       provider,
+                                    Timers              timers,
+                                    UriInfo             uriInfo)
   {
     // check if the mapDataSources parameter is provided
     if (mapEntityTypes != null && mapEntityTypes.trim().length() > 0) {
@@ -2300,11 +2576,22 @@ public class BulkDataServices {
   }
 
 
-  private static void processEntityTypes(Map<String, String> entityTypeMap,
-                                         List<String>        mapEntityTypeList,
-                                         SzApiProvider       provider,
-                                         Timers              timers,
-                                         UriInfo             uriInfo)
+  /**
+   * Populates the specified {@link Map} with the entity type mappings found
+   * in the specified {@link List} of encoded strings.
+   *
+   * @param entityTypeMap The {@link Map} to be populated.
+   * @param mapEntityTypeList The {@link List} of encoded strings describing the
+   *                          entity type mappings.
+   * @param provider The {@link SzApiProvider} to use.
+   * @param timers The {@link Timers} for the operation.
+   * @param uriInfo The {@link UriInfo} for the operation.
+   */
+  protected void processEntityTypes(Map<String, String> entityTypeMap,
+                                    List<String>        mapEntityTypeList,
+                                    SzApiProvider       provider,
+                                    Timers              timers,
+                                    UriInfo             uriInfo)
   {
     // check if the mapDataSources parameter is provided
     if (mapEntityTypeList != null && mapEntityTypeList.size() > 0) {
@@ -2331,5 +2618,35 @@ public class BulkDataServices {
         entityTypeMap.put(etype1, etype2);
       }
     }
+  }
+
+  /**
+   * The static instance of this class.
+   */
+  private static BulkDataServices DEFAULT_INSTANCE = null;
+
+  /**
+   * Gets the default instance of this class to be used by static methods.
+   *
+   * @return The default instance of this class to be used by static methods.
+   */
+  protected static synchronized BulkDataServices getDefaultInstance() {
+    if (DEFAULT_INSTANCE == null) {
+      DEFAULT_INSTANCE = new BulkDataServices();
+    }
+    return DEFAULT_INSTANCE;
+  }
+
+  /**
+   * Sets the default instance of this class to be used by static methods.
+   * If the specified parameter is <tt>null</tt> then a new instance of
+   * {@link BulkDataServices} is created.
+   *
+   * @param instance The default instance of this class to use.
+   */
+  protected static synchronized void setDefaultInstance(
+      BulkDataServices instance)
+  {
+    DEFAULT_INSTANCE = instance;
   }
 }

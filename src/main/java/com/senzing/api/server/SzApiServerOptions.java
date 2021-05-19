@@ -1,5 +1,6 @@
 package com.senzing.api.server;
 
+import com.senzing.cmdline.CommandLineOption;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonObject;
@@ -35,8 +36,6 @@ public class SzApiServerOptions {
   private Integer     webSocketsMessageMaxSize  = null;
   private Long        autoRefreshPeriod         = null;
   private JsonObject  jsonInit                  = null;
-  private String      asyncLoadQueueUrl         = null;
-  private String      asyncInfoQueueUrl         = null;
   private String      kafkaInfoServers          = null;
   private String      kafkaInfoGroupId          = null;
   private String      kafkaInfoTopic            = null;
@@ -50,8 +49,8 @@ public class SzApiServerOptions {
   private String      sqsInfoUrl                = null;
 
   /**
-   * Constructs with the JSON initialization parameters as a {@link
-   * JsonObject}.
+   * Constructs with the native Senzing JSON initialization parameters as a
+   * {@link JsonObject}.
    *
    * @param jsonInit The JSON initialization parameters.
    */
@@ -62,7 +61,8 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Constructs with the JSON initialization parameters as JSON text.
+   * Constructs with the native Senzing JSON initialization parameters as JSON
+   * text.
    *
    * @param jsonInitText The JSON initialization parameters as JSON text.
    */
@@ -816,20 +816,29 @@ public class SzApiServerOptions {
     return sqsInfoUrl;
   }
 
+  /**
+   * Sets the SQS URL for the "info" queue.  This is part of the info queue
+   * configuration to push "info" messages when records are loaded or deleted
+   * or entities are reevaluated.
+   *
+   * @param url The SQS URL for the "info" queue.
+   *
+   * @return A reference to this instance.
+   */
   public SzApiServerOptions setSqsInfoUrl(String url) {
     this.sqsInfoUrl = url;
     return this;
   }
 
   /**
-   * Creates a {@link Map} of {@link SzApiServerOption} keys to {@link Object} values
-   * for initializing an {@link SzApiServer} instance.
+   * Creates a {@link Map} of {@link CommandLineOption} keys to {@link Object}
+   * values for initializing an {@link SzApiServer} instance.
    *
-   * @return The {@link Map} of {@link SzApiServerOption} keys to {@link Object} values
-   *         for initializing an {@link SzApiServer} instanc
+   * @return The {@link Map} of {@link CommandLineOption} keys to {@link Object}
+   *         values for initializing an {@link SzApiServer} instanc
    */
-  Map<SzApiServerOption, Object> buildOptionsMap() {
-    Map<SzApiServerOption, Object> map = new HashMap<>();
+  protected Map<CommandLineOption, Object> buildOptionsMap() {
+    Map<CommandLineOption, Object> map = new HashMap<>();
     put(map, HTTP_PORT,                    this.getHttpPort());
     put(map, BIND_ADDRESS,                 this.getBindAddress());
     put(map, URL_BASE_PATH,                this.getUrlBasePath());
@@ -869,7 +878,7 @@ public class SzApiServerOptions {
    * @param option The {@link SzApiServerOption} key.
    * @param value The {@link Object} value.
    */
-  private static void put(Map<SzApiServerOption, Object>  map,
+  private static void put(Map<CommandLineOption, Object>  map,
                           SzApiServerOption               option,
                           Object                          value)
   {

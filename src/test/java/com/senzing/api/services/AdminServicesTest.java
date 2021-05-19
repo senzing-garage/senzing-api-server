@@ -37,15 +37,20 @@ public class AdminServicesTest extends AbstractServiceTest {
 
   @Test public void heartbeatTest() {
     this.performTest(() -> {
-      String uriText = this.formatServerUri("heartbeat");
-      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+      try {
+        String uriText = this.formatServerUri("heartbeat");
+        UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long before = System.nanoTime();
-      SzBasicResponse response = this.adminServices.heartbeat(uriInfo);
-      response.concludeTimers();
-      long after = System.nanoTime();
+        long before = System.nanoTime();
+        SzBasicResponse response = this.adminServices.heartbeat(uriInfo);
+        response.concludeTimers();
+        long after = System.nanoTime();
 
-      validateBasics(response, uriText, after - before);
+        validateBasics(response, uriText, after - before);
+      } catch (Error error) {
+        error.printStackTrace();
+        throw error;
+      }
     });
   }
 
