@@ -6,7 +6,7 @@ import com.senzing.api.model.impl.SzServerInfoImpl;
 /**
  * Describes the server features and state.
  */
-@JsonDeserialize(using=com.senzing.api.model.SzServerInfo.Factory.class)
+@JsonDeserialize(using=SzServerInfo.Factory.class)
 public interface SzServerInfo {
   /**
    * Gets the number of Senzing worker threads pooled for handling requests.
@@ -120,6 +120,24 @@ public interface SzServerInfo {
   void setWebSocketsMessageMaxSize(int webSocketsMessageMaxSize);
 
   /**
+   * Checks if an asynchronous INFO queue has been configured for load,
+   * reevaluate and delete operations.
+   *
+   * @return <tt>true</tt> if an asynchronous INFO queue has been configured,
+   *         otherwise <tt>false</tt>.
+   */
+  boolean isInfoQueueConfigured();
+
+  /**
+   * Sets whether or not an asynchronous INFO queue has been configured for
+   * load, reevaluate and delete operations.
+   *
+   * @param configured <tt>true</tt> if an asynchronous INFO queue has been
+   *                   configured, and <tt>false</tt> if not.
+   */
+  void setInfoQueueConfigured(boolean configured);
+
+  /**
    * A {@link ModelProvider} for instances of {@link SzServerInfo}.
    */
   interface Provider extends ModelProvider<SzServerInfo> {
@@ -161,7 +179,7 @@ public interface SzServerInfo {
      * the master instance.
      */
     public Factory() {
-      super();
+      super(SzServerInfo.class);
     }
 
     /**

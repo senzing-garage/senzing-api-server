@@ -1,81 +1,25 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzAttributeTypeImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-public class SzAttributeType {
-  /**
-   * The unique attribute code identifying this attribute type.
-   */
-  private String attributeCode;
-
-  /**
-   * The default value associated with the attribute type when an attribute
-   * value is not provided.
-   */
-  private String defaultValue;
-
-  /**
-   * Describes the {@linkplain SzAttributeNecessity necessity} for an attribute
-   * of this type with the associated feature type.
-   */
-  private SzAttributeNecessity necessity;
-
-  /**
-   * The {@linkplain SzAttributeClass attribute class} associated with the
-   * attribute.
-   */
-  private SzAttributeClass attributeClass;
-
-  /**
-   * The feature type to which this attribute type belongs (if any).  If this
-   * is <tt>null</tt> then it is a stand-alone attribute.
-   */
-  private String featureType;
-
-  /**
-   * Whether or not the attribute type is considered to be "advanced". Advanced
-   * attribute types usually require the user to have some knowledge of how the
-   * data is mapped in the entity repository (e.g.: "RECORD_ID" or
-   * "DATA_SOURCE"). An application may exclude displaying these as options if
-   * these things are being auto-generated or automatically selected for the
-   * user.
-   */
-  private boolean advanced;
-
-  /**
-   * Whether or not an attribute type that is typically generated internally
-   * based on other attribute types.  These are not commonly used by the user
-   * except in some rare cases.  Examples include pre-hashed versions of
-   * attributes that are hashed.
-   */
-  private boolean internal;
-
-  /**
-   * Default constructor.
-   */
-  public SzAttributeType() {
-    this.attributeCode    = null;
-    this.defaultValue     = null;
-    this.necessity        = null;
-    this.attributeClass   = null;
-    this.featureType      = null;
-    this.advanced         = false;
-    this.internal         = false;
-  }
-
+/**
+ * Describes a Senzing attribute type which helps describe a feature of an
+ * entity and/or record in part or in whole.
+ */
+@JsonDeserialize(using=SzAttributeType.Factory.class)
+public interface SzAttributeType {
   /**
    * Returns the unique attribute code identifying this attribute type.
    *
    * @return The unique attribute code identifying this attribute type.
    */
-  public String getAttributeCode() {
-    return attributeCode;
-  }
+  String getAttributeCode();
 
   /**
    * Sets the unique attribute code identifying this attribute type.
@@ -83,9 +27,7 @@ public class SzAttributeType {
    * @param attributeCode The unique attribute code identifying this
    *                      attribute type.
    */
-  public void setAttributeCode(String attributeCode) {
-    this.attributeCode = attributeCode;
-  }
+  void setAttributeCode(String attributeCode);
 
   /**
    * Gets the default value associated with the attribute type when an attribute
@@ -94,9 +36,7 @@ public class SzAttributeType {
    * @return The default value associated with the attribute type when an
    *         attribute value is not provided.
    */
-  public String getDefaultValue() {
-    return defaultValue;
-  }
+  String getDefaultValue();
 
   /**
    * Sets the default value associated with the attribute type when an attribute
@@ -105,9 +45,7 @@ public class SzAttributeType {
    * @param defaultValue The default value associated with the attribute type
    *                     when an attribute value is not provided.
    */
-  public void setDefaultValue(String defaultValue) {
-    this.defaultValue = defaultValue;
-  }
+  void setDefaultValue(String defaultValue);
 
   /**
    * Gets the {@linkplain SzAttributeNecessity necessity} for an attribute
@@ -115,9 +53,7 @@ public class SzAttributeType {
    *
    * @return The {@link SzAttributeNecessity} describing the neccessity.
    */
-  public SzAttributeNecessity getNecessity() {
-    return necessity;
-  }
+  SzAttributeNecessity getNecessity();
 
   /**
    * Sets the {@linkplain SzAttributeNecessity necessity} for an attribute
@@ -126,9 +62,7 @@ public class SzAttributeType {
    * @param necessity The {@link SzAttributeNecessity} describing the
    *                  neccessity.
    */
-  public void setNecessity(SzAttributeNecessity necessity) {
-    this.necessity = necessity;
-  }
+  void setNecessity(SzAttributeNecessity necessity);
 
   /**
    * Gets the {@linkplain SzAttributeClass attribute class} associated with the
@@ -137,9 +71,7 @@ public class SzAttributeType {
    * @return The {@link SzAttributeClass} describing the attribute class
    *         associated with the attribute type.
    */
-  public SzAttributeClass getAttributeClass() {
-    return attributeClass;
-  }
+  SzAttributeClass getAttributeClass();
 
   /**
    * Sets the {@linkplain SzAttributeClass attribute class} associated with the
@@ -148,9 +80,7 @@ public class SzAttributeType {
    * @param attributeClass The {@link SzAttributeClass} describing the attribute
    *                       class associated with the attribute type.
    */
-  public void setAttributeClass(SzAttributeClass attributeClass) {
-    this.attributeClass = attributeClass;
-  }
+  void setAttributeClass(SzAttributeClass attributeClass);
 
   /**
    * Gets the name of feature type to which this attribute type belongs (if
@@ -160,9 +90,7 @@ public class SzAttributeType {
    * @return The name of the feature type to which this attribute type belongs,
    *         or <tt>null</tt> if this is a stand-alone attribute type.
    */
-  public String getFeatureType() {
-    return featureType;
-  }
+  String getFeatureType();
 
   /**
    * Sets the name of feature type to which this attribute type belongs (if
@@ -173,9 +101,7 @@ public class SzAttributeType {
    *                    type belongs, or <tt>null</tt> if this is a stand-alone
    *                    attribute type.
    */
-  public void setFeatureType(String featureType) {
-    this.featureType = featureType;
-  }
+  void setFeatureType(String featureType);
 
   /**
    * Checks whether or not the attribute type is considered to be "advanced".
@@ -188,9 +114,7 @@ public class SzAttributeType {
    * @return <tt>true</tt> if this attribute type is advanced, otherwise
    *         <tt>false</tt>
    */
-  public boolean isAdvanced() {
-    return advanced;
-  }
+  boolean isAdvanced();
 
   /**
    * Sets whether or not the attribute type is considered to be "advanced".
@@ -203,9 +127,7 @@ public class SzAttributeType {
    * @param advanced <tt>true</tt> if this attribute type is advanced,
    *                 otherwise <tt>false</tt>.
    */
-  public void setAdvanced(boolean advanced) {
-    this.advanced = advanced;
-  }
+  void setAdvanced(boolean advanced);
 
   /**
    * Checks whether or not an attribute type that is typically generated
@@ -216,9 +138,7 @@ public class SzAttributeType {
    * @return <tt>true</tt> if this attribute type is internal, otherwise
    *         <tt>false</tt>.
    */
-  public boolean isInternal() {
-    return internal;
-  }
+  boolean isInternal();
 
   /**
    * Sets whether or not an attribute type that is typically generated
@@ -229,22 +149,7 @@ public class SzAttributeType {
    * @param internal <tt>true</tt> if this attribute type is internal,
    *                 otherwise <tt>false</tt>.
    */
-  public void setInternal(boolean internal) {
-    this.internal = internal;
-  }
-
-  @Override
-  public String toString() {
-    return "SzAttributeType{" +
-        "attributeCode='" + attributeCode + '\'' +
-        ", defaultValue='" + defaultValue + '\'' +
-        ", necessity=" + necessity +
-        ", attributeClass=" + attributeClass +
-        ", featureType='" + featureType + '\'' +
-        ", advanced=" + advanced +
-        ", internal=" + internal +
-        '}';
-  }
+  void setInternal(boolean internal);
 
   /**
    * Parses a list of entity data instances from a {@link JsonArray}
@@ -262,7 +167,7 @@ public class SzAttributeType {
    * @return The populated (or created) {@link List} of {@link
    *         SzAttributeType} instances.
    */
-  public static List<SzAttributeType> parseAttributeTypeList(
+  static List<SzAttributeType> parseAttributeTypeList(
       List<SzAttributeType> list,
       JsonArray             jsonArray)
   {
@@ -274,6 +179,75 @@ public class SzAttributeType {
     }
     return list;
   }
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzAttributeType}.
+   */
+  interface Provider extends ModelProvider<SzAttributeType> {
+    /**
+     * Creates a new instance of {@link SzAttributeType}.
+     *
+     * @return The new instance of {@link SzAttributeType}
+     */
+    SzAttributeType create();
+  }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzVersionInfo} that produces instances of {@link SzAttributeTypeImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzAttributeType>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzAttributeType.class, SzAttributeTypeImpl.class);
+    }
+
+    @Override
+    public SzAttributeType create() {
+      return new SzAttributeTypeImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link SzAttributeType}.
+   */
+  class Factory extends ModelFactory<SzAttributeType, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzAttributeType.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzAttributeType}.
+     * @return The new instance of {@link SzAttributeType}.
+     */
+    public SzAttributeType create()
+    {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the attribute type data from a {@link JsonObject} describing
@@ -289,15 +263,15 @@ public class SzAttributeType {
    *
    * @return The populated (or created) {@link SzAttributeType}.
    */
-  public static SzAttributeType parseAttributeType(
+  static SzAttributeType parseAttributeType(
       SzAttributeType   attributeType,
       JsonObject        jsonObject)
   {
-    if (attributeType == null) attributeType = new SzAttributeType();
+    if (attributeType == null) attributeType = SzAttributeType.FACTORY.create();
 
-    String  attrCode     = jsonObject.getString("ATTR_CODE");
-    String  defaultValue = JsonUtils.getString(jsonObject, "DEFAULT_VALUE");
-    String  felemReq     = jsonObject.getString("FELEM_REQ");
+    String  attrCode      = jsonObject.getString("ATTR_CODE");
+    String  defaultValue  = JsonUtils.getString(jsonObject, "DEFAULT_VALUE");
+    String  felemReq      = jsonObject.getString("FELEM_REQ");
     String  rawAttrClass  = jsonObject.getString("ATTR_CLASS");
     boolean internal      = interpretBoolean(jsonObject, "INTERNAL");
     String  ftypeCode     = JsonUtils.getString(jsonObject, "FTYPE_CODE");
@@ -330,7 +304,7 @@ public class SzAttributeType {
    *
    * @return <tt>true</tt> or <tt>false</tt> depending on the interpreted value.
    */
-  public static boolean interpretBoolean(JsonObject jsonObject, String key) {
+  static boolean interpretBoolean(JsonObject jsonObject, String key) {
     JsonValue jsonValue = jsonObject.getValue("/" + key);
     switch (jsonValue.getValueType()) {
       case NUMBER:

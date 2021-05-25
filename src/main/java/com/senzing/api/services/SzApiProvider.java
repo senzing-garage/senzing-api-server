@@ -97,6 +97,14 @@ public interface SzApiProvider {
   }
 
   /**
+   * Returns a description for the provider.  This is useful for inclusion
+   * in the meta data for each response.
+   *
+   * @return A description for the provider.
+   */
+  String getDescription();
+
+  /**
    * Returns the associated {@link G2Product} API implementation.
    *
    * @return The associated {@link G2Product} API implementation.
@@ -332,7 +340,10 @@ public interface SzApiProvider {
   SzMessageSink acquireInfoSink();
 
   /**
+   * Releases the specified {@link SzMessageSink} back to the provider when
+   * done using it.
    *
+   * @param sink The {@link SzMessageSink} to release.
    */
   void releaseInfoSink(SzMessageSink sink);
 }

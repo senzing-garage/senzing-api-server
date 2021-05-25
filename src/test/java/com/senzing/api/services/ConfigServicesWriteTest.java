@@ -703,7 +703,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     Integer sourceId    = this.nextDataSourceId++;
     String  sourceCode  = "TEST_SOURCE_" + sourceId;
     boolean withId      = idMode.isSpecified(sourceCode, ID_STEP);
-    return new SzDataSource(sourceCode, withId ? sourceId : null);
+    return SzDataSource.FACTORY.create(sourceCode, withId ? sourceId : null);
   }
 
   private List<SzDataSource> nextDataSources(int count, SpecifiedMode idMode)

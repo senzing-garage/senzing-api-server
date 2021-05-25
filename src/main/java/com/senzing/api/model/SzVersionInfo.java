@@ -18,7 +18,7 @@ import java.util.List;
  * Senzing REST API Specification that is implemented and the native Senzing
  * API.
  */
-@JsonDeserialize(using=com.senzing.api.model.SzVersionInfo.Factory.class)
+@JsonDeserialize(using=SzVersionInfo.Factory.class)
 public interface SzVersionInfo {
   /**
    * The date-time pattern for the build number.
@@ -175,7 +175,7 @@ public interface SzVersionInfo {
      * the master instance.
      */
     public Factory() {
-      super();
+      super(SzVersionInfo.class);
     }
 
     /**

@@ -14,6 +14,7 @@ import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.io.IOException;
+import java.lang.reflect.*;
 import java.util.*;
 
 /**
@@ -24,6 +25,15 @@ import java.util.*;
 public abstract class ModelFactory<T, P extends ModelProvider<T>>
   extends JsonDeserializer<T>
 {
+  private static InvocationHandler DUMMY_HANDLER = new InvocationHandler() {
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args)
+        throws Throwable
+    {
+      throw new UnsupportedOperationException();
+    }
+  };
+
   /**
    * The factory state which is kept on a per-class basis (i.e.: globally).
    */
@@ -110,19 +120,62 @@ public abstract class ModelFactory<T, P extends ModelProvider<T>>
    * Default constructor which simply inherits an existing singleton
    * "master" state.
    */
-  protected ModelFactory()
+  protected ModelFactory(Class<T> interfaceClass)
   {
-    // set the interface and runtime classes
+    Objects.requireNonNull(
+        interfaceClass, "The interface class cannot be null");
+    // check if the master instance already created the shared state
+    FactoryState<T,P> state = null;
+    // synchronize
     synchronized (STATE_MAP) {
-      FactoryState<T,P> state = STATE_MAP.get(this.getClass());
-      // check if this is the first/master instance
+      // get the state instance
+      state = STATE_MAP.get(this.getClass());
+
+      // check if it does not exist
       if (state == null) {
-        throw new IllegalStateException(
-            "The master state does not yet exist.  Cannot construct: "
-                + this.getClass().getName());
+        // try to force initialization of the host class (which should create
+        // the master instance if it conforms to the model factory pattern)
+        try {
+          // create a dummy proxy instance to force initialization
+          Class[] interfaces = { interfaceClass };
+          Object proxy = Proxy.newProxyInstance(
+              this.getClass().getClassLoader(), interfaces, DUMMY_HANDLER);
+
+          // use the proxy instance to ensure it is not optimized out
+          if (proxy == null) {
+            throw new IllegalStateException(
+                "Failed to create proxy instance for " + interfaceClass);
+          }
+        } catch (Exception e) {
+          // ignore
+        }
       }
-      this.state = state;
     }
+
+    // check if the state is null at this point (only should be if the
+    // initialization had to be forced above)
+    if (state == null) {
+      synchronized (STATE_MAP) {
+        state = STATE_MAP.get(this.getClass());
+        // check if this is the first/master instance
+        if (state == null) {
+          throw new IllegalStateException(
+              "The master state does not yet exist.  Cannot construct: "
+                  + this.getClass().getName());
+        }
+      }
+    }
+
+    // validate the interface class matches
+    if (interfaceClass != state.interfaceClass) {
+      throw new IllegalStateException(
+          "The specified interface class does not match that of the shared "
+          + "state.  expected=[ " + state.interfaceClass + " ], specified=[ "
+          + interfaceClass + " ]");
+    }
+
+    // set the state
+    this.state = state;
   }
 
   /**

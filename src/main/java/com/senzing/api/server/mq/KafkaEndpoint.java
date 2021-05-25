@@ -27,6 +27,11 @@ import static com.senzing.io.IOUtilities.UTF_8;
  */
 public class KafkaEndpoint extends SzAbstractMessagingEndpoint {
   /**
+   * The message sink type for Kafka. The value is {@value}.
+   */
+  public static final String KAFKA_SINK_TYPE = "Kafka";
+
+  /**
    * The {@link Initiator} for the {@link KafkaEndpoint} class.
    */
   public static final Initiator INITIATOR = new KafkaInitiator();
@@ -116,8 +121,13 @@ public class KafkaEndpoint extends SzAbstractMessagingEndpoint {
     this.producer.send(record, ((recordMetadata, exception) -> {
       // check if a handler is defined
       if (onFailure != null) {
-        // handle the failure
-        onFailure.handle(exception, message);
+        try {
+          // handle the failure
+          onFailure.handle(exception, message);
+
+        } catch (Exception ignore) {
+          ignore.printStackTrace();
+        }
       }
 
       // set the failure as an exception object in case this was blocking
@@ -197,4 +207,14 @@ public class KafkaEndpoint extends SzAbstractMessagingEndpoint {
       return PROPERTY_KEYS;
     }
   }
+
+  /**
+   * Implemented to return {@link #KAFKA_SINK_TYPE}.
+   * {@inheritDoc}
+   */
+  @Override
+  public String getSinkType() {
+    return KAFKA_SINK_TYPE;
+  }
+
 }

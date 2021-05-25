@@ -8,7 +8,7 @@ import javax.ws.rs.core.UriInfo;
 /**
  * Describes the links section of the response.
  */
-@JsonDeserialize(using=com.senzing.api.model.SzLinks.Factory.class)
+@JsonDeserialize(using=SzLinks.Factory.class)
 public interface SzLinks {
   /**
    * Gets the self link.
@@ -16,6 +16,13 @@ public interface SzLinks {
    * @return The self link.
    */
   String getSelf();
+
+  /**
+   * Sets the self link.
+   *
+   * @param self The self link.
+   */
+  void setSelf(String self);
 
   /**
    * A {@link ModelProvider} for instances of {@link SzLinks}.
@@ -73,7 +80,7 @@ public interface SzLinks {
      * the master instance.
      */
     public Factory() {
-      super();
+      super(SzLinks.class);
     }
 
     /**

@@ -68,6 +68,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    *
    * @return The customer string associated with the license.
    */
+  @Override
   public String getCustomer() {
     return customer;
   }
@@ -77,6 +78,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    *
    * @param customer The customer string associated with the license.
    */
+  @Override
   public void setCustomer(String customer) {
     this.customer = customer;
   }
@@ -86,6 +88,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    *
    * @return The contract string associated with the license.
    */
+  @Override
   public String getContract() {
     return contract;
   }
@@ -95,6 +98,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    *
    * @param contract The contract string associated with the license.
    */
+  @Override
   public void setContract(String contract) {
     this.contract = contract;
   }
@@ -104,6 +108,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    *
    * @return The license type associated with the license.
    */
+  @Override
   public String getLicenseType() {
     return licenseType;
   }
@@ -113,6 +118,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    *
    * @param licenseType The license type associated with the license.
    */
+  @Override
   public void setLicenseType(String licenseType) {
     this.licenseType = licenseType;
   }
@@ -122,6 +128,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    *
    * @return The license level associated with the license.
    */
+  @Override
   public String getLicenseLevel() {
     return licenseLevel;
   }
@@ -131,6 +138,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    *
    * @param licenseLevel The license level associated with the license.
    */
+  @Override
   public void setLicenseLevel(String licenseLevel) {
     this.licenseLevel = licenseLevel;
   }
@@ -140,6 +148,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    *
    * @return The billing string associated with the license.
    */
+  @Override
   public String getBilling() {
     return billing;
   }
@@ -149,6 +158,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    *
    * @param billing The billing string associated with the license.
    */
+  @Override
   public void setBilling(String billing) {
     this.billing = billing;
   }
@@ -158,6 +168,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    *
    * @return The issuance date associated with the license.
    */
+  @Override
   public Date getIssuanceDate() {
     return issuanceDate;
   }
@@ -168,6 +179,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    * @param issuanceDate The issuance {@link Date} to be associated with the
    *                     license.
    */
+  @Override
   public void setIssuanceDate(Date issuanceDate) {
     this.issuanceDate = issuanceDate;
   }
@@ -177,6 +189,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    *
    * @return The expiration {@link Date} associated with the license.
    */
+  @Override
   public Date getExpirationDate() {
     return expirationDate;
   }
@@ -186,6 +199,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    *
    * @param expirationDate The expiration date associated with the license.
    */
+  @Override
   public void setExpirationDate(Date expirationDate) {
     this.expirationDate = expirationDate;
   }
@@ -195,6 +209,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    *
    * @return The record limit associated with the license.
    */
+  @Override
   public long getRecordLimit() {
     return recordLimit;
   }
@@ -204,6 +219,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
    *
    * @param recordLimit The record limit associated with the license.
    */
+  @Override
   public void setRecordLimit(long recordLimit) {
     this.recordLimit = recordLimit;
   }

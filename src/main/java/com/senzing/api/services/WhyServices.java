@@ -19,7 +19,7 @@ import static com.senzing.api.model.SzHttpMethod.*;
  */
 @Path("/")
 @Produces("application/json; charset=UTF-8")
-public class WhyServices extends ServicesSupport {
+public class WhyServices implements ServicesSupport {
   /**
    * Implements the
    * <tt>GET /data-sources/{dataSourceCode}/records/{recordId}/entity/why</tt>

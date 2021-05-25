@@ -45,7 +45,7 @@ public class Timers {
     private long getDuration(long atTime) {
       if (this.start == null) return this.accumulated;
 
-      return this.accumulated + ((atTime - this.start) / 1000L);
+      return this.accumulated + ((atTime - this.start) / 1000000L);
     }
 
     private boolean isRunning() {
@@ -62,7 +62,7 @@ public class Timers {
 
     private boolean pause(long atTime) {
       if (this.start == null) return false;
-      long duration = (atTime - this.start) / 1000L;
+      long duration = (atTime - this.start) / 1000000L;
       this.accumulated += duration;
       this.start = null;
       return true;

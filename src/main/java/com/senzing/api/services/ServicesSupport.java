@@ -6,7 +6,7 @@ import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2ConfigMgr;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.g2.engine.G2Fallible;
-import com.senzing.util.ErrorLogSuppressor;
+import com.senzing.util.AccessToken;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
 
@@ -17,7 +17,6 @@ import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
@@ -32,101 +31,105 @@ import static com.senzing.g2.engine.G2Engine.G2_ENTITY_INCLUDE_RECORD_SUMMARY;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 /**
- * Provides a base class for service handlers with utility methods.
+ * Provides a base interface for service implementations.
  */
-public abstract class ServicesSupport {
+public interface ServicesSupport {
   /**
    * The standardized {@link Timers} key used for the overall timing.
    */
-  public static final String OVERALL_TIMING = "overall";
+  String OVERALL_TIMING = "overall";
 
   /**
    * The standardized {@link Timers} key used for the raw-data processing stage.
    */
-  public static final String PROCESS_RAW_DATA_TIMING = "processRawData";
+  String PROCESS_RAW_DATA_TIMING = "processRawData";
 
   /**
    * The standardized {@link Timers} key used for the native API stage.
    */
-  public static final String NATIVE_API_TIMING = "nativeAPI";
+  String NATIVE_API_TIMING = "nativeAPI";
 
   /**
    * The standardized {@link Timers} key used for the enqueued stage.
    */
-  public static final String ENQUEUED_TIMING = "enqueued";
+  String ENQUEUED_TIMING = "enqueued";
 
   /**
    * The standardized {@link Timers} key used for the locking stage.
    */
-  public static final String LOCK_TIMING = "locking";
+  String LOCK_TIMING = "locking";
 
   /**
-   * The suppression state for info errors.
+   * The standardized {@link Timers} key used for sending an asynchronous
+   * message on a queue.
    */
-  private static final ErrorLogSuppressor INFO_ERROR_SUPPRESSOR
-      = new ErrorLogSuppressor();
+  String ASYNC_SEND_TIMING = "asyncSend";
 
   /**
-   * The hash of the system identity codes of the last info message exception
-   * as well as the the message object that was sent.
+   * The queue name for tracking time of the INFO queue.
    */
-  private static final ThreadLocal<Long> LAST_INFO_ERROR_HASH
-      = new ThreadLocal<>();
+  String INFO_QUEUE_NAME = "INFO";
 
   /**
    * HTTP Response code for server error.
    */
-  public static final int SERVER_ERROR = 500;
+  int SERVER_ERROR = 500;
 
   /**
    * HTTP Response code for service unavailable error.
    */
-  public static final int SERVICE_UNAVAILABLE = 503;
+  int SERVICE_UNAVAILABLE = 503;
 
   /**
    * HTTP Response code for bad request.
    */
-  public static final int BAD_REQUEST = 400;
+  int BAD_REQUEST = 400;
 
   /**
    * HTTP Response code for forbidden.
    */
-  public static final int FORBIDDEN = 403;
+  int FORBIDDEN = 403;
 
   /**
    * HTTP Response code for "not found".
    * \
    */
-  public static final int NOT_FOUND = 404;
+  int NOT_FOUND = 404;
 
   /**
    * HTTP Response code for "not allowed".
    */
-  public static final int NOT_ALLOWED = 405;
+  int NOT_ALLOWED = 405;
 
   /**
    * Error code when a data source code is not found.
    */
-  protected static final int DATA_SOURCE_NOT_FOUND_CODE = 27;
+  int DATA_SOURCE_NOT_FOUND_CODE = 27;
 
   /**
    * Error code when a record ID is not found.
    */
-  protected static final int RECORD_NOT_FOUND_CODE = 33;
+  int RECORD_NOT_FOUND_CODE = 33;
 
   /**
    * Error code when the entity ID is not found.
    */
-  protected static final int ENTITY_NOT_FOUND_CODE = 37;
+  int ENTITY_NOT_FOUND_CODE = 37;
 
   /**
    * Default flags for retrieving records.
    */
-  public static final int DEFAULT_RECORD_FLAGS
+  int DEFAULT_RECORD_FLAGS
       = G2_ENTITY_INCLUDE_RECORD_FORMATTED_DATA
       | G2_ENTITY_INCLUDE_RECORD_MATCHING_INFO
       | G2_ENTITY_INCLUDE_RECORD_JSON_DATA
       | G2_ENTITY_INCLUDE_RECORD_SUMMARY;
+
+  /**
+   * The default progress period as the number of milliseconds between sending
+   * progress responses to the client for SSE and Web Sockets.
+   */
+  Long DEFAULT_PROGRESS_PERIOD = 3000L;
 
   /**
    * Gets the {@link SzApiProvider} to use.  The default implementation returns
@@ -134,7 +137,7 @@ public abstract class ServicesSupport {
    *
    * @return The {@link SzApiProvider} to use.
    */
-  public SzApiProvider getApiProvider() {
+  default SzApiProvider getApiProvider() {
     return SzApiProvider.Factory.getProvider();
   }
 
@@ -149,9 +152,9 @@ public abstract class ServicesSupport {
    *
    * @return The new instance of {@link SzMeta}.
    */
-  protected SzMeta newMeta(SzHttpMethod httpMethod,
-                           int          httpStatusCode,
-                           Timers       timers)
+  default SzMeta newMeta(SzHttpMethod httpMethod,
+                         int          httpStatusCode,
+                         Timers       timers)
   {
     return SzMeta.FACTORY.create(httpMethod, httpStatusCode, timers);
   }
@@ -163,7 +166,7 @@ public abstract class ServicesSupport {
    *
    * @return The new instance of {@link SzLinks}
    */
-  protected SzLinks newLinks(String self) {
+  default SzLinks newLinks(String self) {
     return SzLinks.FACTORY.create(self);
   }
 
@@ -174,7 +177,7 @@ public abstract class ServicesSupport {
    *
    * @return The new instance of {@link SzLinks}
    */
-  protected SzLinks newLinks(UriInfo uriInfo) {
+  default SzLinks newLinks(UriInfo uriInfo) {
     return SzLinks.FACTORY.create(uriInfo);
   }
 
@@ -189,7 +192,7 @@ public abstract class ServicesSupport {
    * @param exception  The exception that caused the error.
    * @return The {@link InternalServerErrorException}
    */
-  protected InternalServerErrorException newInternalServerErrorException(
+  default InternalServerErrorException newInternalServerErrorException(
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
@@ -213,7 +216,7 @@ public abstract class ServicesSupport {
    * @param message    The message describing the error.
    * @return The {@link ServiceUnavailableException}
    */
-  protected ServiceUnavailableException newServiceUnavailableErrorException(
+  default ServiceUnavailableException newServiceUnavailableErrorException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
       Timers        timers,
@@ -239,7 +242,7 @@ public abstract class ServicesSupport {
    * @param fallible   The {@link G2Fallible} to get the last exception from.
    * @return The {@link InternalServerErrorException}
    */
-  protected InternalServerErrorException newInternalServerErrorException(
+  default InternalServerErrorException newInternalServerErrorException(
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
@@ -268,7 +271,7 @@ public abstract class ServicesSupport {
    * @param fallible   The {@link G2Fallible} to get the last exception from.
    * @return The {@link InternalServerErrorException}
    */
-  protected NotFoundException newNotFoundException(
+  default NotFoundException newNotFoundException(
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
@@ -292,7 +295,7 @@ public abstract class ServicesSupport {
    * @param timers     The {@link Timers} object for the timings that were taken.
    * @return The {@link InternalServerErrorException}
    */
-  protected NotFoundException newNotFoundException(
+  default NotFoundException newNotFoundException(
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers)
@@ -315,7 +318,7 @@ public abstract class ServicesSupport {
    * @param errorMessage The error message.
    * @return The {@link InternalServerErrorException}
    */
-  protected NotFoundException newNotFoundException(
+  default NotFoundException newNotFoundException(
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
@@ -339,7 +342,7 @@ public abstract class ServicesSupport {
    * @param errorMessage The error message.
    * @return The {@link InternalServerErrorException}
    */
-  protected NotAllowedException newNotAllowedException(
+  default NotAllowedException newNotAllowedException(
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
@@ -364,7 +367,7 @@ public abstract class ServicesSupport {
    * @param fallible   The {@link G2Fallible} to get the last exception from.
    * @return The {@link BadRequestException}
    */
-  protected BadRequestException newBadRequestException(
+  default BadRequestException newBadRequestException(
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
@@ -390,7 +393,7 @@ public abstract class ServicesSupport {
    * @return The {@link BadRequestException} that was created with the
    * specified http method and {@link UriInfo}.
    */
-  protected BadRequestException newBadRequestException(
+  default BadRequestException newBadRequestException(
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
@@ -415,7 +418,7 @@ public abstract class ServicesSupport {
    * @param exception  The exception that caused the error.
    * @return The {@link InternalServerErrorException}
    */
-  protected BadRequestException newBadRequestException(
+  default BadRequestException newBadRequestException(
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
@@ -440,7 +443,7 @@ public abstract class ServicesSupport {
    * @return The {@link ForbiddenException} that was created with the
    * specified http method and {@link UriInfo}.
    */
-  protected ForbiddenException newForbiddenException(
+  default ForbiddenException newForbiddenException(
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
@@ -468,7 +471,7 @@ public abstract class ServicesSupport {
    * @return A newly created {@link NotFoundException} or {@link
    * InternalServerErrorException}.
    */
-  protected WebApplicationException newPossiblyNotFoundException(
+  default WebApplicationException newPossiblyNotFoundException(
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
@@ -497,7 +500,7 @@ public abstract class ServicesSupport {
    * @return A newly created {@link BadRequestException} or {@link
    * InternalServerErrorException}.
    */
-  protected WebApplicationException newPossiblyBadRequestException(
+  default WebApplicationException newPossiblyBadRequestException(
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
@@ -519,7 +522,7 @@ public abstract class ServicesSupport {
    * @param text The text to encode.
    * @return The URL-encoded text.
    */
-  protected String urlEncode(String text) {
+  default String urlEncode(String text) {
     try {
       return URLEncoder.encode(text, "UTF-8");
 
@@ -536,7 +539,7 @@ public abstract class ServicesSupport {
    * @param list The {@link List} of strings to encode.
    * @return The encoded string.
    */
-  protected String urlEncodeStrings(List<String> list) {
+  default String urlEncodeStrings(List<String> list) {
     StringBuilder sb = new StringBuilder();
     String prefix = "";
     for (String item : list) {
@@ -558,7 +561,7 @@ public abstract class ServicesSupport {
    * @param list The {@link List} of strings to encode.
    * @return The encoded string.
    */
-  protected String jsonEncodeStrings(List<String> list) {
+  default String jsonEncodeStrings(List<String> list) {
     JsonArrayBuilder jab = Json.createArrayBuilder();
     for (String item : list) {
       jab.add(item);
@@ -573,7 +576,7 @@ public abstract class ServicesSupport {
    * @param list The list of entity identifiers.
    * @return The JSON array string for the identifiers.
    */
-  protected String jsonEncodeEntityIds(List<SzEntityIdentifier> list) {
+  default String jsonEncodeEntityIds(List<SzEntityIdentifier> list) {
     JsonArrayBuilder jab = Json.createArrayBuilder();
     for (SzEntityIdentifier id : list) {
       if (id instanceof SzEntityId) {
@@ -596,7 +599,7 @@ public abstract class ServicesSupport {
    * @param ids The {@link Collection} of entity identifiers.
    * @return The JSON array string for the identifiers.
    */
-  public String nativeJsonEncodeEntityIds(Collection<SzEntityIdentifier> ids) {
+  default String nativeJsonEncodeEntityIds(Collection<SzEntityIdentifier> ids) {
     if (ids == null) {
       return null;
     }
@@ -629,7 +632,7 @@ public abstract class ServicesSupport {
    * @param ids The {@link Collection} of entity identifiers.
    * @return The URL-encoded JSON array string for the identifiers.
    */
-  public String urlEncodeEntityIds(Collection<SzEntityIdentifier> ids) {
+  default String urlEncodeEntityIds(Collection<SzEntityIdentifier> ids) {
     StringBuilder sb = new StringBuilder();
     String prefix = "";
     for (SzEntityIdentifier id : ids) {
@@ -655,7 +658,7 @@ public abstract class ServicesSupport {
    * @param list The list of entity identifiers.
    * @return The JSON array string for the identifiers.
    */
-  public String nativeJsonEncodeDataSources(List<String> list) {
+  default String nativeJsonEncodeDataSources(List<String> list) {
     JsonArrayBuilder jab = Json.createArrayBuilder();
     for (String code : list) {
       jab.add(code);
@@ -674,9 +677,9 @@ public abstract class ServicesSupport {
    * @param values    The {@link List} of values.
    * @return The multi-valued query string parameter.
    */
-  protected String formatMultiValuedParam(String prefix,
-                                          String paramName,
-                                          List<String> values)
+  default String formatMultiValuedParam(String       prefix,
+                                        String       paramName,
+                                        List<String> values)
   {
     if (values == null || values.size() == 0) return "";
     StringBuilder sb = new StringBuilder();
@@ -702,7 +705,7 @@ public abstract class ServicesSupport {
    * @return The {@link Set} of {@link SzEntityIdentifier} instances that was
    * parsed from the specified parameters.
    */
-  protected Set<SzEntityIdentifier> parseEntityIdentifiers(
+  default Set<SzEntityIdentifier> parseEntityIdentifiers(
       List<String> params,
       String paramName,
       SzHttpMethod httpMethod,
@@ -749,11 +752,11 @@ public abstract class ServicesSupport {
    *
    * @return The flags to use given the parameters.
    */
-  protected int getFlags(boolean        forceMinimal,
-                         SzFeatureMode  featureMode,
-                         boolean        withFeatureStats,
-                         boolean        withInternalFeatures,
-                         boolean        withRelationships)
+  default int getFlags(boolean       forceMinimal,
+                       SzFeatureMode featureMode,
+                       boolean       withFeatureStats,
+                       boolean       withInternalFeatures,
+                       boolean       withRelationships)
   {
     return this.getFlags(0,
                          forceMinimal,
@@ -781,12 +784,12 @@ public abstract class ServicesSupport {
    *
    * @return The flags to use given the parameters.
    */
-  protected int getFlags(int            baseFlags,
-                         boolean        forceMinimal,
-                         SzFeatureMode  featureMode,
-                         boolean        withFeatureStats,
-                         boolean        withInternalFeatures,
-                         boolean        withRelationships)
+  default int getFlags(int           baseFlags,
+                       boolean       forceMinimal,
+                       SzFeatureMode featureMode,
+                       boolean       withFeatureStats,
+                       boolean       withInternalFeatures,
+                       boolean       withRelationships)
   {
     int flags = baseFlags
         | G2_ENTITY_INCLUDE_RECORD_DATA
@@ -839,9 +842,9 @@ public abstract class ServicesSupport {
    * @param featureMode The {@link SzFeatureMode} describing how features
    *                    are retrieved.
    */
-  protected void postProcessEntityData(SzEntityData   entityData,
-                                       boolean        forceMinimal,
-                                       SzFeatureMode  featureMode)
+  default void postProcessEntityData(SzEntityData  entityData,
+                                     boolean       forceMinimal,
+                                     SzFeatureMode featureMode)
   {
     // check if we need to strip out duplicate features
     if (featureMode == REPRESENTATIVE) {
@@ -860,7 +863,7 @@ public abstract class ServicesSupport {
    *
    * @param entityData The {@link SzEntityData} to mark as partial.
    */
-  protected void setEntitiesPartial(SzEntityData entityData) {
+  default void setEntitiesPartial(SzEntityData entityData) {
     entityData.getResolvedEntity().setPartial(true);
     entityData.getRelatedEntities().forEach(e -> {
       e.setPartial(true);
@@ -873,7 +876,7 @@ public abstract class ServicesSupport {
    *
    * @param entityData The {@link SzEntityData} to mark as partial.
    */
-  protected void stripDuplicateFeatureValues(SzEntityData entityData) {
+  default void stripDuplicateFeatureValues(SzEntityData entityData) {
     stripDuplicateFeatureValues(entityData.getResolvedEntity());
     List<SzRelatedEntity> relatedEntities = entityData.getRelatedEntities();
     if (relatedEntities != null) {
@@ -888,7 +891,7 @@ public abstract class ServicesSupport {
    * @param entity The {@link SzResolvedEntity} from which to strip duplicate
    *               features.
    */
-  protected void stripDuplicateFeatureValues(SzResolvedEntity entity) {
+  default void stripDuplicateFeatureValues(SzResolvedEntity entity) {
     Map<String, List<SzEntityFeature>> featureMap = entity.getFeatures();
     if (featureMap != null) {
       featureMap.values().forEach(list -> {
@@ -902,7 +905,7 @@ public abstract class ServicesSupport {
    *
    * @return A new {@link Timers} instance to track timings of an operation.
    */
-  protected Timers newTimers() {
+  default Timers newTimers() {
     return new Timers(OVERALL_TIMING);
   }
 
@@ -912,7 +915,7 @@ public abstract class ServicesSupport {
    *
    * @param timers The {@link Timers} instance to transition.
    */
-  protected void processingRawData(Timers timers) {
+  default void processingRawData(Timers timers) {
     if (timers != null) timers.start(PROCESS_RAW_DATA_TIMING);
   }
 
@@ -922,7 +925,7 @@ public abstract class ServicesSupport {
    *
    * @param timers The {@link Timers} instance to transition.
    */
-  protected void processedRawData(Timers timers) {
+  default void processedRawData(Timers timers) {
     if (timers != null) timers.pause(PROCESS_RAW_DATA_TIMING);
   }
 
@@ -934,7 +937,7 @@ public abstract class ServicesSupport {
    * @param api The API being invoked.
    * @param function The function name on the API being invoked.
    */
-  protected void callingNativeAPI(Timers timers, String api, String function) {
+  default void callingNativeAPI(Timers timers, String api, String function) {
     if (timers == null) return;
     timers.start(NATIVE_API_TIMING,
                  NATIVE_API_TIMING + ":" + api + "." + function);
@@ -948,7 +951,7 @@ public abstract class ServicesSupport {
    * @param api The API being invoked.
    * @param function The function name on the API being invoked.
    */
-  protected void calledNativeAPI(Timers timers, String api, String function) {
+  default void calledNativeAPI(Timers timers, String api, String function) {
     if (timers == null) return;
     timers.pause(NATIVE_API_TIMING,
                  NATIVE_API_TIMING + ":" + api + "." + function);
@@ -960,7 +963,7 @@ public abstract class ServicesSupport {
    *
    * @param timers The {@link Timers} instance to transition.
    */
-  protected void enteringQueue(Timers timers) {
+  default void enteringQueue(Timers timers) {
     if (timers != null) timers.start(ENQUEUED_TIMING);
   }
 
@@ -970,7 +973,7 @@ public abstract class ServicesSupport {
    *
    * @param timers The {@link Timers} instance to transition.
    */
-  protected void exitingQueue(Timers timers) {
+  default void exitingQueue(Timers timers) {
     if (timers != null) timers.pause(ENQUEUED_TIMING);
   }
 
@@ -981,7 +984,7 @@ public abstract class ServicesSupport {
    * @param timers The {@link Timers} instance to transition.
    * @param lockName The name of the lock being obtained.
    */
-  protected void obtainingLock(Timers timers, String lockName) {
+  default void obtainingLock(Timers timers, String lockName) {
     if (timers != null) timers.start(
         LOCK_TIMING, LOCK_TIMING + ":" + lockName);
   }
@@ -993,9 +996,33 @@ public abstract class ServicesSupport {
    * @param timers The {@link Timers} instance to transition.
    * @param lockName The name of the lock being obtained.
    */
-  protected void obtainedLock(Timers timers, String lockName) {
+  default void obtainedLock(Timers timers, String lockName) {
     if (timers != null) timers.pause(
         LOCK_TIMING, LOCK_TIMING + ":" + lockName);
+  }
+
+  /**
+   * Transitions the specified {@link Timers} into the {@link
+   * #LOCK_TIMING} stage.
+   *
+   * @param timers The {@link Timers} instance to transition.
+   * @param queueName The name of the lock being obtained.
+   */
+  default void sendingAsyncMessage(Timers timers, String queueName) {
+    if (timers != null) timers.start(
+        ASYNC_SEND_TIMING, ASYNC_SEND_TIMING + ":" + queueName);
+  }
+
+  /**
+   * Concludes the {@link #LOCK_TIMING} stage for the the specified
+   * {@link Timers}.
+   *
+   * @param timers The {@link Timers} instance to transition.
+   * @param queueName The name of the lock being obtained.
+   */
+  default void sentAsyncMessage(Timers timers, String queueName) {
+    if (timers != null) timers.pause(
+        ASYNC_SEND_TIMING, ASYNC_SEND_TIMING + ":" + queueName);
   }
 
   /**
@@ -1010,10 +1037,10 @@ public abstract class ServicesSupport {
    * @throws ForbiddenException If the specified {@link SzApiProvider} is in
    *                            read-only mode.
    */
-  public void ensureLoadingIsAllowed(SzApiProvider provider,
-                                     SzHttpMethod  method,
-                                     UriInfo       uriInfo,
-                                     Timers        timers)
+  default void ensureLoadingIsAllowed(SzApiProvider provider,
+                                      SzHttpMethod  method,
+                                      UriInfo       uriInfo,
+                                      Timers        timers)
       throws ForbiddenException
   {
     if (provider.isReadOnly()) {
@@ -1037,10 +1064,10 @@ public abstract class ServicesSupport {
    * @throws ForbiddenException If the specified {@link SzApiProvider} is in
    *                            read-only mode.
    */
-  public void ensureConfigChangesAllowed(SzApiProvider  provider,
-                                         SzHttpMethod   method,
-                                         UriInfo        uriInfo,
-                                         Timers         timers)
+  default void ensureConfigChangesAllowed(SzApiProvider  provider,
+                                          SzHttpMethod   method,
+                                          UriInfo        uriInfo,
+                                          Timers         timers)
       throws ForbiddenException
   {
     if (!provider.isAdminEnabled()) {
@@ -1072,66 +1099,8 @@ public abstract class ServicesSupport {
    * @param bodyContent
    * @return The formatted string.
    */
-  public String formatTestInfo(String uriText, String bodyContent) {
+  default String formatTestInfo(String uriText, String bodyContent) {
     return "uriText=[ " + uriText + " ], bodyContent=[ " + bodyContent + " ]";
-  }
-
-  /**
-   * Generates a 64-bit hash from the system identity hash codes of the two
-   * specified objects.
-   *
-   * @param obj1 The first object whose identity hash code goes to the high-order
-   *             bits.
-   * @param obj2 The second object whose identity hash code goes to the low-order
-   *             bits.
-   *
-   * @return The <tt>long</tt> hash code of the object pair.
-   */
-  public long identityPairHash(Object obj1, Object obj2) {
-    long high = (long) ((obj1 == null) ? 0 : System.identityHashCode(obj1));
-    long low = (long) ((obj2 == null) ? 0 : System.identityHashCode(obj2));
-    return (high << 32) | low;
-  }
-
-  /**
-   * Logs an error related to sending asynchronous info messages.
-   *
-   * @param e The {@link Exception} that occurred.
-   * @param message The info message that failed.
-   */
-  public final void logFailedAsyncInfo(Exception e, SzMessage message) {
-    // check what was previously logged and avoid double-logging
-    Long previous = LAST_INFO_ERROR_HASH.get();
-    long hash = this.identityPairHash(e, message);
-    if (previous != null && previous == hash) return;
-    LAST_INFO_ERROR_HASH.set(hash);
-
-    Date timestamp = new Date();
-    String info = message.getBody();
-    System.err.println(
-        timestamp + ": FAILED TO SEND ASYNC INFO MESSAGE: " + info);
-    synchronized (INFO_ERROR_SUPPRESSOR) {
-      boolean suppressing = INFO_ERROR_SUPPRESSOR.isSuppressing();
-      ErrorLogSuppressor.Result result = INFO_ERROR_SUPPRESSOR.updateOnError();
-      switch (result.getState()) {
-        case SUPPRESSED:
-          if (!suppressing) {
-            System.err.println(
-                timestamp + ": SUPPRESSING ASYNC INFO MESSAGE ERRORS FOR "
-                    + INFO_ERROR_SUPPRESSOR.getSuppressDuration() + "ms");
-          }
-          break;
-        case REACTIVATED:
-          if (result.getSuppressedCount() > 0) {
-            System.err.println(
-                timestamp + ": RESUMING ASYNC INFO MESSAGE ERRORS ("
-                    + result.getSuppressedCount() + " SUPPRESSED)");
-          }
-        case ACTIVE:
-          e.printStackTrace();
-          break;
-      }
-    }
   }
 
   /**
@@ -1143,7 +1112,7 @@ public abstract class ServicesSupport {
    * @return The proxied {@link UriInfo} object using the specified Web Socket
    *                     {@link Session}.
    */
-  protected UriInfo newProxyUriInfo(Session webSocketSession) {
+  default UriInfo newProxyUriInfo(Session webSocketSession) {
     try {
       InvocationHandler handler = (p, m, a) -> {
         switch (m.getName()) {
@@ -1187,14 +1156,14 @@ public abstract class ServicesSupport {
   /**
    * Converts the specified object to JSON.
    */
-  protected String toJsonString(Object object) {
+  default String toJsonString(Object object) {
     return toJsonString(object, false);
   }
 
   /**
    * Converts the specified object to JSON.
    */
-  protected String toJsonString(Object object, boolean prettyPrint) {
+  default String toJsonString(Object object, boolean prettyPrint) {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JodaModule());
     try {
@@ -1216,7 +1185,7 @@ public abstract class ServicesSupport {
    * @param links The {@link SzLinks} describing the links.
    * @return The newly created {@link SzErrorResponse}.
    */
-  protected SzErrorResponse newErrorResponse(SzMeta meta, SzLinks links)
+  default SzErrorResponse newErrorResponse(SzMeta meta, SzLinks links)
   {
     return new SzErrorResponse(meta, links);
   }
@@ -1228,9 +1197,9 @@ public abstract class ServicesSupport {
    * @param firstError The first error for the response.
    * @return The newly created {@link SzErrorResponse}.
    */
-  protected SzErrorResponse newErrorResponse(SzMeta   meta,
-                                             SzLinks  links,
-                                             SzError  firstError)
+  default SzErrorResponse newErrorResponse(SzMeta   meta,
+                                           SzLinks  links,
+                                           SzError  firstError)
   {
     return new SzErrorResponse(meta, links, firstError);
   }
@@ -1242,9 +1211,9 @@ public abstract class ServicesSupport {
    * @param firstError The first error for the response.
    * @return The newly created {@link SzErrorResponse}.
    */
-  protected SzErrorResponse newErrorResponse(SzMeta   meta,
-                                             SzLinks  links,
-                                             String  firstError)
+  default SzErrorResponse newErrorResponse(SzMeta   meta,
+                                           SzLinks  links,
+                                           String   firstError)
   {
     return new SzErrorResponse(meta, links, firstError);
   }
@@ -1256,9 +1225,9 @@ public abstract class ServicesSupport {
    * @param firstError The first error for the response.
    * @return The newly created {@link SzErrorResponse}.
    */
-  protected SzErrorResponse newErrorResponse(SzMeta     meta,
-                                             SzLinks    links,
-                                             Throwable  firstError)
+  default SzErrorResponse newErrorResponse(SzMeta     meta,
+                                           SzLinks    links,
+                                           Throwable  firstError)
   {
     return new SzErrorResponse(meta, links, firstError);
   }
@@ -1271,9 +1240,9 @@ public abstract class ServicesSupport {
    *                           the response.
    * @return The newly created {@link SzErrorResponse}.
    */
-  protected SzErrorResponse newErrorResponse(SzMeta     meta,
-                                             SzLinks    links,
-                                             G2Fallible firstErrorFallible)
+  default SzErrorResponse newErrorResponse(SzMeta     meta,
+                                           SzLinks    links,
+                                           G2Fallible firstErrorFallible)
   {
     return new SzErrorResponse(meta, links, firstErrorFallible);
   }
@@ -1283,8 +1252,8 @@ public abstract class ServicesSupport {
    *
    * @return The newly created {@link SzError} instance.
    */
-  protected SzError newError() {
-    return new SzError();
+  default SzError newError() {
+    return SzError.FACTORY.create();
   }
 
   /**
@@ -1295,8 +1264,8 @@ public abstract class ServicesSupport {
    *
    * @return The newly created {@link SzError} instance.
    */
-  protected SzError newError(String errorMessage) {
-    return new SzError(errorMessage);
+  default SzError newError(String errorMessage) {
+    return SzError.FACTORY.create(errorMessage);
   }
 
   /**
@@ -1310,8 +1279,8 @@ public abstract class ServicesSupport {
    *
    * @return The newly created {@link SzError} instance.
    */
-  protected SzError newError(String errorCode, String errorMessage) {
-    return new SzError(errorCode, errorMessage);
+  default SzError newError(String errorCode, String errorMessage) {
+    return SzError.FACTORY.create(errorCode, errorMessage);
   }
 
   /**
@@ -1323,8 +1292,8 @@ public abstract class ServicesSupport {
    *
    * @return The newly created {@link SzError} instance.
    */
-  protected SzError newError(Throwable throwable) {
-    return new SzError(throwable);
+  default SzError newError(Throwable throwable) {
+    return SzError.FACTORY.create(throwable);
   }
 
   /**
@@ -1336,8 +1305,8 @@ public abstract class ServicesSupport {
    *
    * @return The newly created {@link SzError} instance.
    */
-  protected SzError newError(G2Fallible fallible) {
-    return new SzError(fallible);
+  default SzError newError(G2Fallible fallible) {
+    return SzError.FACTORY.create(fallible);
   }
 
   /**
@@ -1347,7 +1316,7 @@ public abstract class ServicesSupport {
    * @param text The text to parse.
    * @return The parsed {@link SzEntityIdentifier} instance.
    */
-  protected SzEntityIdentifier parseEntityIdentifier(String text) {
+  default SzEntityIdentifier parseEntityIdentifier(String text) {
     return SzEntityIdentifier.valueOf(text);
   }
 
@@ -1359,7 +1328,7 @@ public abstract class ServicesSupport {
    * @param text The text to parse.
    * @return The parsed {@link SzEntityIdentifiers} instance.
    */
-  protected SzEntityIdentifiers parseEntityIdentifiers(String text) {
+  default SzEntityIdentifiers parseEntityIdentifiers(String text) {
     return SzEntityIdentifiers.valueOf(text);
   }
 
@@ -1378,7 +1347,7 @@ public abstract class ServicesSupport {
    * @return The populated (or created) {@link List} of {@link
    *         SzEntityData} instances.
    */
-  protected List<SzEntityData> parseEntityDataList(
+  default List<SzEntityData> parseEntityDataList(
       JsonArray               jsonArray,
       Function<String,String> featureToAttrClassMapper)
   {
@@ -1386,4 +1355,46 @@ public abstract class ServicesSupport {
         null, jsonArray, featureToAttrClassMapper);
   }
 
+  /**
+   * Prepares for performing a long-running operation is authorized.
+   *
+   * @parma provider The {@link SzApiProvider} to use.
+   * @param method The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} tracking timing for the operation.
+   *
+   * @return The {@link AccessToken} for the prolonged operation.
+   *
+   * @throws ServiceUnavailableException If too many long-running operaitons are
+   *                                     already running.
+   */
+  default AccessToken prepareProlongedOperation(SzApiProvider  provider,
+                                                SzHttpMethod   method,
+                                                UriInfo        uriInfo,
+                                                Timers         timers)
+      throws ForbiddenException, ServiceUnavailableException
+  {
+    AccessToken accessToken = provider.authorizeProlongedOperation();
+    if (accessToken == null) {
+      throw this.newServiceUnavailableErrorException(
+          method, uriInfo, timers,
+          "Too many prolonged operations running.  Try again later.");
+    }
+    return accessToken;
+  }
+
+  /**
+   * Normalizes the specified {@link String}.  If <tt>null</tt> then
+   * <tt>null</tt> is returned.  Otherwise, the {@link String} is trimmed of
+   * leading and trailing whitespace and if empty-string then <tt>null</tt>
+   * is returned, otherwise the trimmed {@link String} is returned.
+   *
+   * @param text The {@link String} to be normalized.
+   * @return The normalized {@link String}.
+   */
+  default String normalizeString(String text) {
+    if (text == null) return null;
+    if (text.trim().length() == 0) return null;
+    return text.trim();
+  }
 }

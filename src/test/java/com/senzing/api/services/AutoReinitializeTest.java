@@ -44,17 +44,17 @@ public class AutoReinitializeTest extends AbstractServiceTest
       defaultSources  = new LinkedHashMap<>();
 
       List<SzDataSource> sources = new LinkedList<>();
-      sources.add(new SzDataSource("TEST", 1));
-      sources.add(new SzDataSource("SEARCH", 2));
+      sources.add(SzDataSource.FACTORY.create("TEST", 1));
+      sources.add(SzDataSource.FACTORY.create("SEARCH", 2));
       for (SzDataSource source : sources) {
         defaultSources.put(source.getDataSourceCode(), source);
       }
       defaultSources = Collections.unmodifiableMap(defaultSources);
 
       sources.clear();
-      sources.add(new SzDataSource("EMPLOYEES", 1001));
-      sources.add(new SzDataSource("CUSTOMERS", 1002));
-      sources.add(new SzDataSource("VENDORS", 1003));
+      sources.add(SzDataSource.FACTORY.create("EMPLOYEES", 1001));
+      sources.add(SzDataSource.FACTORY.create("CUSTOMERS", 1002));
+      sources.add(SzDataSource.FACTORY.create("VENDORS", 1003));
       for (SzDataSource source: sources) {
         customSources.put(source.getDataSourceCode(), source);
       }
@@ -321,7 +321,7 @@ public class AutoReinitializeTest extends AbstractServiceTest
       fail("Failure in native API call: " + errorMsg);
     }
 
-    SzDataSource newDS = new SzDataSource(newDataSource, dataSourceId);
+    SzDataSource newDS = SzDataSource.FACTORY.create(newDataSource, dataSourceId);
     synchronized (this.expectedDataSources) {
       this.expectedDataSources.put(newDS.getDataSourceCode(), newDS);
     }

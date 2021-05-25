@@ -10,8 +10,15 @@ import java.util.*;
 /**
  * Describes the meta-data section for each response.
  */
-@JsonDeserialize(using=com.senzing.api.model.SzMeta.Factory.class)
+@JsonDeserialize(using=SzMeta.Factory.class)
 public interface SzMeta {
+  /**
+   * Gets the description of the server/provider that produced the response.
+   *
+   * @return The description of the server/provider that produced the response.
+   */
+  String getServer();
+
   /**
    * The HTTP method for the REST request.
    *
@@ -162,7 +169,7 @@ public interface SzMeta {
      * the master instance.
      */
     public Factory() {
-      super();
+      super(SzMeta.class);
     }
 
     /**

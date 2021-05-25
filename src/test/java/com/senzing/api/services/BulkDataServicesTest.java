@@ -405,19 +405,19 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       Map<String, File> dataFileMap = new LinkedHashMap<>();
 
-      SzBulkDataAnalysis csvAnalysis        = new SzBulkDataAnalysis();
-      SzBulkDataAnalysis jsonAnalysis       = new SzBulkDataAnalysis();
-      SzBulkDataAnalysis jsonLinesAnalysis  = new SzBulkDataAnalysis();
+      SzBulkDataAnalysis csvAnalysis    = SzBulkDataAnalysis.FACTORY.create();
+      SzBulkDataAnalysis jsonAnalysis   = SzBulkDataAnalysis.FACTORY.create();
+      SzBulkDataAnalysis jsonlAnalysis  = SzBulkDataAnalysis.FACTORY.create();
 
       SzBulkDataAnalysis[] analyses = {
-          csvAnalysis, jsonAnalysis, jsonLinesAnalysis
+          csvAnalysis, jsonAnalysis, jsonlAnalysis
       };
       for (SzBulkDataAnalysis analysis : analyses) {
         analysis.setCharacterEncoding("UTF-8");
       }
       csvAnalysis.setMediaType(CSV_SPEC);
       jsonAnalysis.setMediaType(JSON_SPEC);
-      jsonLinesAnalysis.setMediaType(JSON_LINES_SPEC);
+      jsonlAnalysis.setMediaType(JSON_LINES_SPEC);
 
       try {
         dataFileIndex++;

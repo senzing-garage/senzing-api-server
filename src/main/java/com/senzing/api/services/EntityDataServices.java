@@ -20,13 +20,14 @@ import static com.senzing.api.model.SzRelationshipMode.*;
 import static com.senzing.api.model.SzAttributeSearchResultType.*;
 import static com.senzing.g2.engine.G2Engine.*;
 import static javax.ws.rs.core.MediaType.*;
+import static com.senzing.api.services.ServicesUtil.*;
 
 /**
  * Provides entity data related API services.
  */
 @Path("/")
 @Produces(APPLICATION_JSON)
-public class EntityDataServices extends ServicesSupport {
+public class EntityDataServices implements ServicesSupport {
   /**
    * The minimum native API version to support search filtering.
    */
@@ -177,14 +178,16 @@ public class EntityDataServices extends ServicesSupport {
           SzMessageSink infoSink = provider.acquireInfoSink();
           SzMessage message = new SzMessage(rawData);
           try {
+            this.sendingAsyncMessage(timers, INFO_QUEUE_NAME);
             // send the info on the async queue
-            infoSink.send(message, this::logFailedAsyncInfo);
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
 
           } catch (Exception e) {
             // failed async logger will not double-log
             logFailedAsyncInfo(e, message);
 
           } finally {
+            this.sentAsyncMessage(timers, INFO_QUEUE_NAME);
             provider.releaseInfoSink(infoSink);
           }
         }
@@ -308,13 +311,7 @@ public class EntityDataServices extends ServicesSupport {
                                                 map,
                                                 defaultMap);
 
-      Set<String> dataSources = provider.getDataSources(dataSource);
-
-      if (!dataSources.contains(dataSource)) {
-        throw this.newNotFoundException(
-            PUT, uriInfo, timers,
-            "The specified data source is not recognized: " + dataSource);
-      }
+      this.checkDataSource(PUT, uriInfo, timers, dataSource, provider);
 
       // get the asynchronous info sink
       boolean asyncInfo = provider.hasInfoSink();
@@ -362,13 +359,15 @@ public class EntityDataServices extends ServicesSupport {
           SzMessageSink infoSink = provider.acquireInfoSink();
           SzMessage message = new SzMessage(rawInfo);
           try {
+            this.sendingAsyncMessage(timers, INFO_QUEUE_NAME);
             // send the info on the async queue
-            infoSink.send(message, this::logFailedAsyncInfo);
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
 
           } catch (Exception e) {
             logFailedAsyncInfo(e, message);
 
           } finally {
+            this.sentAsyncMessage(timers, INFO_QUEUE_NAME);
             provider.releaseInfoSink(infoSink);
           }
         }
@@ -494,13 +493,15 @@ public class EntityDataServices extends ServicesSupport {
           SzMessageSink infoSink = provider.acquireInfoSink();
           SzMessage message = new SzMessage(rawInfo);
           try {
+            this.sendingAsyncMessage(timers, INFO_QUEUE_NAME);
             // send the info on the async queue
-            infoSink.send(message, this::logFailedAsyncInfo);
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
 
           } catch (Exception e) {
             logFailedAsyncInfo(e, message);
 
           } finally {
+            this.sentAsyncMessage(timers, INFO_QUEUE_NAME);
             provider.releaseInfoSink(infoSink);
           }
         }
@@ -643,12 +644,14 @@ public class EntityDataServices extends ServicesSupport {
           SzMessageSink infoSink = provider.acquireInfoSink();
           SzMessage message = new SzMessage(rawInfo);
           try {
-            infoSink.send(message, this::logFailedAsyncInfo);
+            this.sendingAsyncMessage(timers, INFO_QUEUE_NAME);
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
 
           } catch (Exception e) {
             logFailedAsyncInfo(e, message);
 
           } finally {
+            this.sentAsyncMessage(timers, INFO_QUEUE_NAME);
             provider.releaseInfoSink(infoSink);
           }
         }
@@ -1656,13 +1659,15 @@ public class EntityDataServices extends ServicesSupport {
           SzMessageSink infoSink = provider.acquireInfoSink();
           SzMessage message = new SzMessage(rawInfo);
           try {
+            this.sendingAsyncMessage(timers, INFO_QUEUE_NAME);
             // send the info on the async queue
-            infoSink.send(message, this::logFailedAsyncInfo);
+            infoSink.send(message, ServicesUtil::logFailedAsyncInfo);
 
           } catch (Exception e) {
             logFailedAsyncInfo(e, message);
 
           } finally {
+            this.sentAsyncMessage(timers, INFO_QUEUE_NAME);
             provider.releaseInfoSink(infoSink);
           }
         }
@@ -1854,22 +1859,7 @@ public class EntityDataServices extends ServicesSupport {
   }
 
   /**
-   * Normalizes the specified {@link String}.  If <tt>null</tt> then
-   * <tt>null</tt> is returned.  Otherwise, the {@link String} is trimmed of
-   * leading and trailing whitespace and if empty-string then <tt>null</tt>
-   * is returned, otherwise the trimmed {@link String} is returned.
-   *
-   * @param text The {@link String} to be normalized.
-   * @return The normalized {@link String}.
-   */
-  protected String normalizeString(String text) {
-    if (text == null) return null;
-    if (text.trim().length() == 0) return null;
-    return text.trim();
-  }
-
-  /**
-   * Ensures the specified data source exists for the provider and thows a
+   * Ensures the specified data source exists for the provider and throws a
    * {@link NotFoundException} if not found.
    *
    * @param httpMethod The {@link SzHttpMethod} for the request.
@@ -1879,11 +1869,11 @@ public class EntityDataServices extends ServicesSupport {
    * @param apiProvider The {@link SzApiProvider} to validate against.
    * @throws NotFoundException If the data source is not found.
    */
-  private void checkDataSource(SzHttpMethod  httpMethod,
-                               UriInfo       uriInfo,
-                               Timers        timers,
-                               String        dataSource,
-                               SzApiProvider apiProvider)
+  protected void checkDataSource(SzHttpMethod   httpMethod,
+                                 UriInfo        uriInfo,
+                                 Timers         timers,
+                                 String         dataSource,
+                                 SzApiProvider  apiProvider)
     throws NotFoundException
   {
     Set<String> dataSources = apiProvider.getDataSources(dataSource);

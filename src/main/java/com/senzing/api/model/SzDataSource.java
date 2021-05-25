@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzDataSourceImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.*;
@@ -12,105 +14,150 @@ import java.util.Objects;
 /**
  * Describes a data source in its entirety.
  */
-public class SzDataSource implements SzDataSourceDescriptor {
-  /**
-   * The data source code.
-   */
-  private String dataSourceCode;
-
-  /**
-   * The data source ID.
-   */
-  private Integer dataSourceId;
-
-  /**
-   * Default constructor.
-   */
-  SzDataSource() {
-    this.dataSourceCode = null;
-    this.dataSourceId   = null;
-  }
-
-  /**
-   * Constructs with the specified data source code and a <tt>null</tt>
-   * data source ID.
-   *
-   * @param dataSourceCode The data source code for the data source.
-   */
-  public SzDataSource(String dataSourceCode) {
-    this(dataSourceCode, null);
-  }
-
-  /**
-   * Constructs with the specified data source code and data source ID.
-   *
-   * @param dataSourceCode The data source code for the data source.
-   * @param dataSourceId The data source ID for the data source, or
-   *                     <tt>null</tt> if the data source ID is not
-   *                     specified.
-   */
-  public SzDataSource(String dataSourceCode, Integer dataSourceId) {
-    this.dataSourceCode = dataSourceCode.toUpperCase().trim();
-    this.dataSourceId   = dataSourceId;
-  }
-
+@JsonDeserialize(using=SzDataSource.Factory.class)
+public interface SzDataSource extends SzDataSourceDescriptor {
   /**
    * Gets the data source code for the data source.
    *
    * @return The data source code for the data source.
    */
-  public String getDataSourceCode() {
-    return this.dataSourceCode;
-  }
+  String getDataSourceCode();
 
   /**
    * Sets the data source code for the data source.
    *
    * @param code The data source code for the data source.
    */
-  void setDataSourceCode(String code) {
-    this.dataSourceCode = code;
-    if (this.dataSourceCode != null) {
-      this.dataSourceCode = this.dataSourceCode.toUpperCase().trim();
-    }
-  }
+  void setDataSourceCode(String code);
 
   /**
    * Return the data source ID associated with the data source.
    *
    * @return The data source ID associated with the data source.
    */
-  public Integer getDataSourceId() {
-    return this.dataSourceId;
-  }
+  Integer getDataSourceId();
 
   /**
    * Sets the data source ID associated with the data source.
    *
    * @param dataSourceId The data source ID associated with the data source.
    */
-  public void setDataSourceId(Integer dataSourceId) {
-    this.dataSourceId = dataSourceId;
+  void setDataSourceId(Integer dataSourceId);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzDataSource}.
+   */
+  interface Provider extends ModelProvider<SzDataSource> {
+    /**
+     * Constructs an uninitialized instance.
+     */
+    SzDataSource create();
+
+    /**
+     * Constructs with the specified data source code and a <tt>null</tt>
+     * data source ID.
+     *
+     * @param dataSourceCode The data source code for the data source.
+     */
+    SzDataSource create(String dataSourceCode);
+
+    /**
+     * Constructs with the specified data source code and data source ID.
+     *
+     * @param dataSourceCode The data source code for the data source.
+     * @param dataSourceId The data source ID for the data source, or
+     *                     <tt>null</tt> if the data source ID is not
+     *                     specified.
+     */
+    SzDataSource create(String dataSourceCode, Integer dataSourceId);
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    SzDataSource dataSource = (SzDataSource) o;
-    return Objects.equals(getDataSourceCode(), dataSource.getDataSourceCode())
-        && Objects.equals(this.getDataSourceId(), dataSource.getDataSourceId());
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzDataSource} that produces instances of {@link SzDataSourceImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzDataSource>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzDataSource.class, SzDataSourceImpl.class);
+    }
+
+    @Override
+    public SzDataSource create() {
+      return new SzDataSourceImpl();
+    }
+
+    @Override
+    public SzDataSource create(String dataSourceCode) {
+      return new SzDataSourceImpl(dataSourceCode);
+    }
+
+    @Override
+    public SzDataSource create(String dataSourceCode, Integer dataSourceId) {
+      return new SzDataSourceImpl(dataSourceCode, dataSourceId);
+    }
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.getDataSourceCode(), this.getDataSourceId());
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link SzDataSource}.
+   */
+  class Factory extends ModelFactory<SzDataSource, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzDataSource.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Constructs an uninitialized instance.
+     */
+    public SzDataSource create() {
+      return this.getProvider().create();
+    }
+
+    /**
+     * Constructs with the specified data source code and a <tt>null</tt>
+     * data source ID.
+     *
+     * @param dataSourceCode The data source code for the data source.
+     */
+    public SzDataSource create(String dataSourceCode) {
+      return this.getProvider().create(dataSourceCode);
+    }
+
+    /**
+     * Constructs with the specified data source code and data source ID.
+     *
+     * @param dataSourceCode The data source code for the data source.
+     * @param dataSourceId The data source ID for the data source, or
+     *                     <tt>null</tt> if the data source ID is not
+     *                     specified.
+     */
+    public SzDataSource create(String dataSourceCode, Integer dataSourceId) {
+      return this.getProvider().create(dataSourceCode, dataSourceId);
+    }
   }
 
-  @Override
-  public String toString() {
-    return this.toJson();
-  }
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the specified JSON text for the data source.
@@ -118,7 +165,7 @@ public class SzDataSource implements SzDataSourceDescriptor {
    * @param text The JSON text to parse.
    * @return The {@link SzDataSource} that was created.
    */
-  public static SzDataSource valueOf(String text) {
+  static SzDataSource valueOf(String text) {
     try {
       JsonObject jsonObject = JsonUtils.parseJsonObject(text.trim());
 
@@ -136,7 +183,7 @@ public class SzDataSource implements SzDataSourceDescriptor {
    *
    * @return The {@link SzDataSource} that was created.
    */
-  public static SzDataSource parse(JsonObject jsonObject) {
+  static SzDataSource parse(JsonObject jsonObject) {
     String code = JsonUtils.getString(jsonObject, "dataSourceCode");
     if (code == null) {
       code = JsonUtils.getString(jsonObject, "DSRC_CODE");
@@ -145,7 +192,7 @@ public class SzDataSource implements SzDataSourceDescriptor {
     if (id == null) {
       id = JsonUtils.getInteger(jsonObject, "DSRC_ID");
     }
-    return new SzDataSource(code, id);
+    return SzDataSource.FACTORY.create(code, id);
   }
 
   /**
@@ -161,7 +208,7 @@ public class SzDataSource implements SzDataSourceDescriptor {
    * @return The specified (or newly created) {@link List} of 
    *         {@link SzDataSource} instances.
    */
-  public static List<SzDataSource> parseDataSourceList(
+  static List<SzDataSource> parseDataSourceList(
       List<SzDataSource>  list,
       JsonArray           jsonArray)
   {
@@ -184,10 +231,10 @@ public class SzDataSource implements SzDataSourceDescriptor {
    *
    * @return The specified (or newly created) {@link SzDataSource}
    */
-  public static SzDataSource parseDataSource(SzDataSource dataSource,
-                                             JsonObject   jsonObject)
+  static SzDataSource parseDataSource(SzDataSource dataSource,
+                                      JsonObject   jsonObject)
   {
-    if (dataSource == null) dataSource = new SzDataSource();
+    if (dataSource == null) dataSource = SzDataSource.FACTORY.create();
 
     String  code  = JsonUtils.getString(jsonObject, "DSRC_CODE");
     Integer id    = JsonUtils.getInteger(jsonObject, "DSRC_ID");
@@ -212,7 +259,7 @@ public class SzDataSource implements SzDataSourceDescriptor {
    *
    * @return The a reference to this instance.
    */
-  public SzDataSource toDataSource() {
+  default SzDataSource toDataSource() {
     return this;
   }
 
@@ -222,7 +269,7 @@ public class SzDataSource implements SzDataSourceDescriptor {
    *
    * @param builder The {@link JsonObjectBuilder} to add the properties.
    */
-  public void buildJson(JsonObjectBuilder builder) {
+  default void buildJson(JsonObjectBuilder builder) {
     builder.add("dataSourceCode", this.getDataSourceCode());
     Integer sourceId = this.getDataSourceId();
     if (sourceId != null) {
@@ -236,7 +283,7 @@ public class SzDataSource implements SzDataSourceDescriptor {
    *
    * @param builder The {@link JsonObjectBuilder} to add the JSON properties to.
    */
-  public void buildNativeJson(JsonObjectBuilder builder) {
+  default void buildNativeJson(JsonObjectBuilder builder) {
     builder.add("DSRC_CODE", this.getDataSourceCode());
     if (this.getDataSourceId() != null) {
       builder.add("DSRC_ID", this.getDataSourceId());

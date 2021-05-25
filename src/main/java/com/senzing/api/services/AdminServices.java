@@ -23,7 +23,7 @@ import static com.senzing.api.model.SzHttpMethod.*;
  */
 @Path("/")
 @Produces("application/json; charset=UTF-8")
-public class AdminServices extends ServicesSupport {
+public class AdminServices implements ServicesSupport {
   /**
    * Generates a heartbeat response to affirnm the provider is running.
    */
@@ -31,7 +31,7 @@ public class AdminServices extends ServicesSupport {
   @Path("heartbeat")
   public SzBasicResponse heartbeat(@Context UriInfo uriInfo) {
     Timers timers = this.newTimers();
-    return newGetHeartbeatResponse(uriInfo, timers);
+    return newBasicResponse(uriInfo, timers);
   }
 
   /**
@@ -41,8 +41,8 @@ public class AdminServices extends ServicesSupport {
    * @param timers The {@link Timers} for the operation.
    * @return The {@link SzBasicResponse} with the specified parameters.
    */
-  protected SzBasicResponse newGetHeartbeatResponse(UriInfo uriInfo,
-                                                    Timers  timers)
+  protected SzBasicResponse newBasicResponse(UriInfo uriInfo,
+                                             Timers  timers)
   {
     return new SzBasicResponse(
         this.newMeta(GET, 200, timers), this.newLinks(uriInfo));
@@ -78,7 +78,7 @@ public class AdminServices extends ServicesSupport {
       this.processedRawData(timers);
 
       SzLicenseResponse response
-          = this.newGetLicenseResponse(uriInfo, timers, info);
+          = this.newLicenseResponse(uriInfo, timers, info);
       if (withRaw) response.setRawData(rawData);
       return response;
 
@@ -115,9 +115,9 @@ public class AdminServices extends ServicesSupport {
    * @param licenseInfo The {@link SzLicenseInfo} for the response.
    * @return The {@link SzLicenseResponse} with the specified parameters.
    */
-  protected SzLicenseResponse newGetLicenseResponse(UriInfo       uriInfo,
-                                                    Timers        timers,
-                                                    SzLicenseInfo licenseInfo)
+  protected SzLicenseResponse newLicenseResponse(UriInfo       uriInfo,
+                                                 Timers        timers,
+                                                 SzLicenseInfo licenseInfo)
   {
     return new SzLicenseResponse(this.newMeta(GET, 200, timers),
                                  this.newLinks(uriInfo),
@@ -153,7 +153,7 @@ public class AdminServices extends ServicesSupport {
       SzVersionInfo info = this.parseVersionInfo(jsonObject);
       this.processedRawData(timers);
 
-      SzVersionResponse response = newGetVersionResponse(uriInfo, timers, info);
+      SzVersionResponse response = newVersionResponse(uriInfo, timers, info);
 
       if (withRaw) response.setRawData(rawData);
       return response;
@@ -191,9 +191,9 @@ public class AdminServices extends ServicesSupport {
    * @param versionInfo The {@link SzVersionInfo} for the response.
    * @return The {@link SzVersionResponse} with the specified parameters.
    */
-  protected SzVersionResponse newGetVersionResponse(UriInfo       uriInfo,
-                                                    Timers        timers,
-                                                    SzVersionInfo versionInfo)
+  protected SzVersionResponse newVersionResponse(UriInfo       uriInfo,
+                                                 Timers        timers,
+                                                 SzVersionInfo versionInfo)
   {
     return new SzVersionResponse(this.newMeta(GET, 200, timers),
                                  this.newLinks(uriInfo),
@@ -231,7 +231,7 @@ public class AdminServices extends ServicesSupport {
 
       SzServerInfo serverInfo = newServerInfo(provider, activeConfigId);
 
-      return this.newGetServerInfoResponse(uriInfo, timers, serverInfo);
+      return this.newServerInfoResponse(uriInfo, timers, serverInfo);
 
     } catch (ServerErrorException e) {
       e.printStackTrace();
@@ -282,6 +282,8 @@ public class AdminServices extends ServicesSupport {
     serverInfo.setActiveConfigId(activeConfigId);
     serverInfo.setWebSocketsMessageMaxSize(
         provider.getWebSocketsMessageMaxSize());
+    serverInfo.setInfoQueueConfigured(
+        provider.hasInfoSink());
     return serverInfo;
   }
 
@@ -294,7 +296,7 @@ public class AdminServices extends ServicesSupport {
    * @param serverInfo The {@link SzServerInfo} for the response.
    * @return The {@link SzServerInfoResponse} with the specified parameters.
    */
-  protected SzServerInfoResponse newGetServerInfoResponse(
+  protected SzServerInfoResponse newServerInfoResponse(
       UriInfo       uriInfo,
       Timers        timers,
       SzServerInfo  serverInfo)

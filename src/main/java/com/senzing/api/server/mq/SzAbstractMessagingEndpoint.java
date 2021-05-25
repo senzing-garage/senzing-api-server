@@ -1,5 +1,6 @@
 package com.senzing.api.server.mq;
 
+import com.senzing.api.services.SzMessage;
 import com.senzing.api.services.SzMessageSink;
 
 import java.io.UnsupportedEncodingException;
@@ -14,6 +15,29 @@ import static com.senzing.io.IOUtilities.UTF_8;
 public abstract class SzAbstractMessagingEndpoint
     implements SzMessagingEndpoint
 {
+  /**
+   * Inner class to provide a facade that limits access to the instance of
+   * {@link SzMessagingEndpoint} to the {@link SzMessageSink} functions.
+   */
+  protected class SinkFacade implements SzMessageSink {
+    @Override
+    public void send(SzMessage message, FailureHandler onFailure)
+      throws Exception
+    {
+      SzAbstractMessagingEndpoint.this.send(message, onFailure);
+    }
+
+    @Override
+    public String getSinkType() {
+      return SzAbstractMessagingEndpoint.this.getSinkType();
+    }
+
+    @Override
+    public Integer getMessageCount() {
+      return SzAbstractMessagingEndpoint.this.getMessageCount();
+    }
+  }
+
   /**
    * The {@link SzMessageSink} that was acquired on the current thread.
    */
@@ -135,7 +159,7 @@ public abstract class SzAbstractMessagingEndpoint
    * @return The acquired {@link SzMessageSink}.
    */
   protected SzMessageSink doAcquireMessageSink() {
-    return (SzAbstractMessagingEndpoint.this::send);
+    return new SinkFacade();
   }
 
   /**
@@ -318,4 +342,13 @@ public abstract class SzAbstractMessagingEndpoint
    * @throws Exception If a failure occurs.
    */
   protected abstract void doClose() throws Exception;
+
+  /**
+   * Overridden to provide a default implementation that returns <tt>null</tt>.
+   * {@inheritDoc}
+   */
+  @Override
+  public Integer getMessageCount() {
+    return null;
+  }
 }

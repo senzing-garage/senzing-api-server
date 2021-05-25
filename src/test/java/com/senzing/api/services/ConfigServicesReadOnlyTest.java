@@ -68,7 +68,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
   {
     this.performTest(() -> {
       SzDataSource dataSource
-          = new SzDataSource("SHOULD_FAIL", 10000);
+          = SzDataSource.FACTORY.create("SHOULD_FAIL", 10000);
 
       String  relativeUri = "data-sources";
       String  uriText     = this.formatServerUri(relativeUri);
@@ -102,7 +102,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
   {
     this.performTest(() -> {
       SzDataSource dataSource
-          = new SzDataSource("SHOULD_FAIL", 10000);
+          = SzDataSource.FACTORY.create("SHOULD_FAIL", 10000);
 
       String  relativeUri = "data-sources";
       String  uriText     = this.formatServerUri(relativeUri);

@@ -44,6 +44,7 @@ public class SzLinksImpl implements SzLinks {
    *
    * @return The self link.
    */
+  @Override
   public String getSelf() {
     return self;
   }
@@ -53,6 +54,7 @@ public class SzLinksImpl implements SzLinks {
    *
    * @param self The self link.
    */
+  @Override
   public void setSelf(String self) {
     this.self = self;
   }

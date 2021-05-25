@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Describes a Senzing license.
  */
-@JsonDeserialize(using=com.senzing.api.model.SzLicenseInfo.Factory.class)
+@JsonDeserialize(using=SzLicenseInfo.Factory.class)
 public interface SzLicenseInfo {
   /**
    * Gets the customer string associated with the license.
@@ -181,7 +181,7 @@ public interface SzLicenseInfo {
      * the master instance.
      */
     public Factory() {
-      super();
+      super(SzLicenseInfo.class);
     }
 
     /**

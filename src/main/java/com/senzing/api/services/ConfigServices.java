@@ -22,7 +22,7 @@ import static com.senzing.api.model.SzHttpMethod.*;
  */
 @Produces("application/json; charset=UTF-8")
 @Path("/")
-public class ConfigServices extends ServicesSupport {
+public class ConfigServices implements ServicesSupport {
   /**
    * The maximum length for comments used when adding a config via the
    * {@link G2ConfigMgr#addConfig(String, String, Result)} function.
@@ -1259,7 +1259,7 @@ public class ConfigServices extends ServicesSupport {
   protected SzDataSource newDataSource(String   dataSourceCode,
                                        Integer  dataSourceId)
   {
-    return new SzDataSource(dataSourceCode, dataSourceId);
+    return SzDataSource.FACTORY.create(dataSourceCode, dataSourceId);
   }
 
   /**

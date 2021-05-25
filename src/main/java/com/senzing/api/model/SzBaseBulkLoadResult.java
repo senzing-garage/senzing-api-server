@@ -8,87 +8,41 @@ import java.util.List;
  * bulk data records either in entirety or by some aggregate group (e.g.: by
  * data source or entity type).
  */
-public abstract class SzBaseBulkLoadResult {
-  /**
-   * The total number of records.
-   */
-  private int recordCount;
-
-  /**
-   * The number of records that were successfully loaded.
-   */
-  private int loadedRecordCount;
-
-  /**
-   * The number of records that are incomplete.
-   */
-  private int incompleteRecordCount;
-
-  /**
-   * The number of records that failed to load.
-   */
-  private int failedRecordCount;
-
-  /**
-   * The tracker for instances of {@link SzBulkLoadError}.
-   */
-  private SzBulkLoadErrorTracker errorTracker;
-
-  /**
-   * Default constructor.
-   */
-  protected SzBaseBulkLoadResult() {
-    this.recordCount            = 0;
-    this.loadedRecordCount      = 0;
-    this.incompleteRecordCount  = 0;
-    this.failedRecordCount      = 0;
-    this.errorTracker           = new SzBulkLoadErrorTracker();
-  }
-
+public interface SzBaseBulkLoadResult {
   /**
    * Gets the total number of records.
    *
    * @return The total number of records.
    */
-  public int getRecordCount() {
-    return recordCount;
-  }
+  int getRecordCount();
 
   /**
    * Sets the total number of records.
    *
    * @param recordCount The total number of records.
    */
-  protected void setRecordCount(int recordCount) {
-    this.recordCount = recordCount;
-  }
+  void setRecordCount(int recordCount);
 
   /**
    * Increments the total number of records and returns the new count.
    *
    * @return The total number of records after incrementing.
    */
-  protected long incrementRecordCount() {
-    return ++this.recordCount;
-  }
+  long incrementRecordCount();
 
   /**
    * Gets the number of records that were successfully loaded.
    *
    * @return The number of records that were successfully loaded.
    */
-  public int getLoadedRecordCount() {
-    return this.loadedRecordCount;
-  }
+  int getLoadedRecordCount();
 
   /**
    * Sets the number of records that were successfully loaded.
    *
    * @param recordCount The number of records that were successfully loaded.
    */
-  protected void setLoadedRecordCount(int recordCount) {
-    this.loadedRecordCount = recordCount;
-  }
+  void setLoadedRecordCount(int recordCount);
 
   /**
    * Increments the number of records that were successfully loaded and
@@ -97,54 +51,42 @@ public abstract class SzBaseBulkLoadResult {
    * @return The number of records that were successfully loaded after
    *         incrementing.
    */
-  protected long incrementLoadedRecordCount() {
-    return ++this.loadedRecordCount;
-  }
+  long incrementLoadedRecordCount();
 
   /**
    * Return the number of records associated that are deemed incomplete.
    *
    * @return The number of records that are incomplete.
    */
-  public int getIncompleteRecordCount() {
-    return this.incompleteRecordCount;
-  }
+  int getIncompleteRecordCount();
 
   /**
    * Sets the number of records that are incomplete.
    *
    * @param recordCount The number of records that are incomplete.
    */
-  protected void setIncompleteRecordCount(int recordCount) {
-    this.incompleteRecordCount = recordCount;
-  }
+  void setIncompleteRecordCount(int recordCount);
 
   /**
    * Increments the number of records that are incomplete.
    *
    * @return The incremented incomplete record count.
    */
-  protected int incrementIncompleteRecordCount() {
-    return ++this.incompleteRecordCount;
-  }
+  int incrementIncompleteRecordCount();
 
   /**
    * Gets the number of records that failed to load.
    *
    * @return The number of records that failed to load.
    */
-  public int getFailedRecordCount() {
-    return this.failedRecordCount;
-  }
+  int getFailedRecordCount();
 
   /**
    * Sets the number of records that failed to load.
    *
    * @param recordCount The number of records that failed to load.
    */
-  protected void setFailedRecordCount(int recordCount) {
-    this.failedRecordCount = recordCount;
-  }
+  void setFailedRecordCount(int recordCount);
 
   /**
    * Tracks the specified error and increments the number of records failed
@@ -154,10 +96,7 @@ public abstract class SzBaseBulkLoadResult {
    *
    * @return The number of records that failed to load after incrementing.
    */
-  protected long trackFailedRecord(SzError error) {
-    this.errorTracker.trackError(error);
-    return ++this.failedRecordCount;
-  }
+  long trackFailedRecord(SzError error);
 
   /**
    * Gets the unmodifiable {@link List} of {@link SzBulkLoadError} instances
@@ -166,9 +105,7 @@ public abstract class SzBaseBulkLoadResult {
    * @return The {@link List} of {@link SzBulkLoadError} instances describing
    * the top errors.
    */
-  public List<SzBulkLoadError> getTopErrors() {
-    return this.errorTracker.getTopErrors();
-  }
+  List<SzBulkLoadError> getTopErrors();
 
   /**
    * Sets the {@link List} of {@link SzBulkLoadError} instances describing the
@@ -176,19 +113,6 @@ public abstract class SzBaseBulkLoadResult {
    *
    * @param errors The list of top errors.
    */
-  protected void setTopErrors(Collection<SzBulkLoadError> errors) {
-    this.errorTracker.setTopErrors(errors);
-  }
-
-  @Override
-  public String toString() {
-    return "SzAbstractBulkLoadResult{" +
-        "recordCount=" + this.getRecordCount() +
-        ", loadedRecordCount=" + this.getLoadedRecordCount() +
-        ", incompleteRecordCount=" + this.getIncompleteRecordCount() +
-        ", failedRecordCount=" + this.getFailedRecordCount() +
-        ", topErrors=[ " + this.getTopErrors() +
-        " ]}";
-  }
+  void setTopErrors(Collection<SzBulkLoadError> errors);
 }
 

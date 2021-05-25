@@ -1796,7 +1796,7 @@ public class RepositoryManager {
           continue;
         }
         StringBuffer sb = new StringBuffer();
-        SzDataSource dataSource = new SzDataSource(dataSourceCode);
+        SzDataSource dataSource = SzDataSource.FACTORY.create(dataSourceCode);
         returnCode = CONFIG_API.addDataSourceV2(
             configId.getValue(), dataSource.toNativeJson(), sb);
         if (returnCode != 0) {

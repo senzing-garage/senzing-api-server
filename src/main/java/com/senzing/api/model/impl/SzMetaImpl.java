@@ -18,6 +18,11 @@ import java.util.Map;
 @JsonDeserialize
 public class SzMetaImpl implements SzMeta {
   /**
+   * The description of the server / provider that produced the response.
+   */
+  private String server;
+
+  /**
    * The HTTP method that was executed.
    */
   private SzHttpMethod httpMethod;
@@ -81,7 +86,8 @@ public class SzMetaImpl implements SzMeta {
   /**
    * Default constructor for reconstructing from JSON.
    */
-  SzMetaImpl() {
+  protected SzMetaImpl() {
+    this.server         = null;
     this.httpMethod     = null;
     this.httpStatusCode = 0;
     this.timestamp      = null;
@@ -114,6 +120,7 @@ public class SzMetaImpl implements SzMeta {
       // ignore the exception
     }
     if (prov != null) {
+      this.server                     = prov.getDescription();
       this.nativeApiVersion           = prov.getNativeApiVersion();
       this.nativeApiBuildVersion      = prov.getNativeApiBuildVersion();
       this.nativeApiBuildNumber       = prov.getNativeApiBuildNumber();
@@ -121,6 +128,14 @@ public class SzMetaImpl implements SzMeta {
       this.configCompatibilityVersion = prov.getConfigCompatibilityVersion();
     }
   }
+
+  /**
+   * Gets the description of the server/provider that produced the response.
+   *
+   * @return The description of the server/provider that produced the response.
+   */
+  @Override
+  public String getServer() { return this.server; }
 
   /**
    * The HTTP method for the REST request.

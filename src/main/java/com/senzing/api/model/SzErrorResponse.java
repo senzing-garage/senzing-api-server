@@ -69,7 +69,8 @@ public class SzErrorResponse extends SzBasicResponse {
    */
   public SzErrorResponse(SzMeta meta, SzLinks links, String firstError)
   {
-    this(meta, links, firstError != null ? new SzError(firstError) : null);
+    this(meta, links,
+         firstError != null ? SzError.FACTORY.create(firstError) : null);
   }
 
   /**
@@ -86,7 +87,8 @@ public class SzErrorResponse extends SzBasicResponse {
                          SzLinks      links,
                          Throwable    firstError)
   {
-    this(meta, links, firstError != null ? new SzError(firstError) : null);
+    this(meta, links,
+         firstError != null ? SzError.FACTORY.create(firstError) : null);
   }
 
   /**
@@ -107,7 +109,7 @@ public class SzErrorResponse extends SzBasicResponse {
     this(meta,
          links,
          ((firstErrorFallible != null)
-             ? new SzError(firstErrorFallible) : null));
+             ? SzError.FACTORY.create(firstErrorFallible) : null));
   }
 
   /**

@@ -23,7 +23,7 @@ import static com.senzing.g2.engine.G2Engine.*;
  */
 @Path("/")
 @Produces("application/json; charset=UTF-8")
-public class EntityGraphServices extends ServicesSupport {
+public class EntityGraphServices implements ServicesSupport {
   /**
    * Implements the <tt>GET /entity-paths</tt> operation.
    *

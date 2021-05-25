@@ -23,6 +23,11 @@ import static com.senzing.io.IOUtilities.*;
  */
 public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
   /**
+   * The message sink type for RabbitMQ.  The value is {@value}.
+   */
+  public static final String RABBIT_SINK_TYPE = "RabbitMQ";
+
+  /**
    * The {@link Initiator} for the {@link RabbitEndpoint} class.
    */
   public static final Initiator INITIATOR = new RabbitInitiator();
@@ -147,6 +152,16 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
       } finally {
         CONTEXT_SINK.set(null);
       }
+    }
+
+    @Override
+    public String getSinkType() {
+      return RabbitEndpoint.this.getSinkType();
+    }
+
+    @Override
+    public Integer getMessageCount() {
+      return RabbitEndpoint.this.getMessageCount();
     }
   }
 
@@ -442,4 +457,12 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
     }
   }
 
+  /**
+   * Implemented to return {@link #RABBIT_SINK_TYPE}.
+   * {@inheritDoc}
+   */
+  @Override
+  public String getSinkType() {
+    return RABBIT_SINK_TYPE;
+  }
 }

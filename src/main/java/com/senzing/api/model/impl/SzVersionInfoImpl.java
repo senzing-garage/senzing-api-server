@@ -63,6 +63,7 @@ public class SzVersionInfoImpl implements SzVersionInfo {
    *
    * @return The version of the REST API Server implementation.
    */
+  @Override
   public String getApiServerVersion() {
     return this.apiServerVersion;
   }
@@ -83,6 +84,7 @@ public class SzVersionInfoImpl implements SzVersionInfo {
    *
    * @return The version of the REST API Specification that is implemented.
    */
+  @Override
   public String getRestApiVersion() {
     return this.restApiVersion;
   }
@@ -104,6 +106,7 @@ public class SzVersionInfoImpl implements SzVersionInfo {
    *
    * @return The version for the underlying runtime native Senzing API.
    */
+  @Override
   public String getNativeApiVersion() {
     return this.nativeApiVersion;
   }
@@ -114,6 +117,7 @@ public class SzVersionInfoImpl implements SzVersionInfo {
    * @param nativeApiVersion Sets the version for the underlying runtime
    *                         native Senzing API.
    */
+  @Override
   public void setNativeApiVersion(String nativeApiVersion) {
     this.nativeApiVersion = nativeApiVersion;
   }
@@ -123,6 +127,7 @@ public class SzVersionInfoImpl implements SzVersionInfo {
    *
    * @return The build version for the underlying runtime native Senzing API.
    */
+  @Override
   public String getNativeApiBuildVersion() {
     return this.nativeApiBuildVersion;
   }
@@ -133,6 +138,7 @@ public class SzVersionInfoImpl implements SzVersionInfo {
    * @param nativeApiBuildVersion The build version for the underlying runtime
    *                              native Senzing API.
    */
+  @Override
   public void setNativeApiBuildVersion(String nativeApiBuildVersion) {
     this.nativeApiBuildVersion = nativeApiBuildVersion;
   }
@@ -142,6 +148,7 @@ public class SzVersionInfoImpl implements SzVersionInfo {
    *
    * @return The build number for the underlying runtime native Senzing API.
    */
+  @Override
   public String getNativeApiBuildNumber() {
     return this.nativeApiBuildNumber;
   }
@@ -152,6 +159,7 @@ public class SzVersionInfoImpl implements SzVersionInfo {
    * @param nativeApiBuildNumber The build number for the underlying runtime
    *                             native Senzing API.
    */
+  @Override
   public void setNativeApiBuildNumber(String nativeApiBuildNumber) {
     this.nativeApiBuildNumber = nativeApiBuildNumber;
   }
@@ -161,6 +169,7 @@ public class SzVersionInfoImpl implements SzVersionInfo {
    *
    * @return The build date for the underlying runtime native Senzing API.
    */
+  @Override
   public Date getNativeApiBuildDate() {
     return this.nativeApiBuildDate;
   }
@@ -171,6 +180,7 @@ public class SzVersionInfoImpl implements SzVersionInfo {
    * @param nativeApiBuildDate The build date for the underlying runtime
    *                           native Senzing API.
    */
+  @Override
   public void setNativeApiBuildDate(Date nativeApiBuildDate) {
     this.nativeApiBuildDate = nativeApiBuildDate;
   }
@@ -182,6 +192,7 @@ public class SzVersionInfoImpl implements SzVersionInfo {
    * @return The configuration compatibility version for the underlying runtime
    *         native Senzing API.
    */
+  @Override
   public String getConfigCompatibilityVersion() {
     return this.configCompatibilityVersion;
   }
@@ -194,6 +205,7 @@ public class SzVersionInfoImpl implements SzVersionInfo {
    *                                   for the underlying runtime native
    *                                   Senzing API.
    */
+  @Override
   public void setConfigCompatibilityVersion(String configCompatibilityVersion) {
     this.configCompatibilityVersion = configCompatibilityVersion;
   }

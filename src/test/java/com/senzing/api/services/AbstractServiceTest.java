@@ -565,7 +565,7 @@ public abstract class AbstractServiceTest {
       for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
         String  dataSourceCode  = jsonObject.getString("DSRC_CODE");
         int     dataSourceId    = jsonObject.getInt("DSRC_ID");
-        SzDataSource dataSource = new SzDataSource(dataSourceCode, dataSourceId);
+        SzDataSource dataSource = SzDataSource.FACTORY.create(dataSourceCode, dataSourceId);
         dataSourceMap.put(dataSource.getDataSourceCode(), dataSource);
       }
     }

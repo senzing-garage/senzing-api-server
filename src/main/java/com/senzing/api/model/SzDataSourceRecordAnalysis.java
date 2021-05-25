@@ -1,70 +1,27 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzDataSourceRecordAnalysisImpl;
+
 /**
  * Describes an analysis of bulk data records associated with a specific
  * data source (or no data source at all).
  */
-public class SzDataSourceRecordAnalysis {
-  /**
-   * The associated data source or <tt>null</tt>.
-   */
-  private String dataSource;
-
-  /**
-   * The number of records with the associated data source.
-   */
-  private int recordCount;
-
-  /**
-   * The number of records with the associated data source that have a
-   * <tt>"RECORD_ID"</tt> specified.
-   */
-  private int recordIdCount;
-
-  /**
-   * The number of records with the associated data source that have an
-   * <tt>"ENTITY_TYPE"</tt> specified.
-   */
-  private int entityTypeCount;
-
-  /**
-   * Default constructor that constructs with a <tt>null</tt> data source.
-   */
-  public SzDataSourceRecordAnalysis() {
-    this(null);
-  }
-
-  /**
-   * Constructs with the specified data source.
-   *
-   * @param dataSource The data source or <tt>null</tt> if the constructed
-   *                   instance is associated with those records that have
-   *                   no data source.
-   */
-  public SzDataSourceRecordAnalysis(String dataSource) {
-    this.dataSource       = dataSource;
-    this.recordCount      = 0;
-    this.recordIdCount    = 0;
-    this.entityTypeCount  = 0;
-  }
-
+@JsonDeserialize(using=SzDataSourceRecordAnalysis.Factory.class)
+public interface SzDataSourceRecordAnalysis {
   /**
    * Returns the data source with which this instance was constructed.
    *
    * @return The data source with which this instance was constructed.
    */
-  public String getDataSource() {
-    return dataSource;
-  }
+  String getDataSource();
 
   /**
    * Gets the number of records that have the associated data source.
    *
    * @return The number of records that have the associated data source.
    */
-  public int getRecordCount() {
-    return recordCount;
-  }
+  int getRecordCount();
 
   /**
    * Sets the number of records that have the associated data source.
@@ -72,9 +29,7 @@ public class SzDataSourceRecordAnalysis {
    * @param recordCount The number of records that have the associated
    *                    data source.
    */
-  void setRecordCount(int recordCount) {
-    this.recordCount = recordCount;
-  }
+  void setRecordCount(int recordCount);
 
   /**
    * Increments the number of records that have the associated data source
@@ -82,9 +37,7 @@ public class SzDataSourceRecordAnalysis {
    *
    * @return The new count after incrementing.
    */
-  long incrementRecordCount() {
-    return ++this.recordCount;
-  }
+  long incrementRecordCount();
 
   /**
    * Increments the number of records that have the associated data source
@@ -94,10 +47,7 @@ public class SzDataSourceRecordAnalysis {
    *
    * @return The new count after incrementing.
    */
-  long incrementRecordCount(int increment) {
-    this.recordCount += increment;
-    return this.recordCount;
-  }
+  long incrementRecordCount(int increment);
 
   /**
    * Gets the number of records that have the associated data source and also
@@ -106,9 +56,7 @@ public class SzDataSourceRecordAnalysis {
    * @return The number of records that have the associated data source and
    *         also have a <tt>"RECORD_ID"</tt>.
    */
-  public int getRecordsWithRecordIdCount() {
-    return recordIdCount;
-  }
+  int getRecordsWithRecordIdCount();
 
   /**
    * Sets the number of records that have the associated data source and also
@@ -117,9 +65,7 @@ public class SzDataSourceRecordAnalysis {
    * @param recordIdCount The number of records that have the associated
    *                      data source and also have a <tt>"RECORD_ID"</tt>.
    */
-  void setRecordsWithRecordIdCount(int recordIdCount) {
-    this.recordIdCount = recordIdCount;
-  }
+  void setRecordsWithRecordIdCount(int recordIdCount);
 
   /**
    * Increments the number of records that have the associated data source
@@ -127,9 +73,7 @@ public class SzDataSourceRecordAnalysis {
    *
    * @return The new count after incrementing.
    */
-  int incrementRecordsWithRecordIdCount() {
-    return ++this.recordIdCount;
-  }
+  int incrementRecordsWithRecordIdCount();
 
   /**
    * Increments the number of records that have the associated data source
@@ -139,10 +83,7 @@ public class SzDataSourceRecordAnalysis {
    *
    * @return The new count after incrementing.
    */
-  int incrementRecordsWithRecordIdCount(int increment) {
-    this.recordIdCount += increment;
-    return this.recordIdCount;
-  }
+  int incrementRecordsWithRecordIdCount(int increment);
 
   /**
    * Gets the number of records that have the associated data source and also
@@ -151,9 +92,7 @@ public class SzDataSourceRecordAnalysis {
    * @return The number of records that have the associated data source and
    *         also have an <tt>"ENTITY_TYPE"</tt>.
    */
-  public int getRecordsWithEntityTypeCount() {
-    return this.entityTypeCount;
-  }
+  int getRecordsWithEntityTypeCount();
 
   /**
    * Sets the number of records that have the associated data source and also
@@ -162,9 +101,7 @@ public class SzDataSourceRecordAnalysis {
    * @param entityTypeCount The number of records that have the associated data
    *                        source and also have an <tt>"ENTITY_TYPE"</tt>.
    */
-  void setRecordsWithEntityTypeCount(int entityTypeCount) {
-    this.entityTypeCount = entityTypeCount;
-  }
+  void setRecordsWithEntityTypeCount(int entityTypeCount);
 
   /**
    * Increments the number of records that have the associated data source
@@ -172,9 +109,7 @@ public class SzDataSourceRecordAnalysis {
    *
    * @return The new count after incrementing.
    */
-  int incrementRecordsWithEntityTypeCount() {
-    return ++this.entityTypeCount;
-  }
+  int incrementRecordsWithEntityTypeCount();
 
   /**
    * Increments the number of records that have the associated data source
@@ -184,19 +119,81 @@ public class SzDataSourceRecordAnalysis {
    *
    * @return The new count after incrementing.
    */
-  int incrementRecordsWithEntityTypeCount(int increment) {
-    this.entityTypeCount += increment;
-    return this.entityTypeCount;
+  int incrementRecordsWithEntityTypeCount(int increment);
+
+    /**
+   * A {@link ModelProvider} for instances of {@link
+   * SzDataSourceRecordAnalysis}.
+   */
+  interface Provider extends ModelProvider<SzDataSourceRecordAnalysis> {
+    /**
+     * Creates a new instance of {@link SzDataSourceRecordAnalysis}.
+     * @param dataSource The data source code for the new instance.
+     * @return The new instance of {@link SzDataSourceRecordAnalysis}
+     */
+    SzDataSourceRecordAnalysis create(String dataSource);
   }
 
-  @Override
-  public String toString() {
-    return "SzDataSourceRecordAnalysis{" +
-        "dataSource='" + dataSource + '\'' +
-        ", recordCount=" + recordCount +
-        ", recordIdCount=" + recordIdCount +
-        ", entityTypeCount=" + entityTypeCount +
-        '}';
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzDataSourceRecordAnalysis} that produces instances of {@link
+   * SzDataSourceRecordAnalysisImpl}.
+   */
+  class DefaultProvider
+      extends AbstractModelProvider<SzDataSourceRecordAnalysis>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzDataSourceRecordAnalysis.class,
+            SzDataSourceRecordAnalysisImpl.class);
+    }
+
+    @Override
+    public SzDataSourceRecordAnalysis create(String dataSource) {
+      return new SzDataSourceRecordAnalysisImpl(dataSource);
+    }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link
+   * SzDataSourceRecordAnalysis}.
+   */
+  class Factory extends ModelFactory<SzDataSourceRecordAnalysis, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzDataSourceRecordAnalysis.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzDataSourceRecordAnalysis}.
+     * @param dataSource The data source code for the new instance.
+     * @return The new instance of {@link SzDataSourceRecordAnalysis}.
+     */
+    public SzDataSourceRecordAnalysis create(String dataSource)
+    {
+      return this.getProvider().create(dataSource);
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 }
 

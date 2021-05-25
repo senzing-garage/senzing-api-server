@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzCandidateKeyImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -10,84 +12,118 @@ import java.util.List;
 /**
  * Describes a candidate key that triggered the scoring of two entities.
  */
-public class SzCandidateKey {
-  /**
-   * The identifier for the candidate feature.
-   */
-  private Long featureId;
-
-  /**
-   * The feature type for the candidate feature.
-   */
-  private String featureType;
-
-  /**
-   * The feature value for the candidate feature.
-   */
-  private String featureValue;
-
-  /**
-   * Default constructor.
-   */
-  public SzCandidateKey() {
-    this.featureId    = null;
-    this.featureType  = null;
-    this.featureValue = null;
-  }
-
+@JsonDeserialize(using=SzCandidateKey.Factory.class)
+public interface SzCandidateKey {
   /**
    * Gets the identifier for the candidate feature.
    *
    * @return The identifier for the candidate feature.
    */
-  public Long getFeatureId() {
-    return featureId;
-  }
+  Long getFeatureId();
 
   /**
    * Sets the identifier for the candidate feature.
    *
    * @param featureId The identifier for the candidate feature.
    */
-  public void setFeatureId(Long featureId) {
-    this.featureId = featureId;
-  }
+  void setFeatureId(Long featureId);
 
   /**
    * Gets the feature type for the candidate feature.
    *
    * @return The feature type for the candidate feature.
    */
-  public String getFeatureType() {
-    return featureType;
-  }
+  String getFeatureType();
 
   /**
    * Sets the feature type for the candidate feature.
    *
    * @param featureType The feature type for the candidate feature.
    */
-  public void setFeatureType(String featureType) {
-    this.featureType = featureType;
-  }
+  void setFeatureType(String featureType);
 
   /**
    * Gets the feature value for the candidate feature.
    *
    * @return The feature value for the candidate feature.
    */
-  public String getFeatureValue() {
-    return featureValue;
-  }
+  String getFeatureValue();
 
   /**
    * Sets the feature value for the candidate feature.
    *
    * @param featureValue The feature value for the candidate feature.
    */
-  public void setFeatureValue(String featureValue) {
-    this.featureValue = featureValue;
+  void setFeatureValue(String featureValue);
+
+    /**
+   * A {@link ModelProvider} for instances of {@link SzCandidateKey}.
+   */
+  interface Provider extends ModelProvider<SzCandidateKey> {
+    /**
+     * Creates a new instance of {@link SzCandidateKey}.
+     *
+     * @return The new instance of {@link SzCandidateKey}
+     */
+    SzCandidateKey create();
   }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzCandidateKey} that produces instances of {@link SzCandidateKeyImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzCandidateKey>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzCandidateKey.class, SzCandidateKeyImpl.class);
+    }
+
+    @Override
+    public SzCandidateKey create() {
+      return new SzCandidateKeyImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link SzCandidateKey}.
+   */
+  class Factory extends ModelFactory<SzCandidateKey, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzCandidateKey.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzCandidateKey}.
+     * @return The new instance of {@link SzCandidateKey}.
+     */
+    public SzCandidateKey create()
+    {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the {@link SzCandidateKey} from a {@link JsonObject} describing JSON
@@ -100,13 +136,13 @@ public class SzCandidateKey {
    *
    * @return The {@link SzCandidateKey} that was created.
    */
-  public static SzCandidateKey parseCandidateKey(JsonObject jsonObject,
-                                                 String     featureType)
+  static SzCandidateKey parseCandidateKey(JsonObject  jsonObject,
+                                          String      featureType)
   {
     Long    featureId     = JsonUtils.getLong(jsonObject, "FEAT_ID");
     String  featureValue  = JsonUtils.getString(jsonObject, "FEAT_DESC");
 
-    SzCandidateKey result = new SzCandidateKey();
+    SzCandidateKey result = SzCandidateKey.FACTORY.create();
 
     result.setFeatureId(featureId);
     result.setFeatureType(featureType);
@@ -129,9 +165,8 @@ public class SzCandidateKey {
    * @return The {@link List} of {@link SzCandidateKey} instances that were
    *         populated.
    */
-  public static List<SzCandidateKey> parseCandidateKeyList(
-      JsonArray   jsonArray,
-      String      featureType)
+  static List<SzCandidateKey> parseCandidateKeyList(JsonArray jsonArray,
+                                                    String    featureType)
   {
     return parseCandidateKeyList(null, jsonArray, featureType);
   }
@@ -153,7 +188,7 @@ public class SzCandidateKey {
    * @return The {@link List} of {@link SzCandidateKey} instances that were
    *         populated.
    */
-  public static List<SzCandidateKey> parseCandidateKeyList(
+  static List<SzCandidateKey> parseCandidateKeyList(
       List<SzCandidateKey>  list,
       JsonArray             jsonArray,
       String                featureType)
@@ -168,5 +203,4 @@ public class SzCandidateKey {
 
     return list;
   }
-
 }

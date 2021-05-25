@@ -43,6 +43,11 @@ public class SzServerInfoImpl implements SzServerInfo  {
   private int webSocketsMessageMaxSize;
 
   /**
+   * Whether or not an asynchronous INFO queue has been configured.
+   */
+  private boolean infoQueueConfigured;
+
+  /**
    * Default constructor.
    */
   public SzServerInfoImpl() {
@@ -52,6 +57,7 @@ public class SzServerInfoImpl implements SzServerInfo  {
     this.readOnly                 = false;
     this.adminEnabled             = false;
     this.webSocketsMessageMaxSize = 0;
+    this.infoQueueConfigured      = false;
   }
 
   /**
@@ -59,6 +65,7 @@ public class SzServerInfoImpl implements SzServerInfo  {
    *
    * @return The number of Senzing worker threads pooled for handling requests.
    */
+  @Override
   public int getConcurrency() {
     return this.concurrency;
   }
@@ -69,6 +76,7 @@ public class SzServerInfoImpl implements SzServerInfo  {
    * @param concurrency The number of Senzing worker threads pooled for
    *                    handling requests.
    */
+  @Override
   public void setConcurrency(int concurrency) {
     this.concurrency = concurrency;
   }
@@ -80,6 +88,7 @@ public class SzServerInfoImpl implements SzServerInfo  {
    *
    * @return The active configuration ID being used b the API server.
    */
+  @Override
   public long getActiveConfigId() {
     return this.activeConfigId;
   }
@@ -92,6 +101,7 @@ public class SzServerInfoImpl implements SzServerInfo  {
    * @param activeConfigId The active configuration ID being used by the
    *                       API server.
    */
+  @Override
   public void setActiveConfigId(long activeConfigId) {
     this.activeConfigId = activeConfigId;
   }
@@ -104,6 +114,7 @@ public class SzServerInfoImpl implements SzServerInfo  {
    *         default configuration if it changes, and <tt>false</tt> if the
    *         configuration is static and the server will not recognize changes.
    */
+  @Override
   public boolean isDynamicConfig() {
     return this.dynamicConfig;
   }
@@ -117,6 +128,7 @@ public class SzServerInfoImpl implements SzServerInfo  {
    *                      <tt>false</tt> if the configuration is static and the
    *                      server will not recognize changes.
    */
+  @Override
   public void setDynamicConfig(boolean dynamicConfig) {
     this.dynamicConfig = dynamicConfig;
   }
@@ -129,6 +141,7 @@ public class SzServerInfoImpl implements SzServerInfo  {
    * @return <tt>true</tt> if the server was started in read-only mode,
    *         and <tt>false</tt> if write operations are allowed.
    */
+  @Override
   public boolean isReadOnly() {
     return this.readOnly;
   }
@@ -141,6 +154,7 @@ public class SzServerInfoImpl implements SzServerInfo  {
    * @param readOnly <tt>true</tt> if the server was started in read-only mode,
    *                 and <tt>false</tt> if write operations are allowed.
    */
+  @Override
   public void setReadOnly(boolean readOnly) {
     this.readOnly = readOnly;
   }
@@ -152,6 +166,7 @@ public class SzServerInfoImpl implements SzServerInfo  {
    * @return <tt>true</tt> if admin features are enabled, otherwise
    *         <tt>false</tt>.
    */
+  @Override
   public boolean isAdminEnabled() {
     return this.adminEnabled;
   }
@@ -163,6 +178,7 @@ public class SzServerInfoImpl implements SzServerInfo  {
    * @param adminEnabled <tt>true</tt> if admin features are enabled, otherwise
    *                     <tt>false</tt>.
    */
+  @Override
   public void setAdminEnabled(boolean adminEnabled) {
     this.adminEnabled = adminEnabled;
   }
@@ -174,6 +190,7 @@ public class SzServerInfoImpl implements SzServerInfo  {
    * @return The maximum number of bytes for both text and binary web sockets
    *         messages.
    */
+  @Override
   public int getWebSocketsMessageMaxSize() {
     return this.webSocketsMessageMaxSize;
   }
@@ -185,7 +202,33 @@ public class SzServerInfoImpl implements SzServerInfo  {
    * @param webSocketsMessageMaxSize The maximum number of bytes for both text
    *                                 and binary web sockets messages.
    */
+  @Override
   public void setWebSocketsMessageMaxSize(int webSocketsMessageMaxSize) {
     this.webSocketsMessageMaxSize = webSocketsMessageMaxSize;
   }
+
+  /**
+   * Checks if an asynchronous INFO queue has been configured for load,
+   * reevaluate and delete operations.
+   *
+   * @return <tt>true</tt> if an asynchronous INFO queue has been configured,
+   *         otherwise <tt>false</tt>.
+   */
+  @Override
+  public boolean isInfoQueueConfigured() {
+    return this.infoQueueConfigured;
+  }
+
+  /**
+   * Sets whether or not an asynchronous INFO queue has been configured for
+   * load, reevaluate and delete operations.
+   *
+   * @param configured <tt>true</tt> if an asynchronous INFO queue has been
+   *                   configured, and <tt>false</tt> if not.
+   */
+  @Override
+  public void setInfoQueueConfigured(boolean configured) {
+    this.infoQueueConfigured = configured;
+  }
+
 }
