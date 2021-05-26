@@ -25,7 +25,16 @@ import static com.senzing.api.model.SzHttpMethod.*;
 @Produces("application/json; charset=UTF-8")
 public class AdminServices implements ServicesSupport {
   /**
-   * Generates a heartbeat response to affirnm the provider is running.
+   * Generates a root-level response -- similar to heartbeat.
+   */
+  @GET
+  @Path("")
+  public SzBasicResponse root(@Context UriInfo uriInfo) {
+    return this.heartbeat(uriInfo);
+  }
+
+  /**
+   * Generates a heartbeat response to affirm the provider is running.
    */
   @GET
   @Path("heartbeat")
@@ -33,7 +42,6 @@ public class AdminServices implements ServicesSupport {
     Timers timers = this.newTimers();
     return newBasicResponse(uriInfo, timers);
   }
-
   /**
    * Creates a new response to the <tt>GET /heartbeat</tt> operation.
    *
