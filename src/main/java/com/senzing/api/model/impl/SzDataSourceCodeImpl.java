@@ -1,5 +1,6 @@
 package com.senzing.api.model.impl;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.SzDataSourceBulkLoadResult;
 import com.senzing.api.model.SzDataSourceCode;
 
@@ -8,6 +9,7 @@ import java.util.Objects;
 /**
  * Provides a default implementation of {@link SzDataSourceCode}
  */
+@JsonDeserialize
 public class SzDataSourceCodeImpl implements SzDataSourceCode {
   /**
    * The data source code that identifiers the data source.
