@@ -28,8 +28,8 @@ public abstract class SzAbstractMessagingEndpoint
     }
 
     @Override
-    public String getSinkType() {
-      return SzAbstractMessagingEndpoint.this.getSinkType();
+    public String getProviderType() {
+      return SzAbstractMessagingEndpoint.this.getProviderType();
     }
 
     @Override

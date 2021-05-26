@@ -39,11 +39,11 @@ public interface SzMessageSink {
       throws Exception;
 
   /**
-   * Gets a {@link String} describing the type of the queue.
+   * Gets a {@link String} describing the provider for the queue.
    *
-   * @return A {@link String} describing the type of the queue.
+   * @return A {@link String} describing the provider for the queue.
    */
-  String getSinkType();
+  String getProviderType();
 
   /**
    * Gets the (likely approximate) number of messages currently on the {@link

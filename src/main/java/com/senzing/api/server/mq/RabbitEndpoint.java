@@ -155,8 +155,8 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
     }
 
     @Override
-    public String getSinkType() {
-      return RabbitEndpoint.this.getSinkType();
+    public String getProviderType() {
+      return RabbitEndpoint.this.getProviderType();
     }
 
     @Override
@@ -462,7 +462,7 @@ public class RabbitEndpoint extends SzAbstractMessagingEndpoint {
    * {@inheritDoc}
    */
   @Override
-  public String getSinkType() {
+  public String getProviderType() {
     return RABBIT_SINK_TYPE;
   }
 }

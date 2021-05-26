@@ -206,7 +206,7 @@ public class SqsEndpoint extends SzAbstractMessagingEndpoint {
    * {@inheritDoc}
    */
   @Override
-  public String getSinkType() {
+  public String getProviderType() {
     return SQS_SINK_TYPE;
   }
 

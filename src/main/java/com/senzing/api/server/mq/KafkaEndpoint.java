@@ -213,7 +213,7 @@ public class KafkaEndpoint extends SzAbstractMessagingEndpoint {
    * {@inheritDoc}
    */
   @Override
-  public String getSinkType() {
+  public String getProviderType() {
     return KAFKA_SINK_TYPE;
   }
 

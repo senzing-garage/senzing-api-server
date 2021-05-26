@@ -187,6 +187,9 @@ public interface SzMeta {
      * @param httpMethod     The HTTP method with which to construct.
      * @param httpStatusCode The HTTP response code.
      * @param timers         The {@link Timers} instance that tracked timing.
+     *
+     * @return A new instance of {@link SzMeta} created with the specified
+     *         parameters.
      */
     public SzMeta create(SzHttpMethod httpMethod,
                          int httpStatusCode,
