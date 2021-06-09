@@ -323,6 +323,7 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
         {
           // check if there was a failure
           if (next instanceof Throwable) {
+            ((Throwable)next).printStackTrace();
             fail((Throwable) next);
           }
 

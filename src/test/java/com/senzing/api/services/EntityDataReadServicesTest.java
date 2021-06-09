@@ -156,13 +156,13 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
     String[][] passengers = {
         {ABC123.getRecordId(), "Joe", "Schmoe", "702-555-1212",
-            "101 Main Street, Las Vegas, NV 89101", "12-JAN-1981"},
+            "101 Main Street, Las Vegas, NV 89101", "1981-01-12"},
         {DEF456.getRecordId(), "Joanne", "Smith", "212-555-1212",
-            "101 Fifth Ave, Las Vegas, NV 10018", "15-MAY-1983"},
+            "101 Fifth Ave, Las Vegas, NV 10018", "1983-05-15"},
         {GHI789.getRecordId(), "John", "Doe", "818-555-1313",
-            "100 Main Street, Los Angeles, CA 90012", "17-OCT-1978"},
+            "100 Main Street, Los Angeles, CA 90012", "1978-10-17"},
         {JKL012.getRecordId(), "Jane", "Doe", "818-555-1212",
-            "100 Main Street, Los Angeles, CA 90012", "5-FEB-1979"}
+            "100 Main Street, Los Angeles, CA 90012", "1979-02-05"}
     };
     return this.prepareCSVFile("test-passengers-", headers, passengers);
   }
@@ -174,16 +174,16 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
     String[][] employees = {
         {MNO345.getRecordId(), "Joseph", "Schmoe", "702-555-1212",
-            "101 Main Street, Las Vegas, NV 89101", "12-JAN-1981", "WILSON",
+            "101 Main Street, Las Vegas, NV 89101", "1981-01-12", "WILSON",
             "145-45-9866"},
         {PQR678.getRecordId(), "Jo Anne", "Smith", "212-555-1212",
-            "101 Fifth Ave, Las Vegas, NV 10018", "15-MAY-1983", "JACOBS",
+            "101 Fifth Ave, Las Vegas, NV 10018", "1983-05-15", "JACOBS",
             "213-98-9374"},
         {ZYX321.getRecordId(), "Mark", "Hightower", "563-927-2833",
-            "1882 Meadows Lane, Las Vegas, NV 89125", "22-JUN-1981", "JENKINS",
+            "1882 Meadows Lane, Las Vegas, NV 89125", "1981-06-22", "JENKINS",
             "873-22-4213"},
         {CBA654.getRecordId(), "Mark", "Hightower", "781-332-2824",
-            "2121 Roscoe Blvd, Los Angeles, CA 90232", "09-SEP-1980", "BROOKS",
+            "2121 Roscoe Blvd, Los Angeles, CA 90232", "1980-09-09", "BROOKS",
             "827-27-4829"}
     };
 
@@ -197,9 +197,9 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
     String[][] vips = {
         {STU901.getRecordId(), "John", "Doe", "818-555-1313",
-            "100 Main Street, Los Angeles, CA 90012", "17-OCT-1978", "GREEN"},
+            "100 Main Street, Los Angeles, CA 90012", "1978-10-17", "GREEN"},
         {XYZ234.getRecordId(), "Jane", "Doe", "818-555-1212",
-            "100 Main Street, Los Angeles, CA 90012", "5-FEB-1979", "GRAHAM"}
+            "100 Main Street, Los Angeles, CA 90012", "1979-02-05", "GRAHAM"}
     };
 
     return this.prepareJsonFile("test-vips-", headers, vips);
@@ -213,20 +213,20 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
     String[][] spouses = {
         {BCD123.getRecordId(), "Bruce Wayne", "Batman", "201-765-3451",
-            "101 Wayne Manor Rd; Gotham City, NJ 07017", "05-JUN-2008",
-            "08-SEP-1971", "M", "SPOUSE", "HUSBAND",
+            "101 Wayne Manor Rd; Gotham City, NJ 07017", "2008-06-05",
+            "1971-09-08", "M", "SPOUSE", "HUSBAND",
             relationshipKey(BCD123, CDE456)},
         {CDE456.getRecordId(), "Selina Kyle", "Catwoman", "201-875-2314",
-            "101 Wayne Manor Rd; Gotham City, NJ 07017", "05-JUN-2008",
-            "05-DEC-1981", "F", "SPOUSE", "WIFE",
+            "101 Wayne Manor Rd; Gotham City, NJ 07017", "2008-06-05",
+            "1981-12-05", "F", "SPOUSE", "WIFE",
             relationshipKey(BCD123, CDE456)},
         {EFG789.getRecordId(), "Barry Allen", "The Flash", "330-982-2133",
-            "1201 Main Street; Star City, OH 44308", "07-NOV-2014",
-            "04-MAR-1986", "M", "SPOUSE", "HUSBAND",
+            "1201 Main Street; Star City, OH 44308", "2014-11-07",
+            "1986-03-04", "M", "SPOUSE", "HUSBAND",
             relationshipKey(EFG789, FGH012)},
         {FGH012.getRecordId(), "Iris West-Allen", "", "330-675-1231",
-            "1201 Main Street; Star City, OH 44308", "07-NOV-2014",
-            "14-MAY-1986", "F", "SPOUSE", "WIFE",
+            "1201 Main Street; Star City, OH 44308", "2014-11-07",
+            "1986-05-14", "F", "SPOUSE", "WIFE",
             relationshipKey(EFG789, FGH012)}
     };
 
@@ -268,7 +268,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("101 Main Street, Las Vegas, NV 89101"),
           Collections.singleton("702-555-1212"),
           null,
-          Collections.singleton("DOB: 12-JAN-1981"),
+          Collections.singleton("DOB: 1981-01-12"),
           null,
           null,
           after - before,
@@ -301,7 +301,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("101 Fifth Ave, Las Vegas, NV 10018"),
           Collections.singleton("212-555-1212"),
           null,
-          Collections.singleton("DOB: 15-MAY-1983"),
+          Collections.singleton("DOB: 1983-05-15"),
           null,
           null,
           after - before,
@@ -335,7 +335,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("100 Main Street, Los Angeles, CA 90012"),
           Collections.singleton("818-555-1313"),
           null,
-          Collections.singleton("DOB: 17-OCT-1978"),
+          Collections.singleton("DOB: 1978-10-17"),
           null,
           null,
           after - before,
@@ -369,7 +369,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("100 Main Street, Los Angeles, CA 90012"),
           Collections.singleton("818-555-1212"),
           null,
-          Collections.singleton("DOB: 5-FEB-1979"),
+          Collections.singleton("DOB: 1979-02-05"),
           null,
           null,
           after - before,
@@ -403,7 +403,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("101 Main Street, Las Vegas, NV 89101"),
           Collections.singleton("702-555-1212"),
           null,
-          Collections.singleton("DOB: 12-JAN-1981"),
+          Collections.singleton("DOB: 1981-01-12"),
           null,
           Collections.singleton("MOTHERS_MAIDEN_NAME: WILSON"),
           after - before,
@@ -437,7 +437,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("101 Fifth Ave, Las Vegas, NV 10018"),
           Collections.singleton("212-555-1212"),
           null,
-          Collections.singleton("DOB: 15-MAY-1983"),
+          Collections.singleton("DOB: 1983-05-15"),
           null,
           Collections.singleton("MOTHERS_MAIDEN_NAME: JACOBS"),
           after - before,
@@ -478,7 +478,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("101 Fifth Ave, Las Vegas, NV 10018"),
           Collections.singleton("212-555-1212"),
           null,
-          Collections.singleton("DOB: 15-MAY-1983"),
+          Collections.singleton("DOB: 1983-05-15"),
           null,
           null,
           after - before,
@@ -512,7 +512,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("101 Wayne Manor Rd; Gotham City, NJ 07017"),
           Collections.singleton("201-765-3451"),
           null,
-          set("DOB: 08-SEP-1971", "GENDER: M"),
+          set("DOB: 1971-09-08", "GENDER: M"),
           Collections.singleton("REL_LINK: HUSBAND: SPOUSE " + relKey),
           null,
           after - before,
@@ -546,7 +546,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           Collections.singleton("101 Wayne Manor Rd; Gotham City, NJ 07017"),
           Collections.singleton("201-875-2314"),
           null,
-          set("DOB: 05-DEC-1981", "GENDER: F"),
+          set("DOB: 1981-12-05", "GENDER: F"),
           Collections.singleton("REL_LINK: WIFE: SPOUSE " + relKey),
           null,
           after - before,
@@ -1901,14 +1901,14 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "Mark Hightower"),
-                 criterion("DATE_OF_BIRTH", "22-MAR-1981")),
+                 criterion("DATE_OF_BIRTH", "1981-03-22")),
         sortedMap(Map.of(POSSIBLE_MATCH, 1)));
 
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "Mark Hightower"),
                  criterion("PHONE_NUMBER", "563-927-2833"),
                  criterion("PHONE_NUMBER", "781-332-2824"),
-                 criterion("DATE_OF_BIRTH", "22-JUN-1981")),
+                 criterion("DATE_OF_BIRTH", "1981-06-22")),
         sortedMap(Map.of(MATCH, 1, POSSIBLE_MATCH, 1)));
 
     List<Arguments> list = new LinkedList<>();
