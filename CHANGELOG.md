@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Modified auto tests to accommodate forth-coming changes in Senzing v2.7.0
 - Added new cached auto-test data for versions 2.0.0 through 2.7.0
+- Updated Jetty dependencies for security patch
 
 ## [2.6.0] - 2021-04-23
 
