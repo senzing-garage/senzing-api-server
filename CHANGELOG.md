@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.1] - 2021-06-09
+
+### Changed in 2.6.1
+
+- Modified auto tests to accommodate forth-coming changes in Senzing v2.7.0
+- Added new cached auto-test data for versions 2.0.0 through 2.7.0
+- Updated Jetty dependencies for security patch
+
 ## [2.6.0] - 2021-04-23
 
 ### Changed in 2.6.0
