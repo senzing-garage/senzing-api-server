@@ -161,10 +161,10 @@ public class SzEntityTypeDescriptors {
    *         {@link List} of {@link SzEntityTypeDescriptor} instances.
    */
   public static SzEntityTypeDescriptors valueOf(String text) {
-    text = text.trim();
-    int               length  = text.length();
-    char              first   = text.charAt(0);
-    char              last    = text.charAt(length-1);
+    if (text != null) text = text.trim();
+    int               length  = (text == null) ? 0 : text.length();
+    char              first   = (length > 0) ? 0 : text.charAt(0);
+    char              last    = (length > 1) ? 0 : text.charAt(length-1);
 
     // check if no descriptors
     if (length == 0) {
@@ -226,7 +226,8 @@ public class SzEntityTypeDescriptors {
       SzEntityTypeDescriptor descriptor;
       switch (vt) {
         case STRING:
-          descriptor = new SzEntityTypeCode(((JsonString) value).getString());
+          descriptor = SzEntityTypeCode.FACTORY.create(
+              ((JsonString) value).getString());
           break;
 
         case OBJECT:

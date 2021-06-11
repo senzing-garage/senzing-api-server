@@ -1,5 +1,6 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzDataSourceCodeImpl;
 
 import javax.json.JsonObjectBuilder;
@@ -7,6 +8,7 @@ import javax.json.JsonObjectBuilder;
 /**
  * Describes a data source code to identify an data source.
  */
+@JsonDeserialize(using=SzDataSourceCode.Factory.class)
 public interface SzDataSourceCode extends SzDataSourceDescriptor {
   /**
    * Return the data source code identifying the data source.
@@ -20,8 +22,7 @@ public interface SzDataSourceCode extends SzDataSourceDescriptor {
    */
   interface Provider extends ModelProvider<SzDataSourceCode> {
     /**
-     * Constructs with the specified data source code and a <tt>null</tt>
-     * data source ID.
+     * Constructs with the specified data source code.
      *
      * @param dataSourceCode The data source code for the data source.
      */
@@ -72,8 +73,7 @@ public interface SzDataSourceCode extends SzDataSourceDescriptor {
     }
 
     /**
-     * Constructs with the specified data source code and a <tt>null</tt>
-     * data source ID.
+     * Constructs with the specified data source code.
      *
      * @param dataSourceCode The data source code for the data source.
      */
@@ -94,7 +94,7 @@ public interface SzDataSourceCode extends SzDataSourceDescriptor {
    *
    * @param text The to parse.
    *
-   * @return The {@link SzDataSourceCodeImpl} that was created.
+   * @return The {@link SzDataSourceCode} that was created.
    *
    * @throws NullPointerException If the specified text is <tt>null</tt>.
    */

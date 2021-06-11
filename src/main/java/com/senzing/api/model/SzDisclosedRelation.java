@@ -1,6 +1,8 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzDisclosedRelationImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -13,62 +15,21 @@ import static com.senzing.api.model.SzRelationDirection.*;
 /**
  * Describes a disclosed relationship between two entities.
  */
-public class SzDisclosedRelation {
-  /**
-   * The domain for the relationship.
-   */
-  private String domain;
-
-  /**
-   * The direction for the relationship.
-   */
-  private SzRelationDirection direction;
-
-  /**
-   * The relationship roles associated with the first entity.
-   */
-  private Set<String> roles1;
-
-  /**
-   * The relationship roles associated with the second entity.
-   */
-  private Set<String> roles2;
-
-  /**
-   * The {@link List} of {@link SzRelatedFeatures} describing the disclosed
-   * relationship features with the same domain that matched to create the
-   * relationship.
-   */
-  private List<SzRelatedFeatures> relatedFeatures;
-
-  /**
-   * Default constructor.
-   */
-  public SzDisclosedRelation() {
-    this.domain           = null;
-    this.direction        = null;
-    this.roles1           = new LinkedHashSet<>();
-    this.roles2           = new LinkedHashSet<>();
-    this.relatedFeatures  = new LinkedList<>();
-  }
-
+@JsonDeserialize(using=SzDisclosedRelation.Factory.class)
+public interface SzDisclosedRelation {
   /**
    * Gets the domain for the disclosed relationship.
    *
    * @return The domain for the disclosed relationship.
    */
-  public String getDomain() {
-    return this.domain;
-  }
+  String getDomain();
 
   /**
    * Sets the domain for the disclosed relationship.
    *
    * @param domain The domain for the disclosed relationship.
    */
-  public void setDomain(String domain) {
-    this.domain = domain;
-  }
+  void setDomain(String domain);
 
   /**
    * Gets the {@link SzRelationDirection} describing the direction of
@@ -88,9 +49,7 @@ public class SzDisclosedRelation {
    * @return The {@link SzRelationDirection} describing the direction of
    *         the relationship.
    */
-  public SzRelationDirection getDirection() {
-    return this.direction;
-  }
+  SzRelationDirection getDirection();
 
   /**
    * Sets the {@link SzRelationDirection} describing the direction of
@@ -110,9 +69,7 @@ public class SzDisclosedRelation {
    * @param direction The {@link SzRelationDirection} describing the
    *                  direction of the relationship.
    */
-  public void setDirection(SzRelationDirection direction) {
-    this.direction = direction;
-  }
+  void setDirection(SzRelationDirection direction);
 
   /**
    * Returns the <b>unmodifiable</b> {@link Set} of relationship roles
@@ -124,9 +81,7 @@ public class SzDisclosedRelation {
    *         associated with the first entity of the disclosed relationship.
    */
   @JsonInclude(NON_EMPTY)
-  public Set<String> getRoles1() {
-    return Collections.unmodifiableSet(this.roles1);
-  }
+  Set<String> getRoles1();
 
   /**
    * Adds a role to the {@link Set} of relationship roles associated with the
@@ -135,9 +90,7 @@ public class SzDisclosedRelation {
    * @param role The role to add to the {@link Set} of relationship roles
    *             associated with the first entity of the disclosed relationship.
    */
-  public void addRole1(String role) {
-    this.roles1.add(role);
-  }
+  void addRole1(String role);
 
   /**
    * Removes the specified role from the {@link Set} of relationship roles
@@ -146,9 +99,7 @@ public class SzDisclosedRelation {
    * @param role The role to remove from the {@link Set} of relationship roles
    *             associated with the first entity of the disclosed relationship.
    */
-  public void removeRole1(String role) {
-    this.roles1.remove(role);
-  }
+  void removeRole1(String role);
 
   /**
    * Sets the {@link Set} of relationship roles associated with the first
@@ -159,20 +110,13 @@ public class SzDisclosedRelation {
    *              relationship roles associated with the first entity of the
    *              disclosed relationship.
    */
-  public void setRoles1(Collection<String> roles) {
-    this.roles1.clear();
-    if (roles != null) {
-      this.roles1.addAll(roles);
-    }
-  }
+  void setRoles1(Collection<String> roles);
 
   /**
    * Removes all roles from the {@link Set} of relationship roles associated
    * with the first entity of the disclosed relationship.
    */
-  public void clearRoles1() {
-    this.roles1.clear();
-  }
+  void clearRoles1();
 
   /**
    * Returns the <b>unmodifiable</b> {@link Set} of relationship roles
@@ -184,9 +128,7 @@ public class SzDisclosedRelation {
    *         associated with the second entity of the disclosed relationship.
    */
   @JsonInclude(NON_EMPTY)
-  public Set<String> getRoles2() {
-    return Collections.unmodifiableSet(this.roles2);
-  }
+  Set<String> getRoles2();
 
   /**
    * Adds a role to the {@link Set} of relationship roles associated with the
@@ -196,9 +138,7 @@ public class SzDisclosedRelation {
    *             associated with the second entity of the disclosed
    *             relationship.
    */
-  public void addRole2(String role) {
-    this.roles2.add(role);
-  }
+  void addRole2(String role);
 
   /**
    * Removes the specified role from the {@link Set} of relationship roles
@@ -208,9 +148,7 @@ public class SzDisclosedRelation {
    *             associated with the second entity of the disclosed
    *             relationship.
    */
-  public void removeRole2(String role) {
-    this.roles2.remove(role);
-  }
+  void removeRole2(String role);
 
   /**
    * Sets the {@link Set} of relationship roles associated with the second
@@ -221,20 +159,13 @@ public class SzDisclosedRelation {
    *              relationship roles associated with the second entity of the
    *              disclosed relationship.
    */
-  public void setRoles2(Collection<String> roles) {
-    this.roles2.clear();
-    if (roles != null) {
-      this.roles2.addAll(roles);
-    }
-  }
+  void setRoles2(Collection<String> roles);
 
   /**
    * Removes all roles from the {@link Set} of relationship roles associated
    * with the second entity of the disclosed relationship.
    */
-  public void clearRoles2() {
-    this.roles2.clear();
-  }
+  void clearRoles2();
 
   /**
    * Gets the <b>unmodifiable</b> {@link List} of {@link SzRelatedFeatures}
@@ -246,9 +177,7 @@ public class SzDisclosedRelation {
    *         one another to create the disclosed relationship.
    */
   @JsonInclude(NON_EMPTY)
-  public List<SzRelatedFeatures> getRelatedFeatures() {
-    return Collections.unmodifiableList(this.relatedFeatures);
-  }
+  List<SzRelatedFeatures> getRelatedFeatures();
 
   /**
    * Adds an {@link SzRelatedFeatures} describing a pair of related features
@@ -258,9 +187,7 @@ public class SzDisclosedRelation {
    *                 related features to add to the list of related feature
    *                 pairs.
    */
-  public void addRelatedFeatures(SzRelatedFeatures features) {
-    this.relatedFeatures.add(features);
-  }
+  void addRelatedFeatures(SzRelatedFeatures features);
 
   /**
    * Removes the specified {@link SzRelatedFeatures} from the list of related
@@ -269,9 +196,7 @@ public class SzDisclosedRelation {
    * @param features The {@link SzRelatedFeatures} to remove from the list of
    *                 related feature pairs.
    */
-  public void removeRelatedFeatures(SzRelatedFeatures features) {
-    this.relatedFeatures.remove(features);
-  }
+  void removeRelatedFeatures(SzRelatedFeatures features);
 
   /**
    * Removes the {@link SzRelatedFeatures} element from the list of related
@@ -280,9 +205,7 @@ public class SzDisclosedRelation {
    * @param index The index of {@link SzRelatedFeatures} to be removed from
    *              the list of related feature pairs.
    */
-  public void removeRelatedFeatures(int index) {
-    this.relatedFeatures.remove(index);
-  }
+  void removeRelatedFeatures(int index);
 
   /**
    * Sets the list of related feature pairs to the specified {@link Collection}
@@ -291,41 +214,84 @@ public class SzDisclosedRelation {
    * @param featuresList The {@link Collection} of {@link SzRelatedFeatures}
    *                     instances to set as the related features.
    */
-  public void setRelatedFeatures(Collection<SzRelatedFeatures> featuresList) {
-    this.relatedFeatures.clear();
-    if (featuresList != null) {
-      this.relatedFeatures.addAll(featuresList);
-    }
-  }
+  void setRelatedFeatures(Collection<SzRelatedFeatures> featuresList);
 
   /**
    * Removes all related features from the list of {@link SzRelatedFeatures}
    * instances.
    */
-  public void clearRelatedFeatures() {
-    this.relatedFeatures.clear();
+  void clearRelatedFeatures();
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzDisclosedRelation}.
+   */
+  interface Provider extends ModelProvider<SzDisclosedRelation> {
+    /**
+     * Creates a new instance of {@link SzDisclosedRelation}.
+     *
+     * @return The new instance of {@link SzDisclosedRelation}
+     */
+    SzDisclosedRelation create();
   }
 
-  @Override
-  public boolean equals(Object object) {
-    if (this == object) return true;
-    if (object == null || getClass() != object.getClass()) return false;
-    SzDisclosedRelation that = (SzDisclosedRelation) object;
-    return Objects.equals(this.getDomain(), that.getDomain()) &&
-        this.getDirection() == that.getDirection() &&
-        Objects.equals(this.getRoles1(), that.getRoles1()) &&
-        Objects.equals(this.getRoles2(), that.getRoles2()) &&
-        Objects.equals(this.getRelatedFeatures(), that.getRelatedFeatures());
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzDisclosedRelation} that produces instances of {@link
+   * SzDisclosedRelationImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzDisclosedRelation>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzDisclosedRelation.class, SzDisclosedRelationImpl.class);
+    }
+
+    @Override
+    public SzDisclosedRelation create() {
+      return new SzDisclosedRelationImpl();
+    }
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.getDomain(),
-                        this.getDirection(),
-                        this.getRoles1(),
-                        this.getRoles2(),
-                        this.getRelatedFeatures());
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link
+   * SzDisclosedRelation}.
+   */
+  class Factory extends ModelFactory<SzDisclosedRelation, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzDisclosedRelation.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzDisclosedRelation}.
+     * @return The new instance of {@link SzDisclosedRelation}.
+     */
+    public SzDisclosedRelation create()
+    {
+      return this.getProvider().create();
+    }
   }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the native API JSON to build an instance of {@link
@@ -338,7 +304,7 @@ public class SzDisclosedRelation {
    *
    * @return The created instance of {@link SzRelatedFeatures}.
    */
-  public static List<SzDisclosedRelation> parseDisclosedRelationships(
+  static List<SzDisclosedRelation> parseDisclosedRelationships(
       JsonObject jsonObject, String whyKey)
   {
     if (jsonObject == null) return null;
@@ -397,7 +363,7 @@ public class SzDisclosedRelation {
 
     // loop through the feature pair groups
     featuresMap.forEach((key, list) -> {
-      SzDisclosedRelation relationship = new SzDisclosedRelation();
+      SzDisclosedRelation relationship = SzDisclosedRelation.FACTORY.create();
 
       String domain = key;
 
@@ -579,9 +545,9 @@ public class SzDisclosedRelation {
 
   private static void addRole(
       Map<String, Map<SzRelationDirection, Set<String>>>  map,
-      String                                                  domain,
-      SzRelationDirection direction,
-      String                                                  role)
+      String                                              domain,
+      SzRelationDirection                                 direction,
+      String                                              role)
   {
     Map<SzRelationDirection, Set<String>> roleMap
         = map.get(domain);

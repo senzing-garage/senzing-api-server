@@ -891,7 +891,8 @@ public class SzResolvedEntity {
       recordIds = Collections.unmodifiableList(recordIds);
 
       // create a new record summary
-      SzDataSourceRecordSummary summary = new SzDataSourceRecordSummary();
+      SzDataSourceRecordSummary summary
+          = SzDataSourceRecordSummary.FACTORY.create();
       summary.setDataSource(dataSource);
       summary.setRecordCount(recordCount);
       summary.setTopRecordIds(recordIds);

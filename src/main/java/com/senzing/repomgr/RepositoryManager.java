@@ -1946,7 +1946,7 @@ public class RepositoryManager {
           continue;
         }
         StringBuffer sb = new StringBuffer();
-        SzEntityType entityType = new SzEntityType(
+        SzEntityType entityType = SzEntityType.FACTORY.create(
             entityTypeCode, null, "ACTOR");
         returnCode = CONFIG_API.addEntityTypeV2(
             configId.getValue(), entityType.toNativeJson(), sb);

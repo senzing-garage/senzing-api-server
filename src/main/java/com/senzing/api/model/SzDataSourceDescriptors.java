@@ -198,44 +198,6 @@ public interface SzDataSourceDescriptors {
     {
       return this.getProvider().create(descriptors);
     }
-
-    /**
-     * Parses the specified text as a JSON array.
-     *
-     * @param text The text to parse
-     * @return The {@link SzDataSourceDescriptors} that was parsed.
-     */
-    private static SzDataSourceDescriptors parseAsJsonArray(String text) {
-      // it appears we have a JSON array of entity descriptors
-      JsonArray jsonArray = JsonUtils.parseJsonArray(text);
-      List<SzDataSourceDescriptor> descriptors
-          = new ArrayList<>(jsonArray.size());
-      JsonValue.ValueType valueType = null;
-      for (JsonValue value : jsonArray) {
-        JsonValue.ValueType vt = value.getValueType();
-        SzDataSourceDescriptor descriptor;
-        switch (vt) {
-          case STRING:
-            descriptor = SzDataSourceCode.FACTORY.create(
-                ((JsonString) value).getString());
-            break;
-
-          case OBJECT:
-            descriptor = SzDataSource.parse((JsonObject) value);
-            break;
-
-          default:
-            throw new IllegalArgumentException(
-                "Unexpected element in entity descriptor array: valueType=[ "
-                    + valueType + " ], value=[ " + value + " ]");
-        }
-        descriptors.add(descriptor);
-      }
-
-      // make the list unmodifiable
-      return SzDataSourceDescriptors.FACTORY.create(
-          Collections.unmodifiableList(descriptors));
-    }
   }
 
   /**
@@ -253,10 +215,10 @@ public interface SzDataSourceDescriptors {
    *         List} of {@link SzDataSourceDescriptor} instances.
    */
   static SzDataSourceDescriptors valueOf(String text) {
-    text = text.trim();
-    int               length  = text.length();
-    char              first   = text.charAt(0);
-    char              last    = text.charAt(length-1);
+    if (text != null) text = text.trim();
+    int               length  = (text == null) ? 0 : text.length();
+    char              first   = (length > 0) ? 0 : text.charAt(0);
+    char              last    = (length > 1) ? 0 : text.charAt(length-1);
 
     // check if no descriptors
     if (length == 0) {
@@ -267,7 +229,7 @@ public interface SzDataSourceDescriptors {
     // check if it looks like a JSON array
     if (first == '[' && last == ']') {
       try {
-        return Factory.parseAsJsonArray(text);
+        return parseAsJsonArray(text);
 
       } catch (RuntimeException e) {
         // ignore
@@ -280,7 +242,7 @@ public interface SzDataSourceDescriptors {
       if ((first == '"' && last == '"') || (first == '{' && last == '}')) {
         // if its already a quoted string or object, surround it in brackets
         try {
-          return Factory.parseAsJsonArray("[" + text + "]");
+          return parseAsJsonArray("[" + text + "]");
 
         } catch (RuntimeException e) {
           // ignore
@@ -292,13 +254,51 @@ public interface SzDataSourceDescriptors {
       JsonArrayBuilder jab = Json.createArrayBuilder();
       jab.add(text);
       String jsonText = JsonUtils.toJsonText(jab);
-      return Factory.parseAsJsonArray(jsonText);
+      return parseAsJsonArray(jsonText);
     }
 
     // if we get here then check for a failure
     throw new IllegalArgumentException(
         "Unable to interpret the text as a list of data source descriptors: "
         + text);
+  }
+
+  /**
+   * Parses the specified text as a JSON array.
+   *
+   * @param text The text to parse
+   * @return The {@link SzDataSourceDescriptors} that was parsed.
+   */
+  private static SzDataSourceDescriptors parseAsJsonArray(String text) {
+    // it appears we have a JSON array of entity descriptors
+    JsonArray jsonArray = JsonUtils.parseJsonArray(text);
+    List<SzDataSourceDescriptor> descriptors
+        = new ArrayList<>(jsonArray.size());
+    JsonValue.ValueType valueType = null;
+    for (JsonValue value : jsonArray) {
+      JsonValue.ValueType vt = value.getValueType();
+      SzDataSourceDescriptor descriptor;
+      switch (vt) {
+        case STRING:
+          descriptor = SzDataSourceCode.FACTORY.create(
+              ((JsonString) value).getString());
+          break;
+
+        case OBJECT:
+          descriptor = SzDataSource.parse((JsonObject) value);
+          break;
+
+        default:
+          throw new IllegalArgumentException(
+              "Unexpected element in entity descriptor array: valueType=[ "
+                  + valueType + " ], value=[ " + value + " ]");
+      }
+      descriptors.add(descriptor);
+    }
+
+    // make the list unmodifiable
+    return SzDataSourceDescriptors.FACTORY.create(
+        Collections.unmodifiableList(descriptors));
   }
 
   /**

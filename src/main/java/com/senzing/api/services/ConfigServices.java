@@ -1276,7 +1276,8 @@ public class ConfigServices implements ServicesSupport {
                                          Integer  entityClassId,
                                          Boolean  resolving)
   {
-    return new SzEntityClass(entityClassCode, entityClassId, resolving);
+    return SzEntityClass.FACTORY.create(
+        entityClassCode, entityClassId, resolving);
   }
 
   /**
@@ -1293,7 +1294,8 @@ public class ConfigServices implements ServicesSupport {
                                        Integer  entityTypeId,
                                        String   entityClassCode)
   {
-    return new SzEntityType(entityTypeCode, entityTypeId, entityClassCode);
+    return SzEntityType.FACTORY.create(
+        entityTypeCode, entityTypeId, entityClassCode);
   }
 
   /**

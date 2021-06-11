@@ -1,6 +1,8 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzEntityFeatureImpl;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -12,62 +14,22 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 /**
  * Describes a feature for an entity.
  */
-public class SzEntityFeature {
-  /**
-   * The internal ID of the primary feature value.
-   */
-  private Long primaryId;
-
-  /**
-   * The primary value for the feature.
-   */
-  private String primaryValue;
-
-  /**
-   * The usage type associated with the feature.
-   */
-  private String usageType;
-
-  /**
-   * The set of duplicate values.
-   */
-  private Set<String> duplicateValues;
-
-  /**
-   * The {@link List} of {@link SzEntityFeatureDetail} instances describing
-   * the details of each of the clustered feature values for this feature.
-   */
-  private List<SzEntityFeatureDetail> featureDetails;
-
-  /**
-   * Default constructor.
-   */
-  public SzEntityFeature() {
-    this.primaryId        = null;
-    this.primaryValue     = null;
-    this.usageType        = null;
-    this.duplicateValues  = new LinkedHashSet<>();
-    this.featureDetails   = new LinkedList<>();
-  }
-
+@JsonDeserialize(using=SzEntityFeature.Factory.class)
+public interface SzEntityFeature {
   /**
    * Gets the internal ID for the primary feature value.
    *
    * @return The internal ID for the primary feature value.
    */
   @JsonInclude(NON_NULL)
-  public Long getPrimaryId() {
-    return this.primaryId;
-  }
+  Long getPrimaryId();
 
   /**
    * Sets the internal ID for the primary feature value.
    *
    * @param primaryId The internal ID for the primary feature value.
    */
-  public void setPrimaryId(Long primaryId) {
-    this.primaryId = primaryId;
-  }
+  void setPrimaryId(Long primaryId);
 
   /**
    * Gets the primary value for the feature.
@@ -75,18 +37,14 @@ public class SzEntityFeature {
    * @return The primary value for the feature.
    */
   @JsonInclude(NON_NULL)
-  public String getPrimaryValue() {
-    return primaryValue;
-  }
+  String getPrimaryValue();
 
   /**
    * Sets the primary value for the feature.
    *
    * @param primaryValue The primary value for the feature.
    */
-  public void setPrimaryValue(String primaryValue) {
-    this.primaryValue = primaryValue;
-  }
+  void setPrimaryValue(String primaryValue);
 
   /**
    * Gets the usage type for the feature.
@@ -94,18 +52,14 @@ public class SzEntityFeature {
    * @return The usage type for the feature.
    */
   @JsonInclude(NON_NULL)
-  public String getUsageType() {
-    return usageType;
-  }
+  String getUsageType();
 
   /**
    * Sets the usage type for the feature.
    *
    * @param usageType The usage type for the feature.
    */
-  public void setUsageType(String usageType) {
-    this.usageType = usageType;
-  }
+  void setUsageType(String usageType);
 
   /**
    * Returns the <b>unmodifiable</b> {@link Set} of duplicate values for the
@@ -115,31 +69,21 @@ public class SzEntityFeature {
    *         entity.
    */
   @JsonInclude(NON_EMPTY)
-  public Set<String> getDuplicateValues() {
-    return Collections.unmodifiableSet(this.duplicateValues);
-  }
+  Set<String> getDuplicateValues();
 
   /**
    * Sets the duplicate values list for the entity.
    *
    * @param duplicateValues The list of duplicate values.
    */
-  public void setDuplicateValues(Collection<String> duplicateValues) {
-    this.duplicateValues.clear();
-    if (duplicateValues != null) {
-      this.duplicateValues.addAll(duplicateValues);
-    }
-  }
+  void setDuplicateValues(Collection<String> duplicateValues);
 
   /**
    * Adds to the duplicate value list for the record.
    *
    * @param value The duplicate value to add to the duplicate value list.
    */
-  public void addDuplicateValue(String value)
-  {
-    this.duplicateValues.add(value);
-  }
+  void addDuplicateValue(String value);
 
   /**
    * Gets the <b>unmodifiable</b> {@link List} of {@link SzEntityFeatureDetail}
@@ -151,9 +95,7 @@ public class SzEntityFeature {
    *         the clustered feature values for this feature.
    */
   @JsonInclude(NON_EMPTY)
-  public List<SzEntityFeatureDetail> getFeatureDetails() {
-    return Collections.unmodifiableList(this.featureDetails);
-  }
+  List<SzEntityFeatureDetail> getFeatureDetails();
 
   /**
    * Sets the {@link List} of {@link SzEntityFeatureDetail} instances describing
@@ -163,12 +105,7 @@ public class SzEntityFeature {
    *                instances describing the details of each of the clustered
    *                feature values for this feature.
    */
-  public void setFeatureDetails(Collection<SzEntityFeatureDetail> details) {
-    this.featureDetails.clear();
-    if (details != null) {
-      this.featureDetails.addAll(details);
-    }
-  }
+  void setFeatureDetails(Collection<SzEntityFeatureDetail> details);
 
   /**
    * Adds the specified {@link SzEntityFeatureDetail} instance to the {@link
@@ -177,9 +114,76 @@ public class SzEntityFeature {
    * @param featureDetail The {@link SzEntityFeatureDetail} instance to add to
    *                      the list of feature details.
    */
-  public void addFeatureDetail(SzEntityFeatureDetail featureDetail) {
-    this.featureDetails.add(featureDetail);
+  void addFeatureDetail(SzEntityFeatureDetail featureDetail);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzEntityFeature}.
+   */
+  interface Provider extends ModelProvider<SzEntityFeature> {
+    /**
+     * Creates a new instance of {@link SzEntityFeature}.
+     *
+     * @return The new instance of {@link SzEntityFeature}
+     */
+    SzEntityFeature create();
   }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzEntityFeature} that produces instances of {@link SzEntityFeatureImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzEntityFeature>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzEntityFeature.class, SzEntityFeatureImpl.class);
+    }
+
+    @Override
+    public SzEntityFeature create() {
+      return new SzEntityFeatureImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link SzEntityFeature}.
+   */
+  class Factory extends ModelFactory<SzEntityFeature, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzEntityFeature.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzEntityFeature}.
+     * @return The new instance of {@link SzEntityFeature}.
+     */
+    public SzEntityFeature create()
+    {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses a list of entity features from a {@link JsonArray} describing a
@@ -196,7 +200,7 @@ public class SzEntityFeature {
    * @return The populated (or created) {@link List} of {@link SzEntityFeature}
    *         instances.
    */
-  public static List<SzEntityFeature> parseEntityFeatureList(
+  static List<SzEntityFeature> parseEntityFeatureList(
       List<SzEntityFeature> list,
       JsonArray             jsonArray)
   {
@@ -222,10 +226,10 @@ public class SzEntityFeature {
    *
    * @return The populated (or created) {@link SzEntityFeature}.
    */
-  public static SzEntityFeature parseEntityFeature(SzEntityFeature  feature,
-                                                   JsonObject       jsonObject)
+  static SzEntityFeature parseEntityFeature(SzEntityFeature feature,
+                                            JsonObject      jsonObject)
   {
-    if (feature == null) feature = new SzEntityFeature();
+    if (feature == null) feature = SzEntityFeature.FACTORY.create();
 
     String featureDesc = jsonObject.getString("FEAT_DESC");
     long   libFeatId   = jsonObject.getJsonNumber("LIB_FEAT_ID").longValue();
@@ -250,15 +254,5 @@ public class SzEntityFeature {
     }
 
     return feature;
-  }
-
-  @Override
-  public String toString() {
-    return "SzEntityFeature{" +
-        "primaryId=" + primaryId +
-        ", primaryValue='" + primaryValue + '\'' +
-        ", usageType='" + usageType + '\'' +
-        ", duplicateValues=" + duplicateValues +
-        '}';
   }
 }
