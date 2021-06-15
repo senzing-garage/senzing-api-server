@@ -723,7 +723,8 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
     boolean withId    = idMode.isSpecified(classCode, ID_STEP);
     boolean withRes   = resolveMode.isSpecified(classCode, RESOLVE_STEP);
     Boolean resolving = (withRes) ? (classId.intValue()%2 == 0) : null;
-    return new SzEntityClass(classCode, withId ? classId : null, resolving);
+    return SzEntityClass.FACTORY.create(
+        classCode, withId ? classId : null, resolving);
   }
 
   private List<SzEntityClass> nextEntityClasses(int            count,
@@ -749,7 +750,8 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
       int index = Math.abs(hash % entityClasses.size());
       classCode = entityClasses.get(index);
     }
-    return new SzEntityType(typeCode, withId ? typeId : null, classCode);
+    return SzEntityType.FACTORY.create(
+        typeCode, withId ? typeId : null, classCode);
   }
 
   private List<SzEntityType> nextEntityTypes(int            count,

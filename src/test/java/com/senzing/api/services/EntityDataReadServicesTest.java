@@ -44,35 +44,35 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   private static final String VIPS       = "VIPS";
   private static final String MARRIAGES  = "MARRIAGES";
 
-  private static final SzRecordId ABC123 = new SzRecordId(PASSENGERS,
-                                                          "ABC123");
-  private static final SzRecordId DEF456 = new SzRecordId(PASSENGERS,
-                                                          "DEF456");
-  private static final SzRecordId GHI789 = new SzRecordId(PASSENGERS,
-                                                          "GHI789");
-  private static final SzRecordId JKL012 = new SzRecordId(PASSENGERS,
-                                                          "JKL012");
-  private static final SzRecordId MNO345 = new SzRecordId(EMPLOYEES,
-                                                          "MNO345");
-  private static final SzRecordId PQR678 = new SzRecordId(EMPLOYEES,
-                                                          "PQR678");
-  private static final SzRecordId STU901 = new SzRecordId(VIPS,
-                                                          "STU901");
-  private static final SzRecordId XYZ234 = new SzRecordId(VIPS,
-                                                          "XYZ234");
-  private static final SzRecordId ZYX321 = new SzRecordId(EMPLOYEES,
-                                                          "ZYX321");
-  private static final SzRecordId CBA654 = new SzRecordId(EMPLOYEES,
-                                                          "CBA654");
+  private static final SzRecordId ABC123
+      = SzRecordId.FACTORY.create(PASSENGERS,"ABC123");
+  private static final SzRecordId DEF456
+      = SzRecordId.FACTORY.create(PASSENGERS, "DEF456");
+  private static final SzRecordId GHI789
+      = SzRecordId.FACTORY.create(PASSENGERS, "GHI789");
+  private static final SzRecordId JKL012
+      = SzRecordId.FACTORY.create(PASSENGERS, "JKL012");
+  private static final SzRecordId MNO345
+      = SzRecordId.FACTORY.create(EMPLOYEES, "MNO345");
+  private static final SzRecordId PQR678
+      = SzRecordId.FACTORY.create(EMPLOYEES, "PQR678");
+  private static final SzRecordId STU901
+      = SzRecordId.FACTORY.create(VIPS, "STU901");
+  private static final SzRecordId XYZ234
+      = SzRecordId.FACTORY.create(VIPS, "XYZ234");
+  private static final SzRecordId ZYX321
+      = SzRecordId.FACTORY.create(EMPLOYEES, "ZYX321");
+  private static final SzRecordId CBA654
+      = SzRecordId.FACTORY.create(EMPLOYEES, "CBA654");
 
-  private static final SzRecordId BCD123 = new SzRecordId(MARRIAGES,
-                                                          "BCD123");
-  private static final SzRecordId CDE456 = new SzRecordId(MARRIAGES,
-                                                          "CDE456");
-  private static final SzRecordId EFG789 = new SzRecordId(MARRIAGES,
-                                                          "EFG789");
-  private static final SzRecordId FGH012 = new SzRecordId(MARRIAGES,
-                                                          "FGH012");
+  private static final SzRecordId BCD123
+      = SzRecordId.FACTORY.create(MARRIAGES, "BCD123");
+  private static final SzRecordId CDE456
+      = SzRecordId.FACTORY.create(MARRIAGES, "CDE456");
+  private static final SzRecordId EFG789
+      = SzRecordId.FACTORY.create(MARRIAGES, "EFG789");
+  private static final SzRecordId FGH012
+      = SzRecordId.FACTORY.create(MARRIAGES, "FGH012");
 
   private EntityDataServices entityDataServices;
   private EntityDataApi entityDataApi;

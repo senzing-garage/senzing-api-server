@@ -1,6 +1,7 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.senzing.api.model.impl.SzNameScoringImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonObject;
@@ -10,44 +11,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 /**
  * Describes the various scoring values between two name feature values.
  */
-public class SzNameScoring {
-  /**
-   * The full name score, or <tt>null</tt> if no full name score.
-   */
-  private Integer fullNameScore;
-
-  /**
-   * The surname score, or <tt>null</tt> if no surname score.
-   */
-  private Integer surnameScore;
-
-  /**
-   * The given name score, or <tt>null</tt> if no given name score.
-   */
-  private Integer givenNameScore;
-
-  /**
-   * The generation match score, or <tt>null</tt> if no generation match score.
-   */
-  private Integer generationScore;
-
-  /**
-   * The organization name score, or <tt>null</tt> if no organization name
-   * score.
-   */
-  private Integer orgNameScore;
-
-  /**
-   * Default constructor.
-   */
-  public SzNameScoring() {
-    this.fullNameScore    = null;
-    this.surnameScore     = null;
-    this.givenNameScore   = null;
-    this.generationScore  = null;
-    this.orgNameScore     = null;
-  }
-
+public interface SzNameScoring {
   /**
    * Gets the full name score if one exists.  This method returns <tt>null</tt>
    * if there is no full name score.
@@ -56,9 +20,7 @@ public class SzNameScoring {
    *         score.
    */
   @JsonInclude(NON_EMPTY)
-  public Integer getFullNameScore() {
-    return fullNameScore;
-  }
+  Integer getFullNameScore();
 
   /**
    * Sets the full name score if one exists.  Set the value to <tt>null</tt>
@@ -67,9 +29,7 @@ public class SzNameScoring {
    * @param score The full name score, or <tt>null</tt> if there is no full
    *              name score.
    */
-  public void setFullNameScore(Integer score) {
-    this.fullNameScore = score;
-  }
+  void setFullNameScore(Integer score);
 
   /**
    * Gets the surname score if one exists.  This method returns <tt>null</tt>
@@ -78,9 +38,7 @@ public class SzNameScoring {
    * @return The surname score, or <tt>null</tt> if there is no surname score.
    */
   @JsonInclude(NON_EMPTY)
-  public Integer getSurnameScore() {
-    return surnameScore;
-  }
+  Integer getSurnameScore();
 
   /**
    * Sets the surname score if one exists.  Set the value to <tt>null</tt>
@@ -89,9 +47,7 @@ public class SzNameScoring {
    * @param score The surname score, or <tt>null</tt> if there is no surname
    *              score.
    */
-  public void setSurnameScore(Integer score) {
-    this.surnameScore = score;
-  }
+  void setSurnameScore(Integer score);
 
   /**
    * Gets the given name score if one exists.  This method returns <tt>null</tt>
@@ -101,9 +57,7 @@ public class SzNameScoring {
    *         score.
    */
   @JsonInclude(NON_EMPTY)
-  public Integer getGivenNameScore() {
-    return givenNameScore;
-  }
+  Integer getGivenNameScore();
 
   /**
    * Sets the given name score if one exists.  Set the value to <tt>null</tt>
@@ -112,9 +66,7 @@ public class SzNameScoring {
    * @param score The given name score, or <tt>null</tt> if there is no
    *              given name score.
    */
-  public void setGivenNameScore(Integer score) {
-    this.givenNameScore = score;
-  }
+  void setGivenNameScore(Integer score);
 
   /**
    * Gets the generation match score if one exists.  This method returns
@@ -124,9 +76,7 @@ public class SzNameScoring {
    *         generation match score.
    */
   @JsonInclude(NON_EMPTY)
-  public Integer getGenerationScore() {
-    return generationScore;
-  }
+  Integer getGenerationScore();
 
   /**
    * Sets the generation match score if one exists.  Set the value to
@@ -135,9 +85,7 @@ public class SzNameScoring {
    * @param score The generation match score, or <tt>null</tt> if there is no
    *              generation match score.
    */
-  public void setGenerationScore(Integer score) {
-    this.generationScore = score;
-  }
+  void setGenerationScore(Integer score);
 
   /**
    * Gets the organization name score if one exists.  This method returns
@@ -147,9 +95,7 @@ public class SzNameScoring {
    *         organization name score.
    */
   @JsonInclude(NON_EMPTY)
-  public Integer getOrgNameScore() {
-    return orgNameScore;
-  }
+  Integer getOrgNameScore();
 
   /**
    * Sets the organization name score if one exists.  Set the value to
@@ -158,20 +104,7 @@ public class SzNameScoring {
    * @param score The organization name score, or <tt>null</tt> if there is no
    *              organization name score.
    */
-  public void setOrgNameScore(Integer score) {
-    this.orgNameScore = score;
-  }
-
-  @Override
-  public String toString() {
-    return "SzNameScoring{" +
-        "fullNameScore=" + fullNameScore +
-        ", surnameScore=" + surnameScore +
-        ", givenNameScore=" + givenNameScore +
-        ", generationScore=" + generationScore +
-        ", orgNameScore=" + orgNameScore +
-        '}';
-  }
+  void setOrgNameScore(Integer score);
 
   /**
    * Converts the value into the best value for a "full score".  This looks for
@@ -186,13 +119,83 @@ public class SzNameScoring {
    *
    * @return The "best" {@link Integer} value for the full score.
    */
-  public Integer asFullScore() {
-    if (this.orgNameScore != null)    return this.orgNameScore;
-    if (this.fullNameScore != null)   return this.fullNameScore;
-    if (this.surnameScore != null)    return this.surnameScore;
-    if (this.givenNameScore != null)  return this.givenNameScore;
+  default Integer asFullScore() {
+    if (this.getOrgNameScore()    != null)  return this.getOrgNameScore();
+    if (this.getFullNameScore()   != null)  return this.getFullNameScore();
+    if (this.getSurnameScore()    != null)  return this.getSurnameScore();
+    if (this.getGivenNameScore()  != null)  return this.getGivenNameScore();
     return null;
   }
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzNameScoring}.
+   */
+  interface Provider extends ModelProvider<SzNameScoring> {
+    /**
+     * Creates a new instance of {@link SzNameScoring}.
+     *
+     * @return The new instance of {@link SzNameScoring}
+     */
+    SzNameScoring create();
+  }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzNameScoring} that produces instances of
+   * {@link SzNameScoringImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzNameScoring>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzNameScoring.class, SzNameScoringImpl.class);
+    }
+
+    @Override
+    public SzNameScoring create() {
+      return new SzNameScoringImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzNameScoring}.
+   */
+  class Factory extends ModelFactory<SzNameScoring, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzNameScoring.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzNameScoring}.
+     * @return The new instance of {@link SzNameScoring}.
+     */
+    public SzNameScoring create() {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the {@link SzNameScoring} from a {@link JsonObject} describing JSON
@@ -203,7 +206,7 @@ public class SzNameScoring {
    *
    * @return The {@link SzFeatureScore} that was created.
    */
-  public static SzNameScoring parseNameScoring(JsonObject jsonObject) {
+  static SzNameScoring parseNameScoring(JsonObject jsonObject) {
     Integer fnScore  = JsonUtils.getInteger(jsonObject, "GNR_FN");
     Integer snScore  = JsonUtils.getInteger(jsonObject, "GNR_SN");
     Integer gnScore  = JsonUtils.getInteger(jsonObject, "GNR_GN");
@@ -225,7 +228,7 @@ public class SzNameScoring {
     if (orgScore < 0) orgScore = null;
 
     // construct the result
-    SzNameScoring result = new SzNameScoring();
+    SzNameScoring result = SzNameScoring.FACTORY.create();
 
     // set the score values
     result.setFullNameScore(fnScore);

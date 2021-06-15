@@ -41,51 +41,51 @@ public class WhyServicesTest extends AbstractServiceTest {
   private static final String EMPLOYEES = "EMPLOYEES";
   private static final String CONTACTS = "CONTACTS";
 
-  private static final SzRecordId ABC123 = new SzRecordId(PASSENGERS,
-                                                          "ABC123");
-  private static final SzRecordId DEF456 = new SzRecordId(PASSENGERS,
-                                                          "DEF456");
-  private static final SzRecordId GHI789 = new SzRecordId(PASSENGERS,
-                                                          "GHI789");
-  private static final SzRecordId JKL012 = new SzRecordId(PASSENGERS,
-                                                          "JKL012");
-  private static final SzRecordId MNO345 = new SzRecordId(CUSTOMERS,
-                                                          "MNO345");
-  private static final SzRecordId PQR678 = new SzRecordId(CUSTOMERS,
-                                                          "PQR678");
-  private static final SzRecordId ABC567 = new SzRecordId(CUSTOMERS,
-                                                          "ABC567");
-  private static final SzRecordId DEF890 = new SzRecordId(CUSTOMERS,
-                                                          "DEF890");
-  private static final SzRecordId STU901 = new SzRecordId(VIPS,
-                                                          "STU901");
-  private static final SzRecordId XYZ234 = new SzRecordId(VIPS,
-                                                          "XYZ234");
-  private static final SzRecordId GHI123 = new SzRecordId(VIPS,
-                                                          "GHI123");
-  private static final SzRecordId JKL456 = new SzRecordId(VIPS,
-                                                          "JKL456");
+  private static final SzRecordId ABC123
+      = SzRecordId.FACTORY.create(PASSENGERS, "ABC123");
+  private static final SzRecordId DEF456
+      = SzRecordId.FACTORY.create(PASSENGERS, "DEF456");
+  private static final SzRecordId GHI789
+      = SzRecordId.FACTORY.create(PASSENGERS, "GHI789");
+  private static final SzRecordId JKL012
+      = SzRecordId.FACTORY.create(PASSENGERS, "JKL012");
+  private static final SzRecordId MNO345
+      = SzRecordId.FACTORY.create(CUSTOMERS, "MNO345");
+  private static final SzRecordId PQR678
+      = SzRecordId.FACTORY.create(CUSTOMERS, "PQR678");
+  private static final SzRecordId ABC567
+      = SzRecordId.FACTORY.create(CUSTOMERS, "ABC567");
+  private static final SzRecordId DEF890
+      = SzRecordId.FACTORY.create(CUSTOMERS, "DEF890");
+  private static final SzRecordId STU901
+      = SzRecordId.FACTORY.create(VIPS, "STU901");
+  private static final SzRecordId XYZ234
+      = SzRecordId.FACTORY.create(VIPS, "XYZ234");
+  private static final SzRecordId GHI123
+      = SzRecordId.FACTORY.create(VIPS, "GHI123");
+  private static final SzRecordId JKL456
+      = SzRecordId.FACTORY.create(VIPS, "JKL456");
 
   private static final List<SzRecordId> RECORD_IDS;
 
-  private static final SzRecordId COMPANY_1 = new SzRecordId(COMPANIES,
-                                                             "COMPANY_1");
-  private static final SzRecordId COMPANY_2 = new SzRecordId(COMPANIES,
-                                                             "COMPANY_2");
-  private static final SzRecordId EMPLOYEE_1 = new SzRecordId(EMPLOYEES,
-                                                              "EMPLOYEE_1");
-  private static final SzRecordId EMPLOYEE_2 = new SzRecordId(EMPLOYEES,
-                                                              "EMPLOYEE_2");
-  private static final SzRecordId EMPLOYEE_3 = new SzRecordId(EMPLOYEES,
-                                                              "EMPLOYEE_3");
-  private static final SzRecordId CONTACT_1 = new SzRecordId(CONTACTS,
-                                                             "CONTACT_1");
-  private static final SzRecordId CONTACT_2 = new SzRecordId(CONTACTS,
-                                                             "CONTACT_2");
-  private static final SzRecordId CONTACT_3 = new SzRecordId(CONTACTS,
-                                                             "CONTACT_3");
-  private static final SzRecordId CONTACT_4 = new SzRecordId(CONTACTS,
-                                                             "CONTACT_4");
+  private static final SzRecordId COMPANY_1
+      = SzRecordId.FACTORY.create(COMPANIES, "COMPANY_1");
+  private static final SzRecordId COMPANY_2
+      = SzRecordId.FACTORY.create(COMPANIES, "COMPANY_2");
+  private static final SzRecordId EMPLOYEE_1
+      = SzRecordId.FACTORY.create(EMPLOYEES, "EMPLOYEE_1");
+  private static final SzRecordId EMPLOYEE_2
+      = SzRecordId.FACTORY.create(EMPLOYEES, "EMPLOYEE_2");
+  private static final SzRecordId EMPLOYEE_3
+      = SzRecordId.FACTORY.create(EMPLOYEES, "EMPLOYEE_3");
+  private static final SzRecordId CONTACT_1
+      = SzRecordId.FACTORY.create(CONTACTS, "CONTACT_1");
+  private static final SzRecordId CONTACT_2
+      = SzRecordId.FACTORY.create(CONTACTS, "CONTACT_2");
+  private static final SzRecordId CONTACT_3
+      = SzRecordId.FACTORY.create(CONTACTS, "CONTACT_3");
+  private static final SzRecordId CONTACT_4
+      = SzRecordId.FACTORY.create(CONTACTS, "CONTACT_4");
 
   private static final List<SzRecordId> RELATED_RECORD_IDS;
 
@@ -757,10 +757,10 @@ public class WhyServicesTest extends AbstractServiceTest {
       Long entityId2 = getEntityIdForRecordId(recordId2);
 
       SzEntityIdentifier entityIdent1 = (asRecordIds) ? recordId1
-          : new SzEntityId(entityId1);
+          : SzEntityId.FACTORY.create(entityId1);
 
       SzEntityIdentifier entityIdent2 = (asRecordIds) ? recordId2
-          : new SzEntityId(entityId2);
+          : SzEntityId.FACTORY.create(entityId2);
 
       buildWhyEntitiesQueryString(sb,
                                   entityIdent1,
@@ -841,10 +841,10 @@ public class WhyServicesTest extends AbstractServiceTest {
       Long entityId2 = getEntityIdForRecordId(recordId2);
 
       SzEntityIdentifier entityIdent1 = (asRecordIds) ? recordId1
-          : new SzEntityId(entityId1);
+          : SzEntityId.FACTORY.create(entityId1);
 
       SzEntityIdentifier entityIdent2 = (asRecordIds) ? recordId2
-          : new SzEntityId(entityId2);
+          : SzEntityId.FACTORY.create(entityId2);
 
       buildWhyEntitiesQueryString(sb,
                                   entityIdent1,
@@ -917,10 +917,10 @@ public class WhyServicesTest extends AbstractServiceTest {
       Long entityId2 = getEntityIdForRecordId(recordId2);
 
       SzEntityIdentifier entityIdent1 = (asRecordIds) ? recordId1
-          : new SzEntityId(entityId1);
+          : SzEntityId.FACTORY.create(entityId1);
 
       SzEntityIdentifier entityIdent2 = (asRecordIds) ? recordId2
-          : new SzEntityId(entityId2);
+          : SzEntityId.FACTORY.create(entityId2);
 
       buildWhyEntitiesQueryString(sb,
                                   entityIdent1,
@@ -982,7 +982,8 @@ public class WhyServicesTest extends AbstractServiceTest {
       StringBuilder sb = new StringBuilder();
       sb.append("why/entities");
 
-      SzRecordId recordId1 = new SzRecordId(COMPANIES, "DOES_NOT_EXIST");
+      SzRecordId recordId1 = SzRecordId.FACTORY.create(COMPANIES,
+                                                       "DOES_NOT_EXIST");
       SzRecordId recordId2 = COMPANY_1;
 
       buildWhyEntitiesQueryString(sb,
@@ -1033,7 +1034,8 @@ public class WhyServicesTest extends AbstractServiceTest {
       StringBuilder sb = new StringBuilder();
       sb.append("why/entities");
 
-      SzRecordId recordId1 = new SzRecordId(COMPANIES, "DOES_NOT_EXIST");
+      SzRecordId recordId1 = SzRecordId.FACTORY.create(COMPANIES,
+                                                       "DOES_NOT_EXIST");
       SzRecordId recordId2 = COMPANY_1;
 
       buildWhyEntitiesQueryString(sb,
@@ -1066,8 +1068,8 @@ public class WhyServicesTest extends AbstractServiceTest {
       StringBuilder sb = new StringBuilder();
       sb.append("why/entities");
 
-      SzRecordId recordId1 = new SzRecordId("DOES_NOT_EXIST",
-                                            "ABC123");
+      SzRecordId recordId1 = SzRecordId.FACTORY.create("DOES_NOT_EXIST",
+                                                       "ABC123");
       SzRecordId recordId2 = COMPANY_1;
 
       buildWhyEntitiesQueryString(sb,
@@ -1119,8 +1121,8 @@ public class WhyServicesTest extends AbstractServiceTest {
       StringBuilder sb = new StringBuilder();
       sb.append("why/entities");
 
-      SzRecordId recordId1 = new SzRecordId("DOES_NOT_EXIST",
-                                            "ABC123");
+      SzRecordId recordId1 = SzRecordId.FACTORY.create("DOES_NOT_EXIST",
+                                                       "ABC123");
       SzRecordId recordId2 = COMPANY_1;
 
       buildWhyEntitiesQueryString(sb,
@@ -1152,8 +1154,8 @@ public class WhyServicesTest extends AbstractServiceTest {
       StringBuilder sb = new StringBuilder();
       sb.append("why/entities");
 
-      SzEntityId entityId1 = new SzEntityId(100000000L);
-      SzEntityId entityId2 = new SzEntityId(100000001L);
+      SzEntityId entityId1 = SzEntityId.FACTORY.create(100000000L);
+      SzEntityId entityId2 = SzEntityId.FACTORY.create(100000001L);
 
       buildWhyEntitiesQueryString(sb,
                                   entityId1,
@@ -1204,8 +1206,8 @@ public class WhyServicesTest extends AbstractServiceTest {
       StringBuilder sb = new StringBuilder();
       sb.append("why/entities");
 
-      SzEntityId entityId1 = new SzEntityId(100000000L);
-      SzEntityId entityId2 = new SzEntityId(100000001L);
+      SzEntityId entityId1 = SzEntityId.FACTORY.create(100000000L);
+      SzEntityId entityId2 = SzEntityId.FACTORY.create(100000001L);
 
       buildWhyEntitiesQueryString(sb,
                                   entityId1,
@@ -1672,7 +1674,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       this.validateMatchInfo(testInfo, matchInfo);
     }
 
-    SzFocusRecordId focusRecordId = new SzFocusRecordId(
+    SzFocusRecordId focusRecordId = SzFocusRecordId.FACTORY.create(
         recordId.getDataSourceCode(), recordId.getRecordId());
 
     if (recordId != null) {
@@ -1697,8 +1699,8 @@ public class WhyServicesTest extends AbstractServiceTest {
       for (SzEntityData entityData : entities) {
         SzResolvedEntity entity = entityData.getResolvedEntity();
         for (SzEntityRecord record : entity.getRecords()) {
-          recordIds.add(new SzRecordId(record.getDataSource(),
-                                       record.getRecordId()));
+          recordIds.add(SzRecordId.FACTORY.create(record.getDataSource(),
+                                                  record.getRecordId()));
         }
       }
       assertTrue(recordIds.contains(recordId),
@@ -1843,8 +1845,8 @@ public class WhyServicesTest extends AbstractServiceTest {
       SzResolvedEntity resolvedEntity = entityData.getResolvedEntity();
       entityIds.add(resolvedEntity.getEntityId());
       for (SzMatchedRecord record : resolvedEntity.getRecords()) {
-        recordIds.add(
-            new SzRecordId(record.getDataSource(), record.getRecordId()));
+        recordIds.add(SzRecordId.FACTORY.create(record.getDataSource(),
+                                                record.getRecordId()));
       }
     }
 
@@ -2223,9 +2225,9 @@ public class WhyServicesTest extends AbstractServiceTest {
     Set<SzFocusRecordId> recordIds2
         = whyResult.getPerspective2().getFocusRecords();
 
-    SzFocusRecordId focusRecord1 = new SzFocusRecordId(
+    SzFocusRecordId focusRecord1 = SzFocusRecordId.FACTORY.create(
         recordId1.getDataSourceCode(), recordId1.getRecordId());
-    SzFocusRecordId focusRecord2 = new SzFocusRecordId(
+    SzFocusRecordId focusRecord2 = SzFocusRecordId.FACTORY.create(
         recordId2.getDataSourceCode(), recordId2.getRecordId());
 
     assertTrue(recordIds1.contains(focusRecord1),
@@ -2243,8 +2245,8 @@ public class WhyServicesTest extends AbstractServiceTest {
     for (SzEntityData entityData : entities) {
       SzResolvedEntity entity = entityData.getResolvedEntity();
       for (SzEntityRecord record : entity.getRecords()) {
-        recordIds.add(new SzRecordId(record.getDataSource(),
-                                     record.getRecordId()));
+        recordIds.add(SzRecordId.FACTORY.create(record.getDataSource(),
+                                                record.getRecordId()));
       }
     }
 

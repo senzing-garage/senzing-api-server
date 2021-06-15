@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzEntityPathImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -13,79 +15,21 @@ import java.util.function.Function;
  * Represents a path between entities consisting of one or more entity IDs
  * identifying the entities in the path in order.
  */
-public class SzEntityPath {
-  /**
-   * The starting entity ID for the path.
-   */
-  private long startEntityId;
-
-  /**
-   * The ending entity ID for the path.
-   */
-  private long endEntityId;
-
-  /**
-   * The {@link List} of entity IDs.
-   */
-  private List<Long> entityIds;
-
-  /**
-   * Package-private default constructor.
-   */
-  SzEntityPath() {
-    this.startEntityId  = 0;
-    this.endEntityId    = 0;
-    this.entityIds      = null;
-  }
-
-  /**
-   * Constructs with the specified list of entity IDs.
-   *
-   * @param startEntityId The starting entity ID for the path.
-   *
-   * @param endEntityId The ending entity ID for the path.
-   *
-   * @param entityIds The {@link List} of entity IDs, or an empty
-   *                  {@link List} if there is no path between the entities.
-   *
-   * @throws IllegalArgumentException If the specified {@link List} contains
-   *                                  duplicate entity IDs is empty.
-   */
-  public SzEntityPath(long        startEntityId,
-                      long        endEntityId,
-                      List<Long>  entityIds)
-    throws IllegalArgumentException
-  {
-    this.startEntityId = startEntityId;
-    this.endEntityId   = endEntityId;
-    this.entityIds = Collections.unmodifiableList(new ArrayList<>(entityIds));
-    if (this.entityIds.size() > 0 && this.entityIds.get(0) != startEntityId
-        && this.entityIds.get(this.entityIds.size()-1) != endEntityId) {
-      throw new IllegalArgumentException(
-          "The specified entity IDs list does not start and end with the "
-          + "specified starting and ending entity ID.  startEntityId=[ "
-          + startEntityId + " ], endEntityId=[ " + endEntityId
-          + " ], entityIDs=[ " + entityIds + " ]");
-    }
-  }
-
+@JsonDeserialize(using=SzEntityPath.Factory.class)
+public interface SzEntityPath {
   /**
    * Returns the entity ID of the first entity in the path.
    *
    * @return The entity ID of the first entity in the path.
    */
-  public long getStartEntityId() {
-    return this.startEntityId;
-  }
+  long getStartEntityId();
 
   /**
    * Returns the entity ID of the last entity in the path.
    *
    * @return The entity ID of the last entity in the path.
    */
-  public long getEndEntityId() {
-    return this.endEntityId;
-  }
+  long getEndEntityId();
 
   /**
    * Returns the {@link List} of entity IDs identifying the entities in the
@@ -94,18 +38,101 @@ public class SzEntityPath {
    * @return The {@link List} of entity IDs identifying the entities in the
    *         path in order of the path.
    */
-  public List<Long> getEntityIds() {
-    return this.entityIds;
+  List<Long> getEntityIds();
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzEntityPath}.
+   */
+  interface Provider extends ModelProvider<SzEntityPath> {
+    /**
+     * Constructs with the specified list of entity IDs.
+     *
+     * @param startEntityId The starting entity ID for the path.
+     *
+     * @param endEntityId The ending entity ID for the path.
+     *
+     * @param entityIds The {@link List} of entity IDs, or an empty
+     *                  {@link List} if there is no path between the entities.
+     *
+     * @throws IllegalArgumentException If the specified {@link List} contains
+     *                                  duplicate entity IDs is empty.
+     */
+    SzEntityPath create(long        startEntityId,
+                        long        endEntityId,
+                        List<Long>  entityIds);
   }
 
-  @Override
-  public String toString() {
-    return "SzEntityPath{" +
-        "startEntityId=" + startEntityId +
-        ", endEntityId=" + endEntityId +
-        ", entityIds=" + entityIds +
-        '}';
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzEntityPath} that produces instances of {@link SzEntityPathImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzEntityPath>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzEntityPath.class, SzEntityPathImpl.class);
+    }
+
+    @Override
+    public SzEntityPath create(long        startEntityId,
+                               long        endEntityId,
+                               List<Long>  entityIds)
+    {
+      return new SzEntityPathImpl(startEntityId, endEntityId, entityIds);
+    }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link SzEntityPath}.
+   */
+  class Factory extends ModelFactory<SzEntityPath, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzEntityPath.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Constructs with the specified list of entity IDs.
+     *
+     * @param startEntityId The starting entity ID for the path.
+     *
+     * @param endEntityId The ending entity ID for the path.
+     *
+     * @param entityIds The {@link List} of entity IDs, or an empty
+     *                  {@link List} if there is no path between the entities.
+     *
+     * @throws IllegalArgumentException If the specified {@link List} contains
+     *                                  duplicate entity IDs is empty.
+     */
+    public SzEntityPath create(long       startEntityId,
+                               long       endEntityId,
+                               List<Long> entityIds)
+        throws IllegalArgumentException
+    {
+      return this.getProvider().create(startEntityId, endEntityId, entityIds);
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses a list of entity path instances from a {@link JsonArray}
@@ -123,7 +150,7 @@ public class SzEntityPath {
    * @return The populated (or created) {@link List} of {@link
    *         SzEntityPath} instances.
    */
-  public static List<SzEntityPath> parseEntityPathList(
+  static List<SzEntityPath> parseEntityPathList(
       List<SzEntityPath>      list,
       JsonArray               jsonArray)
   {
@@ -146,7 +173,7 @@ public class SzEntityPath {
    *
    * @return The populated (or created) {@link SzEntityPath}.
    */
-  public static SzEntityPath parseEntityPath(JsonObject jsonObject)
+  static SzEntityPath parseEntityPath(JsonObject jsonObject)
   {
     Long startId = JsonUtils.getLong(jsonObject, "START_ENTITY_ID");
     Long endId = JsonUtils.getLong(jsonObject, "END_ENTITY_ID");
@@ -158,7 +185,6 @@ public class SzEntityPath {
       list.add(entities.getJsonNumber(index).longValue());
     }
 
-    return new SzEntityPath(startId, endId, list);
+    return SzEntityPath.FACTORY.create(startId, endId, list);
   }
-
 }

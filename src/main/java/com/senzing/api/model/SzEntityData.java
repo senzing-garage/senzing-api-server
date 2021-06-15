@@ -12,8 +12,7 @@ import java.util.function.Function;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 
 /**
- * Describes a resolved entity and its related entities.
- *
+ * Provides a default implementation of {@link SzEntityData}.
  */
 public interface SzEntityData {
   /**

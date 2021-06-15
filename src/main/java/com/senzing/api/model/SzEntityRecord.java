@@ -2,6 +2,8 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzEntityRecordImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -20,138 +22,35 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 /**
  * Describes an entity record.
  */
-public class SzEntityRecord {
-  /**
-   * The pattern for parsing the date values returned from the native API.
-   */
-  private static final String NATIVE_DATE_PATTERN = "yyyy-MM-dd HH:mm:ss.SSS";
-
-  /**
-   * The time zone used for the time component of the build number.
-   */
-  private static final ZoneId UTC_ZONE = ZoneId.of("UTC");
-
-  /**
-   * The {@link DateTimeFormatter} for interpreting the timestamps from the
-   * native API.
-   */
-  private static final DateTimeFormatter NATIVE_DATE_FORMATTER
-      = DateTimeFormatter.ofPattern(NATIVE_DATE_PATTERN);
-
-  /**
-   * The data source code for the record.
-   */
-  private String dataSource;
-
-  /**
-   * The record ID for the record.
-   */
-  private String recordId;
-
-  /**
-   * The list of address data strings.
-   */
-  private List<String> addressData;
-
-  /**
-   * The list of characteristic data strings.
-   */
-  private List<String> characteristicData;
-
-  /**
-   * The list of identifier data strings.
-   */
-  private List<String> identifierData;
-
-  /**
-   * The list of name data strings.
-   */
-  private List<String> nameData;
-
-  /**
-   * The list of phone data strings.
-   */
-  private List<String> phoneData;
-
-  /**
-   * The list of relationship data strings.
-   */
-  private List<String> relationshipData;
-
-  /**
-   * The list of other data strings.
-   */
-  private List<String> otherData;
-
-  /**
-   * The object representing the original source data.
-   */
-  private Object originalSourceData;
-
-  /**
-   * The last seen timestamp.
-   */
-  @JsonFormat(shape   = JsonFormat.Shape.STRING,
-      pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-      locale  = "en_GB")
-  private Date lastSeenTimestamp;
-
-  /**
-   * Default constructor.
-   */
-  public SzEntityRecord() {
-    this.dataSource         = null;
-    this.recordId           = null;
-    this.lastSeenTimestamp  = null;
-    this.addressData        = new LinkedList<>();
-    this.characteristicData = new LinkedList<>();
-    this.identifierData     = new LinkedList<>();
-    this.nameData           = new LinkedList<>();
-    this.phoneData          = new LinkedList<>();
-    this.relationshipData   = new LinkedList<>();
-    this.otherData          = new LinkedList<>();
-    this.originalSourceData = null;
-  }
-
+@JsonDeserialize(using=SzEntityRecord.Factory.class)
+public interface SzEntityRecord {
   /**
    * Gets the data source code for the record.
    *
    * @return The data source code for the record.
    */
-  public String getDataSource()
-  {
-    return dataSource;
-  }
+  String getDataSource();
 
   /**
    * Sets the data source code for the record.
    *
    * @param dataSource The data source code for the record.
    */
-  public void setDataSource(String dataSource)
-  {
-    this.dataSource = dataSource;
-  }
+  void setDataSource(String dataSource);
 
   /**
    * Gets the record ID for the record.
    *
    * @return The record ID for the record.
    */
-  public String getRecordId()
-  {
-    return recordId;
-  }
+  String getRecordId();
 
   /**
    * Sets the record ID for the record.
    *
    * @param recordId The record ID for the record.
    */
-  public void setRecordId(String recordId)
-  {
-    this.recordId = recordId;
-  }
+  void setRecordId(String recordId);
 
   /**
    * Gets the last-seen timestamp for the entity.
@@ -159,18 +58,17 @@ public class SzEntityRecord {
    * @return The last-seen timestamp for the entity.
    */
   @JsonInclude(NON_NULL)
-  public Date getLastSeenTimestamp() {
-    return this.lastSeenTimestamp;
-  }
+  @JsonFormat(shape   = JsonFormat.Shape.STRING,
+      pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+      locale  = "en_GB")
+  Date getLastSeenTimestamp();
 
   /**
    * Sets the last-seen timestamp for the entity.
    *
    * @param timestamp The last-seen timestamp for the entity.
    */
-  public void setLastSeenTimestamp(Date timestamp) {
-    this.lastSeenTimestamp = timestamp;
-  }
+  void setLastSeenTimestamp(Date timestamp);
 
   /**
    * Returns the list of address data strings for the record.
@@ -178,32 +76,21 @@ public class SzEntityRecord {
    * @return The list of address data strings for the record.
    */
   @JsonInclude(NON_EMPTY)
-  public List<String> getAddressData() {
-    return Collections.unmodifiableList(this.addressData);
-  }
+  List<String> getAddressData();
 
   /**
    * Sets the address data list for the record.
    *
    * @param addressData The list of address data strings.
    */
-  public void setAddressData(List<String> addressData)
-  {
-    this.addressData.clear();
-    if (addressData != null) {
-      this.addressData.addAll(addressData);
-    }
-  }
+  void setAddressData(List<String> addressData);
 
   /**
    * Adds to the address data list for the record.
    *
    * @param addressData The address data string to add to the address data list.
    */
-  public void addAddressData(String addressData)
-  {
-    this.addressData.add(addressData);
-  }
+  void addAddressData(String addressData);
 
   /**
    * Returns the list of characteristic data strings for the record.
@@ -211,22 +98,14 @@ public class SzEntityRecord {
    * @return The list of characteristic data strings for the record.
    */
   @JsonInclude(NON_EMPTY)
-  public List<String> getCharacteristicData() {
-    return Collections.unmodifiableList(this.characteristicData);
-  }
+  List<String> getCharacteristicData();
 
   /**
    * Sets the characteristic data list for the record.
    *
    * @param characteristicData The list of characteristic data strings.
    */
-  public void setCharacteristicData(List<String> characteristicData)
-  {
-    this.characteristicData.clear();
-    if (characteristicData != null) {
-      this.characteristicData.addAll(characteristicData);
-    }
-  }
+  void setCharacteristicData(List<String> characteristicData);
 
   /**
    * Adds to the characteristic data list for the record.
@@ -234,10 +113,7 @@ public class SzEntityRecord {
    * @param characteristicData The characteristic data string to add to the address
    *                      data list.
    */
-  public void addCharacteristicData(String characteristicData)
-  {
-    this.characteristicData.add(characteristicData);
-  }
+  void addCharacteristicData(String characteristicData);
 
   /**
    * Returns the list of identifier data strings for the record.
@@ -245,22 +121,14 @@ public class SzEntityRecord {
    * @return The list of identifier data strings for the record.
    */
   @JsonInclude(NON_EMPTY)
-  public List<String> getIdentifierData() {
-    return Collections.unmodifiableList(this.identifierData);
-  }
+  List<String> getIdentifierData();
 
   /**
    * Sets the identifier data list for the record.
    *
    * @param identifierData The list of identifier data strings.
    */
-  public void setIdentifierData(List<String> identifierData)
-  {
-    this.identifierData.clear();
-    if (identifierData != null) {
-      this.identifierData.addAll(identifierData);
-    }
-  }
+  void setIdentifierData(List<String> identifierData);
 
   /**
    * Adds to the identifier data list for the record.
@@ -268,10 +136,7 @@ public class SzEntityRecord {
    * @param identifierData The identifier data string to add to the identifier
    *                       data list.
    */
-  public void addIdentifierData(String identifierData)
-  {
-    this.identifierData.add(identifierData);
-  }
+  void addIdentifierData(String identifierData);
 
   /**
    * Returns the list of name data strings for the record.
@@ -279,31 +144,21 @@ public class SzEntityRecord {
    * @return The list of name data strings for the record.
    */
   @JsonInclude(NON_EMPTY)
-  public List<String> getNameData() {
-    return Collections.unmodifiableList(this.nameData);
-  }
+  List<String> getNameData();
 
   /**
    * Sets the name data list for the record.
    *
    * @param nameData The list of name data strings.
    */
-  public void setNameData(List<String> nameData) {
-    this.nameData.clear();
-    if (nameData != null) {
-      this.nameData.addAll(nameData);
-    }
-  }
+  void setNameData(List<String> nameData);
 
   /**
    * Adds to the name data list for the record.
    *
    * @param nameData The name data string to add to the name data list.
    */
-  public void addNameData(String nameData)
-  {
-    this.nameData.add(nameData);
-  }
+  void addNameData(String nameData);
 
   /**
    * Returns the list of phone data strings for the record.
@@ -311,31 +166,21 @@ public class SzEntityRecord {
    * @return The list of phone data strings for the record.
    */
   @JsonInclude(NON_EMPTY)
-  public List<String> getPhoneData() {
-    return Collections.unmodifiableList(this.phoneData);
-  }
+  List<String> getPhoneData();
 
   /**
    * Sets the phone data list for the record.
    *
    * @param phoneData The list of name data strings.
    */
-  public void setPhoneData(List<String> phoneData) {
-    this.phoneData.clear();
-    if (phoneData != null) {
-      this.phoneData.addAll(phoneData);
-    }
-  }
+  void setPhoneData(List<String> phoneData);
 
   /**
    * Adds to the phone data list for the record.
    *
    * @param phoneData The phone data string to add to the phone data list.
    */
-  public void addPhoneData(String phoneData)
-  {
-    this.phoneData.add(phoneData);
-  }
+  void addPhoneData(String phoneData);
 
   /**
    * Returns the list of relationship data strings for the record.
@@ -343,21 +188,14 @@ public class SzEntityRecord {
    * @return The list of relationship data strings for the record.
    */
   @JsonInclude(NON_EMPTY)
-  public List<String> getRelationshipData() {
-    return Collections.unmodifiableList(this.relationshipData);
-  }
+  List<String> getRelationshipData();
 
   /**
    * Sets the relationship data list for the record.
    *
    * @param relationshipData The list of relationship data strings.
    */
-   public void setRelationshipData(List<String> relationshipData) {
-     this.relationshipData.clear();
-     if (relationshipData != null) {
-       this.relationshipData.addAll(relationshipData);
-     }
-   }
+   void setRelationshipData(List<String> relationshipData);
 
    /**
    * Adds to the relationship data list for the record.
@@ -365,10 +203,7 @@ public class SzEntityRecord {
    * @param relationshipData The relationship data string to add to the
    *                         relationship data list.
    */
-  public void addRelationshipData(String relationshipData)
-  {
-    this.relationshipData.add(relationshipData);
-  }
+  void addRelationshipData(String relationshipData);
 
   /**
    * Returns the list of other data strings for the record.
@@ -376,31 +211,21 @@ public class SzEntityRecord {
    * @return The list of other data strings for the record.
    */
   @JsonInclude(NON_EMPTY)
-  public List<String> getOtherData() {
-    return Collections.unmodifiableList(this.otherData);
-  }
+  List<String> getOtherData();
 
   /**
    * Sets the other data list for the record.
    *
    * @param otherData The list of other data strings.
    */
-  public void setOtherData(List<String> otherData) {
-    this.otherData.clear();
-    if (otherData != null) {
-      this.otherData.addAll(otherData);
-    }
-  }
+  void setOtherData(List<String> otherData);
 
   /**
    * Adds to the other data list for the record.
    *
    * @param otherData The other data string to add to the other data list.
    */
-  public void addOtherData(String otherData)
-  {
-    this.otherData.add(otherData);
-  }
+  void addOtherData(String otherData);
 
   /**
    * Returns the original source data that was used to load the record.
@@ -408,9 +233,7 @@ public class SzEntityRecord {
    * @return The original source data that was used to load the record.
    */
   @JsonInclude(NON_NULL)
-  public Object getOriginalSourceData() {
-    return originalSourceData;
-  }
+  Object getOriginalSourceData();
 
   /**
    * Sets the original source data using the specified object.
@@ -418,25 +241,100 @@ public class SzEntityRecord {
    * @param jsonObject The object representation of the JSON for the
    *                   original source data.
    */
-  public void setOriginalSourceData(Object jsonObject)
-  {
-    if (jsonObject != null && jsonObject instanceof String) {
-      this.setOriginalSourceDataFromText((String) jsonObject);
-    } else {
-      this.originalSourceData = jsonObject;
-    }
-  }
+  void setOriginalSourceData(Object jsonObject);
 
   /**
    * Sets the original source data using the specified JSON text.
    *
    * @param jsonText The JSON text for the original source data.
    */
-  public void setOriginalSourceDataFromText(String jsonText)
-  {
-    this.originalSourceData = JsonUtils.normalizeJsonText(jsonText);
+  void setOriginalSourceDataFromText(String jsonText);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzEntityRecord}.
+   */
+  interface Provider extends ModelProvider<SzEntityRecord> {
+    /**
+     * Creates a new instance of {@link SzEntityRecord}.
+     *
+     * @return The new instance of {@link SzEntityRecord}
+     */
+    SzEntityRecord create();
   }
 
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzEntityRecord} that produces instances of {@link SzEntityRecordImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzEntityRecord>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzEntityRecord.class, SzEntityRecordImpl.class);
+    }
+
+    @Override
+    public SzEntityRecord create() {
+      return new SzEntityRecordImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link SzEntityRecord}.
+   */
+  class Factory extends ModelFactory<SzEntityRecord, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzEntityRecord.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzEntityRecord}.
+     * @return The new instance of {@link SzEntityRecord}.
+     */
+    public SzEntityRecord create()
+    {
+      return this.getProvider().create();
+    }
+
+    /**
+     * The pattern for parsing the date values returned from the native API.
+     */
+    private static final String NATIVE_DATE_PATTERN = "yyyy-MM-dd HH:mm:ss.SSS";
+
+    /**
+     * The time zone used for the time component of the build number.
+     */
+    private static final ZoneId UTC_ZONE = ZoneId.of("UTC");
+
+    /**
+     * The {@link DateTimeFormatter} for interpreting the timestamps from the
+     * native API.
+     */
+    private static final DateTimeFormatter NATIVE_DATE_FORMATTER
+        = DateTimeFormatter.ofPattern(NATIVE_DATE_PATTERN);
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the native JSON to construct/populate a {@link List}
@@ -449,13 +347,13 @@ public class SzEntityRecord {
    * @return The specified (or constructed) {@link List} of {@link
    *         SzEntityRecord} instances.
    */
-  public static List<SzEntityRecord> parseEntityRecordList(
+  static List<SzEntityRecord> parseEntityRecordList(
       List<SzEntityRecord>  list,
       JsonArray             jsonArray)
   {
     for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
       if (list == null) {
-        list = new ArrayList<SzEntityRecord>(jsonArray.size());
+        list = new ArrayList<>(jsonArray.size());
       }
       list.add(parseEntityRecord(null, jsonObject));
     }
@@ -497,10 +395,14 @@ public class SzEntityRecord {
    *
    * @return The populated (or created) instance of {@link SzEntityRecord}
    */
-  public static SzEntityRecord parseEntityRecord(SzEntityRecord record,
-                                                 JsonObject     jsonObject)
+  static SzEntityRecord parseEntityRecord(SzEntityRecord  record,
+                                          JsonObject      jsonObject)
   {
-    if (record == null) record = new SzEntityRecord();
+    final DateTimeFormatter NATIVE_DATE_FORMATTER
+        = Factory.NATIVE_DATE_FORMATTER;
+    final ZoneId UTC_ZONE = Factory.UTC_ZONE;
+
+    if (record == null) record = SzEntityRecord.FACTORY.create();
     final SzEntityRecord rec = record;
 
     // get the data source and record ID
@@ -557,24 +459,5 @@ public class SzEntityRecord {
     });
 
     return record;
-  }
-
-  @Override
-  public String toString() {
-    return "SzEntityRecord{" + this.fieldsToString() + "}";
-  }
-
-  protected String fieldsToString() {
-    return "dataSource='" + dataSource + '\'' +
-        ", recordId='" + recordId + '\'' +
-        ", lastSeenTimestamp=" + lastSeenTimestamp +
-        ", addressData=" + addressData +
-        ", characteristicData=" + characteristicData +
-        ", identifierData=" + identifierData +
-        ", nameData=" + nameData +
-        ", phoneData=" + phoneData +
-        ", relationshipData=" + relationshipData +
-        ", otherData=" + otherData +
-        ", originalSourceData=" + originalSourceData;
   }
 }

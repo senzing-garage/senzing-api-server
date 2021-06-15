@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzRecordIdImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.Json;
@@ -13,93 +15,95 @@ import java.util.Objects;
 /**
  * Describes a record ID with a data source.
  */
-public class SzRecordId implements SzEntityIdentifier {
-  /**
-   * The data source code.
-   */
-  private String dataSourceCode;
-
-  /**
-   * The record ID identifying the record within the data source.
-   */
-  private String recordId;
-
-  /**
-   * Default constructor.
-   */
-  private SzRecordId() {
-    this.dataSourceCode = null;
-    this.recordId = null;
-  }
-
-  /**
-   * Constructs with the specified data source code and record ID.
-   *
-   * @param dataSourceCode The data source code.
-   * @param recordId The record ID identifying the record.
-   */
-  public SzRecordId(String dataSourceCode, String recordId) {
-    this.dataSourceCode = dataSourceCode.toUpperCase().trim();
-    this.recordId = recordId.trim();
-  }
-
+@JsonDeserialize(using=SzRecordId.Factory.class)
+public interface SzRecordId extends SzEntityIdentifier {
   /**
    * Gets the data source code for the record.
    *
    * @return The data source code for the record.
    */
-  public String getDataSourceCode() {
-    return dataSourceCode;
-  }
-
-  /**
-   * Sets the data source code for the record.
-   *
-   * @param dataSourceCode The data source code for the record.
-   */
-  private void setDataSourceCode(String dataSourceCode) {
-    this.dataSourceCode = dataSourceCode.toUpperCase().trim();
-  }
+  String getDataSourceCode();
 
   /**
    * Return the record ID identifying the record.
    *
    * @return The record ID identifying the record.
    */
-  public String getRecordId() {
-    return recordId;
+  String getRecordId();
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzRecordId}.
+   */
+  interface Provider extends ModelProvider<SzRecordId> {
+    /**
+     * Constructs with the specified data source code and record ID.
+     *
+     * @param dataSourceCode The data source code.
+     * @param recordId The record ID identifying the record.
+     */
+    SzRecordId create(String dataSourceCode, String recordId);
   }
 
   /**
-   * Sets the record ID identifying the record.
-   *
-   * @param recordId The record ID identifying the record.
+   * Provides a default {@link Provider} implementation for {@link
+   * SzRecordId} that produces instances of
+   * {@link SzRecordIdImpl}.
    */
-  private void setRecordId(String recordId) {
-    this.recordId = recordId;
+  class DefaultProvider extends AbstractModelProvider<SzRecordId>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzRecordId.class, SzRecordIdImpl.class);
+    }
+
+    @Override
+    public SzRecordId create(String dataSourceCode, String recordId) {
+      return new SzRecordIdImpl(dataSourceCode, recordId);
+    }
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    SzRecordId recordId1 = (SzRecordId) o;
-    return Objects.equals(getDataSourceCode(), recordId1.getDataSourceCode()) &&
-        Objects.equals(getRecordId(), recordId1.getRecordId());
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzRecordId}.
+   */
+  class Factory extends ModelFactory<SzRecordId, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzRecordId.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzRecordId} with the specified
+     * data source code and record ID.
+     *
+     * @param dataSourceCode The data source code.
+     * @param recordId The record ID identifying the record.
+     */
+    public SzRecordId create(String dataSourceCode, String recordId) {
+      return this.getProvider().create(dataSourceCode, recordId);
+    }
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(getDataSourceCode(), getRecordId());
-  }
-
-  @Override
-  public String toString() {
-    JsonObjectBuilder builder = Json.createObjectBuilder();
-    builder.add("src", this.getDataSourceCode());
-    builder.add("id", this.getRecordId());
-    return JsonUtils.toJsonText(builder);
-  }
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the specified JSON text for the record ID.  Alternatively, instead
@@ -116,7 +120,7 @@ public class SzRecordId implements SzEntityIdentifier {
    * @param text The JSON text to parse.
    * @return The {@link SzRecordId} that was created.
    */
-  public static SzRecordId valueOf(String text) {
+  static SzRecordId valueOf(String text) {
     RuntimeException failure = null;
     text = text.trim();
     int length = text.length();
@@ -127,7 +131,7 @@ public class SzRecordId implements SzEntityIdentifier {
         JsonObject jsonObject = JsonUtils.parseJsonObject(text);
         String source = jsonObject.getString("src");
         String id = jsonObject.getString("id");
-        return new SzRecordId(source, id);
+        return SzRecordId.FACTORY.create(source, id);
       } catch (RuntimeException e) {
         failure = e;
       }
@@ -143,7 +147,7 @@ public class SzRecordId implements SzEntityIdentifier {
       }
       String prefix = text.substring(1, index);
       String suffix = text.substring(index + 1);
-      return new SzRecordId(prefix, suffix);
+      return SzRecordId.FACTORY.create(prefix, suffix);
 
     } else {
       if (failure != null) throw failure;
@@ -161,7 +165,7 @@ public class SzRecordId implements SzEntityIdentifier {
    *
    * @return The {@link SzRecordId} that was created.
    */
-  public static SzRecordId parse(JsonObject jsonObject) {
+  static SzRecordId parse(JsonObject jsonObject) {
     String src = JsonUtils.getString(jsonObject, "src");
     if (src == null) {
       src = JsonUtils.getString(jsonObject, "dataSourceCode");
@@ -181,7 +185,7 @@ public class SzRecordId implements SzEntityIdentifier {
           "The specified JsonObject does not have the required fields.  src=[ "
           + src + " ], id=[ " + id + " ], jsonObject=[ " + jsonObject + " ]");
     }
-    return new SzRecordId(src, id);
+    return SzRecordId.FACTORY.create(src, id);
   }
 
   /**
@@ -192,7 +196,7 @@ public class SzRecordId implements SzEntityIdentifier {
    *
    * @return The {@link SzRecordId} that was created.
    */
-  public static SzRecordId parseRecordId(JsonObject jsonObject) {
+  static SzRecordId parseRecordId(JsonObject jsonObject) {
     String src  = JsonUtils.getString(jsonObject, "DATA_SOURCE");
     String id   = JsonUtils.getString(jsonObject, "RECORD_ID");
 
@@ -201,7 +205,7 @@ public class SzRecordId implements SzEntityIdentifier {
           "The specified JsonObject does not have the required fields.  src=[ "
           + src + " ], id=[ " + id + " ], jsonObject=[ " + jsonObject + " ]");
     }
-    return new SzRecordId(src, id);
+    return SzRecordId.FACTORY.create(src, id);
   }
 
   /**
@@ -214,7 +218,7 @@ public class SzRecordId implements SzEntityIdentifier {
    * @return The {@link List} of {@link SzRecordId} instances that were
    *         populated.
    */
-  public static List<SzRecordId> parseRecordIdList(JsonArray jsonArray) {
+  static List<SzRecordId> parseRecordIdList(JsonArray jsonArray) {
     return parseRecordIdList(null, jsonArray);
   }
 
@@ -231,8 +235,8 @@ public class SzRecordId implements SzEntityIdentifier {
    * @return The {@link List} of {@link SzRecordId} instances that were
    *         populated.
    */
-  public static List<SzRecordId> parseRecordIdList(List<SzRecordId> list,
-                                                   JsonArray        jsonArray)
+  static List<SzRecordId> parseRecordIdList(List<SzRecordId> list,
+                                            JsonArray        jsonArray)
   {
     if (list == null) {
       list = new ArrayList<>(jsonArray.size());

@@ -1,6 +1,7 @@
 package com.senzing.api.model;
 
-import com.senzing.util.JsonUtils;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzRelatedEntityImpl;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -12,40 +13,15 @@ import static com.senzing.api.model.SzRelationshipType.*;
 /**
  * Describes an entity related to the base entity.
  */
-public class SzRelatedEntity extends SzBaseRelatedEntity {
-  /**
-   * Whether or not the relationship is disclosed.
-   */
-  private boolean disclosed;
-
-  /**
-   * Whether or not the relationship is ambiguous.
-   */
-  private boolean ambiguous;
-
-  /**
-   * The relationship type.
-   */
-  private SzRelationshipType relationType;
-
-  /**
-   * Default constructor.
-   */
-  public SzRelatedEntity() {
-    this.disclosed    = false;
-    this.ambiguous    = false;
-    this.relationType = null;
-  }
-
+@JsonDeserialize(using=SzRelatedEntity.Factory.class)
+public interface SzRelatedEntity extends SzBaseRelatedEntity {
   /**
    * Checks whether or not the relationship between the entities is disclosed.
    *
    * @return <tt>true</tt> if the relationship is disclosed, or <tt>false</tt>
    *         if not disclosed.
    */
-  public boolean isDisclosed() {
-    return this.disclosed;
-  }
+  boolean isDisclosed();
 
   /**
    * Sets whether or not the relationship between the entities is disclosed.
@@ -53,9 +29,7 @@ public class SzRelatedEntity extends SzBaseRelatedEntity {
    * @param disclosed <tt>true</tt> if the relationship is disclosed, or
    *                  <tt>false</tt> if not disclosed.
    */
-  public void setDisclosed(boolean disclosed) {
-    this.disclosed = disclosed;
-  }
+  void setDisclosed(boolean disclosed);
 
   /**
    * Checks whether or not the relationship between the entities is an
@@ -64,9 +38,7 @@ public class SzRelatedEntity extends SzBaseRelatedEntity {
    * @return <tt>true</tt> if the relationship is an ambiguous possible match,
    *         or <tt>false</tt> if not disclosed.
    */
-  public boolean isAmbiguous() {
-    return this.ambiguous;
-  }
+  boolean isAmbiguous();
 
   /**
    * Sets whether or not the relationship between the entities is an
@@ -75,18 +47,14 @@ public class SzRelatedEntity extends SzBaseRelatedEntity {
    * @param ambiguous <tt>true</tt> if the relationship is an ambiguous
    *                  possible match, or <tt>false</tt> if not disclosed.
    */
-  public void setAmbiguous(boolean ambiguous) {
-    this.ambiguous = ambiguous;
-  }
+  void setAmbiguous(boolean ambiguous);
 
   /**
    * Gets the {@link SzRelationshipType} describing the type of relation.
    *
    * @return The {@link SzRelationshipType} describing the type of relation.
    */
-  public SzRelationshipType getRelationType() {
-    return this.relationType;
-  }
+  SzRelationshipType getRelationType();
 
   /**
    * Sets the {@link SzRelationshipType} describing the type of relation.
@@ -94,9 +62,75 @@ public class SzRelatedEntity extends SzBaseRelatedEntity {
    * @param relationType The {@link SzRelationshipType} describing the type
    *                     of relation.
    */
-  public void setRelationType(SzRelationshipType relationType) {
-    this.relationType = relationType;
+  void setRelationType(SzRelationshipType relationType);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzRelatedEntity}.
+   */
+  interface Provider extends ModelProvider<SzRelatedEntity> {
+    /**
+     * Creates a new instance of {@link SzRelatedEntity}.
+     *
+     * @return The new instance of {@link SzRelatedEntity}
+     */
+    SzRelatedEntity create();
   }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzRelatedEntity} that produces instances of {@link SzRelatedEntityImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzRelatedEntity>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzRelatedEntity.class, SzRelatedEntityImpl.class);
+    }
+
+    @Override
+    public SzRelatedEntity create() {
+      return new SzRelatedEntityImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link SzRelatedEntity}.
+   */
+  class Factory extends ModelFactory<SzRelatedEntity, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzRelatedEntity.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzRelatedEntity}.
+     * @return The new instance of {@link SzRelatedEntity}.
+     */
+    public SzRelatedEntity create() {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses a list of resolved entities from a {@link JsonArray} describing a
@@ -116,7 +150,7 @@ public class SzRelatedEntity extends SzBaseRelatedEntity {
    * @return The populated (or created) {@link List} of {@link
    *         SzRelatedEntity} instances.
    */
-  public static List<SzRelatedEntity> parseRelatedEntityList(
+  static List<SzRelatedEntity> parseRelatedEntityList(
       List<SzRelatedEntity>   list,
       JsonArray               jsonArray,
       Function<String,String> featureToAttrClassMapper)
@@ -151,12 +185,12 @@ public class SzRelatedEntity extends SzBaseRelatedEntity {
    *
    * @return The populated (or created) {@link SzRelatedEntity}.
    */
-  public static SzRelatedEntity parseRelatedEntity(
+  static SzRelatedEntity parseRelatedEntity(
       SzRelatedEntity         entity,
       JsonObject              jsonObject,
       Function<String,String> featureToAttrClassMapper)
   {
-    if (entity == null) entity = new SzRelatedEntity();
+    if (entity == null) entity = SzRelatedEntity.FACTORY.create();
 
     Function<String,String> mapper = featureToAttrClassMapper;
     SzBaseRelatedEntity.parseBaseRelatedEntity(entity, jsonObject, mapper);
@@ -183,15 +217,5 @@ public class SzRelatedEntity extends SzBaseRelatedEntity {
 
     // iterate over the feature map
     return entity;
-  }
-
-  @Override
-  public String toString() {
-    return "SzRelatedEntity{" +
-        super.toString() +
-        ", disclosed=" + disclosed +
-        ", ambiguous=" + ambiguous +
-        ", relationType=" + relationType +
-        '}';
   }
 }

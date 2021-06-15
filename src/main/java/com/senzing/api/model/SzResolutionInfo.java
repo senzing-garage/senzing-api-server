@@ -1,12 +1,12 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzResolutionInfoImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
-import javax.json.JsonNumber;
 import javax.json.JsonObject;
-import javax.json.JsonString;
 import java.util.*;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
@@ -15,56 +15,22 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 /**
  * Describes the information associated with resolution of a record.
  */
-public class SzResolutionInfo {
-  /**
-   * The data source for the focus record.
-   */
-  private String dataSource;
-
-  /**
-   * The record ID for the focus record.
-   */
-  private String recordId;
-
-  /**
-   * The {@link List} of {@link Long} entity ID's for the affected entities.
-   */
-  private Set<Long> affectedEntities;
-
-  /**
-   * The {@link List} of {@link SzFlaggedEntity} instances describing the
-   * flagged entities.
-   */
-  private List<SzFlaggedEntity> flaggedEntities;
-
-  /**
-   * Default constructor.
-   */
-  public SzResolutionInfo() {
-    this.dataSource       = null;
-    this.recordId         = null;
-    this.affectedEntities = new LinkedHashSet<>();
-    this.flaggedEntities  = new LinkedList<>();
-  }
-
+@JsonDeserialize(using=SzResolutionInfo.Factory.class)
+public interface SzResolutionInfo {
   /**
    * Gets the data source for the focal record.
    *
    * @return The data source for the focal record.
    */
   @JsonInclude(NON_NULL)
-  public String getDataSource() {
-    return dataSource;
-  }
+  String getDataSource();
 
   /**
    * Sets the data source for the focal record.
    *
    * @param dataSource The data source for the focal record.
    */
-  public void setDataSource(String dataSource) {
-    this.dataSource = dataSource;
-  }
+  void setDataSource(String dataSource);
 
   /**
    * Gets the record ID for the focal record.
@@ -72,18 +38,14 @@ public class SzResolutionInfo {
    * @return The record ID for the focal record.
    */
   @JsonInclude(NON_NULL)
-  public String getRecordId() {
-    return recordId;
-  }
+  String getRecordId();
 
   /**
    * Sets the record ID for the focal record.
    *
    * @param recordId The record ID for the focal record.
    */
-  public void setRecordId(String recordId) {
-    this.recordId = recordId;
-  }
+  void setRecordId(String recordId);
 
   /**
    * Get the <b>unmodifiable</b> {@link Set} of entity ID's for the affected
@@ -93,9 +55,7 @@ public class SzResolutionInfo {
    *         affected entities.
    */
   @JsonInclude(NON_EMPTY)
-  public Set<Long> getAffectedEntities() {
-    return Collections.unmodifiableSet(this.affectedEntities);
-  }
+  Set<Long> getAffectedEntities();
 
   /**
    * Adds the specified entity ID to the {@Link Set} of affected entities.
@@ -103,9 +63,7 @@ public class SzResolutionInfo {
    *
    * @param entityId The entity ID to add.
    */
-  public void addAffectedEntity(Long entityId) {
-    if (entityId != null) this.affectedEntities.add(entityId);
-  }
+  void addAffectedEntity(Long entityId);
 
   /**
    * Sets the {@link Set} of affected entity IDs to those in the specified
@@ -115,16 +73,7 @@ public class SzResolutionInfo {
    *
    * @param affectedEntities
    */
-  public void setAffectedEntities(Collection<Long> affectedEntities) {
-    this.affectedEntities.clear();
-    if (affectedEntities != null) {
-      for (Long entityId : affectedEntities) {
-        if (entityId != null) {
-          this.affectedEntities.add(entityId);
-        }
-      }
-    }
-  }
+  void setAffectedEntities(Collection<Long> affectedEntities);
 
   /**
    * Gets the <b>unmodifiable</b> {@link List} of {@link SzFlaggedEntity}
@@ -134,9 +83,7 @@ public class SzResolutionInfo {
    *         instances.
    */
   @JsonInclude(NON_EMPTY)
-  public List<SzFlaggedEntity> getFlaggedEntities() {
-    return Collections.unmodifiableList(this.flaggedEntities);
-  }
+  List<SzFlaggedEntity> getFlaggedEntities();
 
   /**
    * Adds the specified {@link SzFlaggedEntity} to the {@link List} of flagged
@@ -145,9 +92,7 @@ public class SzResolutionInfo {
    *
    * @param flaggedEntity The {@link SzFlaggedEntity} to add to the {@link List}
    */
-  public void addFlaggedEntity(SzFlaggedEntity flaggedEntity) {
-    if (flaggedEntity != null) this.flaggedEntities.add(flaggedEntity);
-  }
+  void addFlaggedEntity(SzFlaggedEntity flaggedEntity);
 
   /**
    * Sets the {@link List} of flagged entities to those in the specified
@@ -159,24 +104,77 @@ public class SzResolutionInfo {
    *                        instances to add to the {@link List} of flagged
    *                        entities.
    */
-  public void setFlaggedEntities(Collection<SzFlaggedEntity> flaggedEntities) {
-    this.flaggedEntities.clear();
-    if (flaggedEntities != null) {
-      for (SzFlaggedEntity entity : flaggedEntities) {
-        this.flaggedEntities.add(entity);
-      }
+  void setFlaggedEntities(Collection<SzFlaggedEntity> flaggedEntities);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzResolutionInfo}.
+   */
+  interface Provider extends ModelProvider<SzResolutionInfo> {
+    /**
+     * Creates a new instance of {@link SzResolutionInfo}.
+     *
+     * @return The new instance of {@link SzResolutionInfo}
+     */
+    SzResolutionInfo create();
+  }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzResolutionInfo} that produces instances of
+   * {@link SzResolutionInfoImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzResolutionInfo>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzResolutionInfo.class, SzResolutionInfoImpl.class);
+    }
+
+    @Override
+    public SzResolutionInfo create() {
+      return new SzResolutionInfoImpl();
     }
   }
 
-  @Override
-  public String toString() {
-    return "SzResolutionInfo{" +
-        "dataSource='" + dataSource + '\'' +
-        ", recordId='" + recordId + '\'' +
-        ", affectedEntities=" + affectedEntities +
-        ", flaggedEntities=" + flaggedEntities +
-        '}';
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzResolutionInfo}.
+   */
+  class Factory extends ModelFactory<SzResolutionInfo, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzResolutionInfo.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzResolutionInfo}.
+     * @return The new instance of {@link SzResolutionInfo}.
+     */
+    public SzResolutionInfo create() {
+      return this.getProvider().create();
+    }
   }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the resolution info from a {@link JsonObject} describing JSON
@@ -191,11 +189,11 @@ public class SzResolutionInfo {
    *
    * @return The populated (or created) {@link SzResolutionInfo}.
    */
-  public static SzResolutionInfo parseResolutionInfo(
+  static SzResolutionInfo parseResolutionInfo(
       SzResolutionInfo  info,
       JsonObject        jsonObject)
   {
-    if (info == null) info = new SzResolutionInfo();
+    if (info == null) info = SzResolutionInfo.FACTORY.create();
 
     info.setDataSource(JsonUtils.getString(jsonObject, "DATA_SOURCE"));
     info.setRecordId(JsonUtils.getString(jsonObject, "RECORD_ID"));
@@ -212,7 +210,7 @@ public class SzResolutionInfo {
     jsonArray = JsonUtils.getJsonArray(jsonObject, "INTERESTING_ENTITIES");
     if (jsonArray != null) {
       List<SzFlaggedEntity> flaggedEntities
-          = SzFlaggedEntity.parseFlaggedEntityList(info.flaggedEntities,
+          = SzFlaggedEntity.parseFlaggedEntityList(info.getFlaggedEntities(),
                                                    jsonArray);
     }
 

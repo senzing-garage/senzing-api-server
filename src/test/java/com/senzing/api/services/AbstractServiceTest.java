@@ -586,7 +586,7 @@ public abstract class AbstractServiceTest {
 
         Integer eclassId    = jsonObject.getInt("ECLASS_ID");
         String  resolve     = jsonObject.getString("RESOLVE");
-        SzEntityClass entityClass = new SzEntityClass(
+        SzEntityClass entityClass = SzEntityClass.FACTORY.create(
             eclassCode, eclassId, "YES".equalsIgnoreCase(resolve));
 
         entityClassMap.put(
@@ -603,7 +603,7 @@ public abstract class AbstractServiceTest {
         Integer etypeId   = jsonObject.getInt("ETYPE_ID");
         Integer eclassId  = jsonObject.getInt("ECLASS_ID");
         SzEntityClass entityClass = entityClassesById.get(eclassId);
-        SzEntityType entityType = new SzEntityType(
+        SzEntityType entityType = SzEntityType.FACTORY.create(
             etypeCode, etypeId, entityClass.getEntityClassCode());
         entityTypeMap.put(entityType.getEntityTypeCode(), entityType);
       }

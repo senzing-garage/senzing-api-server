@@ -598,8 +598,8 @@ public class ResponseValidators {
       Set<SzRecordId> actualRecordIds = new HashSet<>();
       List<SzMatchedRecord> matchedRecords = entity.getRecords();
       for (SzMatchedRecord record : matchedRecords) {
-        SzRecordId recordId = new SzRecordId(record.getDataSource(),
-                                             record.getRecordId());
+        SzRecordId recordId = SzRecordId.FACTORY.create(record.getDataSource(),
+                                                        record.getRecordId());
         actualRecordIds.add(recordId);
       }
       assertSameElements(expectedRecordIds, actualRecordIds,

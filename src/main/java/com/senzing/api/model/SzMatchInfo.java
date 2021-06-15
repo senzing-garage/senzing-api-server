@@ -1,6 +1,8 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzMatchInfoImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -15,66 +17,8 @@ import static com.senzing.api.model.SzMatchLevel.*;
  * The match info describing why two entities (or records) resolve or
  * relate to one another.
  */
-public class SzMatchInfo {
-  /**
-   * The why key indicating the components of the match (similar to the
-   * match key).
-   */
-  private String whyKey;
-
-  /**
-   * The match level describing how the two records resolve against each other.
-   */
-  private SzMatchLevel matchLevel;
-
-  /**
-   * The resolution rule that triggered the match.
-   */
-  private String resolutionRule;
-
-  /**
-   * The {@link Map} of {@link String} feature type keys to {@link List}
-   * values of {@link SzCandidateKey} instances.
-   */
-  private Map<String, List<SzCandidateKey>> candidateKeys;
-
-  /**
-   * The {@link Map} of {@link String} feature type keys to <b>unmodifiable</b>
-   * {@link List} values of {@link SzCandidateKey} instances.
-   */
-  private Map<String, List<SzCandidateKey>> candidateKeyViews;
-
-  /**
-   * The {@link Map} of {@link String} feature type keys to {@link List}
-   * values of {@link SzFeatureScore} instances.
-   */
-  private Map<String, List<SzFeatureScore>> featureScores;
-
-  /**
-   * The {@link Map} of {@link String} feature type keys to <b>unmodifiable</b>
-   * {@link List} values of {@link SzFeatureScore} instances.
-   */
-  private Map<String, List<SzFeatureScore>> featureScoreViews;
-
-  /**
-   * The {@link List} of {@link SzDisclosedRelation} instances.
-   */
-  private List<SzDisclosedRelation> disclosedRelations;
-
-  /**
-   * Default constructor.
-   */
-  public SzMatchInfo() {
-    this.whyKey             = null;
-    this.matchLevel         = null;
-    this.resolutionRule     = null;
-    this.candidateKeys      = new LinkedHashMap<>();
-    this.candidateKeyViews  = new LinkedHashMap<>();
-    this.featureScores      = new LinkedHashMap<>();
-    this.featureScoreViews  = new LinkedHashMap<>();
-    this.disclosedRelations = new LinkedList<>();
-  }
-
+@JsonDeserialize(using=SzMatchInfo.Factory.class)
+public interface SzMatchInfo {
   /**
    * Gets the why key indicating the components of the match (similar to the
    * match key).
@@ -82,9 +26,7 @@ public class SzMatchInfo {
    * @return The why key indicating the components of the match.
    */
   @JsonInclude(NON_EMPTY)
-  public String getWhyKey() {
-    return this.whyKey;
-  }
+  String getWhyKey();
 
   /**
    * Sets the why key indicating the components of the match (similar to the
@@ -92,9 +34,7 @@ public class SzMatchInfo {
    *
    * @param whyKey The why key indicating the components of the match.
    */
-  public void setWhyKey(String whyKey) {
-    this.whyKey = whyKey;
-  }
+  void setWhyKey(String whyKey);
 
   /**
    * Returns the {@link SzMatchLevel} describing how the records resolve
@@ -103,9 +43,7 @@ public class SzMatchInfo {
    * @return The {@link SzMatchLevel} describing how the records resolve
    *         against each other.
    */
-  public SzMatchLevel getMatchLevel() {
-    return this.matchLevel;
-  }
+  SzMatchLevel getMatchLevel();
 
   /**
    * Sets the {@link SzMatchLevel} describing how the records resolve
@@ -114,9 +52,7 @@ public class SzMatchInfo {
    * @param matchLevel The {@link SzMatchLevel} describing how the records
    *                   resolve against each other.
    */
-  public void setMatchLevel(SzMatchLevel matchLevel) {
-    this.matchLevel = matchLevel;
-  }
+  void setMatchLevel(SzMatchLevel matchLevel);
 
   /**
    * Gets the resolution rule that triggered the match.
@@ -124,18 +60,14 @@ public class SzMatchInfo {
    * @return The resolution rule that triggered the match.
    */
   @JsonInclude(NON_EMPTY)
-  public String getResolutionRule() {
-    return this.resolutionRule;
-  }
+  String getResolutionRule();
 
   /**
    * Sets the resolution rule that triggered the match.
    *
    * @param resolutionRule The resolution rule that triggered the match.
    */
-  public void setResolutionRule(String resolutionRule) {
-    this.resolutionRule = resolutionRule;
-  }
+  void setResolutionRule(String resolutionRule);
 
   /**
    * Gets the <b>unmodifiable</b> {@link Map} of {@link String} feature type
@@ -148,56 +80,23 @@ public class SzMatchInfo {
    *         for that type.
    */
   @JsonInclude(NON_EMPTY)
-  public Map<String, List<SzCandidateKey>> getCandidateKeys() {
-    return Collections.unmodifiableMap(this.candidateKeyViews);
-  }
+  Map<String, List<SzCandidateKey>> getCandidateKeys();
 
   /**
    * Adds the specified {@link SzCandidateKey} to this instance.
    *
    * @param candidateKey The {@link SzCandidateKey} to add.
    */
-  public void addCandidateKey(SzCandidateKey candidateKey) {
-    String                featureType = candidateKey.getFeatureType();
-    List<SzCandidateKey>  list        = this.candidateKeys.get(featureType);
-
-    // check if the list does not exist
-    if (list == null) {
-      list = new LinkedList<>();
-      List<SzCandidateKey> listView = Collections.unmodifiableList(list);
-
-      this.candidateKeys.put(featureType, list);
-      this.candidateKeyViews.put(featureType, listView);
-    }
-
-    // add to the list
-    list.add(candidateKey);
-  }
+  void addCandidateKey(SzCandidateKey candidateKey);
 
   /**
-   * Private setter for JSON marshalling.  The specified {@link Map} will be
-   * copied.
+   * Sets the candidate keys using the specified {@link Map} of {@link String}
+   * feature type keys to {@link SzCandidateKey} values.
    *
    * @param candidateKeys The {@link Map} of {@link String} feature type
    *                      keys to {@link SzCandidateKey} values.
    */
-  private void setCandidateKeys(Map<String, List<SzCandidateKey>> candidateKeys)
-  {
-    this.candidateKeys.clear();
-    this.candidateKeyViews.clear();
-    if (candidateKeys == null) return;
-    candidateKeys.entrySet().forEach(entry -> {
-      String                featureType = entry.getKey();
-      List<SzCandidateKey>  list        = entry.getValue();
-
-      List<SzCandidateKey> listCopy = new LinkedList<>();
-      List<SzCandidateKey> listView = Collections.unmodifiableList(listCopy);
-      listCopy.addAll(list);
-
-      this.candidateKeys.put(featureType, listCopy);
-      this.candidateKeyViews.put(featureType, listView);
-    });
-  }
+  void setCandidateKeys(Map<String, List<SzCandidateKey>> candidateKeys);
 
   /**
    * Gets the <b>unmodifiable</b> {@link Map} of {@link String} feature type
@@ -210,56 +109,23 @@ public class SzMatchInfo {
    *         for that type.
    */
   @JsonInclude(NON_EMPTY)
-  public Map<String, List<SzFeatureScore>> getFeatureScores() {
-    return Collections.unmodifiableMap(this.featureScoreViews);
-  }
+  Map<String, List<SzFeatureScore>> getFeatureScores();
 
   /**
    * Adds the specified {@link SzFeatureScore} to this instance.
    *
    * @param featureScore The {@link SzFeatureScore} to add.
    */
-  public void addFeatureScore(SzFeatureScore featureScore) {
-    String                featureType = featureScore.getFeatureType();
-    List<SzFeatureScore>  list        = this.featureScores.get(featureType);
-
-    // check if the list does not exist
-    if (list == null) {
-      list = new LinkedList<>();
-      List<SzFeatureScore> listView = Collections.unmodifiableList(list);
-
-      this.featureScores.put(featureType, list);
-      this.featureScoreViews.put(featureType, listView);
-    }
-
-    // add to the list
-    list.add(featureScore);
-  }
+  void addFeatureScore(SzFeatureScore featureScore);
 
   /**
-   * Private setter for JSON marshalling.  The specified {@link Map} will be
-   * copied.
+   * Sets the feature scores using the specified {@link Map} of {@link String}
+   * feature type keys to {@link SzFeatureScore} values.
    *
    * @param featureScores The {@link Map} of {@link String} feature type
    *                      keys to {@link SzFeatureScore} values.
    */
-  private void setFeatureScores(Map<String, List<SzFeatureScore>> featureScores)
-  {
-    this.featureScores.clear();
-    this.featureScoreViews.clear();
-    if (featureScores == null) return;
-    featureScores.entrySet().forEach(entry -> {
-      String                featureType = entry.getKey();
-      List<SzFeatureScore>  list        = entry.getValue();
-
-      List<SzFeatureScore> listCopy = new LinkedList<>();
-      List<SzFeatureScore> listView = Collections.unmodifiableList(listCopy);
-      listCopy.addAll(list);
-
-      this.featureScores.put(featureType, listCopy);
-      this.featureScoreViews.put(featureType, listView);
-    });
-  }
+  void setFeatureScores(Map<String, List<SzFeatureScore>> featureScores);
 
   /**
    * Gets the <b>unmodifiable</b> {@link List} of {@link
@@ -272,9 +138,7 @@ public class SzMatchInfo {
    *         relationships between two entities.
    */
   @JsonInclude(NON_EMPTY)
-  public List<SzDisclosedRelation> getDisclosedRelations() {
-    return Collections.unmodifiableList(this.disclosedRelations);
-  }
+  List<SzDisclosedRelation> getDisclosedRelations();
 
   /**
    * Sets the disclosed relationships for this match info to those in the
@@ -284,12 +148,7 @@ public class SzMatchInfo {
    * @param relations The {@link Collection} of {@link SzDisclosedRelation}
    *                  instances for this instance.
    */
-  public void setDisclosedRelations(Collection<SzDisclosedRelation> relations) {
-    this.disclosedRelations.clear();
-    if (relations != null) {
-      this.disclosedRelations.addAll(relations);
-    }
-  }
+  void setDisclosedRelations(Collection<SzDisclosedRelation> relations);
 
   /**
    * Adds the specified {@link SzDisclosedRelation} to the list of
@@ -298,17 +157,82 @@ public class SzMatchInfo {
    * @param relation The {@link SzDisclosedRelation} instance describing the
    *                 disclosed relationship to add.
    */
-  public void addDisclosedRelation(SzDisclosedRelation relation) {
-    this.disclosedRelations.add(relation);
-  }
+  void addDisclosedRelation(SzDisclosedRelation relation);
 
   /**
    * Removes all disclosed relationships from the list of disclosed
    * relationships for this match info.
    */
-  public void clearDisclosedRelations() {
-    this.disclosedRelations.clear();
+  void clearDisclosedRelations();
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzMatchInfo}.
+   */
+  interface Provider extends ModelProvider<SzMatchInfo> {
+    /**
+     * Creates a new instance of {@link SzMatchInfo}.
+     *
+     * @return The new instance of {@link SzMatchInfo}
+     */
+    SzMatchInfo create();
   }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzMatchInfo} that produces instances of {@link SzMatchInfoImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzMatchInfo>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzMatchInfo.class, SzMatchInfoImpl.class);
+    }
+
+    @Override
+    public SzMatchInfo create() {
+      return new SzMatchInfoImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link SzMatchInfo}.
+   */
+  class Factory extends ModelFactory<SzMatchInfo, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzMatchInfo.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzMatchInfo}.
+     * @return The new instance of {@link SzMatchInfo}.
+     */
+    public SzMatchInfo create()
+    {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the native API JSON to build an instance of {@link SzMatchInfo}.
@@ -318,9 +242,9 @@ public class SzMatchInfo {
    *
    * @return The created instance of {@link SzMatchInfo}.
    */
-  public static SzMatchInfo parseMatchInfo(JsonObject jsonObject)
+  static SzMatchInfo parseMatchInfo(JsonObject jsonObject)
   {
-    SzMatchInfo matchInfo = new SzMatchInfo();
+    SzMatchInfo result = SzMatchInfo.FACTORY.create();
 
     String whyKey   = JsonUtils.getString(jsonObject, "WHY_KEY");
     if (whyKey != null && whyKey.trim().length() == 0) whyKey = null;
@@ -379,8 +303,6 @@ public class SzMatchInfo {
     List<SzDisclosedRelation> disclosedRelations
         = SzDisclosedRelation.parseDisclosedRelationships(
             disclosedRelationshipObject, whyKey);
-
-    SzMatchInfo result = new SzMatchInfo();
 
     result.setWhyKey(whyKey);
     result.setMatchLevel(matchLevel);

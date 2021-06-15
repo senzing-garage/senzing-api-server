@@ -1,36 +1,20 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzRelatedFeaturesImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Described two features that matched each other to create a relationship
  * (typically a disclosed relationship).
  */
-public class SzRelatedFeatures {
-  /**
-   * The feature belonging to the first entity.
-   */
-  private SzScoredFeature feature1;
-
-  /**
-   * The feature belonging to the second entity.
-   */
-  private SzScoredFeature feature2;
-
-  /**
-   * Default constructor.
-   */
-  public SzRelatedFeatures() {
-    this.feature1 = null;
-    this.feature2 = null;
-  }
-
+@JsonDeserialize(using=SzRelatedFeatures.Factory.class)
+public interface SzRelatedFeatures {
   /**
    * Gets the relationship feature belonging to the first entity that was
    * matched to create the relationship.
@@ -38,9 +22,7 @@ public class SzRelatedFeatures {
    * @return The relationship feature belonging to the first entity that was
    *         matched to create the relationship.
    */
-  public SzScoredFeature getFeature1() {
-    return this.feature1;
-  }
+  SzScoredFeature getFeature1();
 
   /**
    * Sets the relationship feature belonging to the first entity that was
@@ -49,9 +31,7 @@ public class SzRelatedFeatures {
    * @param feature The relationship feature belonging to the first entity that
    *                was matched to create the relationship.
    */
-  public void setFeature1(SzScoredFeature feature) {
-    this.feature1 = feature;
-  }
+  void setFeature1(SzScoredFeature feature);
 
   /**
    * Gets the relationship feature belonging to the second entity that was
@@ -60,9 +40,7 @@ public class SzRelatedFeatures {
    * @return The relationship feature belonging to the first entity that was
    *         matched to create the relationship.
    */
-  public SzScoredFeature getFeature2() {
-    return this.feature2;
-  }
+  SzScoredFeature getFeature2();
 
   /**
    * Sets the relationship feature belonging to the second entity that was
@@ -71,31 +49,77 @@ public class SzRelatedFeatures {
    * @param feature The relationship feature belonging to the first entity that
    *                was matched to create the relationship.
    */
-  public void setFeature2(SzScoredFeature feature) {
-    this.feature2 = feature;
+  void setFeature2(SzScoredFeature feature);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzRelatedFeatures}.
+   */
+  interface Provider extends ModelProvider<SzRelatedFeatures> {
+    /**
+     * Creates a new instance of {@link SzRelatedFeatures}.
+     *
+     * @return The new instance of {@link SzRelatedFeatures}
+     */
+    SzRelatedFeatures create();
   }
 
-  @Override
-  public boolean equals(Object object) {
-    if (this == object) return true;
-    if (object == null || getClass() != object.getClass()) return false;
-    SzRelatedFeatures that = (SzRelatedFeatures) object;
-    return Objects.equals(this.getFeature1(), that.getFeature1()) &&
-        Objects.equals(this.getFeature2(), that.getFeature2());
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzRelatedFeatures} that produces instances of
+   * {@link SzRelatedFeaturesImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzRelatedFeatures>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzRelatedFeatures.class, SzRelatedFeaturesImpl.class);
+    }
+
+    @Override
+    public SzRelatedFeatures create() {
+      return new SzRelatedFeaturesImpl();
+    }
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.getFeature1(), this.getFeature2());
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzRelatedFeatures}.
+   */
+  class Factory extends ModelFactory<SzRelatedFeatures, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzRelatedFeatures.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzRelatedFeatures}.
+     * @return The new instance of {@link SzRelatedFeatures}.
+     */
+    public SzRelatedFeatures create() {
+      return this.getProvider().create();
+    }
   }
 
-  @Override
-  public String toString() {
-    return "SzRelatedFeatures{" +
-        "feature1=" + this.getFeature1() +
-        ", feature2=" + this.getFeature2() +
-        '}';
-  }
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the native API JSON to build an instance of {@link
@@ -108,8 +132,8 @@ public class SzRelatedFeatures {
    *
    * @return The created instance of {@link SzRelatedFeatures}.
    */
-  public static SzRelatedFeatures parseRelatedFeatures(JsonObject jsonObject,
-                                                       String     featureType)
+  static SzRelatedFeatures parseRelatedFeatures(JsonObject jsonObject,
+                                                String     featureType)
   {
     SzScoredFeature feature = SzScoredFeature.parseScoredFeature(
         jsonObject, "", featureType);
@@ -119,7 +143,7 @@ public class SzRelatedFeatures {
     SzScoredFeature linkedFeature = SzScoredFeature.parseScoredFeature(
         jsonObject, "LINKED_", linkedType);
 
-    SzRelatedFeatures result = new SzRelatedFeatures();
+    SzRelatedFeatures result = SzRelatedFeatures.FACTORY.create();
 
     result.setFeature1(feature);
     result.setFeature2(linkedFeature);
@@ -138,7 +162,7 @@ public class SzRelatedFeatures {
    *
    * @return The created instance of {@link SzRelatedFeatures}.
    */
-  public static List<SzRelatedFeatures> parseRelatedFeatures(
+  static List<SzRelatedFeatures> parseRelatedFeatures(
       JsonArray jsonArray, String featureType) {
     return parseRelatedFeatures(null, jsonArray, featureType);
   }
@@ -154,7 +178,7 @@ public class SzRelatedFeatures {
    *
    * @return The created instance of {@link SzRelatedFeatures}.
    */
-  public static List<SzRelatedFeatures> parseRelatedFeatures(
+  static List<SzRelatedFeatures> parseRelatedFeatures(
       List<SzRelatedFeatures> list,  JsonArray jsonArray, String featureType)
   {
     if (list == null) {
