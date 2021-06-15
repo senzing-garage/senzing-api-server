@@ -194,9 +194,9 @@ public interface SzScoredFeature {
    *
    * @return The created instance of {@link SzWhyPerspective}.
    */
-  public static SzScoredFeature parseScoredFeature(JsonObject jsonObject,
-                                                   String     prefix,
-                                                   String     featureType)
+  static SzScoredFeature parseScoredFeature(JsonObject jsonObject,
+                                            String     prefix,
+                                            String     featureType)
   {
     Long featureId = JsonUtils.getLong(jsonObject, prefix + "FEAT_ID");
 
@@ -208,12 +208,10 @@ public interface SzScoredFeature {
       ? jsonObject.getString(prefix + "FEAT_USAGE_TYPE")
       : JsonUtils.getString(jsonObject,prefix + "FEAT_UTYPE_CODE");
 
-    SzScoredFeature result = SzScoredFeature.FACTORY.create();
-
-    result.setFeatureId(featureId);
-    result.setFeatureType(featureType);
-    result.setFeatureValue(value);
-    result.setUsageType(usage);
+    SzScoredFeature result = SzScoredFeature.FACTORY.create(featureId,
+                                                            featureType,
+                                                            value,
+                                                            usage);
 
     return result;
   }
