@@ -21,53 +21,53 @@
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-server</artifactId>
-      <version>9.4.38.v20210224</version>
+      <version>9.4.42.v20210604</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-servlet</artifactId>
-      <version>9.4.38.v20210224</version>
+      <version>9.4.42.v20210604</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-servlets -->
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-servlets</artifactId>
-      <version>9.4.38.v20210224</version>
+      <version>9.4.42.v20210604</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-rewrite</artifactId>
-      <version>9.4.38.v20210224</version>
+      <version>9.4.42.v20210604</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
       <artifactId>jetty-proxy</artifactId>
-      <version>9.4.38.v20210224</version>
+      <version>9.4.42.v20210604</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty.websocket</groupId>
       <artifactId>websocket-server</artifactId>
-      <version>9.4.35.v20201120</version>
+      <version>9.4.42.v20210604</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty.websocket</groupId>
       <artifactId>websocket-common</artifactId>
-      <version>9.4.35.v20201120</version>
+      <version>9.4.42.v20210604</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty.websocket</groupId>
       <artifactId>websocket-servlet</artifactId>
-      <version>9.4.35.v20201120</version>
+      <version>9.4.42.v20210604</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty.websocket</groupId>
       <artifactId>javax-websocket-server-impl</artifactId>
-      <version>9.4.35.v20201120</version>
+      <version>9.4.42.v20210604</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty.websocket</groupId>
       <artifactId>websocket-api</artifactId>
-      <version>9.4.35.v20201120</version>
+      <version>9.4.42.v20210604</version>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.core</groupId>

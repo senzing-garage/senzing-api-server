@@ -8,6 +8,7 @@ import com.senzing.util.JsonUtils;
 
 import javax.json.JsonObject;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import static com.senzing.api.BuildInfo.MAVEN_VERSION;
 import static com.senzing.api.BuildInfo.REST_API_VERSION;
@@ -2304,16 +2305,16 @@ public class ResponseValidators {
    * @param selfLink
    * @param maxDuration
    * @param expectRawData
-   * @param expectedLicenseType
+   * @param licenseTypePattern
    * @param expectedRecordLimit
    */
   public static void validateLicenseResponse(
-      SzLicenseResponse  response,
-      String             selfLink,
-      long               maxDuration,
-      Boolean            expectRawData,
-      String             expectedLicenseType,
-      Long               expectedRecordLimit)
+      SzLicenseResponse response,
+      String            selfLink,
+      long              maxDuration,
+      Boolean           expectRawData,
+      Pattern           licenseTypePattern,
+      Long              expectedRecordLimit)
   {
     if (expectRawData == null) {
       expectRawData = false;
@@ -2335,10 +2336,14 @@ public class ResponseValidators {
                    "Record limit wrong");
     }
 
-    if (expectedLicenseType != null) {
-      assertEquals(expectedLicenseType,
-                   licenseInfo.getLicenseType(),
-                   "Unexpected license type");
+    if (licenseTypePattern != null) {
+      String licenseType = licenseInfo.getLicenseType();
+
+      assertTrue(
+          licenseTypePattern.matcher(licenseType).matches(),
+          "Unexpected license type: expectedPattern=[ "
+              + licenseTypePattern + " ], actual=[ " + licenseType + " ]");
+
     }
 
     if (expectRawData) {
