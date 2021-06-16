@@ -216,10 +216,10 @@ public interface SzEntityIdentifiers {
    *         List} of {@link SzEntityIdentifier} instances.
    */
   static SzEntityIdentifiers valueOf(String text) {
-    text = text.trim();
-    int               length  = text.length();
-    char              first   = text.charAt(0);
-    char              last    = text.charAt(length-1);
+    if (text != null) text = text.trim();
+    int               length  = (text == null) ? 0 : text.length();
+    char              first   = (length == 0) ? 0 : text.charAt(0);
+    char              last    = (length <= 1) ? 0 : text.charAt(length-1);
 
     // check if no identifiers
     if (length == 0) {

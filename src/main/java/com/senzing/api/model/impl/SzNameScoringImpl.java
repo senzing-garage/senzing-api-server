@@ -1,6 +1,7 @@
 package com.senzing.api.model.impl;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.SzNameScoring;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
@@ -8,6 +9,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 /**
  * Provides a default implementation of {@link SzNameScoring}.
  */
+@JsonDeserialize
 public class SzNameScoringImpl implements SzNameScoring {
   /**
    * The full name score, or <tt>null</tt> if no full name score.

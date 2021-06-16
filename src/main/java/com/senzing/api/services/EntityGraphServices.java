@@ -194,7 +194,7 @@ public class EntityGraphServices implements ServicesSupport {
         StringBuffer responseDataBuffer = new StringBuffer();
 
         int result;
-        if (from.getClass() == SzRecordId.class) {
+        if (from instanceof SzRecordId) {
           String source1 = ((SzRecordId) from).getDataSourceCode();
           String source2 = ((SzRecordId) to).getDataSourceCode();
           String id1 = ((SzRecordId) from).getRecordId();

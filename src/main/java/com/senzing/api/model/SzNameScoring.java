@@ -1,6 +1,7 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzNameScoringImpl;
 import com.senzing.util.JsonUtils;
 
@@ -11,6 +12,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 /**
  * Describes the various scoring values between two name feature values.
  */
+@JsonDeserialize(using=SzNameScoring.Factory.class)
 public interface SzNameScoring {
   /**
    * Gets the full name score if one exists.  This method returns <tt>null</tt>

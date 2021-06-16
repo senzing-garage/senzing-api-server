@@ -232,7 +232,8 @@ public interface SzFlaggedEntity {
     if (jsonArray != null) {
       List<SzFlaggedRecord> sampleRecords
           = SzFlaggedRecord.parseFlaggedRecordList(
-              entity.getSampleRecords(), jsonArray);
+              null, jsonArray);
+      entity.setSampleRecords(sampleRecords);
     }
 
     return entity;

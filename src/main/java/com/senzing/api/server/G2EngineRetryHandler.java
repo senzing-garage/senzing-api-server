@@ -63,6 +63,13 @@ class G2EngineRetryHandler implements InvocationHandler {
           String.class, String.class, long.class, boolean.class));
       unsupportedSet.add(cls.getMethod("reinitV2", long.class));
       unsupportedSet.add(cls.getMethod("destroy"));
+      unsupportedSet.add(cls.getMethod("exportJSONEntityReportV3",
+                                       int.class, Result.class));
+      unsupportedSet.add(cls.getMethod("exportCSVEntityReportV3",
+                                       String.class, int.class, Result.class));
+      unsupportedSet.add(cls.getMethod("fetchNextV3",
+                                       long.class, StringBuffer.class));
+      unsupportedSet.add(cls.getMethod("closeExportV3", long.class));
 
       // handle unsupported methods that may not be in the version of g2.jar
       // that is installed in the build/runtime environment

@@ -210,11 +210,10 @@ public interface SzResolutionInfo {
     jsonArray = JsonUtils.getJsonArray(jsonObject, "INTERESTING_ENTITIES");
     if (jsonArray != null) {
       List<SzFlaggedEntity> flaggedEntities
-          = SzFlaggedEntity.parseFlaggedEntityList(info.getFlaggedEntities(),
-                                                   jsonArray);
+          = SzFlaggedEntity.parseFlaggedEntityList(null, jsonArray);
+      info.setFlaggedEntities(flaggedEntities);
     }
 
     return info;
   }
-
 }

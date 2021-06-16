@@ -1,6 +1,7 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzEntityDataImpl;
 import com.senzing.util.JsonUtils;
 
@@ -14,6 +15,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 /**
  * Provides a default implementation of {@link SzEntityData}.
  */
+@JsonDeserialize(using=SzEntityData.Factory.class)
 public interface SzEntityData {
   /**
    * Gets the {@link SzResolvedEntity} describing the resolved entity.
