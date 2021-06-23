@@ -52,7 +52,7 @@ public class AdminServices implements ServicesSupport {
   protected SzBasicResponse newBasicResponse(UriInfo uriInfo,
                                              Timers  timers)
   {
-    return new SzBasicResponse(
+    return SzBasicResponse.FACTORY.create(
         this.newMeta(GET, 200, timers), this.newLinks(uriInfo));
   }
 
@@ -127,9 +127,23 @@ public class AdminServices implements ServicesSupport {
                                                  Timers        timers,
                                                  SzLicenseInfo licenseInfo)
   {
-    return new SzLicenseResponse(this.newMeta(GET, 200, timers),
-                                 this.newLinks(uriInfo),
-                                 licenseInfo);
+    return SzLicenseResponse.FACTORY.create(
+        this.newMeta(GET, 200, timers),
+        this.newLinks(uriInfo),
+        this.newLicenseResponseData(licenseInfo));
+  }
+
+  /**
+   * Creates a new {@link SzLicenseResponseData} describing an {@link
+   * SzLicenseInfo}.
+   *
+   * @param licenseInfo The {@link SzLicenseInfo} for the response.
+   * @return The {@link SzLicenseResponseData} with the specified parameters.
+   */
+  protected SzLicenseResponseData newLicenseResponseData(
+      SzLicenseInfo licenseInfo)
+  {
+    return SzLicenseResponseData.FACTORY.create(licenseInfo);
   }
 
   /**
@@ -203,9 +217,10 @@ public class AdminServices implements ServicesSupport {
                                                  Timers        timers,
                                                  SzVersionInfo versionInfo)
   {
-    return new SzVersionResponse(this.newMeta(GET, 200, timers),
-                                 this.newLinks(uriInfo),
-                                 versionInfo);
+    return SzVersionResponse.FACTORY.create(
+        this.newMeta(GET, 200, timers),
+        this.newLinks(uriInfo),
+        versionInfo);
   }
 
   /**
@@ -309,8 +324,9 @@ public class AdminServices implements ServicesSupport {
       Timers        timers,
       SzServerInfo  serverInfo)
   {
-    return new SzServerInfoResponse(this.newMeta(GET, 200, timers),
-                                    this.newLinks(uriInfo),
-                                    serverInfo);
+    return SzServerInfoResponse.FACTORY.create(
+        this.newMeta(GET, 200, timers),
+        this.newLinks(uriInfo),
+        serverInfo);
   }
 }

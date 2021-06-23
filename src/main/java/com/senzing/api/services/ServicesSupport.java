@@ -1187,7 +1187,7 @@ public interface ServicesSupport {
    */
   default SzErrorResponse newErrorResponse(SzMeta meta, SzLinks links)
   {
-    return new SzErrorResponse(meta, links);
+    return SzErrorResponse.FACTORY.create(meta, links);
   }
 
   /**
@@ -1201,7 +1201,7 @@ public interface ServicesSupport {
                                            SzLinks  links,
                                            SzError  firstError)
   {
-    return new SzErrorResponse(meta, links, firstError);
+    return SzErrorResponse.FACTORY.create(meta, links, firstError);
   }
 
   /**
@@ -1215,7 +1215,7 @@ public interface ServicesSupport {
                                            SzLinks  links,
                                            String   firstError)
   {
-    return new SzErrorResponse(meta, links, firstError);
+    return SzErrorResponse.FACTORY.create(meta, links, firstError);
   }
 
   /**
@@ -1229,7 +1229,7 @@ public interface ServicesSupport {
                                            SzLinks    links,
                                            Throwable  firstError)
   {
-    return new SzErrorResponse(meta, links, firstError);
+    return SzErrorResponse.FACTORY.create(meta, links, firstError);
   }
 
   /**
@@ -1244,7 +1244,7 @@ public interface ServicesSupport {
                                            SzLinks    links,
                                            G2Fallible firstErrorFallible)
   {
-    return new SzErrorResponse(meta, links, firstErrorFallible);
+    return SzErrorResponse.FACTORY.create(meta, links, firstErrorFallible);
   }
 
   /**

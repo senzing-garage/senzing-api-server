@@ -373,13 +373,30 @@ public class WhyServices implements ServicesSupport {
       List<SzEntityData>  entityDataList)
   {
     // construct the response
-    SzWhyRecordsResponse response = new SzWhyRecordsResponse(
+    return SzWhyRecordsResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo));
+        this.newLinks(uriInfo),
+        this.newWhyRecordsResponseData(whyResult, entityDataList));
+  }
 
-    response.setWhyResult(whyResult);
-    response.setEntities(entityDataList);
-    return response;
+  /**
+   * Constructs a new instance of {@link SzWhyRecordsResponseData} with the
+   * specified parameters:
+   *
+   * @param whyResult The {@link SzWhyRecordsResult} for the response.
+   * @param entityDataList The {@link List} of {@link SzEntityData} instances.
+   *
+   * @return The created {@link SzWhyRecordsResponseData} instance.
+   */
+  protected SzWhyRecordsResponseData newWhyRecordsResponseData(
+      SzWhyRecordsResult  whyResult,
+      List<SzEntityData>  entityDataList)
+  {
+    // construct the response
+    SzWhyRecordsResponseData data = SzWhyRecordsResponseData.FACTORY.create();
+    data.setWhyResult(whyResult);
+    data.setEntities(entityDataList);
+    return data;
   }
 
   /**
@@ -652,14 +669,31 @@ public class WhyServices implements ServicesSupport {
       List<SzWhyEntityResult> whyResults,
       List<SzEntityData>      entityDataList)
   {
-    SzWhyEntityResponse response = new SzWhyEntityResponse(
+    return SzWhyEntityResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo));
+        this.newLinks(uriInfo),
+        this.newWhyEntityResponseData(whyResults, entityDataList));
+  }
 
-    response.setWhyResults(whyResults);
-    response.setEntities(entityDataList);
+  /**
+   * Creates a new instance of {@link SzWhyEntityResponseData} with the
+   * specified parameters.
+   *
+   * @param whyResults The {@link List} of {@link SzWhyEntityResult} instances.
+   * @param entityDataList The {@link List} of {@link SzEntityData} instances.
+   *
+   * @return The {@link SzWhyEntityResponseData} that was created.
+   */
+  protected SzWhyEntityResponseData newWhyEntityResponseData(
+      List<SzWhyEntityResult> whyResults,
+      List<SzEntityData>      entityDataList)
+  {
+    SzWhyEntityResponseData data = SzWhyEntityResponseData.FACTORY.create();
 
-    return response;
+    data.setWhyResults(whyResults);
+    data.setEntities(entityDataList);
+
+    return data;
   }
 
   /**
@@ -733,14 +767,30 @@ public class WhyServices implements ServicesSupport {
       SzWhyEntitiesResult whyResult,
       List<SzEntityData>  entityDataList)
   {
-    SzWhyEntitiesResponse response = new SzWhyEntitiesResponse(
+    return SzWhyEntitiesResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo));
+        this.newLinks(uriInfo),
+        this.newWhyEntitiesResponseData(whyResult, entityDataList));
+  }
 
-    response.setWhyResult(whyResult);
-    response.setEntities(entityDataList);
-
-    return response;
+  /**
+   * Creates a new instance of {@link SzWhyEntitiesResponseData} with the
+   * specified parameters:
+   *
+   * @param whyResult The {@link SzWhyEntitiesResult} instance.
+   * @param entityDataList The {@link List} of {@link SzEntityData} instances.
+   *
+   * @return The {@link SzWhyEntitiesResponseData} that was created.
+   *
+   */
+  protected SzWhyEntitiesResponseData newWhyEntitiesResponseData(
+      SzWhyEntitiesResult whyResult,
+      List<SzEntityData>  entityDataList)
+  {
+    SzWhyEntitiesResponseData data = SzWhyEntitiesResponseData.FACTORY.create();
+    data.setWhyResult(whyResult);
+    data.setEntities(entityDataList);
+    return data;
   }
 
   /**

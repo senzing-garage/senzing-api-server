@@ -1190,9 +1190,9 @@ public abstract class AbstractServiceTest {
       success = true;
 
     } catch (Error|RuntimeException e) {
+      e.printStackTrace();
+      System.err.flush();
       if ("true".equals(System.getProperty("com.senzing.api.test.fastFail"))) {
-        e.printStackTrace();
-        System.err.flush();
         try {
           Thread.sleep(5000L);
         } catch (InterruptedException ignore) {

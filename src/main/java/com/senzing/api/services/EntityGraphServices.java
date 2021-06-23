@@ -358,7 +358,7 @@ public class EntityGraphServices implements ServicesSupport {
       Timers            timers,
       SzEntityPathData  entityPathData)
   {
-    return new SzEntityPathResponse(
+    return SzEntityPathResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
         this.newLinks(uriInfo), entityPathData);
   }
@@ -581,7 +581,7 @@ public class EntityGraphServices implements ServicesSupport {
       Timers              timers,
       SzEntityNetworkData entityNetworkData)
   {
-    return new SzEntityNetworkResponse(
+    return SzEntityNetworkResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
         this.newLinks(uriInfo), entityNetworkData);
   }

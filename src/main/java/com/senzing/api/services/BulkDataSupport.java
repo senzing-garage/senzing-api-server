@@ -300,7 +300,7 @@ public interface BulkDataSupport extends ServicesSupport {
       Timers              timers,
       SzBulkDataAnalysis  dataAnalysis)
   {
-    return new SzBulkDataAnalysisResponse(
+    return SzBulkDataAnalysisResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
         this.newLinks(uriInfo), dataAnalysis);
   }
@@ -545,7 +545,7 @@ public interface BulkDataSupport extends ServicesSupport {
       Timers              timers,
       SzBulkLoadResult    bulkLoadResult)
   {
-    return new SzBulkLoadResponse(
+    return SzBulkLoadResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
         this.newLinks(uriInfo), bulkLoadResult);
   }

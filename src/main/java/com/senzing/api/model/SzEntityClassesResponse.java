@@ -1,8 +1,7 @@
 package com.senzing.api.model;
 
-import com.senzing.util.Timers;
-
-import javax.ws.rs.core.UriInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzEntityClassesResponseImpl;
 import java.util.*;
 
 /**
@@ -10,138 +9,152 @@ import java.util.*;
  * list of all configured entity class codes.
  *
  */
-public class SzEntityClassesResponse extends SzResponseWithRawData
+@JsonDeserialize(using=SzEntityClassesResponse.Factory.class)
+public interface SzEntityClassesResponse extends SzResponseWithRawData
 {
   /**
-   * The data for this instance.
+   * Returns the {@link SzEntityClassesResponseData} for this instance.
+   *
+   * @return The {@link SzEntityClassesResponseData} for this instance.
    */
-  private Data data = new Data();
+  SzEntityClassesResponseData getData();
 
   /**
-   * Package-private default constructor.
+   * Sets the {@link SzEntityClassesResponseData} for this instance.
+   *
+   * @param data The {@link SzEntityClassesResponseData} for this instance.
    */
-  SzEntityClassesResponse() {
-    // do nothing
-  }
+  void setData(SzEntityClassesResponseData data);
 
   /**
-   * Constructs with only the HTTP method and the self link, leaving the
-   * entity classs to be added later.
-   *
-   * @param meta The response meta data.
-   *
-   * @param links The links for the response.
-   *
-   */
-  public SzEntityClassesResponse(SzMeta meta, SzLinks links) {
-    super(meta, links);
-  }
-
-  /**
-   * Returns the {@link Data} for this instance.
-   *
-   * @return The {@link Data} for this instance.
-   */
-  public Data getData() {
-    return this.data;
-  }
-
-  /**
-   * Adds the specified entity class providing the specified entity class
-   * is not already containe
+   * Convenience method to add the specified entity class to the list of
+   * entity classes of the underlying {@link SzEntityClassesResponseData}.
    *
    * @param entityClass The entity class code to add.
    */
-  public void addEntityClass(SzEntityClass entityClass) {
-    this.data.entityClasses.remove(entityClass.getEntityClassCode());
-  }
+  void addEntityClass(SzEntityClass entityClass);
 
   /**
-   * Sets the specified {@link Set} of entity classs using the
-   * specified {@link Collection} of entity classs (removing duplicates).
+   * Convenience method to set the entity classes on the underlying
+   * {@link SzEntityClassesResponseData} to those in the specified collection.
    *
    * @param entityClasses The {@link Collection} of entity classs to set.
    */
-  public void setEntityClasses(Collection<SzEntityClass> entityClasses)
+  void setEntityClasses(Collection<? extends SzEntityClass> entityClasses);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzEntityClassesResponse}.
+   */
+  interface Provider extends ModelProvider<SzEntityClassesResponse> {
+    /**
+     * Creates an instance of {@link SzEntityClassesResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    SzEntityClassesResponse create(SzMeta meta, SzLinks links);
+
+    /**
+     * Creates an instance of {@link SzEntityClassesResponse} with the specified
+     * {@link SzMeta}, {@link SzLinks} and {@link SzEntityClassesResponseData}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The data for the response.
+     */
+    SzEntityClassesResponse create(SzMeta                       meta,
+                                   SzLinks                      links,
+                                   SzEntityClassesResponseData  data);
+  }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzEntityClassesResponse} that produces instances of
+   * {@link SzEntityClassesResponseImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzEntityClassesResponse>
+      implements Provider
   {
-    this.data.entityClasses.clear();
-    if (entityClasses != null) {
-      // ensure the entity classs are unique
-      for (SzEntityClass entityClass : entityClasses) {
-        this.data.entityClasses.put(entityClass.getEntityClassCode(), entityClass);
-      }
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzEntityClassesResponse.class, SzEntityClassesResponseImpl.class);
+    }
+
+    @Override
+    public SzEntityClassesResponse create(SzMeta meta, SzLinks links) {
+      return new SzEntityClassesResponseImpl(meta, links);
+    }
+
+    @Override
+    public SzEntityClassesResponse create(SzMeta                      meta,
+                                          SzLinks                     links,
+                                          SzEntityClassesResponseData data)
+    {
+      return new SzEntityClassesResponseImpl(meta, links, data);
     }
   }
 
   /**
-   * Inner class to represent the data section for this response.
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzEntityClassesResponse}.
    */
-  public static class Data {
+  class Factory extends ModelFactory<SzEntityClassesResponse, Provider> {
     /**
-     * The map of {@link String} entity class codes to {@link SzEntityClass}
-     * instances.
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
      */
-    private Map<String, SzEntityClass> entityClasses;
-
-    /**
-     * Private default constructor.
-     */
-    private Data() {
-      this.entityClasses = new LinkedHashMap<>();
+    public Factory() {
+      super(SzEntityClassesResponse.class);
     }
 
     /**
-     * Gets the unmodifiable {@link Set} of entity class codes.
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates an instance of {@link SzEntityClassesResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}.
      *
-     * @return The unmodifiable {@link Set} of entity class codes.
-     */
-    public Set<String> getEntityClasses() {
-      Set<String> set = this.entityClasses.keySet();
-      return Collections.unmodifiableSet(set);
-    }
-
-    /**
-     * Private setter used for deserialization.
-     */
-    private void setEntityClasses(Collection<String> entityClasses) {
-      Iterator<Map.Entry<String,SzEntityClass>> iter
-          = this.entityClasses.entrySet().iterator();
-
-      // remove entries in the map that are not in the specified set
-      while (iter.hasNext()) {
-        Map.Entry<String,SzEntityClass> entry = iter.next();
-        if (!entityClasses.contains(entry.getKey())) {
-          iter.remove();
-        }
-      }
-
-      // add place-holder entries to the map for data sources in the set
-      for (String entityClass: entityClasses) {
-        this.entityClasses.put(entityClass, null);
-      }
-    }
-
-    /**
-     * Gets the unmodifiable {@link Map} of {@link String} entity class codes
-     * to {@link SzEntityClass} values describing the configured entity classs.
+     * @param meta The response meta data.
      *
-     * @return The unmodifiable {@link Map} of {@link String} entity class codes
-     *         to {@link SzEntityClass} values describing the configured entity
-     *         classes.
+     * @param links The links for the response.
      */
-    public Map<String, SzEntityClass> getEntityClassDetails() {
-      return Collections.unmodifiableMap(this.entityClasses);
+    public SzEntityClassesResponse create(SzMeta meta, SzLinks links) {
+      return this.getProvider().create(meta, links);
     }
 
     /**
-     * Private setter used for deserialization.
+     * Creates an instance of {@link SzEntityClassesResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The data for the response.
      */
-    private void setEntityClassDetails(Map<String, SzEntityClass> details) {
-      this.entityClasses.clear();
-      for (SzEntityClass entityClass: details.values()) {
-        this.entityClasses.put(entityClass.getEntityClassCode(), entityClass);
-      }
+    public SzEntityClassesResponse create(SzMeta                      meta,
+                                          SzLinks                     links,
+                                          SzEntityClassesResponseData data)
+    {
+      return this.getProvider().create(meta, links, data);
     }
-
   }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 }

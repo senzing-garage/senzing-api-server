@@ -1,8 +1,8 @@
 package com.senzing.api.model;
 
-import com.senzing.util.Timers;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzAttributeTypesResponseImpl;
 
-import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
 /**
@@ -10,54 +10,30 @@ import java.util.*;
  * list of all configured attribute types (excluding the "internal" ones).
  *
  */
-public class SzAttributeTypesResponse extends SzResponseWithRawData
+@JsonDeserialize(using=SzAttributeTypesResponse.Factory.class)
+public interface SzAttributeTypesResponse extends SzResponseWithRawData
 {
   /**
-   * The data for this instance.
-   */
-  private Data data = new Data();
-
-  /**
-   * Package-private default constructor.
-   */
-  SzAttributeTypesResponse() {
-    // do nothing
-  }
-
-  /**
-   * Constructs with only the HTTP method and the self link, leaving the
-   * data sources to be added later.
+   * Returns the {@link SzAttributeTypesResponseData} for this instance.
    *
-   * @param meta The response meta data.
-   *
-   * @param links The links for the response.
+   * @return The {@link SzAttributeTypesResponseData} for this instance.
    */
-  public SzAttributeTypesResponse(SzMeta meta, SzLinks links) {
-    super(meta, links);
-    this.data.attributeTypes = new LinkedList<>();
-  }
+  SzAttributeTypesResponseData getData();
 
   /**
-   * Returns the {@link Data} for this instance.
+   * Sets the {@link SzAttributeTypesResponseData} for this instance.
    *
-   * @return The {@link Data} for this instance.
+   * @param data The {@link SzAttributeTypesResponseData} for this instance.
    */
-  public Data getData() {
-    return this.data;
-  }
+  void setData(SzAttributeTypesResponseData data);
 
   /**
-   * Adds the specified {@link SzAttributeType}.
+   * Convenience method to add the {@link SzAttributeType} to the contained
+   * {@link SzAttributeTypesResponseData}.
    *
    * @param attributeType The {@link SzAttributeType} to add.
    */
-  public void addAttributeType(SzAttributeType attributeType) {
-    if (attributeType == null) {
-      throw new NullPointerException(
-          "Cannot add a null attribute type.");
-    }
-    this.data.attributeTypes.add(attributeType);
-  }
+  void addAttributeType(SzAttributeType attributeType);
 
   /**
    * Sets the specified {@link List} of {@linkplain SzAttributeType attribute
@@ -67,40 +43,126 @@ public class SzAttributeTypesResponse extends SzResponseWithRawData
    * @param attributeTypes The {@link Collection} of {@link SzAttributeType}
    *                       instances.
    */
-  public void setAttributeTypes(Collection<SzAttributeType> attributeTypes)
-  {
-    this.data.attributeTypes.clear();
-    if (attributeTypes != null) {
-      this.data.attributeTypes.addAll(attributeTypes);
-    }
+  void setAttributeTypes(Collection<? extends SzAttributeType> attributeTypes);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzAttributeTypesResponse}.
+   */
+  interface Provider extends ModelProvider<SzAttributeTypesResponse> {
+    /**
+     * Creates an instance of {@link SzAttributeTypesResponse} with the
+     * specified {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    SzAttributeTypesResponse create(SzMeta meta, SzLinks links);
+
+    /**
+     * Creates an instance of {@link SzAttributeTypesResponse} with the
+     * specified {@link SzMeta}, {@link SzLinks} and {@link
+     * SzAttributeTypesResponseData}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The data for the response.
+     */
+    SzAttributeTypesResponse create(SzMeta                        meta,
+                                    SzLinks                       links,
+                                    SzAttributeTypesResponseData  data);
   }
 
   /**
-   * Inner class to represent the data section for this response.
+   * Provides a default {@link Provider} implementation for {@link
+   * SzAttributeTypesResponse} that produces instances of
+   * {@link SzAttributeTypesResponseImpl}.
    */
-  public static class Data {
+  class DefaultProvider extends AbstractModelProvider<SzAttributeTypesResponse>
+      implements Provider
+  {
     /**
-     * The list of {@link SzAttributeType} instances describing the attribute
-     * types.
+     * Default constructor.
      */
-    private List<SzAttributeType> attributeTypes;
-
-    /**
-     * Private default constructor.
-     */
-    private Data() {
-      this.attributeTypes = null;
+    public DefaultProvider() {
+      super(SzAttributeTypesResponse.class,
+            SzAttributeTypesResponseImpl.class);
     }
 
-    /**
-     * Gets the unmodifiable {@link List} of {@link SzAttributeType} instances.
-     *
-     * @return The unmodifiable {@link List} of {@link SzAttributeType}
-     *         instances.
-     */
-    public List<SzAttributeType> getAttributeTypes() {
-      List<SzAttributeType> list = this.attributeTypes;
-      return Collections.unmodifiableList(list);
+    @Override
+    public SzAttributeTypesResponse create(SzMeta meta, SzLinks links) {
+      return new SzAttributeTypesResponseImpl(meta, links);
     }
+
+    @Override
+    public SzAttributeTypesResponse create(SzMeta                       meta,
+                                           SzLinks                      links,
+                                           SzAttributeTypesResponseData data) {
+      return new SzAttributeTypesResponseImpl(meta, links, data);
+    }
+
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzAttributeTypesResponse}.
+   */
+  class Factory extends ModelFactory<SzAttributeTypesResponse, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzAttributeTypesResponse.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates an instance of {@link SzAttributeTypesResponse} with the
+     * specified {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    public SzAttributeTypesResponse create(SzMeta meta, SzLinks links) {
+      return this.getProvider().create(meta, links);
+    }
+
+    /**
+     * Creates an instance of {@link SzAttributeTypesResponse} with the
+     * specified {@link SzMeta}, {@link SzLinks} and {@link
+     * SzAttributeTypesResponseData}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The data for the response.
+     */
+    public SzAttributeTypesResponse create(SzMeta                       meta,
+                                           SzLinks                      links,
+                                           SzAttributeTypesResponseData data)
+    {
+      return this.getProvider().create(meta, links, data);
+    }
+
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
+
 }

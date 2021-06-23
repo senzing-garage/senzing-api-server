@@ -247,11 +247,24 @@ public class ConfigServices implements ServicesSupport {
       Timers              timers,
       List<SzDataSource>  dataSources)
   {
-    SzDataSourcesResponse response = new SzDataSourcesResponse(
+    return SzDataSourcesResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo));
-    response.setDataSources(dataSources);
-    return response;
+        this.newLinks(uriInfo),
+        this.newDataSourcesResponseData(dataSources));
+  }
+
+  /**
+   * Creates a new instance of {@link SzDataSourceResponseData} and configures
+   * it with the specified {@link List} of {@link SzDataSource} instances.
+   *
+   * @param dataSources The {@link List} of {@link SzDataSource} instances.
+   *
+   * @return The newly created {@link SzDataSourcesResponse}.
+   */
+  protected SzDataSourcesResponseData newDataSourcesResponseData(
+      List<SzDataSource>  dataSources)
+  {
+    return SzDataSourcesResponseData.FACTORY.create(dataSources);
   }
 
   /**
@@ -350,11 +363,23 @@ public class ConfigServices implements ServicesSupport {
       Timers        timers,
       SzDataSource  dataSource)
   {
-    SzDataSourceResponse response = new SzDataSourceResponse(
+    return SzDataSourceResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo));
-    response.setDataSource(dataSource);
-    return response;
+        this.newLinks(uriInfo),
+        this.newDataSourceResponseData(dataSource));
+  }
+
+  /**
+   * Creates a new {@link SzDataSourceResponse} with the specified parameters.
+   *
+   * @param dataSource The {@link SzDataSource} instance.
+   *
+   * @return The newly created {@link SzDataSourceResponse}.
+   */
+  protected SzDataSourceResponseData newDataSourceResponseData(
+      SzDataSource  dataSource)
+  {
+    return SzDataSourceResponseData.FACTORY.create(dataSource);
   }
 
   /**
@@ -610,11 +635,25 @@ public class ConfigServices implements ServicesSupport {
       Timers              timers,
       List<SzEntityClass> entityClasses)
   {
-    SzEntityClassesResponse response = new SzEntityClassesResponse(
+    return SzEntityClassesResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo));
-    response.setEntityClasses(entityClasses);
-    return response;
+        this.newLinks(uriInfo),
+        this.newEntityClassesResponseData(entityClasses));
+  }
+
+  /**
+   * Creates a new instance of {@link SzEntityClassesResponseData} and
+   * configures it with the specified {@link List} of {@link SzEntityClass}
+   * instances.
+   *
+   * @param entityClasses The {@link List} of {@link SzEntityClass} instances.
+   *
+   * @return The newly created {@link SzEntityClassesResponseData}.
+   */
+  protected SzEntityClassesResponseData newEntityClassesResponseData(
+      List<SzEntityClass> entityClasses)
+  {
+    return SzEntityClassesResponseData.FACTORY.create(entityClasses);
   }
 
   /**
@@ -713,11 +752,24 @@ public class ConfigServices implements ServicesSupport {
       Timers        timers,
       SzEntityClass entityClass)
   {
-    SzEntityClassResponse response = new SzEntityClassResponse(
+    return SzEntityClassResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo));
-    response.setEntityClass(entityClass);
-    return response;
+        this.newLinks(uriInfo),
+        this.newEntityClassResponseData(entityClass));
+  }
+
+  /**
+   * Creates a new {@link SzEntityClassResponseData} with the specified
+   * {@link SzEntityClass}.
+   *
+   * @param entityClass The {@link SzEntityClass} instance.
+   *
+   * @return The newly created {@link SzEntityClassResponseData}.
+   */
+  protected SzEntityClassResponseData newEntityClassResponseData(
+      SzEntityClass entityClass)
+  {
+    return SzEntityClassResponseData.FACTORY.create(entityClass);
   }
 
   /**
@@ -1067,11 +1119,24 @@ public class ConfigServices implements ServicesSupport {
       Timers              timers,
       List<SzEntityType>  entityTypes)
   {
-    SzEntityTypesResponse response = new SzEntityTypesResponse(
+    return SzEntityTypesResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo));
-    response.setEntityTypes(entityTypes);
-    return response;
+        this.newLinks(uriInfo),
+        this.newEntityTypesResponseData(entityTypes));
+  }
+
+  /**
+   * Creates a new instance of {@link SzEntityTypesResponseData} and configures
+   * it with the specified {@link List} of {@link SzEntityType} instances.
+   *
+   * @param entityTypes The {@link List} of {@link SzEntityType} instances.
+   *
+   * @return The newly created {@link SzEntityTypesResponseData}.
+   */
+  protected SzEntityTypesResponseData newEntityTypesResponseData(
+      List<SzEntityType>  entityTypes)
+  {
+    return SzEntityTypesResponseData.FACTORY.create(entityTypes);
   }
 
   /**
@@ -1183,11 +1248,23 @@ public class ConfigServices implements ServicesSupport {
       Timers        timers,
       SzEntityType  entityType)
   {
-    SzEntityTypeResponse response = new SzEntityTypeResponse(
+    return SzEntityTypeResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo));
-    response.setEntityType(entityType);
-    return response;
+        this.newLinks(uriInfo),
+        this.newEntityTypeResponseData(entityType));
+  }
+
+  /**
+   * Creates a new {@link SzEntityTypeResponseData} with the specified parameters.
+   *
+   * @param entityType The {@link SzEntityType} for the instance.
+   *
+   * @return The newly created {@link SzEntityTypeResponseData}.
+   */
+  protected SzEntityTypeResponseData newEntityTypeResponseData(
+      SzEntityType  entityType)
+  {
+    return SzEntityTypeResponseData.FACTORY.create(entityType);
   }
 
   /**
@@ -2516,11 +2593,25 @@ public class ConfigServices implements ServicesSupport {
       Timers                timers,
       List<SzAttributeType> attributeTypes)
   {
-    SzAttributeTypesResponse response = new SzAttributeTypesResponse(
+    return SzAttributeTypesResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo));
-    response.setAttributeTypes(attributeTypes);
-    return response;
+        this.newLinks(uriInfo),
+        this.newAttributeTypesResponseData(attributeTypes));
+  }
+
+  /**
+   * Creates a new instance of {@link SzAttributeTypesResponseData} with the
+   * specified {@link List} of {@link SzAttributeType} instances.
+   *
+   * @param attributeTypes The {@link Collection} of {@link SzAttributeType}
+   *                       instances.
+   *
+   * @return The newly created {@link SzAttributeTypesResponse}.
+   */
+  protected SzAttributeTypesResponseData newAttributeTypesResponseData(
+      Collection<? extends SzAttributeType> attributeTypes)
+  {
+    return SzAttributeTypesResponseData.FACTORY.create(attributeTypes);
   }
 
   /**
@@ -2643,11 +2734,24 @@ public class ConfigServices implements ServicesSupport {
       Timers          timers,
       SzAttributeType attributeType)
   {
-    SzAttributeTypeResponse response = new SzAttributeTypeResponse(
+    return SzAttributeTypeResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo));
-    response.setAttributeType(attributeType);
-    return response;
+        this.newLinks(uriInfo),
+        this.newAttributeTypeResponseData(attributeType));
+  }
+
+  /**
+   * Creates a new {@link SzAttributeTypeResponseData} with the specified
+   * parameters.
+   *
+   * @param attributeType The {@link SzAttributeType} instance.
+   *
+   * @return The newly created {@link SzAttributeTypeResponseData}.
+   */
+  protected SzAttributeTypeResponseData newAttributeTypeResponseData(
+      SzAttributeType attributeType)
+  {
+    return SzAttributeTypeResponseData.FACTORY.create(attributeType);
   }
 
   /**
@@ -2721,7 +2825,7 @@ public class ConfigServices implements ServicesSupport {
                                                Timers       timers,
                                                String       configRawData)
   {
-    return new SzConfigResponse(
+    return SzConfigResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
         this.newLinks(uriInfo),
         configRawData);

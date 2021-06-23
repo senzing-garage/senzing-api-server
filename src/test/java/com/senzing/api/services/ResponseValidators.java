@@ -933,7 +933,7 @@ public class ResponseValidators {
     String testSuffix = (testInfo == null) ? "" : ": " + testInfo;
     String info = (testInfo == null) ? "" : "testInfo=[ " + testInfo + " ], ";
 
-    SzDataSourcesResponse.Data data = response.getData();
+    SzDataSourcesResponseData data = response.getData();
 
     assertNotNull(data, "Response data is null" + testSuffix);
 
@@ -1006,7 +1006,7 @@ public class ResponseValidators {
                    maxDuration,
                    expectRawData);
 
-    SzDataSourceResponse.Data data = response.getData();
+    SzDataSourceResponseData data = response.getData();
 
     assertNotNull(data, "Response data is null");
 
@@ -1052,7 +1052,7 @@ public class ResponseValidators {
     String testSuffix = (testInfo == null) ? "" : ": " + testInfo;
     String info = (testInfo == null) ? "" : "testInfo=[ " + testInfo + " ], ";
 
-    SzEntityClassesResponse.Data data = response.getData();
+    SzEntityClassesResponseData data = response.getData();
 
     assertNotNull(data, "Response data is null" + testSuffix);
 
@@ -1130,7 +1130,7 @@ public class ResponseValidators {
   {
     validateBasics(response, selfLink, maxDuration, expectRawData);
 
-    SzEntityClassResponse.Data data = response.getData();
+    SzEntityClassResponseData data = response.getData();
 
     assertNotNull(data, "Response data is null");
 
@@ -1176,7 +1176,7 @@ public class ResponseValidators {
     String testSuffix = (testInfo == null) ? "" : ": " + testInfo;
     String info = (testInfo == null) ? "" : "testInfo=[ " + testInfo + " ], ";
 
-    SzEntityTypesResponse.Data data = response.getData();
+    SzEntityTypesResponseData data = response.getData();
 
     assertNotNull(data, "Response data is null" + testSuffix);
 
@@ -1237,7 +1237,7 @@ public class ResponseValidators {
   {
     validateBasics(response, selfLink, maxDuration, expectRawData);
 
-    SzEntityTypeResponse.Data data = response.getData();
+    SzEntityTypeResponseData data = response.getData();
 
     assertNotNull(data, "Response data is null");
 
@@ -1288,7 +1288,7 @@ public class ResponseValidators {
                    maxDuration,
                    expectRawData);
 
-    SzAttributeTypesResponse.Data data = response.getData();
+    SzAttributeTypesResponseData data = response.getData();
 
     assertNotNull(data, "Response data is null: " + testInfo);
 
@@ -1352,7 +1352,7 @@ public class ResponseValidators {
 
     validateBasics(response, selfLink, maxDuration, expectRawData);
 
-    SzAttributeTypeResponse.Data data = response.getData();
+    SzAttributeTypeResponseData data = response.getData();
 
     assertNotNull(data, "Response data is null");
 
@@ -1467,7 +1467,7 @@ public class ResponseValidators {
 
     validateBasics(response, httpMethod, selfLink, maxDuration);
 
-    SzRecordResponse.Data data = response.getData();
+    SzRecordResponseData data = response.getData();
 
     assertNotNull(data, "Response data is null");
 
@@ -1741,7 +1741,7 @@ public class ResponseValidators {
 
     validateBasics(testInfo, response, httpMethod, selfLink, maxDuration);
 
-    SzAttributeSearchResponse.Data data = response.getData();
+    SzAttributeSearchResponseData data = response.getData();
 
     assertNotNull(data, "Response data is null: " + testInfo);
 
@@ -1887,7 +1887,7 @@ public class ResponseValidators {
 
       validateBasics(testInfo, response, httpMethod, selfLink, maxDuration);
 
-      SzLoadRecordResponse.Data data = response.getData();
+      SzLoadRecordResponseData data = response.getData();
 
       assertNotNull(data, "Response data is null: " + testInfo);
 
@@ -2039,7 +2039,7 @@ public class ResponseValidators {
 
       validateBasics(testInfo, response, httpMethod, selfLink, maxDuration);
 
-      SzReevaluateResponse.Data data = response.getData();
+      SzReevaluateResponseData data = response.getData();
 
       assertNotNull(data, "Response data is null: " + testInfo);
 
@@ -2183,7 +2183,7 @@ public class ResponseValidators {
 
       validateBasics(testInfo, response, httpMethod, selfLink, maxDuration);
 
-      SzDeleteRecordResponse.Data data = response.getData();
+      SzDeleteRecordResponseData data = response.getData();
 
       assertNotNull(data, "Response data is null: " + testInfo);
 
@@ -2322,7 +2322,7 @@ public class ResponseValidators {
 
     validateBasics(response, selfLink, maxDuration, expectRawData);
 
-    SzLicenseResponse.Data data = response.getData();
+    SzLicenseResponseData data = response.getData();
 
     assertNotNull(data, "Response data is null");
 

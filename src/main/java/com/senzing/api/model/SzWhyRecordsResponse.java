@@ -1,147 +1,172 @@
 package com.senzing.api.model;
 
-import com.senzing.util.Timers;
-
-import javax.ws.rs.core.UriInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzWhyRecordsResponseImpl;
 import java.util.*;
 
 /**
  * A response object that contains the {@link SzWhyRecordsResult} describing
  * why or why not two records did or did not resolve.
  */
-public class SzWhyRecordsResponse extends SzResponseWithRawData {
-  /**
-   * The data for this response.
-   */
-  private Data data = new Data();
-
-  /**
-   * Package-private default constructor.
-   */
-  SzWhyRecordsResponse() {
-    // do nothing
-  }
-
-  /**
-   * Constructs with only the HTTP method and the self link, leaving the
-   * entity data to be initialized later.
-   *
-   * @param meta The response meta data.
-   *
-   * @param links The links for the response.
-   */
-  public SzWhyRecordsResponse(SzMeta meta, SzLinks links)
-  {
-    super(meta, links);
-  }
-
+@JsonDeserialize(using=SzWhyRecordsResponse.Factory.class)
+public interface SzWhyRecordsResponse extends SzResponseWithRawData {
   /**
    * Returns the data associated with this response which is an
    * {@link SzWhyRecordsResult}.
    *
    * @return The data associated with this response.
    */
-  public Data getData() {
-    return this.data;
-  }
+  SzWhyRecordsResponseData getData();
 
   /**
-   * Private setter for JSON marshalling.
+   * Sets the data associated with this response which is an
+   * {@link SzWhyRecordsResult}.
+   *
+   * @param data The data associated with this response.
    */
-  private void setData(Data data) {
-    this.data = data;
-  }
+  void setData(SzWhyRecordsResponseData data);
 
   /**
-   * Sets the {@link SzWhyRecordsResult} describing why the two records did or
-   * did not resolve to one another or why they do or do not relate.
+   * Convenience method to set the {@link SzWhyRecordsResult} associated with
+   * the underlying {@link SzWhyRecordsResponseData}.
+   *
+   * @param result The {@link SzWhyRecordsResult} for the response data.
    */
-  public void setWhyResult(SzWhyRecordsResult result) {
-    this.data.whyResult = result;
-  }
+  void setWhyResult(SzWhyRecordsResult result);
 
   /**
-   * Adds an entity to the list of entities associated with the {@link
-   * SzWhyRecordsResult}.
+   * Convenience method to add the specified {@link SzEntityData} to those
+   * instances associated with the underlying {@link SzWhyRecordsResponseData}.
    *
    * @param entity The {@link SzEntityData} describing the entity to add.
    */
-  public void addEntity(SzEntityData entity) {
-    this.data.entities.add(entity);
+  void addEntity(SzEntityData entity);
+
+  /**
+   * Sets the list of {@link SzEntityData} instances associated with the
+   * underlying {@link SzWhyRecordsResponseData}.
+   *
+   * @param entities The {@link Collection} of {@link SzEntityData} instances
+   *                 to set.
+   */
+  void setEntities(Collection<? extends SzEntityData> entities);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzWhyRecordsResponse}.
+   */
+  interface Provider extends ModelProvider<SzWhyRecordsResponse> {
+    /**
+     * Creates an instance with the specified {@link SzMeta} and
+     * {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    SzWhyRecordsResponse create(SzMeta meta, SzLinks links);
+
+    /**
+     * Creates an instance with the specified {@link SzMeta}, {@link SzLinks}
+     * and {@link SzWhyRecordsResponseData}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The data for the response.
+     */
+    SzWhyRecordsResponse create(SzMeta                    meta,
+                                SzLinks                   links,
+                                SzWhyRecordsResponseData  data);
   }
 
   /**
-   * Sets the list of {@link SzEntityData} instances describing the entities
-   * associated with the why result.
+   * Provides a default {@link Provider} implementation for {@link
+   * SzWhyRecordsResponse} that produces instances of
+   * {@link SzWhyRecordsResponseImpl}.
    */
-  public void setEntities(Collection<SzEntityData> entities) {
-    this.data.setEntities(entities);
+  class DefaultProvider extends AbstractModelProvider<SzWhyRecordsResponse>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzWhyRecordsResponse.class, SzWhyRecordsResponseImpl.class);
+    }
+
+    @Override
+    public SzWhyRecordsResponse create(SzMeta meta, SzLinks links) {
+      return new SzWhyRecordsResponseImpl(meta, links);
+    }
+
+    @Override
+    public SzWhyRecordsResponse create(SzMeta                   meta,
+                                       SzLinks                  links,
+                                       SzWhyRecordsResponseData data)
+    {
+      return new SzWhyRecordsResponseImpl(meta, links, data);
+    }
+
   }
 
   /**
-   * Inner class to represent the data section for this response.
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzWhyRecordsResponse}.
    */
-  public static class Data {
+  class Factory extends ModelFactory<SzWhyRecordsResponse, Provider> {
     /**
-     * The {@link SzWhyRecordsResult} instance for the records.
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
      */
-    private SzWhyRecordsResult whyResult;
-
-    /**
-     * The {@link List} of {@link SzEntityData} instances decribing the
-     * entities in the response.
-     */
-    private List<SzEntityData> entities;
-
-    /**
-     * Private default constructor.
-     */
-    private Data() {
-      this.whyResult  = null;
-      this.entities   = new LinkedList<>();
+    public Factory() {
+      super(SzWhyRecordsResponse.class);
     }
 
     /**
-     * Gets the {@link SzWhyRecordsResult} instance describing why two records
-     * did or did not resolve.
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates an instance with the specified {@link SzMeta} and
+     * {@link SzLinks}.
      *
-     * @return The {@link SzWhyRecordsResult} instance describing why two
-     *         records did or did not resolve.
-     */
-    public SzWhyRecordsResult getWhyResult() {
-      return this.whyResult;
-    }
-
-    /**
-     * Sets the {@link SzWhyRecordsResult} instance describing why two records
-     * did or did not resolve.
+     * @param meta The response meta data.
      *
-     * @param whyResult The {@link SzWhyRecordsResult} instance describing why
-     *                  two records did or did not resolve.
+     * @param links The links for the response.
      */
-    private void setWhyResult(SzWhyRecordsResult whyResult) {
-      this.whyResult = whyResult;
+    public SzWhyRecordsResponse create(SzMeta meta, SzLinks links) {
+      return this.getProvider().create(meta, links);
     }
 
     /**
-     * Gets the unmodifiable {@link List} of {@link SzEntityData} instances
-     * describing the entities involved in this why operation.
+     * Creates an instance with the specified {@link SzMeta}, {@link SzLinks}
+     * and {@link SzWhyRecordsResponseData}.
      *
-     * @return The unmodifiable {@link Map} of {@link String} data source codes
-     *         to {@link SzDataSource} values describing the configured data
-     *         sources.
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The data for the response.
      */
-    public List<SzEntityData> getEntities() {
-      return Collections.unmodifiableList(this.entities);
+    public SzWhyRecordsResponse create(SzMeta                   meta,
+                                       SzLinks                  links,
+                                       SzWhyRecordsResponseData data)
+    {
+      return this.getProvider().create(meta, links, data);
     }
 
-    /**
-     * Private setter used for deserialization.
-     */
-    private void setEntities(Collection<SzEntityData> entities) {
-      this.entities.clear();
-      if (entities != null) this.entities.addAll(entities);
-    }
   }
 
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
+  
 }

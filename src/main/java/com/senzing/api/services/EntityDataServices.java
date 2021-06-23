@@ -258,9 +258,25 @@ public class EntityDataServices implements ServicesSupport {
       String            recordId,
       SzResolutionInfo  info)
   {
-    return new SzLoadRecordResponse(
+    return SzLoadRecordResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo), recordId, info);
+        this.newLinks(uriInfo),
+        this.newLoadRecordResponseData(recordId, info));
+  }
+
+  /**
+   * Creates a new instance of {@link SzLoadRecordResponseData} with the
+   * specified parameters.
+   *
+   * @param recordId The record ID of the record that was loaded.
+   * @param info The optional {@link SzResolutionInfo} for the response.
+   * @return The newly created {@link SzLoadRecordResponseData} instance.
+   */
+  protected SzLoadRecordResponseData newLoadRecordResponseData(
+      String            recordId,
+      SzResolutionInfo  info)
+  {
+    return SzLoadRecordResponseData.FACTORY.create(recordId, info);
   }
 
   /**
@@ -562,9 +578,25 @@ public class EntityDataServices implements ServicesSupport {
       Timers            timers,
       SzResolutionInfo  info)
   {
-    return new SzDeleteRecordResponse(
+    return SzDeleteRecordResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo), info);
+        this.newLinks(uriInfo),
+        this.newDeleteRecordResponseData(info));
+  }
+
+  /**
+   * Creates a new instance of {@link SzDeleteRecordResponseData} with the
+   * specified {@link SzResolutionInfo}.
+   *
+   * @param info The {@link SzResolutionInfo} for the {@link
+   *             SzDeleteRecordResponse}.
+   *
+   * @return The newly created {@link SzDeleteRecordResponse} instance.
+   */
+  protected SzDeleteRecordResponseData newDeleteRecordResponseData(
+      SzResolutionInfo  info)
+  {
+    return SzDeleteRecordResponseData.FACTORY.create(info);
   }
 
   /**
@@ -706,9 +738,23 @@ public class EntityDataServices implements ServicesSupport {
       Timers            timers,
       SzResolutionInfo  info)
   {
-    return new SzReevaluateResponse(
+    return SzReevaluateResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo), info);
+        this.newLinks(uriInfo),
+        this.newReevaluateResponseData(info));
+  }
+
+  /**
+   * Creates a new instance of {@link SzDeleteRecordResponseData} with the
+   * specified parameters.
+   *
+   * @param info The optional {@link SzResolutionInfo} for the response.
+   * @return The newly created {@link SzDeleteRecordResponseData} instance.
+   */
+  protected SzReevaluateResponseData newReevaluateResponseData(
+      SzResolutionInfo  info)
+  {
+    return SzReevaluateResponseData.FACTORY.create(info);
   }
 
   /**
@@ -822,9 +868,23 @@ public class EntityDataServices implements ServicesSupport {
       Timers            timers,
       SzEntityRecord    entityRecord)
   {
-    return new SzRecordResponse(
+    return SzRecordResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo), entityRecord);
+        this.newLinks(uriInfo),
+        this.newRecordResponseData(entityRecord));
+  }
+
+  /**
+   * Creates a new instance of {@link SzRecordResponse} with the specified
+   * parameters.
+   *
+   * @param entityRecord The {@link SzEntityRecord} describing the record.
+   * @return The newly created {@link SzRecordResponse} instance.
+   */
+  protected SzRecordResponseData newRecordResponseData(
+      SzEntityRecord entityRecord)
+  {
+    return SzRecordResponseData.FACTORY.create(entityRecord);
   }
 
   /**
@@ -1576,12 +1636,24 @@ public class EntityDataServices implements ServicesSupport {
       Timers                        timers,
       List<SzAttributeSearchResult> searchResults)
   {
-    SzAttributeSearchResponse response = new SzAttributeSearchResponse(
-        this.newMeta(httpMethod, httpStatusCode, timers),
-        this.newLinks(uriInfo));
+    return SzAttributeSearchResponse.FACTORY.create(
+            this.newMeta(httpMethod, httpStatusCode, timers),
+            this.newLinks(uriInfo),
+            this.newAttributeSearchResponseData(searchResults));
+  }
 
-    response.setSearchResults(searchResults);
-    return response;
+  /**
+   * Creates a new instance of {@link SzAttributeSearchResponseData} from the
+   * specified parameters.
+   *
+   * @param searchResults The {@link List} of {@link SzAttributeSearchResult}
+   *                      instances.
+   * @return The newly created {@link SzAttributeSearchResponseData} instance.
+   */
+  protected SzAttributeSearchResponseData newAttributeSearchResponseData(
+      List<SzAttributeSearchResult> searchResults)
+  {
+    return SzAttributeSearchResponseData.FACTORY.create(searchResults);
   }
 
   /**
@@ -1814,7 +1886,7 @@ public class EntityDataServices implements ServicesSupport {
                                                SzEntityData entityData)
   {
     // construct the response
-    SzEntityResponse response = new SzEntityResponse(
+    SzEntityResponse response = SzEntityResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
         this.newLinks(uriInfo), entityData);
 
