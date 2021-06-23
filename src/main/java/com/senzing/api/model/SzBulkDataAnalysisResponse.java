@@ -32,30 +32,30 @@ public interface SzBulkDataAnalysisResponse extends SzBasicResponse {
    * A {@link ModelProvider} for instances of {@link SzBulkDataAnalysisResponse}.
    */
   interface Provider extends ModelProvider<SzBulkDataAnalysisResponse> {
-      /**
-       * Creates an instance of {@link SzBulkDataAnalysisResponse} with the
-       * specified {@link SzMeta} and {@link SzLinks}.
-       *
-       * @param meta The response meta data.
-       *
-       * @param links The links for the response.
-       */
-      SzBulkDataAnalysisResponse create(SzMeta meta, SzLinks links);
+    /**
+     * Creates an instance of {@link SzBulkDataAnalysisResponse} with the
+     * specified {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    SzBulkDataAnalysisResponse create(SzMeta meta, SzLinks links);
 
-      /**
-       * Creates an instance of {@link SzBulkDataAnalysisResponse} with the
-       * specified {@link SzMeta}, {@link SzLinks} and the speicified {@link
-       * SzBulkDataAnalysis} describing the bulk records..
-       *
-       * @param meta The response meta data.
-       *
-       * @param links The links for the response.
-       *
-       * @param dataAnalysis The {@link SzEntityRecord} describing the record.
-       */
-      SzBulkDataAnalysisResponse create(SzMeta              meta,
-                                        SzLinks             links,
-                                        SzBulkDataAnalysis  dataAnalysis);
+    /**
+     * Creates an instance of {@link SzBulkDataAnalysisResponse} with the
+     * specified {@link SzMeta}, {@link SzLinks} and the speicified {@link
+     * SzBulkDataAnalysis} describing the bulk records..
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param dataAnalysis The {@link SzEntityRecord} describing the record.
+     */
+    SzBulkDataAnalysisResponse create(SzMeta              meta,
+                                      SzLinks             links,
+                                      SzBulkDataAnalysis  dataAnalysis);
   }
 
   /**
