@@ -4,6 +4,7 @@ import com.senzing.cmdline.CommandLineOption;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonObject;
+import java.io.File;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +21,12 @@ import static com.senzing.api.server.SzApiServerOption.*;
 public class SzApiServerOptions {
   private int         httpPort                  = DEFAULT_PORT;
   private InetAddress bindAddress               = null;
+  private int         httpsPort                 = DEFAULT_SECURE_PORT;
+  private File        keyStoreFile              = null;
+  private String      keyStorePassword          = null;
+  private String      keyAlias                  = null;
+  private File        clientKeyStoreFile        = null;
+  private String      clientKeyStorePassword    = null;
   private String      urlBasePath               = null;
   private int         concurrency               = DEFAULT_CONCURRENCY;
   private int         httpConcurrency           = DEFAULT_HTTP_CONCURRENCY;
@@ -111,8 +118,37 @@ public class SzApiServerOptions {
   }
 
   /**
+   * Returns the HTTPS port to bind to.  Zero (0) is returned if binding to
+   * a random available port.  This is initialized to the {@linkplain
+   * SzApiServerConstants#DEFAULT_SECURE_PORT default secure port number} if
+   * not explicitly set.
+   *
+   * @return The HTTPS port to bind to or zero (0) if the server will bind
+   *         to a random available port.
+   */
+  public int getHttpsPort() {
+    return this.httpsPort;
+  }
+
+  /**
+   * Sets the HTTPS port to bind to.  Use zero to bind to a random port and
+   * <tt>null</tt> to bind to the {@linkplain
+   * SzApiServerConstants#DEFAULT_SECURE_PORT default port}.
+   *
+   * @param port The HTTPS port to bind to, zero (0) if the server should bind
+   *             to a random port and <tt>null</tt> if server should bind to
+   *             the default secure port.
+   *
+   * @return A reference to this instance.
+   */
+  public SzApiServerOptions setHttpsPort(Integer port) {
+    this.httpsPort = (port != null) ? port : DEFAULT_SECURE_PORT;
+    return this;
+  }
+
+  /**
    * Gets the {@link InetAddress} for the address that the server will bind
-   * to.  This returns <tt>null</tt> then the loopback address is to be used.
+   * to.  If this returns <tt>null</tt> then the loopback address is to be used.
    *
    * @return The {@link InetAddress} for the address that the server will
    *         bind, or <tt>null</tt> then the loopback address is to be used.
@@ -133,6 +169,128 @@ public class SzApiServerOptions {
   public SzApiServerOptions setBindAddress(InetAddress addr) {
     this.bindAddress = addr;
     return this;
+  }
+
+  /**
+   * Gets the {@link File} for the key store for HTTPS support.  This returns
+   * <tt>null</tt> if HTTPS is not supported.
+   *
+   * @return The {@link File} for the key store for HTTPS support.
+   */
+  public File getKeyStoreFile() {
+    return this.keyStoreFile;
+  }
+
+  /**
+   * Sets the {@link File} for the key store for HTTPS support.  Set this to
+   * <tt>null</tt> if HTTPS is not supported.
+   *
+   * @param keyStoreFile The {@link File} for the key store for HTTPS support.
+   */
+  public void setKeyStoreFile(File keyStoreFile) {
+    this.keyStoreFile = keyStoreFile;
+  }
+
+  /**
+   * Gets the password for decrypting the {@linkplain #getKeyStoreFile() key
+   * store file}.  This returns <tt>null</tt> if HTTPS is not supported.
+   *
+   * @return The password for decrypting the key store file or <tt>null</tt>
+   *         if HTTPS is not supported.
+   */
+  public String getKeyStorePassword() {
+    return this.keyStorePassword;
+  }
+
+  /**
+   * Sets the password for decrypting the {@linkplain #getKeyStoreFile() key
+   * store file}.  Set this to <tt>null</tt> if HTTPS is not supported.
+   *
+   * @param password The password for decrypting the key store file or
+   *                 <tt>null</tt> if HTTPS is not supported.
+   */
+  public void setKeyStorePassword(String password) {
+    this.keyStorePassword = password;
+  }
+
+  /**
+   * Gets the alias for the server key to use from the {@linkplain
+   * #getKeyStoreFile() key store file}.  This returns <tt>null</tt> if
+   * HTTPS is not supported <b>or</b> if HTTPS is supported, but the {@linkplain
+   * #getKeyStoreFile() key store file} only contains a single key and it is
+   * therefore not required.
+   *
+   * @return The alias for the server key to use from the {@linkplain
+   *         #getKeyStoreFile() key store file}, or <tt>null</tt> if not
+   *         specified.
+   */
+  public String getKeyAlias() {
+    return this.keyAlias;
+  }
+
+  /**
+   * Sets the alias for the server key to use from the {@linkplain
+   * #getKeyStoreFile() key store file}.  Set this to <tt>null</tt> if HTTPS
+   * is not supported <b>or</b> if HTTPS is supported, but the {@linkplain
+   * #getKeyStoreFile() key store file} only contains a single key and it is
+   * therefore not required.
+   *
+   * @param keyAlias The alias for the server key to use from the {@linkplain
+   *                 #getKeyStoreFile() key store file}, or <tt>null</tt> if
+   *                 HTTPS is not supported or the alias is not needed.
+   */
+  public void setKeyAlias(String keyAlias) {
+    this.keyAlias = keyAlias;
+  }
+
+  /**
+   * Gets the {@link File} for the client key store for SSL client
+   * authentication.  This returns <tt>null</tt> if SSL client authentication
+   * is not required.
+   *
+   * @return The {@link File} for the client key store for SSL client
+   *         authentication or <tt>null</tt> if SSL client authentication is
+   *         not required.
+   */
+  public File getClientKeyStoreFile() {
+    return this.clientKeyStoreFile;
+  }
+
+  /**
+   * Sets the {@link File} for the client key store for SSL client
+   * authentication.  Set this to <tt>null</tt> if SSL client authentication is
+   * not required.
+   *
+   * @param keyStoreFile The {@link File} for the client key store for SSL
+   *                     client authentication or <tt>null</tt> if SSL client
+   *                     authentication is not required.
+   */
+  public void setClientKeyStoreFile(File keyStoreFile) {
+    this.clientKeyStoreFile = keyStoreFile;
+  }
+
+  /**
+   * Gets the password for decrypting the {@linkplain #getClientKeyStoreFile()
+   * client key store file}.  This returns <tt>null</tt> if SSL client
+   * authentication is not required.
+   *
+   * @return The password for decrypting the client key store file or
+   *         <tt>null</tt> if SSL client authentication is not required.
+   */
+  public String getClientKeyStorePassword() {
+    return this.clientKeyStorePassword;
+  }
+
+  /**
+   * Sets the password for decrypting the {@linkplain #getClientKeyStoreFile()
+   * client key store file}.  Set this to <tt>null</tt> if SSL client
+   * authentication is not required.
+   *
+   * @param password The password for decrypting the client key store file or
+   *                 <tt>null</tt> if SSL client authentication is not required.
+   */
+  public void setClientKeyStorePassword(String password) {
+    this.clientKeyStorePassword = password;
   }
 
   /**
@@ -841,6 +999,12 @@ public class SzApiServerOptions {
     Map<CommandLineOption, Object> map = new HashMap<>();
     put(map, HTTP_PORT,                    this.getHttpPort());
     put(map, BIND_ADDRESS,                 this.getBindAddress());
+    put(map, HTTPS_PORT,                   this.getHttpsPort());
+    put(map, KEY_STORE,                    this.getKeyStoreFile());
+    put(map, KEY_STORE_PASSWORD,           this.getKeyStorePassword());
+    put(map, KEY_ALIAS,                    this.getKeyAlias());
+    put(map, CLIENT_KEY_STORE,             this.getClientKeyStoreFile());
+    put(map, CLIENT_KEY_STORE_PASSWORD,    this.getClientKeyStorePassword());
     put(map, URL_BASE_PATH,                this.getUrlBasePath());
     put(map, CONCURRENCY,                  this.getConcurrency());
     put(map, HTTP_CONCURRENCY,             this.getHttpConcurrency());

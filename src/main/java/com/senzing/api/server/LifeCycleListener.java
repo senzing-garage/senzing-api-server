@@ -8,7 +8,8 @@ import java.net.InetAddress;
 
 class LifeCycleListener implements LifeCycle.Listener {
   private String serverDescription;
-  private int httpPort;
+  private Integer httpPort;
+  private Integer httpsPort = null;
   private InetAddress ipAddr;
   private String basePath;
   private Server jettyServer;
@@ -16,13 +17,15 @@ class LifeCycleListener implements LifeCycle.Listener {
 
   public LifeCycleListener(String       serverDesription,
                            Server       jettyServer,
-                           int          httpPort,
+                           Integer      httpPort,
+                           Integer      httpsPort,
                            String       basePath,
                            InetAddress  ipAddress,
                            FileMonitor  fileMonitor)
   {
     this.serverDescription  = serverDesription;
     this.httpPort           = httpPort;
+    this.httpsPort          = httpsPort;
     this.ipAddr             = ipAddress;
     this.basePath           = basePath;
     this.jettyServer        = jettyServer;
@@ -31,28 +34,50 @@ class LifeCycleListener implements LifeCycle.Listener {
 
   public void lifeCycleStarting(LifeCycle event) {
     System.out.println();
-    if (this.httpPort != 0) {
-      System.out.println("Starting " + this.serverDescription
-                             + " on port " + this.httpPort + "....");
-    } else {
-      System.out.println(
-          "Starting " + this.serverDescription + " with rotating port....");
-
+    System.out.println("Starting " + this.serverDescription + " on ports:");
+    if (this.httpPort != null) {
+      if (this.httpPort != 0) {
+        System.out.println("    - " + this.httpPort + " (HTTP)");
+      } else {
+        System.out.println("    - [rotating port] (HTTP)");
+      }
+    }
+    if (this.httpsPort != null) {
+      if (this.httpsPort != 0) {
+        System.out.println("    - " + this.httpsPort + " (HTTPS / SSL)");
+      } else {
+        System.out.println("    - [rotating port] (HTTPS)");
+      }
     }
     System.out.println();
   }
 
   public void lifeCycleStarted(LifeCycle event) {
-    int port = this.httpPort;
-    if (port == 0) {
+    Integer port = this.httpPort;
+    Integer securePort = this.httpsPort;
+    if (port != null && port == 0) {
       port = ((ServerConnector)(jettyServer.getConnectors()[0])).getLocalPort();
     }
-    System.out.println("Started " + this.serverDescription
-                           + " on port " + port + ".");
+    if (securePort != null && securePort == 0) {
+      securePort = ((ServerConnector)(jettyServer.getConnectors()[1])).getLocalPort();
+    }
+    System.out.println("Started " + this.serverDescription + " on ports:");
+    if (port != null) {
+      System.out.println("    - " + port + " (HTTP)");
+    }
+    if (securePort != null) {
+      System.out.println("    - " + securePort + " (HTTPS / SSL)");
+    }
     System.out.println();
     System.out.println("Server running at:");
-    System.out.println("http://" + this.ipAddr.getHostAddress()
-                       + ":" + port + this.basePath);
+    if (port != null) {
+      System.out.println(" - http://" + this.ipAddr.getHostAddress()
+                             + ":" + port + this.basePath);
+    }
+    if (securePort != null) {
+      System.out.println(" - https://" + this.ipAddr.getHostAddress()
+                             + ":" + securePort + this.basePath);
+    }
     System.out.println();
     if (this.fileMonitor != null) {
       this.fileMonitor.signalReady();
@@ -60,12 +85,21 @@ class LifeCycleListener implements LifeCycle.Listener {
   }
 
   public void lifeCycleFailure(LifeCycle event, Throwable cause) {
-    if (this.httpPort != 0) {
-      System.err.println("Failed to start " + this.serverDescription
-                             + " on port " + this.httpPort + ".");
-    } else {
-      System.err.println(
-          "Failed to start " + this.serverDescription + " with rotating port.");
+    System.err.println("Failed to start " + this.serverDescription
+                           + " on ports:");
+    if (this.httpPort == null) {
+      if (this.httpPort == 0) {
+        System.out.println("    - [rotating port] (HTTP)");
+      } else {
+        System.out.println("    - " + this.httpPort + " (HTTP)");
+      }
+    }
+    if (this.httpsPort == null) {
+      if (this.httpsPort == 0) {
+        System.out.println("    - [rotating port] (HTTPS / SSL)");
+      } else {
+        System.out.println("    - " + this.httpsPort + " (HTTPS / SSL)");
+      }
     }
     System.err.println();
     System.err.println(cause);

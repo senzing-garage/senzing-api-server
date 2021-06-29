@@ -75,6 +75,122 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
 
   /**
    * <p>
+   * Option for specifying the HTTPS port for the API Server.  This has a single
+   * parameter which can be a positive integer port number or can be zero (0)
+   * to indicate binding to a randomly selected port number.  If not provided
+   * then {@link SzApiServerConstants#DEFAULT_SECURE_PORT_PARAM} is used.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--https-port {positive-port-number|0}</tt></li>
+   *   <li>Command Line: <tt>-httpsPort {positive-port-number|0}</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_SECURE_PORT="{positive-port-number|0}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  HTTPS_PORT("--https-port", Set.of("-httpsPort"),
+             ENV_PREFIX + "SECURE_PORT", null,
+             1, DEFAULT_SECURE_PORT_PARAM),
+
+  /**
+   * <p>
+   * Option for specifying the path to the PKCS12 key store file for HTTPS
+   * support.  If the {@link #HTTP_PORT} option is not explicitly provided,
+   * then all connections must be done via SSL on the {@link #HTTPS_PORT}.
+   * This has a single parameter which is a file path.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--key-store {pkcs12-key-store-file-path}</tt></li>
+   *   <li>Command Line: <tt>-keyStore {pkcs12-key-store-file-path}</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_KEY_STORE="{pkcs12-key-store-file-path}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  KEY_STORE("--key-store", Set.of("-keyStore"),
+            ENV_PREFIX + "KEY_STORE",
+            null, 1),
+
+  /**
+   * <p>
+   * Option for specifying the password to decrypt the PKCS12 key store file
+   * for HTTPS support.  This has a single parameter is the password.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--key-store-password {password}</tt></li>
+   *   <li>Command Line: <tt>-keyStorePassword {password}</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_KEY_STORE_PASSWORD="{password}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  KEY_STORE_PASSWORD("--key-store-password", Set.of("-keyStorePassword"),
+                     ENV_PREFIX + "KEY_STORE_PASSWORD",
+                     null, 1),
+
+  /**
+   * <p>
+   * Option for specifying the optional certificate alias identifying the key in
+   * the key store file for HTTPS support.  If not specified, then there must
+   * only be a single key in the key store file.  This has a single parameter
+   * which is the alias for the certificate.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--key-alias {certificate-alias}</tt></li>
+   *   <li>Command Line: <tt>-keyAlias {certificate-alias}</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_KEY_ALIAS="{certificate-alias}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  KEY_ALIAS("--key-alias", Set.of("-keyAlias"),
+            ENV_PREFIX + "KEY_ALIAS",
+            null, 1),
+
+  /**
+   * <p>
+   * Option for specifying the path to the PKCS12 key store file for SSL
+   * client authentication.  This has a single parameter which is a file path.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--client-key-store {pkcs12-key-store-file-path}</tt></li>
+   *   <li>Command Line: <tt>-clientKeyStore {pkcs12-key-store-file-path}</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_CLIENT_KEY_STORE="{pkcs12-key-store-file-path}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  CLIENT_KEY_STORE("--client-key-store", Set.of("-clientKeyStore"),
+                   ENV_PREFIX + "CLIENT_KEY_STORE",
+                   null, 1),
+
+  /**
+   * <p>
+   * Option for specifying the password to decrypt the PKCS12 client key store
+   * file for SSL client authentication.  This has a single parameter is the
+   * password.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--client-key-store-password {password}</tt></li>
+   *   <li>Command Line: <tt>-clientKeyStorePassword {password}</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_CLIENT_KEY_STORE_PASSWORD="{password}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  CLIENT_KEY_STORE_PASSWORD("--client-key-store-password",
+                            Set.of("-clientKeyStorePassword"),
+                            ENV_PREFIX + "CLIENT_KEY_STORE_PASSWORD",
+                            null, 1),
+
+  /**
+   * <p>
    * Option for specifying the bind address for the API Server.  The possible
    * values can be an actual network interface name, an IP address, the word
    * <tt>"loopback"</tt> for the loopback local address or <tt>"all"</tt> to
@@ -1294,6 +1410,7 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
         }
       }
 
+      // handle the messaging options
       Set<SzApiServerOption> kafkaInfoOptions = Set.of(
           KAFKA_INFO_BOOTSTRAP_SERVER,
           KAFKA_INFO_GROUP,
@@ -1374,6 +1491,33 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
         }
       });
 
+      // handle the secure server options
+      dependencyMap.put(HTTPS_PORT,
+                        Set.of(Set.of(KEY_STORE, KEY_STORE_PASSWORD)));
+      dependencyMap.put(KEY_STORE,
+                        Set.of(Set.of(HTTPS_PORT, KEY_STORE_PASSWORD)));
+      dependencyMap.put(KEY_STORE_PASSWORD,
+                        Set.of(Set.of(HTTPS_PORT, KEY_STORE)));
+      dependencyMap.put(
+          KEY_ALIAS, Set.of(Set.of(HTTPS_PORT, KEY_STORE, KEY_STORE_PASSWORD)));
+
+      dependencyMap.put(
+          CLIENT_KEY_STORE,
+          Set.of(Set.of(HTTPS_PORT,
+                        KEY_STORE,
+                        KEY_STORE_PASSWORD,
+                        CLIENT_KEY_STORE_PASSWORD)));
+
+      dependencyMap.put(
+          CLIENT_KEY_STORE_PASSWORD,
+          Set.of(Set.of(
+              HTTPS_PORT, KEY_STORE, KEY_STORE_PASSWORD, CLIENT_KEY_STORE)));
+
+      conflictMap.get(CLIENT_KEY_STORE).add(HTTP_PORT);
+      conflictMap.get(CLIENT_KEY_STORE_PASSWORD).add(HTTP_PORT);
+      conflictMap.get(HTTP_PORT).add(CLIENT_KEY_STORE);
+      conflictMap.get(HTTP_PORT).add(CLIENT_KEY_STORE_PASSWORD);
+
       CONFLICTING_OPTIONS = recursivelyUnmodifiableMap(conflictMap);
       ALTERNATIVE_OPTIONS = recursivelyUnmodifiableMap(altMap);
       OPTIONS_BY_FLAG = Collections.unmodifiableMap(lookupMap);
@@ -1421,7 +1565,8 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
           File f = new File(params.get(0));
           return new FileMonitor(f);
 
-        case HTTP_PORT: {
+        case HTTP_PORT:
+        case HTTPS_PORT: {
           int port = Integer.parseInt(params.get(0));
           if (port < 0) {
             throw new IllegalArgumentException(
@@ -1429,6 +1574,18 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
           }
           return port;
         }
+
+        case KEY_STORE:
+        case CLIENT_KEY_STORE: {
+          String  filePath      = params.get(0);
+          File    keyStoreFile  = new File(filePath);
+          if (! keyStoreFile.exists()) {
+            throw new IllegalArgumentException(
+                "The specified key store file does not exist: " + filePath);
+          }
+          return keyStoreFile;
+        }
+
         case BIND_ADDRESS:
           String addrArg = params.get(0);
           InetAddress addr = null;
@@ -1450,6 +1607,7 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
         case URL_BASE_PATH: {
           return validateBasePath(params.get(0));
         }
+
         case CONCURRENCY: {
           int threadCount;
           try {
@@ -1492,6 +1650,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
         case RABBIT_INFO_EXCHANGE:
         case RABBIT_INFO_ROUTING_KEY:
         case SQS_INFO_URL:
+        case KEY_ALIAS:
+        case KEY_STORE_PASSWORD:
+        case CLIENT_KEY_STORE_PASSWORD:
           return params.get(0);
 
         case RABBIT_INFO_PORT: {

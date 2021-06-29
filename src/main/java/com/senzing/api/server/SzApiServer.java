@@ -32,16 +32,16 @@ import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.WorkerThreadPool;
 import com.senzing.util.AccessToken;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.server.*;
 
-import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.rewrite.handler.RewriteHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.util.thread.ThreadPool;
 import org.eclipse.jetty.websocket.jsr356.server.deploy.WebSocketServerContainerInitializer;
@@ -59,6 +59,7 @@ import static com.senzing.util.WorkerThreadPool.Task;
 import static com.senzing.cmdline.CommandLineUtilities.*;
 import static com.senzing.util.LoggingUtilities.*;
 import static com.senzing.api.server.SzApiServerConstants.*;
+import static com.senzing.cmdline.CommandLineSource.*;
 
 /**
  * Implements the Senzing REST API specification in Java in an HTTP server.
@@ -83,6 +84,32 @@ public class SzApiServer implements SzApiProvider {
    */
   public static final String WEB_SOCKETS_RESOURCE_FILE
       = "web-socket-endpoints.properties";
+
+  /**
+   * The HTTP output buffer size for HTTP connections.
+   */
+  private static final int HTTP_OUTPUT_BUFFER_SIZE = 128 * 1024;
+
+  /**
+   * The HTTP output aggregation size for HTTP connections.
+   */
+  private static final int HTTP_OUTPUT_AGGREGATION_SIZE
+      = HTTP_OUTPUT_BUFFER_SIZE / 4;
+
+  /**
+   * The HTTP request header size for HTTP connections.
+   */
+  private static final int HTTP_REQUEST_HEADER_SIZE = 32 * 1024;
+
+  /**
+   * The HTTP response header size for HTTP connections.
+   */
+  private static final int HTTP_RESPONSE_HEADER_SIZE = 32 * 1024;
+
+  /**
+   * The HTTP header cache size for HTTP connections.
+   */
+  private static final int HTTP_HEADER_CACHE_SIZE = 4 * 1024;
 
   /**
    * The period to avoid over-logging of the diagnostics.
@@ -169,7 +196,7 @@ public class SzApiServer implements SzApiProvider {
   /**
    * The HTTP port for the server.
    */
-  protected int httpPort;
+  protected Integer httpPort;
 
   /**
    * The URL base path.
@@ -180,6 +207,37 @@ public class SzApiServer implements SzApiProvider {
    * The {@link InetAddress} for the server.
    */
   protected InetAddress ipAddr;
+
+  /**
+   * The HTTPS port.
+   */
+  protected Integer httpsPort;
+
+  /**
+   * The key store file for the server key.
+   */
+  protected File keyStoreFile;
+
+  /**
+   * The password for the key store file.
+   */
+  protected String keyStorePassword;
+
+  /**
+   * The alias for the server key or <tt>null</tt> if there is only one key
+   * in the key store file.
+   */
+  protected String keyAlias;
+
+  /**
+   * The client key store file for SSL client authentication.
+   */
+  protected File clientKeyStoreFile;
+
+  /**
+   * The password for the client key store file for SSL client authentication.
+   */
+  protected String clientKeyStorePassword;
 
   /**
    * The concurrency for the engine (e.g.: the number of threads in the
@@ -891,6 +949,13 @@ public class SzApiServer implements SzApiProvider {
           "[" + (new Date()) + "] Senzing API Server: " + sb.toString());
     }
 
+    // check the ports
+    CommandLineValue httpPortValue  = optionValues.get(HTTP_PORT);
+    CommandLineValue keyStoreValue  = optionValues.get(KEY_STORE);
+    if (httpPortValue.getSource() == DEFAULT && keyStoreValue != null) {
+      result.remove(HTTP_PORT);
+    }
+
     // return the result
     return result;
   }
@@ -1006,7 +1071,8 @@ public class SzApiServer implements SzApiProvider {
         "   --http-port <port-number>",
         "        Also -httpPort.  Sets the port for HTTP communication.  If not",
         "        specified, then the default port (" + DEFAULT_PORT + ") is used.",
-        "        Specify 0 for a randomly selected available port number.",
+        "        Specify 0 for a randomly selected available port number.  This",
+        "        option cannot be specified if SSL client authentication is configured.",
         "        --> VIA ENVIRONMENT: " + HTTP_PORT.getEnvironmentVariable(),
         "",
         "   --bind-addr <ip-address|loopback|all>",
@@ -1150,6 +1216,63 @@ public class SzApiServer implements SzApiProvider {
   }
 
   /**
+   * Prints the SSL-related options usage to the specified {@link PrintWriter}.
+   *
+   * @param pw The {@link PrintWriter} to write the info-queue options usage.
+   */
+  protected static void printSslOptionsUsage(PrintWriter pw) {
+    pw.println(multilineFormat(
+        "[ HTTPS / SSL Options ]",
+        "   The following options pertain to HTTPS / SSL configuration.  The ",
+        "   " + KEY_STORE.getCommandLineFlag() + " and "
+            + KEY_STORE_PASSWORD.getCommandLineFlag() + " options are the minimum required",
+        "   options to enable HTTPS / SSL communication.  If HTTPS / SSL communication",
+        "   is enabled, then HTTP communication is disabled UNLESS the "
+            + HTTP_PORT.getCommandLineFlag(),
+        "   option is specified.  However, if client SSL authentication is configured",
+        "   via the " + CLIENT_KEY_STORE.getCommandLineFlag() + " and "
+            + CLIENT_KEY_STORE_PASSWORD.getCommandLineFlag() + " options then",
+        "   enabling HTTP communication via the " + HTTP_PORT.getCommandLineFlag()
+            + " option is prohibited.",
+        "",
+        "   --https-port <port-number>",
+        "        Also -httpsPort.  Sets the port for secure HTTPS communication.",
+        "        While the default HTTPS port is " + DEFAULT_SECURE_PORT + " if not specified,",
+        "        HTTPS is only enabled if the " + KEY_STORE.getCommandLineFlag() + " option is specified.",
+        "        Specify 0 for a randomly selected available port number.",
+        "        --> VIA ENVIRONMENT: " + HTTPS_PORT.getEnvironmentVariable(),
+        "",
+        "   --key-store <path-to-pkcs12-keystore-file>",
+        "        Also -keyStore.  Specifies the key store file that holds the private",
+        "        key that the sever uses to identify itself for HTTPS communication.",
+        "        --> VIA ENVIRONMENT: " + KEY_STORE.getEnvironmentVariable(),
+        "",
+        "   --key-store-password <password>",
+        "        Also -keyStorePassword.  Specifies the password for decrypting the",
+        "        key store file specified with the " + KEY_STORE.getCommandLineFlag() + " option.",
+        "        --> VIA ENVIRONMENT: " + KEY_STORE_PASSWORD.getEnvironmentVariable(),
+        "",
+        "   --key-alias <server-key-alias>",
+        "        Also -keyAlias.  Optionally specifies the alias for the private server",
+        "        key in the specified key store.  If not specified, then the first key",
+        "        found in the specified key store is used.",
+        "        --> VIA ENVIRONMENT: " + KEY_ALIAS.getEnvironmentVariable(),
+        "",
+        "   --client-key-store <path-to-pkcs12-keystore-file>",
+        "        Also -clientKeyStore.  Specifies the key store file that holds the",
+        "        public keys of those clients that are authorized to connect.  If this",
+        "        option is specified then SSL client authentication is required and",
+        "        the " + HTTP_PORT.getCommandLineFlag() + " option is forbidden.",
+        "        --> VIA ENVIRONMENT: " + CLIENT_KEY_STORE.getEnvironmentVariable(),
+        "",
+        "   --client-key-store-password <password>",
+        "        Also -clientKeyStorePassword.  Specifies the password for decrypting",
+        "        the key store file specified with the " + CLIENT_KEY_STORE.getCommandLineFlag() + " option.",
+        "        --> VIA ENVIRONMENT: " + CLIENT_KEY_STORE_PASSWORD.getEnvironmentVariable(),
+        ""));
+  }
+
+  /**
    * Prints the info-queue options usage to the specified {@link PrintWriter}.
    *
    * @param pw The {@link PrintWriter} to write the info-queue options usage.
@@ -1272,6 +1395,7 @@ public class SzApiServer implements SzApiProvider {
     pw.println();
     printUsageIntro(pw);
     printStandardOptionsUsage(pw);
+    printSslOptionsUsage(pw);
     printInfoQueueOptionsUsage(pw);
     printAdvancedOptionsUsage(pw);
 
@@ -1833,7 +1957,7 @@ public class SzApiServer implements SzApiProvider {
   {
     this.accessToken = token;
 
-    this.httpPort = DEFAULT_PORT;
+    this.httpPort = null;
     if (options.containsKey(HTTP_PORT)) {
       this.httpPort = (Integer) options.get(HTTP_PORT);
     }
@@ -2175,12 +2299,70 @@ public class SzApiServer implements SzApiProvider {
 
     // create our server (TODO: add connectors for HTTP + HTTPS)
     ThreadPool threadPool = new QueuedThreadPool(this.httpConcurrency);
-    InetSocketAddress inetAddr = new InetSocketAddress(ipAddr, httpPort);
     this.jettyServer = new Server(threadPool);
-    ServerConnector connector = new ServerConnector(this.jettyServer);
-    connector.setHost(inetAddr.getHostName());
-    connector.setPort(inetAddr.getPort());
-    this.jettyServer.setConnectors(new Connector[]{connector});
+
+    this.httpsPort              = (Integer) options.get(HTTPS_PORT);
+    this.keyStoreFile           = (File) options.get(KEY_STORE);
+    this.keyStorePassword       = (String) options.get(KEY_STORE_PASSWORD);
+    this.keyAlias               = (String) options.get(KEY_ALIAS);
+    this.clientKeyStoreFile     = (File) options.get(CLIENT_KEY_STORE);
+    this.clientKeyStorePassword = (String)
+        options.get(CLIENT_KEY_STORE_PASSWORD);
+
+    // setup the HTTP configuration
+    HttpConfiguration httpConfig  = new HttpConfiguration();
+    httpConfig.setOutputBufferSize(HTTP_OUTPUT_BUFFER_SIZE);
+    httpConfig.setOutputAggregationSize(HTTP_OUTPUT_AGGREGATION_SIZE);
+    httpConfig.setRequestHeaderSize(HTTP_REQUEST_HEADER_SIZE);
+    httpConfig.setResponseHeaderSize(HTTP_RESPONSE_HEADER_SIZE);
+    httpConfig.setHeaderCacheSize(HTTP_HEADER_CACHE_SIZE);
+
+    if (this.keyStoreFile != null) {
+      HttpConfiguration httpsConfig = null;
+      httpConfig.setSecureScheme("https");
+      httpConfig.setSecurePort(this.httpsPort);
+
+      httpsConfig = new HttpConfiguration(httpConfig);
+      httpsConfig.addCustomizer(new SecureRequestCustomizer());
+
+      SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
+      sslContextFactory.setKeyStoreType("PKCS12");
+      sslContextFactory.setKeyStorePath(this.keyStoreFile.getCanonicalPath());
+      sslContextFactory.setKeyStorePassword(this.keyStorePassword);
+      if (this.keyAlias != null) {
+        sslContextFactory.setCertAlias(this.keyAlias);
+      }
+      if (this.clientKeyStoreFile != null) {
+        sslContextFactory.setNeedClientAuth(true);
+        sslContextFactory.setTrustStoreType("PKCS12");
+        sslContextFactory.setTrustStorePath(this.clientKeyStoreFile.toString());
+        sslContextFactory.setTrustStorePassword(this.clientKeyStorePassword);
+      }
+
+      if (this.httpPort != null) {
+        ServerConnector httpConnector = new ServerConnector(
+            this.jettyServer, new HttpConnectionFactory(httpConfig));
+        httpConnector.setPort(this.httpPort);
+        this.jettyServer.addConnector(httpConnector);
+      }
+
+      ServerConnector httpsConnector = new ServerConnector(
+          this.jettyServer,
+          new SslConnectionFactory(sslContextFactory,
+                                   HttpVersion.HTTP_1_1.asString()),
+          new HttpConnectionFactory(httpsConfig));
+      httpsConnector.setPort(this.httpsPort);
+      this.jettyServer.addConnector(httpsConnector);
+
+    } else {
+      InetSocketAddress inetAddr
+          = new InetSocketAddress(this.ipAddr, this.httpPort);
+      ServerConnector connector = new ServerConnector(
+          this.jettyServer, new HttpConnectionFactory(httpConfig));
+      connector.setHost(inetAddr.getHostName());
+      connector.setPort(inetAddr.getPort());
+      this.jettyServer.setConnectors(new Connector[]{connector});
+    }
 
     this.fileMonitor = null;
     if (options.containsKey(MONITOR_FILE)) {
@@ -2191,6 +2373,8 @@ public class SzApiServer implements SzApiProvider {
         = new LifeCycleListener(this.getDescription(),
                                 this.jettyServer,
                                 this.httpPort,
+                                (this.keyStoreFile == null)
+                                    ? null : this.httpsPort,
                                 this.basePath,
                                 this.ipAddr,
                                 this.fileMonitor);
@@ -2233,11 +2417,20 @@ public class SzApiServer implements SzApiProvider {
   {
     try {
       this.jettyServer.start();
-      int actualPort = this.httpPort
-          = ((ServerConnector) (this.jettyServer.getConnectors()[0])).getLocalPort();
+      Connector[] connectors = this.jettyServer.getConnectors();
+      if (connectors.length == 1) {
+        if (this.httpPort == null) {
+          this.httpsPort  = ((ServerConnector) connectors[0]).getLocalPort();
+        } {
+          this.httpPort   = ((ServerConnector) connectors[0]).getLocalPort();
+        }
+      } else if (connectors.length > 1) {
+        this.httpPort   = ((ServerConnector) connectors[0]).getLocalPort();
+        this.httpsPort  = ((ServerConnector) connectors[1]).getLocalPort();
+      }
 
       if (options.containsKey(MONITOR_FILE)) {
-        this.fileMonitor.initialize(actualPort);
+        this.fileMonitor.initialize(this.httpPort, this.httpsPort);
         this.fileMonitor.start();
       }
     } catch (Exception e) {
