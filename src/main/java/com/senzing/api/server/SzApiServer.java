@@ -1035,7 +1035,6 @@ public class SzApiServer implements SzApiProvider {
   protected static void printStandardOptionsUsage(PrintWriter pw) {
     pw.println(multilineFormat(
         "[ Standard Options ]",
-        "",
         "   --help",
         "        Also -help.  Should be the first and only option if provided.",
         "        Causes this help message to be displayed.",
@@ -1376,7 +1375,6 @@ public class SzApiServer implements SzApiProvider {
   protected static void printAdvancedOptionsUsage(PrintWriter pw) {
     pw.println(multilineFormat(
         "[ Advanced Options ]",
-        "",
         "   --config-mgr [config manager options]...",
         "        Also --configmgr.  Should be the first option if provided.  All",
         "        subsequent options are interpreted as configuration manager options.",

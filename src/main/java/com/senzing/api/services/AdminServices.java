@@ -42,6 +42,7 @@ public class AdminServices implements ServicesSupport {
     Timers timers = this.newTimers();
     return newBasicResponse(uriInfo, timers);
   }
+
   /**
    * Creates a new response to the <tt>GET /heartbeat</tt> operation.
    *
