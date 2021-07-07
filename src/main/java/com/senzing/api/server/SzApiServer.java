@@ -189,11 +189,6 @@ public class SzApiServer implements SzApiProvider {
   protected AccessToken accessToken = null;
 
   /**
-   * The base URL for the server.
-   */
-  protected String baseUrl;
-
-  /**
    * The HTTP port for the server.
    */
   protected Integer httpPort;
@@ -462,16 +457,6 @@ public class SzApiServer implements SzApiProvider {
    * The {@link ServletContextHandler} for the Jetty server.
    */
   protected ServletContextHandler servletContext = null;
-
-  /**
-   * Returns the base URL for this instance.
-   *
-   * @return The base URL for this instance.
-   */
-  public String getBaseUrl() {
-    this.assertNotShutdown();
-    return this.baseUrl;
-  }
 
   /**
    * Returns the HTTP port for this instance.
@@ -2197,9 +2182,6 @@ public class SzApiServer implements SzApiProvider {
 
     this.allowedOrigins = (String) options.get(ALLOWED_ORIGINS);
 
-    this.baseUrl = "http://" + ipAddr.getHostAddress() + ":" + httpPort
-        + this.basePath;
-
     this.initNativeApis();
 
     String versionJsonText = this.productApi.version();
@@ -2353,6 +2335,7 @@ public class SzApiServer implements SzApiProvider {
       this.jettyServer.addConnector(httpsConnector);
 
     } else {
+      if (this.httpPort == null) this.httpPort = DEFAULT_PORT;
       InetSocketAddress inetAddr
           = new InetSocketAddress(this.ipAddr, this.httpPort);
       ServerConnector connector = new ServerConnector(

@@ -25,11 +25,13 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.senzing.api.model.SzBulkDataStatus.ABORTED;
 import static com.senzing.api.model.SzBulkDataStatus.COMPLETED;
 import static com.senzing.api.model.SzHttpMethod.POST;
 import static com.senzing.io.IOUtilities.UTF_8;
+import static com.senzing.reflect.ReflectionUtilities.synchronizedProxy;
 import static com.senzing.text.TextUtilities.randomPrintableText;
 import static com.senzing.util.AsyncWorkerPool.AsyncResult;
 import static com.senzing.util.LoggingUtilities.*;
@@ -173,9 +175,11 @@ public interface BulkDataSupport extends ServicesSupport {
 
     OutboundSseEvent.Builder eventBuilder
         = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
-    int eventId = 0;
 
-    SzBulkDataAnalysis dataAnalysis = this.newBulkDataAnalysis();
+    ProgressState progressState = new ProgressState();
+
+    SzBulkDataAnalysis dataAnalysis = synchronizedProxy(
+        SzBulkDataAnalysis.class, this.newBulkDataAnalysis(), progressState);
 
     // check the progress period
     this.validateProgressPeriod(progressPeriod,
@@ -186,8 +190,8 @@ public interface BulkDataSupport extends ServicesSupport {
                                 webSocketSession);
 
     try {
-      BulkDataSet bulkDataSet = new BulkDataSet(mediaType, dataInputStream);
-      TemporaryDataCache dataCache = bulkDataSet.getDataCache();
+      BulkDataSet         bulkDataSet = new BulkDataSet(mediaType, dataInputStream);
+      TemporaryDataCache  dataCache   = bulkDataSet.getDataCache();
 
       // if charset is unknown then try to detect
       String charset = bulkDataSet.getCharacterEncoding();
@@ -209,53 +213,51 @@ public interface BulkDataSupport extends ServicesSupport {
           dataAnalysis.setMediaType(null);
         }
 
-        for (JsonObject record = recordReader.readRecord();
-             (record != null);
-             record = recordReader.readRecord())
-        {
-          String dataSrc    = JsonUtils.getString(record, "DATA_SOURCE");
-          String entityType = JsonUtils.getString(record, "ENTITY_TYPE");
-          String recordId   = JsonUtils.getString(record, "RECORD_ID");
-          dataAnalysis.trackRecord(dataSrc, entityType, recordId);
+        ProgressUpdater<SzBulkDataAnalysisResponse> progressUpdater = null;
+        try {
+          for (JsonObject record = recordReader.readRecord();
+               (record != null);
+               record = recordReader.readRecord()) {
+            String dataSrc = JsonUtils.getString(record, "DATA_SOURCE");
+            String entityType = JsonUtils.getString(record, "ENTITY_TYPE");
+            String recordId = JsonUtils.getString(record, "RECORD_ID");
+            dataAnalysis.trackRecord(dataSrc, entityType, recordId);
 
-          long now = System.nanoTime();
-          long duration = now - start;
-          // check if the progress period has expired
-          if ((progressNanos != null) && (duration > progressNanos)) {
-            // reset the start time
-            start = now;
-
-            // check if we are sending a response message
-            SzBulkDataAnalysisResponse response = null;
-            if (eventBuilder != null || webSocketSession != null) {
-              // build the response message
-              response = this.newBulkDataAnalysisResponse(
-                  POST, 200, uriInfo, timers, dataAnalysis);
+            // check if the progress period has expired
+            if ((progressNanos != null) && (progressUpdater == null)
+                && (eventBuilder != null || webSocketSession != null))
+            {
+              progressState.setStartTime(System.nanoTime());
+              Supplier<SzBulkDataAnalysisResponse> supplier = () -> {
+                return this.newBulkDataAnalysisResponse(
+                    POST, 200, uriInfo, timers, dataAnalysis);
+              };
+              progressUpdater = new ProgressUpdater<>(progressNanos,
+                                                      progressState,
+                                                      progressState, // monitor
+                                                      supplier,
+                                                      sseEventSink,
+                                                      eventBuilder,
+                                                      webSocketSession);
+              progressUpdater.start();
             }
-
-            // check if sending SSE events
-            if (eventBuilder != null) {
-              // send an SSE event message
-              OutboundSseEvent event =
-                  eventBuilder.name(PROGRESS_EVENT)
-                      .id(String.valueOf(eventId++))
-                      .mediaType(APPLICATION_JSON_TYPE)
-                      .data(response)
-                      .reconnectDelay(RECONNECT_DELAY)
-                      .build();
-              sseEventSink.send(event);
-            }
-
-            // check if sending WebSocket messages
-            if (webSocketSession != null) {
-              // send a message no the web socket
-              webSocketSession.getBasicRemote().sendObject(response);
+          }
+        } finally {
+          // make sure to clean up the progress updater
+          if (progressUpdater != null) {
+            // calling this should mark it complete and trigger wake-up
+            progressUpdater.complete();
+            try {
+              // wait for the thread to complete before proceeding
+              progressUpdater.join();
+            } catch (InterruptedException ignore) {
+              // ignore the exception
             }
           }
         }
       }
 
-    } catch (EncodeException|IOException e) {
+    } catch (IOException e) {
       e.printStackTrace();
       dataAnalysis.setStatus(ABORTED);
 
@@ -266,7 +268,7 @@ public interface BulkDataSupport extends ServicesSupport {
                           response,
                           uriInfo,
                           timers,
-                          eventId,
+                          progressState.nextEventId(),
                           eventBuilder,
                           sseEventSink,
                           webSocketSession);
@@ -279,8 +281,11 @@ public interface BulkDataSupport extends ServicesSupport {
     SzBulkDataAnalysisResponse response = this.newBulkDataAnalysisResponse(
         POST, 200, uriInfo, timers, dataAnalysis);
 
-    return this.completeOperation(
-        eventBuilder, sseEventSink, eventId, webSocketSession, response);
+    return this.completeOperation(eventBuilder,
+                                  sseEventSink,
+                                  progressState.nextEventId(),
+                                  webSocketSession,
+                                  response);
   }
 
   /**
@@ -344,7 +349,10 @@ public interface BulkDataSupport extends ServicesSupport {
     OutboundSseEvent.Builder eventBuilder
         = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
 
-    SzBulkLoadResult bulkLoadResult = this.newBulkLoadResult();
+    ProgressState progressState = new ProgressState();
+
+    SzBulkLoadResult bulkLoadResult = synchronizedProxy(
+        SzBulkLoadResult.class, this.newBulkLoadResult(), progressState);
 
     // populate the entity type and data source maps
     Map<String, String> dataSourceMap = new HashMap<>();
@@ -360,8 +368,6 @@ public interface BulkDataSupport extends ServicesSupport {
                                  mapEntityTypeList,
                                  dataSourceMap,
                                  entityTypeMap);
-
-    ProgressState progressState = new ProgressState();
 
     try {
       BulkDataSet bulkDataSet = new BulkDataSet(mediaType, dataInputStream);
@@ -393,6 +399,7 @@ public interface BulkDataSupport extends ServicesSupport {
                                                      dataSourceMap,
                                                      entityTypeMap,
                                                      loadId);
+
         bulkDataSet.setFormat(recordReader.getFormat());
         bulkLoadResult.setCharacterEncoding(charset);
         bulkLoadResult.setMediaType(bulkDataSet.getFormat().getMediaType());
@@ -401,95 +408,133 @@ public interface BulkDataSupport extends ServicesSupport {
         boolean           done             = false;
         List<JsonObject>  first1000Records = new LinkedList<>();
 
-        // loop through the records and handle each record
-        while (!done) {
-          JsonObject record = null;
-          if (concurrent && first1000Records.size() > 0) {
-            // get the first record from the buffer of up to 1000 records
-            record = first1000Records.remove(0);
-          } else {
-            record = recordReader.readRecord();
-          }
+        boolean aborted = false;
+        ProgressUpdater<SzBulkLoadResponse> progressUpdater = null;
+        try {
+          // loop through the records and handle each record
+          while (!done) {
+            JsonObject record = null;
+            if (concurrent && first1000Records.size() > 0) {
+              // get the first record from the buffer of up to 1000 records
+              record = first1000Records.remove(0);
+            } else {
+              record = recordReader.readRecord();
+            }
 
-          // check if the record is null
-          if (record == null) {
-            done = true;
-            continue;
-          }
+            // check if the record is null
+            if (record == null) {
+              done = true;
+              continue;
+            }
 
-          // peel off the first 1000 records to see if we have less than 1000
-          if (!concurrent && first1000Records.size() <= 1000) {
-            // add the record to the first-1000 cache
-            first1000Records.add(record);
+            // peel off the first 1000 records to see if we have less than 1000
+            if (!concurrent && first1000Records.size() <= 1000) {
+              // add the record to the first-1000 cache
+              first1000Records.add(record);
 
-            // check if we have more than 1000 records
-            if (first1000Records.size() > 1000) concurrent = true;
+              // check if we have more than 1000 records
+              if (first1000Records.size() > 1000) concurrent = true;
 
-            // continue for now
-            continue;
-          }
+              // continue for now
+              continue;
+            }
 
-          // check if we have a data source and entity type
-          String resolvedDS = JsonUtils.getString(record, "DATA_SOURCE");
-          String resolvedET = JsonUtils.getString(record, "ENTITY_TYPE");
-          if (resolvedDS == null || resolvedDS.trim().length() == 0
-              || resolvedET == null || resolvedET.trim().length() == 0)
-          {
-            bulkLoadResult.trackIncompleteRecord(resolvedDS, resolvedET);
+            // check if we have a data source and entity type
+            String resolvedDS = JsonUtils.getString(record, "DATA_SOURCE");
+            String resolvedET = JsonUtils.getString(record, "ENTITY_TYPE");
+            if (resolvedDS == null || resolvedDS.trim().length() == 0
+                || resolvedET == null || resolvedET.trim().length() == 0)
+            {
+              bulkLoadResult.trackIncompleteRecord(resolvedDS, resolvedET);
 
-          } else {
-            Timers subTimers  = timerPool.remove(0);
-            AsyncResult<AddRecordResult> asyncResult = null;
-            try {
-              asyncResult = this.asyncProcessRecord(asyncPool,
-                                                    provider,
-                                                    subTimers,
-                                                    record,
-                                                    loadId);
+            } else {
+              Timers subTimers = timerPool.remove(0);
+              AsyncResult<AddRecordResult> asyncResult = null;
+              try {
+                asyncResult = this.asyncProcessRecord(asyncPool,
+                                                      provider,
+                                                      subTimers,
+                                                      record,
+                                                      loadId);
 
-            } finally {
-              this.trackLoadResult(asyncResult, bulkLoadResult);
-              timerPool.add(subTimers);
+              } finally {
+                this.trackLoadResult(asyncResult, bulkLoadResult);
+                timerPool.add(subTimers);
+              }
+            }
+
+            // count the number of failures
+            int failedCount = bulkLoadResult.getFailedRecordCount()
+                + bulkLoadResult.getIncompleteRecordCount();
+
+            // break if aborted
+            if (maxFailures > 0 && failedCount >= maxFailures) {
+              aborted = true;
+              break;
+            }
+
+            // check if the timing has gone beyond the specified progress period
+            if ((progressNanos != null) && (progressUpdater == null)
+                && (eventBuilder != null || webSocketSession != null))
+            {
+              // create the update response if there is a client expecting it
+              progressState.setStartTime(System.nanoTime());
+              Supplier<SzBulkLoadResponse> supplier = () -> {
+                return this.newBulkLoadResponse(
+                    POST, 200, uriInfo, timers, bulkLoadResult);
+              };
+              progressUpdater = new ProgressUpdater<>(progressNanos,
+                                                      progressState,
+                                                      progressState, // monitor
+                                                      supplier,
+                                                      sseEventSink,
+                                                      eventBuilder,
+                                                      webSocketSession);
+              progressUpdater.start();
             }
           }
 
-          // check if aborted and handle reporting periodic progress
-          boolean aborted = this.checkAbortLoadDoProgress(uriInfo,
-                                                          timers,
-                                                          bulkLoadResult,
-                                                          maxFailures,
-                                                          progressState,
-                                                          progressPeriod,
-                                                          sseEventSink,
-                                                          eventBuilder,
-                                                          webSocketSession);
+          // check if we have less than 1000 records
+          if (first1000Records.size() > 0 && !aborted) {
+            this.processRecords(provider,
+                                timers,
+                                first1000Records,
+                                loadId,
+                                bulkLoadResult,
+                                maxFailures);
+          }
 
-          // break if aborted
-          if (aborted) break;
+          // close out any in-flight loads from the asynchronous pool
+          List<AsyncResult<AddRecordResult>> results = asyncPool.close();
+          for (AsyncResult<AddRecordResult> asyncResult : results) {
+            this.trackLoadResult(asyncResult, bulkLoadResult);
+          }
+
+          // merge the timers
+          for (Timers subTimer : timerPool) {
+            timers.mergeWith(subTimer);
+          }
+
+        } finally {
+          // make sure to clean up the progress updater
+          if (progressUpdater != null) {
+            // calling this should mark it complete and trigger wake-up
+            progressUpdater.complete();
+            try {
+              // wait for the thread to complete before proceeding
+              progressUpdater.join();
+            } catch (InterruptedException ignore) {
+              // ignore the exception
+            }
+          }
+
+          // check if aborted
+          if (aborted) {
+            bulkLoadResult.setStatus(ABORTED);
+          }
         }
 
-        // check if we have less than 1000 records
-        if (first1000Records.size()>0 && bulkLoadResult.getStatus()!=ABORTED)
-        {
-          this.processRecords(provider,
-                              timers,
-                              first1000Records,
-                              loadId,
-                              bulkLoadResult,
-                              maxFailures);
-        }
-
-        // close out any in-flight loads from the asynchronous pool
-        List<AsyncResult<AddRecordResult>> results = asyncPool.close();
-        for (AsyncResult<AddRecordResult> asyncResult : results) {
-          this.trackLoadResult(asyncResult, bulkLoadResult);
-        }
-
-        // merge the timers
-        for (Timers subTimer: timerPool) {
-          timers.mergeWith(subTimer);
-        }
-
+        // mark completed if we get here without an exception
         if (bulkLoadResult.getStatus() != ABORTED) {
           bulkLoadResult.setStatus(COMPLETED);
         }
@@ -1620,8 +1665,8 @@ public interface BulkDataSupport extends ServicesSupport {
      * Default constructor.
      */
     public ProgressState() {
-      this.startTime    = System.nanoTime();
-      this.nextEventId  = 0;
+      this.startTime        = System.nanoTime();
+      this.nextEventId      = 0;
     }
 
     /**
@@ -1629,7 +1674,7 @@ public interface BulkDataSupport extends ServicesSupport {
      *
      * @return The next event ID.
      */
-    public int nextEventId() {
+    public synchronized int nextEventId() {
       return this.nextEventId++;
     }
 
@@ -1637,7 +1682,7 @@ public interface BulkDataSupport extends ServicesSupport {
      * Gets the most recent start time.
      * @return The most recent start time.
      */
-    public long getStartTime() {
+    public synchronized long getStartTime() {
       return this.startTime;
     }
 
@@ -1645,8 +1690,190 @@ public interface BulkDataSupport extends ServicesSupport {
      * Updates the start time to the specified time.
      * @param time The new start time.
      */
-    public void setStartTime(long time) {
+    public synchronized void setStartTime(long time) {
       this.startTime = time;
     }
+
   }
+
+  /**
+   * The progress updater thread to handle sending the progress updates.
+   */
+  class ProgressUpdater<T> extends Thread {
+    /**
+     * The time between progress updates in nanoseconds.
+     */
+    private long progressNanos = 0L;
+
+    /**
+     * The progress state.
+     */
+    private ProgressState progressState = null;
+
+    /**
+     * The {@link Object} to synchronize on.
+     */
+    protected final Object monitor;
+
+    /**
+     * The SSE event sink if sending updates via SSE.
+     */
+    private SseEventSink sseEventSink = null;
+
+    /**
+     * The SSE event builder if sending updates via SSE.
+     */
+    private OutboundSseEvent.Builder sseEventBuilder = null;
+
+    /**
+     * The Web Sockets Session if sending updates via web sockets.
+     */
+    private Session webSocketSession = null;
+
+    /**
+     * The supplier for providing the updates.
+     */
+    private Supplier<T> supplier = null;
+
+    /**
+     * Whether or not we are completed.
+     */
+    private boolean completed = false;
+
+    /**
+     * Constructs with the specified parameters.
+     *
+     * @param progressNanos The number of nano-seconds between progress updates.
+     * @param progressState The {@link ProgressState} to manage the progress
+     *                      updates.
+     * @param monitor The object to synchronize, wait and notify on or
+     *                <tt>null</tt> if it should synchronize on itself.
+     * @param supplier THe {@link Supplier} for providing the update object.
+     * @param sseEventSink The event sink for SSE if sending progress updates
+     *                     via SSE, or <tt>null</tt> if not sending via SSE.
+     * @param sseEventBuilder The SSE event builder if sending progress updates
+     *                        via SSE, or <tt>null</tt> if not sending via SSE.
+     * @param webSocketSession The web sockets {@link Session} if sending
+     *                         progress udpates via web sockets, or
+     *                         <tt>null</tt> if not sending via web sockets.
+     */
+    public ProgressUpdater(long                     progressNanos,
+                           ProgressState            progressState,
+                           Object                   monitor,
+                           Supplier<T>              supplier,
+                           SseEventSink             sseEventSink,
+                           OutboundSseEvent.Builder sseEventBuilder,
+                           Session                  webSocketSession)
+    {
+      Objects.requireNonNull(progressState,"The progressState cannot be null.");
+      Objects.requireNonNull(supplier, "The supplier cannot be null.");
+
+      this.progressNanos    = progressNanos;
+      this.progressState    = progressState;
+      this.monitor          = (monitor == null) ? this : monitor;
+      this.supplier         = supplier;
+      this.sseEventSink     = sseEventSink;
+      this.sseEventBuilder  = sseEventBuilder;
+      this.webSocketSession = webSocketSession;
+    }
+
+    /**
+     * Marks this instance as completed.
+     */
+    public void complete() {
+      synchronized (this.monitor) {
+        this.completed = true;
+        monitor.notifyAll();
+      }
+    }
+
+    /**
+     * Checks if this instance is completed.
+     *
+     * @return <tt>true</tt> if this instance is completed, otherwise
+     *         <tt>false</tt>.
+     */
+    public boolean isCompleted() {
+      synchronized (this.monitor) {
+        return this.completed;
+      }
+    }
+
+    /**
+     * Implemented to send the progress updates periodically.
+     */
+    public void run() {
+      while (!this.isCompleted()) {
+        long now        = System.nanoTime();
+        long duration   = now - this.progressState.getStartTime();
+        long sleepTime  = (this.progressNanos - duration) / 1000000L;
+
+        // check if it is not yet time for the next progress update
+        if (sleepTime > 0) {
+          // sleep for the
+          synchronized (this.monitor) {
+            try {
+              // wait for notification or the maximum sleep time
+              this.monitor.wait(sleepTime);
+            } catch (InterruptedException ignore) {
+              // do nothing -- ignore
+            }
+          }
+
+        } else {
+          // send a progress update (if not completed)
+          this.sendProgressUpdate();
+        }
+      }
+    }
+
+    /**
+     * Sends the next progress update.
+     */
+    protected void sendProgressUpdate() {
+      synchronized (this.monitor) {
+        // check if already completed
+        if (this.isCompleted()) return;
+
+        // get the current time
+        long now = System.nanoTime();
+
+        // create the update response if there is a client expecting it
+        T update = null;
+        if (this.sseEventBuilder != null || this.webSocketSession != null) {
+          this.progressState.setStartTime(now);
+          update = this.supplier.get();
+        }
+
+        // check if sending an SSE response
+        if (this.sseEventBuilder != null) {
+          OutboundSseEvent event =
+              this.sseEventBuilder.name(PROGRESS_EVENT)
+                  .id(String.valueOf(this.progressState.nextEventId()))
+                  .mediaType(APPLICATION_JSON_TYPE)
+                  .data(update)
+                  .reconnectDelay(RECONNECT_DELAY)
+                  .build();
+          this.sseEventSink.send(event);
+        }
+
+        // check if sending a web socket response
+        if (this.webSocketSession != null) {
+          try {
+            // send the web socket message and handle exceptions
+            this.webSocketSession.getBasicRemote().sendObject(update);
+
+          } catch (RuntimeException e) {
+            e.printStackTrace();
+            throw e;
+
+          } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+          }
+        }
+      }
+    }
+  }
+
 }
