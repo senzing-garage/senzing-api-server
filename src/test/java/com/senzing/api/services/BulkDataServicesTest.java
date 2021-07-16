@@ -1039,6 +1039,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       byte[] buffer = new byte[8192];
       int writeCount = 0;
       long start = System.nanoTime();
+      boolean firstChunk = true;
       try (FileInputStream fis = new FileInputStream(this.bulkDataFile))
       {
         for (int readCount = fis.read(buffer);
@@ -1046,6 +1047,16 @@ public class BulkDataServicesTest extends AbstractServiceTest {
              readCount = fis.read(buffer))
         {
           synchronized (this) {
+            // give the server a chance to deny the request out-right because
+            // it is in read-only mode or if there is a client error
+            if (firstChunk) {
+              firstChunk = false;
+              try {
+                this.wait(500L);
+              } catch (InterruptedException ignore) {
+                // ignore the exception
+              }
+            }
             if (!this.isOpen()) break;
             this.outputStream.write(buffer, 0, readCount);
             this.outputStream.flush();

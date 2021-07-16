@@ -28,20 +28,11 @@ import javax.ws.rs.sse.OutboundSseEvent;
 import javax.ws.rs.sse.Sse;
 import javax.ws.rs.sse.SseEventSink;
 import java.io.*;
-import java.security.MessageDigest;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.POST;
-import static com.senzing.api.model.SzHttpMethod.GET;
-import static com.senzing.text.TextUtilities.*;
-import static com.senzing.util.AsyncWorkerPool.*;
-import static com.senzing.api.model.SzBulkDataStatus.*;
 import static javax.ws.rs.core.MediaType.*;
 import static com.senzing.util.LoggingUtilities.*;
-import static com.senzing.io.IOUtilities.*;
 
 /**
  * Bulk data REST services.
