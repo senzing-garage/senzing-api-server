@@ -33,8 +33,10 @@ import com.senzing.util.JsonUtils;
 import com.senzing.util.WorkerThreadPool;
 import com.senzing.util.AccessToken;
 import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.server.*;
 
+import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -51,6 +53,7 @@ import javax.servlet.DispatcherType;
 import javax.websocket.DeploymentException;
 import javax.websocket.server.ServerContainer;
 import javax.websocket.server.ServerEndpointConfig;
+import javax.ws.rs.GET;
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
 
@@ -60,6 +63,7 @@ import static com.senzing.cmdline.CommandLineUtilities.*;
 import static com.senzing.util.LoggingUtilities.*;
 import static com.senzing.api.server.SzApiServerConstants.*;
 import static com.senzing.cmdline.CommandLineSource.*;
+import static javax.ws.rs.core.MediaType.*;
 
 /**
  * Implements the Senzing REST API specification in Java in an HTTP server.
@@ -84,6 +88,11 @@ public class SzApiServer implements SzApiProvider {
    */
   public static final String WEB_SOCKETS_RESOURCE_FILE
       = "web-socket-endpoints.properties";
+
+  /**
+   * The GZIP inflate buffer size.
+   */
+  private static final int GZIP_INFLATE_BUFFER_SIZE = 8192;
 
   /**
    * The HTTP output buffer size for HTTP connections.
@@ -2277,6 +2286,13 @@ public class SzApiServer implements SzApiProvider {
 
     rewriteHandler.setHandler(this.servletContext);
 
+    GzipHandler gzipHandler = new GzipHandler();
+    gzipHandler.setIncludedMethods("GET", "POST", "PUT", "DELETE");
+    gzipHandler.setInflateBufferSize(GZIP_INFLATE_BUFFER_SIZE);
+    gzipHandler.setIncludedMimeTypes(
+        APPLICATION_JSON, TEXT_HTML, TEXT_PLAIN, TEXT_XML);
+    gzipHandler.setHandler(rewriteHandler);
+
     // create our server (TODO: add connectors for HTTP + HTTPS)
     ThreadPool threadPool = new QueuedThreadPool(this.httpConcurrency);
     this.jettyServer = new Server(threadPool);
@@ -2349,7 +2365,9 @@ public class SzApiServer implements SzApiProvider {
     if (options.containsKey(MONITOR_FILE)) {
       this.fileMonitor = (FileMonitor) options.get(MONITOR_FILE);
     }
-    this.jettyServer.setHandler(rewriteHandler);
+
+    this.jettyServer.setHandler(gzipHandler);
+
     LifeCycleListener lifeCycleListener
         = new LifeCycleListener(this.getDescription(),
                                 this.jettyServer,
