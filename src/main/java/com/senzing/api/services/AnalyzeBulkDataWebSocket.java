@@ -21,9 +21,9 @@ public class AnalyzeBulkDataWebSocket extends BulkDataWebSocket {
    */
   protected void doRun() {
     SzApiProvider provider  = this.getApiProvider();
-    Timers        timers    = this.newTimers();
+
     this.analyzeBulkRecords(provider,
-                            timers,
+                            this.timers,
                             this.mediaType,
                             this.pipedInputStream,
                             this.uriInfo,

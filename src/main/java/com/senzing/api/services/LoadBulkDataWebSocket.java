@@ -128,10 +128,9 @@ public class LoadBulkDataWebSocket extends BulkDataWebSocket
    */
   protected void doRun() {
     SzApiProvider provider  = this.getApiProvider();
-    Timers        timers    = this.newTimers();
 
     this.loadBulkRecords(provider,
-                         timers,
+                         this.timers,
                          this.dataSource,
                          this.mapDataSources,
                          this.mapDataSourceList,

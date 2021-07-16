@@ -1,6 +1,11 @@
 package com.senzing.api.services;
 
+import com.senzing.api.model.SzErrorResponse;
+import com.senzing.api.model.SzHttpMethod;
+import com.senzing.api.model.SzLinks;
+import com.senzing.api.model.SzMeta;
 import com.senzing.io.IOUtilities;
+import com.senzing.util.Timers;
 
 import javax.websocket.*;
 import javax.ws.rs.BadRequestException;
@@ -14,6 +19,7 @@ import java.util.Map;
 
 import static com.senzing.io.IOUtilities.UTF_8;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
+import static com.senzing.api.model.SzHttpMethod.*;
 
 /**
  * Provides a base class for web socket implementations that accept a
@@ -96,9 +102,28 @@ public abstract class BulkDataWebSocket implements BulkDataSupport {
      * #doRun()} method.
      */
     public final void run() {
+      final BulkDataWebSocket socket = BulkDataWebSocket.this;
+
       // defer the run
       try {
+        // check for a failure detected during onOpen()
+        if (BulkDataWebSocket.this.openErrorResponse != null) {
+          // delay to allow the web socket to open
+          Thread.currentThread().sleep(100);
+
+          // send the error
+          socket.session.getBasicRemote().sendObject(socket.openErrorResponse);
+
+          // close the web socket due to error
+          BulkDataWebSocket.this.onError(socket.session,
+                                         socket.openException);
+        }
+
+        // call the doRun() method
         BulkDataWebSocket.this.doRun();
+
+      } catch (EncodeException|InterruptedException|IOException ignore) {
+        // thrown by the onError() function or pre-sleep delay -- ignore this
 
       } finally {
         // notify completion
@@ -117,6 +142,11 @@ public abstract class BulkDataWebSocket implements BulkDataSupport {
    * The Web Socket {@link Session} for this instance.
    */
   protected Session session = null;
+
+  /**
+   * The {@link Timers} object to use for the websocket.
+   */
+  protected Timers timers = null;
 
   /**
    * The {@link PipedInputStream} to attach to the {@link PipedOutputStream}.
@@ -169,6 +199,16 @@ public abstract class BulkDataWebSocket implements BulkDataSupport {
   protected boolean closing = false;
 
   /**
+   * The failure that occurred when opening the web socket.
+   */
+  protected Exception openException = null;
+
+  /**
+   * The error response to give for any on-open failure that occurred.
+   */
+  protected SzErrorResponse openErrorResponse = null;
+
+  /**
    * The {@link MediaType} to assume -- if text is sent rather than binary
    * then {@link MediaType#TEXT_PLAIN_TYPE} will be used.
    */
@@ -190,7 +230,9 @@ public abstract class BulkDataWebSocket implements BulkDataSupport {
    */
   @OnOpen
   public synchronized void onOpen(Session session)
-      throws IOException, IllegalArgumentException {
+      throws IOException, IllegalArgumentException
+  {
+    this.timers = newTimers();
     this.session = session;
     this.pipedInputStream = new PipedInputStream(PIPE_SIZE);
     this.pipedOutputStream = new PipedOutputStream(this.pipedInputStream);
@@ -208,9 +250,14 @@ public abstract class BulkDataWebSocket implements BulkDataSupport {
         if (this.progressPeriod < 0L) throw new IllegalArgumentException();
 
       } catch (IllegalArgumentException e) {
-        throw new BadRequestException(
+        this.openException = new BadRequestException(
             "The specified progress period (progressPeriod) must be a "
                 + "non-negative long integer: " + paramValues.get(0));
+
+        this.openErrorResponse = newErrorResponse(
+            SzMeta.FACTORY.create(POST, 403, this.timers),
+            SzLinks.FACTORY.create(this.uriInfo),
+            this.openException.getMessage());
       }
     }
 
@@ -222,9 +269,14 @@ public abstract class BulkDataWebSocket implements BulkDataSupport {
         if (this.eofSendTimeout < 0L) throw new IllegalArgumentException();
 
       } catch (IllegalArgumentException e) {
-        throw new BadRequestException(
+        this.openException = new BadRequestException(
             "The specified EOF send timeout (eofSendTimeout) must be a "
                 + "non-negative long integer: " + paramValues.get(0));
+
+        this.openErrorResponse = newErrorResponse(
+            SzMeta.FACTORY.create(POST, 403, this.timers),
+            SzLinks.FACTORY.create(this.uriInfo),
+            this.openException.getMessage());
       }
     }
 
@@ -232,6 +284,11 @@ public abstract class BulkDataWebSocket implements BulkDataSupport {
     this.readerThread = new ReaderThread();
     this.eofDetector = new EOFDetector();
     this.eofDetector.start();
+
+    // check if we had an exception
+    if (this.openErrorResponse != null) {
+      this.readerThread.start();
+    }
   }
 
   /**
