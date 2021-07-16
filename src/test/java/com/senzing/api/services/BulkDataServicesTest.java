@@ -1052,7 +1052,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
             if (firstChunk) {
               firstChunk = false;
               try {
-                this.wait(500L);
+                this.wait(100L);
               } catch (InterruptedException ignore) {
                 // ignore the exception
               }
