@@ -295,6 +295,23 @@ public abstract class AbstractServiceTest {
   }
 
   /**
+   * Returns the base URL for validating tests responses.
+   *
+   * @return The base URL for validating test responses.
+   */
+  protected String getBaseUri() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("http://localhost:");
+    if (this.server != null) {
+      sb.append(this.server.getHttpPort());
+    } else {
+      sb.append("2080");
+    }
+    sb.append("/");
+    return sb.toString();
+  }
+
+  /**
    * Creates an absolute URI for the relative URI provided.  For example, if
    * <tt>"license"</tt> was passed as the parameter then
    * <tt>"http://localhost:[port]/license"</tt> will be returned where
@@ -1235,13 +1252,18 @@ public abstract class AbstractServiceTest {
   protected UriInfo newProxyUriInfo(String selfLink) {
     try {
       final URI uri = new URI(selfLink);
+      final URI baseUri = new URI(this.getBaseUri());
 
       InvocationHandler handler = (p, m, a) -> {
-        if (m.getName().equals("getRequestUri")) {
-          return uri;
+        switch (m.getName()) {
+          case "getRequestUri":
+            return uri;
+          case "getBaseUri":
+            return baseUri;
+          default:
+            throw new UnsupportedOperationException(
+                "Operation not implemented on proxy UriInfo");
         }
-        throw new UnsupportedOperationException(
-            "Operation not implemented on proxy UriInfo");
       };
 
       ClassLoader loader = this.getClass().getClassLoader();
@@ -1270,16 +1292,20 @@ public abstract class AbstractServiceTest {
   {
     try {
       final URI uri = new URI(selfLink);
+      final URI baseUri = new URI(this.getBaseUri());
 
       InvocationHandler handler = (p, m, a) -> {
-        if (m.getName().equals("getRequestUri")) {
-          return uri;
+        switch (m.getName()) {
+          case "getRequestUri":
+            return uri;
+          case "getBaseUri":
+            return baseUri;
+          case "getQueryParameters":
+            return queryParams;
+          default:
+            throw new UnsupportedOperationException(
+                "Operation not implemented on proxy UriInfo");
         }
-        if (m.getName().equals("getQueryParameters")) {
-          return queryParams;
-        }
-        throw new UnsupportedOperationException(
-            "Operation not implemented on proxy UriInfo");
       };
 
       ClassLoader loader = this.getClass().getClassLoader();
@@ -1372,6 +1398,11 @@ public abstract class AbstractServiceTest {
       }
 
       String responseJson = sb.toString();
+
+      // check if a string is expected
+      if (responseClass == String.class) {
+        return (T) responseJson;
+      }
 
       T result = null;
       try {
@@ -1524,6 +1555,11 @@ public abstract class AbstractServiceTest {
       }
 
       String responseJson = sb.toString();
+
+      // check if a string is expected
+      if (responseClass == String.class) {
+        return (T) responseJson;
+      }
 
       T result = null;
       try {
@@ -1983,22 +2019,6 @@ public abstract class AbstractServiceTest {
       result.add(arguments(argArray));
     }
     return result;
-  }
-
-  /**
-   * Converts the specified object to JSON.
-   */
-  protected static String toJsonString(Object object) {
-    ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.registerModule(new JodaModule());
-    try {
-      String jsonText = objectMapper.writeValueAsString(object);
-      JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
-      return JsonUtils.toJsonText(jsonObject, true);
-
-    } catch (Exception e) {
-      return "FAILED TO CONVERT TO JSON: " + e.getMessage();
-    }
   }
 
   /**

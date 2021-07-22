@@ -41,7 +41,7 @@ public interface BlockUpgradeIfReadOnly extends BulkDataSupport {
     Timers timers = this.newTimers();
     SzErrorResponse errorResponse = this.newErrorResponse(
         this.newMeta(GET, 403, timers),
-        this.newLinks(request.getRequestURI()),
+        this.newLinks(request),
         "Loading data is not allowed if Senzing API Server started "
             + "in read-only mode");
     errorResponse.concludeTimers();

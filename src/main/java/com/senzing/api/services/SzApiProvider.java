@@ -207,6 +207,14 @@ public interface SzApiProvider {
   int getConcurrency();
 
   /**
+   * Returns the base path for the REST API.  Typically this is <tt>"/"</tt>,
+   * but it may be a sub-path.
+   *
+   * @return The base path for the REST API.
+   */
+  String getBasePath();
+
+  /**
    * Gets the maximum number of bytes for both text and binary web sockets
    * messages.
    *

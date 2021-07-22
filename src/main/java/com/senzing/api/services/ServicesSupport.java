@@ -11,6 +11,7 @@ import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
 
 import javax.json.*;
+import javax.servlet.http.HttpServletRequest;
 import javax.websocket.Session;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MultivaluedHashMap;
@@ -20,6 +21,8 @@ import javax.ws.rs.core.UriInfo;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.function.Function;
@@ -160,14 +163,15 @@ public interface ServicesSupport {
   }
 
   /**
-   * Creates a new instance of {@link SzLinks} with the specified self link.
+   * Creates a new instance of {@link SzLinks} with the specified {@link
+   * HttpServletRequest}.
    *
-   * @param self The self link.
+   * @param request The {@link HttpServletRequest} to use for the links.
    *
    * @return The new instance of {@link SzLinks}
    */
-  default SzLinks newLinks(String self) {
-    return SzLinks.FACTORY.create(self);
+  default SzLinks newLinks(HttpServletRequest request) {
+    return SzLinks.FACTORY.create(request);
   }
 
   /**
@@ -1104,6 +1108,17 @@ public interface ServicesSupport {
   }
 
   /**
+   * Returns the Base {@link URI} given the specified request {@link URI}.
+   *
+   * @param requestUri The request {@link URI} for the request.
+   *
+   * @return The Base {@link URI} for the specified request {@link URI}.
+   */
+  default URI getBaseUri(URI requestUri) {
+    return ServicesUtil.getBaseUri(requestUri);
+  }
+
+  /**
    * Creates a proxy {@link UriInfo} using the Web Socket {@link Session} to
    * back it.
    *
@@ -1114,10 +1129,15 @@ public interface ServicesSupport {
    */
   default UriInfo newProxyUriInfo(Session webSocketSession) {
     try {
+      final URI requestUri  = webSocketSession.getRequestURI();
+      final URI baseUri     = this.getBaseUri(requestUri);
+
       InvocationHandler handler = (p, m, a) -> {
         switch (m.getName()) {
+          case "getBaseUri":
+            return baseUri;
           case "getRequestUri":
-            return webSocketSession.getRequestURI();
+            return requestUri;
           case "getQueryParameters": {
             MultivaluedMap<String, String> result = new MultivaluedHashMap<>();
             Map<String, List<String>> paramMap

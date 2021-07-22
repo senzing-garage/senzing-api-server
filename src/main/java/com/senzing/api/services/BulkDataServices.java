@@ -1,25 +1,11 @@
 package com.senzing.api.services;
 
 import com.senzing.api.model.*;
-import com.senzing.api.websocket.JsonEncoder;
-import com.senzing.api.websocket.OnUpgrade;
-import com.senzing.api.websocket.StringDecoder;
-import com.senzing.g2.engine.G2Engine;
-import com.senzing.io.IOUtilities;
-import com.senzing.io.RecordReader;
-import com.senzing.io.TemporaryDataCache;
 import com.senzing.util.AccessToken;
-import com.senzing.util.AsyncWorkerPool;
-import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 import org.glassfish.jersey.media.multipart.FormDataParam;
 
-import javax.json.*;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.websocket.*;
-import javax.websocket.server.ServerEndpoint;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;

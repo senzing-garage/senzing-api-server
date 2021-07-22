@@ -1,9 +1,13 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzLinksImpl;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.core.UriInfo;
+
+import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 
 /**
  * Describes the links section of the response.
@@ -15,6 +19,7 @@ public interface SzLinks {
    *
    * @return The self link.
    */
+  @JsonInclude(NON_NULL)
   String getSelf();
 
   /**
@@ -25,15 +30,31 @@ public interface SzLinks {
   void setSelf(String self);
 
   /**
+   * Gets the Open API specification link.
+   *
+   * @return The Open API specification link.
+   */
+  @JsonInclude(NON_NULL)
+  String getOpenApiSpecification();
+
+  /**
+   * Sets the Open API specification link.
+   *
+   * @param openApiSpec The Open API specification link.
+   */
+  void setOpenApiSpecification(String openApiSpec);
+
+  /**
    * A {@link ModelProvider} for instances of {@link SzLinks}.
    */
   interface Provider extends ModelProvider<SzLinks> {
     /**
-     * Creates a new instance of {@link SzLinks} with the specified self link.
+     * Creates a new instance of {@link SzLinks} with the specified {@link
+     * HttpServletRequest}.
      *
-     * @param self The self link.
+     * @param request The {@link HttpServletRequest} to build from.
      */
-    SzLinks create(String self);
+    SzLinks create(HttpServletRequest request);
 
     /**
      * Creates a new instance of {@link SzLinks} with the specified {@link
@@ -60,8 +81,8 @@ public interface SzLinks {
     }
 
     @Override
-    public SzLinks create(String self) {
-      return new SzLinksImpl(self);
+    public SzLinks create(HttpServletRequest request) {
+      return new SzLinksImpl(request);
     }
 
     @Override
@@ -93,15 +114,16 @@ public interface SzLinks {
     }
 
     /**
-     * Creates a new instance of {@link SzLinks} with the specified parameters.
+     * Creates a new instance of {@link SzLinks} with the specified {@link
+     * HttpServletRequest}.
      *
-     * @param self The self link.
+     * @param request The {@link HttpServletRequest} to build from.
      *
      * @return The new instance of {@link SzLinks}
      */
-    public SzLinks create(String self)
+    public SzLinks create(HttpServletRequest request)
     {
-      return this.getProvider().create(self);
+      return this.getProvider().create(request);
     }
 
     /**

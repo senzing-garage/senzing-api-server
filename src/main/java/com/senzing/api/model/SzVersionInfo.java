@@ -21,6 +21,12 @@ import java.util.List;
 @JsonDeserialize(using=SzVersionInfo.Factory.class)
 public interface SzVersionInfo {
   /**
+   * The {@link String} token used to identify development builds when parsing
+   * the version info.
+   */
+  String DEVELOPMENT_VERSION_TOKEN = "DEVELOPMENT_VERSION";
+
+  /**
    * The date-time pattern for the build number.
    */
   String BUILD_NUMBER_PATTERN = "yyyy_MM_dd__HH_mm";
@@ -254,11 +260,16 @@ public interface SzVersionInfo {
                                                      "CONFIG_VERSION");
 
     Date buildDate = null;
-    if (buildNumber != null && buildNumber.length() > 0) {
+    if (buildNumber != null && buildNumber.length() > 0
+        && buildNumber.indexOf(DEVELOPMENT_VERSION_TOKEN) < 0)
+    {
       LocalDateTime localDateTime = LocalDateTime.parse(buildNumber,
                                                         BUILD_NUMBER_FORMATTER);
       ZonedDateTime zonedDateTime = localDateTime.atZone(BUILD_ZONE);
       buildDate = Date.from(zonedDateTime.toInstant());
+
+    } else {
+      buildDate = new Date();
     }
 
     info.setConfigCompatibilityVersion(configCompatVersion);

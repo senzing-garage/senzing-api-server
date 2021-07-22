@@ -1052,7 +1052,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
             if (firstChunk) {
               firstChunk = false;
               try {
-                this.wait(500L);
+                this.wait(600L);
               } catch (InterruptedException ignore) {
                 // ignore the exception
               }
@@ -2214,7 +2214,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       assertEquals(
           expectedStatus, actual.getStatus(),
           "Unexpected status for bulk load result: " + testInfo
-                  + "\nRESPONSE:\n" + this.toJsonString(response));
+                  + "\nRESPONSE:\n" + toJsonString(response));
     }
 
     // determine how many failures are expected

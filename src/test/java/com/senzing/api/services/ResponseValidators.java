@@ -1,12 +1,16 @@
 package com.senzing.api.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.joda.JodaModule;
 import com.senzing.api.BuildInfo;
 import com.senzing.api.model.*;
 import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.g2.engine.G2Product;
 import com.senzing.util.JsonUtils;
 
+import javax.json.JsonArray;
 import javax.json.JsonObject;
+import javax.ws.rs.core.UriInfo;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -316,6 +320,77 @@ public class ResponseValidators {
       assertNotNull(rawData, "Raw data unexpectedly non-null" + suffix);
     } else {
       assertNull(rawData, "Raw data unexpectedly null" + suffix);
+    }
+  }
+
+  /**
+   * Validates the basic response fields for the specified {@link
+   * SzBasicResponse} using the specified self link, and the maximum duration
+   * for the timings in nanoseconds.
+   *
+   * @param response    The {@link SzBasicResponse} to validate.
+   * @param uriInfo     The {@link UriInfo} to self link to be expected.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
+   */
+  public static void validateOpenApiSpecResponse(
+      SzOpenApiSpecResponse response,
+      String                selfLink,
+      String                baseUri,
+      long                  maxDuration)
+  {
+    validateBasics(response, GET, selfLink, maxDuration);
+
+    validateOpenApiSpecResponse(response.getData(), baseUri);
+  }
+
+  /**
+   * Validates the basic response fields for the specified {@link
+   * SzBasicResponse} using the specified self link, and the maximum duration
+   * for the timings in nanoseconds.
+   *
+   * @param response  The {@link SzBasicResponse} to validate.
+   * @param baseUri   The base URI for the server.
+   */
+  public static void validateOpenApiSpecResponse(Object response,
+                                                 String baseUri)
+  {
+    String      jsonText    = toJsonString(response);
+    JsonObject  jsonObject  = JsonUtils.parseJsonObject(jsonText);
+
+    // check for expected segments
+    String[] segments = {
+        "openapi", "info", "servers", "tags", "paths", "components" };
+    for (String segment: segments) {
+      if (!jsonObject.containsKey(segment)) {
+        fail("Open API specification missing expected segment: " + segment);
+      }
+    }
+
+    // get the servers segment
+    JsonArray servers = jsonObject.getJsonArray("servers");
+    if (servers.size() == 0) {
+      fail("No servers defined in servers segment");
+    }
+
+    // get the first server and check the URL
+    JsonObject server = servers.getJsonObject(0);
+    assertEquals(baseUri, server.getString("url"),
+                 "Unexpected server URL in Open API specification");
+  }
+
+  /**
+   * Converts the specified object to JSON.
+   */
+  public static String toJsonString(Object object) {
+    ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.registerModule(new JodaModule());
+    try {
+      String jsonText = objectMapper.writeValueAsString(object);
+      JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
+      return JsonUtils.toJsonText(jsonObject, true);
+
+    } catch (Exception e) {
+      return "FAILED TO CONVERT TO JSON: " + e.getMessage();
     }
   }
 

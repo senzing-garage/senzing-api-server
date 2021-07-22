@@ -4,13 +4,17 @@ import com.senzing.api.model.*;
 
 import javax.ws.rs.core.UriInfo;
 
+import com.senzing.util.JsonUtils;
 import org.junit.jupiter.api.*;
 import com.senzing.gen.api.invoker.*;
 import com.senzing.gen.api.services.AdminApi;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import static com.senzing.api.model.SzHttpMethod.*;
 import static org.junit.jupiter.api.TestInstance.*;
 import static com.senzing.api.services.ResponseValidators.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class AdminServicesTest extends AbstractServiceTest {
@@ -124,6 +128,66 @@ public class AdminServicesTest extends AbstractServiceTest {
           = jsonCopy(clientResponse, SzBasicResponse.class);
 
       validateBasics(response, uriText, after - before);
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("getWithRawVariants")
+  public void openApiSpecTest(Boolean asRaw) {
+    this.performTest(() -> {
+      try {
+        String uriText = this.formatServerUri(
+            "specifications/open-api"
+                + ((asRaw == null) ? "" : ("?asRaw=" + asRaw)));
+        String baseUri = this.getBaseUri();
+        UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+        if (Boolean.TRUE.equals(asRaw)) {
+          Object openApiSpec
+              = this.adminServices.openApiSpecification(true, uriInfo);
+
+          validateOpenApiSpecResponse(openApiSpec, baseUri);
+
+        } else {
+          long before = System.nanoTime();
+          SzOpenApiSpecResponse response = (SzOpenApiSpecResponse)
+              this.adminServices.openApiSpecification(false, uriInfo);
+          response.concludeTimers();
+          long after = System.nanoTime();
+          validateOpenApiSpecResponse(
+              response, uriText, baseUri,after - before);
+        }
+
+      } catch (Error error) {
+        error.printStackTrace();
+        throw error;
+      }
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("getWithRawVariants")
+  public void openApiSpecViaHttpTest(Boolean asRaw) {
+    this.performTest(() -> {
+      String uriText = this.formatServerUri(
+          "specifications/open-api"
+              + ((asRaw == null) ? "" : ("?asRaw=" + asRaw)));
+      String  baseUri = this.getBaseUri();
+
+      if (Boolean.TRUE.equals(asRaw)) {
+        String jsonText = this.invokeServerViaHttp(GET, uriText, String.class);
+        Object openApiSpec = JsonUtils.normalizeJsonText(jsonText);
+        validateOpenApiSpecResponse(openApiSpec, baseUri);
+
+      } else {
+        long before = System.nanoTime();
+        SzOpenApiSpecResponse response
+            = this.invokeServerViaHttp(GET, uriText, SzOpenApiSpecResponse.class);
+        long after = System.nanoTime();
+
+        validateOpenApiSpecResponse(
+            response, uriText, baseUri, after - before);
+      }
     });
   }
 

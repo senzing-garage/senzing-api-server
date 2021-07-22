@@ -3,6 +3,9 @@ package com.senzing.api.services;
 
 import com.senzing.util.ErrorLogSuppressor;
 
+import javax.servlet.http.HttpServletRequest;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 
 /**
@@ -79,4 +82,94 @@ public class ServicesUtil {
       }
     }
   }
+
+  /**
+   * Returns the Base {@link URI} given the specified request {@link URI}.
+   *
+   * @param requestUri The request {@link URI} for the request.
+   *
+   * @return The Base {@link URI} for the specified request {@link URI}.
+   */
+  public static URI getBaseUri(URI requestUri) {
+    // determine the scheme
+    String scheme = requestUri.getScheme();
+    if (scheme.equalsIgnoreCase("wss")) {
+      scheme = "https";
+    } else if (scheme.equalsIgnoreCase("ws")) {
+      scheme = "http";
+    }
+
+    // get the host
+    String host = requestUri.getHost();
+
+    // get the port
+    int port = requestUri.getPort();
+    String portText = ":" + port;
+    if ((port == 80 && scheme.equalsIgnoreCase("http"))
+        || (port == 443 && scheme.equalsIgnoreCase("https")))
+    {
+      portText = "";
+    }
+
+    // get the context path
+    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    String contextPath = provider.getBasePath();
+    if (!contextPath.endsWith("/")) contextPath += "/";
+    if (!contextPath.startsWith("/")) contextPath = "/" + contextPath;
+
+    // build the URI
+    String uriText = scheme + "://" + host + portText + contextPath;
+
+    try {
+      // return the result
+      return new URI(uriText);
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Returns the Base {@link URI} for the specified {@link HttpServletRequest}.
+   *
+   * @param request The {@link HttpServletRequest}.
+   *
+   * @return The Base {@link URI} for the specified {@link HttpServletRequest}.
+   */
+  public static URI getBaseUri(HttpServletRequest request) {
+    // determine the scheme
+    String scheme = request.getScheme();
+    if (scheme.equalsIgnoreCase("wss")) {
+      scheme = "https";
+    } else if (scheme.equalsIgnoreCase("ws")) {
+      scheme = "http";
+    }
+
+    // get the host
+    String host = request.getServerName();
+
+    // get the port
+    int port = request.getServerPort();
+    String portText = ":" + port;
+    if ((port == 80 && scheme.equalsIgnoreCase("http"))
+        || (port == 443 && scheme.equalsIgnoreCase("https")))
+    {
+      portText = "";
+    }
+
+    // get the context path
+    String contextPath = request.getContextPath();
+    if (!contextPath.endsWith("/")) contextPath += "/";
+    if (!contextPath.startsWith("/")) contextPath = "/" + contextPath;
+
+    // build the URI
+    String uriText = scheme + "://" + host + portText + contextPath;
+
+    try {
+      // return the result
+      return new URI(uriText);
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
 }

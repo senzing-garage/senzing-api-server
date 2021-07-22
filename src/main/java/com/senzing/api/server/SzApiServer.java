@@ -642,6 +642,11 @@ public class SzApiServer implements SzApiProvider {
   }
 
   @Override
+  public String getBasePath() {
+    return this.basePath;
+  }
+
+  @Override
   public int getWebSocketsMessageMaxSize() {
     return WEB_SOCKETS_MESSAGE_MAX_SIZE;
   }

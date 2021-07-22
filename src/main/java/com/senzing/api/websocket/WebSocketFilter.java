@@ -284,6 +284,8 @@ public class WebSocketFilter implements Filter {
 
     } catch (Exception e) {
       throw new ServletException(e);
+    } finally {
+      System.out.println();
     }
   }
 

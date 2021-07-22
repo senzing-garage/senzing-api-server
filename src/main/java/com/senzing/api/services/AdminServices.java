@@ -1,8 +1,6 @@
 package com.senzing.api.services;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import javax.json.JsonReader;
+import javax.json.*;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
@@ -12,11 +10,18 @@ import com.senzing.g2.engine.G2ConfigMgr;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.g2.engine.G2Product;
 import com.senzing.g2.engine.Result;
+import com.senzing.io.IOUtilities;
+import com.senzing.util.JsonUtils;
 import com.senzing.util.Timers;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.net.URI;
 
 import static com.senzing.api.model.SzHttpMethod.*;
+import static com.senzing.io.IOUtilities.*;
 
 /**
  * Administration REST services.
@@ -24,6 +29,12 @@ import static com.senzing.api.model.SzHttpMethod.*;
 @Path("/")
 @Produces("application/json; charset=UTF-8")
 public class AdminServices implements ServicesSupport {
+  /**
+   * The name of the JSON resource to retrieve to get the Open API
+   * specification.
+   */
+  public static final String OPEN_API_SPECIFICATION = "openapi.json";
+
   /**
    * Generates a root-level response -- similar to heartbeat.
    */
@@ -44,6 +55,97 @@ public class AdminServices implements ServicesSupport {
   }
 
   /**
+   * Obtains the Open API specification for the running server.
+   *
+   * @param asRaw <tt>true</tt> if the specification should be directly
+   *              returned and <tt>false</tt> if an instance of {@link
+   *              SzOpenApiSpecResponse} should be returned.
+   *
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The object describing the Open API specification as JSON or
+   *         an instance of {@link SzOpenApiSpecResponse} containing the
+   *         Open API specification JSON.
+   */
+  @GET
+  @Path("specifications/open-api")
+  public Object openApiSpecification(
+      @DefaultValue("false") @QueryParam("asRaw") boolean asRaw,
+      @Context UriInfo uriInfo)
+  {
+    Timers timers = this.newTimers();
+    try {
+      Class       cls       = AdminServices.class;
+      InputStream is        = cls.getResourceAsStream(OPEN_API_SPECIFICATION);
+      String      jsonText  = readFully(new InputStreamReader(is, UTF_8));
+
+      // replace the servers
+      jsonText = this.replaceOpenApiServers(jsonText, uriInfo.getBaseUri());
+
+      // check if returning as raw Open API specification
+      if (asRaw) return JsonUtils.normalizeJsonText(jsonText);
+
+      // return the SzOpenApiSpecResponse
+      return this.newOpenApiSpecResponse(uriInfo, timers, jsonText);
+
+    } catch (WebApplicationException e) {
+      throw e;
+
+    } catch (Exception e) {
+      throw newInternalServerErrorException(GET, uriInfo, timers, e);
+    }
+  }
+
+  /**
+   * Replaces the <tt>"servers"</tt> property in the Open API specification
+   * described by the specified JSON text using the specified base URI.
+   *
+   * @param jsonText The JSON text for the Open API Specification.
+   * @param baseUri The base {@link URI} to use for the servers.
+   * @return The modified JSON text with the new servers field.
+   */
+  protected String replaceOpenApiServers(String jsonText, URI baseUri)
+  {
+    JsonObject        jsonSpec      = JsonUtils.parseJsonObject(jsonText);
+    JsonObjectBuilder specBuilder   = Json.createObjectBuilder(jsonSpec);
+    JsonArrayBuilder  jabServers    = Json.createArrayBuilder();
+    JsonObjectBuilder jobServer1    = Json.createObjectBuilder();
+    JsonObjectBuilder jobServer2    = Json.createObjectBuilder();
+    JsonObjectBuilder jobVariables  = Json.createObjectBuilder();
+
+    jobServer1.add("url", baseUri.toString());
+    JsonObjectBuilder jobProtocol = Json.createObjectBuilder();
+    JsonArrayBuilder jabEnum = Json.createArrayBuilder();
+    jabEnum.add("http").add("https");
+    jobProtocol.add("enum", jabEnum);
+    jobProtocol.add("default", baseUri.getScheme());
+    jobVariables.add("protocol", jobProtocol);
+
+    JsonObjectBuilder jobHost = Json.createObjectBuilder();
+    jobHost.add("default", baseUri.getHost());
+    jobVariables.add("host", jobHost);
+
+    JsonObjectBuilder jobPort = Json.createObjectBuilder();
+    jobPort.add("default", "" + baseUri.getPort());
+    jobVariables.add("port", jobPort);
+
+    JsonObjectBuilder jobPath = Json.createObjectBuilder();
+    jobPath.add("default", baseUri.getPath());
+    jobVariables.add("path", jobPath);
+
+    jobServer2.add("url", "{protocol}://{host}:{port}{path}");
+    jobServer2.add("variables", jobVariables);
+    jabServers.add(jobServer1);
+    jabServers.add(jobServer2);
+
+    specBuilder.add("servers", jabServers);
+
+    jsonSpec = specBuilder.build();
+
+    return JsonUtils.toJsonText(jsonSpec);
+  }
+
+  /**
    * Creates a new response to the <tt>GET /heartbeat</tt> operation.
    *
    * @param uriInfo The {@link UriInfo} for the request.
@@ -55,6 +157,23 @@ public class AdminServices implements ServicesSupport {
   {
     return SzBasicResponse.FACTORY.create(
         this.newMeta(GET, 200, timers), this.newLinks(uriInfo));
+  }
+
+  /**
+   * Creates a response to the <tt>GET /specifications/open-api</tt> operation.
+   *
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param openApiSpec The {@link Object} describing the OpenAPI specification.
+   * @return The {@link SzOpenApiSpecResponse} with the specified parameters.
+   */
+  protected SzOpenApiSpecResponse newOpenApiSpecResponse(UriInfo  uriInfo,
+                                                         Timers   timers,
+                                                         Object   openApiSpec)
+  {
+    return SzOpenApiSpecResponse.FACTORY.create(
+        this.newMeta(GET, 200, timers), this.newLinks(uriInfo),
+        openApiSpec);
   }
 
   /**
