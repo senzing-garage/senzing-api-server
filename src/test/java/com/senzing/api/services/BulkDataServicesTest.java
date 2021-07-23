@@ -17,6 +17,7 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.websocket.*;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
@@ -826,6 +827,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     private MediaType         mediaType;
     private List              queue;
     private boolean           open = true;
+    private Integer           statusCode = null;
     private Thread            readerThread = null;
 
     /**
@@ -841,6 +843,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       this.mediaType    = mediaType;
       this.queue        = new LinkedList<>();
       this.open         = true;
+      this.statusCode   = null;
 
       // setup the headers
       try {
@@ -882,6 +885,25 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
+    }
+
+    /**
+     * Gets the HTTP response status code.  This method returns <tt>null</tt>
+     * if the status code has not yet been received.
+     *
+     * @return The HTTP response status code, or <tt>null</tt> if the code has
+     *         not yet been received.
+     */
+    public synchronized Integer getStatusCode() { return this.statusCode; }
+
+    /**
+     * Sets the HTTP response status code to a non-null value.
+     *
+     * @param statusCode The status code value to set.
+     */
+    public synchronized void setStatusCode(int statusCode) {
+      this.statusCode = statusCode;
+      this.notifyAll();
     }
 
     /**
@@ -931,10 +953,33 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       boolean sse     = false;
       try (BufferedInputStream bis = new BufferedInputStream(this.inputStream))
       {
+        boolean first = true;
         for (String line = readAsciiLine(bis);
              (line != null);
              line = readAsciiLine(bis))
         {
+          // check if the first line
+          if (first) {
+            first = false;
+            String[] tokens = line.split("\\s+");
+            if (tokens.length < 3) {
+              throw new IllegalStateException(
+                  "Unexpected number of tokens in HTTP status line: "
+                  + line);
+            }
+            try {
+              int statusCode = Integer.parseInt(tokens[1]);
+
+              // set the status code
+              this.setStatusCode(statusCode);
+
+            } catch (IllegalArgumentException e) {
+              throw new IllegalStateException(
+                  "Unable to parse HTTP status code (" + tokens[1] + ") from "
+                  + "status line: " + line);
+            }
+          }
+
           // check if headers are complete
           if (line.trim().length() == 0) {
             break;
@@ -1058,6 +1103,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
               }
             }
             if (!this.isOpen()) break;
+            Integer statusCode = this.getStatusCode();
+            if (statusCode != null && statusCode != 200) break;
             this.outputStream.write(buffer, 0, readCount);
             this.outputStream.flush();
             writeCount += readCount;
@@ -1173,7 +1220,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getAnalyzeBulkRecordsParameters")
-  public void analyzeBulkRecordsViaSSETest(
+  public void analyzeBulkRecordsTest(
       String              testInfo,
       MediaType           mediaType,
       File                bulkDataFile,
