@@ -1001,13 +1001,19 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
         // create a reader
         InputStreamReader isr = new InputStreamReader(is, UTF_8);
-        BufferedReader    br  = new BufferedReader(isr);
 
         // if not SSE then read text
         if (!sse) {
           StringBuilder sb = new StringBuilder();
-          for (int readChar = br.read(); readChar >= 0; readChar = br.read()) {
-            sb.append((char) readChar);
+          try {
+            for (int readChar = isr.read(); readChar >= 0; readChar = isr.read())
+            {
+              sb.append((char) readChar);
+            }
+          } catch (SocketException e) {
+            System.err.println(
+                "*** Received SocketException, assuming connection closed: "
+                    + e);
           }
           synchronized (this) {
             this.queue.add(sb.toString());
@@ -1016,6 +1022,9 @@ public class BulkDataServicesTest extends AbstractServiceTest {
           this.close();
           return;
         }
+
+        // create a buffered reader to read lines
+        BufferedReader br = new BufferedReader(isr);
 
         // if SSE then read events
         for (String line = br.readLine(); line != null; line = br.readLine()) {
