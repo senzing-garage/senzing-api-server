@@ -1,5 +1,5 @@
-ARG BASE_IMAGE=senzing/senzing-base:1.5.2
-ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.3
+ARG BASE_IMAGE=senzing/senzing-base:1.6.1
+ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.4
 
 # -----------------------------------------------------------------------------
 # Stage: builder
@@ -9,7 +9,7 @@ FROM ${BASE_BUILDER_IMAGE} as builder
 
 # Set Shell to use for RUN commands in builder step.
 
-ENV REFRESHED_AT=2020-04-24
+ENV REFRESHED_AT=2021-07-14
 
 LABEL Name="senzing/senzing-api-server-builder" \
       Maintainer="support@senzing.com" \
@@ -48,11 +48,11 @@ RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=pro
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2020-04-24
+ENV REFRESHED_AT=2021-07-14
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
-      Version="2.6.1"
+      Version="2.6.2"
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
 
