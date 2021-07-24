@@ -18,6 +18,7 @@ documents the available API methods, their parameters and the response formats.
     1. [Dependencies](#dependencies)
     1. [Building](#building)
     1. [Running](#running)
+    1. [Running with SSL](#running-with-ssl)
 1. [Demonstrate using Docker](#demonstrate-using-docker)
     1. [Expectations for docker](#expectations-for-docker)
     1. [Initialize Senzing](#initialize-senzing)
@@ -87,7 +88,7 @@ In order to install `g2.jar` you must:
 
         ```console
         export SENZING_G2_DIR=/opt/senzing/g2
-        export SENZING_G2_JAR_VERSION=2.4.1
+        export SENZING_G2_JAR_VERSION=2.8.0
 
         mvn install:install-file \
             -Dfile=${SENZING_G2_DIR}/lib/g2.jar \
@@ -176,14 +177,13 @@ to obtain a help message describing all available options.
 For example:
 
 ```console
-$ java -jar target/senzing-api-server-2.6.0.jar --help
+$ java -jar target/senzing-api-server-2.7.0.jar --help
 
-java -jar senzing-api-server-2.6.0.jar <options>
+java -jar senzing-api-server-2.7.0.jar <options>
 
-<options> includes:
+<options> includes: 
 
 [ Standard Options ]
-
    --help
         Also -help.  Should be the first and only option if provided.
         Causes this help message to be displayed.
@@ -219,7 +219,8 @@ java -jar senzing-api-server-2.6.0.jar <options>
    --http-port <port-number>
         Also -httpPort.  Sets the port for HTTP communication.  If not
         specified, then the default port (2080) is used.
-        Specify 0 for a randomly selected available port number.
+        Specify 0 for a randomly selected available port number.  This
+        option cannot be specified if SSL client authentication is configured.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_PORT
 
    --bind-addr <ip-address|loopback|all>
@@ -238,7 +239,7 @@ java -jar senzing-api-server-2.6.0.jar <options>
         --> VIA ENVIRONMENT: SENZING_API_SERVER_ALLOWED_ORIGINS
 
    --concurrency <thread-count>
-        Also -concurrency.  Sets the number of threads available for executing
+        Also -concurrency.  Sets the number of threads available for executing 
         Senzing API functions (i.e.: the number of engine threads).
         If not specified, then this defaults to 8.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_CONCURRENCY
@@ -252,7 +253,7 @@ java -jar senzing-api-server-2.6.0.jar <options>
 
    --module-name <module-name>
         Also -moduleName.  The module name to initialize with.  If not
-        specified, then the module name defaults to "SzApiServer".
+        specified, then the module name defaults to "senzing-api-server".
         --> VIA ENVIRONMENT: SENZING_API_SERVER_MODULE_NAME
 
    --ini-file <ini-file-path>
@@ -356,6 +357,52 @@ java -jar senzing-api-server-2.6.0.jar <options>
         determine when to shutdown.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_MONITOR_FILE
 
+
+[ HTTPS / SSL Options ]
+   The following options pertain to HTTPS / SSL configuration.  The 
+   --key-store and --key-store-password options are the minimum required
+   options to enable HTTPS / SSL communication.  If HTTPS / SSL communication
+   is enabled, then HTTP communication is disabled UNLESS the --http-port
+   option is specified.  However, if client SSL authentication is configured
+   via the --client-key-store and --client-key-store-password options then
+   enabling HTTP communication via the --http-port option is prohibited.
+
+   --https-port <port-number>
+        Also -httpsPort.  Sets the port for secure HTTPS communication.
+        While the default HTTPS port is 2443 if not specified,
+        HTTPS is only enabled if the --key-store option is specified.
+        Specify 0 for a randomly selected available port number.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_SECURE_PORT
+
+   --key-store <path-to-pkcs12-keystore-file>
+        Also -keyStore.  Specifies the key store file that holds the private
+        key that the sever uses to identify itself for HTTPS communication.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_KEY_STORE
+
+   --key-store-password <password>
+        Also -keyStorePassword.  Specifies the password for decrypting the
+        key store file specified with the --key-store option.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_KEY_STORE_PASSWORD
+
+   --key-alias <server-key-alias>
+        Also -keyAlias.  Optionally specifies the alias for the private server
+        key in the specified key store.  If not specified, then the first key
+        found in the specified key store is used.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_KEY_ALIAS
+
+   --client-key-store <path-to-pkcs12-keystore-file>
+        Also -clientKeyStore.  Specifies the key store file that holds the
+        public keys of those clients that are authorized to connect.  If this
+        option is specified then SSL client authentication is required and
+        the --http-port option is forbidden.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_CLIENT_KEY_STORE
+
+   --client-key-store-password <password>
+        Also -clientKeyStorePassword.  Specifies the password for decrypting
+        the key store file specified with the --client-key-store option.
+        --> VIA ENVIRONMENT: SENZING_API_SERVER_CLIENT_KEY_STORE_PASSWORD
+
+
 [ Asynchronous Info Queue Options ]
    The following options pertain to configuring an asynchronous message
    queue on which to send "info" messages generated when records are
@@ -427,8 +474,8 @@ java -jar senzing-api-server-2.6.0.jar <options>
         Kafka as part of specifying a Kafka info topic.
         --> VIA ENVIRONMENT: SENZING_KAFKA_INFO_TOPIC
 
-[ Advanced Options ]
 
+[ Advanced Options ]
    --config-mgr [config manager options]...
         Also --configmgr.  Should be the first option if provided.  All
         subsequent options are interpreted as configuration manager options.
@@ -448,6 +495,64 @@ java -jar target/senzing-api-server-[version].jar \
   --bind-addr all \
   --init-file ~/senzing/data/g2-init.json
 ```
+
+### Running with SSL
+
+#### Enabling Basic SSL Support
+
+By default, the Senzing REST API Server will only accept connections on a single
+port that supports HTTP communication.  The default HTTP port is `2080` and can
+be changed via the `--http-port` command-line option.  Alternatively, the 
+Senzing REST API Server can be started with only HTTPS support on a single port
+or with both HTTP and HTTPS support (on separate ports).
+
+In order to enable HTTPS the server's private key must be provided in an
+encrypted PKCS12 key store via the `--key-store` option. The key store is
+decrypted by a password provided via the `--key-store-password` option.  If the
+key store contains more than one key and a key other than the first should be
+used then specific key alias can be provided via the `--key-alias` option.  By
+providing the server's private key HTTPS is enabled on the default port of
+`2443`.  The HTTPS port can be configured via the `--https-port` command-line
+option.
+
+**NOTE:** By enabling HTTPS, HTTP will be disabled by default.  You can enable
+both by explicitly providing the `--http-port` option as well.
+
+Let's look at some examples for enabling HTTPS with a self-signed certificate.
+
+1. Java KeyTool example
+   ```console
+
+   ```
+1. Open SSL example
+   ```console
+
+   ```
+
+#### SSL Client Authentication
+
+In addition to supporting HTTPS on the server, you can also configure the server
+to only accept connections from clients communicating with specific SSL
+certificates.  If SSL Client Authentication is configured then HTTP support
+is not allowed because clients cannot be identified over HTTP, thus the 
+`--http-port` command-line option is prohibited.
+
+SSL Client authentication is configured by providing an encrypted PKCS12 key
+store containing the public keys of the authorized clients via the 
+`--client-key-store` option.  The client key store is decrypted using the
+password provided by the `--client-key-store-password` option.
+
+Let's look at some examples for enabling SSL client authentication with a
+self-signed certificate.
+
+1. Java KeyTool example
+   ```console
+
+   ```
+1. Open SSL example
+   ```console
+
+   ```
 
 ## Demonstrate using Docker
 
