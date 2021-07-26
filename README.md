@@ -519,14 +519,55 @@ option.
 both by explicitly providing the `--http-port` option as well.
 
 Let's look at some examples for enabling HTTPS with a self-signed certificate.
-
-1. Java KeyTool example
+ 
+##### Example with Java KeyTool
+1. Create the server PKCS12 key store (`sz-api-server-store.p12`).
+   **NOTE:** you will be prompted to provide the 7 fields for the Distinguished Name
+   ("DN") for the certificate being generated.
    ```console
-
+   keytool -genkey \
+           -alias sz-api-server \
+           -keystore sz-api-server-store.p12 \
+           -storetype PKCS12 \
+           -keyalg RSA \
+           -storepass change-it \
+           -validity 730 \
+           -keysize 2048
    ```
-1. Open SSL example
+1. Start the Senzing API Server with the server key store:
    ```console
-
+   java -jar senzing-api-server-2.7.0.jar \
+             --ini-file /etc/opt/senzing/G2Module.ini \
+             --key-store sz-api-server-store.p12 \
+             --key-store-password change-it \
+             --key-alias sz-api-server
+   ```
+1. Now let's test it with `curl`.  Keep in mind that our certificate is
+   self-signed, so we need to use the `-k` option with curl so it does not
+   reject the self-signed certificate:
+   ```console
+   curl -k https://localhost:2443/heartbeat
+   ```
+1. So far so good, but if you need your application client or browser to
+   trust the self-signed certificate you may need to export it to a file
+   (`sz-api-server.cer`) and then import to a keychain:
+   ```console
+   keytool -export \
+           -keystore sz-api-server-store.p12 \
+           -storepass change-it \
+           -storetype PKCS12 \
+           -alias sz-api-server \
+           -file sz-api-server.cer
+   ```
+1. If your client application uses PKCS12 key store for its trusted 
+   certificates then you can add the certificate to a trust store:
+   ```console
+   keytool -import \
+           -file sz-api-server.cer \
+           -alias sz-api-server \
+           -keystore my-trust-store.p12 \
+           -storetype PKCS12 \
+           -storepass change-it
    ```
 
 #### SSL Client Authentication
@@ -545,13 +586,63 @@ password provided by the `--client-key-store-password` option.
 Let's look at some examples for enabling SSL client authentication with a
 self-signed certificate.
 
-1. Java KeyTool example
+##### Example with Java KeyTool
+1. We will assume a single authorized client certificate for our example
+   purposes.  So first, let's create the client key and certificate for the
+   client to use.  **NOTE:** you will be prompted to provide the 7 fields for
+   the Distinguished Name ("DN") for the certificate being generated.
    ```console
+   keytool -genkey \
+           -alias my-client \
+           -keystore my-client-store.p12 \
+           -storetype PKCS12 \
+           -keyalg RSA \
+           -storepass change-it \
+           -validity 730 \
+           -keysize 2048
+   ```
+1. Export the client certificate and create a trust store containing it.
+   ```console
+   keytool -export \
+           -keystore my-client-store.p12 \
+           -storepass change-it \
+           -storetype PKCS12 \
+           -alias my-client \
+           -file my-client.cer
+   
+   keytool -import \
+           -file my-client.cer \
+           -alias my-client \
+           -keystore client-trust-store.p12 \
+           -storetype PKCS12 \
+           -storepass change-it   
+   ```
+1. Start the Senzing API Server with the server key store (from the previous
+   section) and this time we will use the client trust store options.
+   ```console
+   java -jar senzing-api-server-2.7.0.jar \
+             --ini-file /etc/opt/senzing/G2Module.ini \
+             --key-store sz-api-server-store.p12 \
+             --key-store-password change-it \
+             --key-alias sz-api-server \
+             --client-key-store client-trust-store.p12 \
+             --client-key-store-password change-it
+   ```
+1. Now let's test it with `curl` and the `-k` option as we did in the
+   previous example, but we won't provide the client certificate to `curl`.
+   The expectation is that the server will reject the request.
+   ```console
+   curl -k https://localhost:2443/heartbeat
+   
+   > curl: (35) error:1401E412:SSL routines:CONNECT_CR_FINISHED:sslv3 alert bad certificate
 
    ```
-1. Open SSL example
+1. Now try `curl` again with the `--cert` and `--cert-type` options to get
+   `curl` to authenticate itself with the SSL certificate.
    ```console
-
+   curl -k https://localhost:2443/heartbeat \
+        --cert my-client-store.p12:change-it \
+        --cert-type P12
    ```
 
 ## Demonstrate using Docker
