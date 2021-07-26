@@ -19,8 +19,8 @@ GIT_VERSION_LONG := $(shell git describe --always --tags --long --dirty)
 
 # Docker.
 
-BASE_IMAGE ?= senzing/senzing-base:1.5.2
-BASE_BUILDER_IMAGE ?= senzing/base-image-debian:1.0.3
+BASE_IMAGE ?= senzing/senzing-base:1.6.1
+BASE_BUILDER_IMAGE ?= senzing/base-image-debian:1.0.4
 DOCKER_IMAGE_PACKAGE := $(GIT_REPOSITORY_NAME)-package:$(GIT_VERSION)
 DOCKER_IMAGE_TAG ?= $(GIT_REPOSITORY_NAME):$(GIT_VERSION)
 DOCKER_IMAGE_NAME := senzing/senzing-api-server

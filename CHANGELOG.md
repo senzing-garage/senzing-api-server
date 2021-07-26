@@ -32,6 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   compatibility for extended Java code in minor releases in a future major
   release.
 
+## [2.6.2] - 2021-07-15
+
+### Changed in 2.6.2
+
+- Updated to senzing/senzing-base:1.6.1
+
 ## [2.6.1] - 2021-06-09
 
 ### Changed in 2.6.1
@@ -103,9 +109,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed the `pom.xml` so the replacement of `${project.version}` in the
   `build-info.properties` is restored
-- Fixed typo bug with the meta timings of `searchByAttributesV2` in 
+- Fixed typo bug with the meta timings of `searchByAttributesV2` in
   `EntityDataServices` class
-- Removed extraneous debug logging code in `EntityDataServices` that caused 
+- Removed extraneous debug logging code in `EntityDataServices` that caused
   both a security issue and a memory leak
 
 ## [2.4.0] - 2021-03-11
@@ -136,7 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added additional allowed HTTP methods for CORS support (`PUT`, `DELETE`,
   `PATCH` and `OPTIONS` in addition to the already supported `GET`, `POST`,
   and `HEAD`)
-- Added DiagnoseRequestFilter to log the request line to `stderr` if an 
+- Added DiagnoseRequestFilter to log the request line to `stderr` if an
   exception is caught in processing the request
 - Updated recorded test data for Senzing API versions 2.0.0 through version 2.3.0
 - Added NOTICES file to account for Eclipse Distribution License v1.0 requirements
@@ -165,7 +171,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `com.senzing.api.model.SzDisclosedRelation`
 - Added `com.senzing.api.model.SzRelationDirection`
 - Added `com.senzing.api.model.SzRelatedFeatures`
-- Refactored some functionality from `EntityDataServices` to `ServicesUtil` 
+- Refactored some functionality from `EntityDataServices` to `ServicesUtil`
 - Added new tests for `WhyServices.whyEntities()`
 - Pared down the number of tests ran from `WhyServicesTest` for faster runs.
 - Re-ran tests for all versions of native Senzing SDK from 2.0.0 to 2.2.5
@@ -184,10 +190,10 @@ and recorded mock test data.
 
 ### Changed in 2.2.1
 
-- Modified `com.senzing.api.services.EntityDataServices` so that 
-`POST /data-sources/{dataSourceCode}/records` call will be tolerant of the 
+- Modified `com.senzing.api.services.EntityDataServices` so that
+`POST /data-sources/{dataSourceCode}/records` call will be tolerant of the
 `RECORD_ID` specified in the JSON payload for the record.
-- Updated EntityDataWriteServicesTest to handle testing POST with various 
+- Updated EntityDataWriteServicesTest to handle testing POST with various
 record ID variants.
 - Re-ran tests for all versions of native Senzing SDK from 2.0.0 to 2.2.1
 
@@ -202,14 +208,14 @@ record ID variants.
 field since it has not been populated since switch to version 2.0.0 of native
 Senzing SDK.
 - Added `bestNameScore` field to `com.senzing.api.model.SzAttributeSearchResult`
-to replace `fullNameScore` in the place where the name score was previously 
+to replace `fullNameScore` in the place where the name score was previously
 used with version 1.x of the native Senzing SDK (i.e.: to sort search results
 based on the strength of the name match).
 - Modified `com.senzing.api.model.SzAttributeSearchResult` to include the
 `featureScores` field to provide feature scores without using "raw data"
-- Added `nameScoringDetails` field to `com.senzing.api.model.SzFeatureScore` 
+- Added `nameScoringDetails` field to `com.senzing.api.model.SzFeatureScore`
 class to provide `SzNameScoring` name scoring details on why operations,
-- Updated `com.senzing.api.model.SzFeatureScore` to set its `score` field to 
+- Updated `com.senzing.api.model.SzFeatureScore` to set its `score` field to
 the most sensible score value from the `nameScoringDetails` for `"NAME"`
 features since the `FULL_SCORE` field is not available for names.
 - Updated to latest `senzing-rest-api-specification` specification.
