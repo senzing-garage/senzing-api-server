@@ -1,6 +1,8 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzEntityFeatureDetailImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -14,68 +16,35 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
  * Describes the details of an entity feature value, optionally including
  * statistics if they have been requested.
  */
-public class SzEntityFeatureDetail {
-  /**
-   * The internal ID for the feature value.
-   */
-  private Long internalId;
-
-  /**
-   * The feature value.
-   */
-  private String featureValue;
-
-  /**
-   * The {@link SzEntityFeatureStatistics} describing the statistics for the
-   * feature value.  This may be <tt>null</tt> if the statistics were not
-   * requested.
-   */
-  private SzEntityFeatureStatistics statistics;
-
-  /**
-   * Default constructor.
-   */
-  public SzEntityFeatureDetail() {
-    this.internalId   = null;
-    this.featureValue = null;
-    this.statistics   = null;
-  }
-
+@JsonDeserialize(using=SzEntityFeatureDetail.Factory.class)
+public interface SzEntityFeatureDetail {
   /**
    * Gets the internal ID for the feature value.
    *
    * @return The internal ID for the feature value.
    */
-  public Long getInternalId() {
-    return internalId;
-  }
+  Long getInternalId();
 
   /**
    * Sets the internal ID for the feature value.
    *
    * @param internalId The internal ID for the feature value.
    */
-  public void setInternalId(Long internalId) {
-    this.internalId = internalId;
-  }
+  void setInternalId(Long internalId);
 
   /**
    * Gets the actual feature value.
    *
    * @return The actual feature value.
    */
-  public String getFeatureValue() {
-    return featureValue;
-  }
+  String getFeatureValue();
 
   /**
    * Sets the actual feature value.
    *
    * @param featureValue The actual feature value.
    */
-  public void setFeatureValue(String featureValue) {
-    this.featureValue = featureValue;
-  }
+  void setFeatureValue(String featureValue);
 
   /**
    * Gets the {@link SzEntityFeatureStatistics} describing the statistics for
@@ -87,9 +56,7 @@ public class SzEntityFeatureDetail {
    *         requested.
    */
   @JsonInclude(NON_NULL)
-  public SzEntityFeatureStatistics getStatistics() {
-    return statistics;
-  }
+  SzEntityFeatureStatistics getStatistics();
 
   /**
    * Sets the {@link SzEntityFeatureStatistics} describing the statistics for
@@ -100,18 +67,78 @@ public class SzEntityFeatureDetail {
    *                   statistics for the feature value, or <tt>null</tt> if
    *                   the statistics were not requested.
    */
-  public void setStatistics(SzEntityFeatureStatistics statistics) {
-    this.statistics = statistics;
+  void setStatistics(SzEntityFeatureStatistics statistics);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzEntityFeatureDetail}.
+   */
+  interface Provider extends ModelProvider<SzEntityFeatureDetail> {
+    /**
+     * Creates a new instance of {@link SzEntityFeatureDetail}.
+     *
+     * @return The new instance of {@link SzEntityFeatureDetail}
+     */
+    SzEntityFeatureDetail create();
   }
 
-  @Override
-  public String toString() {
-    return "SzEntityFeatureDetail{" +
-        "internalId=" + internalId +
-        ", featureValue='" + featureValue + '\'' +
-        ", statistics=" + statistics +
-        '}';
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzEntityFeatureDetail} that produces instances of {@link
+   * SzEntityFeatureDetailImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzEntityFeatureDetail>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzEntityFeatureDetail.class, SzEntityFeatureDetailImpl.class);
+    }
+
+    @Override
+    public SzEntityFeatureDetail create() {
+      return new SzEntityFeatureDetailImpl();
+    }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link
+   * SzEntityFeatureDetail}.
+   */
+  class Factory extends ModelFactory<SzEntityFeatureDetail, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzEntityFeatureDetail.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzEntityFeatureDetail}.
+     * @return The new instance of {@link SzEntityFeatureDetail}.
+     */
+    public SzEntityFeatureDetail create()
+    {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the native API Senzing JSON to populate (or create and populate) an
@@ -124,11 +151,11 @@ public class SzEntityFeatureDetail {
    *
    * @return The {@link SzEntityFeatureDetail} that was parsed.
    */
-  public static SzEntityFeatureDetail parseEntityFeatureDetail(
+  static SzEntityFeatureDetail parseEntityFeatureDetail(
       SzEntityFeatureDetail detail,
       JsonObject            jsonObject)
   {
-    if (detail == null) detail = new SzEntityFeatureDetail();
+    if (detail == null) detail = SzEntityFeatureDetail.FACTORY.create();
 
     Long    internalId  = JsonUtils.getLong(jsonObject, "LIB_FEAT_ID");
     String  value       = JsonUtils.getString(jsonObject,  "FEAT_DESC");
@@ -155,7 +182,7 @@ public class SzEntityFeatureDetail {
    *
    * @return The {@link SzEntityFeatureDetail} that was parsed.
    */
-  public static List<SzEntityFeatureDetail> parseEntityFeatureDetailList(
+  static List<SzEntityFeatureDetail> parseEntityFeatureDetailList(
       List<SzEntityFeatureDetail> list,
       JsonArray                   jsonArray)
   {

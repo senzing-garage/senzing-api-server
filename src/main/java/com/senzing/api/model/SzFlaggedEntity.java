@@ -1,6 +1,8 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzFlaggedEntityImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -14,56 +16,22 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 /**
  * Describes an entity that was flagged during entity resolution.
  */
-public class SzFlaggedEntity {
-  /**
-   * The entity ID of this entity.
-   */
-  private Long entityId;
-
-  /**
-   * The number of degrees that this entity is separated from the resolved
-   * entity.
-   */
-  private Integer degrees;
-
-  /**
-   * The {@link Set} of {@link String} flags for this entity.
-   */
-  private Set<String> flags;
-
-  /**
-   * The {@link List} of {@link SzFlaggedRecord} instances.
-   */
-  private List<SzFlaggedRecord> sampleRecords;
-
-  /**
-   * Default constructor.
-   */
-  public SzFlaggedEntity() {
-    this.entityId       = null;
-    this.degrees        = null;
-    this.flags          = new LinkedHashSet<>();
-    this.sampleRecords  = new LinkedList<>();
-  }
-
+@JsonDeserialize(using=SzFlaggedEntity.Factory.class)
+public interface SzFlaggedEntity {
   /**
    * Gets the entity ID for the flagged entity.
    *
    * @return The entity ID for the flagged entity.
    */
   @JsonInclude(NON_NULL)
-  public Long getEntityId() {
-    return entityId;
-  }
+  Long getEntityId();
 
   /**
    * Sets the entity ID for the flagged entity.
    *
    * @param entityId The entity ID for the flagged entity.
    */
-  public void setEntityId(Long entityId) {
-    this.entityId = entityId;
-  }
+  void setEntityId(Long entityId);
 
   /**
    * Gets the number of degrees of separation for the flagged entity.
@@ -71,18 +39,14 @@ public class SzFlaggedEntity {
    * @return The number of degrees of separation for the flagged entity.
    */
   @JsonInclude(NON_NULL)
-  public Integer getDegrees() {
-    return degrees;
-  }
+  Integer getDegrees();
 
   /**
    * Sets the number of degrees of separation for the flagged entity.
    *
    * @param degrees The number of degrees of separation for the flagged entity.
    */
-  public void setDegrees(Integer degrees) {
-    this.degrees = degrees;
-  }
+  void setDegrees(Integer degrees);
 
   /**
    * Gets the {@link Set} of {@link String} flags that were triggered for this
@@ -92,9 +56,7 @@ public class SzFlaggedEntity {
    *         this entity.
    */
   @JsonInclude(NON_EMPTY)
-  public Set<String> getFlags() {
-    return Collections.unmodifiableSet(this.flags);
-  }
+  Set<String> getFlags();
 
   /**
    * Adds the specified {@link String} flag to the {@link Set} of flags
@@ -102,9 +64,7 @@ public class SzFlaggedEntity {
    *
    * @param flag The {@link String} flag to add to the {@link Set} of flags.
    */
-  public void addFlag(String flag) {
-    if (flag != null) this.flags.add(flag);
-  }
+  void addFlag(String flag);
 
   /**
    * Sets the {@link Set} of {@link String} flags that were triggered for this
@@ -113,14 +73,7 @@ public class SzFlaggedEntity {
    * @return The {@link Set} of {@link String} flags that were triggered for
    *         this entity, or <tt>null</tt> if none.
    */
-  public void setFlags(Set<String> flags) {
-    this.flags.clear();
-    if (flags != null) {
-      for (String flag : flags) {
-        if (flag != null) this.flags.add(flag);
-      }
-    }
-  }
+  void setFlags(Set<String> flags);
 
   /**
    * Gets the {@link List} of {@link SzFlaggedRecord} instances describing the
@@ -130,9 +83,7 @@ public class SzFlaggedEntity {
    *         the sample of records that were flagged for this entity.
    */
   @JsonInclude(NON_EMPTY)
-  public List<SzFlaggedRecord> getSampleRecords() {
-    return Collections.unmodifiableList(sampleRecords);
-  }
+  List<SzFlaggedRecord> getSampleRecords();
 
   /**
    * Adds the specified {@link SzFlaggedRecord} to the {@link List} of sample
@@ -141,9 +92,7 @@ public class SzFlaggedEntity {
    *
    * @param sampleRecord The {@link SzFlaggedRecord} to add as a sample record.
    */
-  public void addSampleRecord(SzFlaggedRecord sampleRecord) {
-    if (sampleRecord != null) this.sampleRecords.add(sampleRecord);
-  }
+  void addSampleRecord(SzFlaggedRecord sampleRecord);
 
   /**
    * Sets the {@link List} of {@link SzFlaggedRecord} instances using those
@@ -151,24 +100,77 @@ public class SzFlaggedEntity {
    *
    * @param sampleRecords The sample records to set, or <tt>null</tt> if none.
    */
-  public void setSampleRecords(Collection<SzFlaggedRecord> sampleRecords) {
-    this.sampleRecords.clear();
-    if (sampleRecords != null) {
-      for (SzFlaggedRecord record: sampleRecords) {
-        if (record != null) this.sampleRecords.add(record);
-      }
+  void setSampleRecords(Collection<SzFlaggedRecord> sampleRecords);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzFlaggedEntity}.
+   */
+  interface Provider extends ModelProvider<SzFlaggedEntity> {
+    /**
+     * Creates a new instance of {@link SzFlaggedEntity}.
+     *
+     * @return The new instance of {@link SzFlaggedEntity}
+     */
+    SzFlaggedEntity create();
+  }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzFlaggedEntity} that produces instances of
+   * {@link SzFlaggedEntityImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzFlaggedEntity>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzFlaggedEntity.class, SzFlaggedEntityImpl.class);
+    }
+
+    @Override
+    public SzFlaggedEntity create() {
+      return new SzFlaggedEntityImpl();
     }
   }
 
-  @Override
-  public String toString() {
-    return "SzFlaggedEntity{" +
-        "entityId=" + entityId +
-        ", degrees=" + degrees +
-        ", flags=" + flags +
-        ", sampleRecords=" + sampleRecords +
-        '}';
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzFlaggedEntity}.
+   */
+  class Factory extends ModelFactory<SzFlaggedEntity, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzFlaggedEntity.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzFlaggedEntity}.
+     * @return The new instance of {@link SzFlaggedEntity}.
+     */
+    public SzFlaggedEntity create() {
+      return this.getProvider().create();
+    }
   }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses a list of flagged entities from a {@link JsonArray} describing a
@@ -183,7 +185,7 @@ public class SzFlaggedEntity {
    * @return The populated (or created) {@link List} of {@link
    *         SzFlaggedEntity} instances.
    */
-  public static List<SzFlaggedEntity> parseFlaggedEntityList(
+  static List<SzFlaggedEntity> parseFlaggedEntityList(
       List<SzFlaggedEntity> list,
       JsonArray             jsonArray)
   {
@@ -210,11 +212,11 @@ public class SzFlaggedEntity {
    *                   Senzing native API format.
    * @return The populated (or created) {@link SzFlaggedEntity}.
    */
-  public static SzFlaggedEntity parseFlaggedEntity(
+  static SzFlaggedEntity parseFlaggedEntity(
       SzFlaggedEntity entity,
       JsonObject      jsonObject)
   {
-    if (entity == null) entity = new SzFlaggedEntity();
+    if (entity == null) entity = SzFlaggedEntity.FACTORY.create();
 
     entity.setEntityId(JsonUtils.getLong(jsonObject, "ENTITY_ID"));
     entity.setDegrees(JsonUtils.getInteger(jsonObject, "DEGREES"));
@@ -229,8 +231,9 @@ public class SzFlaggedEntity {
     jsonArray = JsonUtils.getJsonArray(jsonObject, "SAMPLE_RECORDS");
     if (jsonArray != null) {
       List<SzFlaggedRecord> sampleRecords
-          = SzFlaggedRecord.parseFlaggedRecordList(entity.sampleRecords,
-                                                   jsonArray);
+          = SzFlaggedRecord.parseFlaggedRecordList(
+              null, jsonArray);
+      entity.setSampleRecords(sampleRecords);
     }
 
     return entity;

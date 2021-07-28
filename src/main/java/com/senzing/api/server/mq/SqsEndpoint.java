@@ -2,14 +2,13 @@ package com.senzing.api.server.mq;
 
 import com.senzing.api.services.SzMessage;
 import software.amazon.awssdk.services.sqs.SqsClient;
-import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
-import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+import software.amazon.awssdk.services.sqs.model.*;
+import static software.amazon.awssdk.services.sqs.model.QueueAttributeName.*;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Provides an {@link SzMessagingEndpoint} implementation for an Amazon SQS
@@ -23,6 +22,11 @@ import java.util.regex.Pattern;
  * </pre>
  */
 public class SqsEndpoint extends SzAbstractMessagingEndpoint {
+  /**
+   * The message sink type for Amazon SQS.  The value is {@value}.
+   */
+  public static final String SQS_SINK_TYPE = "Amazon SQS";
+
   /**
    * The prefix to use for the initialization properties.
    */
@@ -53,6 +57,20 @@ public class SqsEndpoint extends SzAbstractMessagingEndpoint {
    * The string message attribute data type.
    */
   private static final String STRING_ATTR_DATA_TYPE = "String";
+
+  /**
+   * The attribute key used for pulling back the approximate number of messages
+   * on the queue.
+   */
+  private static final String COUNT_ATTRIBUTE_KEY
+      = "ApproximateNumberOfMessages";
+
+  /**
+   * The {@link List} of attributes to retrieve from the queue.
+   */
+  private static final List<String> QUEUE_ATTRIBUTE_LIST
+      = List.of(COUNT_ATTRIBUTE_KEY);
+
 
   /**
    * The {@link SqsClient} to use for sending the requests.
@@ -183,4 +201,50 @@ public class SqsEndpoint extends SzAbstractMessagingEndpoint {
     }
   }
 
+  /**
+   * Implemented to return {@link #SQS_SINK_TYPE}.
+   * {@inheritDoc}
+   */
+  @Override
+  public String getProviderType() {
+    return SQS_SINK_TYPE;
+  }
+
+  /**
+   * Overridden to pull the queue attributes and return the value associated
+   * with the {@link QueueAttributeName#APPROXIMATE_NUMBER_OF_MESSAGES}
+   * attribute.
+   *
+   * {@inheritDoc}
+   */
+  @Override
+  public Integer getMessageCount() {
+    // build the request to get the queue attributes
+    GetQueueAttributesRequest request = GetQueueAttributesRequest.builder()
+        .queueUrl(this.queueUrl)
+        .attributeNames(APPROXIMATE_NUMBER_OF_MESSAGES)
+        .build();
+
+    // get the queue attributes
+    GetQueueAttributesResponse response
+        = this.sqsClient.getQueueAttributes(request);
+
+    // get the text value for the attribute
+    String value = response.attributes().get(APPROXIMATE_NUMBER_OF_MESSAGES);
+
+    // check if null
+    if (value == null) {
+      System.err.println("Missing SQS message count.");
+      return null;
+    }
+
+    try {
+      // parse the text value as an integer
+      return Integer.valueOf(value);
+
+    } catch (IllegalArgumentException e) {
+      System.err.println("Unable to parse SQS message count: " + value);
+      return null;
+    }
+  }
 }

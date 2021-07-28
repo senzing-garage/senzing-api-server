@@ -9,43 +9,10 @@ import java.util.function.Function;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
-public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
-  /**
-   * The match level.
-   */
-  private Integer matchLevel;
-
-  /**
-   * The match score.
-   */
-  private Integer matchScore;
-
-  /**
-   * The match key for the relationship.
-   */
-  private String matchKey;
-
-  /**
-   * The resolution rule code.
-   */
-  private String resolutionRuleCode;
-
-  /**
-   * The ref score.
-   */
-  private Integer refScore;
-
-  /**
-   * Default constructor.
-   */
-  public SzBaseRelatedEntity() {
-    this.matchLevel         = null;
-    this.matchScore         = null;
-    this.matchKey           = null;
-    this.resolutionRuleCode = null;
-    this.refScore           = null;
-  }
-
+/**
+ * Describes the base features for a related entity.
+ */
+public interface SzBaseRelatedEntity extends SzResolvedEntity {
   /**
    * Gets the underlying match level from the entity resolution between the
    * entities.
@@ -54,9 +21,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    *         entities.
    */
   @JsonInclude(NON_NULL)
-  public Integer getMatchLevel() {
-    return this.matchLevel;
-  }
+  Integer getMatchLevel();
 
   /**
    * Sets the underlying match level from the entity resolution between the
@@ -65,9 +30,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @param matchLevel The underlying match level from the entity resolution
    *                   between the entities.
    */
-  public void setMatchLevel(Integer matchLevel) {
-    this.matchLevel = matchLevel;
-  }
+  void setMatchLevel(Integer matchLevel);
 
   /**
    * Gets the underlying match score from the entity resolution between
@@ -77,9 +40,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    *         the entities.
    */
   @JsonInclude(NON_NULL)
-  public Integer getMatchScore() {
-    return this.matchScore;
-  }
+  Integer getMatchScore();
 
   /**
    * Sets the underlying match score from the entity resolution between
@@ -88,9 +49,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @param matchScore The underlying match score from the entity resolution
    *                   between the entities.
    */
-  public void setMatchScore(Integer matchScore) {
-    this.matchScore = matchScore;
-  }
+  void setMatchScore(Integer matchScore);
 
   /**
    * Gets the underlying match key from the entity resolution between
@@ -100,9 +59,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    *         the entities.
    */
   @JsonInclude(NON_NULL)
-  public String getMatchKey() {
-    return matchKey;
-  }
+  String getMatchKey();
 
   /**
    * Sets the underlying match key from the entity resolution between
@@ -111,9 +68,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @param matchKey The underlying match key from the entity resolution
    *                 between the entities.
    */
-  public void setMatchKey(String matchKey) {
-    this.matchKey = matchKey;
-  }
+  void setMatchKey(String matchKey);
 
   /**
    * Gets the underlying resolution rule code from the entity resolution
@@ -123,9 +78,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    *         between the entities.
    */
   @JsonInclude(NON_NULL)
-  public String getResolutionRuleCode() {
-    return resolutionRuleCode;
-  }
+  String getResolutionRuleCode();
 
   /**
    * Sets the underlying resolution rule code from the entity resolution
@@ -134,9 +87,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @param code The underlying resolution rule code from the entity resolution
    *             between the entities.
    */
-  public void setResolutionRuleCode(String code) {
-    this.resolutionRuleCode = code;
-  }
+  void setResolutionRuleCode(String code);
 
   /**
    * Gets the underlying ref score from the entity resolution between
@@ -146,9 +97,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    *         the entities.
    */
   @JsonInclude(NON_NULL)
-  public Integer getRefScore() {
-    return this.refScore;
-  }
+  Integer getRefScore();
 
   /**
    * Sets the underlying ref score from the entity resolution between
@@ -157,17 +106,15 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    * @param refScore The underlying ref score from the entity resolution between
    *                 the entities.
    */
-  public void setRefScore(Integer refScore) {
-    this.refScore = refScore;
-  }
+  void setRefScore(Integer refScore);
 
   /**
    * Parses the entity feature from a {@link JsonObject} describing JSON
    * for the Senzing native API format for an entity feature and populates
    * the specified {@link SzBaseRelatedEntity} or creates a new instance.
    *
-   * @param entity The {@link SzBaseRelatedEntity} instance to populate, or
-   *               <tt>null</tt> if a new instance should be created.
+   * @param entity The {@link SzBaseRelatedEntity} instance to populate, (this
+   *               cannot be <tt>null</tt>).
    *
    * @param jsonObject The {@link JsonObject} describing the JSON in the
    *                   Senzing native API format.
@@ -176,11 +123,15 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    *                                 attribute classes.
    *
    * @return The populated (or created) {@link SzBaseRelatedEntity}.
+   *
+   * @throws NullPointerException If the specified entity or JSON object is
+   *                              <tt>null</tt>.
    */
-  protected static SzBaseRelatedEntity parseBaseRelatedEntity(
+  static SzBaseRelatedEntity parseBaseRelatedEntity(
       SzBaseRelatedEntity     entity,
       JsonObject              jsonObject,
       Function<String,String> featureToAttrClassMapper)
+    throws NullPointerException
   {
     Function<String,String> mapper = featureToAttrClassMapper;
 
@@ -234,7 +185,7 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
    *
    * @return The {@link Optional<Integer>} representing the match score.
    */
-  public static Optional<Integer> readMatchScore(JsonObject jsonObject) {
+  static Optional<Integer> readMatchScore(JsonObject jsonObject) {
     return Optional.ofNullable(JsonUtils.getJsonValue(jsonObject, "MATCH_SCORE"))
         .map(o -> {
           switch (o.getValueType()) {
@@ -253,17 +204,5 @@ public abstract class SzBaseRelatedEntity extends SzResolvedEntity {
               return null;
           }
         });
-  }
-
-  @Override
-  public String toString() {
-    return "SzRelatedEntity{" +
-        super.toString() +
-        ", matchLevel=" + matchLevel +
-        ", matchScore=" + matchScore +
-        ", matchKey='" + matchKey + '\'' +
-        ", resolutionRuleCode='" + resolutionRuleCode + '\'' +
-        ", refScore=" + refScore +
-        '}';
   }
 }

@@ -4,7 +4,7 @@
   <groupId>com.senzing</groupId>
   <artifactId>senzing-api-server</artifactId>
   <packaging>jar</packaging>
-  <version>2.6.1</version>
+  <version>2.7.0</version>
   <name>senzing-api-server</name>
   <url>http://maven.apache.org</url>
   <dependencies>
@@ -257,6 +257,19 @@
         <version>3.0.19</version>
         <executions>
           <execution>
+            <id>generate-openapi-spec</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${project.basedir}/senzing-rest-api-specification/senzing-rest-api.yaml</inputSpec>
+              <language>openapi</language>
+              <output>${project.build.directory}/generated-api-spec/com/senzing/api/services</output>
+            </configuration>
+          </execution>
+          <execution>
+            <id>generate-test-client</id>
             <phase>generate-test-sources</phase>
             <goals>
               <goal>generate</goal>
@@ -369,6 +382,12 @@
                 <resource>
                   <directory>${basedir}/src/main/resources</directory>
                   <filtering>true</filtering>
+                </resource>
+                <resource>
+                  <directory>${project.build.directory}/generated-api-spec</directory>
+                  <includes>
+                    <include>com/senzing/api/services/openapi.json</include>
+                  </includes>
                 </resource>
               </resources>
             </configuration>

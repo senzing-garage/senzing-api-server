@@ -1,6 +1,8 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzFeatureScoreImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -13,83 +15,28 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 /**
  * Describes the scoring between {@link SzScoredFeature} instances.
  */
-public class SzFeatureScore {
-  /**
-   * The feature type of the features being scored.
-   */
-  private String featureType;
-
-  /**
-   * The inbound feature described as an {@link SzScoredFeature}.
-   */
-  private SzScoredFeature inboundFeature;
-
-  /**
-   * The feature that was a candidate match for the inbound feature (also
-   * described as an {@link SzScoredFeature}).
-   */
-  private SzScoredFeature candidateFeature;
-
-  /**
-   * The integer score between the two feature values (typically from 0 and 100)
-   */
-  private Integer score;
-
-  /**
-   * The optional name scoring details.
-   */
-  private SzNameScoring nameScoringDetails;
-
-  /**
-   * The {@link SzScoringBucket} describing the meaning of the score.
-   */
-  private SzScoringBucket scoringBucket;
-
-  /**
-   * The {@link SzScoringBehavior} describing the scoring behavior for the
-   * features.
-   */
-  private SzScoringBehavior scoringBehavior;
-
-  /**
-   * Default constructor.
-   */
-  public SzFeatureScore() {
-    this.featureType        = null;
-    this.inboundFeature     = null;
-    this.candidateFeature   = null;
-    this.score              = null;
-    this.nameScoringDetails = null;
-    this.scoringBucket      = null;
-    this.scoringBehavior    = null;
-  }
-
+@JsonDeserialize(using=SzFeatureScore.Factory.class)
+public interface SzFeatureScore {
   /**
    * Gets the feature type for the features being scored.
    *
    * @return The feature type for the features being scored.
    */
-  public String getFeatureType() {
-    return featureType;
-  }
+  String getFeatureType();
 
   /**
    * Sets the feature type for the features being scored.
    *
    * @param featureType The feature type for the features being scored.
    */
-  public void setFeatureType(String featureType) {
-    this.featureType = featureType;
-  }
+  void setFeatureType(String featureType);
 
   /**
    * Gets the inbound feature described as an {@link SzScoredFeature}.
    *
    * @return The inbound feature described as an {@link SzScoredFeature}.
    */
-  public SzScoredFeature getInboundFeature() {
-    return inboundFeature;
-  }
+  SzScoredFeature getInboundFeature();
 
   /**
    * Sets the inbound feature described as an {@link SzScoredFeature}.
@@ -97,9 +44,7 @@ public class SzFeatureScore {
    * @param inboundFeature The inbound feature described as an {@link
    *                       SzScoredFeature}.
    */
-  public void setInboundFeature(SzScoredFeature inboundFeature) {
-    this.inboundFeature = inboundFeature;
-  }
+  void setInboundFeature(SzScoredFeature inboundFeature);
 
   /**
    * Gets the {@link SzScoredFeature} that describes the candidate match for
@@ -108,9 +53,7 @@ public class SzFeatureScore {
    * @return The {@link SzScoredFeature} that describes the candidate match for
    *         the inbound feature.
    */
-  public SzScoredFeature getCandidateFeature() {
-    return candidateFeature;
-  }
+  SzScoredFeature getCandidateFeature();
 
   /**
    * Sets the {@link SzScoredFeature} that describes the candidate match for
@@ -119,9 +62,7 @@ public class SzFeatureScore {
    * @param candidateFeature The {@link SzScoredFeature} that describes the
    *                         candidate match for the inbound feature.
    */
-  public void setCandidateFeature(SzScoredFeature candidateFeature) {
-    this.candidateFeature = candidateFeature;
-  }
+  void setCandidateFeature(SzScoredFeature candidateFeature);
 
   /**
    * Gets the integer score between the two feature values (typically from 0
@@ -132,13 +73,7 @@ public class SzFeatureScore {
    * @return The integer score between the two feature values (typically from 0
    *         and 100).
    */
-  public Integer getScore() {
-    if (this.score != null) return this.score;
-    if (this.nameScoringDetails != null) {
-      return this.nameScoringDetails.asFullScore();
-    }
-    return null;
-  }
+  Integer getScore();
 
   /**
    * Sets the integer score between the two feature values (typically from 0
@@ -147,9 +82,7 @@ public class SzFeatureScore {
    * @param score The integer score between the two feature values (typically
    *              from 0 and 100).
    */
-  public void setScore(Integer score) {
-    this.score = score;
-  }
+  void setScore(Integer score);
 
   /**
    * Gets the name scoring details if any exist.  This method returns
@@ -159,9 +92,7 @@ public class SzFeatureScore {
    *         was not a name.
    */
   @JsonInclude(NON_EMPTY)
-  public SzNameScoring getNameScoringDetails() {
-    return this.nameScoringDetails;
-  }
+  SzNameScoring getNameScoringDetails();
 
   /**
    * Sets the name scoring details if any exist.  Set the value to <tt>null</tt>
@@ -170,18 +101,14 @@ public class SzFeatureScore {
    * @param scoring The {@link SzNameScoring} describing the name-scoring
    *                details.
    */
-  public void setNameScoringDetails(SzNameScoring scoring) {
-    this.nameScoringDetails = scoring;
-  }
+  void setNameScoringDetails(SzNameScoring scoring);
 
   /**
    * Gets the {@link SzScoringBucket} describing the meaning of the score.
    *
    * @return The {@link SzScoringBucket} describing the meaning of the score.
    */
-  public SzScoringBucket getScoringBucket() {
-    return scoringBucket;
-  }
+  SzScoringBucket getScoringBucket();
 
   /**
    * Sets the {@link SzScoringBucket} describing the meaning of the score.
@@ -189,9 +116,7 @@ public class SzFeatureScore {
    * @param scoringBucket The {@link SzScoringBucket} describing the meaning
    *                      of the score.
    */
-  public void setScoringBucket(SzScoringBucket scoringBucket) {
-    this.scoringBucket = scoringBucket;
-  }
+  void setScoringBucket(SzScoringBucket scoringBucket);
 
   /**
    * Gets the {@link SzScoringBehavior} describing the scoring behavior for the
@@ -200,9 +125,7 @@ public class SzFeatureScore {
    * @return The {@link SzScoringBehavior} describing the scoring behavior for
    *         the features.
    */
-  public SzScoringBehavior getScoringBehavior() {
-    return scoringBehavior;
-  }
+  SzScoringBehavior getScoringBehavior();
 
   /**
    * Sets the {@link SzScoringBehavior} describing the scoring behavior for the
@@ -211,9 +134,76 @@ public class SzFeatureScore {
    * @param scoringBehavior The {@link SzScoringBehavior} describing the scoring
    *                        behavior for the features.
    */
-  public void setScoringBehavior(SzScoringBehavior scoringBehavior) {
-    this.scoringBehavior = scoringBehavior;
+  void setScoringBehavior(SzScoringBehavior scoringBehavior);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzFeatureScore}.
+   */
+  interface Provider extends ModelProvider<SzFeatureScore> {
+    /**
+     * Creates a new instance of {@link SzFeatureScore}.
+     *
+     * @return The new instance of {@link SzFeatureScore}
+     */
+    SzFeatureScore create();
   }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzFeatureScore} that produces instances of {@link SzFeatureScoreImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzFeatureScore>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzFeatureScore.class, SzFeatureScoreImpl.class);
+    }
+
+    @Override
+    public SzFeatureScore create() {
+      return new SzFeatureScoreImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link SzFeatureScore}.
+   */
+  class Factory extends ModelFactory<SzFeatureScore, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzFeatureScore.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzFeatureScore}.
+     * @return The new instance of {@link SzFeatureScore}.
+     */
+    public SzFeatureScore create()
+    {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the {@link SzFeatureScore} from a {@link JsonObject} describing JSON
@@ -226,8 +216,8 @@ public class SzFeatureScore {
    *
    * @return The {@link SzFeatureScore} that was created.
    */
-  public static SzFeatureScore parseFeatureScore(JsonObject jsonObject,
-                                                 String     featureType)
+  static SzFeatureScore parseFeatureScore(JsonObject  jsonObject,
+                                          String      featureType)
   {
     SzScoredFeature inboundFeature = SzScoredFeature.parseScoredFeature(
         jsonObject, "INBOUND_", featureType);
@@ -262,7 +252,7 @@ public class SzFeatureScore {
       e.printStackTrace();
     }
 
-    SzFeatureScore result = new SzFeatureScore();
+    SzFeatureScore result = SzFeatureScore.FACTORY.create();
 
     result.setFeatureType(featureType);
     result.setInboundFeature(inboundFeature);
@@ -289,7 +279,7 @@ public class SzFeatureScore {
    * @return The {@link List} of {@link SzFeatureScore} instances that were
    *         populated.
    */
-  public static List<SzFeatureScore> parseFeatureScoreList(
+  static List<SzFeatureScore> parseFeatureScoreList(
       JsonArray   jsonArray,
       String      featureType)
   {
@@ -313,7 +303,7 @@ public class SzFeatureScore {
    * @return The {@link List} of {@link SzFeatureScore} instances that were
    *         populated.
    */
-  public static List<SzFeatureScore> parseFeatureScoreList(
+  static List<SzFeatureScore> parseFeatureScoreList(
       List<SzFeatureScore>  list,
       JsonArray             jsonArray,
       String                featureType)

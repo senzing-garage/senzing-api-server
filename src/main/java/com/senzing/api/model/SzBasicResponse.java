@@ -1,85 +1,27 @@
 package com.senzing.api.model;
 
-import com.senzing.util.Timers;
-
-import javax.ws.rs.core.UriInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzBasicResponseImpl;
 
 /**
  * The most basic response from the Senzing REST API.  Also servers as a basis
  * for other responses.
  */
-public class SzBasicResponse {
-  /**
-   * The meta section for this response.
-   */
-  private SzMeta meta;
-
-  /**
-   * The links associated with this response.
-   */
-  private SzLinks links;
-
-  /**
-   * Default constructor.
-   */
-  SzBasicResponse() {
-    this.meta = null;
-    this.links = null;
-  }
-
-  /**
-   * Constructs with the specified HTTP method and self link.
-   *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
-   *
-   * @param httpStatusCode The HTTP response code.
-   *
-   * @param selfLink The self link from the request.
-   */
-  public SzBasicResponse(SzHttpMethod httpMethod,
-                         int          httpStatusCode,
-                         String       selfLink,
-                         Timers       timers)
-  {
-    this.meta = new SzMeta(httpMethod, httpStatusCode, timers);
-    this.links = new SzLinks(selfLink);
-  }
-
-  /**
-   * Constructs with the specified HTTP method and {@link UriInfo}.
-   *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
-   *
-   * @param httpStatusCode The HTTP response code.
-   *
-   * @param uriInfo The {@link UriInfo} for the self link.
-   */
-  public SzBasicResponse(SzHttpMethod httpMethod,
-                         int          httpStatusCode,
-                         UriInfo      uriInfo,
-                         Timers       timers)
-  {
-    this.meta = new SzMeta(httpMethod, httpStatusCode, timers);
-    this.links = new SzLinks(uriInfo);
-  }
-
+@JsonDeserialize(using=SzBasicResponse.Factory.class)
+public interface SzBasicResponse {
   /**
    * Returns the meta data associated with this response.
    *
    * @return The meta data associated with this response.
    */
-  public SzMeta getMeta() {
-    return meta;
-  }
+  SzMeta getMeta();
 
   /**
    * Gets the links associated with this response.
    *
    * @return The links associated with this response.
    */
-  public SzLinks getLinks() {
-    return links;
-  }
+  SzLinks getLinks();
 
   /**
    * If any of the response's timers are still accumulating time, this
@@ -89,7 +31,82 @@ public class SzBasicResponse {
    *
    * If timers are already concluded then this method does nothing.
    */
-  public void concludeTimers() {
-    this.getMeta().concludeTimers();
+  void concludeTimers();
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzBasicResponse}.
+   */
+  interface Provider extends ModelProvider<SzBasicResponse> {
+    /**
+     * Creates an instance with the specified {@link SzMeta} and
+     * {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    SzBasicResponse create(SzMeta meta, SzLinks links);
   }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzBasicResponse} that produces instances of
+   * {@link SzBasicResponseImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzBasicResponse>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzBasicResponse.class, SzBasicResponseImpl.class);
+    }
+
+    @Override
+    public SzBasicResponse create(SzMeta meta, SzLinks links) {
+      return new SzBasicResponseImpl(meta, links);
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzBasicResponse}.
+   */
+  class Factory extends ModelFactory<SzBasicResponse, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzBasicResponse.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates an instance with the specified {@link SzMeta} and
+     * {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    public SzBasicResponse create(SzMeta meta, SzLinks links) {
+      return this.getProvider().create(meta, links);
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 }

@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzEntityTypeDescriptorsImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.*;
@@ -10,79 +12,8 @@ import java.util.*;
  * SzEntityTypeDescriptor} instances.
  *
  */
-public class SzEntityTypeDescriptors {
-  /**
-   * The {@link List} of {@link SzEntityTypeDescriptor} instances.
-   */
-  private List<SzEntityTypeDescriptor> descriptors;
-
-  /**
-   * Constructs with no {@link SzEntityTypeDescriptor} instances.
-   */
-  public SzEntityTypeDescriptors() throws NullPointerException
-  {
-    this.descriptors = Collections.emptyList();
-  }
-
-  /**
-   * Constructs with a single {@link SzEntityTypeDescriptor} instance.
-   *
-   * @param identifier The single non-null {@link SzEntityTypeDescriptor}
-   *                   instance.
-   *
-   * @throws NullPointerException If the specified parameter is null.
-   */
-  public SzEntityTypeDescriptors(SzEntityTypeDescriptor identifier)
-      throws NullPointerException
-  {
-    Objects.requireNonNull(identifier, "Identifier cannot be null.");
-    this.descriptors = Collections.singletonList(identifier);
-  }
-
-  /**
-   * Constructs with the specified {@link Collection} of {@link
-   * SzEntityTypeDescriptor} instances.  The specified {@link Collection} will
-   * be copied.
-   *
-   * @param descriptors The non-null {@link Collection} of {@link
-   *                    SzEntityTypeDescriptor} instances.
-   *
-   * @throws NullPointerException If the specified parameter is null.
-   */
-  public SzEntityTypeDescriptors(
-      Collection<? extends SzEntityTypeDescriptor> descriptors)
-    throws NullPointerException
-  {
-    Objects.requireNonNull(descriptors, "Identifiers cannot be null.");
-    this.descriptors = Collections.unmodifiableList(
-        new ArrayList<>(descriptors));
-  }
-
-  /**
-   * Private constructor to use when the collection of {@link
-   * SzEntityTypeDescriptor} instances may not need to be copied.
-   *
-   * @param descriptors The {@link List} of {@link SzEntityTypeDescriptor}
-   *                    instances.
-   *
-   * @param copy <tt>true</tt> if the specified list should be copied or
-   *             used directly.
-   */
-  private SzEntityTypeDescriptors(List<SzEntityTypeDescriptor>  descriptors,
-                                  boolean                       copy)
-  {
-    if (copy) {
-      if (descriptors == null || descriptors.size() == 0) {
-        this.descriptors = Collections.emptyList();
-      } else {
-        this.descriptors = Collections.unmodifiableList(
-            new ArrayList<>(descriptors));
-      }
-    } else {
-      this.descriptors = descriptors;
-    }
-  }
-
+@JsonDeserialize(using=SzEntityTypeDescriptors.Factory.class)
+public interface SzEntityTypeDescriptors {
   /**
    * Checks if all the {@link SzEntityTypeDescriptor} instances contained are
    * of the same type (e.g.: either {@link SzEntityId} or {@link SzRecordId}).
@@ -90,9 +21,9 @@ public class SzEntityTypeDescriptors {
    * @return <tt>true</tt> if the {@link SzEntityTypeDescriptor} instances are
    *         of the same type otherwise <tt>false</tt>.
    */
-  public boolean isHomogeneous() {
+  default boolean isHomogeneous() {
     Class<? extends SzEntityTypeDescriptor> c = null;
-    for (SzEntityTypeDescriptor i : this.descriptors) {
+    for (SzEntityTypeDescriptor i : this.getDescriptors()) {
       if (c == null) {
         c = i.getClass();
         continue;
@@ -108,8 +39,9 @@ public class SzEntityTypeDescriptors {
    * @return <tt>true</tt> if no entity descriptors are specified, otherwise
    *         <tt>false</tt>.
    */
-  public boolean isEmpty() {
-    return (this.descriptors == null || this.descriptors.size() == 0);
+  default boolean isEmpty() {
+    List<SzEntityTypeDescriptor> descriptors = this.getDescriptors();
+    return (descriptors == null || descriptors.size() == 0);
   }
 
   /**
@@ -117,8 +49,9 @@ public class SzEntityTypeDescriptors {
    *
    * @return The number of entity descriptors.
    */
-  public int getCount() {
-    return (this.descriptors == null ? 0 : this.descriptors.size());
+  default int getCount() {
+    List<SzEntityTypeDescriptor> descriptors = this.getDescriptors();
+    return (descriptors == null ? 0 : descriptors.size());
   }
 
   /**
@@ -128,29 +61,148 @@ public class SzEntityTypeDescriptors {
    * @return The unmodifiable {@link List} of {@link SzEntityTypeDescriptor}
    *         instances that were specified.
    */
-  public List<SzEntityTypeDescriptor> getDescriptors() {
-    return this.descriptors;
+  List<SzEntityTypeDescriptor> getDescriptors();
+  
+  /**
+   * A {@link ModelProvider} for instances of {@link SzEntityTypeDescriptors}.
+   */
+  interface Provider extends ModelProvider<SzEntityTypeDescriptors> {
+    /**
+     * Constructs an instance with no {@link SzEntityTypeDescriptor} instances.
+     */
+    SzEntityTypeDescriptors create();
+
+    /**
+     * Constructs an instance with a single {@link SzEntityTypeDescriptor}
+     * instance.
+     *
+     * @param identifier The single non-null {@link SzEntityTypeDescriptor}
+     *                   instance.
+     *
+     * @throws NullPointerException If the specified parameter is null.
+     */
+    SzEntityTypeDescriptors create(SzEntityTypeDescriptor identifier)
+        throws NullPointerException;
+
+    /**
+     * Constructs with the specified {@link Collection} of {@link
+     * SzEntityTypeDescriptor} instances.  The specified {@link Collection} will be
+     * copied.
+     *
+     * @param descriptors The non-null {@link Collection} of {@link
+     *                    SzEntityTypeDescriptor} instances.
+     *
+     * @throws NullPointerException If the specified parameter is null.
+     */
+    SzEntityTypeDescriptors create(
+        Collection<? extends SzEntityTypeDescriptor> descriptors)
+        throws NullPointerException;
   }
 
   /**
-   * Overridden to convert the {@link SzEntityTypeDescriptors} instance to a
-   * JSON array string.
-   *
-   * @return The JSON array string representation of this instance.
-   *
+   * Provides a default {@link Provider} implementation for {@link
+   * SzEntityTypeDescriptor} that produces instances of {@link
+   * SzEntityTypeDescriptorsImpl}.
    */
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("[");
-    String prefix = "";
-    for (SzEntityTypeDescriptor identifier : this.getDescriptors()) {
-      sb.append(prefix).append(identifier.toString());
-      prefix = ",";
+  class DefaultProvider extends AbstractModelProvider<SzEntityTypeDescriptors>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzEntityTypeDescriptors.class, SzEntityTypeDescriptorsImpl.class);
     }
-    sb.append("]");
-    return sb.toString();
+
+    @Override
+    public SzEntityTypeDescriptors create() {
+      return new SzEntityTypeDescriptorsImpl();
+    }
+
+    @Override
+    public SzEntityTypeDescriptors create(SzEntityTypeDescriptor identifier)
+        throws NullPointerException
+    {
+      return new SzEntityTypeDescriptorsImpl(identifier);
+    }
+
+    @Override
+    public SzEntityTypeDescriptors create(
+        Collection<? extends SzEntityTypeDescriptor> descriptors)
+        throws NullPointerException
+    {
+      return new SzEntityTypeDescriptorsImpl(descriptors);
+    }
   }
 
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link
+   * SzEntityTypeDescriptors}.
+   */
+  class Factory extends ModelFactory<SzEntityTypeDescriptors, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzEntityTypeDescriptors.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Constructs an instance with no {@link SzEntityTypeDescriptor} instances.
+     */
+    public SzEntityTypeDescriptors create() {
+      return this.getProvider().create();
+    }
+
+    /**
+     * Constructs an instance with a single {@link SzEntityTypeDescriptor}
+     * instance.
+     *
+     * @param identifier The single non-null {@link SzEntityTypeDescriptor}
+     *                   instance.
+     *
+     * @throws NullPointerException If the specified parameter is null.
+     */
+    public SzEntityTypeDescriptors create(SzEntityTypeDescriptor identifier)
+        throws NullPointerException
+    {
+      return this.getProvider().create(identifier);
+    }
+
+    /**
+     * Constructs with the specified {@link Collection} of {@link
+     * SzEntityTypeDescriptor} instances.  The specified {@link Collection} will be
+     * copied.
+     *
+     * @param descriptors The non-null {@link Collection} of {@link
+     *                    SzEntityTypeDescriptor} instances.
+     *
+     * @throws NullPointerException If the specified parameter is null.
+     */
+    public SzEntityTypeDescriptors create(
+        Collection<? extends SzEntityTypeDescriptor> descriptors)
+        throws NullPointerException
+    {
+      return this.getProvider().create(descriptors);
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
+  
   /**
    * Parses the specified text as a {@link List} of homogeneous
    * {@link SzEntityTypeDescriptor} instances.
@@ -160,16 +212,16 @@ public class SzEntityTypeDescriptors {
    * @return The {@link SzEntityTypeDescriptors} instance representing the
    *         {@link List} of {@link SzEntityTypeDescriptor} instances.
    */
-  public static SzEntityTypeDescriptors valueOf(String text) {
-    text = text.trim();
-    int               length  = text.length();
-    char              first   = text.charAt(0);
-    char              last    = text.charAt(length-1);
+  static SzEntityTypeDescriptors valueOf(String text) {
+    if (text != null) text = text.trim();
+    int               length  = (text == null) ? 0 : text.length();
+    char              first   = (length == 0) ? 0 : text.charAt(0);
+    char              last    = (length <= 1) ? 0 : text.charAt(length-1);
 
     // check if no descriptors
     if (length == 0) {
       // no descriptors
-      return new SzEntityTypeDescriptors();
+      return SzEntityTypeDescriptors.FACTORY.create();
     }
 
     // check if it looks like a JSON array
@@ -226,7 +278,8 @@ public class SzEntityTypeDescriptors {
       SzEntityTypeDescriptor descriptor;
       switch (vt) {
         case STRING:
-          descriptor = new SzEntityTypeCode(((JsonString) value).getString());
+          descriptor = SzEntityTypeCode.FACTORY.create(
+              ((JsonString) value).getString());
           break;
 
         case OBJECT:
@@ -242,8 +295,8 @@ public class SzEntityTypeDescriptors {
     }
 
     // make the list unmodifiable
-    return new SzEntityTypeDescriptors(
-        Collections.unmodifiableList(descriptors), false);
+    return SzEntityTypeDescriptors.FACTORY.create(
+        Collections.unmodifiableList(descriptors));
   }
 
 }

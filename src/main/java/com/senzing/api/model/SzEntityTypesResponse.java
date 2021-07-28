@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzEntityTypesResponseImpl;
 import com.senzing.util.Timers;
 
 import javax.ws.rs.core.UriInfo;
@@ -10,69 +12,22 @@ import java.util.*;
  * list of all configured entity type codes.
  *
  */
-public class SzEntityTypesResponse extends SzResponseWithRawData
+@JsonDeserialize(using=SzEntityTypesResponse.Factory.class)
+public interface SzEntityTypesResponse extends SzResponseWithRawData
 {
   /**
-   * The data for this instance.
+   * Returns the {@link SzEntityTypesResponseData} for this instance.
+   *
+   * @return The {@link SzEntityTypesResponseData} for this instance.
    */
-  private Data data = new Data();
+  SzEntityTypesResponseData getData();
 
   /**
-   * Package-private default constructor.
+   * Sets the {@link SzEntityTypesResponseData} for this instance.
+   *
+   * @param data The {@link SzEntityTypesResponseData} for this instance.
    */
-  SzEntityTypesResponse() {
-    // do nothing
-  }
-
-  /**
-   * Constructs with only the HTTP method and the self link, leaving the
-   * entity types to be added later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The string URL link to generate this response.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   */
-  public SzEntityTypesResponse(SzHttpMethod httpMethod,
-                               int          httpStatusCode,
-                               String       selfLink,
-                               Timers       timers) {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-  }
-
-  /**
-   * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
-   * entity types to be added later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   */
-  public SzEntityTypesResponse(SzHttpMethod httpMethod,
-                               int          httpStatusCode,
-                               UriInfo      uriInfo,
-                               Timers       timers)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
-  }
-
-  /**
-   * Returns the {@link Data} for this instance.
-   *
-   * @return The {@link Data} for this instance.
-   */
-  public Data getData() {
-    return this.data;
-  }
+  void setData(SzEntityTypesResponseData data);
 
   /**
    * Adds the specified entity type providing the specified entity type
@@ -80,9 +35,7 @@ public class SzEntityTypesResponse extends SzResponseWithRawData
    *
    * @param entityType The entity type code to add.
    */
-  public void addEntityType(SzEntityType entityType) {
-    this.data.entityTypes.remove(entityType.getEntityTypeCode());
-  }
+  void addEntityType(SzEntityType entityType);
 
   /**
    * Sets the specified {@link Set} of entity types using the
@@ -90,85 +43,123 @@ public class SzEntityTypesResponse extends SzResponseWithRawData
    *
    * @param entityTypes The {@link Collection} of entity types to set.
    */
-  public void setEntityTypes(Collection<SzEntityType> entityTypes)
-  {
-    this.data.entityTypes.clear();
-    if (entityTypes != null) {
-      // ensure the entity types are unique
-      for (SzEntityType entityType : entityTypes) {
-        this.data.entityTypes.put(entityType.getEntityTypeCode(), entityType);
-      }
-    }
+  void setEntityTypes(Collection<SzEntityType> entityTypes);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzEntityTypesResponse}.
+   */
+  interface Provider extends ModelProvider<SzEntityTypesResponse> {
+    /**
+     * Creates an instance of {@link SzEntityTypesResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    SzEntityTypesResponse create(SzMeta meta, SzLinks links);
+
+    /**
+     * Creates an instance of {@link SzEntityTypesResponse} with the specified
+     * {@link SzMeta}, {@link SzLinks} and {@link SzEntityTypesResponseData}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The data for the response.
+     */
+    SzEntityTypesResponse create(SzMeta                     meta,
+                                 SzLinks                    links,
+                                 SzEntityTypesResponseData  data);
   }
 
   /**
-   * Inner class to represent the data section for this response.
+   * Provides a default {@link Provider} implementation for {@link
+   * SzEntityTypesResponse} that produces instances of
+   * {@link SzEntityTypesResponseImpl}.
    */
-  public static class Data {
+  class DefaultProvider extends AbstractModelProvider<SzEntityTypesResponse>
+      implements Provider
+  {
     /**
-     * The map of {@link String} entity type codes to {@link SzEntityType}
-     * instances.
+     * Default constructor.
      */
-    private Map<String, SzEntityType> entityTypes;
-
-    /**
-     * Private default constructor.
-     */
-    private Data() {
-      this.entityTypes = new LinkedHashMap<>();
+    public DefaultProvider() {
+      super(SzEntityTypesResponse.class, SzEntityTypesResponseImpl.class);
     }
 
-    /**
-     * Gets the unmodifiable {@link Set} of entity type codes.
-     *
-     * @return The unmodifiable {@link Set} of entity type codes.
-     */
-    public Set<String> getEntityTypes() {
-      Set<String> set = this.entityTypes.keySet();
-      return Collections.unmodifiableSet(set);
+    @Override
+    public SzEntityTypesResponse create(SzMeta meta, SzLinks links) {
+      return new SzEntityTypesResponseImpl(meta, links);
     }
 
-    /**
-     * Private setter used for deserialization.
-     */
-    private void setEntityTypes(Collection<String> entityTypes) {
-      Iterator<Map.Entry<String,SzEntityType>> iter
-          = this.entityTypes.entrySet().iterator();
-
-      // remove entries in the map that are not in the specified set
-      while (iter.hasNext()) {
-        Map.Entry<String,SzEntityType> entry = iter.next();
-        if (!entityTypes.contains(entry.getKey())) {
-          iter.remove();
-        }
-      }
-
-      // add place-holder entries to the map for data sources in the set
-      for (String entityType: entityTypes) {
-        this.entityTypes.put(entityType, null);
-      }
+    @Override
+    public SzEntityTypesResponse create(SzMeta                    meta,
+                                        SzLinks                   links,
+                                        SzEntityTypesResponseData data)
+    {
+      return new SzEntityTypesResponseImpl(meta, links, data);
     }
 
-    /**
-     * Gets the unmodifiable {@link Map} of {@link String} entity type codes
-     * to {@link SzEntityType} values describing the configured entity types.
-     *
-     * @return The unmodifiable {@link Map} of {@link String} entity type codes
-     *         to {@link SzEntityType} values describing the configured entity
-     *         types.
-     */
-    public Map<String, SzEntityType> getEntityTypeDetails() {
-      return Collections.unmodifiableMap(this.entityTypes);
-    }
-
-    /**
-     * Private setter used for deserialization.
-     */
-    private void setEntityTypeDetails(Map<String, SzEntityType> details) {
-      this.entityTypes.clear();
-      for (SzEntityType entityType: details.values()) {
-        this.entityTypes.put(entityType.getEntityTypeCode(), entityType);
-      }
-    }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzEntityTypesResponse}.
+   */
+  class Factory extends ModelFactory<SzEntityTypesResponse, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzEntityTypesResponse.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates an instance of {@link SzEntityTypesResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    public SzEntityTypesResponse create(SzMeta meta, SzLinks links) {
+      return this.getProvider().create(meta, links);
+    }
+
+    /**
+     * Creates an instance of {@link SzEntityTypesResponse} with the specified
+     * {@link SzMeta}, {@link SzLinks} and {@link SzEntityTypesResponseData}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The data for the response.
+     */
+    public SzEntityTypesResponse create(SzMeta                    meta,
+                                        SzLinks                   links,
+                                        SzEntityTypesResponseData data)
+    {
+      return this.getProvider().create(meta, links, data);
+    }
+
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 }

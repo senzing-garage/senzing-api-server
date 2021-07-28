@@ -1,70 +1,27 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzEntityTypeRecordAnalysisImpl;
+
 /**
  * Describes an analysis of bulk data records associated with a specific
  * entity type (or no entity type at all).
  */
-public class SzEntityTypeRecordAnalysis {
-  /**
-   * The associated entity type or <tt>null</tt>.
-   */
-  private String entityType;
-
-  /**
-   * The number of records with the associated entity type.
-   */
-  private int recordCount;
-
-  /**
-   * The number of records with the associated entity type that have a
-   * <tt>"RECORD_ID"</tt> specified.
-   */
-  private int recordIdCount;
-
-  /**
-   * The number of records with the associated entity type that have a
-   * <tt>"DATA_SOURCE"</tt> specified.
-   */
-  private int dataSourceCount;
-
-  /**
-   * Default constructor that constructs with a <tt>null</tt> entity type.
-   */
-  public SzEntityTypeRecordAnalysis() {
-    this(null);
-  }
-
-  /**
-   * Constructs with the specified entity type.
-   *
-   * @param entityType The entity type or <tt>null</tt> if the constructed
-   *                   instance is associated with those records that have
-   *                   no entity type.
-   */
-  public SzEntityTypeRecordAnalysis(String entityType) {
-    this.entityType       = entityType;
-    this.recordCount      = 0;
-    this.recordIdCount    = 0;
-    this.dataSourceCount  = 0;
-  }
-
+@JsonDeserialize(using=SzEntityTypeRecordAnalysis.Factory.class)
+public interface SzEntityTypeRecordAnalysis {
   /**
    * Returns the entity type with which this instance was constructed.
    *
    * @return The entity type with which this instance was constructed.
    */
-  public String getEntityType() {
-    return entityType;
-  }
+  String getEntityType();
 
   /**
    * Gets the number of records that have the associated entity type.
    *
    * @return The number of records that have the associated entity type.
    */
-  public int getRecordCount() {
-    return recordCount;
-  }
+  int getRecordCount();
 
   /**
    * Sets the number of records that have the associated entity type.
@@ -72,9 +29,7 @@ public class SzEntityTypeRecordAnalysis {
    * @param recordCount The number of records that have the associated
    *                    entity type.
    */
-  void setRecordCount(int recordCount) {
-    this.recordCount = recordCount;
-  }
+  void setRecordCount(int recordCount);
 
   /**
    * Increments the number of records that have the associated entity type
@@ -82,9 +37,7 @@ public class SzEntityTypeRecordAnalysis {
    *
    * @return The new count after incrementing.
    */
-  long incrementRecordCount() {
-    return ++this.recordCount;
-  }
+  long incrementRecordCount();
 
   /**
    * Increments the number of records that have the associated entity type
@@ -94,10 +47,7 @@ public class SzEntityTypeRecordAnalysis {
    *
    * @return The new count after incrementing.
    */
-  long incrementRecordCount(int increment) {
-    this.recordCount += increment;
-    return this.recordCount;
-  }
+  long incrementRecordCount(int increment);
 
   /**
    * Gets the number of records that have the associated entity type and also
@@ -106,9 +56,7 @@ public class SzEntityTypeRecordAnalysis {
    * @return The number of records that have the associated entity type and
    *         also have a <tt>"RECORD_ID"</tt>.
    */
-  public int getRecordsWithRecordIdCount() {
-    return recordIdCount;
-  }
+  int getRecordsWithRecordIdCount();
 
   /**
    * Sets the number of records that have the associated entity type and also
@@ -117,9 +65,7 @@ public class SzEntityTypeRecordAnalysis {
    * @param recordIdCount The number of records that have the associated
    *                      entity type and also have a <tt>"RECORD_ID"</tt>.
    */
-  void setRecordsWithRecordIdCount(int recordIdCount) {
-    this.recordIdCount = recordIdCount;
-  }
+  void setRecordsWithRecordIdCount(int recordIdzzount);
 
   /**
    * Increments the number of records that have the associated data source
@@ -127,9 +73,7 @@ public class SzEntityTypeRecordAnalysis {
    *
    * @return The new count after incrementing.
    */
-  int incrementRecordsWithRecordIdCount() {
-    return ++this.recordIdCount;
-  }
+  int incrementRecordsWithRecordIdCount();
 
   /**
    * Increments the number of records that have the associated data source
@@ -139,10 +83,7 @@ public class SzEntityTypeRecordAnalysis {
    *
    * @return The new count after incrementing.
    */
-  int incrementRecordsWithRecordIdCount(int increment) {
-    this.recordIdCount += increment;
-    return this.recordIdCount;
-  }
+  int incrementRecordsWithRecordIdCount(int increment);
 
   /**
    * Gets the number of records that have the associated entity type and also
@@ -151,9 +92,7 @@ public class SzEntityTypeRecordAnalysis {
    * @return The number of records that have the associated entity type and
    *         also have a <tt>"DATA_SOURCE"</tt>.
    */
-  public int getRecordsWithDataSourceCount() {
-    return this.dataSourceCount;
-  }
+  int getRecordsWithDataSourceCount();
 
   /**
    * Sets the number of records that have the associated entity type and also
@@ -162,9 +101,7 @@ public class SzEntityTypeRecordAnalysis {
    * @param dataSourceCount The number of records that have the associated
    *                        entity type and also have a <tt>"DATA_SOURCE"</tt>.
    */
-  void setRecordsWithDataSourceCount(int dataSourceCount) {
-    this.dataSourceCount = dataSourceCount;
-  }
+  void setRecordsWithDataSourceCount(int dataSourceCount);
 
   /**
    * Increments the number of records that have the associated data source
@@ -172,9 +109,7 @@ public class SzEntityTypeRecordAnalysis {
    *
    * @return The new count after incrementing.
    */
-  int incrementRecordsWithDataSourceCount() {
-    return ++this.dataSourceCount;
-  }
+  int incrementRecordsWithDataSourceCount();
 
   /**
    * Increments the number of records that have the associated data source
@@ -184,19 +119,82 @@ public class SzEntityTypeRecordAnalysis {
    *
    * @return The new count after incrementing.
    */
-  int incrementRecordsWithDataSourceCount(int increment) {
-    this.dataSourceCount += increment;
-    return this.dataSourceCount;
+  int incrementRecordsWithDataSourceCount(int increment);
+
+    /**
+   * A {@link ModelProvider} for instances of {@link
+   * SzEntityTypeRecordAnalysis}.
+   */
+  interface Provider extends ModelProvider<SzEntityTypeRecordAnalysis> {
+    /**
+     * Creates a new instance of {@link SzEntityTypeRecordAnalysis}.
+     * @param entityType The entity type code for the new instance.
+     * @return The new instance of {@link SzEntityTypeRecordAnalysis}
+     */
+    SzEntityTypeRecordAnalysis create(String entityType);
   }
 
-  @Override
-  public String toString() {
-    return "SzEntityTypeRecordAnalysis{" +
-        "entityType='" + entityType + '\'' +
-        ", recordCount=" + recordCount +
-        ", recordIdCount=" + recordIdCount +
-        ", dataSourceCount=" + dataSourceCount +
-        '}';
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzEntityTypeRecordAnalysis} that produces instances of {@link
+   * SzEntityTypeRecordAnalysisImpl}.
+   */
+  class DefaultProvider
+      extends AbstractModelProvider<SzEntityTypeRecordAnalysis>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzEntityTypeRecordAnalysis.class,
+            SzEntityTypeRecordAnalysisImpl.class);
+    }
+
+    @Override
+    public SzEntityTypeRecordAnalysis create(String entityType) {
+      return new SzEntityTypeRecordAnalysisImpl(entityType);
+    }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link
+   * SzEntityTypeRecordAnalysis}.
+   */
+  class Factory extends ModelFactory<SzEntityTypeRecordAnalysis, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzEntityTypeRecordAnalysis.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzEntityTypeRecordAnalysis}.
+     * @param entityType The entity type code for the new instance.
+     * @return The new instance of {@link SzEntityTypeRecordAnalysis}.
+     */
+    public SzEntityTypeRecordAnalysis create(String entityType)
+    {
+      return this.getProvider().create(entityType);
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
+
 }
 

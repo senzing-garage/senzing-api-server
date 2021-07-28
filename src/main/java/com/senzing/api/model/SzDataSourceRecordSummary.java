@@ -1,77 +1,38 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzDataSourceRecordSummaryImpl;
+
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
  * Describes a record summary by data source.
  */
-public class SzDataSourceRecordSummary {
-  /**
-   * The data source for the record summary.
-   */
-  private String dataSource;
-
-  /**
-   * The number of records in the entity from the data source.
-   */
-  private int recordCount;
-
-  /**
-   * The list of record IDs for the entity from the data source.
-   */
-  private List<String> topRecordIds;
-
-  /**
-   * Default constructor.
-   */
-  public SzDataSourceRecordSummary() {
-    this(null, 0);
-  }
-
-  /**
-   * Constructs with the specified data source and record count.
-   *
-   * @param dataSource The data source associated with the summary.
-   * @param recordCount The number of records from the data source in
-   *                    the entity.
-   */
-  public SzDataSourceRecordSummary(String dataSource, int recordCount) {
-    this.dataSource   = dataSource;
-    this.recordCount  = recordCount;
-    this.topRecordIds = new LinkedList<>();
-  }
-
+@JsonDeserialize(using=SzDataSourceRecordSummary.Factory.class)
+public interface SzDataSourceRecordSummary {
   /**
    * Returns the associated data source.
    *
    * @return The associated data source.
    */
-  public String getDataSource() {
-    return this.dataSource;
-  }
+  String getDataSource();
 
   /**
    * Sets the associated data source.
    *
    * @param dataSource The data source for the summary.
    */
-  public void setDataSource(String dataSource) {
-    this.dataSource = dataSource;
-  }
+  void setDataSource(String dataSource);
 
   /**
    * Returns the record count for the summary.
    *
    * @return The record count for the summary.
    */
-  public int getRecordCount() {
-    return this.recordCount;
-  }
+  int getRecordCount();
 
   /**
    * Sets the record count for the summary.
@@ -79,39 +40,99 @@ public class SzDataSourceRecordSummary {
    * @param recordCount The number of records in the entity from the
    *                    data source.
    */
-  public void setRecordCount(int recordCount) {
-    this.recordCount = recordCount;
-  }
+  void setRecordCount(int recordCount);
 
   /**
    * Returns an unmodifiable {@link List} of the top record IDs.
    *
    * @return An unmodifiable {@link List} of the top record IDs.
    */
-  public List<String> getTopRecordIds() {
-    return Collections.unmodifiableList(this.topRecordIds);
-  }
+  List<String> getTopRecordIds();
 
   /**
    * Sets the top record IDs to the specified {@link List} of record IDs.
    *
    * @param topRecordIds The top record IDs for the data source.
    */
-  public void setTopRecordIds(List<String> topRecordIds) {
-    this.topRecordIds.clear();
-    if (topRecordIds != null) {
-      this.topRecordIds.addAll(topRecordIds);
-    }
-  }
+  void setTopRecordIds(List<String> topRecordIds);
 
   /**
    * Adds a record ID to the {@link List} of top record IDs for the summary.
    *
    * @param recordId The record ID to add to the list of top record IDs.
    */
-  public void addTopRecordId(String recordId) {
-    this.topRecordIds.add(recordId);
+  void addTopRecordId(String recordId);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzDataSourceRecordSummary}.
+   */
+  interface Provider extends ModelProvider<SzDataSourceRecordSummary> {
+    /**
+     * Creates a new instance of {@link SzDataSourceRecordSummary}.
+     *
+     * @return The new instance of {@link SzDataSourceRecordSummary}
+     */
+    SzDataSourceRecordSummary create();
   }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzDataSourceRecordSummary} that produces instances of {@link
+   * SzDataSourceRecordSummaryImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzDataSourceRecordSummary>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzDataSourceRecordSummary.class, SzDataSourceRecordSummaryImpl.class);
+    }
+
+    @Override
+    public SzDataSourceRecordSummary create() {
+      return new SzDataSourceRecordSummaryImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link
+   * SzDataSourceRecordSummary}.
+   */
+  class Factory extends ModelFactory<SzDataSourceRecordSummary, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzDataSourceRecordSummary.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzDataSourceRecordSummary}.
+     * @return The new instance of {@link SzDataSourceRecordSummary}.
+     */
+    public SzDataSourceRecordSummary create()
+    {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses a list of {@link SzDataSourceRecordSummary} instances from native API JSON
@@ -127,9 +148,9 @@ public class SzDataSourceRecordSummary {
    * @return The specified {@link List} that was populated or the new
    *         {@link List} that was created.
    */
-  public static List<SzDataSourceRecordSummary> parseRecordSummaryList(
+  static List<SzDataSourceRecordSummary> parseRecordSummaryList(
       List<SzDataSourceRecordSummary> list,
-      JsonArray             jsonArray)
+      JsonArray                       jsonArray)
   {
     if (list == null) {
       list = new ArrayList<>(jsonArray.size());
@@ -151,10 +172,11 @@ public class SzDataSourceRecordSummary {
    *
    * @return The {@link SzDataSourceRecordSummary} that was specified or created.
    */
-  public static SzDataSourceRecordSummary parseRecordSummary(SzDataSourceRecordSummary summary,
-                                                             JsonObject      jsonObject)
+  static SzDataSourceRecordSummary parseRecordSummary(
+      SzDataSourceRecordSummary summary,
+      JsonObject                jsonObject)
   {
-    if (summary == null) summary = new SzDataSourceRecordSummary();
+    if (summary == null) summary = SzDataSourceRecordSummary.FACTORY.create();
 
     String dataSource  = jsonObject.getString("DATA_SOURCE");
     int    recordCount = jsonObject.getJsonNumber("RECORD_COUNT").intValue();
@@ -163,14 +185,5 @@ public class SzDataSourceRecordSummary {
     summary.setRecordCount(recordCount);
 
     return summary;
-  }
-
-  @Override
-  public String toString() {
-    return "SzRecordSummary{" +
-        "dataSource='" + dataSource + '\'' +
-        ", recordCount=" + recordCount +
-        ", topRecordIds=" + topRecordIds +
-        '}';
   }
 }

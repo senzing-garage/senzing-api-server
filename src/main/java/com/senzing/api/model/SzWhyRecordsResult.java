@@ -1,6 +1,8 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzWhyRecordsResultImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -13,33 +15,8 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 /**
  * Describes why an entity resolved.
  */
-public class SzWhyRecordsResult {
-  /**
-   * The {@link SzWhyPerspective} identifying and describing the perspective
-   * from the first record.
-   */
-  private SzWhyPerspective perspective1;
-
-  /**
-   * The {@link SzWhyPerspective} identifying and describing the perspective
-   * from the second record.
-   */
-  private SzWhyPerspective perspective2;
-
-  /**
-   * The {@link SzMatchInfo} providing the details of the result.
-   */
-  private SzMatchInfo matchInfo;
-
-  /**
-   * Default constructor.
-   */
-  public SzWhyRecordsResult() {
-    this.perspective1 = null;
-    this.perspective2 = null;
-    this.matchInfo    = null;
-  }
-
+@JsonDeserialize(using=SzWhyRecordsResult.Factory.class)
+public interface SzWhyRecordsResult {
   /**
    * Gets the {@link SzWhyPerspective} identifying and describing the
    * perspective for this why result from the first record.
@@ -48,9 +25,7 @@ public class SzWhyRecordsResult {
    *         perspective for this why result from the first record.
    */
   @JsonInclude(NON_NULL)
-  public SzWhyPerspective getPerspective1() {
-    return this.perspective1;
-  }
+  SzWhyPerspective getPerspective1();
 
   /**
    * Sets the {@link SzWhyPerspective} identifying and describing the
@@ -60,9 +35,7 @@ public class SzWhyRecordsResult {
    *                    the perspective for this why result from the first
    *                    record.
    */
-  public void setPerspective1(SzWhyPerspective perspective) {
-    this.perspective1 = perspective;
-  }
+  void setPerspective1(SzWhyPerspective perspective);
 
   /**
    * Gets the {@link SzWhyPerspective} identifying and describing the
@@ -72,9 +45,7 @@ public class SzWhyRecordsResult {
    *         perspective for this why result from the first record.
    */
   @JsonInclude(NON_NULL)
-  public SzWhyPerspective getPerspective2() {
-    return this.perspective2;
-  }
+  SzWhyPerspective getPerspective2();
 
   /**
    * Sets the {@link SzWhyPerspective} identifying and describing the
@@ -84,9 +55,7 @@ public class SzWhyRecordsResult {
    *                    the perspective for this why result from the first
    *                    record.
    */
-  public void setPerspective2(SzWhyPerspective perspective) {
-    this.perspective2 = perspective;
-  }
+  void setPerspective2(SzWhyPerspective perspective);
 
   /**
    * Gets the {@link SzMatchInfo} providing the details of the result.
@@ -94,9 +63,7 @@ public class SzWhyRecordsResult {
    * @return The {@link SzMatchInfo} providing the details of the result.
    */
   @JsonInclude(NON_NULL)
-  public SzMatchInfo getMatchInfo() {
-    return this.matchInfo;
-  }
+  SzMatchInfo getMatchInfo();
 
   /**
    * Sets the {@link SzMatchInfo} providing the details of the result.
@@ -104,9 +71,77 @@ public class SzWhyRecordsResult {
    * @param matchInfo The {@link SzMatchInfo} providing the details of the
    *                  result.
    */
-  public void setMatchInfo(SzMatchInfo matchInfo) {
-    this.matchInfo = matchInfo;
+  void setMatchInfo(SzMatchInfo matchInfo);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzWhyRecordsResult}.
+   */
+  interface Provider extends ModelProvider<SzWhyRecordsResult> {
+    /**
+     * Creates a new instance of {@link SzWhyRecordsResult}.
+     *
+     * @return The new instance of {@link SzWhyRecordsResult}
+     */
+    SzWhyRecordsResult create();
   }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzWhyRecordsResult} that produces instances of
+   * {@link SzWhyRecordsResultImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzWhyRecordsResult>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzWhyRecordsResult.class, SzWhyRecordsResultImpl.class);
+    }
+
+    @Override
+    public SzWhyRecordsResult create() {
+      return new SzWhyRecordsResultImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzWhyRecordsResult}.
+   */
+  class Factory extends ModelFactory<SzWhyRecordsResult, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzWhyRecordsResult.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzWhyRecordsResult}.
+     * @return The new instance of {@link SzWhyRecordsResult}.
+     */
+    public SzWhyRecordsResult create() {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the native API JSON to build an instance of {@link
@@ -117,7 +152,7 @@ public class SzWhyRecordsResult {
    *
    * @return The created instance of {@link SzWhyRecordsResult}.
    */
-  public static SzWhyRecordsResult parseWhyRecordsResult(JsonObject jsonObject)
+  static SzWhyRecordsResult parseWhyRecordsResult(JsonObject jsonObject)
   {
     SzWhyPerspective perspective1
         = SzWhyPerspective.parseWhyPerspective(jsonObject);
@@ -130,7 +165,7 @@ public class SzWhyRecordsResult {
     SzMatchInfo matchInfo
         = SzMatchInfo.parseMatchInfo(infoJson);
 
-    SzWhyRecordsResult result = new SzWhyRecordsResult();
+    SzWhyRecordsResult result = SzWhyRecordsResult.FACTORY.create();
     result.setPerspective1(perspective1);
     result.setPerspective2(perspective2);
     result.setMatchInfo(matchInfo);
@@ -151,7 +186,7 @@ public class SzWhyRecordsResult {
    * @return The {@link List} of {@link SzWhyRecordsResult} instances that was
    *         populated.
    */
-  public static List<SzWhyRecordsResult> parseWhyRecordsResultList(
+  static List<SzWhyRecordsResult> parseWhyRecordsResultList(
       List<SzWhyRecordsResult>  list,
       JsonArray                 jsonArray)
   {

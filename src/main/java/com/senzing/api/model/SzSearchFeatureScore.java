@@ -1,6 +1,8 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzSearchFeatureScoreImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -13,79 +15,35 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 /**
  * Describes the scoring between {@link SzScoredFeature} instances.
  */
-public class SzSearchFeatureScore {
-  /**
-   * The feature type of the features being scored.
-   */
-  private String featureType;
-
-  /**
-   * The inbound feature value as a {@link String}.
-   */
-  private String inboundFeature;
-
-  /**
-   * The feature value that was a candidate match for the inbound feature as a
-   * {@link String}.
-   */
-  private String candidateFeature;
-
-  /**
-   * The integer score between the two feature values (typically from 0 and 100)
-   */
-  private Integer score;
-
-  /**
-   * The optional name scoring details.
-   */
-  private SzNameScoring nameScoringDetails;
-
-  /**
-   * Default constructor.
-   */
-  public SzSearchFeatureScore() {
-    this.featureType        = null;
-    this.inboundFeature     = null;
-    this.candidateFeature   = null;
-    this.score              = null;
-    this.nameScoringDetails = null;
-  }
-
+@JsonDeserialize(using=SzSearchFeatureScore.Factory.class)
+public interface SzSearchFeatureScore {
   /**
    * Gets the feature type for the features being scored.
    *
    * @return The feature type for the features being scored.
    */
-  public String getFeatureType() {
-    return featureType;
-  }
+  String getFeatureType();
 
   /**
    * Sets the feature type for the features being scored.
    *
    * @param featureType The feature type for the features being scored.
    */
-  public void setFeatureType(String featureType) {
-    this.featureType = featureType;
-  }
+  void setFeatureType(String featureType);
 
   /**
    * Gets the inbound feature value as a {@link String}.
    *
    * @return The inbound feature value as a {@link String}.
    */
-  public String getInboundFeature() {
-    return this.inboundFeature;
-  }
+  String getInboundFeature();
 
   /**
    * Sets the inbound feature value as a {@link String}.
    *
    * @param inboundFeature The inbound feature value as a {@link String}.
    */
-  public void setInboundFeature(String inboundFeature) {
-    this.inboundFeature = inboundFeature;
-  }
+  void setInboundFeature(String inboundFeature);
 
   /**
    * Gets the feature value of the candidate match for the inbound feature as
@@ -94,9 +52,7 @@ public class SzSearchFeatureScore {
    * @return The feature value of the candidate match for the inbound feature as
    *         a {@link String}.
    */
-  public String getCandidateFeature() {
-    return this.candidateFeature;
-  }
+  String getCandidateFeature();
 
   /**
    * Sets the feature value that describes the candidate match for the inbound
@@ -105,9 +61,7 @@ public class SzSearchFeatureScore {
    * @param candidateFeature The feature value that describes the candidate
    *                         match for the inbound feature.
    */
-  public void setCandidateFeature(String candidateFeature) {
-    this.candidateFeature = candidateFeature;
-  }
+  void setCandidateFeature(String candidateFeature);
 
   /**
    * Gets the integer score between the two feature values (typically from 0
@@ -118,13 +72,7 @@ public class SzSearchFeatureScore {
    * @return The integer score between the two feature values (typically from 0
    *         and 100).
    */
-  public Integer getScore() {
-    if (this.score != null) return this.score;
-    if (this.nameScoringDetails != null) {
-      return this.nameScoringDetails.asFullScore();
-    }
-    return null;
-  }
+  Integer getScore();
 
   /**
    * Sets the integer score between the two feature values (typically from 0
@@ -133,9 +81,7 @@ public class SzSearchFeatureScore {
    * @param score The integer score between the two feature values (typically
    *              from 0 and 100).
    */
-  public void setScore(Integer score) {
-    this.score = score;
-  }
+  void setScore(Integer score);
 
   /**
    * Gets the name scoring details if any exist.  This method returns
@@ -145,9 +91,7 @@ public class SzSearchFeatureScore {
    *         was not a name.
    */
   @JsonInclude(NON_EMPTY)
-  public SzNameScoring getNameScoringDetails() {
-    return this.nameScoringDetails;
-  }
+  SzNameScoring getNameScoringDetails();
 
   /**
    * Sets the name scoring details if any exist.  Set the value to <tt>null</tt>
@@ -156,9 +100,77 @@ public class SzSearchFeatureScore {
    * @param scoring The {@link SzNameScoring} describing the name-scoring
    *                details.
    */
-  public void setNameScoringDetails(SzNameScoring scoring) {
-    this.nameScoringDetails = scoring;
+  void setNameScoringDetails(SzNameScoring scoring);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzSearchFeatureScore}.
+   */
+  interface Provider extends ModelProvider<SzSearchFeatureScore> {
+    /**
+     * Creates a new instance of {@link SzSearchFeatureScore}.
+     *
+     * @return The new instance of {@link SzSearchFeatureScore}
+     */
+    SzSearchFeatureScore create();
   }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzSearchFeatureScore} that produces instances of
+   * {@link SzSearchFeatureScoreImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzSearchFeatureScore>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzSearchFeatureScore.class, SzSearchFeatureScoreImpl.class);
+    }
+
+    @Override
+    public SzSearchFeatureScore create() {
+      return new SzSearchFeatureScoreImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzSearchFeatureScore}.
+   */
+  class Factory extends ModelFactory<SzSearchFeatureScore, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzSearchFeatureScore.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzSearchFeatureScore}.
+     * @return The new instance of {@link SzSearchFeatureScore}.
+     */
+    public SzSearchFeatureScore create() {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the {@link SzSearchFeatureScore} from a {@link JsonObject}
@@ -171,8 +183,8 @@ public class SzSearchFeatureScore {
    *
    * @return The {@link SzSearchFeatureScore} that was created.
    */
-  public static SzSearchFeatureScore parseFeatureScore(JsonObject jsonObject,
-                                                       String     featureType)
+  static SzSearchFeatureScore parseFeatureScore(JsonObject jsonObject,
+                                                String     featureType)
   {
     Integer score     = JsonUtils.getInteger(jsonObject, "FULL_SCORE");
     String  inbound   = JsonUtils.getString(jsonObject, "INBOUND_FEAT");
@@ -186,7 +198,7 @@ public class SzSearchFeatureScore {
       }
     }
 
-    SzSearchFeatureScore result = new SzSearchFeatureScore();
+    SzSearchFeatureScore result = SzSearchFeatureScore.FACTORY.create();
 
     result.setFeatureType(featureType);
     result.setInboundFeature(inbound);
@@ -211,7 +223,7 @@ public class SzSearchFeatureScore {
    * @return The {@link List} of {@link SzSearchFeatureScore} instances that were
    *         populated.
    */
-  public static List<SzSearchFeatureScore> parseFeatureScoreList(
+  static List<SzSearchFeatureScore> parseFeatureScoreList(
       JsonArray   jsonArray,
       String      featureType)
   {
@@ -235,7 +247,7 @@ public class SzSearchFeatureScore {
    * @return The {@link List} of {@link SzSearchFeatureScore} instances that were
    *         populated.
    */
-  public static List<SzSearchFeatureScore> parseFeatureScoreList(
+  static List<SzSearchFeatureScore> parseFeatureScoreList(
       List<SzSearchFeatureScore>  list,
       JsonArray             jsonArray,
       String                featureType)

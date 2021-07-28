@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzFocusRecordIdImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.Json;
@@ -13,94 +15,94 @@ import java.util.Objects;
 /**
  * Describes a record ID with a data source.
  */
-public class SzFocusRecordId {
-  /**
-   * The data source code.
-   */
-  private String dataSource;
-
-  /**
-   * The record ID identifying the record within the data source.
-   */
-  private String recordId;
-
-  /**
-   * Default constructor.
-   */
-  private SzFocusRecordId() {
-    this.dataSource = null;
-    this.recordId = null;
-  }
-
-  /**
-   * Constructs with the specified data source code and record ID.
-   *
-   * @param dataSource The data source code.
-   * @param recordId The record ID identifying the record.
-   */
-  public SzFocusRecordId(String dataSource, String recordId) {
-    this.dataSource = (dataSource != null)
-        ? dataSource.toUpperCase().trim() : null;
-    this.recordId = (recordId != null) ? recordId.trim() : null;
-  }
-
+@JsonDeserialize(using=SzFocusRecordId.Factory.class)
+public interface SzFocusRecordId {
   /**
    * Gets the data source code for the record.
    *
    * @return The data source code for the record.
    */
-  public String getDataSource() {
-    return dataSource;
-  }
-
-  /**
-   * Sets the data source code for the record.
-   *
-   * @param dataSource The data source code for the record.
-   */
-  private void setDataSource(String dataSource) {
-    this.dataSource = dataSource.toUpperCase().trim();
-  }
+  String getDataSource();
 
   /**
    * Return the record ID identifying the record.
    *
    * @return The record ID identifying the record.
    */
-  public String getRecordId() {
-    return recordId;
+  String getRecordId();
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzFocusRecordId}.
+   */
+  interface Provider extends ModelProvider<SzFocusRecordId> {
+    /**
+     * Constructs with the specified data source code and record ID.
+     *
+     * @param dataSource The data source code.
+     * @param recordId The record ID identifying the record.
+     */
+    SzFocusRecordId create(String dataSource, String recordId);
   }
 
   /**
-   * Sets the record ID identifying the record.
-   *
-   * @param recordId The record ID identifying the record.
+   * Provides a default {@link Provider} implementation for {@link
+   * SzFocusRecordId} that produces instances of
+   * {@link SzFocusRecordIdImpl}.
    */
-  private void setRecordId(String recordId) {
-    this.recordId = recordId;
+  class DefaultProvider extends AbstractModelProvider<SzFocusRecordId>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzFocusRecordId.class, SzFocusRecordIdImpl.class);
+    }
+
+    @Override
+    public SzFocusRecordId create(String dataSource, String recordId) {
+      return new SzFocusRecordIdImpl(dataSource, recordId);
+    }
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    SzFocusRecordId recordId1 = (SzFocusRecordId) o;
-    return Objects.equals(getDataSource(), recordId1.getDataSource()) &&
-        Objects.equals(getRecordId(), recordId1.getRecordId());
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzFocusRecordId}.
+   */
+  class Factory extends ModelFactory<SzFocusRecordId, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzFocusRecordId.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Constructs with the specified data source code and record ID.
+     *
+     * @param dataSource The data source code.
+     * @param recordId The record ID identifying the record.
+     */
+    public SzFocusRecordId create(String dataSource, String recordId) {
+      return this.getProvider().create(dataSource, recordId);
+    }
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(getDataSource(), getRecordId());
-  }
-
-  @Override
-  public String toString() {
-    return "SzFocusRecordId{" +
-        "dataSource='" + this.getDataSource() + '\'' +
-        ", recordId='" + this.getRecordId() + '\'' +
-        '}';
-  }
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the {@link SzFocusRecordId} from a {@link JsonObject} describing
@@ -111,10 +113,10 @@ public class SzFocusRecordId {
    *
    * @return The {@link SzFocusRecordId} that was created.
    */
-  public static SzFocusRecordId parseFocusRecordId(JsonObject jsonObject) {
+  static SzFocusRecordId parseFocusRecordId(JsonObject jsonObject) {
     String src  = JsonUtils.getString(jsonObject, "DATA_SOURCE");
     String id   = JsonUtils.getString(jsonObject, "RECORD_ID");
-    return new SzFocusRecordId(src, id);
+    return SzFocusRecordId.FACTORY.create(src, id);
   }
 
   /**
@@ -127,8 +129,7 @@ public class SzFocusRecordId {
    * @return The {@link List} of {@link SzFocusRecordId} instances that were
    *         populated.
    */
-  public static List<SzFocusRecordId> parseFocusRecordIdList(
-      JsonArray jsonArray)
+  static List<SzFocusRecordId> parseFocusRecordIdList(JsonArray jsonArray)
   {
     return parseRecordIdList(null, jsonArray);
   }
@@ -146,7 +147,7 @@ public class SzFocusRecordId {
    * @return The {@link List} of {@link SzFocusRecordId} instances that were
    *         populated.
    */
-  public static List<SzFocusRecordId> parseRecordIdList(
+  static List<SzFocusRecordId> parseRecordIdList(
       List<SzFocusRecordId> list,
       JsonArray             jsonArray)
   {

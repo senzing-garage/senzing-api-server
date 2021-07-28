@@ -1,8 +1,14 @@
-package com.senzing.api.model;
+package com.senzing.api.model.impl;
+
+import com.senzing.api.model.SzBulkLoadError;
+import com.senzing.api.model.SzError;
 
 import java.util.*;
 
-class SzBulkLoadErrorTracker {
+/**
+ * A utility class for tracking bulk-load errors.
+ */
+public class SzBulkLoadErrorTracker {
   /**
    * The maximum number of tracked errors.
    */
@@ -146,7 +152,7 @@ class SzBulkLoadErrorTracker {
     private SzBulkLoadError loadError;
     private long timestamp;
     private TrackedError(SzError error) {
-      this(new SzBulkLoadError(error));
+      this(SzBulkLoadError.FACTORY.create(error));
     }
     private TrackedError(SzBulkLoadError error) {
       this.loadError = error;

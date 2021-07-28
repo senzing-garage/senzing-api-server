@@ -1,5 +1,8 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzEntityNetworkDataImpl;
+
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.*;
@@ -7,64 +10,9 @@ import java.util.function.Function;
 
 /**
  * Describes an entity path and the entities in the path.
- *
  */
-public class SzEntityNetworkData {
-  /**
-   * The {@link List} of {@link SzEntityPath} describing the entity paths.
-   */
-  private List<SzEntityPath> entityPaths;
-
-  /**
-   * The {@link List} of {@link SzEntityData} instances describing the entities
-   * in the path.
-   */
-  private List<SzEntityData> entities;
-
-  /**
-   * Package-private default constructor.
-   */
-  SzEntityNetworkData() {
-    this.entityPaths  = null;
-    this.entities     = null;
-  }
-
-  /**
-   * Constructs with the specified {@link List} of {@link SzEntityPath}
-   * instances and {@link List} of {@link SzEntityData} instances describing
-   * the entities in the path.
-   *
-   * @param entityPaths The {@link List} of {@link SzEntityPath} instances
-   *                    describing the entity paths.
-   *
-   * @param entities The {@link List} of {@link SzEntityData} instances
-   *                 describing the entities in the path.
-   *
-   * @throws IllegalArgumentException If the entities list is not consistent
-   *                                  with the specified entity paths.
-   */
-  public SzEntityNetworkData(List<SzEntityPath>  entityPaths,
-                             List<SzEntityData>  entities)
-    throws IllegalArgumentException
-  {
-    // check the sets of entity IDs
-    Set<Long> set1 = new HashSet<>();
-    Set<Long> set2 = new HashSet<>();
-    entities.forEach(e -> set1.add(e.getResolvedEntity().getEntityId()));
-    entityPaths.forEach(entityPath -> set2.addAll(entityPath.getEntityIds()));
-
-    if (!set1.containsAll(set2)) {
-      throw new IllegalArgumentException(
-          "Some of the entities on the paths are not in included in the "
-          + "enitty list.  pathEntities=[ " + set2 + " ], listEntities=[ "
-          + set1 + " ]");
-    }
-
-    this.entityPaths = Collections.unmodifiableList(
-        new ArrayList<>(entityPaths));
-    this.entities = Collections.unmodifiableList(new ArrayList<>(entities));
-  }
-
+@JsonDeserialize(using=SzEntityNetworkData.Factory.class)
+public interface SzEntityNetworkData {
   /**
    * Returns the {@link List} of {@link SzEntityPath} instances describing
    * the entity paths.
@@ -72,9 +20,7 @@ public class SzEntityNetworkData {
    * @return The {@link List} of {@link SzEntityPath} instances describing
    *         the entity paths.
    */
-  public List<SzEntityPath> getEntityPaths() {
-    return this.entityPaths;
-  }
+  List<SzEntityPath> getEntityPaths();
 
   /**
    * Returns the {@link List} of {@link SzEntityData} instances describing
@@ -83,17 +29,121 @@ public class SzEntityNetworkData {
    * @return The {@link List} of {@link SzEntityData} instances describing
    *         the entities in the path.
    */
-  public List<SzEntityData> getEntities() {
-    return this.entities;
+  List<SzEntityData> getEntities();
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzEntityNetworkData}.
+   */
+  interface Provider extends ModelProvider<SzEntityNetworkData> {
+    /**
+     * Creates an uninitialized instance.
+     */
+    SzEntityNetworkData create();
+
+    /**
+     * Creates an instance with the specified {@link List} of {@link
+     * SzEntityPath} instances and {@link List} of {@link SzEntityData}
+     * instances describing the entities in the path.
+     *
+     * @param entityPaths The {@link List} of {@link SzEntityPath} instances
+     *                    describing the entity paths.
+     *
+     * @param entities The {@link List} of {@link SzEntityData} instances
+     *                 describing the entities in the path.
+     *
+     * @throws IllegalArgumentException If the entities list is not consistent
+     *                                  with the specified entity paths.
+     */
+    SzEntityNetworkData create(List<SzEntityPath> entityPaths,
+                               List<SzEntityData> entities)
+        throws IllegalArgumentException;
   }
 
-  @Override
-  public String toString() {
-    return "SzEntityNetworkData{" +
-        "entityPaths=" + entityPaths +
-        ", entities=" + entities +
-        '}';
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzEntityNetworkData} that produces instances of {@link
+   * SzEntityNetworkDataImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzEntityNetworkData>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzEntityNetworkData.class, SzEntityNetworkDataImpl.class);
+    }
+
+    @Override
+    public SzEntityNetworkData create() {
+      return new SzEntityNetworkDataImpl();
+    }
+
+    @Override
+    public SzEntityNetworkData create(List<SzEntityPath> entityPaths,
+                                      List<SzEntityData> entities)
+        throws IllegalArgumentException
+    {
+      return new SzEntityNetworkDataImpl(entityPaths, entities);
+    }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link
+   * SzEntityNetworkData}.
+   */
+  class Factory extends ModelFactory<SzEntityNetworkData, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzEntityNetworkData.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates an uninitialized instance.
+     */
+    public SzEntityNetworkData create() {
+      return this.getProvider().create();
+    }
+
+    /**
+     * Creates an instance with the specified {@link List} of {@link
+     * SzEntityPath} instances and {@link List} of {@link SzEntityData}
+     * instances describing the entities in the path.
+     *
+     * @param entityPaths The {@link List} of {@link SzEntityPath} instances
+     *                    describing the entity paths.
+     *
+     * @param entities The {@link List} of {@link SzEntityData} instances
+     *                 describing the entities in the path.
+     *
+     * @throws IllegalArgumentException If the entities list is not consistent
+     *                                  with the specified entity paths.
+     */
+    public SzEntityNetworkData create(List<SzEntityPath> entityPaths,
+                                      List<SzEntityData> entities)
+        throws IllegalArgumentException
+    {
+      return this.getProvider().create(entityPaths, entities);
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the entity feature from a {@link JsonObject} describing JSON
@@ -108,7 +158,7 @@ public class SzEntityNetworkData {
    *
    * @return The populated (or created) {@link SzEntityNetworkData}.
    */
-  public static SzEntityNetworkData parseEntityNetworkData(
+  static SzEntityNetworkData parseEntityNetworkData(
       JsonObject              jsonObject,
       Function<String,String> featureToAttrClassMapper)
   {
@@ -121,7 +171,7 @@ public class SzEntityNetworkData {
     List<SzEntityData> dataList = SzEntityData.parseEntityDataList(
         null, jsonArray, featureToAttrClassMapper);
 
-    return new SzEntityNetworkData(entityPaths, dataList);
+    return SzEntityNetworkData.FACTORY.create(entityPaths, dataList);
   }
 
 }

@@ -1,6 +1,8 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzMatchedRecordImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -13,55 +15,17 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
  * Describes an entity record that has matched another record in a resolved
  * entity.
  */
-public class SzMatchedRecord extends SzEntityRecord {
-  /**
-   * The match level.
-   */
-  private Integer matchLevel;
-
-  /**
-   * The match score.
-   */
-  private Integer matchScore;
-
-  /**
-   * The match key for the relationship.
-   */
-  private String matchKey;
-
-  /**
-   * The resolution rule code.
-   */
-  private String resolutionRuleCode;
-
-  /**
-   * The ref score.
-   */
-  private Integer refScore;
-
-  /**
-   * Default constructor.
-   */
-  public SzMatchedRecord() {
-    super();
-    this.matchKey           = null;
-    this.resolutionRuleCode = null;
-    this.matchLevel         = null;
-    this.matchScore         = null;
-    this.refScore           = null;
-  }
-
+@JsonDeserialize(using=SzMatchedRecord.Factory.class)
+public interface SzMatchedRecord extends SzEntityRecord {
   /**
    * Gets the match level for how this record matched against the first record
    * in the resolved entity.
    *
-   * @return The match level for how this record matched against the first record
-   *         in the resolved entity.
+   * @return The match level for how this record matched against the first
+   *         record in the resolved entity.
    */
   @JsonInclude(NON_EMPTY)
-  public Integer getMatchLevel() {
-    return matchLevel;
-  }
+  Integer getMatchLevel();
 
   /**
    * Sets the match level for how this record matched against the first record
@@ -70,9 +34,7 @@ public class SzMatchedRecord extends SzEntityRecord {
    * @param matchLevel The match level for how this record matched against the
    *                   first record in the resolved entity.
    */
-  public void setMatchLevel(Integer matchLevel) {
-    this.matchLevel = matchLevel;
-  }
+  void setMatchLevel(Integer matchLevel);
 
   /**
    * Gets the match score for how this record matched against the first record
@@ -82,9 +44,7 @@ public class SzMatchedRecord extends SzEntityRecord {
    *         record in the resolved entity.
    */
   @JsonInclude(NON_EMPTY)
-  public Integer getMatchScore() {
-    return matchScore;
-  }
+  Integer getMatchScore();
 
   /**
    * Sets the match score for how this record matched against the first record
@@ -93,9 +53,7 @@ public class SzMatchedRecord extends SzEntityRecord {
    * @param matchScore The match score for how this record matched against the
    *                   first record in the resolved entity.
    */
-  public void setMatchScore(Integer matchScore) {
-    this.matchScore = matchScore;
-  }
+  void setMatchScore(Integer matchScore);
 
   /**
    * Gets the match key for how this record matched against the first record
@@ -105,9 +63,7 @@ public class SzMatchedRecord extends SzEntityRecord {
    *         in the resolved entity.
    */
   @JsonInclude(NON_EMPTY)
-  public String getMatchKey() {
-    return matchKey;
-  }
+  String getMatchKey();
 
   /**
    * Sets the match key for how this record matched against the first record
@@ -116,9 +72,7 @@ public class SzMatchedRecord extends SzEntityRecord {
    * @param matchKey The match key for how this record matched against the
    *                 first record in the resolved entity.
    */
-  public void setMatchKey(String matchKey) {
-    this.matchKey = matchKey;
-  }
+  void setMatchKey(String matchKey);
 
   /**
    * Gets the resolution rule code for how this record matched against the
@@ -128,9 +82,7 @@ public class SzMatchedRecord extends SzEntityRecord {
    *         first record in the resolved entity.
    */
   @JsonInclude(NON_EMPTY)
-  public String getResolutionRuleCode() {
-    return resolutionRuleCode;
-  }
+  String getResolutionRuleCode();
 
   /**
    * Sets the resolution rule code for how this record matched against the
@@ -140,9 +92,7 @@ public class SzMatchedRecord extends SzEntityRecord {
    *                           matched against the first record in the
    *                           resolved entity.
    */
-  public void setResolutionRuleCode(String resolutionRuleCode) {
-    this.resolutionRuleCode = resolutionRuleCode;
-  }
+  void setResolutionRuleCode(String resolutionRuleCode);
 
   /**
    * Gets the ref score for how this record matched against the
@@ -152,9 +102,7 @@ public class SzMatchedRecord extends SzEntityRecord {
    *         first record in the resolved entity.
    */
   @JsonInclude(NON_EMPTY)
-  public Integer getRefScore() {
-    return refScore;
-  }
+  Integer getRefScore();
 
   /**
    * Sets the ref score for how this record matched against the first record
@@ -163,9 +111,76 @@ public class SzMatchedRecord extends SzEntityRecord {
    * @param refScore The ref score for how this record matched against the
    *                 first record in the resolved entity.
    */
-  public void setRefScore(Integer refScore) {
-    this.refScore = refScore;
+  void setRefScore(Integer refScore);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzMatchedRecord}.
+   */
+  interface Provider extends ModelProvider<SzMatchedRecord> {
+    /**
+     * Creates a new instance of {@link SzMatchedRecord}.
+     *
+     * @return The new instance of {@link SzMatchedRecord}
+     */
+    SzMatchedRecord create();
   }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzMatchedRecord} that produces instances of {@link SzMatchedRecordImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzMatchedRecord>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzMatchedRecord.class, SzMatchedRecordImpl.class);
+    }
+
+    @Override
+    public SzMatchedRecord create() {
+      return new SzMatchedRecordImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link SzMatchedRecord}.
+   */
+  class Factory extends ModelFactory<SzMatchedRecord, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzMatchedRecord.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzMatchedRecord}.
+     * @return The new instance of {@link SzMatchedRecord}.
+     */
+    public SzMatchedRecord create()
+    {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the native JSON to construct/populate a {@link List}
@@ -178,13 +193,13 @@ public class SzMatchedRecord extends SzEntityRecord {
    * @return The specified (or constructed) {@link List} of {@link
    *         SzMatchedRecord} instances.
    */
-  public static List<SzMatchedRecord> parseMatchedRecordList(
+  static List<SzMatchedRecord> parseMatchedRecordList(
       List<SzMatchedRecord>  list,
       JsonArray             jsonArray)
   {
     for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
       if (list == null) {
-        list = new ArrayList<SzMatchedRecord>(jsonArray.size());
+        list = new ArrayList<>(jsonArray.size());
       }
       list.add(parseMatchedRecord(null, jsonObject));
     }
@@ -208,13 +223,13 @@ public class SzMatchedRecord extends SzEntityRecord {
    *
    * @return The populated (or created) instance of {@link SzMatchedRecord}
    */
-  public static SzMatchedRecord parseMatchedRecord(SzMatchedRecord record,
-                                                   JsonObject     jsonObject)
+  static SzMatchedRecord parseMatchedRecord(SzMatchedRecord record,
+                                            JsonObject      jsonObject)
   {
-    if (record == null) record = new SzMatchedRecord();
+    if (record == null) record = SzMatchedRecord.FACTORY.create();
 
     // populate from the base class
-    parseEntityRecord(record, jsonObject);
+    SzEntityRecord.parseEntityRecord(record, jsonObject);
 
     // now get the match fields
     Optional<Integer> matchScore = SzBaseRelatedEntity.readMatchScore(jsonObject);
@@ -232,20 +247,4 @@ public class SzMatchedRecord extends SzEntityRecord {
 
     return record;
   }
-
-  @Override
-  public String toString() {
-    return "SzMatchedRecord{" + this.fieldsToString() + "}";
-  }
-
-  @Override
-  protected String fieldsToString() {
-    return super.fieldsToString() +
-        ", matchLevel=" + matchLevel +
-        ", matchScore=" + matchScore +
-        ", matchKey='" + matchKey + '\'' +
-        ", resolutionRuleCode='" + resolutionRuleCode + '\'' +
-        ", refScore=" + refScore;
-  }
-
 }

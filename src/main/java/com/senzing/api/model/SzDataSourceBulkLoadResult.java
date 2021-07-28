@@ -1,62 +1,94 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzDataSourceBulkLoadResultImpl;
+
 /**
  * Describes an analysis of bulk data records associated with a specific
  * data source (or no data source at all).
  */
-public class SzDataSourceBulkLoadResult extends SzBaseBulkLoadResult {
-  /**
-   * The associated data source or <tt>null</tt>.
-   */
-  private String dataSource;
-
-  /**
-   * Default constructor that constructs with a <tt>null</tt> data source.
-   */
-  public SzDataSourceBulkLoadResult() {
-    this(null);
-  }
-
-  /**
-   * Constructs with the specified data source.
-   *
-   * @param dataSource The data source or <tt>null</tt> if the constructed
-   *                   instance is associated with those records that have
-   *                   no data source.
-   */
-  public SzDataSourceBulkLoadResult(String dataSource) {
-    super();
-    this.dataSource = dataSource;
-  }
-
+@JsonDeserialize(using=SzDataSourceBulkLoadResult.Factory.class)
+public interface SzDataSourceBulkLoadResult extends SzBaseBulkLoadResult {
   /**
    * Returns the data source with which this instance was constructed.
    *
    * @return The data source with which this instance was constructed.
    */
-  public String getDataSource() {
-    return dataSource;
+  String getDataSource();
+
+  /**
+   * A {@link ModelProvider} for instances of {@link
+   * SzDataSourceBulkLoadResult}.
+   */
+  interface Provider extends ModelProvider<SzDataSourceBulkLoadResult> {
+    /**
+     * Creates a new instance of {@link SzDataSourceBulkLoadResult}.
+     * @param dataSource The data source code for the new instance.
+     * @return The new instance of {@link SzDataSourceBulkLoadResult}
+     */
+    SzDataSourceBulkLoadResult create(String dataSource);
   }
 
   /**
-   * Sets the data source for this instance.
-   *
-   * @return The data source for this instance.
+   * Provides a default {@link Provider} implementation for {@link
+   * SzDataSourceBulkLoadResult} that produces instances of {@link
+   * SzDataSourceBulkLoadResultImpl}.
    */
-  void setDataSource(String dataSource) {
-    this.dataSource = dataSource;
+  class DefaultProvider
+      extends AbstractModelProvider<SzDataSourceBulkLoadResult>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzDataSourceBulkLoadResult.class,
+            SzDataSourceBulkLoadResultImpl.class);
+    }
+
+    @Override
+    public SzDataSourceBulkLoadResult create(String dataSource) {
+      return new SzDataSourceBulkLoadResultImpl(dataSource);
+    }
   }
 
-  @Override
-  public String toString() {
-    return "SzDataSourceBulkLoadResult{" +
-        "dataSource='" + this.getDataSource() + '\'' +
-        ", recordCount=" + this.getRecordCount() +
-        ", loadedRecordCount=" + this.getLoadedRecordCount() +
-        ", incompleteRecordCount=" + this.getIncompleteRecordCount() +
-        ", failedRecordCount=" + this.getFailedRecordCount() +
-        ", topErrors=[ " + this.getTopErrors() +
-        " ]}";
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link
+   * SzDataSourceBulkLoadResult}.
+   */
+  class Factory extends ModelFactory<SzDataSourceBulkLoadResult, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzDataSourceBulkLoadResult.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzDataSourceBulkLoadResult}.
+     * @param dataSource The data source code for the new instance.
+     * @return The new instance of {@link SzDataSourceBulkLoadResult}.
+     */
+    public SzDataSourceBulkLoadResult create(String dataSource)
+    {
+      return this.getProvider().create(dataSource);
+    }
   }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 }
 

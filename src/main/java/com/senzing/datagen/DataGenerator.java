@@ -1,5 +1,6 @@
 package com.senzing.datagen;
 
+import com.senzing.cmdline.CommandLineOption;
 import com.senzing.cmdline.CommandLineUtilities;
 import com.senzing.cmdline.CommandLineValue;
 
@@ -1376,7 +1377,7 @@ public class DataGenerator {
    *
    */
   public static void main(String[] args) {
-    Map<DataGeneratorOption, Object> options = null;
+    Map<CommandLineOption, Object> options = null;
     try {
       options = parseCommandLine(args);
     } catch (Exception e) {
@@ -1696,83 +1697,16 @@ public class DataGenerator {
    * @return The {@link Map} of options to their values.
    * @throws IllegalArgumentException If command line arguments are invalid.
    */
-  private static Map<DataGeneratorOption, Object> parseCommandLine(
-      String[] args)
+  private static Map<CommandLineOption, Object> parseCommandLine(String[] args)
   {
-    Map<DataGeneratorOption, CommandLineValue<DataGeneratorOption>> optionValues
+    Map<CommandLineOption, CommandLineValue> optionValues
         = CommandLineUtilities.parseCommandLine(
         DataGeneratorOption.class,
         args,
-        (option, params) -> {
-          switch (option) {
-            case HELP:
-              if (args.length > 1) {
-                throw new IllegalArgumentException(
-                    "Help option should be only option when provided.");
-              }
-              return Boolean.TRUE;
-
-            case CSV_FILE:
-            case JSON_FILE:
-            case JSON_LINES_FILE:
-              return new File(params.get(0));
-
-            case PERSON_COUNT:
-            case ORGANIZATION_COUNT:
-            case BUSINESS_COUNT:
-            case MAX_NAME_COUNT:
-            case MAX_BIRTH_DATE_COUNT:
-            case MAX_ADDRESS_COUNT:
-            case MAX_PHONE_COUNT:
-            case MAX_EMAIL_COUNT:
-              try {
-                int count = Integer.parseInt(params.get(0));
-                if (count < 0) throw new IllegalArgumentException();
-                return count;
-              } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException(
-                    "The " + option.getCommandLineFlag() + " option requires "
-                        + " a non-negative integer: " + params.get(0));
-              }
-
-            case PERSON_SOURCES:
-            case ORGANIZATION_SOURCES:
-            case BUSINESS_SOURCES:
-              return new ArrayList<>(params);
-
-            case ENTITY_TYPE_STRATEGY:
-              return EntityTypeStrategy.valueOf(
-                  params.get(0).replace('-', '_').toUpperCase());
-
-            case NAME_DENSITY:
-            case BIRTH_DATE_DENSITY:
-            case ADDRESS_DENSITY:
-            case PHONE_DENSITY:
-            case EMAIL_DENSITY:
-              return FeatureDensity.valueOf(
-                  params.get(0).replace('-','_').toUpperCase());
-
-            case FULL_VALUES:
-            case DEFAULT_NO_FEATURES:
-            case FLATTEN:
-            case OVERWRITE:
-            case PRETTY_PRINT:
-            case WITH_RECORD_IDS:
-              return Boolean.TRUE;
-
-            case SEED:
-              return Long.parseLong(params.get(0));
-
-            default:
-              throw new IllegalArgumentException(
-                  "Unhandled command line option: "
-                      + option.getCommandLineFlag()
-                      + " / " + option);
-          }
-        });
+        DataGeneratorOption.PARAMETER_PROCESSOR);
 
     // create a result map
-    Map<DataGeneratorOption, Object> result = new LinkedHashMap<>();
+    Map<CommandLineOption, Object> result = new LinkedHashMap<>();
 
     // iterate over the option values and handle them
     CommandLineUtilities.processCommandLine(optionValues, result);

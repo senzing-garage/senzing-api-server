@@ -1,6 +1,8 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzEntityDataImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -11,36 +13,16 @@ import java.util.function.Function;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 
 /**
- * Describes a resolved entity and its related entities.
- *
+ * Provides a default implementation of {@link SzEntityData}.
  */
-public class SzEntityData {
-  /**
-   * The resolved entity.
-   */
-  private SzResolvedEntity resolvedEntity;
-
-  /**
-   * The entities related to the resolved entity.
-   */
-  private List<SzRelatedEntity> relatedEntities;
-
-  /**
-   * Default constructor.
-   */
-  public SzEntityData() {
-    this.resolvedEntity = null;
-    this.relatedEntities = new LinkedList<>();
-  }
-
+@JsonDeserialize(using=SzEntityData.Factory.class)
+public interface SzEntityData {
   /**
    * Gets the {@link SzResolvedEntity} describing the resolved entity.
    *
    * @return The {@link SzResolvedEntity} describing the resolved entity.
    */
-  public SzResolvedEntity getResolvedEntity() {
-    return resolvedEntity;
-  }
+  SzResolvedEntity getResolvedEntity();
 
   /**
    * Sets the {@link SzResolvedEntity} describing the resolved entity.
@@ -48,9 +30,7 @@ public class SzEntityData {
    * @param resolvedEntity The {@link SzResolvedEntity} describing the
    *                       resolved entity.
    */
-  public void setResolvedEntity(SzResolvedEntity resolvedEntity) {
-    this.resolvedEntity = resolvedEntity;
-  }
+  void setResolvedEntity(SzResolvedEntity resolvedEntity);
 
   /**
    * Gets the {@link List} of {@linkplain SzRelatedEntity related entities}.
@@ -58,9 +38,7 @@ public class SzEntityData {
    * @return The {@link List} of {@linkplain SzRelatedEntity related entities}.
    */
   @JsonInclude(NON_EMPTY)
-  public List<SzRelatedEntity> getRelatedEntities() {
-    return Collections.unmodifiableList(this.relatedEntities);
-  }
+  List<SzRelatedEntity> getRelatedEntities();
 
   /**
    * Sets the {@link List} of {@linkplain SzRelatedEntity related entities}.
@@ -68,21 +46,81 @@ public class SzEntityData {
    * @param relatedEntities The {@link List} of {@linkplain SzRelatedEntity
    *                        related entities}.
    */
-  public void setRelatedEntities(List<SzRelatedEntity> relatedEntities) {
-    this.relatedEntities.clear();
-    if (relatedEntities != null) {
-      this.relatedEntities.addAll(relatedEntities);
-    }
-  }
+  void setRelatedEntities(List<SzRelatedEntity> relatedEntities);
 
   /**
    * Adds the specified {@link SzRelatedEntity}
    */
-  public void addRelatedEntity(SzRelatedEntity relatedEntity) {
-    if (relatedEntity != null) {
-      this.relatedEntities.add(relatedEntity);
+  void addRelatedEntity(SzRelatedEntity relatedEntity);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzEntityData}.
+   */
+  interface Provider extends ModelProvider<SzEntityData> {
+    /**
+     * Creates a new instance of {@link SzEntityData}.
+     *
+     * @return The new instance of {@link SzEntityData}
+     */
+    SzEntityData create();
+  }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzEntityData} that produces instances of {@link SzEntityDataImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzEntityData>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzEntityData.class, SzEntityDataImpl.class);
+    }
+
+    @Override
+    public SzEntityData create() {
+      return new SzEntityDataImpl();
     }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link SzEntityData}.
+   */
+  class Factory extends ModelFactory<SzEntityData, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzEntityData.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzEntityData}.
+     * @return The new instance of {@link SzEntityData}.
+     */
+    public SzEntityData create()
+    {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses a list of entity data instances from a {@link JsonArray}
@@ -103,7 +141,7 @@ public class SzEntityData {
    * @return The populated (or created) {@link List} of {@link
    *         SzEntityData} instances.
    */
-  public static List<SzEntityData> parseEntityDataList(
+  static List<SzEntityData> parseEntityDataList(
       List<SzEntityData>      list,
       JsonArray               jsonArray,
       Function<String,String> featureToAttrClassMapper)
@@ -136,12 +174,12 @@ public class SzEntityData {
    *
    * @return The populated (or created) {@link SzEntityData}.
    */
-  public static SzEntityData parseEntityData(
+  static SzEntityData parseEntityData(
       SzEntityData            entityData,
       JsonObject              jsonObject,
       Function<String,String> featureToAttrClassMapper)
   {
-    if (entityData == null) entityData = new SzEntityData();
+    if (entityData == null) entityData = SzEntityData.FACTORY.create();
 
     Function<String,String> mapper = featureToAttrClassMapper;
 
@@ -162,13 +200,5 @@ public class SzEntityData {
     entityData.setRelatedEntities(relatedEntities);
 
     return entityData;
-  }
-
-  @Override
-  public String toString() {
-    return "SzEntityData{" +
-        "resolvedEntity=" + resolvedEntity +
-        ", relatedEntities=" + relatedEntities +
-        '}';
   }
 }

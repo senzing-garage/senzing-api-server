@@ -17,6 +17,7 @@ import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.websocket.*;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
@@ -405,19 +406,19 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       Map<String, File> dataFileMap = new LinkedHashMap<>();
 
-      SzBulkDataAnalysis csvAnalysis        = new SzBulkDataAnalysis();
-      SzBulkDataAnalysis jsonAnalysis       = new SzBulkDataAnalysis();
-      SzBulkDataAnalysis jsonLinesAnalysis  = new SzBulkDataAnalysis();
+      SzBulkDataAnalysis csvAnalysis    = SzBulkDataAnalysis.FACTORY.create();
+      SzBulkDataAnalysis jsonAnalysis   = SzBulkDataAnalysis.FACTORY.create();
+      SzBulkDataAnalysis jsonlAnalysis  = SzBulkDataAnalysis.FACTORY.create();
 
       SzBulkDataAnalysis[] analyses = {
-          csvAnalysis, jsonAnalysis, jsonLinesAnalysis
+          csvAnalysis, jsonAnalysis, jsonlAnalysis
       };
       for (SzBulkDataAnalysis analysis : analyses) {
         analysis.setCharacterEncoding("UTF-8");
       }
       csvAnalysis.setMediaType(CSV_SPEC);
       jsonAnalysis.setMediaType(JSON_SPEC);
-      jsonLinesAnalysis.setMediaType(JSON_LINES_SPEC);
+      jsonlAnalysis.setMediaType(JSON_LINES_SPEC);
 
       try {
         dataFileIndex++;
@@ -826,6 +827,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     private MediaType         mediaType;
     private List              queue;
     private boolean           open = true;
+    private Integer           statusCode = null;
     private Thread            readerThread = null;
 
     /**
@@ -841,6 +843,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       this.mediaType    = mediaType;
       this.queue        = new LinkedList<>();
       this.open         = true;
+      this.statusCode   = null;
 
       // setup the headers
       try {
@@ -882,6 +885,25 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
+    }
+
+    /**
+     * Gets the HTTP response status code.  This method returns <tt>null</tt>
+     * if the status code has not yet been received.
+     *
+     * @return The HTTP response status code, or <tt>null</tt> if the code has
+     *         not yet been received.
+     */
+    public synchronized Integer getStatusCode() { return this.statusCode; }
+
+    /**
+     * Sets the HTTP response status code to a non-null value.
+     *
+     * @param statusCode The status code value to set.
+     */
+    public synchronized void setStatusCode(int statusCode) {
+      this.statusCode = statusCode;
+      this.notifyAll();
     }
 
     /**
@@ -931,10 +953,33 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       boolean sse     = false;
       try (BufferedInputStream bis = new BufferedInputStream(this.inputStream))
       {
+        boolean first = true;
         for (String line = readAsciiLine(bis);
              (line != null);
              line = readAsciiLine(bis))
         {
+          // check if the first line
+          if (first) {
+            first = false;
+            String[] tokens = line.split("\\s+");
+            if (tokens.length < 3) {
+              throw new IllegalStateException(
+                  "Unexpected number of tokens in HTTP status line: "
+                  + line);
+            }
+            try {
+              int statusCode = Integer.parseInt(tokens[1]);
+
+              // set the status code
+              this.setStatusCode(statusCode);
+
+            } catch (IllegalArgumentException e) {
+              throw new IllegalStateException(
+                  "Unable to parse HTTP status code (" + tokens[1] + ") from "
+                  + "status line: " + line);
+            }
+          }
+
           // check if headers are complete
           if (line.trim().length() == 0) {
             break;
@@ -956,13 +1001,19 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
         // create a reader
         InputStreamReader isr = new InputStreamReader(is, UTF_8);
-        BufferedReader    br  = new BufferedReader(isr);
 
         // if not SSE then read text
         if (!sse) {
           StringBuilder sb = new StringBuilder();
-          for (int readChar = br.read(); readChar >= 0; readChar = br.read()) {
-            sb.append((char) readChar);
+          try {
+            for (int readChar = isr.read(); readChar >= 0; readChar = isr.read())
+            {
+              sb.append((char) readChar);
+            }
+          } catch (SocketException e) {
+            System.err.println(
+                "*** Received SocketException, assuming connection closed: "
+                    + e);
           }
           synchronized (this) {
             this.queue.add(sb.toString());
@@ -971,6 +1022,9 @@ public class BulkDataServicesTest extends AbstractServiceTest {
           this.close();
           return;
         }
+
+        // create a buffered reader to read lines
+        BufferedReader br = new BufferedReader(isr);
 
         // if SSE then read events
         for (String line = br.readLine(); line != null; line = br.readLine()) {
@@ -1039,6 +1093,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       byte[] buffer = new byte[8192];
       int writeCount = 0;
       long start = System.nanoTime();
+      boolean firstChunk = true;
       try (FileInputStream fis = new FileInputStream(this.bulkDataFile))
       {
         for (int readCount = fis.read(buffer);
@@ -1046,7 +1101,19 @@ public class BulkDataServicesTest extends AbstractServiceTest {
              readCount = fis.read(buffer))
         {
           synchronized (this) {
+            // give the server a chance to deny the request out-right because
+            // it is in read-only mode or if there is a client error
+            if (firstChunk) {
+              firstChunk = false;
+              try {
+                this.wait(600L);
+              } catch (InterruptedException ignore) {
+                // ignore the exception
+              }
+            }
             if (!this.isOpen()) break;
+            Integer statusCode = this.getStatusCode();
+            if (statusCode != null && statusCode != 200) break;
             this.outputStream.write(buffer, 0, readCount);
             this.outputStream.flush();
             writeCount += readCount;
@@ -1162,7 +1229,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getAnalyzeBulkRecordsParameters")
-  public void analyzeBulkRecordsViaSSETest(
+  public void analyzeBulkRecordsTest(
       String              testInfo,
       MediaType           mediaType,
       File                bulkDataFile,
@@ -2203,7 +2270,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       assertEquals(
           expectedStatus, actual.getStatus(),
           "Unexpected status for bulk load result: " + testInfo
-                  + "\nRESPONSE:\n" + this.toJsonString(response));
+                  + "\nRESPONSE:\n" + toJsonString(response));
     }
 
     // determine how many failures are expected

@@ -1,6 +1,8 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzLoadRecordResponseImpl;
 import com.senzing.util.Timers;
 
 import javax.ws.rs.core.UriInfo;
@@ -12,187 +14,152 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
  * The response containing the record ID of the record that was loaded.
  *
  */
-public class SzLoadRecordResponse extends SzResponseWithRawData
-{
+@JsonDeserialize(using=SzLoadRecordResponse.Factory.class)
+public interface SzLoadRecordResponse extends SzResponseWithRawData {
   /**
-   * The data for this instance.
+   * Returns the {@link SzLoadRecordResponseData} for this instance.
+   *
+   * @return The {@link SzLoadRecordResponseData} for this instance.
    */
-  private Data data = new Data();
+  SzLoadRecordResponseData getData();
 
   /**
-   * Default constructor.
+   * Sets the {@link SzLoadRecordResponseData} for this instance.
+   *
+   * @param data The {@link SzLoadRecordResponseData} for this instance.
    */
-  public SzLoadRecordResponse() {
-    this.data.recordId = null;
-  }
+  void setData(SzLoadRecordResponseData data);
 
   /**
-   * Constructs with only the HTTP method and the self link, leaving the
-   * record ID to be initialized later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The string URL link to generate this response.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   */
-  public SzLoadRecordResponse(SzHttpMethod httpMethod,
-                              int          httpStatusCode,
-                              String       selfLink,
-                              Timers       timers)
-  {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-  }
-
-  /**
-   * Constructs with the HTTP method, the self link, and the record ID.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The string URL link to generate this response.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param recordId The record ID of the record that was loaded.
-   *
-   * @param info The {@link SzResolutionInfo} providing the information
-   *             associated with the resolution of the record.
-   */
-  public SzLoadRecordResponse(SzHttpMethod      httpMethod,
-                              int               httpStatusCode,
-                              String            selfLink,
-                              Timers            timers,
-                              String            recordId,
-                              SzResolutionInfo  info)
-  {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-    this.data.recordId  = recordId;
-    this.data.info      = info;
-  }
-
-  /**
-   * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
-   * record ID to be initialized later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   */
-  public SzLoadRecordResponse(SzHttpMethod httpMethod,
-                              int          httpStatusCode,
-                              UriInfo      uriInfo,
-                              Timers       timers)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
-  }
-
-  /**
-   * Constructs with the HTTP method, the {@link UriInfo}, and the record ID.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param recordId The record ID of the record that was loaded.
-   *
-   * @param info The {@link SzResolutionInfo} providing the information
-   *             associated with the resolution of the record.
-   */
-  public SzLoadRecordResponse(SzHttpMethod      httpMethod,
-                              int               httpStatusCode,
-                              UriInfo           uriInfo,
-                              Timers            timers,
-                              String            recordId,
-                              SzResolutionInfo  info)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.data.recordId  = recordId;
-    this.data.info      = info;
-  }
-
-  /**
-   * Returns the {@link Data} for this instance.
-   *
-   * @return The {@link Data} for this instance.
-   */
-  public Data getData() {
-    return this.data;
-  }
-
-  /**
-   * Sets the record ID of the record that was loaded.
+   * Convenience method to set the record ID of the record that was loaded
+   * on the underlying {@link SzLoadRecordResponseData}.
    *
    * @param recordId The record ID of the record.
    */
-  public void setRecordId(String recordId) {
-    this.data.recordId = recordId;
-  }
+  void setRecordId(String recordId);
 
   /**
-   * Sets the @link SzResolutionInfo} providing the information associated
-   * with the resolution of the record.
+   * Convenience method to set the {@link SzResolutionInfo} for the resolution
+   * of the record on the underlying {@link SzLoadRecordResponseData}.
    *
    * @param info The @link SzResolutionInfo} providing the information associated
    *             with the resolution of the record.
    */
-  public void setInfo(SzResolutionInfo info) {
-    this.data.info = info;
+  void setInfo(SzResolutionInfo info);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzLoadRecordResponse}.
+   */
+  interface Provider extends ModelProvider<SzLoadRecordResponse> {
+    /**
+     * Creates an instance of {@link SzLoadRecordResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    SzLoadRecordResponse create(SzMeta meta, SzLinks links);
+
+    /**
+     * Creates an instance of {@link SzLoadRecordResponse} with the specified
+     * {@link SzMeta}, {@link SzLinks}, and {@link SzLoadRecordResponseData}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The data for the response.
+     */
+    SzLoadRecordResponse create(SzMeta                    meta,
+                                SzLinks                   links,
+                                SzLoadRecordResponseData  data);
   }
 
   /**
-   * Inner class to represent the data section for this response.
+   * Provides a default {@link Provider} implementation for {@link
+   * SzLoadRecordResponse} that produces instances of
+   * {@link SzLoadRecordResponseImpl}.
    */
-  public static class Data {
+  class DefaultProvider extends AbstractModelProvider<SzLoadRecordResponse>
+      implements Provider
+  {
     /**
-     * The record ID of the record that was loaded.
+     * Default constructor.
      */
-    private String recordId;
-
-    /**
-     * The {@link SzResolutionInfo} providing the information associated with
-     * the resolution of the record.
-     */
-    private SzResolutionInfo info;
-
-    /**
-     * Private default constructor.
-     */
-    private Data() {
-      this.recordId = null;
-      this.info     = null;
+    public DefaultProvider() {
+      super(SzLoadRecordResponse.class, SzLoadRecordResponseImpl.class);
     }
 
-    /**
-     * Gets the record ID of the record that was loaded.
-     *
-     * @return The record ID of the record that was loaded.
-     */
-    @JsonInclude(NON_NULL)
-    public String getRecordId() {
-      return this.recordId;
+    @Override
+    public SzLoadRecordResponse create(SzMeta meta, SzLinks links) {
+      return new SzLoadRecordResponseImpl(meta, links);
     }
 
-    /**
-     * Gets the {@link SzResolutionInfo} providing the information associated
-     * with the resolution of the record.
-     *
-     * @return The {@link SzResolutionInfo} providing the information
-     *         associated with the resolution of the record.
-     */
-    @JsonInclude(NON_NULL)
-    public SzResolutionInfo getInfo() {
-      return this.info;
+    @Override
+    public SzLoadRecordResponse create(SzMeta                   meta,
+                                       SzLinks                  links,
+                                       SzLoadRecordResponseData data)
+    {
+      return new SzLoadRecordResponseImpl(meta, links, data);
     }
-
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzLoadRecordResponse}.
+   */
+  class Factory extends ModelFactory<SzLoadRecordResponse, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzLoadRecordResponse.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates an instance of {@link SzLoadRecordResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    public SzLoadRecordResponse create(SzMeta meta, SzLinks links) {
+      return this.getProvider().create(meta, links);
+    }
+
+    /**
+     * Creates an instance of {@link SzLoadRecordResponse} with the specified
+     * {@link SzMeta}, {@link SzLinks}, and {@link SzLoadRecordResponseData}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The data for the response.
+     */
+    public SzLoadRecordResponse create(SzMeta                   meta,
+                                       SzLinks                  links,
+                                       SzLoadRecordResponseData data)
+    {
+      return this.getProvider().create(meta, links, data);
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 }

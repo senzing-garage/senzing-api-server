@@ -16,9 +16,11 @@ public interface SzMessageSink {
      * Handles the exception that occurred when trying to send the specified
      * message.
      * @param exception The exception that occurred.
-     * @param message THe message that was sent, triggering the exception.
+     * @param message The message that was sent, triggering the exception.
+     * @throws Exception If the exception is being rethrown.
      */
-    void handle(Exception exception, SzMessage message);
+    void handle(Exception exception, SzMessage message)
+      throws Exception;
   }
 
   /**
@@ -35,4 +37,21 @@ public interface SzMessageSink {
    */
   void send(SzMessage message, FailureHandler onFailure)
       throws Exception;
+
+  /**
+   * Gets a {@link String} describing the provider for the queue.
+   *
+   * @return A {@link String} describing the provider for the queue.
+   */
+  String getProviderType();
+
+  /**
+   * Gets the (likely approximate) number of messages currently on the {@link
+   * SzMessageSink} queue that have not been processed.  If this is not known
+   * for this type of queue then <tt>null</tt> is returned.
+   *
+   * @return The (likely approximate) number of messages on the {@link
+   *         SzMessageSink} queue, or <tt>null</tt> if not known.
+   */
+  Integer getMessageCount();
 }

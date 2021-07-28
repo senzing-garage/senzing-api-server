@@ -13,9 +13,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import static com.senzing.api.model.SzHttpMethod.GET;
-import static com.senzing.api.services.ServicesUtil.*;
 import static com.senzing.g2.engine.G2Engine.*;
 
 /**
@@ -23,11 +23,37 @@ import static com.senzing.g2.engine.G2Engine.*;
  */
 @Path("/")
 @Produces("application/json; charset=UTF-8")
-public class EntityGraphServices {
-  private static final int ENTITY_NOT_FOUND_CODE = 37;
-
-  private static final int RECORD_NOT_FOUND_CODE = 33;
-
+public class EntityGraphServices implements ServicesSupport {
+  /**
+   * Implements the <tt>GET /entity-paths</tt> operation.
+   *
+   * @param fromParam The {@link SzEntityIdentifier} for the start of the
+   *                  requested path.
+   * @param toParam The {@link SzEntityIdentifier} for the end of the requested
+   *                path.
+   * @param maxDegrees The maximum number of degrees for the requested path.
+   * @param avoidParam The optional {@link List} of {@link SzEntityIdentifier}
+   *                   instances identifying those entities to avoid.
+   * @param avoidList The optional text describing a {@link List} of {@link
+   *                  SzEntityIdentifier} instances identifying those entities
+   *                  to avoid.
+   * @param forbidAvoided Flag indicating whether or not avoided entities should
+   *                      be strictly forbidden (<tt>true</tt>) or only avoided
+   *                      if possible (<tt>false</tt>).
+   * @param sourcesParam The {@link List} of data source codes that are legal
+   *                     for entities included in the path.
+   * @param forceMinimal Whether or not the returned entities should be in
+   *                     the minimal format.
+   * @param featureMode The {@link SzFeatureMode} for the returned entities.
+   * @param withFeatureStats Whether or not feature stats should be included
+   *                         with the returned entities.
+   * @param withInternalFeatures Whether or not internal features should be
+   *                             included with the returned entities.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included with the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @return The {@link SzEntityPathResponse} describing the response.
+   */
   @GET
   @Path("entity-paths")
   public SzEntityPathResponse getEntityPath(
@@ -41,12 +67,12 @@ public class EntityGraphServices {
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
-      @DefaultValue("false") @QueryParam("withInternalFeatures")   boolean             withInternalFeatures,
+      @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean             withInternalFeatures,
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
       @Context                                                    UriInfo             uriInfo)
   {
-    Timers timers = newTimers();
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    Timers timers = this.newTimers();
+    SzApiProvider provider = this.getApiProvider();
 
     SzEntityIdentifier        from;
     SzEntityIdentifier        to;
@@ -54,37 +80,37 @@ public class EntityGraphServices {
     List<String>              withSources   = null;
     try {
       if (fromParam == null) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers,
             "Parameter missing or empty: \"from\".  "
                 + "The 'from' entity identifier is required.");
       }
       if (toParam == null) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers,
             "Parameter missing or empty: \"to\".  "
                 + "The 'to' entity identifier is required.");
       }
 
       try {
-        from = SzEntityIdentifier.valueOf(fromParam.trim());
+        from = this.parseEntityIdentifier(fromParam.trim());
       } catch (Exception e) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers,
             "Parameter is not formatted correctly: \"from\".");
       }
 
       try {
-        to = SzEntityIdentifier.valueOf(toParam.trim());
+        to = this.parseEntityIdentifier(toParam.trim());
       } catch (Exception e) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers,
             "Parameter is not formatted correctly: \"to\".");
       }
 
       // check for consistent from/to
       if (from.getClass() != to.getClass()) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers,
             "Entity identifiers must be consistent types.  from=" + from
                 + ", to=" + to);
@@ -95,18 +121,18 @@ public class EntityGraphServices {
           || (avoidList != null && avoidList.trim().length() > 0))
       {
         // parse the multi-valued parameters
-        avoidEntities = parseEntityIdentifiers(
+        avoidEntities = this.parseEntityIdentifiers(
             avoidParam, "avoidEntities", GET, uriInfo, timers);
 
         // check if the avoid list is specified
         if (avoidList != null && avoidList.trim().length() > 0) {
-          SzEntityIdentifiers ids = SzEntityIdentifiers.valueOf(avoidList);
+          SzEntityIdentifiers ids = this.parseEntityIdentifiers(avoidList);
 
           avoidEntities.addAll(ids.getIdentifiers());
         }
 
         if (!checkConsistent(avoidEntities)) {
-          throw newBadRequestException(
+          throw this.newBadRequestException(
               GET, uriInfo, timers,
               "Entity identifiers for avoided entities must be of "
                   + "consistent types: " + avoidEntities);
@@ -125,42 +151,42 @@ public class EntityGraphServices {
           if (dataSources.contains(source)) {
             withSources.add(source);
           } else {
-            throw newBadRequestException(
+            throw this.newBadRequestException(
                 GET, uriInfo, timers,
                 "Unrecognized data source: " + source);
           }
         }
       }
       if (maxDegrees < 1) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers,
             "Max degrees must be greater than zero: " + maxDegrees);
       }
     } catch (WebApplicationException e) {
       throw e;
     } catch (Exception e) {
-      throw newBadRequestException(GET, uriInfo, timers, e.getMessage());
+      throw this.newBadRequestException(GET, uriInfo, timers, e.getMessage());
     }
 
     final String encodedAvoid = (avoidEntities == null)
-        ? null : nativeJsonEncodeEntityIds(avoidEntities);
+        ? null : this.nativeJsonEncodeEntityIds(avoidEntities);
 
     final List<String> originalSources = withSources;
 
     final String encodedSources = (withSources == null)
-        ? null : nativeJsonEncodeDataSources(withSources);
+        ? null : this.nativeJsonEncodeDataSources(withSources);
 
     final int flags = (forbidAvoided ? 0 : G2_FIND_PATH_PREFER_EXCLUDE)
-                    | getFlags(forceMinimal,
-                               featureMode,
-                               withFeatureStats,
-                               withInternalFeatures,
-                               true);
+                    | this.getFlags(forceMinimal,
+                                    featureMode,
+                                    withFeatureStats,
+                                    withInternalFeatures,
+                                    true);
 
     try {
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get the engine API and the config API
         G2Engine engineApi = provider.getEngineApi();
@@ -168,14 +194,14 @@ public class EntityGraphServices {
         StringBuffer responseDataBuffer = new StringBuffer();
 
         int result;
-        if (from.getClass() == SzRecordId.class) {
+        if (from instanceof SzRecordId) {
           String source1 = ((SzRecordId) from).getDataSourceCode();
           String source2 = ((SzRecordId) to).getDataSourceCode();
           String id1 = ((SzRecordId) from).getRecordId();
           String id2 = ((SzRecordId) to).getRecordId();
 
           if (encodedAvoid == null && encodedSources == null) {
-            callingNativeAPI(timers, "engine", "findPathByRecordIDV2");
+            this.callingNativeAPI(timers, "engine", "findPathByRecordIDV2");
             result = engineApi.findPathByRecordIDV2(source1,
                                                     id1,
                                                     source2,
@@ -183,10 +209,10 @@ public class EntityGraphServices {
                                                     maxDegrees,
                                                     flags,
                                                     responseDataBuffer);
-            calledNativeAPI(timers, "engine", "findPathByRecordIDV2");
+            this.calledNativeAPI(timers, "engine", "findPathByRecordIDV2");
 
           } else if (encodedSources == null) {
-            callingNativeAPI(timers, "engine", "findPathExcludingByRecordID");
+            this.callingNativeAPI(timers, "engine", "findPathExcludingByRecordID");
             result = engineApi.findPathExcludingByRecordID(
                 source1,
                 id1,
@@ -197,10 +223,10 @@ public class EntityGraphServices {
                     : nativeJsonEncodeEntityIds(Collections.emptyList())),
                 flags,
                 responseDataBuffer);
-            calledNativeAPI(timers, "engine", "findPathExcludingByRecordID");
+            this.calledNativeAPI(timers, "engine", "findPathExcludingByRecordID");
 
           } else {
-            callingNativeAPI(timers, "engine", "findPathIncludingSourceByRecordID");
+            this.callingNativeAPI(timers, "engine", "findPathIncludingSourceByRecordID");
             result = engineApi.findPathIncludingSourceByRecordID(
                 source1,
                 id1,
@@ -213,23 +239,23 @@ public class EntityGraphServices {
                     : nativeJsonEncodeDataSources(Collections.emptyList())),
                 flags,
                 responseDataBuffer);
-            calledNativeAPI(timers, "engine", "findPathIncludingSourceByRecordID");
+            this.calledNativeAPI(timers, "engine", "findPathIncludingSourceByRecordID");
           }
         } else {
           SzEntityId id1 = (SzEntityId) from;
           SzEntityId id2 = (SzEntityId) to;
 
           if (encodedAvoid == null && encodedSources == null) {
-            callingNativeAPI(timers, "engine", "findPathByEntityIDV2");
+            this.callingNativeAPI(timers, "engine", "findPathByEntityIDV2");
             result = engineApi.findPathByEntityIDV2(id1.getValue(),
                                                   id2.getValue(),
                                                   maxDegrees,
                                                   flags,
                                                   responseDataBuffer);
-            calledNativeAPI(timers, "engine", "findPathByEntityIDV2");
+            this.calledNativeAPI(timers, "engine", "findPathByEntityIDV2");
 
           } else if (encodedSources == null) {
-            callingNativeAPI(timers, "engine", "findPathExcludingByEntityID");
+            this.callingNativeAPI(timers, "engine", "findPathExcludingByEntityID");
             result = engineApi.findPathExcludingByEntityID(
                 id1.getValue(),
                 id2.getValue(),
@@ -238,10 +264,10 @@ public class EntityGraphServices {
                     : nativeJsonEncodeEntityIds(Collections.emptyList())),
                 flags,
                 responseDataBuffer);
-            calledNativeAPI(timers, "engine", "findPathExcludingByEntityID");
+            this.calledNativeAPI(timers, "engine", "findPathExcludingByEntityID");
 
           } else {
-            callingNativeAPI(timers, "engine", "findPathIncludingSourceByEntityID");
+            this.callingNativeAPI(timers, "engine", "findPathIncludingSourceByEntityID");
             result = engineApi.findPathIncludingSourceByEntityID(
                 id1.getValue(),
                 id2.getValue(),
@@ -252,41 +278,35 @@ public class EntityGraphServices {
                     : nativeJsonEncodeDataSources(Collections.emptyList())),
                 flags,
                 responseDataBuffer);
-            calledNativeAPI(timers, "engine", "findPathIncludingSourceByEntityID");
-
+            this.calledNativeAPI(timers, "engine", "findPathIncludingSourceByEntityID");
           }
         }
 
         if (result != 0) {
           System.err.println("********* SOURCES: " + originalSources);
           System.err.println("********* ENCODED SOURCES: " + encodedSources);
-          throw newWebApplicationException(GET, uriInfo, timers, engineApi);
+          throw this.newWebApplicationException(GET, uriInfo, timers, engineApi);
         }
 
         // parse the raw data
         return responseDataBuffer.toString();
       });
 
-      processingRawData(timers);
+      this.processingRawData(timers);
       JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
-      SzEntityPathData entityPathData
-          = SzEntityPathData.parseEntityPathData(
-              jsonObject,
-              provider::getAttributeClassForFeature);
+      SzEntityPathData entityPathData = this.parseEntityPathData(
+          jsonObject,
+          provider::getAttributeClassForFeature);
 
       entityPathData.getEntities().forEach(e -> {
-        postProcessEntityData(e, forceMinimal, featureMode);
+        this.postProcessEntityData(e, forceMinimal, featureMode);
       });
 
-      processedRawData(timers);
+      this.processedRawData(timers);
 
       // construct the response
-      SzEntityPathResponse response
-          = new SzEntityPathResponse(GET,
-                                     200,
-                                     uriInfo,
-                                     timers,
-                                     entityPathData);
+      SzEntityPathResponse response = this.newEntityPathResponse(
+          GET, 200, uriInfo, timers, entityPathData);
 
       // if including raw data then add it
       if (withRaw) response.setRawData(rawData);
@@ -298,27 +318,92 @@ public class EntityGraphServices {
       throw e;
 
     } catch (Exception e) {
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Parses the raw Senzing JSON described by the specified {@link JsonObject}
+   * as an instance of {@link SzEntityPathData}.
+   *
+   * @param jsonObject The {@link JsonObject} describing the JSON.
+   * @param getAttributeClassForFeature The mapping function to map features to
+   *                                    attribute classes.
+   * @return The {@link SzEntityPathData} instance that was created.
+   */
+  protected SzEntityPathData parseEntityPathData(
+      JsonObject              jsonObject,
+      Function<String,String> getAttributeClassForFeature)
+  {
+    return SzEntityPathData.parseEntityPathData(
+        jsonObject, getAttributeClassForFeature);
+  }
+
+  /**
+   * Constructs a new instance of {@link SzEntityPathResponse} with the
+   * specified parameters.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param entityPathData The {@link SzEntityPathData} for the response.
+   *
+   * @return The {@link SzEntityPathResponse} that was created.
+   */
+  protected SzEntityPathResponse newEntityPathResponse(
+      SzHttpMethod      httpMethod,
+      int               httpStatusCode,
+      UriInfo           uriInfo,
+      Timers            timers,
+      SzEntityPathData  entityPathData)
+  {
+    return SzEntityPathResponse.FACTORY.create(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo), entityPathData);
+  }
+
+  /**
+   * Implements the <tt>GET /entity-paths</tt> operation.
+   *
+   * @param entitiesParam The {@link List} of encoded strings describing
+   *                      {@link SzEntityIdentifier} instances for the network.
+   * @param entityList The encoded {@link String} describing the the
+   *                   {@link SzEntityIdentifiers} instance for the network.
+   * @param maxDegrees The maximum degrees for finding the paths between the
+   *                   identified entities.
+   * @param buildOut The number of related entities to build out from the
+   *                 found entities.
+   * @param maxEntities The maximum number of build-out entities to return.
+   * @param forceMinimal Whether or not the returned entities should be in
+   *                     the minimal format.
+   * @param featureMode The {@link SzFeatureMode} for the returned entities.
+   * @param withFeatureStats Whether or not feature stats should be included
+   *                         with the returned entities.
+   * @param withInternalFeatures Whether or not internal features should be
+   *                             included with the returned entities.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included with the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @return The {@link SzEntityNetworkResponse} describing the response.
+   */
   @GET
   @Path("entity-networks")
   public SzEntityNetworkResponse getEntityNetwork(
-      @QueryParam("e")        List<String>  entitiesParam,
-      @QueryParam("entities") String        entityList,
-      @DefaultValue("3")      @QueryParam("maxDegrees")           int                 maxDegrees,
-      @DefaultValue("1")      @QueryParam("buildOut")             int                 buildOut,
-      @DefaultValue("1000")   @QueryParam("maxEntities")          int                 maxEntities,
-      @DefaultValue("false")  @QueryParam("forceMinimal")         boolean             forceMinimal,
+      @QueryParam("e")                                            List<String>  entitiesParam,
+      @QueryParam("entities")                                     String        entityList,
+      @DefaultValue("3")      @QueryParam("maxDegrees")           int           maxDegrees,
+      @DefaultValue("1")      @QueryParam("buildOut")             int           buildOut,
+      @DefaultValue("1000")   @QueryParam("maxEntities")          int           maxEntities,
+      @DefaultValue("false")  @QueryParam("forceMinimal")         boolean       forceMinimal,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
-      @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
-      @DefaultValue("false") @QueryParam("withInternalFeatures")   boolean             withInternalFeatures,
-      @DefaultValue("false")  @QueryParam("withRaw")              boolean             withRaw,
-      @Context                                                    UriInfo             uriInfo)
+      @DefaultValue("false") @QueryParam("withFeatureStats")      boolean       withFeatureStats,
+      @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean       withInternalFeatures,
+      @DefaultValue("false")  @QueryParam("withRaw")              boolean       withRaw,
+      @Context                                                    UriInfo       uriInfo)
   {
-    Timers timers = newTimers();
-    SzApiProvider provider = SzApiProvider.Factory.getProvider();
+    Timers timers = this.newTimers();
+    SzApiProvider provider = this.getApiProvider();
 
     Set<SzEntityIdentifier> entities;
     // check for consistent entity IDs
@@ -326,7 +411,7 @@ public class EntityGraphServices {
       if ((entitiesParam == null || entitiesParam.isEmpty())
           && ((entityList == null) || entityList.isEmpty()))
       {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers,
             "One of the following parameters is required to specify at least "
                 + "one entity: 'e' or 'entities'.  "
@@ -334,37 +419,37 @@ public class EntityGraphServices {
                 + "least one entity identifier.");
       }
 
-      entities = parseEntityIdentifiers(
+      entities = this.parseEntityIdentifiers(
           entitiesParam, "e", GET, uriInfo, timers);
 
       if (entityList != null && entityList.trim().length() > 0) {
-        SzEntityIdentifiers ids = SzEntityIdentifiers.valueOf(entityList);
+        SzEntityIdentifiers ids = this.parseEntityIdentifiers(entityList);
 
         entities.addAll(ids.getIdentifiers());
       }
 
 
-      if (!checkConsistent(entities)) {
-        throw newBadRequestException(
+      if (!this.checkConsistent(entities)) {
+        throw this.newBadRequestException(
             GET, uriInfo, timers,
             "Entity identifiers for entities must be of consistent "
                 + "types: " + entities);
       }
 
       if (maxDegrees < 1) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers,
             "Max degrees must be greater than zero: " + maxDegrees);
       }
 
       if (buildOut < 0) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers,
             "Build out must be zero or greater: " + buildOut);
       }
 
       if (maxEntities < 0) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers,
             "Max entities must be zero or greater: " + maxEntities);
       }
@@ -373,21 +458,22 @@ public class EntityGraphServices {
       throw e;
     } catch (Exception e) {
       e.printStackTrace();
-      throw newBadRequestException(GET, uriInfo, timers, e.getMessage());
+      throw this.newBadRequestException(GET, uriInfo, timers, e.getMessage());
     }
 
     final String encodedEntityIds = (entities == null)
-        ? null : nativeJsonEncodeEntityIds(entities);
+        ? null : this.nativeJsonEncodeEntityIds(entities);
 
-    final int flags = getFlags(forceMinimal,
-                               featureMode,
-                               withFeatureStats,
-                               withInternalFeatures,
-                               true);
+    final int flags = this.getFlags(forceMinimal,
+                                    featureMode,
+                                    withFeatureStats,
+                                    withInternalFeatures,
+                                    true);
+
     try {
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       String rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get the engine API and the config API
         G2Engine engineApi = provider.getEngineApi();
@@ -397,7 +483,7 @@ public class EntityGraphServices {
         int result;
 
         if (entities.iterator().next().getClass() == SzRecordId.class) {
-          callingNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
+          this.callingNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
           result = engineApi.findNetworkByRecordIDV2(
               encodedEntityIds,
               maxDegrees,
@@ -405,10 +491,10 @@ public class EntityGraphServices {
               maxEntities,
               flags,
               sb);
-          calledNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
+          this.calledNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
 
         } else {
-          callingNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
+          this.callingNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
           result = engineApi.findNetworkByEntityIDV2(
               encodedEntityIds,
               maxDegrees,
@@ -416,39 +502,34 @@ public class EntityGraphServices {
               maxEntities,
               flags,
               sb);
-          calledNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
+          this.calledNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
         }
 
         if (result != 0) {
-          throw newWebApplicationException(GET, uriInfo, timers, engineApi);
+          throw this.newWebApplicationException(GET, uriInfo, timers, engineApi);
         }
 
         // parse the raw data
         return sb.toString();
       });
 
-      processingRawData(timers);
+      this.processingRawData(timers);
 
       JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
 
-      SzEntityNetworkData entityNetworkData
-          = SzEntityNetworkData.parseEntityNetworkData(
+      SzEntityNetworkData entityNetworkData = this.parseEntityNetworkData(
               jsonObject,
               provider::getAttributeClassForFeature);
 
       entityNetworkData.getEntities().forEach(e -> {
-        postProcessEntityData(e, forceMinimal, featureMode);
+        this.postProcessEntityData(e, forceMinimal, featureMode);
       });
 
-      processedRawData(timers);
+      this.processedRawData(timers);
 
       // construct the response
-      SzEntityNetworkResponse response
-          = new SzEntityNetworkResponse(GET,
-                                        200,
-                                        uriInfo,
-                                        timers,
-                                        entityNetworkData);
+      SzEntityNetworkResponse response = this.newEntityNetworkResponse(
+          GET, 200, uriInfo, timers, entityNetworkData);
 
       // if including raw data then add it
       if (withRaw) response.setRawData(rawData);
@@ -460,16 +541,59 @@ public class EntityGraphServices {
       throw e;
 
     } catch (Exception e) {
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
+  }
+
+  /**
+   * Parses the raw JSON described by the specified {@link JsonObject} as an
+   * instance of {@link SzEntityNetworkData}.
+   *
+   * @param jsonObject The {@link JsonObject} describing the JSON.
+   * @param getAttributeClassForFeature The function mapping features to
+   *                                    attribute classes.
+   * @return The parsed {@link SzEntityNetworkData} instance.
+   */
+  protected SzEntityNetworkData parseEntityNetworkData(
+      JsonObject              jsonObject,
+      Function<String,String> getAttributeClassForFeature)
+  {
+    return SzEntityNetworkData.parseEntityNetworkData(
+        jsonObject, getAttributeClassForFeature);
+  }
+
+  /**
+   * Creates a new instance of {@link SzEntityNetworkResponse} with the
+   * specified parameters.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param entityNetworkData The {@link SzEntityNetworkData} for the response.
+   *
+   * @return The {@link SzEntityNetworkResponse} that was created.
+   */
+  protected SzEntityNetworkResponse newEntityNetworkResponse(
+      SzHttpMethod        httpMethod,
+      int                 httpStatusCode,
+      UriInfo             uriInfo,
+      Timers              timers,
+      SzEntityNetworkData entityNetworkData)
+  {
+    return SzEntityNetworkResponse.FACTORY.create(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo), entityNetworkData);
   }
 
   /**
    * Checks if the entity ID's in the specified list are of a consistent type.
    *
    * @param entities The list of {@link SzEntityIdentifier} instances.
+   *
+   * @return <tt>true</tt> if they are consistent, and <tt>false</tt> if not.
    */
-  private static boolean checkConsistent(Set<SzEntityIdentifier> entities) {
+  protected boolean checkConsistent(Set<SzEntityIdentifier> entities) {
     if (entities != null && !entities.isEmpty()) {
       Class idClass = null;
       for (SzEntityIdentifier id : entities) {
@@ -483,7 +607,20 @@ public class EntityGraphServices {
     return true;
   }
 
-  private static WebApplicationException newWebApplicationException(
+  /**
+   * Similar to the method {@link
+   * #newPossiblyNotFoundException(SzHttpMethod, UriInfo, Timers, G2Engine)},
+   * this method either throws a {@link BadRequestException} if an entity is
+   * not found or an {@link InternalServerErrorException}.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param engineApi The {@link G2Engine} instance to determine if the entity
+   *                  was not found or if there was a system error.
+   * @return The appropriate {@link WebApplicationException}.
+   */
+  protected WebApplicationException newWebApplicationException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
       Timers        timers,
@@ -492,8 +629,10 @@ public class EntityGraphServices {
     int errorCode = engineApi.getLastExceptionCode();
     if (errorCode == ENTITY_NOT_FOUND_CODE
         || errorCode == RECORD_NOT_FOUND_CODE) {
-      return newBadRequestException(GET, uriInfo, timers, engineApi);
+      return this.newBadRequestException(
+          httpMethod, uriInfo, timers, engineApi);
     }
-    return newInternalServerErrorException(GET, uriInfo, timers, engineApi);
+    return this.newInternalServerErrorException(
+        httpMethod, uriInfo, timers, engineApi);
   }
 }

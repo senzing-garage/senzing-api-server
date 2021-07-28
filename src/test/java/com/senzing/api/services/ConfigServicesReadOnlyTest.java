@@ -68,7 +68,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
   {
     this.performTest(() -> {
       SzDataSource dataSource
-          = new SzDataSource("SHOULD_FAIL", 10000);
+          = SzDataSource.FACTORY.create("SHOULD_FAIL", 10000);
 
       String  relativeUri = "data-sources";
       String  uriText     = this.formatServerUri(relativeUri);
@@ -102,7 +102,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
   {
     this.performTest(() -> {
       SzDataSource dataSource
-          = new SzDataSource("SHOULD_FAIL", 10000);
+          = SzDataSource.FACTORY.create("SHOULD_FAIL", 10000);
 
       String  relativeUri = "data-sources";
       String  uriText     = this.formatServerUri(relativeUri);
@@ -138,7 +138,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
   public void postEntityClassesTest()
   {
     this.performTest(() -> {
-      SzEntityClass entityClass = new SzEntityClass(
+      SzEntityClass entityClass = SzEntityClass.FACTORY.create(
           "SHOULD_FAIL", 10000, true);
 
       String  relativeUri = "entity-classes";
@@ -171,7 +171,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
   public void postEntityClassesViaHttpTest()
   {
     this.performTest(() -> {
-      SzEntityClass entityClass = new SzEntityClass(
+      SzEntityClass entityClass = SzEntityClass.FACTORY.create(
           "SHOULD_FAIL", 10000, true);
 
       String  relativeUri = "entity-classes";
@@ -209,7 +209,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
   public void postEntityTypesTest()
   {
     this.performTest(() -> {
-      SzEntityType entityType = new SzEntityType(
+      SzEntityType entityType = SzEntityType.FACTORY.create(
           "SHOULD_FAIL", 10000, "ACTOR");
 
       String  relativeUri = "entity-types";
@@ -242,7 +242,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
   public void postEntityTypesViaHttpTest()
   {
     this.performTest(() -> {
-      SzEntityType entityType = new SzEntityType(
+      SzEntityType entityType = SzEntityType.FACTORY.create(
           "SHOULD_FAIL", 10000, "ACTOR");
 
       String  relativeUri = "entity-types";
@@ -280,7 +280,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
   public void postEntityTypesForClassTest()
   {
     this.performTest(() -> {
-      SzEntityType entityType = new SzEntityType(
+      SzEntityType entityType = SzEntityType.FACTORY.create(
           "SHOULD_FAIL", 10000, "ACTOR");
 
       String  relativeUri = "entity-classes/ACTOR/entity-types";
@@ -315,7 +315,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
   public void postEntityTypesForClassViaHttpTest()
   {
     this.performTest(() -> {
-      SzEntityType entityType = new SzEntityType(
+      SzEntityType entityType = SzEntityType.FACTORY.create(
           "SHOULD_FAIL", 10000, "ACTOR");
 
       String  relativeUri = "entity-classes/ACTOR/entity-types";

@@ -97,6 +97,14 @@ public interface SzApiProvider {
   }
 
   /**
+   * Returns a description for the provider.  This is useful for inclusion
+   * in the meta data for each response.
+   *
+   * @return A description for the provider.
+   */
+  String getDescription();
+
+  /**
    * Returns the associated {@link G2Product} API implementation.
    *
    * @return The associated {@link G2Product} API implementation.
@@ -197,6 +205,14 @@ public interface SzApiProvider {
    *         the number of threads is unknown.
    */
   int getConcurrency();
+
+  /**
+   * Returns the base path for the REST API.  Typically this is <tt>"/"</tt>,
+   * but it may be a sub-path.
+   *
+   * @return The base path for the REST API.
+   */
+  String getBasePath();
 
   /**
    * Gets the maximum number of bytes for both text and binary web sockets
@@ -314,30 +330,6 @@ public interface SzApiProvider {
   boolean isAdminEnabled();
 
   /**
-   * Checks if there is a load message sink configured for asynchronous loading.
-   *
-   * @return <tt>true</tt> if a load message sink is configured, and
-   *         <tt>false</tt> if none is configured.
-   */
-  boolean hasLoadSink();
-
-  /**
-   * Acquires the {@link SzMessageSink} for sending record messages for loading.
-   * This returns <tt>null</tt> if an loading queue is not configured.
-   *
-   * @return The {@link SzMessageSink} for sending record messages for loading,
-   *         or <tt>null</tt> if none is configured.
-   */
-  SzMessageSink acquireLoadSink();
-
-  /**
-   * Releases the {@link SzMessageSink} for sending record messages for loading.
-   *
-   * @param sink The {@link SzMessageSink} to be released.
-   */
-  void releaseLoadSink(SzMessageSink sink);
-
-  /**
    * Checks if there is an info message sink configured.
    *
    * @return <tt>true</tt> if an info message sink is configured, and
@@ -356,7 +348,10 @@ public interface SzApiProvider {
   SzMessageSink acquireInfoSink();
 
   /**
+   * Releases the specified {@link SzMessageSink} back to the provider when
+   * done using it.
    *
+   * @param sink The {@link SzMessageSink} to release.
    */
   void releaseInfoSink(SzMessageSink sink);
 }

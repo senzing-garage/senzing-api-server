@@ -1,164 +1,159 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.senzing.util.Timers;
-
-import javax.ws.rs.core.UriInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzReevaluateResponseImpl;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 /**
- * The response for a reevaluation operation..
+ * The response for a reevaluation operation.
  *
  */
-public class SzReevaluateResponse extends SzResponseWithRawData
+@JsonDeserialize(using=SzReevaluateResponse.Factory.class)
+public interface SzReevaluateResponse extends SzResponseWithRawData
 {
   /**
-   * The data for this instance.
+   * Returns the {@link SzReevaluateResponseData} for this instance.
+   *
+   * @return The {@link SzReevaluateResponseData} for this instance.
    */
-  private Data data = new Data();
+  SzReevaluateResponseData getData();
 
   /**
-   * Default constructor.
+   * Sets the {@link SzReevaluateResponseData} for this instance.
+   *
+   * @param data The {@link SzReevaluateResponseData} for this instance.
    */
-  public SzReevaluateResponse() {
-    // do nothing
-  }
+  void setData(SzReevaluateResponseData data);
 
   /**
-   * Constructs with only the HTTP method and the self link, leaving the
-   * record ID to be initialized later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The string URL link to generate this response.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   */
-  public SzReevaluateResponse(SzHttpMethod httpMethod,
-                              int          httpStatusCode,
-                              String       selfLink,
-                              Timers       timers)
-  {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-  }
-
-  /**
-   * Constructs with the HTTP method, the self link, and the record ID.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The string URL link to generate this response.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param info The {@link SzResolutionInfo} providing the information
-   *             associated with the resolution of the record.
-   */
-  public SzReevaluateResponse(SzHttpMethod      httpMethod,
-                              int               httpStatusCode,
-                              String            selfLink,
-                              Timers            timers,
-                              SzResolutionInfo  info)
-  {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-    this.data.info = info;
-  }
-
-  /**
-   * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
-   * record ID to be initialized later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   */
-  public SzReevaluateResponse(SzHttpMethod httpMethod,
-                              int          httpStatusCode,
-                              UriInfo      uriInfo,
-                              Timers       timers)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
-  }
-
-  /**
-   * Constructs with the HTTP method, the {@link UriInfo}, and the record ID.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param info The {@link SzResolutionInfo} providing the information
-   *             associated with the resolution of the record.
-   */
-  public SzReevaluateResponse(SzHttpMethod      httpMethod,
-                              int               httpStatusCode,
-                              UriInfo           uriInfo,
-                              Timers            timers,
-                              SzResolutionInfo  info)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.data.info = info;
-  }
-
-  /**
-   * Returns the {@link Data} for this instance.
-   *
-   * @return The {@link Data} for this instance.
-   */
-  public Data getData() {
-    return this.data;
-  }
-
-  /**
-   * Sets the @link SzResolutionInfo} providing the information associated
-   * with the resolution of the record.
+   * Convenience method for setting the @link SzResolutionInfo} on the
+   * underlying {@link SzReevaluateResponseData}.
    *
    * @param info The @link SzResolutionInfo} providing the information associated
-   *             with the resolution of the record.
+   *             with the reevaluation.
    */
-  public void setInfo(SzResolutionInfo info) {
-    this.data.info = info;
+  void setInfo(SzResolutionInfo info);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzReevaluateResponse}.
+   */
+  interface Provider extends ModelProvider<SzReevaluateResponse> {
+    /**
+     * Creates an instance of {@link SzReevaluateResponse} initialized with
+     * the specified {@link SzMeta} and {@link SzLinks}, but no data.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    SzReevaluateResponse create(SzMeta meta, SzLinks links);
+
+    /**
+     * Creates an instance of {@link SzReevaluateResponse} initialized with
+     * the specified {@link SzMeta}, {@link SzLinks} and the specified
+     * {@link SzResolutionInfo}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The {@link SzReevaluateResponseData} describing the data
+     *             associated with the response.
+     */
+    SzReevaluateResponse create(SzMeta                    meta,
+                                SzLinks                   links,
+                                SzReevaluateResponseData  data);
   }
 
   /**
-   * Inner class to represent the data section for this response.
+   * Provides a default {@link Provider} implementation for {@link
+   * SzReevaluateResponse} that produces instances of
+   * {@link SzReevaluateResponseImpl}.
    */
-  public static class Data {
+  class DefaultProvider extends AbstractModelProvider<SzReevaluateResponse>
+      implements Provider
+  {
     /**
-     * The {@link SzResolutionInfo} providing the information associated with
-     * the resolution of the record.
+     * Default constructor.
      */
-    private SzResolutionInfo info;
-
-    /**
-     * Private default constructor.
-     */
-    private Data() {
-      this.info = null;
+    public DefaultProvider() {
+      super(SzReevaluateResponse.class, SzReevaluateResponseImpl.class);
     }
 
-    /**
-     * Gets the {@link SzResolutionInfo} providing the information associated
-     * with the resolution of the record.
-     *
-     * @return The {@link SzResolutionInfo} providing the information
-     *         associated with the resolution of the record.
-     */
-    @JsonInclude(NON_NULL)
-    public SzResolutionInfo getInfo() {
-      return this.info;
+    @Override
+    public SzReevaluateResponse create(SzMeta meta, SzLinks links) {
+      return new SzReevaluateResponseImpl(meta, links);
     }
 
+    @Override
+    public SzReevaluateResponse create(SzMeta                   meta,
+                                       SzLinks                  links,
+                                       SzReevaluateResponseData data)
+    {
+      return new SzReevaluateResponseImpl(meta, links, data);
+    }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzReevaluateResponse}.
+   */
+  class Factory extends ModelFactory<SzReevaluateResponse, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzReevaluateResponse.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates an instance of {@link SzReevaluateResponse} initialized with
+     * the specified {@link SzMeta} and {@link SzLinks}, but no data.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    public SzReevaluateResponse create(SzMeta meta, SzLinks links) {
+      return this.getProvider().create(meta, links);
+    }
+
+    /**
+     * Creates an instance of {@link SzReevaluateResponse} initialized with
+     * the specified {@link SzMeta}, {@link SzLinks} and the specified
+     * {@link SzResolutionInfo}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The {@link SzReevaluateResponseData} describing the data
+     *             associated with the response.
+     */
+    public SzReevaluateResponse create(SzMeta                   meta,
+                                       SzLinks                  links,
+                                       SzReevaluateResponseData data)
+    {
+      return this.getProvider().create(meta, links, data);
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
+
 }

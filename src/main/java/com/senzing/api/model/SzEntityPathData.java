@@ -1,5 +1,8 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzEntityPathDataImpl;
+
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.*;
@@ -7,79 +10,15 @@ import java.util.function.Function;
 
 /**
  * Describes an entity path and the entities in the path.
- *
  */
-public class SzEntityPathData {
-  /**
-   * The {@link SzEntityPath} describing the entity path.
-   */
-  private SzEntityPath entityPath;
-
-  /**
-   * The {@link List} of {@link SzEntityData} instances describing the entities
-   * in the path.
-   */
-  private List<SzEntityData> entities;
-
-  /**
-   * Package-private default constructor.
-   */
-  SzEntityPathData() {
-    this.entityPath = null;
-    this.entities   = null;
-  }
-
-  /**
-   * Constructs with the specified {@link SzEntityPath} and {@link
-   * SzEntityData} instances describing the entities in the path.
-   *
-   * @param entityPath The {@link SzEntityPath} describing the entity path.
-   *
-   * @param entities The {@link List} of {@link SzEntityData} instances
-   *                 describing the entities in the path.
-   *
-   * @throws IllegalArgumentException If the entities list is not consistent
-   *                                  with the specified entity path.
-   */
-  public SzEntityPathData(SzEntityPath        entityPath,
-                          List<SzEntityData>  entities)
-    throws IllegalArgumentException
-  {
-    if (entityPath.getEntityIds().size() > 0
-        && entities.size() != entityPath.getEntityIds().size()) {
-      throw new IllegalArgumentException(
-          "The specified entity path and entities list are not consistent.  "
-          + "pathSize=[ " + entityPath.getEntityIds().size()
-          + " ], entityCount=[ " + entities.size() + " ]");
-    }
-
-    // check the sets of entity IDs
-    Set<Long> set1 = new HashSet<>();
-    Set<Long> set2 = new HashSet<>();
-    entities.forEach(e -> set1.add(e.getResolvedEntity().getEntityId()));
-    set2.addAll(entityPath.getEntityIds());
-
-    if ((set2.size() > 0)
-        && (!set1.containsAll(set2) || !set2.containsAll(set1)))
-    {
-      throw new IllegalArgumentException(
-          "The specified entity path and entities list have different "
-          + "entity IDs.  pathEntities=[ " + set2 + " ], listEntities=[ "
-          + set1 + " ]");
-    }
-
-    this.entityPath = entityPath;
-    this.entities = Collections.unmodifiableList(new ArrayList<>(entities));
-  }
-
+@JsonDeserialize(using=SzEntityPathData.Factory.class)
+public interface SzEntityPathData {
   /**
    * Returns the {@link SzEntityPath} describing the entity path.
    *
    * @return The {@link SzEntityPath} describing the entity path.
    */
-  public SzEntityPath getEntityPath() {
-    return this.entityPath;
-  }
+  SzEntityPath getEntityPath();
 
   /**
    * Returns the {@link List} of {@link SzEntityData} instances describing
@@ -88,17 +27,91 @@ public class SzEntityPathData {
    * @return The {@link List} of {@link SzEntityData} instances describing
    *         the entities in the path.
    */
-  public List<SzEntityData> getEntities() {
-    return this.entities;
+  List<SzEntityData> getEntities();
+
+    /**
+   * A {@link ModelProvider} for instances of {@link SzEntityData}.
+   */
+  interface Provider extends ModelProvider<SzEntityPathData> {
+    /**
+     * Constructs with the specified {@link SzEntityPath} and {@link
+     * SzEntityData} instances describing the entities in the path.
+     *
+     * @param entityPath The {@link SzEntityPath} describing the entity path.
+     *
+     * @param entities The {@link List} of {@link SzEntityData} instances
+     *                 describing the entities in the path.
+     *
+     * @throws IllegalArgumentException If the entities list is not consistent
+     *                                  with the specified entity path.
+     */
+    SzEntityPathData create(SzEntityPath        entityPath,
+                            List<SzEntityData>  entities)
+        throws IllegalArgumentException;
   }
 
-  @Override
-  public String toString() {
-    return "SzEntityPathData{" +
-        "entityPath=" + entityPath +
-        ", entities=" + entities +
-        '}';
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzEntityPathData} that produces instances of {@link SzEntityPathDataImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzEntityPathData>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzEntityPathData.class, SzEntityPathDataImpl.class);
+    }
+
+    @Override
+    public SzEntityPathData create(SzEntityPath       entityPath,
+                                   List<SzEntityData> entities)
+        throws IllegalArgumentException
+    {
+      return new SzEntityPathDataImpl(entityPath, entities);
+    }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzEntityPathData}.
+   */
+  class Factory extends ModelFactory<SzEntityPathData, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzEntityPathData.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzEntityPathData}.
+     * @return The new instance of {@link SzEntityPathData}.
+     */
+    public SzEntityPathData create(SzEntityPath       entityPath,
+                                   List<SzEntityData> entities)
+        throws IllegalArgumentException
+    {
+      return this.getProvider().create(entityPath, entities);
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the entity path data from a {@link JsonObject} describing JSON
@@ -113,7 +126,7 @@ public class SzEntityPathData {
    *
    * @return The populated (or created) {@link SzEntityPathData}.
    */
-  public static SzEntityPathData parseEntityPathData(
+  static SzEntityPathData parseEntityPathData(
       JsonObject              jsonObject,
       Function<String,String> featureToAttrClassMapper)
   {
@@ -127,7 +140,7 @@ public class SzEntityPathData {
     List<SzEntityData> dataList = SzEntityData.parseEntityDataList(
         null, jsonArray, featureToAttrClassMapper);
 
-    return new SzEntityPathData(entityPath, dataList);
+    return SzEntityPathData.FACTORY.create(entityPath, dataList);
   }
 
 }

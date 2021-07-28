@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzDataSourceResponseImpl;
 import com.senzing.util.Timers;
 
 import javax.ws.rs.core.UriInfo;
@@ -10,117 +12,145 @@ import java.util.*;
  * list of all configured data source codes.
  *
  */
-public class SzDataSourceResponse extends SzResponseWithRawData
+@JsonDeserialize(using=SzDataSourceResponse.Factory.class)
+public interface SzDataSourceResponse extends SzResponseWithRawData
 {
   /**
-   * The data for this instance.
+   * Returns the {@link SzDataSourceResponseData} for this instance.
+   *
+   * @return The {@link SzDataSourceResponseData} for this instance.
    */
-  private Data data = new Data();
+  SzDataSourceResponseData getData();
 
   /**
-   * Package-private default constructor.
+   * Sets the {@link SzDataSourceResponseData} for this instance.
+   *
+   * @param data The {@link SzDataSourceResponseData} for this instance.
    */
-  SzDataSourceResponse() {
-    // do nothing
-  }
+  void setData(SzDataSourceResponseData data);
 
   /**
-   * Constructs with only the HTTP method and the self link, leaving the
-   * data sources to be added later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The string URL link to generate this response.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   */
-  public SzDataSourceResponse(SzHttpMethod httpMethod,
-                              int          httpStatusCode,
-                              String       selfLink,
-                              Timers       timers) {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-  }
-
-  /**
-   * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
-   * data sources to be added later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   */
-  public SzDataSourceResponse(SzHttpMethod httpMethod,
-                              int          httpStatusCode,
-                              UriInfo      uriInfo,
-                              Timers       timers)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
-  }
-
-  /**
-   * Returns the {@link Data} for this instance.
-   *
-   * @return The {@link Data} for this instance.
-   */
-  public Data getData() {
-    return this.data;
-  }
-
-  /**
-   * Private setter for JSON marshalling.
-   */
-  private void setData(Data data) {
-    this.data = data;
-  }
-
-  /**
-   * Adds the specified data source providing the specified data source
-   * is not already containe
+   * Convenience method to set the specified data source providing the
+   * specified data source to the underlying {@link SzDataSourceResponseData}.
    *
    * @param dataSource The data source code to add.
    */
-  public void setDataSource(SzDataSource dataSource) {
-    this.data.dataSource = dataSource;
+  void setDataSource(SzDataSource dataSource);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzDataSourceResponse}.
+   */
+  interface Provider extends ModelProvider<SzDataSourceResponse> {
+    /**
+     * Creates an instance of {@link SzDataSourceResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    SzDataSourceResponse create(SzMeta meta, SzLinks links);
+
+    /**
+     * Creates an instance of {@link SzDataSourceResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The data for the response.
+     */
+    SzDataSourceResponse create(SzMeta                    meta,
+                                SzLinks                   links,
+                                SzDataSourceResponseData  data);
   }
 
   /**
-   * Inner class to represent the data section for this response.
+   * Provides a default {@link Provider} implementation for {@link
+   * SzDataSourceResponse} that produces instances of
+   * {@link SzDataSourceResponseImpl}.
    */
-  public static class Data {
+  class DefaultProvider extends AbstractModelProvider<SzDataSourceResponse>
+      implements Provider
+  {
     /**
-     * The {@link SzDataSource} for this instance.
+     * Default constructor.
      */
-    private SzDataSource dataSource;
-
-    /**
-     * Private default constructor.
-     */
-    private Data() {
-      this.dataSource = null;
+    public DefaultProvider() {
+      super(SzDataSourceResponse.class, SzDataSourceResponseImpl.class);
     }
 
-    /**
-     * Gets the {@link SzDataSource} describing the data source.
-     *
-     * @return The {@link SzDataSource} describing the data source.
-     */
-    public SzDataSource getDataSource() {
-      return this.dataSource;
+    @Override
+    public SzDataSourceResponse create(SzMeta meta, SzLinks links) {
+      return new SzDataSourceResponseImpl(meta, links);
     }
 
-    /**
-     * Private setter used for deserialization.
-     */
-    private void setDataSource(SzDataSource dataSource) {
-      this.dataSource = dataSource;
+    @Override
+    public SzDataSourceResponse create(SzMeta                   meta,
+                                       SzLinks                  links,
+                                       SzDataSourceResponseData data)
+    {
+      return new SzDataSourceResponseImpl(meta, links, data);
     }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzDataSourceResponse}.
+   */
+  class Factory extends ModelFactory<SzDataSourceResponse, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzDataSourceResponse.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates an instance of {@link SzDataSourceResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    public SzDataSourceResponse create(SzMeta meta, SzLinks links) {
+      return this.getProvider().create(meta, links);
+    }
+
+    /**
+     * Creates an instance of {@link SzDataSourceResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The data for the response.
+     */
+    public SzDataSourceResponse create(SzMeta                   meta,
+                                       SzLinks                  links,
+                                       SzDataSourceResponseData data)
+    {
+      return this.getProvider().create(meta, links, data);
+    }
+
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 }

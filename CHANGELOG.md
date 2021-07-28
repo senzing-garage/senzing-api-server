@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2021-07-22
+
+### Changed in 2.7.0
+
+- Added support for HTTPS/SSL communication with optional client SSL
+  authentication.
+- Added support for GZIP compression of HTTP response content when the client
+  sends the "Accept-Encoding: gzip" request header is sent by the client.
+- Added `GET /` endpoint that mimics the functionality of `GET /heartbeat`
+- Added `GET /specifications/open-api` endpoint to get the Open API
+  specification as JSON data.  The optional `?asRaw=true` query parameter
+  promotes the Open API JSON from the `data` property of the response to the
+  root of the response.
+- Updated Senzing REST API Specification version to 2.7.0.
+- Modifications to make the BulkDataServicesReadOnlyTest less sensitive to
+  timing issues.
+- Refactored model classes, service classes and API server classes to allow for
+  extending and customizing the API Server.  **NOTE**: while these changes will
+  **NOT** break backwards compatibility for REST API clients, Java projects that
+  extend API Server Java classes (e.g.: customized API servers) will be
+  affected.  The semantic versioning for the API Server guarantees that minor
+  releases maintain backwards compatibility for REST API clients.  However,
+  these changes are working towards **possibly** maintaining backwards
+  compatibility for extended Java code in minor releases in a future major
+  release.
+
 ## [2.6.2] - 2021-07-15
 
 ### Changed in 2.6.2
@@ -70,8 +96,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   primarily help with Docker deployments.
 - Added command-line option for `--url-base-path` / `-urlBasePath` (along with
   `SENZING_API_SERVER_URL_BASE_PATH` environment variable) to set the base path
-  base path of the API server on startup
-- Updated usage string of `SzApiServer` to reflect all changes regarding
+  of the API server on startup
+- Updated usage string of `SzApiServer` to reflect all changes regarding 
   command-line options
 - Updated/fixed the output when running with `-version` command-line option
 - Modified `SzVersionInfo` to include `nativeApiBuildVersion` field on the

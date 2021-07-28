@@ -1809,7 +1809,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  after - before);
 
       Long entityId1 = this.getEntityIdForRecordId(
-          new SzRecordId(WATCHLIST_DATA_SOURCE, recordId1));
+          SzRecordId.FACTORY.create(WATCHLIST_DATA_SOURCE, recordId1));
 
       queryParams.put("entityId", entityId1);
       uriText = this.formatServerUri("reevaluate-entity", queryParams);
@@ -1875,7 +1875,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  after - before);
 
       Long entityId2 = this.getEntityIdForRecordId(
-          new SzRecordId(CUSTOMER_DATA_SOURCE, recordId2));
+          SzRecordId.FACTORY.create(CUSTOMER_DATA_SOURCE, recordId2));
 
       queryParams.put("entityId", entityId2);
       uriText = this.formatServerUri("reevaluate-entity", queryParams);
@@ -1948,7 +1948,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  after - before);
 
       Long entityId1 = this.getEntityIdForRecordId(
-          new SzRecordId(WATCHLIST_DATA_SOURCE, recordId1));
+          SzRecordId.FACTORY.create(WATCHLIST_DATA_SOURCE, recordId1));
 
       queryParams.put("entityId", entityId1);
       uriText = this.formatServerUri("reevaluate-entity", queryParams);
@@ -2001,7 +2001,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  after - before);
 
       Long entityId2 = this.getEntityIdForRecordId(
-          new SzRecordId(CUSTOMER_DATA_SOURCE, recordId2));
+          SzRecordId.FACTORY.create(CUSTOMER_DATA_SOURCE, recordId2));
 
       queryParams.put("entityId", entityId2);
       uriText = this.formatServerUri("reevaluate-entity", queryParams);
@@ -2078,7 +2078,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  after - before);
 
       Long entityId1 = this.getEntityIdForRecordId(
-          new SzRecordId(WATCHLIST_DATA_SOURCE, recordId1));
+          SzRecordId.FACTORY.create(WATCHLIST_DATA_SOURCE, recordId1));
 
       Map<String, Object> queryParams2 = new LinkedHashMap<>();
       queryParams2.put("entityId", entityId1);
@@ -2139,7 +2139,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                  after - before);
 
       Long entityId2 = this.getEntityIdForRecordId(
-          new SzRecordId(CUSTOMER_DATA_SOURCE, recordId2));
+          SzRecordId.FACTORY.create(CUSTOMER_DATA_SOURCE, recordId2));
 
       queryParams2.clear();
       queryParams2.put("entityId", entityId2);

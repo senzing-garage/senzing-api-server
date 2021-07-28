@@ -7,6 +7,7 @@ import javax.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -73,13 +74,6 @@ public class WebSocketFilter implements Filter {
     for (Method method : methods) {
       // check if the method is annotated as OnUpgrade
       if (method.getAnnotation(OnUpgrade.class) == null) continue;
-
-      // check if the method is static (required)
-      if ((method.getModifiers() & Modifier.STATIC) == 0) {
-        throw new IllegalStateException(
-            "The OnUpgrade method must be static: class=[ " + c.getName()
-                + " ], method=[ " + method + " ]");
-      }
 
       // check the return type
       if (method.getReturnType() != boolean.class) {
@@ -311,10 +305,13 @@ public class WebSocketFilter implements Filter {
     throws ServletException, IOException
   {
     try {
-      Object[] params = {request, response};
-      return (Boolean) this.onUpgradeMethod.invoke(null, params);
+      Object[]    params      = {request, response};
+      Constructor constructor = this.onUpgradeClass.getDeclaredConstructor();
+      Object      instance    = constructor.newInstance();
 
-    } catch (InvocationTargetException|IllegalAccessException e) {
+      return (Boolean) this.onUpgradeMethod.invoke(instance, params);
+
+    } catch (Exception e) {
       throw new ServletException(
           "Failed to call OnUpgrade method: class=[ " + this.onUpgradeClass
           + " ], method=[ " + this.onUpgradeMethod + " ]", e);

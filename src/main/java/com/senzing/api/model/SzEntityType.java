@@ -1,111 +1,47 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzEntityTypeImpl;
 import com.senzing.util.JsonUtils;
 
-import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Describes a entity type in its entirety.
  */
-public class SzEntityType implements SzEntityTypeDescriptor {
-  /**
-   * The entity type code.
-   */
-  private String entityTypeCode;
-
-  /**
-   * The entity type ID.
-   */
-  private Integer entityTypeId;
-
-  /**
-   * The entity class code identifying the associated entity class.
-   */
-  private String entityClassCode;
-
-  /**
-   * Default constructor.
-   */
-  SzEntityType() {
-    this.entityTypeCode = null;
-    this.entityTypeId   = null;
-    this.entityTypeCode = null;
-  }
-
-  /**
-   * Constructs with only the entity type code, leaving the entity class code
-   * and entity type ID as <tt>null</tt>.
-   *
-   * @param entityTypeCode The entity type code for the entity type.
-   */
-  public SzEntityType(String entityTypeCode) {
-    this(entityTypeCode, null, null);
-  }
-
-  /**
-   * Constructs with the specified entity tfype code and entity type ID.
-   *
-   * @param entityTypeCode The entity type code for the entity type.
-   * @param entityTypeId The entity type ID for the entity type.
-   * @param entityTypeCode The entity class code for the associated entity
-   *                        class.
-   */
-  public SzEntityType(String    entityTypeCode,
-                      Integer   entityTypeId,
-                      String    entityClassCode)
-  {
-    this.entityTypeCode   = entityTypeCode.toUpperCase().trim();
-    this.entityTypeId     = entityTypeId;
-    this.entityClassCode  = entityClassCode;
-    if (this.entityClassCode != null) {
-      this.entityClassCode = this.entityClassCode.toUpperCase().trim();
-    }
-  }
-
+@JsonDeserialize(using=SzEntityType.Factory.class)
+public interface SzEntityType extends SzEntityTypeDescriptor {
   /**
    * Gets the entity type code for the entity type.
    *
    * @return The entity type code for the entity type.
    */
-  public String getEntityTypeCode() {
-    return this.entityTypeCode;
-  }
+  String getEntityTypeCode();
 
   /**
    * Sets the entity type code for the entity type.
    *
    * @param code The entity type code for the entity type.
    */
-  void setEntityTypeCode(String code) {
-    this.entityTypeCode = code;
-    if (this.entityTypeCode != null) {
-      this.entityTypeCode = this.entityTypeCode.toUpperCase().trim();
-    }
-  }
+  void setEntityTypeCode(String code);
 
   /**
    * Return the entity type ID associated with the entity type.
    *
    * @return The entity type ID associated with the entity type.
    */
-  public Integer getEntityTypeId() {
-    return this.entityTypeId;
-  }
+  Integer getEntityTypeId();
 
   /**
    * Sets the entity type ID associated with the entity type.
    *
    * @param entityTypeId The entity type ID associated with the entity type.
    */
-  public void setEntityTypeId(Integer entityTypeId) {
-    this.entityTypeId = entityTypeId;
-  }
+  void setEntityTypeId(Integer entityTypeId);
 
   /**
    * Gets the entity class code for the entity class to which this entity type
@@ -114,9 +50,7 @@ public class SzEntityType implements SzEntityTypeDescriptor {
    * @return The entity class code for the entity class to which this entity
    *         type belongs.
    */
-  public String getEntityClassCode() {
-    return this.entityClassCode;
-  }
+  String getEntityClassCode();
 
   /**
    * Sets the entity class code for the entity class to which this entity type
@@ -125,52 +59,133 @@ public class SzEntityType implements SzEntityTypeDescriptor {
    * @param code The entity class code for the entity class to which this entity
    *             type belongs.
    */
-  public void setEntityClassCode(String code) {
-    this.entityClassCode = code;
-    if (this.entityClassCode != null) {
-      this.entityClassCode = this.entityClassCode.toUpperCase().trim();
-    }
-  }
+  void setEntityClassCode(String code);
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    SzEntityType ec = (SzEntityType) o;
-    return Objects.equals(this.getEntityTypeCode(), ec.getEntityTypeCode())
-        && Objects.equals(this.getEntityTypeId(), ec.getEntityTypeId())
-        && Objects.equals(this.getEntityClassCode(), ec.getEntityClassCode());
-  }
+  /**
+   * A {@link ModelProvider} for instances of {@link SzEntityType}.
+   */
+  interface Provider extends ModelProvider<SzEntityType> {
+    /**
+     * Default creator method.
+     */
+    SzEntityType create();
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.getEntityTypeCode(),
-                        this.getEntityTypeId(),
-                        this.getEntityClassCode());
-  }
+    /**
+     * Creates an instance with only the entity type code, leaving the entity
+     * class code and entity type ID as <tt>null</tt>.
+     *
+     * @param entityTypeCode The entity type code for the entity type.
+     */
+    SzEntityType create(String entityTypeCode);
 
-  @Override
-  public String toString() {
-    return this.toJson();
+    /**
+     * Creates an instance with the specified entity tfype code and entity
+     * type ID.
+     *
+     * @param entityTypeCode The entity type code for the entity type.
+     * @param entityTypeId The entity type ID for the entity type.
+     * @param entityClassCode The entity class code for the associated entity
+     *                        class.
+     */
+    SzEntityType create(String    entityTypeCode,
+                        Integer   entityTypeId,
+                        String    entityClassCode);
   }
 
   /**
-   * Adds the JSON properties to the specified {@link JsonObjectBuilder} to
-   * describe this instance in its standard JSON format.
-   *
-   * @param builder The {@link JsonObjectBuilder} to add the properties.
+   * Provides a default {@link Provider} implementation for {@link
+   * SzEntityType} that produces instances of {@link SzEntityTypeImpl}.
    */
-  public void buildJson(JsonObjectBuilder builder) {
-    builder.add("entityTypeCode", this.getEntityTypeCode());
-    Integer typeId = this.getEntityTypeId();
-    if (typeId != null) {
-      builder.add("entityTypeId", typeId);
+  class DefaultProvider extends AbstractModelProvider<SzEntityType>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzEntityType.class, SzEntityTypeImpl.class);
     }
-    String classCode = this.getEntityClassCode();
-    if (classCode != null) {
-      builder.add("entityClassCode", classCode);
+
+    @Override
+    public SzEntityType create() {
+      return new SzEntityTypeImpl();
+    }
+
+    @Override
+    public SzEntityType create(String entityTypeCode) {
+      return new SzEntityTypeImpl(entityTypeCode);
+    }
+
+    @Override
+    public SzEntityType create(String    entityTypeCode,
+                               Integer   entityTypeId,
+                               String    entityClassCode) {
+      return new SzEntityTypeImpl(
+          entityTypeCode, entityTypeId, entityClassCode);
     }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link SzEntityType}.
+   */
+  class Factory extends ModelFactory<SzEntityType, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzEntityType.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Default creator method.
+     */
+    public SzEntityType create() {
+      return this.getProvider().create();
+    }
+
+    /**
+     * Creates an instance with only the entity type code, leaving the entity
+     * class code and entity type ID as <tt>null</tt>.
+     *
+     * @param entityTypeCode The entity type code for the entity type.
+     */
+    public SzEntityType create(String entityTypeCode) {
+      return this.getProvider().create(entityTypeCode);
+    }
+
+    /**
+     * Creates an instance with the specified entity tfype code and entity
+     * type ID.
+     *
+     * @param entityTypeCode The entity type code for the entity type.
+     * @param entityTypeId The entity type ID for the entity type.
+     * @param entityClassCode The entity class code for the associated entity
+     *                        class.
+     */
+    public SzEntityType create(String   entityTypeCode,
+                               Integer  entityTypeId,
+                               String   entityClassCode) {
+      return this.getProvider().create(
+          entityTypeCode, entityTypeId, entityClassCode);
+    }
+
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the specified JSON text for the entity class.
@@ -178,7 +193,7 @@ public class SzEntityType implements SzEntityTypeDescriptor {
    * @param text The JSON text to parse.
    * @return The {@link SzEntityType} that was created.
    */
-  public static SzEntityType valueOf(String text) {
+  static SzEntityType valueOf(String text) {
     try {
       JsonObject jsonObject = JsonUtils.parseJsonObject(text.trim());
 
@@ -196,7 +211,7 @@ public class SzEntityType implements SzEntityTypeDescriptor {
    *
    * @return The {@link SzEntityType} that was created.
    */
-  public static SzEntityType parse(JsonObject jsonObject) {
+  static SzEntityType parse(JsonObject jsonObject) {
     String typeCode = JsonUtils.getString(jsonObject, "entityTypeCode");
     if (typeCode == null) {
       typeCode = JsonUtils.getString(jsonObject, "ETYPE_CODE");
@@ -209,7 +224,7 @@ public class SzEntityType implements SzEntityTypeDescriptor {
     if (classCode == null) {
       classCode = JsonUtils.getString(jsonObject, "ECLASS_CODE");
     }
-    return new SzEntityType(typeCode, id, classCode);
+    return SzEntityType.FACTORY.create(typeCode, id, classCode);
   }
 
   /**
@@ -225,8 +240,8 @@ public class SzEntityType implements SzEntityTypeDescriptor {
    * @return The specified (or newly created) {@link List} of 
    *         {@link SzEntityType} instances.
    */
-  public static List<SzEntityType> parseEntityTypeList(
-      List<SzEntityType> list,
+  static List<SzEntityType> parseEntityTypeList(
+      List<SzEntityType>  list,
       JsonArray           jsonArray)
   {
     if (list == null) {
@@ -248,10 +263,10 @@ public class SzEntityType implements SzEntityTypeDescriptor {
    *
    * @return The specified (or newly created) {@link SzEntityType}
    */
-  public static SzEntityType parseEntityType(SzEntityType entityType,
+  static SzEntityType parseEntityType(SzEntityType entityType,
                                              JsonObject   jsonObject)
   {
-    if (entityType == null) entityType = new SzEntityType();
+    if (entityType == null) entityType = SzEntityType.FACTORY.create();
 
     String  typeCode  = JsonUtils.getString(jsonObject, "ETYPE_CODE");
     Integer id        = JsonUtils.getInteger(jsonObject, "ETYPE_ID");
@@ -282,8 +297,26 @@ public class SzEntityType implements SzEntityTypeDescriptor {
    *
    * @return A reference to this instance.
    */
-  public SzEntityType toEntityType() {
+  default SzEntityType toEntityType() {
     return this;
+  }
+
+  /**
+   * Adds the JSON properties to the specified {@link JsonObjectBuilder} to
+   * describe this instance in its standard JSON format.
+   *
+   * @param builder The {@link JsonObjectBuilder} to add the properties.
+   */
+  default void buildJson(JsonObjectBuilder builder) {
+    builder.add("entityTypeCode", this.getEntityTypeCode());
+    Integer typeId = this.getEntityTypeId();
+    if (typeId != null) {
+      builder.add("entityTypeId", typeId);
+    }
+    String classCode = this.getEntityClassCode();
+    if (classCode != null) {
+      builder.add("entityClassCode", classCode);
+    }
   }
 
   /**
@@ -291,7 +324,7 @@ public class SzEntityType implements SzEntityTypeDescriptor {
    *
    * @param builder The {@link JsonObjectBuilder} to add the properties to.
    */
-  public void buildNativeJson(JsonObjectBuilder builder) {
+  default void buildNativeJson(JsonObjectBuilder builder) {
     builder.add("ETYPE_CODE", this.getEntityTypeCode());
     if (this.getEntityTypeId() != null) {
       builder.add("ETYPE_ID", this.getEntityTypeId());

@@ -1,6 +1,8 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzAttributeSearchResultImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -17,53 +19,14 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
  * SzBaseRelatedEntity} to add the {@link SzAttributeSearchResultType} and
  * the {@link SzSearchFeatureScore} instances.
  */
-public class SzAttributeSearchResult extends SzBaseRelatedEntity {
-  /**
-   * The search result type.
-   */
-  private SzAttributeSearchResultType resultType;
-
-  /**
-   * The best name score.
-   */
-  private Integer bestNameScore;
-
-  /**
-   * The {@link Map} of {@link String} feature type keys to {@link List}
-   * values of {@link SzSearchFeatureScore} instances.
-   */
-  private Map<String, List<SzSearchFeatureScore>> featureScores;
-
-  /**
-   * The {@link Map} of {@link String} feature type keys to <b>unmodifiable</b>
-   * {@link List} values of {@link SzSearchFeatureScore} instances.
-   */
-  private Map<String, List<SzSearchFeatureScore>> featureScoreViews;
-
-  /**
-   * The entities related to the resolved entity.
-   */
-  private List<SzRelatedEntity> relatedEntities;
-
-  /**
-   * Default constructor.
-   */
-  public SzAttributeSearchResult() {
-    this.resultType         = null;
-    this.bestNameScore      = null;
-    this.featureScores      = new LinkedHashMap<>();
-    this.featureScoreViews  = new LinkedHashMap<>();
-    this.relatedEntities    = new LinkedList<>();
-  }
-
+@JsonDeserialize(using=SzAttributeSearchResult.Factory.class)
+public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
   /**
    * Gets the {@link SzRelationshipType} describing the type of relation.
    *
    * @return The {@link SzRelationshipType} describing the type of relation.
    */
-  public SzAttributeSearchResultType getResultType() {
-    return this.resultType;
-  }
+  SzAttributeSearchResultType getResultType();
 
   /**
    * Sets the {@link SzAttributeSearchResultType} describing the type of
@@ -72,9 +35,7 @@ public class SzAttributeSearchResult extends SzBaseRelatedEntity {
    * @param resultType The {@link SzAttributeSearchResultType} describing the
    *                   type of relation.
    */
-  public void setResultType(SzAttributeSearchResultType resultType) {
-    this.resultType = resultType;
-  }
+  void setResultType(SzAttributeSearchResultType resultType);
 
   /**
    * Gets the best name score from the search match.  This is the best of the
@@ -85,9 +46,7 @@ public class SzAttributeSearchResult extends SzBaseRelatedEntity {
    *         no full name or organization scores.
    */
   @JsonInclude(NON_NULL)
-  public Integer getBestNameScore() {
-    return this.bestNameScore;
-  }
+  Integer getBestNameScore();
 
   /**
    * Sets the best full name score from the search match.  This is the best of
@@ -97,9 +56,7 @@ public class SzAttributeSearchResult extends SzBaseRelatedEntity {
    * @param score The best name score from the search match, or
    *              <tt>null</tt> if no full name or organization name scores.
    */
-  public void setBestNameScore(Integer score) {
-    this.bestNameScore = score;
-  }
+  void setBestNameScore(Integer score);
 
   /**
    * Gets the <b>unmodifiable</b> {@link Map} of {@link String} feature type
@@ -112,58 +69,23 @@ public class SzAttributeSearchResult extends SzBaseRelatedEntity {
    *         for that type.
    */
   @JsonInclude(NON_EMPTY)
-  public Map<String, List<SzSearchFeatureScore>> getFeatureScores() {
-    if (this.featureScoreViews.size() == 0) return null;
-    return Collections.unmodifiableMap(this.featureScoreViews);
-  }
+  Map<String, List<SzSearchFeatureScore>> getFeatureScores();
 
   /**
    * Adds the specified {@link SzSearchFeatureScore} to this instance.
    *
    * @param featureScore The {@link SzSearchFeatureScore} to add.
    */
-  public void addFeatureScore(SzSearchFeatureScore featureScore) {
-    String featureType = featureScore.getFeatureType();
-    List<SzSearchFeatureScore> list = this.featureScores.get(featureType);
-
-    // check if the list does not exist
-    if (list == null) {
-      list = new LinkedList<>();
-      List<SzSearchFeatureScore> listView = Collections.unmodifiableList(list);
-
-      this.featureScores.put(featureType, list);
-      this.featureScoreViews.put(featureType, listView);
-    }
-
-    // add to the list
-    list.add(featureScore);
-  }
+  void addFeatureScore(SzSearchFeatureScore featureScore);
 
   /**
-   * Private setter for JSON marshalling.  The specified {@link Map} will be
-   * copied.
+   * Sets the feature scores using a {@link Map} of {@link String} feature type
+   * keys to {@link SzSearchFeatureScore} values.
    *
    * @param featureScores The {@link Map} of {@link String} feature type
    *                      keys to {@link SzSearchFeatureScore} values.
    */
-  private void setFeatureScores(Map<String, List<SzSearchFeatureScore>> featureScores)
-  {
-    this.featureScores.clear();
-    this.featureScoreViews.clear();
-    if (featureScores == null) return;
-    featureScores.entrySet().forEach(entry -> {
-      String                      featureType = entry.getKey();
-      List<SzSearchFeatureScore>  list        = entry.getValue();
-
-      List<SzSearchFeatureScore> listCopy = new LinkedList<>();
-      List<SzSearchFeatureScore> listView
-          = Collections.unmodifiableList(listCopy);
-      listCopy.addAll(list);
-
-      this.featureScores.put(featureType, listCopy);
-      this.featureScoreViews.put(featureType, listView);
-    });
-  }
+  void setFeatureScores(Map<String, List<SzSearchFeatureScore>> featureScores);
 
   /**
    * Gets the {@link List} of {@linkplain SzRelatedEntity related entities}.
@@ -171,9 +93,7 @@ public class SzAttributeSearchResult extends SzBaseRelatedEntity {
    * @return The {@link List} of {@linkplain SzRelatedEntity related entities}.
    */
   @JsonInclude(NON_EMPTY)
-  public List<SzRelatedEntity> getRelatedEntities() {
-    return this.relatedEntities;
-  }
+  List<SzRelatedEntity> getRelatedEntities();
 
   /**
    * Sets the {@link List} of {@linkplain SzRelatedEntity related entities}.
@@ -181,21 +101,82 @@ public class SzAttributeSearchResult extends SzBaseRelatedEntity {
    * @param relatedEntities The {@link List} of {@linkplain SzRelatedEntity
    *                        related entities}.
    */
-  public void setRelatedEntities(List<SzRelatedEntity> relatedEntities) {
-    this.relatedEntities.clear();
-    if (relatedEntities != null) {
-      this.relatedEntities.addAll(relatedEntities);
-    }
-  }
+  void setRelatedEntities(List<SzRelatedEntity> relatedEntities);
 
   /**
    * Adds the specified {@link SzRelatedEntity}
    */
-  public void addRelatedEntity(SzRelatedEntity relatedEntity) {
-    if (relatedEntity != null) {
-      this.relatedEntities.add(relatedEntity);
+  void addRelatedEntity(SzRelatedEntity relatedEntity);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzAttributeSearchResult}.
+   */
+  interface Provider extends ModelProvider<SzAttributeSearchResult> {
+    /**
+     * Creates a new instance of {@link SzAttributeSearchResult}.
+     *
+     * @return The new instance of {@link SzAttributeSearchResult}
+     */
+    SzAttributeSearchResult create();
+  }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzAttributeSearchResult} that produces instances of
+   * {@link SzAttributeSearchResultImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzAttributeSearchResult>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzAttributeSearchResult.class, SzAttributeSearchResultImpl.class);
+    }
+
+    @Override
+    public SzAttributeSearchResult create() {
+      return new SzAttributeSearchResultImpl();
     }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzAttributeSearchResult}.
+   */
+  class Factory extends ModelFactory<SzAttributeSearchResult, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzAttributeSearchResult.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzAttributeSearchResult}.
+     * @return The new instance of {@link SzAttributeSearchResult}.
+     */
+    public SzAttributeSearchResult create() {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses a list of resolved entities from a {@link JsonArray} describing a
@@ -215,7 +196,7 @@ public class SzAttributeSearchResult extends SzBaseRelatedEntity {
    * @return The populated (or created) {@link List} of {@link
    *         SzAttributeSearchResult} instances.
    */
-  public static List<SzAttributeSearchResult> parseSearchResultList(
+  static List<SzAttributeSearchResult> parseSearchResultList(
       List<SzAttributeSearchResult> list,
       JsonArray                     jsonArray,
       Function<String,String>       featureToAttrClassMapper)
@@ -248,13 +229,13 @@ public class SzAttributeSearchResult extends SzBaseRelatedEntity {
    *
    * @return The populated (or created) {@link SzAttributeSearchResult}.
    */
-  public static SzAttributeSearchResult parseSearchResult(
+  static SzAttributeSearchResult parseSearchResult(
       SzAttributeSearchResult searchResult,
       JsonObject              jsonObject,
       Function<String,String> featureToAttrClassMapper)
   {
     SzAttributeSearchResult result = (searchResult != null)
-        ? searchResult : new SzAttributeSearchResult();
+        ? searchResult : SzAttributeSearchResult.FACTORY.create();
 
     Function<String,String> mapper = featureToAttrClassMapper;
 
@@ -355,16 +336,5 @@ public class SzAttributeSearchResult extends SzBaseRelatedEntity {
 
     // return the result
     return result;
-  }
-
-  @Override
-  public String toString() {
-    return "SzAttributeSearchResult{" +
-        super.toString() +
-        ", resultType=" + this.resultType +
-        ", bestNameScore=" + this.bestNameScore +
-        ", featureScores=" + this.featureScores +
-        ", relatedEntities=" + this.relatedEntities +
-        '}';
   }
 }

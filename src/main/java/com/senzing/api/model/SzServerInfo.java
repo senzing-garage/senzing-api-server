@@ -1,63 +1,19 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzServerInfoImpl;
+
 /**
  * Describes the server features and state.
  */
-public class SzServerInfo {
-  /**
-   * The server concurrency.
-   */
-  private int concurrency;
-
-  /**
-   * The active config ID being used by the server or <tt>null</tt>
-   */
-  private long activeConfigId;
-
-  /**
-   * Whether or not the server will automatically pickup the latest
-   * default configuration if it changes.
-   */
-  private boolean dynamicConfig;
-
-  /**
-   * Whether or not the server was started in read-only mode.  If in
-   * read-only mode then operations that modify the repository (e.g.:
-   * loading records or configuring new data sources) are not allowed.
-   */
-  private boolean readOnly;
-
-  /**
-   * Whether or not admin features are enabled.  If admin features are
-   * not enabled then the configuration cannot be modified.
-   */
-  private boolean adminEnabled;
-
-  /**
-   * The maximum size for web sockets messages.
-   */
-  private int webSocketsMessageMaxSize;
-
-  /**
-   * Default constructor.
-   */
-  public SzServerInfo() {
-    this.concurrency              = 0;
-    this.activeConfigId           = 0;
-    this.dynamicConfig            = false;
-    this.readOnly                 = false;
-    this.adminEnabled             = false;
-    this.webSocketsMessageMaxSize = 0;
-  }
-
+@JsonDeserialize(using=SzServerInfo.Factory.class)
+public interface SzServerInfo {
   /**
    * Gets the number of Senzing worker threads pooled for handling requests.
    *
    * @return The number of Senzing worker threads pooled for handling requests.
    */
-  public int getConcurrency() {
-    return this.concurrency;
-  }
+  int getConcurrency();
 
   /**
    * Sets the number of Senzing worker threads pooled for handling requests.
@@ -65,9 +21,7 @@ public class SzServerInfo {
    * @param concurrency The number of Senzing worker threads pooled for
    *                    handling requests.
    */
-  public void setConcurrency(int concurrency) {
-    this.concurrency = concurrency;
-  }
+  void setConcurrency(int concurrency);
 
   /**
    * The active configuration ID being used by the API server.  This
@@ -76,9 +30,7 @@ public class SzServerInfo {
    *
    * @return The active configuration ID being used b the API server.
    */
-  public long getActiveConfigId() {
-    return this.activeConfigId;
-  }
+  long getActiveConfigId();
 
   /**
    * The active configuration ID being used by the API server.  This
@@ -88,9 +40,7 @@ public class SzServerInfo {
    * @param activeConfigId The active configuration ID being used by the
    *                       API server.
    */
-  public void setActiveConfigId(long activeConfigId) {
-    this.activeConfigId = activeConfigId;
-  }
+  void setActiveConfigId(long activeConfigId);
 
   /**
    * Checks whether or not the server will automatically pickup the latest
@@ -100,9 +50,7 @@ public class SzServerInfo {
    *         default configuration if it changes, and <tt>false</tt> if the
    *         configuration is static and the server will not recognize changes.
    */
-  public boolean isDynamicConfig() {
-    return this.dynamicConfig;
-  }
+  boolean isDynamicConfig();
 
   /**
    * Sets whether or not the server will automatically pickup the latest
@@ -113,9 +61,7 @@ public class SzServerInfo {
    *                      <tt>false</tt> if the configuration is static and the
    *                      server will not recognize changes.
    */
-  public void setDynamicConfig(boolean dynamicConfig) {
-    this.dynamicConfig = dynamicConfig;
-  }
+  void setDynamicConfig(boolean dynamicConfig);
 
   /**
    * Checks whether or not the server was started in read-only mode.  If in
@@ -125,9 +71,7 @@ public class SzServerInfo {
    * @return <tt>true</tt> if the server was started in read-only mode,
    *         and <tt>false</tt> if write operations are allowed.
    */
-  public boolean isReadOnly() {
-    return this.readOnly;
-  }
+  boolean isReadOnly();
 
   /**
    * Sets whether or not the server was started in read-only mode.  If in
@@ -137,9 +81,7 @@ public class SzServerInfo {
    * @param readOnly <tt>true</tt> if the server was started in read-only mode,
    *                 and <tt>false</tt> if write operations are allowed.
    */
-  public void setReadOnly(boolean readOnly) {
-    this.readOnly = readOnly;
-  }
+  void setReadOnly(boolean readOnly);
 
   /**
    * Checks whether or not admin features are enabled.  If admin features are
@@ -148,9 +90,7 @@ public class SzServerInfo {
    * @return <tt>true</tt> if admin features are enabled, otherwise
    *         <tt>false</tt>.
    */
-  public boolean isAdminEnabled() {
-    return this.adminEnabled;
-  }
+  boolean isAdminEnabled();
 
   /**
    * Sets whether or not admin features are enabled.  If admin features are
@@ -159,9 +99,7 @@ public class SzServerInfo {
    * @param adminEnabled <tt>true</tt> if admin features are enabled, otherwise
    *                     <tt>false</tt>.
    */
-  public void setAdminEnabled(boolean adminEnabled) {
-    this.adminEnabled = adminEnabled;
-  }
+  void setAdminEnabled(boolean adminEnabled);
 
   /**
    * Gets the maximum number of bytes for both text and binary web sockets
@@ -170,9 +108,7 @@ public class SzServerInfo {
    * @return The maximum number of bytes for both text and binary web sockets
    *         messages.
    */
-  public int getWebSocketsMessageMaxSize() {
-    return this.webSocketsMessageMaxSize;
-  }
+  int getWebSocketsMessageMaxSize();
 
   /**
    * Sets the maximum number of bytes for both text and binary web sockets
@@ -181,7 +117,92 @@ public class SzServerInfo {
    * @param webSocketsMessageMaxSize The maximum number of bytes for both text
    *                                 and binary web sockets messages.
    */
-  public void setWebSocketsMessageMaxSize(int webSocketsMessageMaxSize) {
-    this.webSocketsMessageMaxSize = webSocketsMessageMaxSize;
+  void setWebSocketsMessageMaxSize(int webSocketsMessageMaxSize);
+
+  /**
+   * Checks if an asynchronous INFO queue has been configured for load,
+   * reevaluate and delete operations.
+   *
+   * @return <tt>true</tt> if an asynchronous INFO queue has been configured,
+   *         otherwise <tt>false</tt>.
+   */
+  boolean isInfoQueueConfigured();
+
+  /**
+   * Sets whether or not an asynchronous INFO queue has been configured for
+   * load, reevaluate and delete operations.
+   *
+   * @param configured <tt>true</tt> if an asynchronous INFO queue has been
+   *                   configured, and <tt>false</tt> if not.
+   */
+  void setInfoQueueConfigured(boolean configured);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzServerInfo}.
+   */
+  interface Provider extends ModelProvider<SzServerInfo> {
+    /**
+     * Creates a new instance of {@link SzServerInfo}.
+     *
+     * @return The new instance of {@link SzServerInfo}
+     */
+    SzServerInfo create();
   }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzServerInfo} that produces instances of {@link SzServerInfoImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzServerInfo>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzServerInfo.class, SzServerInfoImpl.class);
+    }
+
+    @Override
+    public SzServerInfo create() {
+      return new SzServerInfoImpl();
+    }
+  }
+
+    /**
+   * Provides a {@link ModelFactory} implementation for {@link SzServerInfo}.
+   */
+  class Factory extends ModelFactory<SzServerInfo, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzServerInfo.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzServerInfo}.
+     * @return The new instance of {@link SzServerInfo}.
+     */
+    public SzServerInfo create()
+    {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 }

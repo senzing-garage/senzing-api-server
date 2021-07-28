@@ -19,6 +19,17 @@ public final class SzApiServerConstants {
   static final String DEFAULT_PORT_PARAM = String.valueOf(DEFAULT_PORT);
 
   /**
+   * The default secure port for the API Server ({@value}).
+   */
+  public static final int DEFAULT_SECURE_PORT = 2443;
+
+  /**
+   * The default secure port as a string.
+   */
+  static final String DEFAULT_SECURE_PORT_PARAM
+      = String.valueOf(DEFAULT_SECURE_PORT);
+
+  /**
    * The default bind address option ({@value}).
    */
   public static final String DEFAULT_BIND_ADDRESS = "loopback";
@@ -26,7 +37,7 @@ public final class SzApiServerConstants {
   /**
    * The default module name ({@value}).
    */
-  public static final String DEFAULT_MODULE_NAME = "SzApiServer";
+  public static final String DEFAULT_MODULE_NAME = "senzing-api-server";
 
   /**
    * The default concurrency setting used by API server instances if

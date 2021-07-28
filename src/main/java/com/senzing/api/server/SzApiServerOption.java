@@ -1,14 +1,22 @@
 package com.senzing.api.server;
 
 import com.senzing.cmdline.CommandLineOption;
+import com.senzing.cmdline.ParameterProcessor;
+import com.senzing.util.JsonUtils;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
 import java.util.*;
+import java.util.regex.Pattern;
 
+import static com.senzing.io.IOUtilities.readTextFileAsString;
 import static com.senzing.util.CollectionUtilities.recursivelyUnmodifiableMap;
 import static com.senzing.api.server.mq.KafkaEndpoint.*;
 import static com.senzing.api.server.mq.SqsEndpoint.*;
 import static com.senzing.api.server.mq.RabbitEndpoint.*;
 import static com.senzing.api.server.SzApiServerConstants.*;
+import static com.senzing.util.LoggingUtilities.multilineFormat;
 
 /**
  * Describes the command-line options for {@link SzApiServer}.
@@ -64,6 +72,122 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
   HTTP_PORT("--http-port", Set.of("-httpPort"),
             ENV_PREFIX + "PORT", null,
             1, DEFAULT_PORT_PARAM),
+
+  /**
+   * <p>
+   * Option for specifying the HTTPS port for the API Server.  This has a single
+   * parameter which can be a positive integer port number or can be zero (0)
+   * to indicate binding to a randomly selected port number.  If not provided
+   * then {@link SzApiServerConstants#DEFAULT_SECURE_PORT_PARAM} is used.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--https-port {positive-port-number|0}</tt></li>
+   *   <li>Command Line: <tt>-httpsPort {positive-port-number|0}</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_SECURE_PORT="{positive-port-number|0}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  HTTPS_PORT("--https-port", Set.of("-httpsPort"),
+             ENV_PREFIX + "SECURE_PORT", null,
+             1, DEFAULT_SECURE_PORT_PARAM),
+
+  /**
+   * <p>
+   * Option for specifying the path to the PKCS12 key store file for HTTPS
+   * support.  If the {@link #HTTP_PORT} option is not explicitly provided,
+   * then all connections must be done via SSL on the {@link #HTTPS_PORT}.
+   * This has a single parameter which is a file path.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--key-store {pkcs12-key-store-file-path}</tt></li>
+   *   <li>Command Line: <tt>-keyStore {pkcs12-key-store-file-path}</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_KEY_STORE="{pkcs12-key-store-file-path}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  KEY_STORE("--key-store", Set.of("-keyStore"),
+            ENV_PREFIX + "KEY_STORE",
+            null, 1),
+
+  /**
+   * <p>
+   * Option for specifying the password to decrypt the PKCS12 key store file
+   * for HTTPS support.  This has a single parameter is the password.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--key-store-password {password}</tt></li>
+   *   <li>Command Line: <tt>-keyStorePassword {password}</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_KEY_STORE_PASSWORD="{password}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  KEY_STORE_PASSWORD("--key-store-password", Set.of("-keyStorePassword"),
+                     ENV_PREFIX + "KEY_STORE_PASSWORD",
+                     null, 1),
+
+  /**
+   * <p>
+   * Option for specifying the optional certificate alias identifying the key in
+   * the key store file for HTTPS support.  If not specified, then there must
+   * only be a single key in the key store file.  This has a single parameter
+   * which is the alias for the certificate.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--key-alias {certificate-alias}</tt></li>
+   *   <li>Command Line: <tt>-keyAlias {certificate-alias}</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_KEY_ALIAS="{certificate-alias}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  KEY_ALIAS("--key-alias", Set.of("-keyAlias"),
+            ENV_PREFIX + "KEY_ALIAS",
+            null, 1),
+
+  /**
+   * <p>
+   * Option for specifying the path to the PKCS12 key store file for SSL
+   * client authentication.  This has a single parameter which is a file path.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--client-key-store {pkcs12-key-store-file-path}</tt></li>
+   *   <li>Command Line: <tt>-clientKeyStore {pkcs12-key-store-file-path}</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_CLIENT_KEY_STORE="{pkcs12-key-store-file-path}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  CLIENT_KEY_STORE("--client-key-store", Set.of("-clientKeyStore"),
+                   ENV_PREFIX + "CLIENT_KEY_STORE",
+                   null, 1),
+
+  /**
+   * <p>
+   * Option for specifying the password to decrypt the PKCS12 client key store
+   * file for SSL client authentication.  This has a single parameter is the
+   * password.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <tt>--client-key-store-password {password}</tt></li>
+   *   <li>Command Line: <tt>-clientKeyStorePassword {password}</tt></li>
+   *   <li>Environment: <tt>SENZING_API_SERVER_CLIENT_KEY_STORE_PASSWORD="{password}"</tt></tt></li>
+   * </ul>
+   * </p>
+   */
+  CLIENT_KEY_STORE_PASSWORD("--client-key-store-password",
+                            Set.of("-clientKeyStorePassword"),
+                            ENV_PREFIX + "CLIENT_KEY_STORE_PASSWORD",
+                            null, 1),
 
   /**
    * <p>
@@ -759,7 +883,7 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * {@link Set} values containing the {@link SzApiServerOption} values that
    * conflict with the key {@link SzApiServerOption} value.
    */
-  private static Map<SzApiServerOption, Set<SzApiServerOption>> CONFLICTING_OPTIONS;
+  private static Map<SzApiServerOption, Set<CommandLineOption>> CONFLICTING_OPTIONS;
 
   /**
    * The {@link Map} of {@link SzApiServerOption} keys to <b>unmodifiable</b>
@@ -779,7 +903,7 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * {@link Set} values containing alternative {@link Set}'s of {@link
    * SzApiServerOption} that the key option is dependent on if specified.
    */
-  private static Map<SzApiServerOption, Set<Set<SzApiServerOption>>> DEPENDENCIES;
+  private static Map<SzApiServerOption, Set<Set<CommandLineOption>>> DEPENDENCIES;
 
   /**
    * Flag indicating if this option is considered a "primary" option.
@@ -1232,7 +1356,7 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
   }
 
   @Override
-  public Set<SzApiServerOption> getConflicts() {
+  public Set<CommandLineOption> getConflicts() {
     return CONFLICTING_OPTIONS.get(this);
   }
 
@@ -1241,8 +1365,8 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
   }
 
   @Override
-  public Set<Set<SzApiServerOption>> getDependencies() {
-    Set<Set<SzApiServerOption>> set = DEPENDENCIES.get(this);
+  public Set<Set<CommandLineOption>> getDependencies() {
+    Set<Set<CommandLineOption>> set = DEPENDENCIES.get(this);
     return (set == null) ? Collections.emptySet() : set;
   }
 
@@ -1252,8 +1376,10 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
 
   static {
     try {
-      Map<SzApiServerOption,Set<SzApiServerOption>> conflictMap = new LinkedHashMap<>();
-      Map<SzApiServerOption,Set<SzApiServerOption>> altMap = new LinkedHashMap<>();
+      Map<SzApiServerOption,Set<CommandLineOption>> conflictMap
+          = new LinkedHashMap<>();
+      Map<SzApiServerOption,Set<SzApiServerOption>> altMap
+          = new LinkedHashMap<>();
       Map<String, SzApiServerOption> lookupMap = new LinkedHashMap<>();
 
       for (SzApiServerOption option : SzApiServerOption.values()) {
@@ -1264,7 +1390,8 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
       SzApiServerOption[] exclusiveOptions = { HELP, VERSION };
       for (SzApiServerOption option : SzApiServerOption.values()) {
         for (SzApiServerOption exclOption : exclusiveOptions) {
-          Set<SzApiServerOption> set = conflictMap.get(exclOption);
+          if (option == exclOption) continue;
+          Set<CommandLineOption> set = conflictMap.get(exclOption);
           set.add(option);
           set = conflictMap.get(option);
           set.add(exclOption);
@@ -1277,12 +1404,13 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
       for (SzApiServerOption option1 : initOptions) {
         for (SzApiServerOption option2 : initOptions) {
           if (option1 != option2) {
-            Set<SzApiServerOption> set = conflictMap.get(option1);
+            Set<CommandLineOption> set = conflictMap.get(option1);
             set.add(option2);
           }
         }
       }
 
+      // handle the messaging options
       Set<SzApiServerOption> kafkaInfoOptions = Set.of(
           KAFKA_INFO_BOOTSTRAP_SERVER,
           KAFKA_INFO_GROUP,
@@ -1301,22 +1429,22 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
 
       // enforce that we only have one info queue
       for (SzApiServerOption option: kafkaInfoOptions) {
-        Set<SzApiServerOption> conflictSet = conflictMap.get(option);
+        Set<CommandLineOption> conflictSet = conflictMap.get(option);
         conflictSet.addAll(rabbitInfoOptions);
         conflictSet.addAll(sqsInfoOptions);
       }
       for (SzApiServerOption option: rabbitInfoOptions) {
-        Set<SzApiServerOption> conflictSet = conflictMap.get(option);
+        Set<CommandLineOption> conflictSet = conflictMap.get(option);
         conflictSet.addAll(kafkaInfoOptions);
         conflictSet.addAll(sqsInfoOptions);
       }
       for (SzApiServerOption option: sqsInfoOptions) {
-        Set<SzApiServerOption> conflictSet = conflictMap.get(option);
+        Set<CommandLineOption> conflictSet = conflictMap.get(option);
         conflictSet.addAll(kafkaInfoOptions);
         conflictSet.addAll(rabbitInfoOptions);
       }
 
-      Set<SzApiServerOption> readOnlyConflicts = conflictMap.get(READ_ONLY);
+      Set<CommandLineOption> readOnlyConflicts = conflictMap.get(READ_ONLY);
       readOnlyConflicts.addAll(kafkaInfoOptions);
       readOnlyConflicts.addAll(rabbitInfoOptions);
       readOnlyConflicts.addAll(sqsInfoOptions);
@@ -1326,7 +1454,7 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
       iniAlts.add(INIT_FILE);
       iniAlts.add(INIT_JSON);
 
-      Map<SzApiServerOption, Set<Set<SzApiServerOption>>> dependencyMap
+      Map<SzApiServerOption, Set<Set<CommandLineOption>>> dependencyMap
           = new LinkedHashMap<>();
 
       // handle dependencies for groups of options that go together
@@ -1345,7 +1473,7 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
       // create the dependencies using the groupings
       groups.forEach((groupName, group) -> {
         for (SzApiServerOption option : group) {
-          Set<SzApiServerOption> others = new LinkedHashSet<>(group);
+          Set<CommandLineOption> others = new LinkedHashSet<>(group);
 
           // remove self from the group (can't depend on itself)
           others.remove(option);
@@ -1363,6 +1491,33 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
         }
       });
 
+      // handle the secure server options
+      dependencyMap.put(HTTPS_PORT,
+                        Set.of(Set.of(KEY_STORE, KEY_STORE_PASSWORD)));
+      dependencyMap.put(KEY_STORE,
+                        Set.of(Set.of(HTTPS_PORT, KEY_STORE_PASSWORD)));
+      dependencyMap.put(KEY_STORE_PASSWORD,
+                        Set.of(Set.of(HTTPS_PORT, KEY_STORE)));
+      dependencyMap.put(
+          KEY_ALIAS, Set.of(Set.of(HTTPS_PORT, KEY_STORE, KEY_STORE_PASSWORD)));
+
+      dependencyMap.put(
+          CLIENT_KEY_STORE,
+          Set.of(Set.of(HTTPS_PORT,
+                        KEY_STORE,
+                        KEY_STORE_PASSWORD,
+                        CLIENT_KEY_STORE_PASSWORD)));
+
+      dependencyMap.put(
+          CLIENT_KEY_STORE_PASSWORD,
+          Set.of(Set.of(
+              HTTPS_PORT, KEY_STORE, KEY_STORE_PASSWORD, CLIENT_KEY_STORE)));
+
+      conflictMap.get(CLIENT_KEY_STORE).add(HTTP_PORT);
+      conflictMap.get(CLIENT_KEY_STORE_PASSWORD).add(HTTP_PORT);
+      conflictMap.get(HTTP_PORT).add(CLIENT_KEY_STORE);
+      conflictMap.get(HTTP_PORT).add(CLIENT_KEY_STORE_PASSWORD);
+
       CONFLICTING_OPTIONS = recursivelyUnmodifiableMap(conflictMap);
       ALTERNATIVE_OPTIONS = recursivelyUnmodifiableMap(altMap);
       OPTIONS_BY_FLAG = Collections.unmodifiableMap(lookupMap);
@@ -1373,4 +1528,308 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
       throw new ExceptionInInitializerError(e);
     }
   }
+
+  /**
+   * The {@link ParameterProcessor} implementation for this class.
+   */
+  private static class ParamProcessor implements ParameterProcessor
+  {
+    /**
+     * Processes the parameters for the specified option.
+     *
+     * @param option The {@link SzApiServerOption} to process.
+     * @param params The {@link List} of parameters for the option.
+     * @return The processed value.
+     * @throws IllegalArgumentException If the specified {@link
+     *         CommandLineOption} is not an instance of {@link
+     *         SzApiServerOption} or is otherwise unrecognized.
+     */
+    public Object process(CommandLineOption option,
+                          List<String>      params)
+    {
+      // check if unhandled
+      if (!(option instanceof SzApiServerOption)) {
+        throw new IllegalArgumentException(
+            "Unhandled command line option: " + option.getCommandLineFlag()
+                + " / " + option);
+      }
+
+      // down-cast
+      SzApiServerOption serverOption = (SzApiServerOption) option;
+      switch (serverOption) {
+        case HELP:
+        case VERSION:
+          return Boolean.TRUE;
+
+        case MONITOR_FILE:
+          File f = new File(params.get(0));
+          return new FileMonitor(f);
+
+        case HTTP_PORT:
+        case HTTPS_PORT: {
+          int port = Integer.parseInt(params.get(0));
+          if (port < 0) {
+            throw new IllegalArgumentException(
+                "Negative port numbers are not allowed: " + port);
+          }
+          return port;
+        }
+
+        case KEY_STORE:
+        case CLIENT_KEY_STORE: {
+          String  filePath      = params.get(0);
+          File    keyStoreFile  = new File(filePath);
+          if (! keyStoreFile.exists()) {
+            throw new IllegalArgumentException(
+                "The specified key store file does not exist: " + filePath);
+          }
+          return keyStoreFile;
+        }
+
+        case BIND_ADDRESS:
+          String addrArg = params.get(0);
+          InetAddress addr = null;
+          try {
+            if ("all".equals(addrArg)) {
+              addr = InetAddress.getByName("0.0.0.0");
+            } else if ("loopback".equals(addrArg)) {
+              addr = InetAddress.getLoopbackAddress();
+            } else {
+              addr = InetAddress.getByName(addrArg);
+            }
+          } catch (RuntimeException e) {
+            throw e;
+          } catch (Exception e) {
+            throw new IllegalArgumentException(e);
+          }
+          return addr;
+
+        case URL_BASE_PATH: {
+          return validateBasePath(params.get(0));
+        }
+
+        case CONCURRENCY: {
+          int threadCount;
+          try {
+            threadCount = Integer.parseInt(params.get(0));
+          } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                "Thread count must be an integer: " + params.get(0));
+          }
+          if (threadCount <= 0) {
+            throw new IllegalArgumentException(
+                "Negative thread counts are not allowed: " + threadCount);
+          }
+          return threadCount;
+        }
+
+        case HTTP_CONCURRENCY: {
+          int threadCount;
+          try {
+            threadCount = Integer.parseInt(params.get(0));
+          } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                "Thread count must be an integer: " + params.get(0));
+          }
+          if (threadCount < MINIMUM_HTTP_CONCURRENCY) {
+            throw new IllegalArgumentException(
+                "Negative thread counts are not allowed: " + threadCount);
+          }
+          return threadCount;
+        }
+
+        case MODULE_NAME:
+        case ALLOWED_ORIGINS:
+        case KAFKA_INFO_BOOTSTRAP_SERVER:
+        case KAFKA_INFO_GROUP:
+        case KAFKA_INFO_TOPIC:
+        case RABBIT_INFO_HOST:
+        case RABBIT_INFO_USER:
+        case RABBIT_INFO_PASSWORD:
+        case RABBIT_INFO_VIRTUAL_HOST:
+        case RABBIT_INFO_EXCHANGE:
+        case RABBIT_INFO_ROUTING_KEY:
+        case SQS_INFO_URL:
+        case KEY_ALIAS:
+        case KEY_STORE_PASSWORD:
+        case CLIENT_KEY_STORE_PASSWORD:
+          return params.get(0);
+
+        case RABBIT_INFO_PORT: {
+          int port = Integer.parseInt(params.get(0));
+          if (port < 0) {
+            throw new IllegalArgumentException(
+                "Negative RabbitMQ port numbers are not allowed: " + port);
+          }
+          return port;
+        }
+
+        case INI_FILE:
+          File iniFile = new File(params.get(0));
+          if (!iniFile.exists()) {
+            throw new IllegalArgumentException(
+                "Specified INI file does not exist: " + iniFile);
+          }
+          return iniFile;
+
+        case INIT_FILE:
+          File initFile = new File(params.get(0));
+          if (!initFile.exists()) {
+            throw new IllegalArgumentException(
+                "Specified JSON init file does not exist: " + initFile);
+          }
+          String jsonText;
+          try {
+            jsonText = readTextFileAsString(initFile, "UTF-8");
+
+          } catch (IOException e) {
+            throw new RuntimeException(
+                multilineFormat(
+                    "Failed to read JSON initialization file: "
+                        + initFile,
+                    "",
+                    "Cause: " + e.getMessage()));
+          }
+          try {
+            return JsonUtils.parseJsonObject(jsonText);
+
+          } catch (Exception e) {
+            throw new IllegalArgumentException(
+                "The initialization file does not contain valid JSON: "
+                    + initFile);
+          }
+
+        case INIT_ENV_VAR:
+          String envVar = params.get(0);
+          String envValue = System.getenv(envVar);
+          if (envValue == null || envValue.trim().length() == 0) {
+            throw new IllegalArgumentException(
+                "Environment variable is missing or empty: " + envVar);
+          }
+          try {
+            return JsonUtils.parseJsonObject(envValue);
+
+          } catch (Exception e) {
+            throw new IllegalArgumentException(
+                multilineFormat(
+                    "Environment variable value is not valid JSON: ",
+                    envValue));
+          }
+
+        case INIT_JSON:
+          String initJson = params.get(0);
+          if (initJson.trim().length() == 0) {
+            throw new IllegalArgumentException(
+                "Initialization JSON is missing or empty.");
+          }
+          try {
+            return JsonUtils.parseJsonObject(initJson);
+
+          } catch (Exception e) {
+            throw new IllegalArgumentException(
+                multilineFormat(
+                    "Initialization JSON is not valid JSON: ",
+                    initJson));
+          }
+
+        case CONFIG_ID:
+          try {
+            return Long.parseLong(params.get(0));
+          } catch (Exception e) {
+            throw new IllegalArgumentException(
+                "The configuration ID for " + option.getCommandLineFlag()
+                    + " must be an integer: " + params.get(0));
+          }
+
+        case AUTO_REFRESH_PERIOD:
+          try {
+            return Long.parseLong(params.get(0));
+          } catch (Exception e) {
+            throw new IllegalArgumentException(
+                "The specified refresh period for "
+                    + option.getCommandLineFlag() + " must be an integer: "
+                    + params.get(0));
+          }
+
+        case READ_ONLY:
+        case ENABLE_ADMIN:
+        case VERBOSE:
+        case QUIET:
+        case SKIP_STARTUP_PERF:
+        case SKIP_ENGINE_PRIMING:
+          if (params.size() == 0) return Boolean.TRUE;
+          String boolText = params.get(0);
+          if ("false".equalsIgnoreCase(boolText)) {
+            return Boolean.FALSE;
+          }
+          if ("true".equalsIgnoreCase(boolText)) {
+            return Boolean.TRUE;
+          }
+          throw new IllegalArgumentException(
+              "The specified parameter for "
+                  + option.getCommandLineFlag()
+                  + " must be true or false: " + params.get(0));
+
+
+        case STATS_INTERVAL: {
+          long statsInterval;
+          try {
+            statsInterval = Long.parseLong(params.get(0));
+          } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(
+                "Stats interval must be a long integer: " + params.get(0));
+          }
+          if (statsInterval < 0) {
+            throw new IllegalArgumentException(
+                "Negative stats intervals are not allowed: "
+                    + statsInterval);
+          }
+          return statsInterval;
+        }
+
+        default:
+          throw new IllegalArgumentException(
+              "Unhandled command line option: "
+                  + option.getCommandLineFlag()
+                  + " / " + option);
+      }
+    }
+  }
+
+  /**
+   * The pattern for legal base paths.
+   */
+  private static final Pattern LEGAL_BASE_PATH_PATTERN
+      = Pattern.compile("[A-Za-z0-9\\-_\\.\\/]+");
+
+  /**
+   * Checks if the specified base path is formatted legally.  If so the
+   * returned value is equivalent but with a leading a trailing forward slash
+   * if the specified parameter did not already have one.
+   *
+   * @param basePath The base path to validate.
+   * @return The base path with a leading and trailing forward slash.
+   *
+   * @throws IllegalArgumentException If the specified base path is not valid.
+   */
+  private static String validateBasePath(String basePath) {
+    if (!LEGAL_BASE_PATH_PATTERN.matcher(basePath).matches()) {
+      throw new IllegalArgumentException(
+          "The specified base path contains illegal characters");
+    }
+    if (basePath.equals("/")) return basePath;
+    if (!basePath.startsWith("/")) basePath = "/" + basePath;
+    if (basePath.endsWith("/")) {
+      basePath = basePath.substring(0, basePath.length() -1);
+    }
+    return basePath;
+  }
+
+  /**
+   * The {@link ParameterProcessor} for {@link SzApiServerOption}.
+   * This instance will only handle instances of {@link CommandLineOption}
+   * instances of type {@link SzApiServerOption}.
+   */
+  public static final ParameterProcessor PARAMETER_PROCESSOR
+      = new ParamProcessor();
 }

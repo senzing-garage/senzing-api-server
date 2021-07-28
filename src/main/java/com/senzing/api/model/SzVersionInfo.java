@@ -1,7 +1,8 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.senzing.api.BuildInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzVersionInfoImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -17,120 +18,51 @@ import java.util.List;
  * Senzing REST API Specification that is implemented and the native Senzing
  * API.
  */
-public class SzVersionInfo {
+@JsonDeserialize(using=SzVersionInfo.Factory.class)
+public interface SzVersionInfo {
+  /**
+   * The {@link String} token used to identify development builds when parsing
+   * the version info.
+   */
+  String DEVELOPMENT_VERSION_TOKEN = "DEVELOPMENT_VERSION";
+
   /**
    * The date-time pattern for the build number.
    */
-  private static final String BUILD_NUMBER_PATTERN = "yyyy_MM_dd__HH_mm";
+  String BUILD_NUMBER_PATTERN = "yyyy_MM_dd__HH_mm";
 
   /**
    * The time zone used for the time component of the build number.
    */
-  private static final ZoneId BUILD_ZONE = ZoneId.of("America/Los_Angeles");
+  ZoneId BUILD_ZONE = ZoneId.of("America/Los_Angeles");
 
   /**
-   * The {@link DateTimeFormatter} for interpretting the build number as a
+   * The {@link DateTimeFormatter} for interpreting the build number as a
    * LocalDateTime instance.
    */
-  private static final DateTimeFormatter BUILD_NUMBER_FORMATTER
+  DateTimeFormatter BUILD_NUMBER_FORMATTER
       = DateTimeFormatter.ofPattern(BUILD_NUMBER_PATTERN);
-
-  /**
-   * The version of the REST API Server implementation.
-   */
-  private String apiServerVersion = null;
-
-  /**
-   * The version of the REST API that is implemented.
-   */
-  private String restApiVersion = null;
-
-  /**
-   * The version for the underlying runtime native Senzing API
-   */
-  private String nativeApiVersion = null;
-
-  /**
-   * The build version for the underlying runtime native Senzing API.
-   */
-  private String nativeApiBuildVersion = null;
-
-  /**
-   * The build number for the underlying runtime native Senzing API.
-   */
-  private String nativeApiBuildNumber = null;
-
-  /**
-   * The build date associated with the underlying runtime native API.
-   */
-  @JsonFormat(shape   = JsonFormat.Shape.STRING,
-              pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-              locale  = "en_GB")
-  private Date nativeApiBuildDate = null;
-
-  /**
-   * The configuration compatibility version for the underlying runtime
-   * native Senzing API.
-   */
-  private String configCompatibilityVersion = null;
-
-  /**
-   * Default constructor.
-   */
-  public SzVersionInfo() {
-    this.apiServerVersion = BuildInfo.MAVEN_VERSION;
-    this.restApiVersion   = BuildInfo.REST_API_VERSION;
-  }
 
   /**
    * Gets the version of the REST API Server implementation.
    *
    * @return The version of the REST API Server implementation.
    */
-  public String getApiServerVersion() {
-    return this.apiServerVersion;
-  }
-
-  /**
-   * Private setter for the version of the REST API Server implementation.
-   * This is used for JSON serialization -- otherwise the version cannot be
-   * normally set (it is inferred).
-   *
-   * @param apiServerVersion The version of the REST API Server implementation.
-   */
-  private void setApiServerVersion(String apiServerVersion) {
-    this.apiServerVersion = apiServerVersion;
-  }
+  String getApiServerVersion();
 
   /**
    * Gets the version of the REST API Specification that is implemented.
    *
    * @return The version of the REST API Specification that is implemented.
    */
-  public String getRestApiVersion() {
-    return this.restApiVersion;
-  }
-
-  /**
-   * Private setter for the REST API version implemented by the REST API
-   * Server implementation.  This is used for JSON serialization -- otherwise
-   * the version cannot be normally set (it is inferred).
-   *
-   * @param restApiVersion The version of the REST API Specification that is
-   *                       implemented.
-   */
-  private void setRestApiVersion(String restApiVersion) {
-    this.restApiVersion = restApiVersion;
-  }
+  String getRestApiVersion();
 
   /**
    * Gets the version for the underlying runtime native Senzing API.
    *
    * @return The version for the underlying runtime native Senzing API.
    */
-  public String getNativeApiVersion() {
-    return this.nativeApiVersion;
-  }
+  String getNativeApiVersion();
 
   /**
    * Sets the version for the underlying runtime native Senzing API.
@@ -138,18 +70,14 @@ public class SzVersionInfo {
    * @param nativeApiVersion Sets the version for the underlying runtime
    *                         native Senzing API.
    */
-  public void setNativeApiVersion(String nativeApiVersion) {
-    this.nativeApiVersion = nativeApiVersion;
-  }
+  void setNativeApiVersion(String nativeApiVersion);
 
   /**
    * Gets the build version for the underlying runtime native Senzing API.
    *
    * @return The build version for the underlying runtime native Senzing API.
    */
-  public String getNativeApiBuildVersion() {
-    return this.nativeApiBuildVersion;
-  }
+  String getNativeApiBuildVersion();
 
   /**
    * Sets the build version for the underlying runtime native Senzing API.
@@ -157,18 +85,14 @@ public class SzVersionInfo {
    * @param nativeApiBuildVersion The build version for the underlying runtime
    *                              native Senzing API.
    */
-  public void setNativeApiBuildVersion(String nativeApiBuildVersion) {
-    this.nativeApiBuildVersion = nativeApiBuildVersion;
-  }
+  void setNativeApiBuildVersion(String nativeApiBuildVersion);
 
   /**
    * Gets the build number for the underlying runtime native Senzing API.
    *
    * @return The build number for the underlying runtime native Senzing API.
    */
-  public String getNativeApiBuildNumber() {
-    return this.nativeApiBuildNumber;
-  }
+  String getNativeApiBuildNumber();
 
   /**
    * Sets the build number for the underlying runtime native Senzing API.
@@ -176,18 +100,17 @@ public class SzVersionInfo {
    * @param nativeApiBuildNumber The build number for the underlying runtime
    *                             native Senzing API.
    */
-  public void setNativeApiBuildNumber(String nativeApiBuildNumber) {
-    this.nativeApiBuildNumber = nativeApiBuildNumber;
-  }
+  void setNativeApiBuildNumber(String nativeApiBuildNumber);
 
   /**
    * Gets the build date for the underlying runtime native Senzing API.
    *
    * @return The build date for the underlying runtime native Senzing API.
    */
-  public Date getNativeApiBuildDate() {
-    return this.nativeApiBuildDate;
-  }
+  @JsonFormat(shape   = JsonFormat.Shape.STRING,
+      pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+      locale  = "en_GB")
+  Date getNativeApiBuildDate();
 
   /**
    * Sets the build date for the underlying runtime native Senzing API.
@@ -195,9 +118,7 @@ public class SzVersionInfo {
    * @param nativeApiBuildDate The build date for the underlying runtime
    *                           native Senzing API.
    */
-  public void setNativeApiBuildDate(Date nativeApiBuildDate) {
-    this.nativeApiBuildDate = nativeApiBuildDate;
-  }
+  void setNativeApiBuildDate(Date nativeApiBuildDate);
 
   /**
    * Gets the configuration compatibility version for the underlying runtime
@@ -206,9 +127,7 @@ public class SzVersionInfo {
    * @return The configuration compatibility version for the underlying runtime
    *         native Senzing API.
    */
-  public String getConfigCompatibilityVersion() {
-    return this.configCompatibilityVersion;
-  }
+  String getConfigCompatibilityVersion();
 
   /**
    * Sets the configuration compatibility version for the underlying runtime
@@ -218,9 +137,76 @@ public class SzVersionInfo {
    *                                   for the underlying runtime native
    *                                   Senzing API.
    */
-  public void setConfigCompatibilityVersion(String configCompatibilityVersion) {
-    this.configCompatibilityVersion = configCompatibilityVersion;
+  void setConfigCompatibilityVersion(String configCompatibilityVersion);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzVersionInfo}.
+   */
+  interface Provider extends ModelProvider<SzVersionInfo> {
+    /**
+     * Creates a new instance of {@link SzVersionInfo}.
+     *
+     * @return The new instance of {@link SzVersionInfo}
+     */
+    SzVersionInfo create();
   }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzVersionInfo} that produces instances of {@link SzVersionInfoImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzVersionInfo>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzVersionInfo.class, SzVersionInfoImpl.class);
+    }
+
+    @Override
+    public SzVersionInfo create() {
+      return new SzVersionInfoImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link SzVersionInfo}.
+   */
+  class Factory extends ModelFactory<SzVersionInfo, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzVersionInfo.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzVersionInfo}.
+     * @return The new instance of {@link SzVersionInfo}.
+     */
+    public SzVersionInfo create()
+    {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses a JSON array of the engine API JSON to create or populate a
@@ -235,12 +221,12 @@ public class SzVersionInfo {
    * @return An unmodifiable view of the specified (or newly created) {@link
    *         List} of {@link SzVersionInfo} instances.
    */
-  public static List<SzVersionInfo> parseVersionInfoList(
+  static List<SzVersionInfo> parseVersionInfoList(
       List<SzVersionInfo>   list,
       JsonArray             jsonArray)
   {
     if (list == null) {
-      list = new ArrayList<SzVersionInfo>(jsonArray.size());
+      list = new ArrayList<>(jsonArray.size());
     }
     for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
       list.add(parseVersionInfo(null, jsonObject));
@@ -258,10 +244,10 @@ public class SzVersionInfo {
    *
    * @return The specified (or newly created) {@link SzVersionInfo}
    */
-  public static SzVersionInfo parseVersionInfo(SzVersionInfo info,
-                                               JsonObject     jsonObject)
+  static SzVersionInfo parseVersionInfo(SzVersionInfo info,
+                                        JsonObject    jsonObject)
   {
-    if (info == null) info = new SzVersionInfo();
+    if (info == null) info = SzVersionInfo.FACTORY.create();
 
     String nativeVersion = JsonUtils.getString(jsonObject, "VERSION");
     String buildVersion  = JsonUtils.getString(jsonObject, "BUILD_VERSION");
@@ -274,15 +260,18 @@ public class SzVersionInfo {
                                                      "CONFIG_VERSION");
 
     Date buildDate = null;
-    if (buildNumber != null && buildNumber.length() > 0) {
+    if (buildNumber != null && buildNumber.length() > 0
+        && buildNumber.indexOf(DEVELOPMENT_VERSION_TOKEN) < 0)
+    {
       LocalDateTime localDateTime = LocalDateTime.parse(buildNumber,
                                                         BUILD_NUMBER_FORMATTER);
       ZonedDateTime zonedDateTime = localDateTime.atZone(BUILD_ZONE);
       buildDate = Date.from(zonedDateTime.toInstant());
+
+    } else {
+      buildDate = new Date();
     }
 
-    info.setApiServerVersion(BuildInfo.MAVEN_VERSION);
-    info.setRestApiVersion(BuildInfo.REST_API_VERSION);
     info.setConfigCompatibilityVersion(configCompatVersion);
     info.setNativeApiVersion(nativeVersion);
     info.setNativeApiBuildDate(buildDate);

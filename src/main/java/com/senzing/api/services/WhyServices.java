@@ -13,39 +13,54 @@ import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.*;
-import static com.senzing.api.services.ServicesUtil.*;
 
 /**
  * Provides "why" API services.
  */
 @Path("/")
 @Produces("application/json; charset=UTF-8")
-public class
-
-WhyServices {
-  private static final int DATA_SOURCE_NOT_FOUND_CODE = 27;
-
-  private static final int RECORD_NOT_FOUND_CODE = 33;
-
-  private static final int ENTITY_ID_NOT_FOUND_CODE = 37;
-
+public class WhyServices implements ServicesSupport {
+  /**
+   * Implements the
+   * <tt>GET /data-sources/{dataSourceCode}/records/{recordId}/entity/why</tt>
+   * operation.
+   *
+   * @param dataSourceCode The data source code from the URI path that in-part
+   *                       identifies the record that belongs to the entity.
+   * @param recordId The record ID from the URI path that in-part identifies the
+   *                 record that belongs to the entity.
+   * @param forceMinimal Whether or not the returned entities should be in
+   *                     the minimal format.
+   * @param featureMode The {@link SzFeatureMode} for the returned entities.
+   * @param withFeatureStats Whether or not feature stats should be included
+   *                         with the returned entities.
+   * @param withInternalFeatures Whether or not internal features should be
+   *                             included with the returned entities.
+   * @param withRelationships Whether or not relationships should be included
+   *                          in the returned entities.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included with the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The {@link SzWhyEntityResponse} describing the response.
+   */
   @GET
   @Path("data-sources/{dataSourceCode}/records/{recordId}/entity/why")
   public SzWhyEntityResponse whyEntityByRecordId(
-      @PathParam("dataSourceCode")                                String              dataSourceCode,
-      @PathParam("recordId")                                      String              recordId,
-      @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
+      @PathParam("dataSourceCode")                                String        dataSourceCode,
+      @PathParam("recordId")                                      String        recordId,
+      @DefaultValue("false") @QueryParam("forceMinimal")          boolean       forceMinimal,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
-      @DefaultValue("true") @QueryParam("withFeatureStats")       boolean             withFeatureStats,
-      @DefaultValue("true") @QueryParam("withInternalFeatures")    boolean             withInternalFeatures,
-      @DefaultValue("false") @QueryParam("withRelationships")     boolean             withRelationships,
-      @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
-      @Context                                                    UriInfo             uriInfo)
+      @DefaultValue("true") @QueryParam("withFeatureStats")       boolean       withFeatureStats,
+      @DefaultValue("true") @QueryParam("withInternalFeatures")   boolean       withInternalFeatures,
+      @DefaultValue("false") @QueryParam("withRelationships")     boolean       withRelationships,
+      @DefaultValue("false") @QueryParam("withRaw")               boolean       withRaw,
+      @Context                                                    UriInfo       uriInfo)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
 
     try {
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      SzApiProvider provider = this.getApiProvider();
       dataSourceCode = dataSourceCode.toUpperCase();
 
       final String dataSource = dataSourceCode;
@@ -54,39 +69,40 @@ WhyServices {
 
       String rawData = null;
 
-      int flags = getFlags(forceMinimal,
-                           featureMode,
-                           withFeatureStats,
-                           withInternalFeatures,
-                           withRelationships);
+      int flags = this.getFlags(forceMinimal,
+                                featureMode,
+                                withFeatureStats,
+                                withInternalFeatures,
+                                withRelationships);
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get the engine API and the config API
         G2Engine engineApi = provider.getEngineApi();
 
-        callingNativeAPI(timers, "engine", "whyEntityByRecordID");
+        this.callingNativeAPI(timers, "engine", "whyEntityByRecordID");
 
         // perform the "why" operation and check the result
         int result = engineApi.whyEntityByRecordIDV2(
             dataSource, recordId, flags, sb);
 
-        calledNativeAPI(timers, "engine", "whyEntityByRecordID");
+        this.calledNativeAPI(timers, "engine", "whyEntityByRecordID");
 
         if (result != 0) {
-          throw newWebApplicationException(GET, uriInfo, timers, engineApi);
+          throw this.newWebApplicationException(
+              GET, uriInfo, timers, engineApi);
         }
 
         return sb.toString();
       });
 
-      return createWhyEntityResponse(rawData,
-                                     timers,
-                                     uriInfo,
-                                     withRaw,
-                                     provider);
+      return this.createWhyEntityResponse(rawData,
+                                          timers,
+                                          uriInfo,
+                                          withRaw,
+                                          provider);
 
     } catch (ServerErrorException e) {
       e.printStackTrace();
@@ -97,63 +113,82 @@ WhyServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Implements the <tt>GET /entities/{entityId}/why</tt> operation.
+   *
+   * @param entityId The entity ID of the entity from the URI path.
+   * @param forceMinimal Whether or not the returned entities should be in
+   *                     the minimal format.
+   * @param featureMode The {@link SzFeatureMode} for the returned entities.
+   * @param withFeatureStats Whether or not feature stats should be included
+   *                         with the returned entities.
+   * @param withInternalFeatures Whether or not internal features should be
+   *                             included with the returned entities.
+   * @param withRelationships Whether or not relationships should be included
+   *                          in the returned entities.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included with the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   *
+   * @return The {@link SzWhyEntityResponse} describing the response.
+   */
   @GET
   @Path("entities/{entityId}/why")
   public SzWhyEntityResponse whyEntityByEntityId(
-      @PathParam("entityId")                                      long                entityId,
-      @DefaultValue("false") @QueryParam("withRelationships")     boolean             withRelationships,
-      @DefaultValue("true") @QueryParam("withFeatureStats")       boolean             withFeatureStats,
-      @DefaultValue("true") @QueryParam("withInternalFeatures")    boolean             withInternalFeatures,
-      @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
+      @PathParam("entityId")                                      long          entityId,
+      @DefaultValue("false") @QueryParam("forceMinimal")          boolean       forceMinimal,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
-      @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
-      @Context                                                    UriInfo             uriInfo)
+      @DefaultValue("true") @QueryParam("withFeatureStats")       boolean       withFeatureStats,
+      @DefaultValue("true") @QueryParam("withInternalFeatures")   boolean       withInternalFeatures,
+      @DefaultValue("false") @QueryParam("withRelationships")     boolean       withRelationships,
+      @DefaultValue("false") @QueryParam("withRaw")               boolean       withRaw,
+      @Context                                                    UriInfo       uriInfo)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
 
     try {
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      SzApiProvider provider = this.getApiProvider();
 
       StringBuffer sb = new StringBuffer();
 
       String rawData = null;
 
-      int flags = getFlags(forceMinimal,
-                           featureMode,
-                           withFeatureStats,
-                           withInternalFeatures,
-                           withRelationships);
+      int flags = this.getFlags(forceMinimal,
+                                featureMode,
+                                withFeatureStats,
+                                withInternalFeatures,
+                                withRelationships);
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get the engine API and the config API
         G2Engine engineApi = provider.getEngineApi();
 
-        callingNativeAPI(timers, "engine", "whyEntityByEntityID");
+        this.callingNativeAPI(timers, "engine", "whyEntityByEntityID");
 
         // perform the "why" operation and check the result
         int result = engineApi.whyEntityByEntityIDV2(entityId, flags, sb);
 
-        calledNativeAPI(timers, "engine", "whyEntityByEntityID");
+        this.calledNativeAPI(timers, "engine", "whyEntityByEntityID");
 
         if (result != 0) {
-          throw newWebApplicationException(GET, uriInfo, timers, engineApi);
+          throw this.newWebApplicationException(GET, uriInfo, timers, engineApi);
         }
 
         return sb.toString();
       });
 
-      return createWhyEntityResponse(rawData,
-                                     timers,
-                                     uriInfo,
-                                     withRaw,
-                                     provider);
+      return this.createWhyEntityResponse(rawData,
+                                          timers,
+                                          uriInfo,
+                                          withRaw,
+                                          provider);
 
     } catch (ServerErrorException e) {
       e.printStackTrace();
@@ -164,45 +199,66 @@ WhyServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Implments the <tt>GET /why/records</tt> operation.
+   *
+   * @param dataSourceCode1 The data source code for the first subject record.
+   * @param recordId1 The record ID for the first subject record.
+   * @param dataSourceCode2 The data source code for the second subject record.
+   * @param recordId2 The record ID for the second subject record.
+   * @param forceMinimal Whether or not the returned entities should be in
+   *                     the minimal format.
+   * @param featureMode The {@link SzFeatureMode} for the returned entities.
+   * @param withFeatureStats Whether or not feature stats should be included
+   *                         with the returned entities.
+   * @param withInternalFeatures Whether or not internal features should be
+   *                             included with the returned entities.
+   * @param withRelationships Whether or not relationships should be included
+   *                          in the returned entities.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included with the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @return The {@link SzWhyRecordsResponse} describing the response.
+   */
   @GET
   @Path("why/records")
   public SzWhyRecordsResponse whyRecords(
-      @QueryParam("dataSource1")                                  String              dataSourceCode1,
-      @QueryParam("recordId1")                                    String              recordId1,
-      @QueryParam("dataSource2")                                  String              dataSourceCode2,
-      @QueryParam("recordId2")                                    String              recordId2,
-      @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
+      @QueryParam("dataSource1")                                  String        dataSourceCode1,
+      @QueryParam("recordId1")                                    String        recordId1,
+      @QueryParam("dataSource2")                                  String        dataSourceCode2,
+      @QueryParam("recordId2")                                    String        recordId2,
+      @DefaultValue("false") @QueryParam("forceMinimal")          boolean       forceMinimal,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
-      @DefaultValue("true") @QueryParam("withFeatureStats")       boolean             withFeatureStats,
-      @DefaultValue("true") @QueryParam("withInternalFeatures")    boolean             withInternalFeatures,
-      @DefaultValue("false") @QueryParam("withRelationships")     boolean             withRelationships,
-      @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
-      @Context                                                    UriInfo             uriInfo)
+      @DefaultValue("true") @QueryParam("withFeatureStats")       boolean       withFeatureStats,
+      @DefaultValue("true") @QueryParam("withInternalFeatures")   boolean       withInternalFeatures,
+      @DefaultValue("false") @QueryParam("withRelationships")     boolean       withRelationships,
+      @DefaultValue("false") @QueryParam("withRaw")               boolean       withRaw,
+      @Context                                                    UriInfo       uriInfo)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
 
     try {
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      SzApiProvider provider = this.getApiProvider();
 
       // check the parameters
       if (dataSourceCode1 == null || dataSourceCode1.trim().length() == 0) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers, "The dataSourceCode1 parameter is required.");
       }
       if (recordId1 == null || recordId1.trim().length() == 0) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers, "The recordId1 parameter is required.");
       }
       if (dataSourceCode2 == null || dataSourceCode2.trim().length() == 0) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers, "The dataSourceCode2 parameter is required.");
       }
       if (recordId2 == null || recordId2.trim().length() == 0) {
-        throw newBadRequestException(
+        throw this.newBadRequestException(
             GET, uriInfo, timers, "The recordId2 parameter is required.");
       }
 
@@ -217,49 +273,49 @@ WhyServices {
 
       String rawData = null;
 
-      int flags = getFlags(forceMinimal,
-                           featureMode,
-                           withFeatureStats,
-                           withInternalFeatures,
-                           withRelationships);
+      int flags = this.getFlags(forceMinimal,
+                                featureMode,
+                                withFeatureStats,
+                                withInternalFeatures,
+                                withRelationships);
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
       rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get the engine API and the config API
         G2Engine engineApi = provider.getEngineApi();
 
-        callingNativeAPI(timers, "engine", "whyRecords");
+        this.callingNativeAPI(timers, "engine", "whyRecords");
 
         // perform the "why" operation
         int result = engineApi.whyRecordsV2(
             dataSource1, recordId1, dataSource2, recordId2, flags, sb);
 
-        calledNativeAPI(timers, "engine", "whyRecords");
+        this.calledNativeAPI(timers, "engine", "whyRecords");
 
         if (result != 0) {
           int errorCode = engineApi.getLastExceptionCode();
           if (errorCode == DATA_SOURCE_NOT_FOUND_CODE
               || errorCode == RECORD_NOT_FOUND_CODE)
           {
-            throw newBadRequestException(GET, uriInfo, timers, engineApi);
+            throw this.newBadRequestException(GET, uriInfo, timers, engineApi);
           }
-          throw newInternalServerErrorException(
+          throw this.newInternalServerErrorException(
               GET, uriInfo, timers, engineApi);
         }
 
         return sb.toString();
       });
 
-      processingRawData(timers);
+      this.processingRawData(timers);
       // parse the result
       JsonObject  json        = JsonUtils.parseJsonObject(rawData);
       JsonArray   whyArray    = json.getJsonArray("WHY_RESULTS");
       JsonArray   entityArray = json.getJsonArray("ENTITIES");
 
       List<SzWhyRecordsResult> whyResults
-          = SzWhyRecordsResult.parseWhyRecordsResultList(null, whyArray);
+          = this.parseWhyRecordsResultList(whyArray);
 
       if (whyResults.size() != 1) {
         throw new IllegalStateException(
@@ -269,16 +325,13 @@ WhyServices {
             + dataSource2 + " ], recordId2=[ " + recordId2 + " ]");
       }
 
-      List<SzEntityData> entities = SzEntityData.parseEntityDataList(
-          null, entityArray, (f) -> provider.getAttributeClassForFeature(f));
-      processedRawData(timers);
+      List<SzEntityData> entities = this.parseEntityDataList(
+          entityArray, provider::getAttributeClassForFeature);
+      this.processedRawData(timers);
 
       // construct the response
-      SzWhyRecordsResponse response = new SzWhyRecordsResponse(
-          GET, 200, uriInfo, timers);
-
-      response.setWhyResult(whyResults.get(0));
-      response.setEntities(entities);
+      SzWhyRecordsResponse response = this.newWhyRecordsResponse(
+          GET, 200, uriInfo, timers, whyResults.get(0), entities);
 
       if (withRaw) {
         response.setRawData(rawData);
@@ -295,11 +348,92 @@ WhyServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
+  /**
+   * Constructs a new instance of {@link SzWhyRecordsResponse} with the
+   * specified parameters:
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param whyResult The {@link SzWhyRecordsResult} for the response.
+   * @param entityDataList The {@link List} of {@link SzEntityData} instances.
+   * @return The created {@link SzWhyRecordsResponse} instance.
+   */
+  protected SzWhyRecordsResponse newWhyRecordsResponse(
+      SzHttpMethod        httpMethod,
+      int                 httpStatusCode,
+      UriInfo             uriInfo,
+      Timers              timers,
+      SzWhyRecordsResult  whyResult,
+      List<SzEntityData>  entityDataList)
+  {
+    // construct the response
+    return SzWhyRecordsResponse.FACTORY.create(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo),
+        this.newWhyRecordsResponseData(whyResult, entityDataList));
+  }
 
+  /**
+   * Constructs a new instance of {@link SzWhyRecordsResponseData} with the
+   * specified parameters:
+   *
+   * @param whyResult The {@link SzWhyRecordsResult} for the response.
+   * @param entityDataList The {@link List} of {@link SzEntityData} instances.
+   *
+   * @return The created {@link SzWhyRecordsResponseData} instance.
+   */
+  protected SzWhyRecordsResponseData newWhyRecordsResponseData(
+      SzWhyRecordsResult  whyResult,
+      List<SzEntityData>  entityDataList)
+  {
+    // construct the response
+    SzWhyRecordsResponseData data = SzWhyRecordsResponseData.FACTORY.create();
+    data.setWhyResult(whyResult);
+    data.setEntities(entityDataList);
+    return data;
+  }
+
+  /**
+   * Parses the raw JSON described by the specified {@link JsonArray} as a
+   * {@link List} of {@link SzWhyRecordsResult} instances.
+   *
+   * @param whyArray The {@link JsonArray} describing the why results/
+   *
+   * @return The parsed {@link List} of {@link SzWhyRecordsResult} instances.
+   */
+  protected List<SzWhyRecordsResult> parseWhyRecordsResultList(
+      JsonArray whyArray)
+  {
+    return SzWhyRecordsResult.parseWhyRecordsResultList(null, whyArray);
+  }
+
+  /**
+   * Implements the <tt>GET /why/entities</tt> operation.
+   *
+   * @param entity1 The encoded {@link String} describing the {@link
+   *                SzEntityIdentifier} for the first subject entity.
+   * @param entity2 The encoded {@link String} describing the {@link
+   *                SzEntityIdentifier} for the second subject entity.
+   * @param forceMinimal Whether or not the returned entities should be in
+   *                     the minimal format.
+   * @param featureMode The {@link SzFeatureMode} for the returned entities.
+   * @param withFeatureStats Whether or not feature stats should be included
+   *                         with the returned entities.
+   * @param withInternalFeatures Whether or not internal features should be
+   *                             included with the returned entities.
+   * @param withRelationships Whether or not relationships should be included
+   *                          in the returned entities.
+   * @param withRaw Whether or not the raw native Senzing JSON should be
+   *                included with the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @return The {@link SzWhyEntitiesResponse} describing the response.
+   */
   @GET
   @Path("why/entities")
   public SzWhyEntitiesResponse whyEntities(
@@ -313,10 +447,10 @@ WhyServices {
       @DefaultValue("false") @QueryParam("withRaw")               boolean       withRaw,
       @Context                                                    UriInfo       uriInfo)
   {
-    Timers timers = newTimers();
+    Timers timers = this.newTimers();
 
     try {
-      SzApiProvider provider = SzApiProvider.Factory.getProvider();
+      SzApiProvider provider = this.getApiProvider();
 
       SzEntityIdentifier ident1 = null;
       SzEntityIdentifier ident2 = null;
@@ -324,37 +458,37 @@ WhyServices {
       // check the parameters
       try {
         if (entity1 == null) {
-          throw newBadRequestException(
+          throw this.newBadRequestException(
               GET, uriInfo, timers,
               "Parameter missing or empty: \"entity1\".  "
                   + "The 'entity1' entity identifier is required.");
         }
         if (entity2 == null) {
-          throw newBadRequestException(
+          throw this.newBadRequestException(
               GET, uriInfo, timers,
               "Parameter missing or empty: \"entity2\".  "
                   + "The 'entity2' entity identifier is required.");
         }
 
         try {
-          ident1 = SzEntityIdentifier.valueOf(entity1.trim());
+          ident1 = this.parseEntityIdentifier(entity1.trim());
         } catch (Exception e) {
-          throw newBadRequestException(
+          throw this.newBadRequestException(
               GET, uriInfo, timers,
               "Parameter is not formatted correctly: \"entity1\".");
         }
 
         try {
-          ident2 = SzEntityIdentifier.valueOf(entity2.trim());
+          ident2 = this.parseEntityIdentifier(entity2.trim());
         } catch (Exception e) {
-          throw newBadRequestException(
+          throw this.newBadRequestException(
               GET, uriInfo, timers,
               "Parameter is not formatted correctly: \"entity2\".");
         }
 
         // check for consistent from/to
         if (ident1.getClass() != ident2.getClass()) {
-          throw newBadRequestException(
+          throw this.newBadRequestException(
               GET, uriInfo, timers,
               "Entity identifiers must be consistent types.  entity1="
                   + entity1 + ", entity2=" + entity2);
@@ -363,50 +497,50 @@ WhyServices {
       } catch (WebApplicationException e) {
         throw e;
       } catch (Exception e) {
-        throw newBadRequestException(GET, uriInfo, timers, e.getMessage());
+        throw this.newBadRequestException(GET, uriInfo, timers, e.getMessage());
       }
 
       StringBuffer sb = new StringBuffer();
 
       String rawData = null;
 
-      int flags = getFlags(forceMinimal,
-                           featureMode,
-                           withFeatureStats,
-                           withInternalFeatures,
-                           withRelationships);
+      int flags = this.getFlags(forceMinimal,
+                                featureMode,
+                                withFeatureStats,
+                                withInternalFeatures,
+                                withRelationships);
 
-      enteringQueue(timers);
+      this.enteringQueue(timers);
 
       final SzEntityIdentifier entityIdent1 = ident1;
       final SzEntityIdentifier entityIdent2 = ident2;
 
       rawData = provider.executeInThread(() -> {
-        exitingQueue(timers);
+        this.exitingQueue(timers);
 
         // get the engine API and the config API
         G2Engine engineApi = provider.getEngineApi();
 
-        Long entityId1 = resolveEntityId(
+        Long entityId1 = this.resolveEntityId(
             GET, uriInfo, timers, engineApi, entityIdent1);
-        Long entityId2 = resolveEntityId(
+        Long entityId2 = this.resolveEntityId(
             GET, uriInfo, timers, engineApi, entityIdent2);
 
-        callingNativeAPI(timers, "engine", "whyEntities");
+        this.callingNativeAPI(timers, "engine", "whyEntities");
 
         // perform the "why" operation
         int result = engineApi.whyEntitiesV2(
             entityId1, entityId2, flags, sb);
 
-        calledNativeAPI(timers, "engine", "whyEntities");
+        this.calledNativeAPI(timers, "engine", "whyEntities");
 
         if (result != 0) {
           int errorCode = engineApi.getLastExceptionCode();
-          if (errorCode == ENTITY_ID_NOT_FOUND_CODE)
+          if (errorCode == ENTITY_NOT_FOUND_CODE)
           {
-            throw newBadRequestException(GET, uriInfo, timers, engineApi);
+            throw this.newBadRequestException(GET, uriInfo, timers, engineApi);
           }
-          throw newInternalServerErrorException(
+          throw this.newInternalServerErrorException(
               GET, uriInfo, timers, engineApi);
         }
 
@@ -426,12 +560,23 @@ WhyServices {
 
     } catch (Exception e) {
       e.printStackTrace();
-      throw ServicesUtil.newInternalServerErrorException(GET, uriInfo, timers, e);
+      throw this.newInternalServerErrorException(GET, uriInfo, timers, e);
     }
   }
 
-
-  private static WebApplicationException newWebApplicationException(
+  /**
+   * Determines if the failure that occurred with respect to the specified
+   * {@link G2Engine} instance and either returns a {@link NotFoundException}
+   * or an {@link InternalServerErrorException}.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param engineApi The {@link G2Engine} that is checked for the cause of the
+   *                  error.
+   * @return The {@link WebApplicationException} that was constructed.
+   */
+  protected WebApplicationException newWebApplicationException(
       SzHttpMethod  httpMethod,
       UriInfo       uriInfo,
       Timers        timers,
@@ -440,57 +585,137 @@ WhyServices {
     int errorCode = engineApi.getLastExceptionCode();
     if (errorCode == DATA_SOURCE_NOT_FOUND_CODE
         || errorCode == RECORD_NOT_FOUND_CODE
-        || errorCode == ENTITY_ID_NOT_FOUND_CODE)
+        || errorCode == ENTITY_NOT_FOUND_CODE)
     {
-      return newNotFoundException(httpMethod, uriInfo, timers, engineApi);
+      return this.newNotFoundException(httpMethod, uriInfo, timers, engineApi);
     }
-    return newInternalServerErrorException(
+    return this.newInternalServerErrorException(
         httpMethod, uriInfo, timers, engineApi);
   }
 
-  private static SzWhyEntityResponse createWhyEntityResponse(
+  /**
+   * Parses the specified raw JSON and creates a new {@link SzWhyEntityResponse}
+   * with the specified parameters.
+   *
+   * @param rawData The raw JSON text to parse.
+   * @param timers The {@link Timers} for the operation.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param withRaw Whether or not the raw JSON should be included in the
+   *                response.
+   * @param provider The {@link SzApiProvider} to use.
+   * @return The {@link SzWhyEntityResponse} that was created.
+   */
+  protected SzWhyEntityResponse createWhyEntityResponse(
       String        rawData,
       Timers        timers,
       UriInfo       uriInfo,
       boolean       withRaw,
       SzApiProvider provider)
   {
-    processingRawData(timers);
+    this.processingRawData(timers);
     // parse the result
     JsonObject  json        = JsonUtils.parseJsonObject(rawData);
     JsonArray   whyArray    = json.getJsonArray("WHY_RESULTS");
     JsonArray   entityArray = json.getJsonArray("ENTITIES");
 
     List<SzWhyEntityResult> whyResults
-        = SzWhyEntityResult.parseWhyEntityResultList(null, whyArray);
+        = this.parseWhyEntityResultList(whyArray);
 
-    List<SzEntityData> entities = SzEntityData.parseEntityDataList(
-        null, entityArray, (f) -> provider.getAttributeClassForFeature(f));
-    processedRawData(timers);
+    List<SzEntityData> entities = this.parseEntityDataList(
+        entityArray, provider::getAttributeClassForFeature);
+    this.processedRawData(timers);
 
     // construct the response
-    SzWhyEntityResponse response = new SzWhyEntityResponse(
-        GET, 200, uriInfo, timers);
-
-    response.setWhyResults(whyResults);
-    response.setEntities(entities);
+    SzWhyEntityResponse response = this.newWhyEntityResponse(
+        GET, 200, uriInfo, timers, whyResults, entities);
 
     if (withRaw) {
       response.setRawData(rawData);
     }
 
     return response;
-
   }
 
-  private static SzWhyEntitiesResponse createWhyEntitiesResponse(
+  /**
+   * Parses the specified raw JSON described by the specified {@link JsonArray}
+   * as a {@link List} of {@link SzWhyEntityResult} instances.
+   *
+   * @param whyArray The {@Link JsonArray} to parse.
+   * @return The {@link List} of {@link SzWhyEntityResult} instances.
+   */
+  protected List<SzWhyEntityResult> parseWhyEntityResultList(JsonArray whyArray)
+  {
+    return SzWhyEntityResult.parseWhyEntityResultList(null, whyArray);
+  }
+
+  /**
+   * Creates a new instance of {@link SzWhyEntityResponse} with the specified
+   * parameters:
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param whyResults The {@link List} of {@link SzWhyEntityResult} instances.
+   * @param entityDataList The {@link List} of {@link SzEntityData} instances.
+   *
+   * @return The {@link SzWhyEntityResponse} that was created.
+   */
+  protected SzWhyEntityResponse newWhyEntityResponse(
+      SzHttpMethod            httpMethod,
+      int                     httpStatusCode,
+      UriInfo                 uriInfo,
+      Timers                  timers,
+      List<SzWhyEntityResult> whyResults,
+      List<SzEntityData>      entityDataList)
+  {
+    return SzWhyEntityResponse.FACTORY.create(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo),
+        this.newWhyEntityResponseData(whyResults, entityDataList));
+  }
+
+  /**
+   * Creates a new instance of {@link SzWhyEntityResponseData} with the
+   * specified parameters.
+   *
+   * @param whyResults The {@link List} of {@link SzWhyEntityResult} instances.
+   * @param entityDataList The {@link List} of {@link SzEntityData} instances.
+   *
+   * @return The {@link SzWhyEntityResponseData} that was created.
+   */
+  protected SzWhyEntityResponseData newWhyEntityResponseData(
+      List<SzWhyEntityResult> whyResults,
+      List<SzEntityData>      entityDataList)
+  {
+    SzWhyEntityResponseData data = SzWhyEntityResponseData.FACTORY.create();
+
+    data.setWhyResults(whyResults);
+    data.setEntities(entityDataList);
+
+    return data;
+  }
+
+  /**
+   * Parses the specified raw JSON and creates a new {@link
+   * SzWhyEntitiesResponse} with the specified parameters.
+   *
+   * @param rawData The raw JSON text to parse.
+   * @param timers The {@link Timers} for the operation.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param withRaw Whether or not the raw JSON should be included in the
+   *                response.
+   * @param provider The {@link SzApiProvider} to use.
+   * @return The {@link SzWhyEntitiesResponse} that was created.
+   */
+  private SzWhyEntitiesResponse createWhyEntitiesResponse(
       String        rawData,
       Timers        timers,
       UriInfo       uriInfo,
       boolean       withRaw,
       SzApiProvider provider)
   {
-    processingRawData(timers);
+    this.processingRawData(timers);
     // parse the result
     JsonObject  json        = JsonUtils.parseJsonObject(rawData);
     JsonArray   whyArray    = json.getJsonArray("WHY_RESULTS");
@@ -499,39 +724,90 @@ WhyServices {
     List<SzWhyEntitiesResult> whyResults
         = SzWhyEntitiesResult.parseWhyEntitiesResultList(null, whyArray);
 
-    List<SzEntityData> entities = SzEntityData.parseEntityDataList(
-        null, entityArray, (f) -> provider.getAttributeClassForFeature(f));
-    processedRawData(timers);
-
-    // construct the response
-    SzWhyEntitiesResponse response = new SzWhyEntitiesResponse(
-        GET, 200, uriInfo, timers);
+    List<SzEntityData> entities = this.parseEntityDataList(
+        entityArray, provider::getAttributeClassForFeature);
+    this.processedRawData(timers);
 
     if (whyResults.size() != 1) {
       throw new IllegalStateException(
           "Unexpected number of why-entities result.  Expected only one: "
-          + whyResults.size() + " / " + whyResults);
+              + whyResults.size() + " / " + whyResults);
     }
 
-    response.setWhyResult(whyResults.get(0));
-    response.setEntities(entities);
+    // construct the response
+    SzWhyEntitiesResponse response = this.newWhyEntitiesResponse(
+        GET, 200, uriInfo, timers, whyResults.get(0), entities);
 
     if (withRaw) {
       response.setRawData(rawData);
     }
 
     return response;
+  }
 
+  /**
+   * Creates a new instance of {@link SzWhyEntitiesResponse} with the specified
+   * parameters:
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpStatusCode The HTTP status code for the response.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param whyResult The {@link SzWhyEntitiesResult} instance.
+   * @param entityDataList The {@link List} of {@link SzEntityData} instances.
+   *
+   * @return The {@link SzWhyEntitiesResponse} that was created.
+   *
+   */
+  protected SzWhyEntitiesResponse newWhyEntitiesResponse(
+      SzHttpMethod        httpMethod,
+      int                 httpStatusCode,
+      UriInfo             uriInfo,
+      Timers              timers,
+      SzWhyEntitiesResult whyResult,
+      List<SzEntityData>  entityDataList)
+  {
+    return SzWhyEntitiesResponse.FACTORY.create(
+        this.newMeta(httpMethod, httpStatusCode, timers),
+        this.newLinks(uriInfo),
+        this.newWhyEntitiesResponseData(whyResult, entityDataList));
+  }
+
+  /**
+   * Creates a new instance of {@link SzWhyEntitiesResponseData} with the
+   * specified parameters:
+   *
+   * @param whyResult The {@link SzWhyEntitiesResult} instance.
+   * @param entityDataList The {@link List} of {@link SzEntityData} instances.
+   *
+   * @return The {@link SzWhyEntitiesResponseData} that was created.
+   *
+   */
+  protected SzWhyEntitiesResponseData newWhyEntitiesResponseData(
+      SzWhyEntitiesResult whyResult,
+      List<SzEntityData>  entityDataList)
+  {
+    SzWhyEntitiesResponseData data = SzWhyEntitiesResponseData.FACTORY.create();
+    data.setWhyResult(whyResult);
+    data.setEntities(entityDataList);
+    return data;
   }
 
   /**
    * Gets the entity ID for the entity identifier which may be a record ID.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param engineApi The {@link G2Engine} instance to use.
+   * @param identifier The {@link SzEntityIdentifier} to resolve.
+   * @return The {@link Long} entity ID.
    */
-  private static Long resolveEntityId(SzHttpMethod        httpMethod,
-                                      UriInfo             uriInfo,
-                                      Timers              timers,
-                                      G2Engine            engineApi,
-                                      SzEntityIdentifier  identifier)
+  private Long resolveEntityId(SzHttpMethod       httpMethod,
+                               UriInfo            uriInfo,
+                               Timers             timers,
+                               G2Engine           engineApi,
+                               SzEntityIdentifier identifier)
   {
     // get the entity IDs
     if (identifier instanceof SzEntityId) {
@@ -543,12 +819,12 @@ WhyServices {
       String      recordId    = recordIdent.getRecordId();
 
       StringBuffer sb = new StringBuffer();
-      callingNativeAPI(timers, "engine", "getEntityByRecordIDV2");
+      this.callingNativeAPI(timers, "engine", "getEntityByRecordIDV2");
       int result = engineApi.getEntityByRecordIDV2(dataSource, recordId, 0, sb);
-      calledNativeAPI(timers, "engine", "getEntityByRecordIDV2");
+      this.calledNativeAPI(timers, "engine", "getEntityByRecordIDV2");
 
       if (result != 0) {
-        throw newPossiblyBadRequestException(
+        throw this.newPossiblyBadRequestException(
             httpMethod, uriInfo, timers, engineApi);
       }
 
@@ -559,6 +835,5 @@ WhyServices {
       // get the entity ID
       return JsonUtils.getLong(jsonObject, "ENTITY_ID");
     }
-
   }
 }

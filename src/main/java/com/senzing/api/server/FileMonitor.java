@@ -13,7 +13,8 @@ class FileMonitor extends Thread {
   private File file;
   private File tempFile;
   private int pid;
-  private int port = -1;
+  private Integer port = -1;
+  private Integer securePort = -1;
   private JsonWriterFactory writerFactory;
   private boolean ready = false;
   private boolean shutdown = false;
@@ -33,13 +34,21 @@ class FileMonitor extends Thread {
     this.tempFile.deleteOnExit();
   }
 
-  public synchronized void initialize(int port) {
-    if (port < 0) {
+  public synchronized void initialize(Integer port, Integer securePort) {
+    if (port != null && port < 0) {
       throw new IllegalArgumentException(
           "The specified port is invalid: " + port);
     }
-    if (this.port >= 0) return;
+    if (securePort != null && securePort < 0) {
+      throw new IllegalArgumentException(
+          "The specified secure port is invalid: " + securePort);
+
+    }
+    if (this.port != null && this.port >= 0) return;
+    if (this.securePort != null && this.securePort >= 0) return;
+
     this.port = port;
+    this.securePort = securePort;
 
     while (!this.ready) {
       try {
@@ -51,7 +60,8 @@ class FileMonitor extends Thread {
 
     JsonObjectBuilder builder = Json.createObjectBuilder();
     builder.add("pid", this.pid);
-    builder.add("port", this.port);
+    if (this.port != null) builder.add("port", this.port);
+    if (this.securePort != null) builder.add("securePort", this.securePort);
     builder.add("shutdown", false);
     builder.add("heartbeat", System.currentTimeMillis());
 
@@ -73,7 +83,11 @@ class FileMonitor extends Thread {
     this.ready = true;
 
     // check if not yet initialized
-    if (this.port < 0) {
+    if (this.port != null && this.port < 0) {
+      // wait until initialized to write to the file
+      return;
+    }
+    if (this.securePort != null && this.securePort < 0) {
       // wait until initialized to write to the file
       return;
     }

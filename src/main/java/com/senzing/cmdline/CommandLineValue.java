@@ -5,14 +5,12 @@ import java.util.List;
 /**
  * Represents a value obtained from the command-line parser for a given
  * {@link CommandLineOption}.
- *
- * @param <T> The {@link CommandLineOption} enum class.
  */
-public class CommandLineValue<T extends Enum<T> & CommandLineOption<T>> {
+public class CommandLineValue {
   /**
    * The option for this value.
    */
-  private T option;
+  private CommandLineOption option;
 
   /**
    * The {@link CommandLineSource} from whence the value came.
@@ -46,7 +44,7 @@ public class CommandLineValue<T extends Enum<T> & CommandLineOption<T>> {
    * @param processedValue The processed value from the command-line parser.
    * @param parameters The {@link String} parameters used to specify this.
    */
-  public CommandLineValue(T                 option,
+  public CommandLineValue(CommandLineOption option,
                           CommandLineSource source,
                           Object            processedValue,
                           List<String>      parameters)
@@ -67,7 +65,7 @@ public class CommandLineValue<T extends Enum<T> & CommandLineOption<T>> {
    * @param processedValue The processed value from the command-line parser.
    * @param parameters The {@link String} parameters used to specify this.
    */
-  public CommandLineValue(T                 option,
+  public CommandLineValue(CommandLineOption option,
                           CommandLineSource source,
                           String            specifier,
                           Object            processedValue,
@@ -85,7 +83,7 @@ public class CommandLineValue<T extends Enum<T> & CommandLineOption<T>> {
    *
    * @return The associated {@link CommandLineOption}.
    */
-  public T getOption() {
+  public CommandLineOption getOption() {
     return this.option;
   }
 

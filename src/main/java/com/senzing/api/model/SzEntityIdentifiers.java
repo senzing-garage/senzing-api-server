@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzEntityIdentifiersImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -13,78 +15,8 @@ import java.util.*;
  * instances.
  *
  */
-public class SzEntityIdentifiers {
-  /**
-   * The {@link List} of {@link SzEntityIdentifier} instances.
-   */
-  private List<SzEntityIdentifier> identifiers;
-
-  /**
-   * Constructs with no {@link SzEntityIdentifier} instances.
-   */
-  public SzEntityIdentifiers() throws NullPointerException
-  {
-    this.identifiers = Collections.emptyList();
-  }
-
-  /**
-   * Constructs with a single {@link SzEntityIdentifier} instance.
-   *
-   * @param identifier The single non-null {@link SzEntityIdentifier} instance.
-   *
-   * @throws NullPointerException If the specified parameter is null.
-   */
-  public SzEntityIdentifiers(SzEntityIdentifier identifier)
-      throws NullPointerException
-  {
-    Objects.requireNonNull(identifier, "Identifier cannot be null.");
-    this.identifiers = Collections.singletonList(identifier);
-  }
-
-  /**
-   * Constructs with the specified {@link Collection} of {@link
-   * SzEntityIdentifier} instances.  The specified {@link Collection} will be
-   * copied.
-   *
-   * @param identifiers The non-null {@link Collection} of {@link
-   *                    SzEntityIdentifier} instances.
-   *
-   * @throws NullPointerException If the specified parameter is null.
-   */
-  public SzEntityIdentifiers(
-      Collection<? extends SzEntityIdentifier> identifiers)
-    throws NullPointerException
-  {
-    Objects.requireNonNull(identifiers, "Identifiers cannot be null.");
-    this.identifiers = Collections.unmodifiableList(
-        new ArrayList<>(identifiers));
-  }
-
-  /**
-   * Private constructor to use when the collection of {@link
-   * SzEntityIdentifier} instances may not need to be copied.
-   *
-   * @param identifiers The {@link List} of {@link SzEntityIdentifier}
-   *                    instances.
-   *
-   * @param copy <tt>true</tt> if the specified list should be copied or
-   *             used directly.
-   */
-  private SzEntityIdentifiers(List<SzEntityIdentifier>  identifiers,
-                              boolean                   copy)
-  {
-    if (copy) {
-      if (identifiers == null || identifiers.size() == 0) {
-        this.identifiers = Collections.emptyList();
-      } else {
-        this.identifiers = Collections.unmodifiableList(
-            new ArrayList<>(identifiers));
-      }
-    } else {
-      this.identifiers = identifiers;
-    }
-  }
-
+@JsonDeserialize(using=SzEntityIdentifiers.Factory.class)
+public interface SzEntityIdentifiers {
   /**
    * Checks if all the {@link SzEntityIdentifier} instances contained are of the
    * same type (e.g.: either {@link SzEntityId} or {@link SzRecordId}).
@@ -92,9 +24,9 @@ public class SzEntityIdentifiers {
    * @return <tt>true</tt> if the {@link SzEntityIdentifier} instances are
    *         of the same type otherwise <tt>false</tt>.
    */
-  public boolean isHomogeneous() {
+  default boolean isHomogeneous() {
     Class<? extends SzEntityIdentifier> c = null;
-    for (SzEntityIdentifier i : this.identifiers) {
+    for (SzEntityIdentifier i : this.getIdentifiers()) {
       if (c == null) {
         c = i.getClass();
         continue;
@@ -110,8 +42,9 @@ public class SzEntityIdentifiers {
    * @return <tt>true</tt> if no entity identifiers are specified, otherwise
    *         <tt>false</tt>.
    */
-  public boolean isEmpty() {
-    return (this.identifiers == null || this.identifiers.size() == 0);
+  default boolean isEmpty() {
+    List<SzEntityIdentifier> identifiers = this.getIdentifiers();
+    return (identifiers == null || identifiers.size() == 0);
   }
 
   /**
@@ -119,8 +52,9 @@ public class SzEntityIdentifiers {
    *
    * @return The number of entity identifiers.
    */
-  public int getCount() {
-    return (this.identifiers == null ? 0 : this.identifiers.size());
+  default int getCount() {
+    List<SzEntityIdentifier> identifiers = this.getIdentifiers();
+    return (identifiers == null ? 0 : identifiers.size());
   }
 
   /**
@@ -130,28 +64,147 @@ public class SzEntityIdentifiers {
    * @return The unmodifiable {@link List} of {@link SzEntityIdentifier}
    *         instances that were specified.
    */
-  public List<SzEntityIdentifier> getIdentifiers() {
-    return this.identifiers;
+  List<SzEntityIdentifier> getIdentifiers();
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzEntityIdentifiers}.
+   */
+  interface Provider extends ModelProvider<SzEntityIdentifiers> {
+    /**
+     * Constructs an instance with no {@link SzEntityIdentifier} instances.
+     */
+    SzEntityIdentifiers create();
+
+    /**
+     * Constructs an instance with a single {@link SzEntityIdentifier}
+     * instance.
+     *
+     * @param identifier The single non-null {@link SzEntityIdentifier}
+     *                   instance.
+     *
+     * @throws NullPointerException If the specified parameter is null.
+     */
+    SzEntityIdentifiers create(SzEntityIdentifier identifier)
+        throws NullPointerException;
+
+    /**
+     * Constructs with the specified {@link Collection} of {@link
+     * SzEntityIdentifier} instances.  The specified {@link Collection} will be
+     * copied.
+     *
+     * @param identifiers The non-null {@link Collection} of {@link
+     *                    SzEntityIdentifier} instances.
+     *
+     * @throws NullPointerException If the specified parameter is null.
+     */
+    SzEntityIdentifiers create(
+        Collection<? extends SzEntityIdentifier> identifiers)
+        throws NullPointerException;
   }
 
   /**
-   * Overridden to convert the {@link SzEntityIdentifiers} instance to a JSON
-   * array string.
-   *
-   * @return The JSON array string representation of this instance.
-   *
+   * Provides a default {@link Provider} implementation for {@link
+   * SzEntityIdentifier} that produces instances of {@link
+   * SzEntityIdentifiersImpl}.
    */
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("[");
-    String prefix = "";
-    for (SzEntityIdentifier identifier : this.getIdentifiers()) {
-      sb.append(prefix).append(identifier.toString());
-      prefix = ",";
+  class DefaultProvider extends AbstractModelProvider<SzEntityIdentifiers>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzEntityIdentifiers.class, SzEntityIdentifiersImpl.class);
     }
-    sb.append("]");
-    return sb.toString();
+
+    @Override
+    public SzEntityIdentifiers create() {
+      return new SzEntityIdentifiersImpl();
+    }
+
+    @Override
+    public SzEntityIdentifiers create(SzEntityIdentifier identifier)
+        throws NullPointerException
+    {
+      return new SzEntityIdentifiersImpl(identifier);
+    }
+
+    @Override
+    public SzEntityIdentifiers create(
+        Collection<? extends SzEntityIdentifier> identifiers)
+        throws NullPointerException
+    {
+      return new SzEntityIdentifiersImpl(identifiers);
+    }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link
+   * SzEntityIdentifiers}.
+   */
+  class Factory extends ModelFactory<SzEntityIdentifiers, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzEntityIdentifiers.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Constructs an instance with no {@link SzEntityIdentifier} instances.
+     */
+    public SzEntityIdentifiers create() {
+      return this.getProvider().create();
+    }
+
+    /**
+     * Constructs an instance with a single {@link SzEntityIdentifier}
+     * instance.
+     *
+     * @param identifier The single non-null {@link SzEntityIdentifier}
+     *                   instance.
+     *
+     * @throws NullPointerException If the specified parameter is null.
+     */
+    public SzEntityIdentifiers create(SzEntityIdentifier identifier)
+        throws NullPointerException
+    {
+      return this.getProvider().create(identifier);
+    }
+
+    /**
+     * Constructs with the specified {@link Collection} of {@link
+     * SzEntityIdentifier} instances.  The specified {@link Collection} will be
+     * copied.
+     *
+     * @param identifiers The non-null {@link Collection} of {@link
+     *                    SzEntityIdentifier} instances.
+     *
+     * @throws NullPointerException If the specified parameter is null.
+     */
+    public SzEntityIdentifiers create(
+        Collection<? extends SzEntityIdentifier> identifiers)
+        throws NullPointerException
+    {
+      return this.getProvider().create(identifiers);
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the specified text as a {@link List} of homogeneous
@@ -162,16 +215,16 @@ public class SzEntityIdentifiers {
    * @return The {@link SzEntityIdentifiers} instance representing the {@link
    *         List} of {@link SzEntityIdentifier} instances.
    */
-  public static SzEntityIdentifiers valueOf(String text) {
-    text = text.trim();
-    int               length  = text.length();
-    char              first   = text.charAt(0);
-    char              last    = text.charAt(length-1);
+  static SzEntityIdentifiers valueOf(String text) {
+    if (text != null) text = text.trim();
+    int               length  = (text == null) ? 0 : text.length();
+    char              first   = (length == 0) ? 0 : text.charAt(0);
+    char              last    = (length <= 1) ? 0 : text.charAt(length-1);
 
     // check if no identifiers
     if (length == 0) {
       // no identifiers
-      return new SzEntityIdentifiers();
+      return SzEntityIdentifiers.FACTORY.create();
     }
 
     // check if it looks like a JSON array
@@ -190,7 +243,7 @@ public class SzEntityIdentifiers {
         // it appears we have a JSON object for a single entity identifier
         JsonObject jsonObject = JsonUtils.parseJsonObject(text);
         SzRecordId recordId = SzRecordId.parse(jsonObject);
-        return new SzEntityIdentifiers(recordId);
+        return SzEntityIdentifiers.FACTORY.create(recordId);
 
       } catch (RuntimeException e) {
         // ignore
@@ -206,7 +259,7 @@ public class SzEntityIdentifiers {
         identifiers.add(SzEntityId.valueOf(token));
       }
       identifiers = Collections.unmodifiableList(identifiers);
-      return new SzEntityIdentifiers(identifiers, false);
+      return SzEntityIdentifiers.FACTORY.create(identifiers);
     }
 
     // try to convert it to a JSON array
@@ -251,7 +304,8 @@ public class SzEntityIdentifiers {
       SzEntityIdentifier identifier = null;
       switch (vt) {
         case NUMBER:
-          identifier = new SzEntityId(((JsonNumber) value).longValue());
+          identifier = SzEntityId.FACTORY.create(
+              ((JsonNumber) value).longValue());
           break;
 
         case OBJECT:
@@ -267,8 +321,8 @@ public class SzEntityIdentifiers {
     }
 
     // make the list unmodifiable
-    return new SzEntityIdentifiers(
-        Collections.unmodifiableList(identifiers), false);
+    return SzEntityIdentifiers.FACTORY.create(
+        Collections.unmodifiableList(identifiers));
   }
 
   /**
@@ -324,13 +378,13 @@ public class SzEntityIdentifiers {
       identifiers.add(SzEntityIdentifier.valueOf(token));
     }
     identifiers = Collections.unmodifiableList(identifiers);
-    return new SzEntityIdentifiers(identifiers, false);
+    return SzEntityIdentifiers.FACTORY.create(identifiers);
   }
 
   /**
    * Test main function.
    */
-  public static void main(String[] args) {
+  static void main(String[] args) {
     for (String arg : args) {
       System.out.println();
       System.out.println("- - - - - - - - - - - - - - - - - - - - - ");

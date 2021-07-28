@@ -2,6 +2,7 @@ package com.senzing.repomgr;
 
 import com.senzing.api.model.SzDataSource;
 import com.senzing.api.model.SzEntityType;
+import com.senzing.cmdline.CommandLineOption;
 import com.senzing.cmdline.CommandLineValue;
 import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.cmdline.CommandLineUtilities;
@@ -237,162 +238,21 @@ public class RepositoryManager {
   }
 
   /**
-   * Validates a repository directory specified in the command-line arguments.
-   *
-   */
-  private static void validateRepositoryDirectory(File directory) {
-    if (!directory.exists()) {
-      String msg = "Specified repository directory path does not exist: "
-                 + directory;
-
-      System.err.println();
-      System.err.println(msg);
-      throw new IllegalArgumentException(msg);
-    }
-    if (!directory.isDirectory()) {
-      String msg = "Specified repository directory path exists, but is not a "
-                 + "directory: " + directory;
-
-      System.err.println();
-      System.err.println(msg);
-      throw new IllegalArgumentException(msg);
-    }
-
-    File iniFile = new File(directory, "g2-init.json");
-    if (!iniFile.exists() || iniFile.isDirectory()) {
-      String msg = "Specified repository directory path exists, but does not "
-                 + "contain a g2-init.json file: " + directory;
-
-      System.err.println();
-      System.err.println(msg);
-      throw new IllegalArgumentException(msg);
-    }
-  }
-
-  /**
-   * Validates that the specified file exists, is not a directory and appears
-   * to be a CSV or a JSON file for loading.
-   */
-  private static void validateSourceFile(File sourceFile) {
-    if (!sourceFile.exists()) {
-      String msg = "Specified file does not exist: " + sourceFile;
-      System.err.println();
-      System.err.println(msg);
-      throw new IllegalArgumentException(msg);
-    }
-    if (sourceFile.isDirectory()) {
-      String msg = "Specified file exists, but is a directory: " + sourceFile;
-      System.err.println();
-      System.err.println(msg);
-      throw new IllegalArgumentException(msg);
-    }
-    String fileName = sourceFile.toString().toUpperCase();
-    if (!fileName.endsWith(".JSON") && !fileName.endsWith(".CSV")) {
-      String msg = "Specified file must be CSV or JSON: " + fileName;
-      System.err.println();
-      System.err.println(msg);
-      throw new IllegalArgumentException(msg);
-    }
-  }
-
-  /**
-   * Validates the specified JSON for loading.
-   */
-  private static void validateJsonRecord(String jsonRecord) {
-    JsonObject jsonObject;
-    try {
-      jsonObject = JsonUtils.parseJsonObject(jsonRecord);
-
-    } catch (Exception e) {
-      String msg = "The provided JSON record is invalid for loading: "
-                 + jsonRecord;
-      System.err.println();
-      System.err.println(msg);
-      throw new IllegalArgumentException(msg);
-    }
-
-    if (jsonObject.size() == 0) {
-      String msg = "The provided JSON record has no properties: " + jsonRecord;
-      System.err.println();
-      System.err.println(msg);
-      throw new IllegalArgumentException(msg);
-    }
-  }
-
-  /**
    * Parses the command line arguments and returns a {@link Map} of those
    * arguments.
    *
    * @param args
    * @return
    */
-  private static Map<RepoManagerOption, Object> parseCommandLine(String[] args) {
-    Map<RepoManagerOption, CommandLineValue<RepoManagerOption>> optionValues =
+  private static Map<CommandLineOption, Object> parseCommandLine(String[] args) {
+    Map<CommandLineOption, CommandLineValue> optionValues =
         CommandLineUtilities.parseCommandLine(
             RepoManagerOption.class,
             args,
-            (option, params) -> {
-              switch (option) {
-                case HELP:
-                  if (args.length > 1) {
-                    throw new IllegalArgumentException(
-                        "Help option should be only option when provided.");
-                  }
-                  return Boolean.TRUE;
-
-                case VERBOSE:
-                  return Boolean.TRUE;
-
-                case CREATE_REPO: {
-                  File repoDirectory = new File(params.get(0));
-                  if (repoDirectory.exists()) {
-                    throw new IllegalArgumentException(
-                        "Specified repository directory file path "
-                            + "already exists: " + repoDirectory);
-                  }
-                  return repoDirectory;
-                }
-                case REPOSITORY: {
-                  File repoDirectory = new File(params.get(0));
-                  validateRepositoryDirectory(repoDirectory);
-                  return repoDirectory;
-                }
-                case PURGE_REPO:
-                  return Boolean.TRUE;
-
-                case LOAD_FILE:
-                  File sourceFile = new File(params.get(0));
-                  validateSourceFile(sourceFile);
-                  return sourceFile;
-
-                case ADD_RECORD:
-                  String jsonRecord = params.get(0);
-                  validateJsonRecord(jsonRecord);
-                  return jsonRecord;
-
-                case CONFIG_SOURCES:
-                  Set<String> sources = new LinkedHashSet<>(params);
-                  if (sources.size() == 0) {
-                    throw new IllegalArgumentException(
-                        "No data source names were provided for the "
-                            + option.getCommandLineFlag() + " option");
-                  }
-                  return sources;
-
-                case DATA_SOURCE:
-                  String dataSource = params.get(0);
-                  return dataSource;
-
-                default:
-                  throw new IllegalArgumentException(
-                      "Unhandled command line option: "
-                          + option.getCommandLineFlag()
-                          + " / " + option);
-              }
-            });
+            RepoManagerOption.PARAMETER_PROCESSOR);
 
     // create a result map
-    Map<RepoManagerOption, Object> result = new LinkedHashMap<>();
+    Map<CommandLineOption, Object> result = new LinkedHashMap<>();
 
     // iterate over the option values and handle them
     CommandLineUtilities.processCommandLine(optionValues, result);
@@ -501,7 +361,7 @@ public class RepositoryManager {
    * @throws Exception
    */
   public static void main(String[] args) throws Exception {
-    Map<RepoManagerOption, Object> options = null;
+    Map<CommandLineOption, Object> options = null;
     try {
       options = parseCommandLine(args);
     } catch (Exception e) {
@@ -1936,7 +1796,7 @@ public class RepositoryManager {
           continue;
         }
         StringBuffer sb = new StringBuffer();
-        SzDataSource dataSource = new SzDataSource(dataSourceCode);
+        SzDataSource dataSource = SzDataSource.FACTORY.create(dataSourceCode);
         returnCode = CONFIG_API.addDataSourceV2(
             configId.getValue(), dataSource.toNativeJson(), sb);
         if (returnCode != 0) {
@@ -2086,7 +1946,7 @@ public class RepositoryManager {
           continue;
         }
         StringBuffer sb = new StringBuffer();
-        SzEntityType entityType = new SzEntityType(
+        SzEntityType entityType = SzEntityType.FACTORY.create(
             entityTypeCode, null, "ACTOR");
         returnCode = CONFIG_API.addEntityTypeV2(
             configId.getValue(), entityType.toNativeJson(), sb);

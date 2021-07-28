@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzEntityTypeCodeImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.Json;
@@ -9,55 +11,84 @@ import java.util.Objects;
 /**
  * Describes a entity type code to identify an entity type.
  */
-public class SzEntityTypeCode implements SzEntityTypeDescriptor {
-  /**
-   * The entity type code that identifiers the entity type.
-   */
-  private String value;
-
-  /**
-   * Constructs with the specified entity type code.  The specified entity
-   * type code is trimmed of leading and trailing white space and converted
-   * to all upper case.
-   *
-   * @param code The non-null entity type code which will be trimmed and
-   *             converted to upper-case.
-   *
-   * @throws NullPointerException If the specified code is <tt>null</tt>.
-   */
-  public SzEntityTypeCode(String code)
-    throws NullPointerException
-  {
-    Objects.requireNonNull(code, "The entity type code cannot be null");
-    this.value = code.trim().toUpperCase();
-  }
-
+@JsonDeserialize(using=SzEntityTypeCode.Factory.class)
+public interface SzEntityTypeCode extends SzEntityTypeDescriptor {
   /**
    * Return the entity type code identifying the entity type.
    *
    * @return The entity type code identifying the entity type.
    */
-  public String getValue() {
-    return this.value;
+  String getValue();
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzDataSourceCode}.
+   */
+  interface Provider extends ModelProvider<SzEntityTypeCode> {
+    /**
+     * Constructs with the specified entity type code.
+     *
+     * @param entityTypeCode The entity type code for the entity type.
+     */
+    SzEntityTypeCode create(String entityTypeCode);
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    SzEntityTypeCode that = (SzEntityTypeCode) o;
-    return this.value.equals(that.value);
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzEntityTypeCode} that produces instances of {@link SzEntityTypeCodeImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzEntityTypeCode>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzEntityTypeCode.class, SzEntityTypeCodeImpl.class);
+    }
+
+    @Override
+    public SzEntityTypeCode create(String entityTypeCode) {
+      return new SzEntityTypeCodeImpl(entityTypeCode);
+    }
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.value);
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link
+   * SzEntityTypeCode}.
+   */
+  class Factory extends ModelFactory<SzEntityTypeCode, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzEntityTypeCode.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Constructs with the specified entity type code.
+     *
+     * @param entityTypeCode The entity type code for the entity type.
+     */
+    public SzEntityTypeCode create(String entityTypeCode) {
+      return this.getProvider().create(entityTypeCode);
+    }
   }
 
-  @Override
-  public String toString() {
-    return this.getValue();
-  }
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses text as a entity type code.  The specified text is trimmed of
@@ -70,13 +101,13 @@ public class SzEntityTypeCode implements SzEntityTypeDescriptor {
    *
    * @throws NullPointerException If the specified text is <tt>null</tt>.
    */
-  public static SzEntityTypeCode valueOf(String text)
+  static SzEntityTypeCode valueOf(String text)
     throws NullPointerException
   {
     if (text.length() > 2 && text.startsWith("\"") && text.endsWith("\"")) {
       text = text.substring(1, text.length() - 1);
     }
-    return new SzEntityTypeCode(text);
+    return SzEntityTypeCode.FACTORY.create(text);
   }
 
   /**
@@ -87,8 +118,8 @@ public class SzEntityTypeCode implements SzEntityTypeDescriptor {
    *
    * @return The {@link SzEntityType} describing the entity type.
    */
-  public SzEntityType toEntityType() {
-    return new SzEntityType(this.getValue());
+  default SzEntityType toEntityType() {
+    return SzEntityType.FACTORY.create(this.getValue());
   }
 
   /**
@@ -97,7 +128,7 @@ public class SzEntityTypeCode implements SzEntityTypeDescriptor {
    *
    * @param builder The {@link JsonObjectBuilder} to add the properties.
    */
-  public void buildJson(JsonObjectBuilder builder) {
+  default void buildJson(JsonObjectBuilder builder) {
     builder.add("entityTypeCode", this.getValue());
   }
 
@@ -107,7 +138,7 @@ public class SzEntityTypeCode implements SzEntityTypeDescriptor {
    *
    * @param builder The {@link JsonObjectBuilder} to add the properties to.
    */
-  public void buildNativeJson(JsonObjectBuilder builder) {
+  default void buildNativeJson(JsonObjectBuilder builder) {
     builder.add("ETYPE_CODE", this.getValue());
   }
 }

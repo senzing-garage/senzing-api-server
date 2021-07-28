@@ -13,6 +13,18 @@ import java.util.Set;
  */
 public interface CommandLineOption<T extends Enum<T> & CommandLineOption> {
   /**
+   * Gets the base {@link CommandLineOption} type that this one extends.  This
+   * returns <tt>null</tt> if there is no base type.
+   *
+   * @return The base {@link CommandLineOption} type that this one extends, or
+   *         <tt>null</tt> if there is no base type.
+   *
+   */
+  default <B extends Enum<B> & CommandLineOption<B>> Class<B> getBaseOptionType() {
+    return null;
+  }
+
+  /**
    * Gets the {@link String} command line flag associated with this option.
    *
    * @return The {@link String} command line flag associated with this option.
@@ -87,7 +99,7 @@ public interface CommandLineOption<T extends Enum<T> & CommandLineOption> {
    *
    * @return An {@link Set} of options that conflict with this option.
    */
-  default Set<T> getConflicts() {
+  default Set<CommandLineOption> getConflicts() {
     return Collections.emptySet();
   }
 
@@ -100,7 +112,7 @@ public interface CommandLineOption<T extends Enum<T> & CommandLineOption> {
    * @return The {@link Set} of {@link Set} instances describing
    *         combinations of sets of options that this option depends on.
    */
-  default Set<Set<T>> getDependencies() {
+  default Set<Set<CommandLineOption>> getDependencies() {
     return Collections.emptySet();
   }
 
@@ -171,4 +183,41 @@ public interface CommandLineOption<T extends Enum<T> & CommandLineOption> {
   default List<String> getDefaultParameters() {
     return null;
   }
+
+//  /**
+//   * Returns the group name for the option assuming the option belongs to a
+//   * group of with other options.  This returns <tt>null</tt> if the option
+//   * does not belong to a group.  The default implementation of this method
+//   * returns <tt>null</tt>.
+//   *
+//   * @return The group name for the option, or <tt>null</tt> if the option does
+//   *         not belong to a group.
+//   */
+//  default String getGroupName() {
+//    return null;
+//  }
+
+//  /**
+//   * Assuming the option belongs to a group, this method returns the property
+//   * key identifying the option with that group.  This returns <tt>null</tt> if
+//   * the option does not belong to a group.  The default implementation of this
+//   * method returns <tt>null</tt>.
+//   *
+//   * @return The property key for this option with its option group, or
+//   *         <tt>null</tt> if the option does not belong to an option group.
+//   */
+//  default String getGroupPropertyKey() {
+//    return null;
+//  }
+
+//  /**
+//   * Assuming this option belongs to a group, this method checks if this option
+//   * is optional with the group.  The default implementation of this method
+//   * returns <tt>false</tt>.
+//   *
+//   * @return Whether or not this option is optional within its option group.
+//   */
+//  default boolean isGroupOptional() {
+//    return false;
+//  }
 }

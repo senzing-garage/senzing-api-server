@@ -1,162 +1,155 @@
 package com.senzing.api.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.senzing.util.Timers;
-
-import javax.ws.rs.core.UriInfo;
-
-import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzDeleteRecordResponseImpl;
 
 /**
  * The response for a record deletion operation.
  *
  */
-public class SzDeleteRecordResponse extends SzResponseWithRawData
+@JsonDeserialize(using=SzDeleteRecordResponse.Factory.class)
+public interface SzDeleteRecordResponse extends SzResponseWithRawData
 {
   /**
-   * The data for this instance.
+   * Returns the {@link SzDeleteRecordResponseData} for this instance.
+   *
+   * @return The {@link SzDeleteRecordResponseData} for this instance.
    */
-  private Data data = new Data();
+  SzDeleteRecordResponseData getData();
 
   /**
-   * Default constructor.
+   * Sets the {@link SzDeleteRecordResponseData} for this instance.
+   *
+   * @param data The {@link SzDeleteRecordResponseData} for this instance.
    */
-  public SzDeleteRecordResponse() {
-    // do nothing
-  }
+  void setData(SzDeleteRecordResponseData data);
 
   /**
-   * Constructs with only the HTTP method and the self link.
+   * Convenience method to set the @link SzResolutionInfo} on the underlying
+   * {@link SzDeleteRecordResponseData}.
    *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The string URL link to generate this response.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   */
-  public SzDeleteRecordResponse(SzHttpMethod httpMethod,
-                                int          httpStatusCode,
-                                String       selfLink,
-                                Timers       timers)
-  {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-  }
-
-  /**
-   * Constructs with the HTTP method, the self link and the info.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The string URL link to generate this response.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param info The {@link SzResolutionInfo} providing the information
+   * @param info The @link SzResolutionInfo} providing the information
    *             associated with the resolution of the record.
    */
-  public SzDeleteRecordResponse(SzHttpMethod      httpMethod,
-                                int               httpStatusCode,
-                                String            selfLink,
-                                Timers            timers,
-                                SzResolutionInfo  info)
-  {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-    this.data.info = info;
-  }
+  void setInfo(SzResolutionInfo info);
 
   /**
-   * Constructs with only the HTTP method and the {@link UriInfo}.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
+   * A {@link ModelProvider} for instances of {@link SzDeleteRecordResponse}.
    */
-  public SzDeleteRecordResponse(SzHttpMethod httpMethod,
-                                int          httpStatusCode,
-                                UriInfo      uriInfo,
-                                Timers       timers)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
-  }
-
-  /**
-   * Constructs with the HTTP method, the {@link UriInfo}, and the info.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param info The {@link SzResolutionInfo} providing the information
-   *             associated with the resolution of the record.
-   */
-  public SzDeleteRecordResponse(SzHttpMethod      httpMethod,
-                                int               httpStatusCode,
-                                UriInfo           uriInfo,
-                                Timers            timers,
-                                SzResolutionInfo  info)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.data.info = info;
-  }
-
-  /**
-   * Returns the {@link Data} for this instance.
-   *
-   * @return The {@link Data} for this instance.
-   */
-  public Data getData() {
-    return this.data;
-  }
-
-  /**
-   * Sets the @link SzResolutionInfo} providing the information associated
-   * with the deletion of the record.
-   *
-   * @param info The @link SzResolutionInfo} providing the information associated
-   *             with the resolution of the record.
-   */
-  public void setInfo(SzResolutionInfo info) {
-    this.data.info = info;
-  }
-
-  /**
-   * Inner class to represent the data section for this response.
-   */
-  public static class Data {
+  interface Provider extends ModelProvider<SzDeleteRecordResponse> {
     /**
-     * The {@link SzResolutionInfo} providing the information associated with
-     * the deletion of the record.
-     */
-    private SzResolutionInfo info;
-
-    /**
-     * Private default constructor.
-     */
-    private Data() {
-      this.info = null;
-    }
-
-    /**
-     * Gets the {@link SzResolutionInfo} providing the information associated
-     * with the deletion of the record.
+     * Creates an instance of {@link SzDeleteRecordResponse} initialized with
+     * the specified {@link SzMeta} and {@link SzLinks}, but no data.
      *
-     * @return The {@link SzResolutionInfo} providing the information
-     *         associated with the deletion of the record.
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
      */
-    @JsonInclude(NON_NULL)
-    public SzResolutionInfo getInfo() {
-      return this.info;
+    SzDeleteRecordResponse create(SzMeta meta, SzLinks links);
+
+    /**
+     * Creates an instance of {@link SzDeleteRecordResponse} initialized with
+     * the specified {@link SzMeta}, {@link SzLinks} and the specified
+     * {@link SzResolutionInfo}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The {@link SzDeleteRecordResponseData} describing the data
+     *             for the response..
+     */
+    SzDeleteRecordResponse create(SzMeta                      meta,
+                                  SzLinks                     links,
+                                  SzDeleteRecordResponseData  data);
+  }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzDeleteRecordResponse} that produces instances of
+   * {@link SzDeleteRecordResponseImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzDeleteRecordResponse>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzDeleteRecordResponse.class, SzDeleteRecordResponseImpl.class);
     }
 
+    @Override
+    public SzDeleteRecordResponse create(SzMeta meta, SzLinks links) {
+      return new SzDeleteRecordResponseImpl(meta, links);
+    }
+
+    @Override
+    public SzDeleteRecordResponse create(SzMeta                     meta,
+                                         SzLinks                    links,
+                                         SzDeleteRecordResponseData data)
+    {
+      return new SzDeleteRecordResponseImpl(meta, links, data);
+    }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzDeleteRecordResponse}.
+   */
+  class Factory extends ModelFactory<SzDeleteRecordResponse, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzDeleteRecordResponse.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates an instance of {@link SzDeleteRecordResponse} initialized with
+     * the specified {@link SzMeta} and {@link SzLinks}, but no data.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    public SzDeleteRecordResponse create(SzMeta meta, SzLinks links) {
+      return this.getProvider().create(meta, links);
+    }
+
+    /**
+     * Creates an instance of {@link SzDeleteRecordResponse} initialized with
+     * the specified {@link SzMeta}, {@link SzLinks} and the specified
+     * {@link SzResolutionInfo}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The {@link SzDeleteRecordResponseData} describing the data
+     *             for the response..
+     */
+    public SzDeleteRecordResponse create(SzMeta                     meta,
+                                         SzLinks                    links,
+                                         SzDeleteRecordResponseData data)
+    {
+      return this.getProvider().create(meta, links, data);
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 }

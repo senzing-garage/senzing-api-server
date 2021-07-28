@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzDataSourceDescriptorsImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.*;
@@ -10,78 +12,8 @@ import java.util.*;
  * instances.
  *
  */
-public class SzDataSourceDescriptors {
-  /**
-   * The {@link List} of {@link SzDataSourceDescriptor} instances.
-   */
-  private List<SzDataSourceDescriptor> descriptors;
-
-  /**
-   * Constructs with no {@link SzDataSourceDescriptor} instances.
-   */
-  public SzDataSourceDescriptors() throws NullPointerException
-  {
-    this.descriptors = Collections.emptyList();
-  }
-
-  /**
-   * Constructs with a single {@link SzDataSourceDescriptor} instance.
-   *
-   * @param identifier The single non-null {@link SzDataSourceDescriptor} instance.
-   *
-   * @throws NullPointerException If the specified parameter is null.
-   */
-  public SzDataSourceDescriptors(SzDataSourceDescriptor identifier)
-      throws NullPointerException
-  {
-    Objects.requireNonNull(identifier, "Identifier cannot be null.");
-    this.descriptors = Collections.singletonList(identifier);
-  }
-
-  /**
-   * Constructs with the specified {@link Collection} of {@link
-   * SzDataSourceDescriptor} instances.  The specified {@link Collection} will be
-   * copied.
-   *
-   * @param descriptors The non-null {@link Collection} of {@link
-   *                    SzDataSourceDescriptor} instances.
-   *
-   * @throws NullPointerException If the specified parameter is null.
-   */
-  public SzDataSourceDescriptors(
-      Collection<? extends SzDataSourceDescriptor> descriptors)
-    throws NullPointerException
-  {
-    Objects.requireNonNull(descriptors, "Identifiers cannot be null.");
-    this.descriptors = Collections.unmodifiableList(
-        new ArrayList<>(descriptors));
-  }
-
-  /**
-   * Private constructor to use when the collection of {@link
-   * SzDataSourceDescriptor} instances may not need to be copied.
-   *
-   * @param descriptors The {@link List} of {@link SzDataSourceDescriptor}
-   *                    instances.
-   *
-   * @param copy <tt>true</tt> if the specified list should be copied or
-   *             used directly.
-   */
-  private SzDataSourceDescriptors(List<SzDataSourceDescriptor>  descriptors,
-                                  boolean                       copy)
-  {
-    if (copy) {
-      if (descriptors == null || descriptors.size() == 0) {
-        this.descriptors = Collections.emptyList();
-      } else {
-        this.descriptors = Collections.unmodifiableList(
-            new ArrayList<>(descriptors));
-      }
-    } else {
-      this.descriptors = descriptors;
-    }
-  }
-
+@JsonDeserialize(using=SzDataSourceDescriptors.Factory.class)
+public interface SzDataSourceDescriptors {
   /**
    * Checks if all the {@link SzDataSourceDescriptor} instances contained are of the
    * same type (e.g.: either {@link SzEntityId} or {@link SzRecordId}).
@@ -89,14 +21,16 @@ public class SzDataSourceDescriptors {
    * @return <tt>true</tt> if the {@link SzDataSourceDescriptor} instances are
    *         of the same type otherwise <tt>false</tt>.
    */
-  public boolean isHomogeneous() {
+  default boolean isHomogeneous() {
+    Boolean expectCodes = null;
     Class<? extends SzDataSourceDescriptor> c = null;
-    for (SzDataSourceDescriptor i : this.descriptors) {
-      if (c == null) {
-        c = i.getClass();
+    for (SzDataSourceDescriptor i : this.getDescriptors()) {
+      boolean isCode = (i instanceof SzDataSourceCode);
+      if (expectCodes == null) {
+        expectCodes = isCode;
         continue;
       }
-      if (c != i.getClass()) return false;
+      if (expectCodes != isCode) return false;
     }
     return true;
   }
@@ -107,8 +41,9 @@ public class SzDataSourceDescriptors {
    * @return <tt>true</tt> if no entity descriptors are specified, otherwise
    *         <tt>false</tt>.
    */
-  public boolean isEmpty() {
-    return (this.descriptors == null || this.descriptors.size() == 0);
+  default boolean isEmpty() {
+    List<SzDataSourceDescriptor> list = this.getDescriptors();
+    return (list == null || list.size() == 0);
   }
 
   /**
@@ -116,8 +51,9 @@ public class SzDataSourceDescriptors {
    *
    * @return The number of entity descriptors.
    */
-  public int getCount() {
-    return (this.descriptors == null ? 0 : this.descriptors.size());
+  default int getCount() {
+    List<SzDataSourceDescriptor> list = this.getDescriptors();
+    return (list == null ? 0 : list.size());
   }
 
   /**
@@ -127,28 +63,147 @@ public class SzDataSourceDescriptors {
    * @return The unmodifiable {@link List} of {@link SzDataSourceDescriptor}
    *         instances that were specified.
    */
-  public List<SzDataSourceDescriptor> getDescriptors() {
-    return this.descriptors;
+  List<SzDataSourceDescriptor> getDescriptors();
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzDataSourceDescriptors}.
+   */
+  interface Provider extends ModelProvider<SzDataSourceDescriptors> {
+    /**
+     * Constructs an instance with no {@link SzDataSourceDescriptor} instances.
+     */
+    SzDataSourceDescriptors create();
+
+    /**
+     * Constructs an instance with a single {@link SzDataSourceDescriptor}
+     * instance.
+     *
+     * @param identifier The single non-null {@link SzDataSourceDescriptor}
+     *                   instance.
+     *
+     * @throws NullPointerException If the specified parameter is null.
+     */
+    SzDataSourceDescriptors create(SzDataSourceDescriptor identifier)
+        throws NullPointerException;
+
+    /**
+     * Constructs with the specified {@link Collection} of {@link
+     * SzDataSourceDescriptor} instances.  The specified {@link Collection} will be
+     * copied.
+     *
+     * @param descriptors The non-null {@link Collection} of {@link
+     *                    SzDataSourceDescriptor} instances.
+     *
+     * @throws NullPointerException If the specified parameter is null.
+     */
+    SzDataSourceDescriptors create(
+        Collection<? extends SzDataSourceDescriptor> descriptors)
+        throws NullPointerException;
   }
 
   /**
-   * Overridden to convert the {@link SzDataSourceDescriptors} instance to a JSON
-   * array string.
-   *
-   * @return The JSON array string representation of this instance.
-   *
+   * Provides a default {@link Provider} implementation for {@link
+   * SzDataSourceDescriptor} that produces instances of {@link
+   * SzDataSourceDescriptorsImpl}.
    */
-  public String toString() {
-    StringBuilder sb = new StringBuilder();
-    sb.append("[");
-    String prefix = "";
-    for (SzDataSourceDescriptor identifier : this.getDescriptors()) {
-      sb.append(prefix).append(identifier.toString());
-      prefix = ",";
+  class DefaultProvider extends AbstractModelProvider<SzDataSourceDescriptors>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzDataSourceDescriptors.class, SzDataSourceDescriptorsImpl.class);
     }
-    sb.append("]");
-    return sb.toString();
+
+    @Override
+    public SzDataSourceDescriptors create() {
+      return new SzDataSourceDescriptorsImpl();
+    }
+
+    @Override
+    public SzDataSourceDescriptors create(SzDataSourceDescriptor identifier)
+        throws NullPointerException
+    {
+      return new SzDataSourceDescriptorsImpl(identifier);
+    }
+
+    @Override
+    public SzDataSourceDescriptors create(
+        Collection<? extends SzDataSourceDescriptor> descriptors)
+        throws NullPointerException
+    {
+      return new SzDataSourceDescriptorsImpl(descriptors);
+    }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link
+   * SzDataSourceDescriptors}.
+   */
+  class Factory extends ModelFactory<SzDataSourceDescriptors, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzDataSourceDescriptors.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Constructs an instance with no {@link SzDataSourceDescriptor} instances.
+     */
+    public SzDataSourceDescriptors create() {
+      return this.getProvider().create();
+    }
+
+    /**
+     * Constructs an instance with a single {@link SzDataSourceDescriptor}
+     * instance.
+     *
+     * @param identifier The single non-null {@link SzDataSourceDescriptor}
+     *                   instance.
+     *
+     * @throws NullPointerException If the specified parameter is null.
+     */
+    public SzDataSourceDescriptors create(SzDataSourceDescriptor identifier)
+        throws NullPointerException
+    {
+      return this.getProvider().create(identifier);
+    }
+
+    /**
+     * Constructs with the specified {@link Collection} of {@link
+     * SzDataSourceDescriptor} instances.  The specified {@link Collection} will be
+     * copied.
+     *
+     * @param descriptors The non-null {@link Collection} of {@link
+     *                    SzDataSourceDescriptor} instances.
+     *
+     * @throws NullPointerException If the specified parameter is null.
+     */
+    public SzDataSourceDescriptors create(
+        Collection<? extends SzDataSourceDescriptor> descriptors)
+        throws NullPointerException
+    {
+      return this.getProvider().create(descriptors);
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the specified text as a {@link List} of homogeneous
@@ -159,16 +214,16 @@ public class SzDataSourceDescriptors {
    * @return The {@link SzDataSourceDescriptors} instance representing the {@link
    *         List} of {@link SzDataSourceDescriptor} instances.
    */
-  public static SzDataSourceDescriptors valueOf(String text) {
-    text = text.trim();
-    int               length  = text.length();
-    char              first   = text.charAt(0);
-    char              last    = text.charAt(length-1);
+  static SzDataSourceDescriptors valueOf(String text) {
+    if (text != null) text = text.trim();
+    int               length  = (text == null) ? 0 : text.length();
+    char              first   = (length == 0) ? 0 : text.charAt(0);
+    char              last    = (length <= 1) ? 0 : text.charAt(length-1);
 
     // check if no descriptors
     if (length == 0) {
       // no descriptors
-      return new SzDataSourceDescriptors();
+      return SzDataSourceDescriptors.FACTORY.create();
     }
 
     // check if it looks like a JSON array
@@ -187,7 +242,7 @@ public class SzDataSourceDescriptors {
       if ((first == '"' && last == '"') || (first == '{' && last == '}')) {
         // if its already a quoted string or object, surround it in brackets
         try {
-          return SzDataSourceDescriptors.parseAsJsonArray("[" + text + "]");
+          return parseAsJsonArray("[" + text + "]");
 
         } catch (RuntimeException e) {
           // ignore
@@ -199,7 +254,7 @@ public class SzDataSourceDescriptors {
       JsonArrayBuilder jab = Json.createArrayBuilder();
       jab.add(text);
       String jsonText = JsonUtils.toJsonText(jab);
-      return SzDataSourceDescriptors.parseAsJsonArray(jsonText);
+      return parseAsJsonArray(jsonText);
     }
 
     // if we get here then check for a failure
@@ -225,7 +280,8 @@ public class SzDataSourceDescriptors {
       SzDataSourceDescriptor descriptor;
       switch (vt) {
         case STRING:
-          descriptor = new SzDataSourceCode(((JsonString) value).getString());
+          descriptor = SzDataSourceCode.FACTORY.create(
+              ((JsonString) value).getString());
           break;
 
         case OBJECT:
@@ -241,14 +297,14 @@ public class SzDataSourceDescriptors {
     }
 
     // make the list unmodifiable
-    return new SzDataSourceDescriptors(
-        Collections.unmodifiableList(descriptors), false);
+    return SzDataSourceDescriptors.FACTORY.create(
+        Collections.unmodifiableList(descriptors));
   }
 
   /**
    * Test main function.
    */
-  public static void main(String[] args) {
+  static void main(String[] args) {
     for (String arg : args) {
       System.out.println();
       System.out.println("- - - - - - - - - - - - - - - - - - - - - ");

@@ -2,6 +2,8 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzResolvedEntityImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -16,152 +18,24 @@ import java.util.function.Function;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
-public class SzResolvedEntity {
-  /**
-   * The pattern for parsing the date values returned from the native API.
-   */
-  private static final String NATIVE_DATE_PATTERN = "yyyy-MM-dd HH:mm:ss.SSS";
-
-  /**
-   * The time zone used for the time component of the build number.
-   */
-  private static final ZoneId UTC_ZONE = ZoneId.of("UTC");
-
-  /**
-   * The {@link DateTimeFormatter} for interpreting the timestamps from the
-   * native API.
-   */
-  private static final DateTimeFormatter NATIVE_DATE_FORMATTER
-      = DateTimeFormatter.ofPattern(NATIVE_DATE_PATTERN);
-
-  /**
-   * The number of records to consider to be the top records.
-   */
-  private static final int TOP_COUNT = 10;
-
-  /**
-   * The entity ID.
-   */
-  private Long entityId;
-
-  /**
-   * The assigned name to the entity.
-   */
-  private String entityName;
-
-  /**
-   * The best name for the entity.
-   */
-  private String bestName;
-
-  /**
-   * The {@link List} of {@link SzDataSourceRecordSummary} instances.
-   */
-  private List<SzDataSourceRecordSummary> recordSummaries;
-
-  /**
-   * The list of address data strings.
-   */
-  private List<String> addressData;
-
-  /**
-   * The list of attribute data strings.
-   */
-  private List<String> characteristicData;
-
-  /**
-   * The list of identifier data strings.
-   */
-  private List<String> identifierData;
-
-  /**
-   * The list of name data strings.
-   */
-  private List<String> nameData;
-
-  /**
-   * The list of phone data strings.
-   */
-  private List<String> phoneData;
-
-  /**
-   * The list of relationship data strings.
-   */
-  private List<String> relationshipData;
-
-  /**
-   * The list of other data strings.
-   */
-  private List<String> otherData;
-
-  /**
-   * The {@link Map} of features.
-   */
-  private Map<String, List<SzEntityFeature>> features;
-
-  /**
-   * The {@link Map} of unmodifiable features.
-   */
-  private Map<String, List<SzEntityFeature>> unmodifiableFeatures;
-
-  /**
-   * The {@link List} of {@link SzMatchedRecord} instances for the
-   * records in the entity.
-   */
-  private List<SzMatchedRecord> records;
-
-  /**
-   * Whether or not this entity is partially populated.
-   */
-  private boolean partial;
-
-  /**
-   * The last seen timestamp.
-   */
-  @JsonFormat(shape   = JsonFormat.Shape.STRING,
-      pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-      locale  = "en_GB")
-  private Date lastSeenTimestamp;
-
-  /**
-   * Default constructor.
-   */
-  public SzResolvedEntity() {
-    this.entityId             = null;
-    this.entityName           = null;
-    this.bestName             = null;
-    this.recordSummaries      = new LinkedList<>();
-    this.addressData          = new LinkedList<>();
-    this.characteristicData   = new LinkedList<>();
-    this.identifierData       = new LinkedList<>();
-    this.nameData             = new LinkedList<>();
-    this.phoneData            = new LinkedList<>();
-    this.relationshipData     = new LinkedList<>();
-    this.otherData            = new LinkedList<>();
-    this.features             = new LinkedHashMap<>();
-    this.unmodifiableFeatures = new LinkedHashMap<>();
-    this.records              = new LinkedList<>();
-    this.lastSeenTimestamp    = null;
-    this.partial              = true;
-  }
-
+/**
+ * Describes a resolved entity.
+ */
+@JsonDeserialize(using=SzResolvedEntity.Factory.class)
+public interface SzResolvedEntity {
   /**
    * Gets the entity ID for the entity.
    *
    * @return The entity ID for the entity.
    */
-  public Long getEntityId() {
-    return entityId;
-  }
+  Long getEntityId();
 
   /**
    * Sets the entity ID for the entity.
    *
    * @param entityId The entity ID for the entity.
    */
-  public void setEntityId(Long entityId) {
-    this.entityId = entityId;
-  }
+  void setEntityId(Long entityId);
 
   /**
    * Gets the entity name.  This is usually the same as the {@link
@@ -171,9 +45,7 @@ public class SzResolvedEntity {
    * @return The highest fidelity name for the entity.
    */
   @JsonInclude(NON_NULL)
-  public String getEntityName() {
-    return this.entityName;
-  }
+  String getEntityName();
 
   /**
    * Sets the entity name.  This is usually the same as the {@link
@@ -182,9 +54,7 @@ public class SzResolvedEntity {
    *
    * @param entityName The highest fidelity name for the entity.
    */
-  public void setEntityName(String entityName) {
-    this.entityName = entityName;
-  }
+  void setEntityName(String entityName);
 
   /**
    * Gets the best name.  This is usually the same as the {@link
@@ -194,9 +64,7 @@ public class SzResolvedEntity {
    * @return The best name for the entity.
    */
   @JsonInclude(NON_NULL)
-  public String getBestName() {
-    return this.bestName;
-  }
+  String getBestName();
 
   /**
    * Sets the best name.  This is usually the same as the {@link
@@ -205,9 +73,7 @@ public class SzResolvedEntity {
    *
    * @param bestName The best name for the entity.
    */
-  public void setBestName(String bestName) {
-    this.bestName = bestName;
-  }
+  void setBestName(String bestName);
 
   /**
    * Returns the list of {@link SzMatchedRecord} instances describing the records
@@ -217,34 +83,14 @@ public class SzResolvedEntity {
    *         for the entity.
    */
   @JsonInclude(NON_EMPTY)
-  public List<SzMatchedRecord> getRecords() {
-    return Collections.unmodifiableList(this.records);
-  }
+  List<SzMatchedRecord> getRecords();
 
   /**
    * Sets the list {@linkplain SzMatchedRecord records} for the entity.
    *
    * @param records The list {@linkplain SzMatchedRecord records} for the entity.
    */
-  public void setRecords(List<SzMatchedRecord> records) {
-    this.records.clear();
-    if (records != null) {
-      this.records.addAll(records);
-
-      // recalculate the "other data"
-      this.otherData.clear();
-      Set<String> set = new LinkedHashSet<>();
-      for (SzMatchedRecord record : records) {
-        List<String> recordOtherData = record.getOtherData();
-        if (recordOtherData != null) {
-          for (String data : recordOtherData) {
-            set.add(data);
-          }
-        }
-      }
-      this.otherData.addAll(set);
-    }
-  }
+  void setRecords(List<SzMatchedRecord> records);
 
   /**
    * Adds the specified {@link SzMatchedRecord} to the list of {@linkplain
@@ -252,19 +98,7 @@ public class SzResolvedEntity {
    *
    * @param record The {@link SzMatchedRecord} to add to the record list.
    */
-  public void addRecord(SzMatchedRecord record)
-  {
-    this.records.add(record);
-    List<String> recordOtherData = record.getOtherData();
-    if (recordOtherData != null) {
-      for (String data: recordOtherData) {
-        if (! this.otherData.contains(data)) {
-          this.otherData.add(data);
-        }
-      }
-    }
-  }
-
+  void addRecord(SzMatchedRecord record);
 
   /**
    * Returns the list of {@link SzDataSourceRecordSummary} instances for the entity.
@@ -272,9 +106,7 @@ public class SzResolvedEntity {
    * @return The list of {@link SzDataSourceRecordSummary} instances for the entity.
    */
   @JsonInclude(NON_EMPTY)
-  public List<SzDataSourceRecordSummary> getRecordSummaries() {
-    return Collections.unmodifiableList(this.recordSummaries);
-  }
+  List<SzDataSourceRecordSummary> getRecordSummaries();
 
   /**
    * Sets the list {@link SzDataSourceRecordSummary record summaries} for the entity.
@@ -282,12 +114,7 @@ public class SzResolvedEntity {
    * @param summaries The list {@link SzDataSourceRecordSummary record summaries}
    *                  for the entity.
    */
-  public void setRecordSummaries(List<SzDataSourceRecordSummary> summaries) {
-    this.recordSummaries.clear();
-    if (summaries != null) {
-      this.recordSummaries.addAll(summaries);
-    }
-  }
+  void setRecordSummaries(List<SzDataSourceRecordSummary> summaries);
 
   /**
    * Adds the specified {@link SzDataSourceRecordSummary} to the list of associated
@@ -295,10 +122,7 @@ public class SzResolvedEntity {
    *
    * @param summary The {@link SzDataSourceRecordSummary} to add to the record summaries.
    */
-  public void addRecordSummary(SzDataSourceRecordSummary summary)
-  {
-    this.recordSummaries.add(summary);
-  }
+  void addRecordSummary(SzDataSourceRecordSummary summary);
 
   /**
    * Returns the list of address data strings for the entity.
@@ -306,30 +130,21 @@ public class SzResolvedEntity {
    * @return The list of address data strings for the entity.
    */
   @JsonInclude(NON_EMPTY)
-  public List<String> getAddressData() {
-    return Collections.unmodifiableList(this.addressData);
-  }
+  List<String> getAddressData();
 
   /**
    * Sets the address data list for the entity.
    *
    * @param addressData The list of address data strings.
    */
-  public void setAddressData(List<String> addressData) {
-    this.addressData.clear();
-    if (addressData != null) {
-      this.addressData.addAll(addressData);
-    }
-  }
+  void setAddressData(List<String> addressData);
 
   /**
    * Adds to the address data list for the entity.
    *
    * @param addressData The address data string to add to the address data list.
    */
-  public void addAddressData(String addressData) {
-    this.addressData.add(addressData);
-  }
+  void addAddressData(String addressData);
 
   /**
    * Returns the list of attribute data strings for the entity.
@@ -337,21 +152,14 @@ public class SzResolvedEntity {
    * @return The list of attribute data strings for the entity.
    */
   @JsonInclude(NON_EMPTY)
-  public List<String> getCharacteristicData() {
-    return Collections.unmodifiableList(this.characteristicData);
-  }
+  List<String> getCharacteristicData();
 
   /**
    * Sets the attribute data list for the entity.
    *
    * @param characteristicData The list of attribute data strings.
    */
-  public void setCharacteristicData(List<String> characteristicData) {
-    this.characteristicData.clear();
-    if (characteristicData != null) {
-      this.characteristicData.addAll(characteristicData);
-    }
-  }
+  void setCharacteristicData(List<String> characteristicData);
 
   /**
    * Adds to the attribute data list for the entity.
@@ -359,9 +167,7 @@ public class SzResolvedEntity {
    * @param attributeData The attribute data string to add to the address
    *                      data list.
    */
-  public void addCharacteristicData(String attributeData) {
-    this.characteristicData.add(attributeData);
-  }
+  void addCharacteristicData(String attributeData);
 
   /**
    * Returns the list of identifier data strings for the entity.
@@ -369,21 +175,14 @@ public class SzResolvedEntity {
    * @return The list of identifier data strings for the entity.
    */
   @JsonInclude(NON_EMPTY)
-  public List<String> getIdentifierData() {
-    return Collections.unmodifiableList(this.identifierData);
-  }
+  List<String> getIdentifierData();
 
   /**
    * Sets the identifier data list for the entity.
    *
    * @param identifierData The list of identifier data strings.
    */
-  public void setIdentifierData(List<String> identifierData) {
-    this.identifierData.clear();
-    if (identifierData != null) {
-      this.identifierData.addAll(identifierData);
-    }
-  }
+  void setIdentifierData(List<String> identifierData);
 
   /**
    * Adds to the identifier data list for the entity.
@@ -391,9 +190,7 @@ public class SzResolvedEntity {
    * @param identifierData The identifier data string to add to the identifier
    *                       data list.
    */
-  public void addIdentifierData(String identifierData) {
-    this.identifierData.add(identifierData);
-  }
+  void addIdentifierData(String identifierData);
 
   /**
    * Returns the list of name data strings for the entity.
@@ -401,31 +198,21 @@ public class SzResolvedEntity {
    * @return The list of name data strings for the entity.
    */
   @JsonInclude(NON_EMPTY)
-  public List<String> getNameData() {
-    return Collections.unmodifiableList(this.nameData);
-  }
+  List<String> getNameData();
 
   /**
    * Sets the name data list for the entity.
    *
    * @param nameData The list of name data strings.
    */
-  public void setNameData(List<String> nameData) {
-    this.nameData.clear();
-    if (nameData != null) {
-      this.nameData.addAll(nameData);
-    }
-  }
+  void setNameData(List<String> nameData);
 
   /**
    * Adds to the name data list for the entity.
    *
    * @param nameData The name data string to add to the name data list.
    */
-  public void addNameData(String nameData)
-  {
-    this.nameData.add(nameData);
-  }
+  void addNameData(String nameData);
 
   /**
    * Returns the list of phone data strings for the entity.
@@ -433,31 +220,21 @@ public class SzResolvedEntity {
    * @return The list of phone data strings for the entity.
    */
   @JsonInclude(NON_EMPTY)
-  public List<String> getPhoneData() {
-    return Collections.unmodifiableList(this.phoneData);
-  }
+  List<String> getPhoneData();
 
   /**
    * Sets the phone data list for the entity.
    *
    * @param phoneData The list of name data strings.
    */
-  public void setPhoneData(List<String> phoneData) {
-    this.phoneData.clear();
-    if (phoneData != null) {
-      this.phoneData.addAll(phoneData);
-    }
-  }
+  void setPhoneData(List<String> phoneData);
 
   /**
    * Adds to the phone data list for the entity.
    *
    * @param phoneData The phone data string to add to the phone data list.
    */
-  public void addPhoneData(String phoneData)
-  {
-    this.phoneData.add(phoneData);
-  }
+  void addPhoneData(String phoneData);
 
   /**
    * Returns the list of relationship data strings for the entity.
@@ -465,21 +242,14 @@ public class SzResolvedEntity {
    * @return The list of relationship data strings for the entity.
    */
   @JsonInclude(NON_EMPTY)
-  public List<String> getRelationshipData() {
-    return Collections.unmodifiableList(this.relationshipData);
-  }
+  List<String> getRelationshipData();
 
   /**
    * Sets the relationship data list for the entity.
    *
    * @param relationshipData The list of relationship data strings.
    */
-  public void setRelationshipData(List<String> relationshipData) {
-    this.relationshipData.clear();
-    if (relationshipData != null) {
-      this.relationshipData.addAll(relationshipData);
-    }
-  }
+  void setRelationshipData(List<String> relationshipData);
 
   /**
    * Adds to the relationship data list for the entity.
@@ -487,10 +257,7 @@ public class SzResolvedEntity {
    * @param relationshipData The relationship data string to add to the
    *                         relationship data list.
    */
-  public void addRelationshipData(String relationshipData)
-  {
-    this.relationshipData.add(relationshipData);
-  }
+  void addRelationshipData(String relationshipData);
 
   /**
    * Returns the list of other data strings for the entity.
@@ -498,31 +265,21 @@ public class SzResolvedEntity {
    * @return The list of other data strings for the entity.
    */
   @JsonInclude(NON_EMPTY)
-  public List<String> getOtherData() {
-    return Collections.unmodifiableList(this.otherData);
-  }
+  List<String> getOtherData();
 
   /**
    * Sets the other data list for the entity.
    *
    * @param otherData The list of other data strings.
    */
-  public void setOtherData(List<String> otherData) {
-    this.otherData.clear();
-    if (otherData != null) {
-      this.otherData.addAll(otherData);
-    }
-  }
+  void setOtherData(List<String> otherData);
 
   /**
    * Adds to the other data list for the record.
    *
    * @param otherData The other data string to add to the other data list.
    */
-  public void addOtherData(String otherData)
-  {
-    this.otherData.add(otherData);
-  }
+  void addOtherData(String otherData);
 
   /**
    * Returns an <b>unmodifiable</b> {@link Map} of {@link String} feature
@@ -533,79 +290,32 @@ public class SzResolvedEntity {
    *         features.
    */
   @JsonInclude(NON_EMPTY)
-  public Map<String, List<SzEntityFeature>> getFeatures() {
-    return Collections.unmodifiableMap(this.unmodifiableFeatures);
-  }
+  Map<String, List<SzEntityFeature>> getFeatures();
 
   /**
-   * Private setter to help with JSON serialization and deserialization.
+   * Sets the features using the specified {@link Map} of feature type to
+   * {@link Collection} values containing {@link SzEntityFeature} instances.
    *
-   * @param featureMap The {@link Map} of features.
+   * @param featureMap The {@link Map} describing the features as {@link String}
+   *                   key values to {@link Collection} values containing
+   *                   {@link SzEntityFeature} instances.
    */
-  private void setFeatures(Map<String, List<SzEntityFeature>> featureMap) {
-    this.features.clear();
-    this.unmodifiableFeatures.clear();
-
-    if (featureMap != null) {
-      featureMap.entrySet().forEach(entry -> {
-        String                featureName = entry.getKey();
-        List<SzEntityFeature> list        = entry.getValue();
-        List<SzEntityFeature> copiedList  = new ArrayList<>(list);
-
-        List<SzEntityFeature> unmodifiableList
-            = Collections.unmodifiableList(copiedList);
-
-        this.features.put(featureName, copiedList);
-        this.unmodifiableFeatures.put(featureName, unmodifiableList);
-      });
-    }
-  }
+  void setFeatures(
+      Map<String, ? extends Collection<? extends SzEntityFeature>> featureMap);
 
   /**
-   * Sets the features using the specified {@link Map}.
+   * Sets the features using the specified {@link Map} of feature type to
+   * {@link Collection} values containing {@link SzEntityFeature} instances.
    *
-   * @param featureMap The {@link Map} of features.
+   * @param featureMap The {@link Map} describing the features as {@link String}
+   *                   key values to {@link Collection} values containing
+   *                   {@link SzEntityFeature} instances.
+   * @param featureToAttrClassMapper The mapping function to map feature types
+   *                                 to attribute class values.
    */
-  public void setFeatures(
-      Map<String, List<SzEntityFeature>>  featureMap,
-      Function<String,String>             featureToAttrClassMapper)
-  {
-    this.setFeatures(featureMap);
-
-    // clear out the data lists
-    this.addressData.clear();
-    this.characteristicData.clear();
-    this.identifierData.clear();
-    this.nameData.clear();
-    this.phoneData.clear();
-
-    if (featureMap == null) return;
-
-    Function<String,String> mapper = featureToAttrClassMapper;
-    getDataFields("NAME", featureMap, mapper).forEach((name) -> {
-      this.addNameData(name);
-    });
-
-    getDataFields("ATTRIBUTE", featureMap, mapper).forEach((attr) -> {
-      this.addCharacteristicData(attr);
-    });
-
-    getDataFields("ADDRESS", featureMap, mapper).forEach((addr) -> {
-      this.addAddressData(addr);
-    });
-
-    getDataFields("PHONE", featureMap, mapper).forEach((phone) -> {
-      this.addPhoneData(phone);
-    });
-
-    getDataFields("IDENTIFIER", featureMap, mapper).forEach((ident) -> {
-      this.addIdentifierData(ident);
-    });
-
-    getDataFields("RELATIONSHIP", featureMap, mapper).forEach((rel) -> {
-      this.addRelationshipData(rel);
-    });
-  }
+  void setFeatures(
+      Map<String, ? extends Collection<? extends SzEntityFeature>>  featureMap,
+      Function<String,String> featureToAttrClassMapper);
 
   /**
    * Sets the specified feature with the specified feature name to the
@@ -616,31 +326,8 @@ public class SzResolvedEntity {
    * @param values The {@link List} of {@link SzEntityFeature} instances
    *               describing the feature values.
    */
-  public void setFeature(String featureName, List<SzEntityFeature> values)
-  {
-    List<SzEntityFeature> featureValues = this.features.get(featureName);
-
-    if (featureValues != null && (values == null || values.size() == 0)) {
-      // feature exists, so remove the feature since no specified values
-      this.features.remove(featureName);
-
-    } else if (featureValues != null) {
-      // feature exists, but are being replaced
-      featureValues.clear();
-      featureValues.addAll(values);
-
-    } else if (values != null && values.size() > 0) {
-      // the feature does not exist but new values are being added
-      featureValues = new LinkedList<>();
-      featureValues.addAll(values);
-      this.features.put(featureName, featureValues);
-
-      List<SzEntityFeature> unmodifiableFeatureValues
-          = Collections.unmodifiableList(featureValues);
-
-      this.unmodifiableFeatures.put(featureName, unmodifiableFeatureValues);
-    }
-  }
+  void setFeature(String                                featureName,
+                  Collection<? extends SzEntityFeature> values);
 
   /**
    * Adds a {@link SzEntityFeature} value to the feature with the specified
@@ -650,21 +337,7 @@ public class SzResolvedEntity {
    *
    * @param value The {@link SzEntityFeature} describing the feature value.
    */
-  public void addFeature(String featureName, SzEntityFeature value)
-  {
-    if (value == null) return;
-    List<SzEntityFeature> featureValues = this.features.get(featureName);
-    if (featureValues == null) {
-      featureValues = new LinkedList<>();
-
-      List<SzEntityFeature> unmodifiableFeatureValues
-          = Collections.unmodifiableList(featureValues);
-
-      this.features.put(featureName, featureValues);
-      this.unmodifiableFeatures.put(featureName, unmodifiableFeatureValues);
-    }
-    featureValues.add(value);
-  }
+  void addFeature(String featureName, SzEntityFeature value);
 
   /**
    * Checks whether or not the entity data is only partially populated.
@@ -674,9 +347,7 @@ public class SzResolvedEntity {
    * @return <tt>true</tt> if the entity data is only partially
    *         populated, otherwise <tt>false</tt>.
    */
-  public boolean isPartial() {
-    return this.partial;
-  }
+  boolean isPartial();
 
   /**
    * Sets whether or not the entity data is only partially populated.
@@ -686,9 +357,7 @@ public class SzResolvedEntity {
    * @param partial <tt>true</tt> if the entity data is only partially
    *                populated, otherwise <tt>false</tt>.
    */
-  public void setPartial(boolean partial) {
-    this.partial = partial;
-  }
+  void setPartial(boolean partial);
 
   /**
    * Gets the last-seen timestamp for the entity.
@@ -696,19 +365,109 @@ public class SzResolvedEntity {
    * @return The last-seen timestamp for the entity.
    */
   @JsonInclude(NON_NULL)
-  public Date getLastSeenTimestamp() {
-    return this.lastSeenTimestamp;
-  }
+  @JsonFormat(shape   = JsonFormat.Shape.STRING,
+      pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+      locale  = "en_GB")
+  Date getLastSeenTimestamp();
 
   /**
    * Sets the last-seen timestamp for the entity.
    *
    * @param timestamp The last-seen timestamp for the entity.
    */
-  public void setLastSeenTimestamp(Date timestamp) {
-    this.lastSeenTimestamp = timestamp;
+  void setLastSeenTimestamp(Date timestamp);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzResolvedEntity}.
+   */
+  interface Provider extends ModelProvider<SzResolvedEntity> {
+    /**
+     * Creates a new instance of {@link SzResolvedEntity}.
+     *
+     * @return The new instance of {@link SzResolvedEntity}
+     */
+    SzResolvedEntity create();
   }
 
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzResolvedEntity} that produces instances of {@link SzResolvedEntityImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzResolvedEntity>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzResolvedEntity.class, SzResolvedEntityImpl.class);
+    }
+
+    @Override
+    public SzResolvedEntity create() {
+      return new SzResolvedEntityImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link SzResolvedEntity}.
+   */
+  class Factory extends ModelFactory<SzResolvedEntity, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzResolvedEntity.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzResolvedEntity}.
+     * @return The new instance of {@link SzResolvedEntity}.
+     */
+    public SzResolvedEntity create()
+    {
+      return this.getProvider().create();
+    }
+
+    /**
+     * The pattern for parsing the date values returned from the native API.
+     */
+    private static final String NATIVE_DATE_PATTERN = "yyyy-MM-dd HH:mm:ss.SSS";
+
+    /**
+     * The time zone used for the time component of the build number.
+     */
+    private static final ZoneId UTC_ZONE = ZoneId.of("UTC");
+
+    /**
+     * The {@link DateTimeFormatter} for interpreting the timestamps from the
+     * native API.
+     */
+    private static final DateTimeFormatter NATIVE_DATE_FORMATTER
+        = DateTimeFormatter.ofPattern(NATIVE_DATE_PATTERN);
+
+    /**
+     * The number of records to consider to be the top records.
+     */
+    private static final int TOP_COUNT = 10;
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
+  
   /**
    * Parses a list of resolved entities from a {@link JsonArray} describing a
    * JSON array in the Senzing native API format for entity features and
@@ -727,7 +486,7 @@ public class SzResolvedEntity {
    * @return The populated (or created) {@link List} of {@link
    *         SzResolvedEntity} instances.
    */
-  public static List<SzResolvedEntity> parseResolvedEntityList(
+  static List<SzResolvedEntity> parseResolvedEntityList(
       List<SzResolvedEntity>  list,
       JsonArray               jsonArray,
       Function<String,String> featureToAttrClassMapper)
@@ -766,12 +525,16 @@ public class SzResolvedEntity {
    *
    * @return The populated (or created) {@link SzResolvedEntity}.
    */
-  public static SzResolvedEntity parseResolvedEntity(
+  static SzResolvedEntity parseResolvedEntity(
       SzResolvedEntity        entity,
       JsonObject              jsonObject,
       Function<String,String> featureToAttrClassMapper)
   {
-    if (entity == null) entity = new SzResolvedEntity();
+    final DateTimeFormatter NATIVE_DATE_FORMATTER
+        = Factory.NATIVE_DATE_FORMATTER;
+    final ZoneId UTC_ZONE = Factory.UTC_ZONE;
+
+    if (entity == null) entity = SzResolvedEntity.FACTORY.create();
 
     long entityId     = jsonObject.getJsonNumber("ENTITY_ID").longValue();
     String entityName = JsonUtils.getString(jsonObject, "ENTITY_NAME");
@@ -843,9 +606,11 @@ public class SzResolvedEntity {
    * @return The {@link List} of {@link SzDataSourceRecordSummary} instances describing
    *         the summaries.
    */
-  public static List<SzDataSourceRecordSummary> summarizeRecords(
+  static List<SzDataSourceRecordSummary> summarizeRecords(
       List<SzMatchedRecord>  records)
   {
+    final int TOP_COUNT = Factory.TOP_COUNT;
+
     // check if we have no records
     if (records.size() == 0) return Collections.emptyList();
 
@@ -891,7 +656,8 @@ public class SzResolvedEntity {
       recordIds = Collections.unmodifiableList(recordIds);
 
       // create a new record summary
-      SzDataSourceRecordSummary summary = new SzDataSourceRecordSummary();
+      SzDataSourceRecordSummary summary
+          = SzDataSourceRecordSummary.FACTORY.create();
       summary.setDataSource(dataSource);
       summary.setRecordCount(recordCount);
       summary.setTopRecordIds(recordIds);
@@ -905,91 +671,5 @@ public class SzResolvedEntity {
     List<SzDataSourceRecordSummary> result = Collections.unmodifiableList(tempList);
 
     return result;
-  }
-
-  /**
-   * Utility method to get the "data values" from the features.
-   *
-   * @param attrClass The attribute class for which to pull the values.
-   *
-   * @param featureMap The {@link Map} of features.
-   *
-   * @param featureToAttrClassMapper Mapping function to map feature names to
-   *                                 attribute classes.
-   *
-   * @return The {@link List} of {@link String} values.
-   */
-  private static List<String> getDataFields(
-      String                              attrClass,
-      Map<String, List<SzEntityFeature>>  featureMap,
-      Function<String,String>             featureToAttrClassMapper)
-  {
-    List<String> dataList = new LinkedList<>();
-    List<String> result   = Collections.unmodifiableList(dataList);
-
-    featureMap.entrySet().forEach(entry -> {
-      String ftypeCode = entry.getKey();
-      List<SzEntityFeature> values = entry.getValue();
-
-      String ac = featureToAttrClassMapper.apply(ftypeCode);
-
-      if (ac == null) return;
-      if (!ac.equalsIgnoreCase(attrClass)) return;
-
-      String prefix = (attrClass.equalsIgnoreCase(ftypeCode)
-          ? "" : ftypeCode + ": ");
-
-      boolean relLink = ftypeCode.equalsIgnoreCase("REL_LINK");
-      values.forEach(val -> {
-        String usageType = val.getUsageType();
-        if (usageType != null && usageType.length() > 0) {
-          usageType = usageType.trim()
-              + (!relLink && prefix.endsWith(": ") ? " " : ": ");
-        } else {
-          usageType = "";
-        }
-
-        String dataValue = (relLink)
-            ? prefix + usageType + val.getPrimaryValue()
-            : usageType + prefix + val.getPrimaryValue();
-
-        // add the value to the list
-        dataList.add(dataValue);
-      });
-    });
-
-    Collections.sort(dataList, (v1, v2) -> {
-      if (v1.startsWith("PRIMARY") && !v2.startsWith("PRIMARY")) {
-        return -1;
-      } else if (v2.startsWith("PRIMARY") && !v1.startsWith("PRIMARY")) {
-        return 1;
-      }
-      int comp = v2.length() - v1.length();
-      if (comp != 0) return comp;
-      return v1.compareTo(v2);
-    });
-
-    return result;
-  }
-
-  @Override
-  public String toString() {
-    return "SzResolvedEntity{" +
-        "entityId=" + entityId +
-        ", partial=" + partial +
-        ", entityName='" + entityName + '\'' +
-        ", bestName='" + bestName + '\'' +
-        ", recordSummaries=" + recordSummaries +
-        ", lastSeenTimestamp=" + lastSeenTimestamp +
-        ", addressData=" + addressData +
-        ", attributeData=" + characteristicData +
-        ", identifierData=" + identifierData +
-        ", nameData=" + nameData +
-        ", phoneData=" + phoneData +
-        ", relationshipData=" + relationshipData +
-        ", otherData=" + otherData +
-        ", features=" + features +
-        ", records=" + records +
-        '}';
   }
 }

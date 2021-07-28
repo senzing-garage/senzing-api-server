@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzDataSourcesResponseImpl;
 import com.senzing.util.Timers;
 
 import javax.ws.rs.core.UriInfo;
@@ -10,165 +12,154 @@ import java.util.*;
  * list of all configured data source codes.
  *
  */
-public class SzDataSourcesResponse extends SzResponseWithRawData
+@JsonDeserialize(using=SzDataSourcesResponse.Factory.class)
+public interface SzDataSourcesResponse extends SzResponseWithRawData
 {
   /**
-   * The data for this instance.
+   * Returns the {@link SzDataSourcesResponseData} for this instance.
+   *
+   * @return The {@link SzDataSourcesResponseData} for this instance.
    */
-  private Data data = new Data();
+  SzDataSourcesResponseData getData();
 
   /**
-   * Package-private default constructor.
+   * Sets the {@link SzDataSourcesResponseData} for this instance.
+   *
+   * @param data The {@link SzDataSourcesResponseData} for this instance.
    */
-  SzDataSourcesResponse() {
-    // do nothing
-  }
+  void setData(SzDataSourcesResponseData data);
 
   /**
-   * Constructs with only the HTTP method and the self link, leaving the
-   * data sources to be added later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The string URL link to generate this response.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   */
-  public SzDataSourcesResponse(SzHttpMethod httpMethod,
-                               int          httpStatusCode,
-                               String       selfLink,
-                               Timers       timers) {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-  }
-
-  /**
-   * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
-   * data sources to be added later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   */
-  public SzDataSourcesResponse(SzHttpMethod httpMethod,
-                               int          httpStatusCode,
-                               UriInfo      uriInfo,
-                               Timers       timers)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
-  }
-
-  /**
-   * Returns the {@link Data} for this instance.
-   *
-   * @return The {@link Data} for this instance.
-   */
-  public Data getData() {
-    return this.data;
-  }
-
-  /**
-   * Adds the specified data source providing the specified data source
-   * is not already containe
+   * Convenience method to add the specified data source to the list of
+   * data sources for the underlying {@link SzDataSourcesResponseData}.
    *
    * @param dataSource The data source code to add.
    */
-  public void addDataSource(SzDataSource dataSource) {
-    this.data.dataSources.remove(dataSource.getDataSourceCode());
-  }
+  void addDataSource(SzDataSource dataSource);
 
   /**
-   * Sets the specified {@link Set} of data sources using the
-   * specified {@link Collection} of data sources (removing duplicates).
+   * Convenience method to set the data sources on the underlying
+   * {@link SzDataSourcesResponseData} to the specified {@link Collection}
+   * of {@link SzDataSource} instances (removing duplicates).
    *
    * @param dataSources The {@link Collection} of data sources to set.
    */
-  public void setDataSources(Collection<SzDataSource> dataSources)
+  void setDataSources(Collection<? extends SzDataSource> dataSources);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzDataSourcesResponse}.
+   */
+  interface Provider extends ModelProvider<SzDataSourcesResponse> {
+    /**
+     * Creates an instance of {@link SzDataSourcesResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    SzDataSourcesResponse create(SzMeta meta, SzLinks links);
+
+    /**
+     * Creates an instance of {@link SzDataSourcesResponse} with the specified
+     * {@link SzMeta}, {@link SzLinks} and {@link SzDataSourcesResponseData}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The data for the response.
+     */
+    SzDataSourcesResponse create(SzMeta                     meta,
+                                 SzLinks                    links,
+                                 SzDataSourcesResponseData  data);
+  }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzDataSourcesResponse} that produces instances of
+   * {@link SzDataSourcesResponseImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzDataSourcesResponse>
+      implements Provider
   {
-    this.data.dataSources.clear();
-    if (dataSources != null) {
-      // ensure the data sources are unique
-      for (SzDataSource dataSource : dataSources) {
-        this.data.dataSources.put(dataSource.getDataSourceCode(), dataSource);
-      }
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzDataSourcesResponse.class, SzDataSourcesResponseImpl.class);
+    }
+
+    @Override
+    public SzDataSourcesResponse create(SzMeta meta, SzLinks links) {
+      return new SzDataSourcesResponseImpl(meta, links);
+    }
+
+    @Override
+    public SzDataSourcesResponse create(SzMeta                    meta,
+                                        SzLinks                   links,
+                                        SzDataSourcesResponseData data)
+    {
+      return new SzDataSourcesResponseImpl(meta, links, data);
     }
   }
 
   /**
-   * Inner class to represent the data section for this response.
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzDataSourcesResponse}.
    */
-  public static class Data {
+  class Factory extends ModelFactory<SzDataSourcesResponse, Provider> {
     /**
-     * The map of {@link String} data source codes to {@link SzDataSource}
-     * instances.
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
      */
-    private Map<String, SzDataSource> dataSources;
-
-    /**
-     * Private default constructor.
-     */
-    private Data() {
-      this.dataSources = new LinkedHashMap<>();
+    public Factory() {
+      super(SzDataSourcesResponse.class);
     }
 
     /**
-     * Gets the unmodifiable {@link Set} of data source codes.
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates an instance of {@link SzDataSourcesResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}.
      *
-     * @return The unmodifiable {@link Set} of data source codes.
-     */
-    public Set<String> getDataSources() {
-      Set<String> set = this.dataSources.keySet();
-      return Collections.unmodifiableSet(set);
-    }
-
-    /**
-     * Private setter used for deserialization.
-     */
-    private void setDataSources(Collection<String> dataSources) {
-      Iterator<Map.Entry<String,SzDataSource>> iter
-          = this.dataSources.entrySet().iterator();
-
-      // remove entries in the map that are not in the specified set
-      while (iter.hasNext()) {
-        Map.Entry<String,SzDataSource> entry = iter.next();
-        if (!dataSources.contains(entry.getKey())) {
-          iter.remove();
-        }
-      }
-
-      // add place-holder entries to the map for data sources in the set
-      for (String dataSource: dataSources) {
-        this.dataSources.put(dataSource, null);
-      }
-    }
-
-    /**
-     * Gets the unmodifiable {@link Map} of {@link String} data source codes
-     * to {@link SzDataSource} values describing the configured data sources.
+     * @param meta The response meta data.
      *
-     * @return The unmodifiable {@link Map} of {@link String} data source codes
-     *         to {@link SzDataSource} values describing the configured data
-     *         sources.
+     * @param links The links for the response.
      */
-    public Map<String, SzDataSource> getDataSourceDetails() {
-      return Collections.unmodifiableMap(this.dataSources);
+    public SzDataSourcesResponse create(SzMeta meta, SzLinks links) {
+      return this.getProvider().create(meta, links);
     }
 
     /**
-     * Private setter used for deserialization.
+     * Creates an instance of {@link SzDataSourcesResponse} with the specified
+     * {@link SzMeta}, {@link SzLinks} and {@link SzDataSourcesResponseData}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The data for the response.
      */
-    private void setDataSourceDetails(Map<String, SzDataSource> details) {
-      this.dataSources.clear();
-      for (SzDataSource dataSource: details.values()) {
-        this.dataSources.put(dataSource.getDataSourceCode(), dataSource);
-      }
+    public SzDataSourcesResponse create(SzMeta                    meta,
+                                        SzLinks                   links,
+                                        SzDataSourcesResponseData data)
+    {
+      return this.getProvider().create(meta, links, data);
     }
+
   }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 }

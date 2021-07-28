@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzConfigResponseImpl;
 import com.senzing.util.Timers;
 
 import javax.ws.rs.core.UriInfo;
@@ -8,98 +10,117 @@ import javax.ws.rs.core.UriInfo;
  * A response object that contains license data.
  *
  */
-public class SzConfigResponse extends SzResponseWithRawData {
+@JsonDeserialize(using=SzConfigResponse.Factory.class)
+public interface SzConfigResponse extends SzResponseWithRawData {
   /**
-   * Default constructor.
+   * A {@link ModelProvider} for instances of {@link SzConfigResponse}.
    */
-  SzConfigResponse() {
-    // do nothing
+  interface Provider extends ModelProvider<SzConfigResponse> {
+    /**
+     * Creates an instance of {@link SzConfigResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    SzConfigResponse create(SzMeta meta, SzLinks links);
+
+    /**
+     * Creates an instance of {@link SzConfigResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}. and {@link String} representing the
+     * raw JSON config.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param rawData The raw data JSON config to associate with the response.
+     */
+    SzConfigResponse create(SzMeta meta, SzLinks links, String rawData);
   }
 
   /**
-   * Constructs with the specified HTTP method and self link.
-   *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The self link from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
+   * Provides a default {@link Provider} implementation for {@link
+   * SzConfigResponse} that produces instances of
+   * {@link SzConfigResponseImpl}.
    */
-  public SzConfigResponse(SzHttpMethod  httpMethod,
-                          int           httpStatusCode,
-                          String        selfLink,
-                          Timers        timers)
+  class DefaultProvider extends AbstractModelProvider<SzConfigResponse>
+      implements Provider
   {
-    super(httpMethod, httpStatusCode, selfLink, timers);
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzConfigResponse.class, SzConfigResponseImpl.class);
+    }
+
+    @Override
+    public SzConfigResponse create(SzMeta meta, SzLinks links) {
+      return new SzConfigResponseImpl(meta, links);
+    }
+
+    @Override
+    public SzConfigResponse create(SzMeta meta, SzLinks links, String rawData) {
+      return new SzConfigResponseImpl(meta, links, rawData);
+    }
+
   }
 
   /**
-   * Constructs with the specified HTTP method, self link string and
-   * object representing the raw data response from the engine.
-   *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param selfLink The self link from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param rawData The raw data to associate with the response.
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzConfigResponse}.
    */
-  public SzConfigResponse(SzHttpMethod  httpMethod,
-                          int           httpStatusCode,
-                          String        selfLink,
-                          Timers        timers,
-                          String        rawData)
-  {
-    super(httpMethod, httpStatusCode, selfLink, timers, rawData);
+  class Factory extends ModelFactory<SzConfigResponse, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzConfigResponse.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates an instance of {@link SzConfigResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    public SzConfigResponse create(SzMeta meta, SzLinks links) {
+      return this.getProvider().create(meta, links);
+    }
+
+    /**
+     * Creates an instance of {@link SzConfigResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks}. and {@link String} representing the
+     * raw JSON config.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param rawData The raw data JSON config to associate with the response.
+     */
+    public SzConfigResponse create(SzMeta meta, SzLinks links, String rawData) {
+      return this.getProvider().create(meta, links, rawData);
+    }
   }
 
   /**
-   * Constructs with the specified HTTP method and {@link UriInfo}.
-   *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
+   * The {@link Factory} instance for this interface.
    */
-  public SzConfigResponse(SzHttpMethod  httpMethod,
-                          int           httpStatusCode,
-                          UriInfo       uriInfo,
-                          Timers        timers)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
-  }
-
-  /**
-   * Constructs with the specified HTTP method, {@link UriInfo} and
-   * object representing the raw data response from the engine.
-   *
-   * @param httpMethod The {@link SzHttpMethod} from the request.
-   *
-   * @param httpStatusCode The HTTP response status code.
-   *
-   * @param uriInfo The {@link UriInfo} from the request.
-   *
-   * @param timers The {@link Timers} object for the timings that were taken.
-   *
-   * @param rawConfigData The raw data to associate with the response.
-   */
-  public SzConfigResponse(SzHttpMethod httpMethod,
-                          int          httpStatusCode,
-                          UriInfo      uriInfo,
-                          Timers       timers,
-                          String       rawConfigData)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers, rawConfigData);
-  }
+  Factory FACTORY = new Factory(new DefaultProvider());
 
 }

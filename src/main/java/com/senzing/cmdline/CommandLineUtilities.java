@@ -1,5 +1,7 @@
 package com.senzing.cmdline;
 
+import com.senzing.api.server.SzApiServer;
+import com.senzing.api.server.SzApiServerOption;
 import com.senzing.util.JsonUtils;
 import com.senzing.util.LoggingUtilities;
 
@@ -137,7 +139,7 @@ public class CommandLineUtilities {
    * @param commandLineValue The {@link CommandLineValue}.
    */
   private static <T extends Enum<T> & CommandLineOption<T>> String
-    sourceDescriptor(CommandLineValue<T> commandLineValue)
+    sourceDescriptor(CommandLineValue commandLineValue)
   {
     switch (commandLineValue.getSource()) {
       case COMMAND_LINE:
@@ -161,12 +163,12 @@ public class CommandLineUtilities {
    * @param value the {@link CommandLineValue} to add to the {@link Map}.
    */
   public static <T extends Enum<T> & CommandLineOption<T>> void putValue(
-      Map<T, CommandLineValue<T>> optionMap,
-      CommandLineValue<T>         value)
+      Map<CommandLineOption, CommandLineValue>  optionMap,
+      CommandLineValue                          value)
   {
-    T option = value.getOption();
-    Set<T> optionKeys = optionMap.keySet();
-    CommandLineValue<T> prevValue = optionMap.get(option);
+    CommandLineOption option = value.getOption();
+    Set<CommandLineOption> optionKeys = optionMap.keySet();
+    CommandLineValue prevValue = optionMap.get(option);
     if (prevValue != null) {
       String msg = (prevValue.getSpecifier().equals(value.getSpecifier()))
           ? "The " + sourceDescriptor(value) + " cannot be specified more than "
@@ -180,13 +182,19 @@ public class CommandLineUtilities {
       setLastLoggedAndThrow(new IllegalArgumentException(msg));
     }
 
-    // check for conflicts if the value is NOT a no-arg option with false value
+    // check for conflicts if the value is NOT a defaulted value
     if (!checkNoArgFalse(value) && (value.getSource() != DEFAULT)) {
-      Set<T> conflicts = option.getConflicts();
-      for (T opt : optionKeys) {
-        if (conflicts != null && conflicts.contains(opt)) {
+      Set<CommandLineOption> conflicts = option.getConflicts();
+      for (CommandLineOption opt : optionKeys) {
+        // get the reverse conflicts in case not symmetrical
+        Set<CommandLineOption> revConflicts = opt.getConflicts();
+
+        // check for conflicts
+        if ((conflicts != null && conflicts.contains(opt))
+            || ((revConflicts != null && revConflicts.contains(option))))
+        {
           // get the command-line value
-          CommandLineValue<T> conflictValue = optionMap.get(opt);
+          CommandLineValue conflictValue = optionMap.get(opt);
 
           // no conflict if the other is a defaulted value
           if (conflictValue.getSource() == DEFAULT) continue;
@@ -234,22 +242,27 @@ public class CommandLineUtilities {
   }
 
   /**
-   * Checks if the specified {@link CommandLineValue} is a zero or single
+   * Checks if the specified {@link CommandLineValue} is a zero or single-valued
+   * boolean flag.
+   *
+   * @param cmdLineValue The {@link CommandLineValue} to check.
    */
   private static <T extends Enum<T> & CommandLineOption<T>> boolean
-    checkNoArgFalse(CommandLineValue<T> cmdLineValue)
+    checkNoArgFalse(CommandLineValue cmdLineValue)
   {
-    T option = cmdLineValue.getOption();
+    CommandLineOption option = cmdLineValue.getOption();
     // special-case no-arg boolean flags
     int minParamCount = option.getMinimumParameterCount();
     int maxParamCount = option.getMaximumParameterCount();
+    List<String> defaultParams = option.getDefaultParameters();
+    List<String> actualParams = cmdLineValue.getParameters();
     return (minParamCount == 0 && maxParamCount >= 0
-            && option.getDefaultParameters() != null
-            && option.getDefaultParameters().size() == 1
-            && "false".equalsIgnoreCase(option.getDefaultParameters().get(0))
-            && cmdLineValue.getParameters() != null
-            && cmdLineValue.getParameters().size() == 1
-            && "false".equalsIgnoreCase(cmdLineValue.getParameters().get(0)));
+            && defaultParams != null
+            && defaultParams.size() == 1
+            && "false".equalsIgnoreCase(defaultParams.get(0))
+            && actualParams != null
+            && actualParams.size() == 1
+            && "false".equalsIgnoreCase(actualParams.get(0)));
   }
 
   /**
@@ -278,6 +291,126 @@ public class CommandLineUtilities {
   }
 
   /**
+   * Checks if a primary option is required.
+   *
+   * @param enumClass The enum class for the {@link CommandLineOption}
+   *                  implementation.
+   *
+   * @return <tt>true</tt> if a primary option is required, otherwise
+   *         <tt>false</tt>.
+   */
+  private static <T extends Enum<T> & CommandLineOption<T>> boolean
+    checkPrimaryRequired(Class<T> enumClass)
+  {
+    // check if we need a primary option
+    boolean primaryRequired = false;
+    EnumSet<T> enumSet = EnumSet.allOf(enumClass);
+    for (T enumVal : enumSet) {
+      if (enumVal.isPrimary()) {
+        return true;
+      }
+    }
+
+    // get the base type
+    Class baseType
+        = ((CommandLineOption) enumSet.iterator().next()).getBaseOptionType();
+
+    // check the base type
+    if (baseType != null && Enum.class.isAssignableFrom(baseType)) {
+      return checkPrimaryRequired(baseType);
+    }
+
+    // return false if we get here
+    return false;
+  }
+
+  /**
+   * Checks if a primary option is required.
+   *
+   * @param enumClass The enum class for the {@link CommandLineOption}
+   *                  implementation.
+   *
+   * @return <tt>true</tt> if a primary option is required, otherwise
+   *         <tt>false</tt>.
+   */
+  private static <T extends Enum<T> & CommandLineOption<T>>
+    Set<CommandLineOption> getPrimaryOptions(Class<T> enumClass)
+  {
+    // create the result
+    Set<CommandLineOption> result = new LinkedHashSet<>();
+
+    populatePrimaryOptions(result, enumClass);
+
+    return result;
+  }
+
+  /**
+   * Checks if a primary option is required.
+   *
+   * @param enumClass The enum class for the {@link CommandLineOption}
+   *                  implementation.
+   *
+   * @return <tt>true</tt> if a primary option is required, otherwise
+   *         <tt>false</tt>.
+   */
+  private static <T extends Enum<T> & CommandLineOption<T>>
+  void populatePrimaryOptions(Set<CommandLineOption> set, Class<T> enumClass)
+  {
+    // check if we need a primary option
+    EnumSet<T> enumSet = EnumSet.allOf(enumClass);
+    for (T enumVal : enumSet) {
+      if (enumVal.isPrimary()) {
+        set.add(enumVal);
+      }
+    }
+
+    // get the base type
+    Class baseType
+        = ((CommandLineOption) enumSet.iterator().next()).getBaseOptionType();
+
+    // check the base type
+    if (baseType != null && Enum.class.isAssignableFrom(baseType)) {
+      populatePrimaryOptions(set,baseType);
+    }
+  }
+
+  /**
+   * Gets the ordered {@link Set} describing the type chain for the specified
+   * command line option class.
+   *
+   * @param enumClass The starting class for the type chain.
+   */
+  private static <T extends Enum<T> & CommandLineOption<T>>
+   Set<Class<? extends CommandLineOption>> getTypeChain(Class<T> enumClass)
+  {
+    Set<Class<? extends CommandLineOption>> result = new LinkedHashSet<>();
+    populateTypeChain(result, enumClass);
+    return result;
+  }
+
+  /**
+   * Populates the type chain for the specified command line option class in
+   * the specified {@link Set}.
+   *
+   * @param set The {@link} set to populate.
+   * @param enumClass The starting class for the type chain.
+   */
+  private static <T extends Enum<T> & CommandLineOption<T>>
+    void populateTypeChain(Set<Class<? extends CommandLineOption>>  set,
+                           Class<T>                                 enumClass)
+  {
+    if (enumClass == null) return;
+    set.add(enumClass);
+
+    EnumSet<T>  enumSet   = EnumSet.allOf(enumClass);
+    Class       baseType  = enumSet.iterator().next().getBaseOptionType();
+
+    if (baseType != null) {
+      populateTypeChain(set, baseType);
+    }
+  }
+
+  /**
    * Validates the specified {@link Set} of specified {@link CommandLineOption}
    * instances and ensures that they logically make sense together.  This
    * checks for the existing of at least one primary option (if primary options
@@ -288,24 +421,34 @@ public class CommandLineUtilities {
    *                                  together.
    */
   public static <T extends Enum<T> & CommandLineOption<T>> void validateOptions(
-      Class<T>                    enumClass,
-      Map<T, CommandLineValue<T>> optionValues)
+      Class<T>                                  enumClass,
+      Map<CommandLineOption, CommandLineValue>  optionValues)
       throws IllegalArgumentException
   {
-    // check if we need a primary option
-    boolean primaryRequired = false;
-    EnumSet<T> enumSet = EnumSet.allOf(enumClass);
-    for (T enumVal : enumSet) {
-      if (enumVal.isPrimary()) {
-        primaryRequired = true;
-        break;
+    // create the set of legal option classes
+    Set<Class<? extends CommandLineOption>> typeChainSet
+        = getTypeChain(enumClass);
+
+    // check the types in the key set
+    for (CommandLineOption option : optionValues.keySet()) {
+      if (!typeChainSet.contains(option.getClass())) {
+        throw new IllegalArgumentException(
+            "The specified option values map contains an option of an illegal "
+            + "type given the specified CommandLineOption type.  found=[ "
+            + option + " ], foundType=[ " + option.getClass()
+            + " ], expected=[ " + typeChainSet + " ]");
       }
     }
+
+    // check if we need a primary option
+    Set<CommandLineOption> primaryOptions = getPrimaryOptions(enumClass);
+    boolean primaryRequired = primaryOptions.size() > 0;
 
     if (primaryRequired) {
       // if primary option is required then check for at least one
       int primaryCount = 0;
-      for (T option : optionValues.keySet()) {
+      for (CommandLineOption option : optionValues.keySet()) {
+        // check if primary
         if (option.isPrimary()) {
           primaryCount++;
         }
@@ -315,11 +458,9 @@ public class CommandLineUtilities {
         PrintWriter pw = new PrintWriter(sw);
 
         pw.println("Must specify at least one of the following:");
-        for (T option : enumSet) {
-          if (option.isPrimary()) {
-            pw.println("     " + option.getCommandLineFlag()
-                           + (option.isDeprecated() ? " (deprecated)" : ""));
-          }
+        for (CommandLineOption option : primaryOptions) {
+          pw.println("     " + option.getCommandLineFlag()
+                     + (option.isDeprecated() ? " (deprecated)" : ""));
         }
 
         String msg = sw.toString();
@@ -331,18 +472,18 @@ public class CommandLineUtilities {
     }
 
     // check for conflicts and dependencies
-    for (CommandLineValue<T> cmdLineValue : optionValues.values()) {
-      if (cmdLineValue.getSource() == DEFAULT) continue;
-      T option = cmdLineValue.getOption();
-      Set<T> conflicts = option.getConflicts();
-      Set<Set<T>> dependencies = option.getDependencies();
+    optionValues.values().forEach(cmdLineValue -> {
+      if (cmdLineValue.getSource() == DEFAULT) return;
+      CommandLineOption option = (CommandLineOption) cmdLineValue.getOption();
+      Set<CommandLineOption> conflicts = option.getConflicts();
+      Set<Set<CommandLineOption>> dependencies = option.getDependencies();
       if (conflicts != null) {
-        for (T conflict : conflicts) {
+        for (CommandLineOption conflict : conflicts) {
           // skip if the same option -- cannot conflict with itself
           if (option == conflict) continue;
 
           // check if the conflict is present
-          CommandLineValue<T> conflictValue = optionValues.get(conflict);
+          CommandLineValue conflictValue = optionValues.get(conflict);
           if (conflictValue != null) {
             if (conflictValue.getSource() == DEFAULT) continue;
             String msg = "Cannot specify both the "
@@ -355,9 +496,10 @@ public class CommandLineUtilities {
           }
         }
       }
+
       boolean satisfied = (dependencies == null || dependencies.size() == 0);
       if (!satisfied) {
-        for (Set<T> dependencySet : dependencies) {
+        for (Set<CommandLineOption> dependencySet : dependencies) {
           if (optionValues.keySet().containsAll(dependencySet)) {
             satisfied = true;
             break;
@@ -369,8 +511,8 @@ public class CommandLineUtilities {
         if (dependencies.size() == 1) {
           System.err.println(
               "The " + sourceDescriptor(cmdLineValue) + " also requires:");
-          Set<T> dependencySet = dependencies.iterator().next();
-          for (T dependency : dependencySet) {
+          Set<CommandLineOption> dependencySet = dependencies.iterator().next();
+          for (CommandLineOption dependency : dependencySet) {
             if (!optionValues.containsKey(dependency)) {
               System.err.println("     " + dependency.getCommandLineFlag());
             }
@@ -379,12 +521,12 @@ public class CommandLineUtilities {
           System.err.println(
               "The " + sourceDescriptor(cmdLineValue) + " also requires:");
           String leader = "     ";
-          for (Set<T> dependencySet : dependencies) {
+          for (Set<CommandLineOption> dependencySet : dependencies) {
             String prefix = "";
             String prevOption = null;
             System.err.print(leader);
             leader = "  or ";
-            for (T dependency : dependencySet) {
+            for (CommandLineOption dependency : dependencySet) {
               int count = 0;
               if (!optionValues.containsKey(dependency)) {
                 if (prevOption != null) {
@@ -404,7 +546,7 @@ public class CommandLineUtilities {
         setLastLoggedAndThrow(new IllegalArgumentException(
             "Missing dependencies for " + sourceDescriptor(cmdLineValue)));
       }
-    }
+    });
   }
 
   /**
@@ -414,15 +556,17 @@ public class CommandLineUtilities {
    *
    * @param enumClass The enumerated class for the {@link CommandLineOption}.
    */
-  private static <T extends Enum<T> & CommandLineOption<T>> Map<String, T>
-    createFlagLookupMap(Class<T> enumClass)
+  private static Map<String, CommandLineOption> createFlagLookupMap(Class enumClass)
   {
     // get all the options
-    EnumSet<T> enumSet = EnumSet.allOf(enumClass);
+    EnumSet<?> enumSet = EnumSet.allOf((Class<Enum>) enumClass);
 
     // create a lookup map for the flags
-    Map<String, T> lookupMap = new LinkedHashMap<>();
-    for (T option : enumSet) {
+    Map<String, CommandLineOption> lookupMap = new LinkedHashMap<>();
+    for (Enum<?> optionEnum : enumSet) {
+      // cast to a CommandLineOption
+      CommandLineOption option = (CommandLineOption) optionEnum;
+
       // get the flag
       String flag = option.getCommandLineFlag();
 
@@ -462,6 +606,30 @@ public class CommandLineUtilities {
       }
     }
 
+    // get the base type
+    Class baseType
+        = ((CommandLineOption) enumSet.iterator().next()).getBaseOptionType();
+
+    // check if not null
+    if (baseType != null) {
+      Map<String, CommandLineOption> baseMap = createFlagLookupMap(baseType);
+
+      baseMap.keySet().forEach(flag -> {
+        if (lookupMap.containsKey(flag)) {
+          CommandLineOption option      = lookupMap.get(flag);
+          CommandLineOption baseOption  = baseMap.get(flag);
+
+          throw new IllegalStateException(
+              "Command-line flag (" + flag + ") for " + option + " in "
+                  + enumClass + " conflicts with " + baseOption + " in the "
+                  + baseType + " base option class.");
+        }
+      });
+
+      // add the base map entries
+      lookupMap.putAll(baseMap);
+    }
+
     // return the lookup map
     return lookupMap;
   }
@@ -479,10 +647,11 @@ public class CommandLineUtilities {
    *                  parameters to the options.
    * @return A {@link Map} of {@link CommandLineOption} keys to
    */
-  public static <T extends Enum<T> & CommandLineOption<T>> Map<T, CommandLineValue<T>>
-  parseCommandLine(Class<T>               enumClass,
-                   String[]               args,
-                   ParameterProcessor<T>  processor)
+  public static <T extends Enum<T> & CommandLineOption<T>>
+    Map<CommandLineOption, CommandLineValue> parseCommandLine(
+        Class<T>            enumClass,
+        String[]            args,
+        ParameterProcessor  processor)
   {
     return parseCommandLine(
         enumClass, args, processor, false, null);
@@ -504,11 +673,12 @@ public class CommandLineUtilities {
    *                          should be ignored in the processing.
    * @return A {@link Map} of {@link CommandLineOption} keys to
    */
-  public static <T extends Enum<T> & CommandLineOption<T>> Map<T, CommandLineValue<T>>
-  parseCommandLine(Class<T>               enumClass,
-                   String[]               args,
-                   ParameterProcessor<T>  processor,
-                   boolean                ignoreEnvironment)
+  public static <T extends Enum<T> & CommandLineOption<T>>
+    Map<CommandLineOption, CommandLineValue> parseCommandLine(
+        Class<T>            enumClass,
+        String[]            args,
+        ParameterProcessor  processor,
+        boolean             ignoreEnvironment)
   {
     return parseCommandLine(
         enumClass, args, processor, false, null);
@@ -535,11 +705,12 @@ public class CommandLineUtilities {
    *
    * @return A {@link Map} of {@link CommandLineOption} keys to
    */
-  public static <T extends Enum<T> & CommandLineOption<T>> Map<T, CommandLineValue<T>>
-  parseCommandLine(Class<T>               enumClass,
-                   String[]               args,
-                   ParameterProcessor<T>  processor,
-                   T                      ignoreEnvOption)
+  public static <T extends Enum<T> & CommandLineOption<T>>
+    Map<CommandLineOption, CommandLineValue> parseCommandLine(
+        Class<T>            enumClass,
+        String[]            args,
+        ParameterProcessor  processor,
+        CommandLineOption   ignoreEnvOption)
   {
     return parseCommandLine(
         enumClass, args, processor, false, ignoreEnvOption);
@@ -553,10 +724,10 @@ public class CommandLineUtilities {
    * @param params The {@link List} of {@link String} parameters.
    * @return The processed value.
    */
-  private static <T extends Enum<T> & CommandLineOption<T>> Object processValue(
-      T                     option,
-      ParameterProcessor<T> processor,
-      List<String>          params)
+  private static Object processValue(
+      CommandLineOption   option,
+      ParameterProcessor  processor,
+      List<String>        params)
   {
     // process the parameters
     if (processor != null) {
@@ -608,25 +779,26 @@ public class CommandLineUtilities {
    *
    * @return A {@link Map} of {@link CommandLineOption} keys to
    */
-  private static <T extends Enum<T> & CommandLineOption<T>> Map<T, CommandLineValue<T>>
-    parseCommandLine(Class<T>               enumClass,
-                     String[]               args,
-                     ParameterProcessor<T>  processor,
-                     boolean                ignoreEnvironment,
-                     T                      ignoreEnvOption)
+  private static <T extends Enum<T> & CommandLineOption<T>>
+    Map<CommandLineOption, CommandLineValue> parseCommandLine(
+        Class<T>           enumClass,
+        String[]           args,
+        ParameterProcessor processor,
+        boolean            ignoreEnvironment,
+        CommandLineOption  ignoreEnvOption)
   {
     // create a lookup map for the flags to their options
-    Map<String, T> lookupMap = createFlagLookupMap(enumClass);
+    Map<String, CommandLineOption> lookupMap = createFlagLookupMap(enumClass);
 
     // iterate over the args and build a map
-    Map<T, CommandLineValue<T>> result     = new LinkedHashMap<>();
-    Map<T, String>              usedFlags  = new LinkedHashMap<>();
+    Map<CommandLineOption, CommandLineValue> result     = new LinkedHashMap<>();
+    Map<CommandLineOption, String>           usedFlags  = new LinkedHashMap<>();
     for (int index = 0; index < args.length; index++) {
       // get the next flag
       String flag = args[index];
 
       // determine the option from the flag
-      T option = lookupMap.get(flag);
+      CommandLineOption option = lookupMap.get(flag);
 
       // check if the option is recognized
       if (option == null) {
@@ -675,11 +847,14 @@ public class CommandLineUtilities {
         index--;
       }
 
+      // get the default parameters
+      List<String> defaultParams = option.getDefaultParameters();
+
       // check if we have a zero-argument parameter
       if (minParamCount == 0 && maxParamCount == 0
-          && option.getDefaultParameters() != null
-          && option.getDefaultParameters().size() == 1
-          && "false".equalsIgnoreCase(option.getDefaultParameters().get(0)))
+          && defaultParams != null
+          && defaultParams.size() == 1
+          && "false".equalsIgnoreCase(defaultParams.get(0)))
       {
         // allow a zero-argument parameter to be followed by "true" or "false"
         if (args.length > (index + 1)) {
@@ -718,11 +893,13 @@ public class CommandLineUtilities {
         }
       }
 
+      defaultParams = option.getDefaultParameters();
+
       // check if we have a zero-parameter option with a "false" default
       if (minParamCount == 0 && maxParamCount == 0 && params.size() == 0
-          && option.getDefaultParameters() != null
-          && option.getDefaultParameters().size() == 1
-          && "false".equalsIgnoreCase(option.getDefaultParameters().get(0)))
+          && defaultParams != null
+          && defaultParams.size() == 1
+          && "false".equalsIgnoreCase(defaultParams.get(0)))
       {
         params.add("true");
       }
@@ -731,11 +908,11 @@ public class CommandLineUtilities {
       Object processedValue = processValue(option, processor, params);
 
       // create the command-line value
-      CommandLineValue<T> cmdLineVal = new CommandLineValue<>(option,
-                                                              COMMAND_LINE,
-                                                              flag,
-                                                              processedValue,
-                                                              params);
+      CommandLineValue cmdLineVal = new CommandLineValue(option,
+                                                         COMMAND_LINE,
+                                                         flag,
+                                                         processedValue,
+                                                         params);
 
       // add to the options map
       putValue(result, cmdLineVal);
@@ -780,20 +957,22 @@ public class CommandLineUtilities {
    *
    */
   private static <T extends Enum<T> & CommandLineOption<T>> void
-  processEnvironment(Class<T>                     enumClass,
-                     ParameterProcessor<T>        processor,
-                     Map<T, CommandLineValue<T>>  optionValues)
+  processEnvironment(Class<T>                                 enumClass,
+                     ParameterProcessor                       processor,
+                     Map<CommandLineOption, CommandLineValue> optionValues)
   {
-    processEnvironment(EnumSet.allOf(enumClass),
+    Set<T> options = EnumSet.allOf(enumClass);
+
+    processEnvironment(options,
                        processor,
                        optionValues,
                        false);
 
-    Set<T> optionKeys       = optionValues.keySet();
-    Set<T> fallbackOptions  = new LinkedHashSet<>();
-    for (T option : optionKeys) {
+    Set<? extends CommandLineOption>  optionKeys      = optionValues.keySet();
+    Set<CommandLineOption>            fallbackOptions = new LinkedHashSet<>();
+    for (CommandLineOption option : optionKeys) {
       // get the dependency sets
-      Set<Set<T>> dependencySets = option.getDependencies();
+      Set<Set<CommandLineOption>> dependencySets = option.getDependencies();
 
       // check if no dependencies
       if (dependencySets == null) continue;
@@ -803,7 +982,7 @@ public class CommandLineUtilities {
       boolean satisfied = false;
 
       // iterate over the dependency sets and see if at least one is satisfied
-      for (Set<T> dependencySet: dependencySets) {
+      for (Set<CommandLineOption> dependencySet: dependencySets) {
         if (optionValues.keySet().containsAll(dependencySet)) {
           satisfied = true;
           break;
@@ -813,13 +992,13 @@ public class CommandLineUtilities {
       // check if the option is not satisfied
       if (!satisfied) {
         // find the first dependency set with missing items with fallbacks
-        for (Set<T> dependencySet: dependencySets) {
+        for (Set<CommandLineOption> dependencySet: dependencySets) {
           // set the fallback count to zero and create the missing set
-          int     fallbackCount = 0;
-          Set<T>  missingSet    = new LinkedHashSet<>();
+          int                     fallbackCount = 0;
+          Set<CommandLineOption>  missingSet    = new LinkedHashSet<>();
 
           // iterate over the options
-          for (T dependency: dependencySet) {
+          for (CommandLineOption dependency: dependencySet) {
             // check if dependency is missing
             if (optionValues.containsKey(dependency)) continue;
 
@@ -847,21 +1026,22 @@ public class CommandLineUtilities {
       processEnvironment(fallbackOptions, processor, optionValues, true);
     }
   }
+
   /**
    * Checka for command-line option values in the environment.
    *
    */
-  private static <T extends Enum<T> & CommandLineOption<T>> void
-    processEnvironment(Set<T>                       enumSet,
-                       ParameterProcessor<T>        processor,
-                       Map<T, CommandLineValue<T>>  optionValues,
-                       boolean                      fallBacks)
+  private static void processEnvironment(
+      Set<? extends CommandLineOption>          enumSet,
+      ParameterProcessor                        processor,
+      Map<CommandLineOption, CommandLineValue>  optionValues,
+      boolean                                   fallBacks)
   {
     // get the environment
     Map<String, String> env = System.getenv();
 
     // iterate over the options
-    for (T option: enumSet) {
+    for (CommandLineOption option: enumSet) {
       // prefer explicit command-line arguments, so skip if already present
       if (optionValues.containsKey(option)) continue;
 
@@ -971,11 +1151,11 @@ public class CommandLineUtilities {
       Object processedValue = processValue(option, processor, params);
 
       // create the command line value
-      CommandLineValue<T> cmdLineVal = new CommandLineValue<>(option,
-                                                              ENVIRONMENT,
-                                                              foundVar,
-                                                              processedValue,
-                                                              params);
+      CommandLineValue cmdLineVal = new CommandLineValue(option,
+                                                         ENVIRONMENT,
+                                                         foundVar,
+                                                         processedValue,
+                                                         params);
 
       // put the value
       putValue(optionValues, cmdLineVal);
@@ -987,15 +1167,15 @@ public class CommandLineUtilities {
    *
    */
   private static <T extends Enum<T> & CommandLineOption<T>> void
-    processDefaults(Class<T>                    enumClass,
-                    ParameterProcessor<T>       processor,
-                    Map<T, CommandLineValue<T>> optionValues)
+    processDefaults(Class<T>                                  enumClass,
+                    ParameterProcessor                        processor,
+                    Map<CommandLineOption, CommandLineValue>  optionValues)
   {
     // get all the options
     EnumSet<T> enumSet = EnumSet.allOf(enumClass);
 
     // iterate over the options
-    for (T option: enumSet) {
+    for (CommandLineOption option: enumSet) {
       // prefer explicit command-line arguments, so skip if already present
       if (optionValues.containsKey(option)) continue;
 
@@ -1009,10 +1189,10 @@ public class CommandLineUtilities {
       Object processedValue = processValue(option, processor, params);
 
       // create the command line value
-      CommandLineValue<T> cmdLineVal = new CommandLineValue<>(option,
-                                                              DEFAULT,
-                                                              processedValue,
-                                                              params);
+      CommandLineValue cmdLineVal = new CommandLineValue(option,
+                                                         DEFAULT,
+                                                         processedValue,
+                                                         params);
 
       // put the value
       putValue(optionValues, cmdLineVal);
@@ -1031,9 +1211,9 @@ public class CommandLineUtilities {
    *                        values if specified, if <tt>null</tt> a new {@link
    *                        Map} is created and returned.
    */
-  public static <T extends Enum<T> & CommandLineOption<T>> Map<T, Object>
-    processCommandLine(Map<T, CommandLineValue<T>>  optionValues,
-                       Map<T, Object>               processedValues)
+  public static Map<CommandLineOption, Object> processCommandLine(
+      Map<CommandLineOption, CommandLineValue>  optionValues,
+      Map<CommandLineOption, Object>            processedValues)
   {
     return processCommandLine(optionValues,
                               processedValues,
@@ -1055,10 +1235,10 @@ public class CommandLineUtilities {
    * @param jsonBuilder If not <tt>null</tt> then this {@link JsonObjectBuilder}
    *                    is populated with startup option information.
    */
-  public static <T extends Enum<T> & CommandLineOption<T>> Map<T, Object>
-  processCommandLine(Map<T, CommandLineValue<T>>  optionValues,
-                     Map<T, Object>               processedValues,
-                     JsonObjectBuilder            jsonBuilder)
+  public static Map<CommandLineOption, Object> processCommandLine(
+      Map<CommandLineOption, CommandLineValue>  optionValues,
+      Map<CommandLineOption, Object>            processedValues,
+      JsonObjectBuilder                         jsonBuilder)
   {
     return processCommandLine(optionValues,
                               processedValues,
@@ -1082,10 +1262,10 @@ public class CommandLineUtilities {
    *                      is populated with JSON text describing the startup
    *                      options.
    */
-  public static <T extends Enum<T> & CommandLineOption<T>> Map<T, Object>
-  processCommandLine(Map<T, CommandLineValue<T>>  optionValues,
-                     Map<T, Object>               processedValues,
-                     StringBuilder                stringBuilder)
+  public static Map<CommandLineOption, Object> processCommandLine(
+      Map<CommandLineOption, CommandLineValue>  optionValues,
+      Map<CommandLineOption, Object>            processedValues,
+      StringBuilder                             stringBuilder)
   {
     return processCommandLine(optionValues,
                               processedValues,
@@ -1110,15 +1290,15 @@ public class CommandLineUtilities {
    *                      is populated with JSON text describing the startup
    *                      options.
    */
-  public static <T extends Enum<T> & CommandLineOption<T>> Map<T, Object>
-    processCommandLine(Map<T, CommandLineValue<T>>  optionValues,
-                       Map<T, Object>               processedValues,
-                       JsonObjectBuilder            jsonBuilder,
-                       StringBuilder                stringBuilder)
+  public static Map<CommandLineOption, Object> processCommandLine(
+      Map<CommandLineOption, CommandLineValue>  optionValues,
+      Map<CommandLineOption, Object>            processedValues,
+      JsonObjectBuilder                         jsonBuilder,
+      StringBuilder                             stringBuilder)
   {
     // create the result map if not specified
-    Map<T, Object> result = (processedValues == null) ? new LinkedHashMap<>()
-        : processedValues;
+    Map<CommandLineOption, Object> result
+        = (processedValues == null) ? new LinkedHashMap<>() : processedValues;
 
     // check if we are generating the JSON
     boolean doJson = (jsonBuilder != null || stringBuilder != null);
@@ -1260,5 +1440,98 @@ public class CommandLineUtilities {
     }
     pw.flush();
     return sw.toString();
+  }
+
+  /**
+   * Gets the base URL for the JAR file where the specified {@link Class} is
+   * found.  This method returns <tt>null</tt> if the JAR base URL cannot be
+   * determined.
+   *
+   * @param cls The {@link Class} for which the JAR base URL is requested.
+   *
+   * @return The base URL for the JAR that has the specified class, or
+   *         <tt>null</tt> if it cannot be determined.
+   */
+  public static String getJarBaseUrl(Class cls) {
+    String simpleName = cls.getSimpleName();
+    String url = cls.getResource(simpleName + ".class").toString();
+
+    int index = url.lastIndexOf(
+        cls.getName().replace(".", "/") + ".class");
+
+    if (index < 0) return null;
+
+    return url.substring(0, index);
+  }
+
+  /**
+   * Gets the name of the JAR file that contains the specified {@link Class}.
+   * This method returns <tt>null</tt> if the JAR file name cannot be
+   * determined.
+   *
+   * @param cls The {@link Class} for which the jar file name is requested.
+   *
+   * @return The name of the JAR file that has the specified class, or
+   *         <tt>null</tt> if it cannot be determined.
+   */
+  public static String getJarName(Class cls) {
+    String url = getJarBaseUrl(cls);
+
+    if (url == null) return null;
+
+    if (url.indexOf(".jar") >= 0) {
+      int index = url.lastIndexOf("!");
+      if (index >= 0) {
+        url = url.substring(0, index);
+        index = url.lastIndexOf("/");
+        if (index >= 0) {
+          return url.substring(index + 1);
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Gets the path of the JAR file that contains the specified {@link Class}.
+   * This method returns <tt>null</tt> if the JAR file path cannot be
+   * determined.
+   *
+   * @param cls The {@link Class} for which the jar file path is requested.
+   *
+   * @return The path to the JAR file that has the specified class, or
+   *         <tt>null</tt> if it cannot be determined.
+   */
+  public static String getJarPath(Class cls) {
+    String url = getJarBaseUrl(cls);
+
+    if (url == null) return null;
+
+    if (url.indexOf(".jar") >= 0) {
+      int index = url.lastIndexOf("!");
+      if (index >= 0) {
+        url = url.substring(0, index);
+        index = url.lastIndexOf("/");
+        if (index >= 0) {
+          url = url.substring(0, index);
+          index = url.indexOf("/");
+          if (index >= 0) {
+            return url.substring(index);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public static void main(String[] args) {
+    try {
+      Class cls = CommandLineUtilities.class;
+      System.out.println("BASE URL: " + getJarBaseUrl(cls));
+      System.out.println("JAR NAME: " + getJarName(cls));
+      System.out.println("JAR PATH: " + getJarPath(cls));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }

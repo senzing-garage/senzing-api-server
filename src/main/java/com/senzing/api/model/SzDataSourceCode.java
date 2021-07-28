@@ -1,63 +1,91 @@
 package com.senzing.api.model;
 
-import com.senzing.util.JsonUtils;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzDataSourceCodeImpl;
 
-import javax.json.Json;
 import javax.json.JsonObjectBuilder;
-import java.util.Objects;
 
 /**
  * Describes a data source code to identify an data source.
  */
-public class SzDataSourceCode implements SzDataSourceDescriptor {
-  /**
-   * The data source code that identifiers the data source.
-   */
-  private String value;
-
-  /**
-   * Constructs with the specified data source code.  The specified data
-   * source code is trimmed of leading and trailing white space and converted
-   * to all upper case.
-   *
-   * @param code The non-null data source code which will be trimmed and
-   *             converted to upper-case.
-   *
-   * @throws NullPointerException If the specified code is <tt>null</tt>.
-   */
-  public SzDataSourceCode(String code)
-    throws NullPointerException
-  {
-    Objects.requireNonNull(code, "The data source code cannot be null");
-    this.value = code.trim().toUpperCase();
-  }
-
+@JsonDeserialize(using=SzDataSourceCode.Factory.class)
+public interface SzDataSourceCode extends SzDataSourceDescriptor {
   /**
    * Return the data source code identifying the data source.
    *
    * @return The data source code identifying the data source.
    */
-  public String getValue() {
-    return this.value;
+  String getValue();
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzDataSourceCode}.
+   */
+  interface Provider extends ModelProvider<SzDataSourceCode> {
+    /**
+     * Constructs with the specified data source code.
+     *
+     * @param dataSourceCode The data source code for the data source.
+     */
+    SzDataSourceCode create(String dataSourceCode);
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    SzDataSourceCode that = (SzDataSourceCode) o;
-    return this.value.equals(that.value);
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzDataSourceCode} that produces instances of {@link SzDataSourceCodeImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzDataSourceCode>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzDataSourceCode.class, SzDataSourceCodeImpl.class);
+    }
+
+    @Override
+    public SzDataSourceCode create(String dataSourceCode) {
+      return new SzDataSourceCodeImpl(dataSourceCode);
+    }
   }
 
-  @Override
-  public int hashCode() {
-    return Objects.hash(this.value);
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link
+   * SzDataSourceCode}.
+   */
+  class Factory extends ModelFactory<SzDataSourceCode, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzDataSourceCode.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Constructs with the specified data source code.
+     *
+     * @param dataSourceCode The data source code for the data source.
+     */
+    public SzDataSourceCode create(String dataSourceCode) {
+      return this.getProvider().create(dataSourceCode);
+    }
   }
 
-  @Override
-  public String toString() {
-    return this.getValue();
-  }
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses text as a data source code.  The specified text is trimmed of
@@ -70,13 +98,11 @@ public class SzDataSourceCode implements SzDataSourceDescriptor {
    *
    * @throws NullPointerException If the specified text is <tt>null</tt>.
    */
-  public static SzDataSourceCode valueOf(String text)
-    throws NullPointerException
-  {
+  static SzDataSourceCode valueOf(String text) throws NullPointerException {
     if (text.length() > 2 && text.startsWith("\"") && text.endsWith("\"")) {
       text = text.substring(1, text.length() - 1);
     }
-    return new SzDataSourceCode(text);
+    return FACTORY.create(text);
   }
 
   /**
@@ -86,8 +112,8 @@ public class SzDataSourceCode implements SzDataSourceDescriptor {
    *
    * @return The {@link SzDataSource} describing the data source.
    */
-  public SzDataSource toDataSource() {
-    return new SzDataSource(this.getValue());
+  default SzDataSource toDataSource() {
+    return SzDataSource.FACTORY.create(this.getValue());
   }
 
   /**
@@ -96,7 +122,7 @@ public class SzDataSourceCode implements SzDataSourceDescriptor {
    *
    * @param builder The {@link JsonObjectBuilder} to add the properties.
    */
-  public void buildJson(JsonObjectBuilder builder) {
+  default void buildJson(JsonObjectBuilder builder) {
     builder.add("dataSourceCode", this.getValue());
   }
 
@@ -106,8 +132,7 @@ public class SzDataSourceCode implements SzDataSourceDescriptor {
    *
    * @param builder The {@link JsonObjectBuilder} to add the properties to.
    */
-  public void buildNativeJson(JsonObjectBuilder builder) {
+  default void buildNativeJson(JsonObjectBuilder builder) {
     builder.add("DSRC_CODE", this.getValue());
   }
-
 }

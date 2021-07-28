@@ -1,6 +1,8 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzWhyEntitiesResultImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonArray;
@@ -13,49 +15,22 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 /**
  * Describes why an entity resolved.
  */
-public class SzWhyEntitiesResult {
-  /**
-   * The entity ID for the first entity.
-   */
-  private Long entityId1;
-
-  /**
-   * The entity ID for the second entity.
-   */
-  private Long entityId2;
-
-  /**
-   * The {@link SzMatchInfo} providing the details of the result.
-   */
-  private SzMatchInfo matchInfo;
-
-  /**
-   * Default constructor.
-   */
-  public SzWhyEntitiesResult() {
-    this.entityId1  = null;
-    this.entityId2  = null;
-    this.matchInfo  = null;
-  }
-
+@JsonDeserialize(using=SzWhyEntitiesResult.Factory.class)
+public interface SzWhyEntitiesResult {
   /**
    * Gets the entity ID of the first entity.
    *
    * @return The entity ID of the first entity.
    */
   @JsonInclude(NON_NULL)
-  public Long getEntityId1() {
-    return this.entityId1;
-  }
+  Long getEntityId1();
 
   /**
    * Sets the entity ID of the first entity.
    *
    * @param entityId The entity ID of the first entity.
    */
-  public void setEntityId1(Long entityId) {
-    this.entityId1 = entityId;
-  }
+  void setEntityId1(Long entityId);
 
   /**
    * Gets the entity ID of the second entity.
@@ -63,18 +38,14 @@ public class SzWhyEntitiesResult {
    * @return The entity ID of the second entity.
    */
   @JsonInclude(NON_NULL)
-  public Long getEntityId2() {
-    return this.entityId2;
-  }
+  Long getEntityId2();
 
   /**
    * Sets the entity ID of the second entity.
    *
    * @param entityId The entity ID of the second entity.
    */
-  public void setEntityId2(Long entityId) {
-    this.entityId2 = entityId;
-  }
+  void setEntityId2(Long entityId);
 
   /**
    * Gets the {@link SzMatchInfo} providing the details of the result.
@@ -82,9 +53,7 @@ public class SzWhyEntitiesResult {
    * @return The {@link SzMatchInfo} providing the details of the result.
    */
   @JsonInclude(NON_NULL)
-  public SzMatchInfo getMatchInfo() {
-    return this.matchInfo;
-  }
+  SzMatchInfo getMatchInfo();
 
   /**
    * Sets the {@link SzMatchInfo} providing the details of the result.
@@ -92,9 +61,77 @@ public class SzWhyEntitiesResult {
    * @param matchInfo The {@link SzMatchInfo} providing the details of the
    *                  result.
    */
-  public void setMatchInfo(SzMatchInfo matchInfo) {
-    this.matchInfo = matchInfo;
+  void setMatchInfo(SzMatchInfo matchInfo);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzWhyEntitiesResult}.
+   */
+  interface Provider extends ModelProvider<SzWhyEntitiesResult> {
+    /**
+     * Creates a new instance of {@link SzWhyEntitiesResult}.
+     *
+     * @return The new instance of {@link SzWhyEntitiesResult}
+     */
+    SzWhyEntitiesResult create();
   }
+
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzWhyEntitiesResult} that produces instances of
+   * {@link SzWhyEntitiesResultImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzWhyEntitiesResult>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzWhyEntitiesResult.class, SzWhyEntitiesResultImpl.class);
+    }
+
+    @Override
+    public SzWhyEntitiesResult create() {
+      return new SzWhyEntitiesResultImpl();
+    }
+  }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzWhyEntitiesResult}.
+   */
+  class Factory extends ModelFactory<SzWhyEntitiesResult, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzWhyEntitiesResult.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzWhyEntitiesResult}.
+     * @return The new instance of {@link SzWhyEntitiesResult}.
+     */
+    public SzWhyEntitiesResult create() {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the native API JSON to build an instance of {@link
@@ -105,7 +142,7 @@ public class SzWhyEntitiesResult {
    *
    * @return The created instance of {@link SzWhyEntitiesResult}.
    */
-  public static SzWhyEntitiesResult parseWhyEntitiesResult(JsonObject jsonObj)
+  static SzWhyEntitiesResult parseWhyEntitiesResult(JsonObject jsonObj)
   {
     Long entityId1 = JsonUtils.getLong(jsonObj, "ENTITY_ID");
     Long entityId2 = JsonUtils.getLong(jsonObj, "ENTITY_ID_2");
@@ -115,7 +152,7 @@ public class SzWhyEntitiesResult {
     SzMatchInfo matchInfo
         = SzMatchInfo.parseMatchInfo(infoJson);
 
-    SzWhyEntitiesResult result = new SzWhyEntitiesResult();
+    SzWhyEntitiesResult result = SzWhyEntitiesResult.FACTORY.create();
     result.setEntityId1(entityId1);
     result.setEntityId2(entityId2);
     result.setMatchInfo(matchInfo);
@@ -136,9 +173,9 @@ public class SzWhyEntitiesResult {
    * @return The {@link List} of {@link SzWhyEntitiesResult} instances that was
    *         populated.
    */
-  public static List<SzWhyEntitiesResult> parseWhyEntitiesResultList(
+  static List<SzWhyEntitiesResult> parseWhyEntitiesResultList(
       List<SzWhyEntitiesResult> list,
-      JsonArray               jsonArray)
+      JsonArray                 jsonArray)
   {
     if (list == null) {
       list = new ArrayList<>(jsonArray.size());

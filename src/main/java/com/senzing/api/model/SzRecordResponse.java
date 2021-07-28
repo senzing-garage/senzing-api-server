@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzRecordResponseImpl;
 import com.senzing.util.Timers;
 
 import javax.ws.rs.core.UriInfo;
@@ -9,149 +11,148 @@ import java.util.*;
  * A response object that contains entity record data.
  *
  */
-public class SzRecordResponse extends SzResponseWithRawData {
-  /**
-   * The data for this instance.
-   */
-  private Data data = new Data();
-
-  /**
-   * Default constructor.
-   */
-  public SzRecordResponse() {
-    // do nothing
-  }
-
-  /**
-   * Constructs with only the HTTP method and the self link, leaving the
-   * record data to be initialized later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   * @param httpStatusCode The HTTP response status code.
-   * @param selfLink The string URL link to generate this response.
-   * @param timers The {@link Timers} object for the timings that were taken.
-   */
-  public SzRecordResponse(SzHttpMethod httpMethod,
-                          int          httpStatusCode,
-                          String       selfLink,
-                          Timers       timers)
-  {
-    this(httpMethod, httpStatusCode, selfLink, timers, null);
-  }
-
-  /**
-   * Constructs with the HTTP method, self link and the {@link SzEntityRecord}
-   * describing the record.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   * @param httpStatusCode The HTTP response status code.
-   * @param selfLink The string URL link to generate this response.
-   * @param timers The {@link Timers} object for the timings that were taken.
-   * @param record The {@link SzEntityRecord} describing the record.
-   */
-  public SzRecordResponse(SzHttpMethod   httpMethod,
-                          int            httpStatusCode,
-                          String         selfLink,
-                          Timers         timers,
-                          SzEntityRecord record)
-  {
-    super(httpMethod, httpStatusCode, selfLink, timers);
-    this.data.setRecord(record);
-  }
-
-  /**
-   * Constructs with only the HTTP method and the {@link UriInfo}, leaving the
-   * record data to be initialized later.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   * @param httpStatusCode The HTTP response status code.
-   * @param uriInfo The {@link UriInfo} from the request.
-   * @param timers The {@link Timers} object for the timings that were taken.
-   */
-  public SzRecordResponse(SzHttpMethod httpMethod,
-                          int          httpStatusCode,
-                          UriInfo      uriInfo,
-                          Timers       timers) {
-    this(httpMethod, httpStatusCode, uriInfo, timers, null);
-  }
-
-  /**
-   * Constructs with the HTTP method, {@link UriInfo} and the {@link SzEntityRecord}
-   * describing the record.
-   *
-   * @param httpMethod The {@link SzHttpMethod}.
-   * @param httpStatusCode The HTTP response status code.
-   * @param uriInfo The {@link UriInfo} from the request.
-   * @param timers The {@link Timers} object for the timings that were taken.
-   * @param record The {@link SzEntityRecord} describing the record.
-   */
-  public SzRecordResponse(SzHttpMethod   httpMethod,
-                          int            httpStatusCode,
-                          UriInfo        uriInfo,
-                          Timers         timers,
-                          SzEntityRecord record)
-  {
-    super(httpMethod, httpStatusCode, uriInfo, timers);
-    this.data.setRecord(record);
-  }
-
+@JsonDeserialize(using=SzRecordResponse.Factory.class)
+public interface SzRecordResponse extends SzResponseWithRawData {
   /**
    * Returns the data associated with this response which contains an
    * {@link SzEntityRecord}.
    *
    * @return The data associated with this response.
    */
-  public Data getData() {
-    return this.data;
-  }
+  SzRecordResponseData getData();
 
   /**
-   * Private setter for JSON marshalling.
+   * Sets the data associated with this response which contains an
+   * {@link SzEntityRecord}.
+   *
+   * @return The data associated with this response.
    */
-  private void setData(Data data) {
-    this.data = data;
-  }
+  void setData(SzRecordResponseData data);
 
   /**
    * Sets the data associated with this response with an {@link SzEntityRecord}.
    *
    * @param record The {@link SzEntityRecord} describing the record.
    */
-  public void setRecord(SzEntityRecord record) {
-    this.data.setRecord(record);
+  void setRecord(SzEntityRecord record);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzRecordResponse}.
+   */
+  interface Provider extends ModelProvider<SzRecordResponse> {
+    /**
+     * Creates an instance of {@link SzRecordResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks} and no data.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    SzRecordResponse create(SzMeta meta, SzLinks links);
+
+    /**
+     * Creates an instance of {@link SzRecordResponse} with the specified
+     * {@link SzMeta}, {@link SzLinks} and the specified
+     * {@link SzRecordResponseData}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The {@link SzRecordResponseData} describing the data for
+     *             the response.
+     */
+    SzRecordResponse create(SzMeta                meta,
+                            SzLinks               links,
+                            SzRecordResponseData  data);
   }
 
   /**
-   * Inner class to represent the data section for this response.
+   * Provides a default {@link Provider} implementation for {@link
+   * SzRecordResponse} that produces instances of
+   * {@link SzRecordResponseImpl}.
    */
-  public static class Data {
+  class DefaultProvider extends AbstractModelProvider<SzRecordResponse>
+      implements Provider
+  {
     /**
-     * The {@link SzEntityRecord} describing the record.
+     * Default constructor.
      */
-    private SzEntityRecord entityRecord;
-
-    /**
-     * Private default constructor.
-     */
-    private Data() {
-      this.entityRecord = null;
+    public DefaultProvider() {
+      super(SzRecordResponse.class, SzRecordResponseImpl.class);
     }
 
-    /**
-     * Gets the {@link SzEntityRecord} describing the record.
-     *
-     * @return The {@link SzEntityRecord} describing the record.
-     */
-    public SzEntityRecord getRecord() {
-      return this.entityRecord;
+    @Override
+    public SzRecordResponse create(SzMeta meta, SzLinks links) {
+      return new SzRecordResponseImpl(meta, links);
     }
 
-    /**
-     * Private setter used for deserialization.
-     */
-    private void setRecord(SzEntityRecord entityRecord) {
-      this.entityRecord = entityRecord;
+    @Override
+    public SzRecordResponse create(SzMeta               meta,
+                                   SzLinks              links,
+                                   SzRecordResponseData data)
+    {
+      return new SzRecordResponseImpl(meta, links, data);
     }
   }
 
+  /**
+   * Provides a {@link ModelFactory} implementation for
+   * {@link SzRecordResponse}.
+   */
+  class Factory extends ModelFactory<SzRecordResponse, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzRecordResponse.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates an instance of {@link SzRecordResponse} with the specified
+     * {@link SzMeta} and {@link SzLinks} and no data.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    public SzRecordResponse create(SzMeta meta, SzLinks links) {
+      return this.getProvider().create(meta, links);
+    }
+
+    /**
+     * Creates an instance of {@link SzRecordResponse} with the specified
+     * {@link SzMeta}, {@link SzLinks} and the specified
+     * {@link SzRecordResponseData}.
+     *
+     * @param meta The response meta data.
+     *
+     * @param links The links for the response.
+     *
+     * @param data The {@link SzRecordResponseData} describing the data for
+     *             the response.
+     */
+    public SzRecordResponse create(SzMeta               meta,
+                                   SzLinks              links,
+                                   SzRecordResponseData data)
+    {
+      return this.getProvider().create(meta, links, data);
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 }

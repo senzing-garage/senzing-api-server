@@ -1,5 +1,7 @@
 package com.senzing.api.model;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.senzing.api.model.impl.SzEntityFeatureStatisticsImpl;
 import com.senzing.util.JsonUtils;
 
 import javax.json.JsonObject;
@@ -7,47 +9,8 @@ import javax.json.JsonObject;
 /**
  * Describes the entity resolution statistics for the feature value.
  */
-public class SzEntityFeatureStatistics {
-  /**
-   * Indicates if the feature is used for finding candidates during entity
-   * resolution.
-   */
-  private boolean usedForCandidates;
-
-  /**
-   * Indicates if the feature is used for scoring during entity resolution.
-   */
-  private Boolean usedForScoring;
-
-  /**
-   * The number of entities having this feature value.
-   */
-  private Long entityCount;
-
-  /**
-   * Indicates if this feature value is no longer being used to find candidates
-   * because too many entities share the same value.
-   */
-  private Boolean candidateCapReached;
-
-  /**
-   * Indicates if this feature value is no longer being used in entity
-   * scoring because too many entities share the same value.
-   */
-  private Boolean scoringCapReached;
-
-  /**
-   * Indicates if this value was suppressed in favor of a more complete value.
-   */
-  private Boolean suppressed;
-
-  /**
-   * Default constructor.
-   */
-  public SzEntityFeatureStatistics() {
-    // do nothing
-  }
-
+@JsonDeserialize(using=SzEntityFeatureStatistics.Factory.class)
+public interface SzEntityFeatureStatistics {
   /**
    * Checks if the feature is used for finding candidates during entity
    * resolution.
@@ -55,9 +18,7 @@ public class SzEntityFeatureStatistics {
    * @return <tt>true</tt> if used for finding candidates during entity
    *         resolution, otherwise <tt>false</tt>.
    */
-  public Boolean isUsedForCandidates() {
-    return usedForCandidates;
-  }
+  Boolean isUsedForCandidates();
 
   /**
    * Sets whether or not the feature is used for finding candidates during
@@ -67,9 +28,7 @@ public class SzEntityFeatureStatistics {
    *                          during entity resolution, otherwise
    *                          <tt>false</tt>.
    */
-  public void setUsedForCandidates(Boolean usedForCandidates) {
-    this.usedForCandidates = usedForCandidates;
-  }
+  void setUsedForCandidates(Boolean usedForCandidates);
 
   /**
    * Checks if the feature is used for scoring during entity resolution.
@@ -77,9 +36,7 @@ public class SzEntityFeatureStatistics {
    * @return <tt>true</tt> if used for scoring during entity resolution,
    *         otherwise <tt>false</tt>.
    */
-  public Boolean isUsedForScoring() {
-    return usedForScoring;
-  }
+  Boolean isUsedForScoring();
 
   /**
    * Sets whether or not the feature is used for scoring during entity
@@ -88,27 +45,21 @@ public class SzEntityFeatureStatistics {
    * @param usedForScoring <tt>true</tt> if used for scoring during entity
    *                       resolution, otherwise <tt>false</tt>.
    */
-  public void setUsedForScoring(Boolean usedForScoring) {
-    this.usedForScoring = usedForScoring;
-  }
+  void setUsedForScoring(Boolean usedForScoring);
 
   /**
    * Gets the number of entities having this feature value.
    *
    * @return The number of entities having this feature value.
    */
-  public Long getEntityCount() {
-    return entityCount;
-  }
+  Long getEntityCount();
 
   /**
    * Sets the number of entities having this feature value.
    *
    * @param entityCount The number of entities having this feature value.
    */
-  public void setEntityCount(Long entityCount) {
-    this.entityCount = entityCount;
-  }
+  void setEntityCount(Long entityCount);
 
   /**
    * Checks if this feature value is no longer being used to find candidates
@@ -118,9 +69,7 @@ public class SzEntityFeatureStatistics {
    *         find candidates because too many entities share the same value,
    *         otherwise <tt>false</tt>.
    */
-  public Boolean isCandidateCapReached() {
-    return candidateCapReached;
-  }
+  Boolean isCandidateCapReached();
 
   /**
    * Sets whether or not this feature value is no longer being used to find
@@ -131,9 +80,7 @@ public class SzEntityFeatureStatistics {
    *                            entities share the same value, otherwise
    *                            <tt>false</tt>.
    */
-  public void setCandidateCapReached(Boolean candidateCapReached) {
-    this.candidateCapReached = candidateCapReached;
-  }
+  void setCandidateCapReached(Boolean candidateCapReached);
 
   /**
    * Checks if this feature value is no longer being used in entity scoring
@@ -143,9 +90,7 @@ public class SzEntityFeatureStatistics {
    *         entity scoring because too many entities share the same value,
    *         otherwise <tt>false</tt>.
    */
-  public Boolean isScoringCapReached() {
-    return scoringCapReached;
-  }
+  Boolean isScoringCapReached();
 
   /**
    * Sets whether or not this feature value is no longer being used in entity
@@ -156,9 +101,7 @@ public class SzEntityFeatureStatistics {
    *                          entities share the same value, otherwise
    *                          <tt>false</tt>.
    */
-  public void setScoringCapReached(Boolean scoringCapReached) {
-    this.scoringCapReached = scoringCapReached;
-  }
+  void setScoringCapReached(Boolean scoringCapReached);
 
   /**
    * Checks if this value was suppressed in favor of a more complete value.
@@ -166,9 +109,7 @@ public class SzEntityFeatureStatistics {
    * @return <tt>true</tt> if this value was suppressed in favor of a more
    *         complete value, otherwise <tt>false</tt>.
    */
-  public Boolean isSuppressed() {
-    return suppressed;
-  }
+  Boolean isSuppressed();
 
   /**
    * Sets whether or not this value was suppressed in favor of a more complete
@@ -177,21 +118,79 @@ public class SzEntityFeatureStatistics {
    * @param suppressed <tt>true</tt> if this value was suppressed in favor of a
    *                   more complete value, otherwise <tt>false</tt>.
    */
-  public void setSuppressed(Boolean suppressed) {
-    this.suppressed = suppressed;
+  void setSuppressed(Boolean suppressed);
+
+  /**
+   * A {@link ModelProvider} for instances of {@link SzEntityFeatureStatistics}.
+   */
+  interface Provider extends ModelProvider<SzEntityFeatureStatistics> {
+    /**
+     * Creates a new instance of {@link SzEntityFeatureStatistics}.
+     *
+     * @return The new instance of {@link SzEntityFeatureStatistics}
+     */
+    SzEntityFeatureStatistics create();
   }
 
-  @Override
-  public String toString() {
-    return "SzEntityFeatureStatistics{" +
-        "usedForCandidates=" + usedForCandidates +
-        ", usedForScoring=" + usedForScoring +
-        ", entityCount=" + entityCount +
-        ", candidateCapReached=" + candidateCapReached +
-        ", scoringCapReached=" + scoringCapReached +
-        ", suppressed=" + suppressed +
-        '}';
+  /**
+   * Provides a default {@link Provider} implementation for {@link
+   * SzEntityFeatureStatistics} that produces instances of {@link
+   * SzEntityFeatureStatisticsImpl}.
+   */
+  class DefaultProvider extends AbstractModelProvider<SzEntityFeatureStatistics>
+      implements Provider
+  {
+    /**
+     * Default constructor.
+     */
+    public DefaultProvider() {
+      super(SzEntityFeatureStatistics.class,
+            SzEntityFeatureStatisticsImpl.class);
+    }
+
+    @Override
+    public SzEntityFeatureStatistics create() {
+      return new SzEntityFeatureStatisticsImpl();
+    }
   }
+
+  /**
+   * Provides a {@link ModelFactory} implementation for {@link
+   * SzEntityFeatureStatistics}.
+   */
+  class Factory extends ModelFactory<SzEntityFeatureStatistics, Provider> {
+    /**
+     * Default constructor.  This is public and can only be called after the
+     * singleton master instance is created as it inherits the same state from
+     * the master instance.
+     */
+    public Factory() {
+      super(SzEntityFeatureStatistics.class);
+    }
+
+    /**
+     * Constructs with the default provider.  This constructor is private and
+     * is used for the master singleton instance.
+     * @param defaultProvider The default provider.
+     */
+    private Factory(Provider defaultProvider) {
+      super(defaultProvider);
+    }
+
+    /**
+     * Creates a new instance of {@link SzEntityFeatureStatistics}.
+     * @return The new instance of {@link SzEntityFeatureStatistics}.
+     */
+    public SzEntityFeatureStatistics create()
+    {
+      return this.getProvider().create();
+    }
+  }
+
+  /**
+   * The {@link Factory} instance for this interface.
+   */
+  Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
    * Parses the native API Senzing JSON to create an instance of
@@ -202,7 +201,7 @@ public class SzEntityFeatureStatistics {
    *
    * @return The {@link SzEntityFeatureStatistics} that was parsed.
    */
-  public static SzEntityFeatureStatistics parseEntityFeatureStatistics(
+  static SzEntityFeatureStatistics parseEntityFeatureStatistics(
       JsonObject            jsonObject)
   {
     Boolean candidateUse = getBoolean(jsonObject, "USED_FOR_CAND");
@@ -218,7 +217,8 @@ public class SzEntityFeatureStatistics {
       return null;
     }
 
-    SzEntityFeatureStatistics statistics = new SzEntityFeatureStatistics();
+    SzEntityFeatureStatistics statistics
+        = SzEntityFeatureStatistics.FACTORY.create();
     statistics.setUsedForCandidates(candidateUse);
     statistics.setUsedForScoring(scoringUse);
     statistics.setEntityCount(entityCount);

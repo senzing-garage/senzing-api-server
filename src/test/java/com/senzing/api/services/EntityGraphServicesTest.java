@@ -45,30 +45,30 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
   private static final String EMPLOYEES  = "EMPLOYEES";
   private static final String VIPS       = "VIPS";
 
-  private static final SzRecordId ABC123 = new SzRecordId(PASSENGERS,
-                                                          "ABC123");
-  private static final SzRecordId DEF456 = new SzRecordId(PASSENGERS,
-                                                          "DEF456");
-  private static final SzRecordId GHI789 = new SzRecordId(PASSENGERS,
-                                                          "GHI789");
-  private static final SzRecordId JKL012 = new SzRecordId(PASSENGERS,
-                                                          "JKL012");
-  private static final SzRecordId MNO345 = new SzRecordId(EMPLOYEES,
-                                                          "MNO345");
-  private static final SzRecordId PQR678 = new SzRecordId(EMPLOYEES,
-                                                          "PQR678");
-  private static final SzRecordId ABC567 = new SzRecordId(EMPLOYEES,
-                                                          "ABC567");
-  private static final SzRecordId DEF890 = new SzRecordId(EMPLOYEES,
-                                                          "DEF890");
-  private static final SzRecordId STU901 = new SzRecordId(VIPS,
-                                                          "STU901");
-  private static final SzRecordId XYZ234 = new SzRecordId(VIPS,
-                                                          "XYZ234");
-  private static final SzRecordId GHI123 = new SzRecordId(VIPS,
-                                                          "GHI123");
-  private static final SzRecordId JKL456 = new SzRecordId(VIPS,
-                                                          "JKL456");
+  private static final SzRecordId ABC123 = SzRecordId.FACTORY.create(
+      PASSENGERS,"ABC123");
+  private static final SzRecordId DEF456 = SzRecordId.FACTORY.create(
+      PASSENGERS,"DEF456");
+  private static final SzRecordId GHI789 = SzRecordId.FACTORY.create(
+      PASSENGERS,"GHI789");
+  private static final SzRecordId JKL012 = SzRecordId.FACTORY.create(
+      PASSENGERS,"JKL012");
+  private static final SzRecordId MNO345 = SzRecordId.FACTORY.create(
+      EMPLOYEES,"MNO345");
+  private static final SzRecordId PQR678 = SzRecordId.FACTORY.create(
+      EMPLOYEES,"PQR678");
+  private static final SzRecordId ABC567 = SzRecordId.FACTORY.create(
+      EMPLOYEES,"ABC567");
+  private static final SzRecordId DEF890 = SzRecordId.FACTORY.create(
+      EMPLOYEES,"DEF890");
+  private static final SzRecordId STU901 = SzRecordId.FACTORY.create(
+      VIPS,"STU901");
+  private static final SzRecordId XYZ234 = SzRecordId.FACTORY.create(
+      VIPS,"XYZ234");
+  private static final SzRecordId GHI123 = SzRecordId.FACTORY.create(
+      VIPS,"GHI123");
+  private static final SzRecordId JKL456 = SzRecordId.FACTORY.create(
+      VIPS,"JKL456");
 
   private EntityGraphServices entityGraphServices;
   private EntityDataServices entityDataServices;
@@ -464,7 +464,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
   private List<Long> asEntityIds(
       Collection<? extends SzEntityIdentifier> identifiers)
   {
-    return this.asEntityIds(new SzEntityIdentifiers(identifiers));
+    return this.asEntityIds(SzEntityIdentifiers.FACTORY.create(identifiers));
   }
 
   private List<Long> asEntityIds(SzEntityIdentifiers identifiers) {
@@ -487,7 +487,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
    if (recordId == null) return null;
    if (!asEntityId) return recordId;
    Long entityId = this.getEntityIdForRecordId(recordId);
-   return new SzEntityId(entityId);
+   return SzEntityId.FACTORY.create(entityId);
   }
 
   private SzEntityIdentifiers normalizeIdentifiers(
@@ -496,13 +496,13 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
   {
     if (recordIds == null) return null;
     if (recordIds.size() == 0) return null;
-    if (!asEntityIds) return new SzEntityIdentifiers(recordIds);
+    if (!asEntityIds) return SzEntityIdentifiers.FACTORY.create(recordIds);
     List<SzEntityId> entityIds = new ArrayList<>(recordIds.size());
     for (SzRecordId recordId : recordIds) {
       long entityId = this.getEntityIdForRecordId(recordId);
-      entityIds.add(new SzEntityId(entityId));
+      entityIds.add(SzEntityId.FACTORY.create(entityId));
     }
-    return new SzEntityIdentifiers(entityIds);
+    return SzEntityIdentifiers.FACTORY.create(entityIds);
   }
 
   private List<String> formatIdentifierParam(SzEntityIdentifiers identifiers)
