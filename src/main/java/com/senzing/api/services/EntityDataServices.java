@@ -986,6 +986,15 @@ public class EntityDataServices implements ServicesSupport {
         Map<Long, SzEntityData> dataMap
             = this.parseEntityDataList(sb.toString(), provider);
 
+        // check if no entities were found
+        if (dataMap.size() == 0) {
+          throw new IllegalStateException(
+              "WARNING: Possible database corruption.  No entity found for "
+              + "record but Senzing API did not indicate an error code for "
+              + "an unrecognized record ID.  dataSource=[ " + dataSource
+              + " ], recordId=[ " + recordId + " ]");
+        }
+
         // find the entity ID matching the data source and record ID
         Long entityId = null;
         for (SzEntityData edata : dataMap.values()) {
@@ -1000,6 +1009,15 @@ public class EntityDataServices implements ServicesSupport {
             }
           }
           if (entityId != null) break;
+        }
+
+        // check for the entity not being found
+        if (entityId == null) {
+          throw new IllegalStateException(
+              "WARNING: Possible database corruption.  No entity found for "
+                  + "entity ID but Senzing API did not indicate an error code "
+                  + "for an unrecognized entity ID.  entityId=[ "
+                  + dataSource + " ]");
         }
 
         // get the result entity data
