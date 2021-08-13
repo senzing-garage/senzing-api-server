@@ -989,7 +989,7 @@ public class EntityDataServices implements ServicesSupport {
         // check if no entities were found
         if (dataMap.size() == 0) {
           throw new IllegalStateException(
-              "WARNING: Possible database corruption.  No entity found for "
+              "ERROR: Possible database corruption.  No entity found for "
               + "record but Senzing API did not indicate an error code for "
               + "an unrecognized record ID.  dataSource=[ " + dataSource
               + " ], recordId=[ " + recordId + " ]");
@@ -1014,10 +1014,10 @@ public class EntityDataServices implements ServicesSupport {
         // check for the entity not being found
         if (entityId == null) {
           throw new IllegalStateException(
-              "WARNING: Possible database corruption.  No entity found for "
-                  + "entity ID but Senzing API did not indicate an error code "
-                  + "for an unrecognized entity ID.  entityId=[ "
-                  + dataSource + " ]");
+              "ERROR: Possible database corruption.  No entity found for "
+                  + "record but Senzing API did not indicate an error code for "
+                  + "an unrecognized record ID.  dataSource=[ " + dataSource
+                  + " ], recordId=[ " + recordId + " ]");
         }
 
         // get the result entity data
@@ -1187,6 +1187,15 @@ public class EntityDataServices implements ServicesSupport {
         // organize all the entities into a map for lookup
         Map<Long, SzEntityData> dataMap
             = this.parseEntityDataList(rawData, provider);
+
+        // check for the entity not being found
+        if (dataMap.size() == 0 || !dataMap.containsKey(entityId)) {
+          throw new IllegalStateException(
+              "WARNING: Possible database corruption.  No entity found for "
+                  + "entity ID but Senzing API did not indicate an error code "
+                  + "for an unrecognized entity ID.  entityId=[ "
+                  + entityId + " ]");
+        }
 
         // get the result entity data
         entityData = this.getAugmentedEntityData(entityId, dataMap, provider);
