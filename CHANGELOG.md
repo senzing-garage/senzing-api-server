@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.1] - 2021-08-16
+
+### Changed in 2.7.1
+
+- Modified EntityDataServices.java to check for empty networks when getting
+  entities with "FULL" related entities.  This guards against a
+  `NullPointerException` in the event of data corruption.  Affected endpoints:
+  - `GET /entities/{entityId}?withRelated=FULL`
+  - `GET /data-sources/{dataSourceCode}/records/{recordId}/entity?withRelated=FULL`
+- Updated cached test mock data for Senzing versions 2.0.0 through 2.8.1 to
+  cover the version 2.8.1 release.
+
 ## [2.7.0] - 2021-07-22
 
 ### Changed in 2.7.0
