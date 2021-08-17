@@ -1112,11 +1112,18 @@ public class BulkDataServicesTest extends AbstractServiceTest {
               }
             }
             if (!this.isOpen()) break;
-            Integer statusCode = this.getStatusCode();
-            if (statusCode != null && statusCode != 200) break;
-            this.outputStream.write(buffer, 0, readCount);
-            this.outputStream.flush();
-            writeCount += readCount;
+            try {
+              Integer statusCode = this.getStatusCode();
+              if (statusCode != null && statusCode != 200) break;
+              this.outputStream.write(buffer, 0, readCount);
+              this.outputStream.flush();
+              writeCount += readCount;
+            } catch (SocketException e) {
+              System.err.println(
+                  "*** Received SocketException, assuming connection closed: "
+                      + e);
+              break;
+            }
           }
         }
       } catch (IOException e) {
