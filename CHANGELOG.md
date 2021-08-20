@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.2] - 2021-08-20
+
+### Changed in 2.7.2
+
+- Minor bug fix for internal CommandLineUtilities class to recognize environment
+  variables for "base" options.  This allows others to extends the Senzing API
+  Server code with new options but still have the environment variables from the
+  base options be recognized (required for `Senzing/senzing-poc-server`).
+
 ## [2.7.1] - 2021-08-16
 
 ### Changed in 2.7.1

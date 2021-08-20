@@ -411,6 +411,30 @@ public class CommandLineUtilities {
   }
 
   /**
+   * Populates the options chain for the specified command line option class in
+   * the specified {@link Set}.
+   *
+   * @param set The {@link} set to populate.
+   * @param enumClass The starting class for the options chain.
+   */
+  private static <T extends Enum<T> & CommandLineOption<T>>
+  void populateOptionsChain(Set<CommandLineOption>  set,
+                            Class<T>                enumClass)
+  {
+    if (enumClass == null) return;
+    EnumSet<T> enumSet = EnumSet.allOf(enumClass);
+    Class baseType = null;
+    for (T option : enumSet) {
+      set.add((CommandLineOption) option);
+      if (baseType == null) baseType = option.getBaseOptionType();
+    }
+
+    if (baseType != null) {
+      populateOptionsChain(set, baseType);
+    }
+  }
+
+  /**
    * Validates the specified {@link Set} of specified {@link CommandLineOption}
    * instances and ensures that they logically make sense together.  This
    * checks for the existing of at least one primary option (if primary options
@@ -953,7 +977,7 @@ public class CommandLineUtilities {
   }
 
   /**
-   * Checka for command-line option values in the environment.
+   * Check for command-line option values in the environment.
    *
    */
   private static <T extends Enum<T> & CommandLineOption<T>> void
@@ -961,7 +985,8 @@ public class CommandLineUtilities {
                      ParameterProcessor                       processor,
                      Map<CommandLineOption, CommandLineValue> optionValues)
   {
-    Set<T> options = EnumSet.allOf(enumClass);
+    Set<CommandLineOption> options = new LinkedHashSet<>();
+    populateOptionsChain(options, enumClass);
 
     processEnvironment(options,
                        processor,
