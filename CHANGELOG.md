@@ -16,9 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added debug logging for bulk-data related operations if --debug enabled.
 - Updated build-info.properties so the Maven build timestamp is properly 
   filtered during build and token-replaced.
-- Minor bug fix for internal CommandLineUtilities class to process defualt 
-  values for "base" options.  This allows others to extends the Senzing API
-  Server code with new options but still have the default alues from the
+- Minor bug fix for internal CommandLineUtilities class to process default 
+  values for "base" options.  This allows others to extend the Senzing API
+  Server code with new options but still have the default values from the
   base options be populated (required for `Senzing/senzing-poc-server`).
 
 ## [2.7.2] - 2021-08-20
