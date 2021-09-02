@@ -37,6 +37,11 @@ public class SzLinksImpl implements SzLinks {
   public SzLinksImpl(HttpServletRequest request) {
     this.self = request.getRequestURI();
 
+    String queryString = request.getQueryString();
+    if (queryString != null && queryString.trim().length() > 0) {
+      this.self += ("?" + queryString);
+    }
+
     String baseUri = ServicesUtil.getBaseUri(request).toString();
 
     if (baseUri != null) {
