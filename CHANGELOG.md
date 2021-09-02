@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.3] - 2021-09-02
+
+### Changed in 2.7.3
+
+- Added --debug command-line option with SENZING_API_SERVER_DEBUG environment
+  variable equivalent to enable API Server debug logging.
+- Added debug logging of every incoming request if --debug enabled.
+- Added debug logging for bulk-data related operations if --debug enabled.
+- Updated build-info.properties so the Maven build timestamp is properly 
+  filtered during build and token-replaced.
+- Minor bug fix for internal CommandLineUtilities class to process defualt 
+  values for "base" options.  This allows others to extends the Senzing API
+  Server code with new options but still have the default alues from the
+  base options be populated (required for `Senzing/senzing-poc-server`).
+
 ## [2.7.2] - 2021-08-20
 
 ### Changed in 2.7.2
