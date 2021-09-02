@@ -1,5 +1,7 @@
 package com.senzing.api.websocket;
 
+import com.senzing.util.LoggingUtilities;
+
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -240,10 +242,27 @@ public class WebSocketFilter implements Filter {
         return;
       }
 
+      // get the request URI
+      String requestUri   = httpRequest.getRequestURI();
+      String queryString  = httpRequest.getQueryString();
+      if (queryString != null && queryString.trim().length() > 0) {
+        requestUri = requestUri + "?" + queryString;
+      }
+
+      if (LoggingUtilities.isDebugLogging()) {
+        System.out.println("RECEIVED UPGRADE REQUEST: " + requestUri);
+      }
+
       // call the pre-upgrade function
       try {
         // do the pre-upgrade check
         boolean proceed = this.preUpgrade(httpRequest, httpResponse);
+
+        if (LoggingUtilities.isDebugLogging()) {
+          System.out.println("PROCEEDING WITH UPGRADE REQUEST: " + proceed);
+          System.out.println("RESPONSE ALREADY COMMITTED: "
+                                 + response.isCommitted());
+        }
 
         // if not proceeding, check if the response was not committed
         if (!proceed && !response.isCommitted()) {

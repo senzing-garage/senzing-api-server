@@ -31,8 +31,8 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--help</tt></li>
-   *   <li>Command Line: <tt>-help</tt></li>
+   *   <li>Command Line: <code>--help</code></li>
+   *   <li>Command Line: <code>-help</code></li>
    * </ul>
    * </p>
    */
@@ -46,8 +46,8 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--version</tt></li>
-   *   <li>Command Line: <tt>-version</tt></li>
+   *   <li>Command Line: <code>--version</code></li>
+   *   <li>Command Line: <code>-version</code></li>
    * </ul>
    * </p>
    */
@@ -63,9 +63,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--http-port {positive-port-number|0}</tt></li>
-   *   <li>Command Line: <tt>-httpPort {positive-port-number|0}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_PORT="{positive-port-number|0}"</tt></tt></li>
+   *   <li>Command Line: <code>--http-port {positive-port-number|0}</code></li>
+   *   <li>Command Line: <code>-httpPort {positive-port-number|0}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_PORT="{positive-port-number|0}"</code></li>
    * </ul>
    * </p>
    */
@@ -83,9 +83,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--https-port {positive-port-number|0}</tt></li>
-   *   <li>Command Line: <tt>-httpsPort {positive-port-number|0}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_SECURE_PORT="{positive-port-number|0}"</tt></tt></li>
+   *   <li>Command Line: <code>--https-port {positive-port-number|0}</code></li>
+   *   <li>Command Line: <code>-httpsPort {positive-port-number|0}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_SECURE_PORT="{positive-port-number|0}"</code></li>
    * </ul>
    * </p>
    */
@@ -103,9 +103,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--key-store {pkcs12-key-store-file-path}</tt></li>
-   *   <li>Command Line: <tt>-keyStore {pkcs12-key-store-file-path}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_KEY_STORE="{pkcs12-key-store-file-path}"</tt></tt></li>
+   *   <li>Command Line: <code>--key-store {pkcs12-key-store-file-path}</code></li>
+   *   <li>Command Line: <code>-keyStore {pkcs12-key-store-file-path}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_KEY_STORE="{pkcs12-key-store-file-path}"</code></li>
    * </ul>
    * </p>
    */
@@ -121,9 +121,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--key-store-password {password}</tt></li>
-   *   <li>Command Line: <tt>-keyStorePassword {password}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_KEY_STORE_PASSWORD="{password}"</tt></tt></li>
+   *   <li>Command Line: <code>--key-store-password {password}</code></li>
+   *   <li>Command Line: <code>-keyStorePassword {password}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_KEY_STORE_PASSWORD="{password}"</code></li>
    * </ul>
    * </p>
    */
@@ -141,9 +141,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--key-alias {certificate-alias}</tt></li>
-   *   <li>Command Line: <tt>-keyAlias {certificate-alias}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_KEY_ALIAS="{certificate-alias}"</tt></tt></li>
+   *   <li>Command Line: <code>--key-alias {certificate-alias}</code></li>
+   *   <li>Command Line: <code>-keyAlias {certificate-alias}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_KEY_ALIAS="{certificate-alias}"</code></li>
    * </ul>
    * </p>
    */
@@ -159,9 +159,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--client-key-store {pkcs12-key-store-file-path}</tt></li>
-   *   <li>Command Line: <tt>-clientKeyStore {pkcs12-key-store-file-path}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_CLIENT_KEY_STORE="{pkcs12-key-store-file-path}"</tt></tt></li>
+   *   <li>Command Line: <code>--client-key-store {pkcs12-key-store-file-path}</code></li>
+   *   <li>Command Line: <code>-clientKeyStore {pkcs12-key-store-file-path}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_CLIENT_KEY_STORE="{pkcs12-key-store-file-path}"</code></li>
    * </ul>
    * </p>
    */
@@ -178,9 +178,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--client-key-store-password {password}</tt></li>
-   *   <li>Command Line: <tt>-clientKeyStorePassword {password}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_CLIENT_KEY_STORE_PASSWORD="{password}"</tt></tt></li>
+   *   <li>Command Line: <code>--client-key-store-password {password}</code></li>
+   *   <li>Command Line: <code>-clientKeyStorePassword {password}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_CLIENT_KEY_STORE_PASSWORD="{password}"</code></li>
    * </ul>
    * </p>
    */
@@ -193,16 +193,16 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * Option for specifying the bind address for the API Server.  The possible
    * values can be an actual network interface name, an IP address, the word
-   * <tt>"loopback"</tt> for the loopback local address or <tt>"all"</tt> to
+   * <code>"loopback"</code> for the loopback local address or <code>"all"</code> to
    * indicate all configured network interfaces.  The default value is
    * {@link SzApiServerConstants#DEFAULT_BIND_ADDRESS}.
    * </p>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--bind-addr {ip-address|loopback|all}</tt></li>
-   *   <li>Command Line: <tt>-bindAddr {ip-address|loopback|all}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_BIND_ADDR="{ip-address|loopback|all}"</tt></tt></li>
+   *   <li>Command Line: <code>--bind-addr {ip-address|loopback|all}</code></li>
+   *   <li>Command Line: <code>-bindAddr {ip-address|loopback|all}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_BIND_ADDR="{ip-address|loopback|all}"</code></li>
    * </ul>
    * </p>
    */
@@ -217,14 +217,14 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * API Server.  The possible values should begin with a forward slash, but if
    * not it will be added.  To specify one or more aliases for the base path
    * use a comma-separated list of base paths.  The default value is
-   * <tt>"/"</tt>.
+   * <code>"/"</code>.
    * </p>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--url-base-path {base-path}</tt></li>
-   *   <li>Command Line: <tt>-urlBasePath {base-path}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_URL_BASE_PATH="{base-path}"</tt></tt></li>
+   *   <li>Command Line: <code>--url-base-path {base-path}</code></li>
+   *   <li>Command Line: <code>-urlBasePath {base-path}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_URL_BASE_PATH="{base-path}"</code></li>
    * </ul>
    * </p>
    */
@@ -242,9 +242,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--module-name {module-name}</tt></li>
-   *   <li>Command Line: <tt>-moduleName {module-name}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_MODULE_NAME="{module-name}"</tt></tt></li>
+   *   <li>Command Line: <code>--module-name {module-name}</code></li>
+   *   <li>Command Line: <code>-moduleName {module-name}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_MODULE_NAME="{module-name}"</code></li>
    * </ul>
    * </p>
    */
@@ -262,9 +262,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--ini-file {file-path}</tt></li>
-   *   <li>Command Line: <tt>-iniFile {file-path}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_INI_FILE="{file-path}"</tt></tt></li>
+   *   <li>Command Line: <code>--ini-file {file-path}</code></li>
+   *   <li>Command Line: <code>-iniFile {file-path}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_INI_FILE="{file-path}"</code></li>
    * </ul>
    * </p>
    */
@@ -282,9 +282,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--init-file {file-path}</tt></li>
-   *   <li>Command Line: <tt>-initFile {file-path}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_INIT_FILE="{file-path}"</tt></tt></li>
+   *   <li>Command Line: <code>--init-file {file-path}</code></li>
+   *   <li>Command Line: <code>-initFile {file-path}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_INIT_FILE="{file-path}"</code></li>
    * </ul>
    * </p>
    */
@@ -302,9 +302,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--init-json {json-text}</tt></li>
-   *   <li>Command Line: <tt>-initJson {json-text}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_INIT_JSON="{json-text}"</tt></tt></li>
+   *   <li>Command Line: <code>--init-json {json-text}</code></li>
+   *   <li>Command Line: <code>-initJson {json-text}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_INIT_JSON="{json-text}"</code></li>
    * </ul>
    * </p>
    */
@@ -323,9 +323,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--init-env-var {env-var-name}</tt></li>
-   *   <li>Command Line: <tt>-initEnvVar {env-var-name}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_INIT_ENV_VAR="{env-var-name}"</tt></tt></li>
+   *   <li>Command Line: <code>--init-env-var {env-var-name}</code></li>
+   *   <li>Command Line: <code>-initEnvVar {env-var-name}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_INIT_ENV_VAR="{env-var-name}"</code></li>
    * </ul>
    * </p>
    */
@@ -343,9 +343,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--config-id {config-id}</tt></li>
-   *   <li>Command Line: <tt>-configId {config-id}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_CONFIG_ID="{config-id}"</tt></tt></li>
+   *   <li>Command Line: <code>--config-id {config-id}</code></li>
+   *   <li>Command Line: <code>-configId {config-id}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_CONFIG_ID="{config-id}"</code></li>
    * </ul>
    * </p>
    */
@@ -360,15 +360,15 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * a 403 Forbidden response.  NOTE: this option will not only disable loading
    * data to the entity repository, but will also disable modifications to the
    * configuration even if the {@link #ENABLE_ADMIN} option is provided.  A
-   * single parameter may optionally be specified as <tt>true</tt> or
-   * <tt>false</tt> with <tt>false</tt> simulating the absence of the option.
+   * single parameter may optionally be specified as <code>true</code> or
+   * <code>false</code> with <code>false</code> simulating the absence of the option.
    * </p>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--read-only [true|false]</tt></li>
-   *   <li>Command Line: <tt>-readOnly [true|false]</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_READ_ONLY="{true|false}"</tt></tt></li>
+   *   <li>Command Line: <code>--read-only [true|false]</code></li>
+   *   <li>Command Line: <code>-readOnly [true|false]</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_READ_ONLY="{true|false}"</code></li>
    * </ul>
    * </p>
    */
@@ -386,15 +386,15 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * the repository rather than only provide information that is privileged for
    * administrators then access to such functions also depend on the whether
    * or not the {@link #READ_ONLY} option was specified.  A single parameter may
-   * optionally be specified as <tt>true</tt> or <tt>false</tt> with
-   * <tt>false</tt> simulating the absence of the option.
+   * optionally be specified as <code>true</code> or <code>false</code> with
+   * <code>false</code> simulating the absence of the option.
    * </p>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--enable-admin [true|false]</tt></li>
-   *   <li>Command Line: <tt>-enableAdmin [true|false]</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_ENABLE_ADMIN="{true|false}"</tt></tt></li>
+   *   <li>Command Line: <code>--enable-admin [true|false]</code></li>
+   *   <li>Command Line: <code>-enableAdmin [true|false]</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_ENABLE_ADMIN="{true|false}"</code></li>
    * </ul>
    * </p>
    */
@@ -409,15 +409,15 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * (the default).  This option is used with {@link #INI_FILE},
    * {@link #INIT_FILE}, {@link #INIT_JSON} or {@link #INIT_ENV_VAR} to control
    * the Senzing API initialization.  A single parameter may optionally be
-   * specified as <tt>true</tt> or <tt>false</tt> with <tt>false</tt> simulating
+   * specified as <code>true</code> or <code>false</code> with <code>false</code> simulating
    * the absence of the option.
    * </p>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--verbose [true|false]</tt></li>
-   *   <li>Command Line: <tt>-verbose [true|false]</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_VERBOSE="{true|false}"</tt></tt></li>
+   *   <li>Command Line: <code>--verbose [true|false]</code></li>
+   *   <li>Command Line: <code>-verbose [true|false]</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_VERBOSE="{true|false}"</code></li>
    * </ul>
    * </p>
    */
@@ -431,20 +431,43 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * by the Senzing API Server to be reduced but does not affect messages
    * produced by the underlying Senzing API.  The absence of this option leads
    * to all log messages produced by the API Server to be generated.  A single
-   * parameter may optionally be specified as <tt>true</tt> or <tt>false</tt>
-   * with <tt>false</tt> simulating the absence of the option.
+   * parameter may optionally be specified as <code>true</code> or <code>false</code>
+   * with <code>false</code> simulating the absence of the option.
    * </p>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--quiet [true|false]</tt></li>
-   *   <li>Command Line: <tt>-quiet [true|false]</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_QUIET="{true|false}"</tt></tt></li>
+   *   <li>Command Line: <code>--quiet [true|false]</code></li>
+   *   <li>Command Line: <code>-quiet [true|false]</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_QUIET="{true|false}"</code></li>
    * </ul>
    * </p>
    */
   QUIET("--quiet", Set.of("-quiet"),
         ENV_PREFIX + "QUIET", null,
+        0, "false"),
+
+  /**
+   * <p>
+   * The presence of this option causes possibly-sensitive debug log messages to
+   * be written to standard output.  The debug messages will contain data that
+   * was sent to the server from the client and therefore this option should be
+   * used with care and only when debugging a problem in a non-production
+   * environment.  The absence of this option leads to debug messages being
+   * disabled.  A single parameter may optionally be specified as <code>true</code>
+   * or <code>false</code> with <code>false</code> simulating the absence of the option.
+   * </p>
+   * <p>
+   * This option can be specified in the following ways:
+   * <ul>
+   *   <li>Command Line: <code>--debug [true|false]</code></li>
+   *   <li>Command Line: <code>-debug [true|false]</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_DEBUG="{true|false}"</code></li>
+   * </ul>
+   * </p>
+   */
+  DEBUG("--debug", Set.of("-debug"),
+        ENV_PREFIX + "DEBUG", null,
         0, "false"),
 
   /**
@@ -457,8 +480,8 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>-monitorFile {file-path}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_MONITOR_FILE="{file-path}"</tt></tt></li>
+   *   <li>Command Line: <code>-monitorFile {file-path}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_MONITOR_FILE="{file-path}"</code></li>
    * </ul>
    * </p>
    */
@@ -476,9 +499,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--concurrency {thread-count}</tt></li>
-   *   <li>Command Line: <tt>-concurrency {thread-count}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_CONCURRENCY="{thread-count}"</tt></tt></li>
+   *   <li>Command Line: <code>--concurrency {thread-count}</code></li>
+   *   <li>Command Line: <code>-concurrency {thread-count}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_CONCURRENCY="{thread-count}"</code></li>
    * </ul>
    * </p>
    */
@@ -498,9 +521,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--http-concurrency {thread-count}</tt></li>
-   *   <li>Command Line: <tt>-httpConcurrency {thread-count}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_HTTP_CONCURRENCY="{thread-count}"</tt></tt></li>
+   *   <li>Command Line: <code>--http-concurrency {thread-count}</code></li>
+   *   <li>Command Line: <code>-httpConcurrency {thread-count}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_HTTP_CONCURRENCY="{thread-count}"</code></li>
    * </ul>
    * </p>
    */
@@ -520,15 +543,15 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * is allowed but is used to enable a check and conditional refresh only when
    * manually requested (programmatically).  <b>NOTE:</b> This is option ignored
    * if auto-refresh is disabled because the config was specified via the
-   * <tt>G2CONFIGFILE</tt> init option or if {@link #CONFIG_ID} has been
+   * <code>G2CONFIGFILE</code> init option or if {@link #CONFIG_ID} has been
    * specified to lock to a specific configuration.
    * </p>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--auto-refresh-period {positive-integer-seconds|0|negative-integer}</tt></li>
-   *   <li>Command Line: <tt>-autoRefreshPeriod {positive-integer-seconds|0|negative-integer}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_AUTO_REFRESH_PERIOD="{positive-integer-seconds|0|negative-integer}"</tt></tt></li>
+   *   <li>Command Line: <code>--auto-refresh-period {positive-integer-seconds|0|negative-integer}</code></li>
+   *   <li>Command Line: <code>-autoRefreshPeriod {positive-integer-seconds|0|negative-integer}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_AUTO_REFRESH_PERIOD="{positive-integer-seconds|0|negative-integer}"</code></li>
    * </ul>
    * </p>
    */
@@ -540,15 +563,15 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
 
   /**
    * <p>
-   * This option is used to enable the CORS <tt>Access-Control-Allow-Origin</tt>
+   * This option is used to enable the CORS <code>Access-Control-Allow-Origin</code>
    * header for all endpoints.  If not present then CORS is disabled.
    * </p>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--allowed-origins {url-domain}</tt></li>
-   *   <li>Command Line: <tt>-allowedOrigins {url-domain}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_ALLOWED_ORIGINS="{url-domain}"</tt></tt></li>
+   *   <li>Command Line: <code>--allowed-origins {url-domain}</code></li>
+   *   <li>Command Line: <code>-allowedOrigins {url-domain}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_ALLOWED_ORIGINS="{url-domain}"</code></li>
    * </ul>
    * </p>
    */
@@ -569,9 +592,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--stats-interval {milliseconds}</tt></li>
-   *   <li>Command Line: <tt>-statsInterval {milliseconds}</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_STATS_INTERVAL="{milliseconds}"</tt></tt></li>
+   *   <li>Command Line: <code>--stats-interval {milliseconds}</code></li>
+   *   <li>Command Line: <code>-statsInterval {milliseconds}</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_STATS_INTERVAL="{milliseconds}"</code></li>
    * </ul>
    * </p>
    */
@@ -584,15 +607,15 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * The presence of this option causes the API Server to skip a performance
    * check on startup, and its absence allows the performance check to be
    * performed as normal.  A single parameter may optionally be specified as
-   * <tt>true</tt> or <tt>false</tt> with <tt>false</tt> simulating the absence
+   * <code>true</code> or <code>false</code> with <code>false</code> simulating the absence
    * of the option.
    * </p>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--skip-startup-perf [true|false]</tt></li>
-   *   <li>Command Line: <tt>-skipStartupPerf [true|false]</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_SKIP_STARTUP_PERF="{true|false}"</tt></tt></li>
+   *   <li>Command Line: <code>--skip-startup-perf [true|false]</code></li>
+   *   <li>Command Line: <code>-skipStartupPerf [true|false]</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_SKIP_STARTUP_PERF="{true|false}"</code></li>
    * </ul>
    * </p>
    */
@@ -604,11 +627,11 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * The presence of this option causes the API Server to skip priming the
    * engine on startup, and its absence allows the engine priming to occur as
    * is the default behavior.  A single parameter may optionally be specified as
-   * <tt>true</tt> or <tt>false</tt> with <tt>false</tt> simulating the absence
+   * <code>true</code> or <code>false</code> with <code>false</code> simulating the absence
    * of the option.
-   *   <li>Command Line: <tt>--skip-engine-priming [true|false]</tt></li>
-   *   <li>Command Line: <tt>-skipEnginePriming [true|false]</tt></li>
-   *   <li>Environment: <tt>SENZING_API_SERVER_SKIP_ENGINE_PRIMING="{true|false}"</tt></tt></li>
+   *   <li>Command Line: <code>--skip-engine-priming [true|false]</code></li>
+   *   <li>Command Line: <code>-skipEnginePriming [true|false]</code></li>
+   *   <li>Environment: <code>SENZING_API_SERVER_SKIP_ENGINE_PRIMING="{true|false}"</code></li>
    * </ul>
    * </p>
    */
@@ -627,9 +650,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--sqs-info-url {url}</tt></li>
-   *   <li>Command Line: <tt>-sqsInfoUrl {url}</tt></li>
-   *   <li>Environment: <tt>SENZING_SQS_INFO_URL="{url}"</tt></tt></li>
+   *   <li>Command Line: <code>--sqs-info-url {url}</code></li>
+   *   <li>Command Line: <code>-sqsInfoUrl {url}</code></li>
+   *   <li>Environment: <code>SENZING_SQS_INFO_URL="{url}"</code></li>
    * </ul>
    * </p>
    */
@@ -649,10 +672,10 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--rabbit-info-host {username}</tt></li>
-   *   <li>Command Line: <tt>-rabbitInfoHost {username}</tt></li>
-   *   <li>Environment: <tt>SENZING_RABBITMQ_INFO_USERNAME="{username}"</tt></tt></li>
-   *   <li>Environment: <tt>SENZING_RABBITMQ_USERNAME="{username}" (fallback)</tt></tt></li>
+   *   <li>Command Line: <code>--rabbit-info-host {username}</code></li>
+   *   <li>Command Line: <code>-rabbitInfoHost {username}</code></li>
+   *   <li>Environment: <code>SENZING_RABBITMQ_INFO_USERNAME="{username}"</code></li>
+   *   <li>Environment: <code>SENZING_RABBITMQ_USERNAME="{username}" (fallback)</code></li>
    * </ul>
    * </p>
    */
@@ -673,10 +696,10 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--rabbit-info-password {password}</tt></li>
-   *   <li>Command Line: <tt>-rabbitInfoPassword {password}</tt></li>
-   *   <li>Environment: <tt>SENZING_RABBITMQ_INFO_PASSWORD="{password}"</tt></tt></li>
-   *   <li>Environment: <tt>SENZING_RABBITMQ_PASSWORD="{password}" (fallback)</tt></tt></li>
+   *   <li>Command Line: <code>--rabbit-info-password {password}</code></li>
+   *   <li>Command Line: <code>-rabbitInfoPassword {password}</code></li>
+   *   <li>Environment: <code>SENZING_RABBITMQ_INFO_PASSWORD="{password}"</code></li>
+   *   <li>Environment: <code>SENZING_RABBITMQ_PASSWORD="{password}" (fallback)</code></li>
    * </ul>
    * </p>
    */
@@ -697,10 +720,10 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--rabbit-info-host {hostname}</tt></li>
-   *   <li>Command Line: <tt>-rabbitInfoHost {hostname}</tt></li>
-   *   <li>Environment: <tt>SENZING_RABBITMQ_INFO_HOST="{hostname}"</tt></tt></li>
-   *   <li>Environment: <tt>SENZING_RABBITMQ_HOST="{hostname}" (fallback)</tt></tt></li>
+   *   <li>Command Line: <code>--rabbit-info-host {hostname}</code></li>
+   *   <li>Command Line: <code>-rabbitInfoHost {hostname}</code></li>
+   *   <li>Environment: <code>SENZING_RABBITMQ_INFO_HOST="{hostname}"</code></li>
+   *   <li>Environment: <code>SENZING_RABBITMQ_HOST="{hostname}" (fallback)</code></li>
    * </ul>
    * </p>
    */
@@ -721,10 +744,10 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--rabbit-info-port {port}</tt></li>
-   *   <li>Command Line: <tt>-rabbitInfoPort {port}</tt></li>
-   *   <li>Environment: <tt>SENZING_RABBITMQ_INFO_PORT="{port}"</tt></tt></li>
-   *   <li>Environment: <tt>SENZING_RABBITMQ_PORT="{port}" (fallback)</tt></tt></li>
+   *   <li>Command Line: <code>--rabbit-info-port {port}</code></li>
+   *   <li>Command Line: <code>-rabbitInfoPort {port}</code></li>
+   *   <li>Environment: <code>SENZING_RABBITMQ_INFO_PORT="{port}"</code></li>
+   *   <li>Environment: <code>SENZING_RABBITMQ_PORT="{port}" (fallback)</code></li>
    * </ul>
    * </p>
    */
@@ -745,10 +768,10 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--rabbit-info-virtual-host {virtual-host}</tt></li>
-   *   <li>Command Line: <tt>-rabbitInfoVirtualHost {virtual-host}</tt></li>
-   *   <li>Environment: <tt>SENZING_RABBITMQ_INFO_VIRTUAL_HOST="{virtual-host}"</tt></tt></li>
-   *   <li>Environment: <tt>SENZING_RABBITMQ_VIRTUAL_HOST="{virtual-host}" (fallback)</tt></tt></li>
+   *   <li>Command Line: <code>--rabbit-info-virtual-host {virtual-host}</code></li>
+   *   <li>Command Line: <code>-rabbitInfoVirtualHost {virtual-host}</code></li>
+   *   <li>Environment: <code>SENZING_RABBITMQ_INFO_VIRTUAL_HOST="{virtual-host}"</code></li>
+   *   <li>Environment: <code>SENZING_RABBITMQ_VIRTUAL_HOST="{virtual-host}" (fallback)</code></li>
    * </ul>
    * </p>
    */
@@ -769,10 +792,10 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--rabbit-info-exchange {exchange}</tt></li>
-   *   <li>Command Line: <tt>-rabbitInfoExchange {exchange}</tt></li>
-   *   <li>Environment: <tt>SENZING_RABBITMQ_INFO_EXCHANGE="{exchange}"</tt></tt></li>
-   *   <li>Environment: <tt>SENZING_RABBITMQ_EXCHANGE="{exchange}" (fallback)</tt></tt></li>
+   *   <li>Command Line: <code>--rabbit-info-exchange {exchange}</code></li>
+   *   <li>Command Line: <code>-rabbitInfoExchange {exchange}</code></li>
+   *   <li>Environment: <code>SENZING_RABBITMQ_INFO_EXCHANGE="{exchange}"</code></li>
+   *   <li>Environment: <code>SENZING_RABBITMQ_EXCHANGE="{exchange}" (fallback)</code></li>
    * </ul>
    * </p>
    */
@@ -793,9 +816,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--rabbit-info-routing-key {routing-key}</tt></li>
-   *   <li>Command Line: <tt>-rabbitInfoRoutingKey {routing-key}</tt></li>
-   *   <li>Environment: <tt>SENZING_RABBITMQ_INFO_ROUTING_KEY="{routing-key}"</tt></tt></li>
+   *   <li>Command Line: <code>--rabbit-info-routing-key {routing-key}</code></li>
+   *   <li>Command Line: <code>-rabbitInfoRoutingKey {routing-key}</code></li>
+   *   <li>Environment: <code>SENZING_RABBITMQ_INFO_ROUTING_KEY="{routing-key}"</code></li>
    * </ul>
    * </p>
    */
@@ -818,10 +841,10 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--kafka-info-bootstrap-servers {bootstrap-servers}</tt></li>
-   *   <li>Command Line: <tt>-kafkaInfoBootstrapServers {bootstrap-servers}</tt></li>
-   *   <li>Environment: <tt>SENZING_KAFKA_INFO_BOOTSTRAP_SERVER="{bootstrap-servers}"</tt></tt></li>
-   *   <li>Environment: <tt>SENZING_KAFKA_BOOTSTRAP_SERVER="{bootstrap-servers}" (fallback)</tt></tt></li>
+   *   <li>Command Line: <code>--kafka-info-bootstrap-servers {bootstrap-servers}</code></li>
+   *   <li>Command Line: <code>-kafkaInfoBootstrapServers {bootstrap-servers}</code></li>
+   *   <li>Environment: <code>SENZING_KAFKA_INFO_BOOTSTRAP_SERVER="{bootstrap-servers}"</code></li>
+   *   <li>Environment: <code>SENZING_KAFKA_BOOTSTRAP_SERVER="{bootstrap-servers}" (fallback)</code></li>
    * </ul>
    * </p>
    */
@@ -843,10 +866,10 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--kafka-info-group {group-id}</tt></li>
-   *   <li>Command Line: <tt>-kafkaInfoGroup {group-id}</tt></li>
-   *   <li>Environment: <tt>SENZING_KAFKA_INFO_GROUP="{group-id}"</tt></tt></li>
-   *   <li>Environment: <tt>SENZING_KAFKA_GROUP="{group-id}" (fallback)</tt></tt></li>
+   *   <li>Command Line: <code>--kafka-info-group {group-id}</code></li>
+   *   <li>Command Line: <code>-kafkaInfoGroup {group-id}</code></li>
+   *   <li>Environment: <code>SENZING_KAFKA_INFO_GROUP="{group-id}"</code></li>
+   *   <li>Environment: <code>SENZING_KAFKA_GROUP="{group-id}" (fallback)</code></li>
    * </ul>
    * </p>
    */
@@ -867,9 +890,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * <p>
    * This option can be specified in the following ways:
    * <ul>
-   *   <li>Command Line: <tt>--kafka-info-topic {topic-name}</tt></li>
-   *   <li>Command Line: <tt>-kafkaInfoTopic {topic-name}</tt></li>
-   *   <li>Environment: <tt>SENZING_KAFKA_INFO_TOPIC="{topic-name}"</tt></tt></li>
+   *   <li>Command Line: <code>--kafka-info-topic {topic-name}</code></li>
+   *   <li>Command Line: <code>-kafkaInfoTopic {topic-name}</code></li>
+   *   <li>Environment: <code>SENZING_KAFKA_INFO_TOPIC="{topic-name}"</code></li>
    * </ul>
    * </p>
    */
@@ -947,7 +970,7 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
 
   /**
    * The {@link List} o {@link String} default parameters for this option.  This
-   * is <tt>null</tt> if no default and an empty {@link List} if the option is
+   * is <code>null</code> if no default and an empty {@link List} if the option is
    * specified by default with no parameters.
    */
   private List<String> defaultParameters;
@@ -1755,6 +1778,7 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
         case ENABLE_ADMIN:
         case VERBOSE:
         case QUIET:
+        case DEBUG:
         case SKIP_STARTUP_PERF:
         case SKIP_ENGINE_PRIMING:
           if (params.size() == 0) return Boolean.TRUE;

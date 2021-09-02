@@ -30,6 +30,7 @@ import com.senzing.configmgr.ConfigurationManager;
 import com.senzing.g2.engine.*;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtils;
+import com.senzing.util.LoggingUtilities;
 import com.senzing.util.WorkerThreadPool;
 import com.senzing.util.AccessToken;
 import org.eclipse.jetty.http.HttpVersion;
@@ -1954,6 +1955,15 @@ public class SzApiServer implements SzApiProvider {
   {
     this.accessToken = token;
 
+    // check the debug flag
+    Boolean debug = false;
+    if (options.containsKey(DEBUG)) {
+      debug = (Boolean) options.get(DEBUG);
+    }
+    if (Boolean.TRUE.equals(debug)) {
+      System.setProperty(DEBUG_SYSTEM_PROPERTY, Boolean.TRUE.toString());
+    }
+
     this.httpPort = null;
     if (options.containsKey(HTTP_PORT)) {
       this.httpPort = (Integer) options.get(HTTP_PORT);
@@ -2273,8 +2283,17 @@ public class SzApiServer implements SzApiProvider {
       }
     });
 
+    // check if debugging requests
+    if (LoggingUtilities.isDebugLogging()) {
+      this.servletContext.addFilter(DebugRequestFilter.class, "/*", requestDispatch);
+    }
+
+
+    // diagnose requests with errors
+    this.servletContext.addFilter(DiagnoseRequestFilter.class, "/*", requestDispatch);
+
+    // check if we have to respond with the allowed origins header
     if (this.allowedOrigins != null) {
-      this.servletContext.addFilter(DiagnoseRequestFilter.class, "/*", requestDispatch);
       FilterHolder filterHolder = this.servletContext.addFilter(CrossOriginFilter.class, "/*", requestDispatch);
       filterHolder.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, this.allowedOrigins);
       filterHolder.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,POST,PUT,DELETE,PATCH,HEAD,OPTIONS");

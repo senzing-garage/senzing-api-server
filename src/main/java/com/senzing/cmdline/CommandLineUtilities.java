@@ -1196,11 +1196,11 @@ public class CommandLineUtilities {
                     ParameterProcessor                        processor,
                     Map<CommandLineOption, CommandLineValue>  optionValues)
   {
-    // get all the options
-    EnumSet<T> enumSet = EnumSet.allOf(enumClass);
+    Set<CommandLineOption> options = new LinkedHashSet<>();
+    populateOptionsChain(options, enumClass);
 
     // iterate over the options
-    for (CommandLineOption option: enumSet) {
+    for (CommandLineOption option: options) {
       // prefer explicit command-line arguments, so skip if already present
       if (optionValues.containsKey(option)) continue;
 

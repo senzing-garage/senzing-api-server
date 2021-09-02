@@ -8,6 +8,11 @@ import java.util.Objects;
 
 public class LoggingUtilities {
   /**
+   * The system property for indicating that debug logging should be enabled.
+   */
+  public static final String DEBUG_SYSTEM_PROPERTY = "com.senzing.debug";
+
+  /**
    * The last logged exception in this thread.
    */
   private static final ThreadLocal<Long> LAST_LOGGED_EXCEPTION
@@ -18,6 +23,18 @@ public class LoggingUtilities {
    */
   private LoggingUtilities() {
     // do nothing
+  }
+
+  /**
+   * Checks if debug logging is enabled.
+   *
+   * @return <code>true</code> if debug logging is enabled, and
+   *         <code>false</code> if not.
+   */
+  public static boolean isDebugLogging() {
+    String value = System.getProperty(DEBUG_SYSTEM_PROPERTY);
+    if (value == null) return false;
+    return (value.trim().equalsIgnoreCase(Boolean.TRUE.toString()));
   }
 
   /**
