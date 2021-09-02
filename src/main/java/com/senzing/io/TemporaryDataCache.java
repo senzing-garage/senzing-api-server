@@ -1,5 +1,7 @@
 package com.senzing.io;
 
+import com.senzing.util.LoggingUtilities;
+
 import javax.crypto.Cipher;
 import javax.crypto.CipherInputStream;
 import javax.crypto.CipherOutputStream;
@@ -456,6 +458,12 @@ public class TemporaryDataCache {
           IOUtilities.close(this.currentCOS);
           IOUtilities.close(this.currentFOS);
 
+          if (LoggingUtilities.isDebugLogging()) {
+            System.out.println("[TemporaryDataCache] Completed file part: "
+                                   + this.currentFile + " (" + this.currentWriteCount
+                                   + " bytes / " + this.currentFile.length()
+                                   + " compressed)");
+          }
           // reinitialize the current file fields
           this.currentGOS         = null;
           this.currentCOS         = null;
@@ -528,6 +536,11 @@ public class TemporaryDataCache {
           // flag the file for deletion on exit
           this.currentFile.deleteOnExit();
 
+          if (LoggingUtilities.isDebugLogging()) {
+            System.out.println("[TemporaryDataCache] Beginning file part: "
+                                   + this.currentFile);
+          }
+
         } catch (RuntimeException e) {
           owner.setFailure(e);
           throw e;
@@ -562,6 +575,24 @@ public class TemporaryDataCache {
         this.totalWriteCount++;
         this.currentWriteCount++;
         this.lastWriteTime = System.nanoTime();
+
+        // log every 5K bytes
+        if (LoggingUtilities.isDebugLogging()) {
+          double countLog10 = Math.floor(
+              Math.log10((double) this.currentWriteCount));
+
+          int logInterval = (int) (Math.max(100, Math.pow(10, countLog10)
+              * Math.max(1, countLog10 - 1)));
+
+          if ((this.currentWriteCount % logInterval) == 0) {
+            System.out.println("[TemporaryDataCache] Bytes written to file: "
+                                   + this.currentFile + " ("
+                                   + this.currentWriteCount
+                                   + " current part / "
+                                   + this.totalWriteCount
+                                   + " total bytes)");
+          }
+        }
 
         // check the write count
         if (this.currentWriteCount >= this.maxPartLength) {
