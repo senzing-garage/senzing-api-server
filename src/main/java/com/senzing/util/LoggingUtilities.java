@@ -1,12 +1,44 @@
 package com.senzing.util;
 
 import com.senzing.g2.engine.G2Fallible;
+import jdk.jfr.StackTrace;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Provides logging utilities.
+ */
 public class LoggingUtilities {
+  /**
+   * The date-time pattern for the build number.
+   */
+  private static final String LOG_DATE_PATTERN = "yyyy-MM-dd HH:mm:ss,SSS";
+
+  /**
+   * The time zone used for the time component of the build number.
+   */
+  private static final ZoneId LOG_DATE_ZONE = ZoneId.of("UTC");
+
+  /**
+   * The {@link DateTimeFormatter} for interpretting the build number as a
+   * LocalDateTime instance.
+   */
+  private static final DateTimeFormatter LOG_DATE_FORMATTER
+      = DateTimeFormatter.ofPattern(LOG_DATE_PATTERN).withZone(LOG_DATE_ZONE);
+
+  /**
+   * The base product ID to log with if the calling package is not overidden.
+   */
+  public static final String BASE_PRODUCT_ID = "5025";
+
   /**
    * The system property for indicating that debug logging should be enabled.
    */
@@ -19,10 +51,60 @@ public class LoggingUtilities {
       = new ThreadLocal<>();
 
   /**
+   * The {@link Map} of package prefixes to product ID's.
+   */
+  private static final Map<String, String> PRODUCT_ID_MAP
+      = new LinkedHashMap<>();
+
+  /**
    * Private default constructor
    */
   private LoggingUtilities() {
     // do nothing
+  }
+
+  /**
+   * Sets the product ID to use when logging messages for classes in the
+   * specified package name.
+   *
+   * @param packageName The package name.
+   * @param productId The product ID to use for the package.
+   */
+  public static void setProductIdForPackage(String packageName,
+                                            String productId)
+  {
+    synchronized (PRODUCT_ID_MAP) {
+      PRODUCT_ID_MAP.put(packageName, productId);
+    }
+  }
+
+  /**
+   * Gets the product ID for the package name of the class performing the
+   * logging.
+   *
+   * @param packageName The package name.
+   *
+   * @return The product ID to log with.
+   */
+  public static String getProductIdForPackage(String packageName) {
+    synchronized (PRODUCT_ID_MAP) {
+      do {
+        // check if we have a product ID for the package
+        if (PRODUCT_ID_MAP.containsKey(packageName)) {
+          return PRODUCT_ID_MAP.get(packageName);
+        }
+
+        // strip off the last part of the package name
+        int index = packageName.lastIndexOf('.');
+        if (index <= 0) break;
+        if (index == (packageName.length() - 1)) break;
+        packageName = packageName.substring(0, index);
+
+      } while (packageName.length() > 0 && !packageName.equals("com.senzing"));
+
+      // return the base product ID if we get here
+      return BASE_PRODUCT_ID;
+    }
   }
 
   /**
@@ -35,6 +117,36 @@ public class LoggingUtilities {
     String value = System.getProperty(DEBUG_SYSTEM_PROPERTY);
     if (value == null) return false;
     return (value.trim().equalsIgnoreCase(Boolean.TRUE.toString()));
+  }
+
+  /**
+   * Produces a single or multi-line debug message with a consistent prefix
+   * and timestamp IF {@linkplain #isDebugLogging() debug logging} is turned on.
+   *
+   * @param lines The lines of text to log.
+   */
+  public static void debugLog(String... lines) {
+    if (!isDebugLogging()) return;
+    Thread currentThread = Thread.currentThread();
+    StackTraceElement[] stackTrace = currentThread.getStackTrace();
+    StackTraceElement caller = stackTrace[2];
+    String callingClass = caller.getClassName();
+    int index = callingClass.lastIndexOf(".");
+
+    String packageName  = callingClass.substring(0, index);
+    callingClass = callingClass.substring(index+1);
+
+    String productId = getProductIdForPackage(packageName);
+
+    StringBuilder sb = new StringBuilder();
+    String timestamp
+        = LOG_DATE_FORMATTER.format(Instant.now().atZone(LOG_DATE_ZONE));
+    sb.append(timestamp).append(" senzing-").append(productId).append("DEBUG")
+        .append(" [").append(callingClass).append(".")
+        .append(caller.getMethodName()).append(":")
+        .append(caller.getLineNumber()).append("] ")
+        .append(multilineFormat(lines));
+    System.out.print(sb);
   }
 
   /**

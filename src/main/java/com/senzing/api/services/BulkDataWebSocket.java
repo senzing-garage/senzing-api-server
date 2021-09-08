@@ -1,7 +1,6 @@
 package com.senzing.api.services;
 
 import com.senzing.api.model.SzErrorResponse;
-import com.senzing.api.model.SzHttpMethod;
 import com.senzing.api.model.SzLinks;
 import com.senzing.api.model.SzMeta;
 import com.senzing.io.IOUtilities;
@@ -15,13 +14,13 @@ import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
 import static com.senzing.io.IOUtilities.UTF_8;
 import static javax.ws.rs.core.MediaType.TEXT_PLAIN_TYPE;
 import static com.senzing.api.model.SzHttpMethod.*;
+import static com.senzing.util.LoggingUtilities.*;
 
 /**
  * Provides a base class for web socket implementations that accept a
@@ -71,11 +70,10 @@ public abstract class BulkDataWebSocket implements BulkDataSupport {
 
           if (LoggingUtilities.isDebugLogging()) {
             if (timedOut) {
-              System.out.println("[BulkDataWebSocket] Timed out waiting for "
-                                     + "input.  Assuming EOF.");
+              debugLog("Timed out waiting for input.  Assuming EOF.");
             } else if (this.completed) {
-              System.out.println("[BulkDataWebSocket] Completed reading input "
-                                 + "without timeout. EOF reached.");
+              debugLog("Completed reading input without timeout.  "
+                       + "EOF reached.");
             }
           }
           if (this.completed || timedOut) {
@@ -311,13 +309,13 @@ public abstract class BulkDataWebSocket implements BulkDataSupport {
    */
   @OnMessage
   public synchronized void onMessage(byte[] bytes) throws IOException {
-    if (LoggingUtilities.isDebugLogging()) {
-      System.out.println("BINARY WEB SOCKET MESSAGE RECEIVED (" + bytes.length
-                             + " bytes): " + this.uriInfo.getRequestUri().toString());
-      System.out.println("---------------------");
-      System.out.println(new String(bytes, IOUtilities.UTF_8));
-      System.out.println("---------------------");
-    }
+    debugLog("Binary web socket message received (" + bytes.length
+                 + " bytes): "
+                 + this.uriInfo.getRequestUri().toString(),
+             "-----------------------------------",
+             new String(bytes, UTF_8),
+             "-----------------------------------");
+
     long now = System.nanoTime();
     if (this.pipedOutputStream == null) {
       // if session closed, ignore the message
@@ -354,13 +352,13 @@ public abstract class BulkDataWebSocket implements BulkDataSupport {
    */
   @OnMessage
   public synchronized void onMessage(String text) throws IOException {
-    if (LoggingUtilities.isDebugLogging()) {
-      System.out.println("TEXT WEB SOCKET MESSAGE RECEIVED (" + text.length()
-                             + "): " + this.uriInfo.getRequestUri().toString());
-      System.out.println("---------------------");
-      System.out.println(text);
-      System.out.println("---------------------");
-    }
+    debugLog("Text web socket message received (" + text.length()
+                 + " characters): "
+                 + this.uriInfo.getRequestUri().toString(),
+             "-----------------------------------",
+             text,
+             "-----------------------------------");
+
     long now = System.nanoTime();
     if (this.pipedOutputStream == null) {
       if (!this.session.isOpen() || this.closing) return;

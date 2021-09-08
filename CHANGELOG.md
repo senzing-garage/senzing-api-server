@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.4] - 2021-09-08
+
+### Changed in 2.7.4
+
+- Improved debug logging with standardized formatting and timestamps.
+- Added more debug logging to TemporaryDataCache.
+- Renamed enum constant for debug logging from DEBUG to DEBUG_LOGGING.
+- Added debug option to SzApiServerOptions for programmatic configuration.
+- Added `com.senzing.api.test.debug=true` system property check to run
+  automated tests with debug logging enabled.
+- Modified usage message to include information on `--debug` option.
+
 ## [2.7.3] - 2021-09-02
 
 ### Changed in 2.7.3

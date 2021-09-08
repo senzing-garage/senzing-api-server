@@ -34,7 +34,6 @@ import com.senzing.util.LoggingUtilities;
 import com.senzing.util.WorkerThreadPool;
 import com.senzing.util.AccessToken;
 import org.eclipse.jetty.http.HttpVersion;
-import org.eclipse.jetty.http.MimeTypes;
 import org.eclipse.jetty.server.*;
 
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
@@ -54,7 +53,6 @@ import javax.servlet.DispatcherType;
 import javax.websocket.DeploymentException;
 import javax.websocket.server.ServerContainer;
 import javax.websocket.server.ServerEndpointConfig;
-import javax.ws.rs.GET;
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
 
@@ -1207,6 +1205,14 @@ public class SzApiServer implements SzApiProvider {
         "        setting whereas an explicit false overrides any environment variable.",
         "        --> VIA ENVIRONMENT: " + QUIET.getEnvironmentVariable(),
         "",
+        "   --debug [true|false]",
+        "        Also -debug.  If specified then debug logging is enabled.  The",
+        "        true/false parameter is optional, if not specified then true is assumed.",
+        "        If specified as false then it is the same as omitting the option with",
+        "        the exception that omission falls back to the environment variable",
+        "        setting whereas an explicit false overrides any environment variable.",
+        "        --> VIA ENVIRONMENT: " + DEBUG_LOGGING.getEnvironmentVariable(),
+        "",
         "   --monitor-file <file-path>",
         "        Also -monitorFile.  Specifies a file whose timestamp is monitored to",
         "        determine when to shutdown.",
@@ -1957,8 +1963,8 @@ public class SzApiServer implements SzApiProvider {
 
     // check the debug flag
     Boolean debug = false;
-    if (options.containsKey(DEBUG)) {
-      debug = (Boolean) options.get(DEBUG);
+    if (options.containsKey(DEBUG_LOGGING)) {
+      debug = (Boolean) options.get(DEBUG_LOGGING);
     }
     if (Boolean.TRUE.equals(debug)) {
       System.setProperty(DEBUG_SYSTEM_PROPERTY, Boolean.TRUE.toString());

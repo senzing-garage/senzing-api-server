@@ -194,11 +194,9 @@ public interface BulkDataSupport extends ServicesSupport {
       String charset = bulkDataSet.getCharacterEncoding();
       dataAnalysis.setCharacterEncoding(charset);
 
-      if (LoggingUtilities.isDebugLogging()) {
-        System.out.println(
-            "[BulkDataSupport] ANALYZE BULK DATA CHARACTER ENCODING: "
+      debugLog("Analyze bulk data character encoding: "
                 + charset);
-      }
+
       long start = System.nanoTime();
       // check if we need to auto-detect the media type
       try (InputStream        is  = dataCache.getInputStream(true);
@@ -209,10 +207,8 @@ public interface BulkDataSupport extends ServicesSupport {
         RecordReader recordReader
             = new RecordReader(bulkDataSet.getFormat(), br);
         bulkDataSet.setFormat(recordReader.getFormat());
-        if (LoggingUtilities.isDebugLogging()) {
-          System.out.println("[BulkDataSupport] ANALYZE BULK DATA FORMAT: "
-                                 + bulkDataSet.getFormat());
-        }
+        debugLog("Analyze bulk data format: "+ bulkDataSet.getFormat());
+
         if (bulkDataSet.getFormat() != null) {
           dataAnalysis.setMediaType(bulkDataSet.getFormat().getMediaType());
         } else {
@@ -382,10 +378,7 @@ public interface BulkDataSupport extends ServicesSupport {
 
       String charset = bulkDataSet.getCharacterEncoding();
 
-      if (LoggingUtilities.isDebugLogging()) {
-        System.out.println("[BulkDataSupport] LOAD BULK DATA CHARACTER ENCODING: "
-                               + charset);
-      }
+      debugLog("Load bulk data character encoding: " + charset);
 
       String loadId = (explicitLoadId == null)
           ? formatLoadId(dataCache, fileMetaData) : explicitLoadId;
@@ -412,10 +405,8 @@ public interface BulkDataSupport extends ServicesSupport {
                                                      loadId);
 
         bulkDataSet.setFormat(recordReader.getFormat());
-        if (LoggingUtilities.isDebugLogging()) {
-          System.out.println("[BulkDataSupport] LOAD BULK DATA FORMAT: "
-                                 + bulkDataSet.getFormat());
-        }
+        debugLog("Load bulk data format: " + bulkDataSet.getFormat());
+
         bulkLoadResult.setCharacterEncoding(charset);
         bulkLoadResult.setMediaType(bulkDataSet.getFormat().getMediaType());
 
@@ -460,11 +451,9 @@ public interface BulkDataSupport extends ServicesSupport {
             if (resolvedDS == null || resolvedDS.trim().length() == 0
                 || resolvedET == null || resolvedET.trim().length() == 0)
             {
-              if (LoggingUtilities.isDebugLogging()) {
-                System.out.println(
-                    "[BulkDataSupport] INCOMPLETE RECORD NOT LOADED: "
+              debugLog("INCOMPLETE RECORD NOT LOADED: "
                         + JsonUtils.toJsonText(record));
-              }
+
               bulkLoadResult.trackIncompleteRecord(resolvedDS, resolvedET);
 
             } else {
@@ -640,10 +629,8 @@ public interface BulkDataSupport extends ServicesSupport {
         this.enteringQueue(timers);
         return provider.executeInThread(() -> {
           this.exitingQueue(timers);
-          if (LoggingUtilities.isDebugLogging()) {
-            System.out.println(
-                "[BulkDataSupport] ASYNC LOADING RECORD: " + recordJSON);
-          }
+          debugLog("Async loading record: " + recordJSON);
+
           int returnCode = this.addRecord(engineApi,
                                           provider,
                                           dataSource,
@@ -695,17 +682,13 @@ public interface BulkDataSupport extends ServicesSupport {
         // check if we have a data source and entity type
         if (dataSource == null || dataSource.trim().length() == 0
             || entityType == null || entityType.trim().length() == 0) {
-          if (LoggingUtilities.isDebugLogging()) {
-            System.out.println(
-              "[BulkDataSupport] INCOMPLETE RECORD NOT LOADED: " + recordJSON);
-          }
+          debugLog("Incomplete record not loaded: " + recordJSON);
+
           bulkLoadResult.trackIncompleteRecord(dataSource, entityType);
 
         } else {
-          if (LoggingUtilities.isDebugLogging()) {
-            System.out.println(
-                "[BulkDataSupport] SYNC LOADING RECORD: " + recordJSON);
-          }
+          debugLog("Sync loading record: " + recordJSON);
+
           int returnCode = this.addRecord(engineApi,
                                           provider,
                                           dataSource,

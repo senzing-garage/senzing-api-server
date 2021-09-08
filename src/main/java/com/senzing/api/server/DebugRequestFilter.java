@@ -2,8 +2,8 @@ package com.senzing.api.server;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.core.UriInfo;
 import java.io.IOException;
+import static com.senzing.util.LoggingUtilities.*;
 
 public class DebugRequestFilter implements Filter {
   @Override
@@ -25,20 +25,20 @@ public class DebugRequestFilter implements Filter {
       requestUri = requestUri + "?" + queryString;
     }
     long start = System.nanoTime();
-    System.out.println("[ " + threadId + " ] RECEIVED REQUEST: " + requestUri);
+    debugLog("Received request on thread " + threadId + ": " + requestUri);
     try {
       filterChain.doFilter(servletRequest, servletResponse);
 
     } catch (IOException|ServletException|RuntimeException e) {
-      System.out.println("[ " + threadId + " ] REQUEST FAILED: " + requestUri);
-      System.out.println(e);
+      debugLog("Request failed on thread " + threadId + ": " + requestUri,
+               e.toString());
       throw e;
 
     } finally {
       long end = System.nanoTime();
       long millis = (end - start) / 1000000L;
-      System.out.println("[ " + threadId + " ] CONCLUDED REQUEST IN " + millis
-                             + "ms : " + requestUri);
+      debugLog("Request concluded in " + millis + "ms on thread "
+                   + threadId + ": " + requestUri);
     }
   }
 

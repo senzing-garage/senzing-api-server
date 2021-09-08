@@ -10,13 +10,12 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.Enumeration;
 import java.util.Objects;
 
 import static javax.servlet.http.HttpServletResponse.*;
+import static com.senzing.util.LoggingUtilities.*;
 
 /**
  * Provides a {@link Filter} that will do a pre-flight check on an
@@ -249,20 +248,15 @@ public class WebSocketFilter implements Filter {
         requestUri = requestUri + "?" + queryString;
       }
 
-      if (LoggingUtilities.isDebugLogging()) {
-        System.out.println("RECEIVED UPGRADE REQUEST: " + requestUri);
-      }
+      debugLog("Received upgrade request: " + requestUri);
 
       // call the pre-upgrade function
       try {
         // do the pre-upgrade check
         boolean proceed = this.preUpgrade(httpRequest, httpResponse);
 
-        if (LoggingUtilities.isDebugLogging()) {
-          System.out.println("PROCEEDING WITH UPGRADE REQUEST: " + proceed);
-          System.out.println("RESPONSE ALREADY COMMITTED: "
-                                 + response.isCommitted());
-        }
+        debugLog("Pre-upgrade checks (PROCEED / COMMITTED): "
+                 + proceed + " / " + response.isCommitted());
 
         // if not proceeding, check if the response was not committed
         if (!proceed && !response.isCommitted()) {

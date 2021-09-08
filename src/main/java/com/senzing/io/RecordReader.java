@@ -849,4 +849,37 @@ public class RecordReader {
     }
   }
 
+  /**
+   *
+   */
+  public static void main(String[] args) {
+    try {
+      for (String arg: args) {
+        File file = new File(arg);
+        try (FileInputStream fis = new FileInputStream(file);
+             InputStreamReader isr = new InputStreamReader(fis))
+        {
+          RecordReader recordReader = new RecordReader(isr);
+          System.out.println();
+          System.out.println("----------------------------------------------");
+          System.out.println("FILE    : " + file);
+          System.out.println("FORMAT  : " + recordReader.getFormat());
+          System.out.println();
+          int index = 0;
+          for (JsonObject record = recordReader.readRecord();
+               record != null;
+               record = recordReader.readRecord())
+          {
+            index++;
+            System.out.println(index + ": " + JsonUtils.toJsonText(record));
+            System.out.println();
+          }
+          System.out.println("COUNT   : " + index);
+          System.out.println("----------------------------------------------");
+        }
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
 }

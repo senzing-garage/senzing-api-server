@@ -37,6 +37,7 @@ public class SzApiServerOptions {
   private boolean     adminEnabled              = false;
   private boolean     skipStartupPerf           = false;
   private boolean     skipEnginePriming         = false;
+  private boolean     debugLogging              = false;
   private long        statsInterval             = DEFAULT_STATS_INTERVAL;
   private String      allowedOrigins            = null;
   private Long        configId                  = null;
@@ -509,6 +510,31 @@ public class SzApiServerOptions {
    */
   public SzApiServerOptions setQuiet(boolean quiet) {
     this.quiet = quiet;
+    return this;
+  }
+
+  /**
+   * Checks whether or not debug logging is enabled.  If debug has not been
+   * {@linkplain #setDebugLogging(boolean) explicitly enabled} then
+   * <tt>false</tt> is returned.
+   *
+   * @return <tt>true</tt> if debug logging should be enabled, otherwise
+   *         <tt>false</tt>.
+   */
+  public boolean isDebugLogging() {
+    return this.debugLogging;
+  }
+
+  /**
+   * Sets whether or debug logging should be enabled.
+   *
+   * @param debugLogging <tt>true</tt> if debug logging should be enabled,
+   *                     otherwise <tt>false</tt>.
+   *
+   * @return A reference to this instance.
+   */
+  public SzApiServerOptions setDebugLogging(boolean debugLogging) {
+    this.debugLogging = debugLogging;
     return this;
   }
 
@@ -1011,6 +1037,7 @@ public class SzApiServerOptions {
     put(map, MODULE_NAME,                  this.getModuleName());
     put(map, VERBOSE,                      this.isVerbose());
     put(map, QUIET,                        this.isQuiet());
+    put(map, DEBUG_LOGGING,                this.isDebugLogging());
     put(map, READ_ONLY,                    this.isReadOnly());
     put(map, ENABLE_ADMIN,                 this.isAdminEnabled());
     put(map, ALLOWED_ORIGINS,              this.getAllowedOrigins());
