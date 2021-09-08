@@ -38,6 +38,13 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
  */
 public abstract class AbstractServiceTest {
   /**
+   * Flag to control whether or not debug logging should be enabled when
+   * running the tests.
+   */
+  public static final Boolean DEBUG_LOGGING
+      = Boolean.valueOf("" + System.getProperty("com.senzing.api.test.debug"));
+
+  /**
    * The entity type code for the GENERIC entity type.
    */
   public static final String GENERIC_ENTITY_TYPE = "GENERIC";
@@ -1074,6 +1081,7 @@ public abstract class AbstractServiceTest {
     options.setModuleName(this.getModuleName("Test API Server"));
     options.setVerbose(this.isVerbose());
     options.setQuiet(this.isQuiet());
+    options.setDebugLogging(DEBUG_LOGGING);
     options.setAutoRefreshPeriod(-1L); // refresh on demand for auto-tests
     options.setStatsInterval(0L); // don't log stats for tests
     options.setSkippingStartupPerformance(true); // no sense in doing perf check

@@ -15,6 +15,8 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import static com.senzing.text.TextUtilities.*;
+import static com.senzing.util.LoggingUtilities.*;
+import static com.senzing.io.IOUtilities.*;
 
 /**
  * Provides an {@link InputStream} implementation that will read data from
@@ -181,8 +183,8 @@ public class TemporaryDataCache {
     }
 
     // check if encrypted
-    this.aesKey = randomPrintableText(16).getBytes("UTF-8");
-    this.initVector = randomPrintableText(16).getBytes("UTF-8");
+    this.aesKey = randomPrintableText(16).getBytes(UTF_8);
+    this.initVector = randomPrintableText(16).getBytes(UTF_8);
 
     this.keySpec = new SecretKeySpec(this.aesKey, KEY_ALGORITHM);
     this.ivSpec = new IvParameterSpec(this.initVector);
@@ -458,12 +460,10 @@ public class TemporaryDataCache {
           IOUtilities.close(this.currentCOS);
           IOUtilities.close(this.currentFOS);
 
-          if (LoggingUtilities.isDebugLogging()) {
-            System.out.println("[TemporaryDataCache] Completed file part: "
-                                   + this.currentFile + " (" + this.currentWriteCount
-                                   + " bytes / " + this.currentFile.length()
-                                   + " compressed)");
-          }
+          debugLog("Completed file part: " + this.currentFile + " ("
+                       + this.currentWriteCount + " bytes / "
+                       + this.currentFile.length() + " compressed)");
+
           // reinitialize the current file fields
           this.currentGOS         = null;
           this.currentCOS         = null;
@@ -536,10 +536,7 @@ public class TemporaryDataCache {
           // flag the file for deletion on exit
           this.currentFile.deleteOnExit();
 
-          if (LoggingUtilities.isDebugLogging()) {
-            System.out.println("[TemporaryDataCache] Beginning file part: "
-                                   + this.currentFile);
-          }
+          debugLog("Beginning file part: " + this.currentFile);
 
         } catch (RuntimeException e) {
           owner.setFailure(e);
@@ -585,12 +582,9 @@ public class TemporaryDataCache {
               * Math.max(1, countLog10 - 1)));
 
           if ((this.currentWriteCount % logInterval) == 0) {
-            System.out.println("[TemporaryDataCache] Bytes written to file: "
-                                   + this.currentFile + " ("
-                                   + this.currentWriteCount
-                                   + " current part / "
-                                   + this.totalWriteCount
-                                   + " total bytes)");
+            debugLog("Bytes written to file: " + this.currentFile + " ("
+                         + this.currentWriteCount + " current part / "
+                         + this.totalWriteCount + " total bytes)");
           }
         }
 
@@ -869,8 +863,40 @@ public class TemporaryDataCache {
 
         synchronized (owner.fileParts) {
           this.currentFilePart = owner.fileParts.get(this.currentFileIndex);
+
+          // dump the contents of the file part
+          if (isDebugLogging()) {
+            File    filePart  = this.currentFilePart.file;
+            Cipher  tmpCipher = Cipher.getInstance(CIPHER_ALGORITHM);
+            tmpCipher.init(Cipher.DECRYPT_MODE, owner.keySpec, owner.ivSpec);
+            try (FileInputStream    fis = new FileInputStream(filePart);
+                 CipherInputStream  cis = new CipherInputStream(fis, tmpCipher);
+                 GZIPInputStream    gis = new GZIPInputStream(cis);
+                 InputStreamReader  isr = new InputStreamReader(gis, UTF_8))
+            {
+              char[]        buffer    = new char[2048];
+              StringBuilder sb        = new StringBuilder();
+              for (int readCount = isr.read(buffer);
+                   readCount >= 0;
+                   readCount = isr.read(buffer))
+              {
+                sb.append(buffer, 0, readCount);
+                if (sb.length() >= buffer.length * 2) break;
+              }
+              boolean truncated = (isr.read() >= 0);
+
+              debugLog("Reading file part " + this.currentFileIndex
+                       + ": " + filePart,
+                       (truncated ? "CONTENTS:" : "PREVIEW"),
+                       "-------------------------------------",
+                       sb.toString(),
+                       "-------------------------------------");
+            }
+          }
+
           this.currentIS =  new BufferedInputStream(
               new FileInputStream(this.currentFilePart.file), 8192);
+
           try {
             this.currentIS = new CipherInputStream(this.currentIS, cipher);
             this.currentIS = new GZIPInputStream(this.currentIS);

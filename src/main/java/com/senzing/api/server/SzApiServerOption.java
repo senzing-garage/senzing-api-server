@@ -466,9 +466,9 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
    * </ul>
    * </p>
    */
-  DEBUG("--debug", Set.of("-debug"),
-        ENV_PREFIX + "DEBUG", null,
-        0, "false"),
+  DEBUG_LOGGING("--debug", Set.of("-debug"),
+                ENV_PREFIX + "DEBUG", null,
+                0, "false"),
 
   /**
    * <p>
@@ -1778,7 +1778,7 @@ public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
         case ENABLE_ADMIN:
         case VERBOSE:
         case QUIET:
-        case DEBUG:
+        case DEBUG_LOGGING:
         case SKIP_STARTUP_PERF:
         case SKIP_ENGINE_PRIMING:
           if (params.size() == 0) return Boolean.TRUE;
