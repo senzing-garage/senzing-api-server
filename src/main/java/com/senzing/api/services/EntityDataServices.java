@@ -38,11 +38,11 @@ public class EntityDataServices implements ServicesSupport {
    * The {@link Map} of {@link SzAttributeSearchResultType} keys to {@link
    * Integer} values representing the flags to apply.
    */
-  private static final Map<SzAttributeSearchResultType, Integer>
+  private static final Map<SzAttributeSearchResultType, Long>
       RESULT_TYPE_FLAG_MAP;
 
   static {
-    Map<SzAttributeSearchResultType, Integer> map = new LinkedHashMap<>();
+    Map<SzAttributeSearchResultType, Long> map = new LinkedHashMap<>();
     map.put(MATCH, G2_EXPORT_INCLUDE_RESOLVED);
     map.put(POSSIBLE_MATCH, G2_EXPORT_INCLUDE_POSSIBLY_SAME);
     map.put(POSSIBLE_RELATION, G2_EXPORT_INCLUDE_POSSIBLY_RELATED);
@@ -932,11 +932,11 @@ public class EntityDataServices implements ServicesSupport {
 
       SzEntityData entityData = null;
 
-      int flags = this.getFlags(forceMinimal,
-                                featureMode,
-                                withFeatureStats,
-                                withInternalFeatures,
-                                (withRelated != SzRelationshipMode.NONE));
+      long flags = this.getFlags(forceMinimal,
+                                 featureMode,
+                                 withFeatureStats,
+                                 withInternalFeatures,
+                                 (withRelated != SzRelationshipMode.NONE));
 
       String rawData = null;
 
@@ -1139,11 +1139,11 @@ public class EntityDataServices implements ServicesSupport {
 
       String rawData = null;
 
-      int flags = this.getFlags(forceMinimal,
-                                featureMode,
-                                withFeatureStats,
-                                withInternalFeatures,
-                                (withRelated != SzRelationshipMode.NONE));
+      long flags = this.getFlags(forceMinimal,
+                                 featureMode,
+                                 withFeatureStats,
+                                 withInternalFeatures,
+                                 (withRelated != SzRelationshipMode.NONE));
 
       // check if we want 1-degree relations as well -- if so we need to
       // find the network instead of a simple lookup
@@ -1534,7 +1534,7 @@ public class EntityDataServices implements ServicesSupport {
       }
 
       // augment the flags based on includeOnly parameter result types
-      int includeFlags = 0;
+      long includeFlags = 0L;
       SemanticVersion version
           = new SemanticVersion(provider.getNativeApiVersion());
 
@@ -1544,9 +1544,9 @@ public class EntityDataServices implements ServicesSupport {
       // only support the include flags on versions where it works
       if (supportFiltering) {
         for (SzAttributeSearchResultType resultType : resultTypes) {
-          Integer flag = RESULT_TYPE_FLAG_MAP.get(resultType);
+          Long flag = RESULT_TYPE_FLAG_MAP.get(resultType);
           if (flag == null) continue;
-          includeFlags |= flag.intValue();
+          includeFlags |= flag.longValue();
         }
       }
 
@@ -1554,12 +1554,12 @@ public class EntityDataServices implements ServicesSupport {
       StringBuffer sb = new StringBuffer();
 
       // get the flags
-      int flags = this.getFlags(includeFlags,
-                                forceMinimal,
-                                featureMode,
-                                withFeatureStats,
-                                withInternalFeatures,
-                                withRelationships);
+      long flags = this.getFlags(includeFlags,
+                                 forceMinimal,
+                                 featureMode,
+                                 withFeatureStats,
+                                 withInternalFeatures,
+                                 withRelationships);
 
       // format the search JSON
       final String searchJson = JsonUtils.toJsonText(searchCriteria);

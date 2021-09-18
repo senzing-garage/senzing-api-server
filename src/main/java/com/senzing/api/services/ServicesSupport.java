@@ -122,7 +122,7 @@ public interface ServicesSupport {
   /**
    * Default flags for retrieving records.
    */
-  int DEFAULT_RECORD_FLAGS
+  long DEFAULT_RECORD_FLAGS
       = G2_ENTITY_INCLUDE_RECORD_FORMATTED_DATA
       | G2_ENTITY_INCLUDE_RECORD_MATCHING_INFO
       | G2_ENTITY_INCLUDE_RECORD_JSON_DATA
@@ -756,13 +756,13 @@ public interface ServicesSupport {
    *
    * @return The flags to use given the parameters.
    */
-  default int getFlags(boolean       forceMinimal,
-                       SzFeatureMode featureMode,
-                       boolean       withFeatureStats,
-                       boolean       withInternalFeatures,
-                       boolean       withRelationships)
+  default long getFlags(boolean       forceMinimal,
+                        SzFeatureMode featureMode,
+                        boolean       withFeatureStats,
+                        boolean       withInternalFeatures,
+                        boolean       withRelationships)
   {
-    return this.getFlags(0,
+    return this.getFlags(0L,
                          forceMinimal,
                          featureMode,
                          withFeatureStats,
@@ -788,19 +788,19 @@ public interface ServicesSupport {
    *
    * @return The flags to use given the parameters.
    */
-  default int getFlags(int           baseFlags,
-                       boolean       forceMinimal,
-                       SzFeatureMode featureMode,
-                       boolean       withFeatureStats,
-                       boolean       withInternalFeatures,
-                       boolean       withRelationships)
+  default long getFlags(long          baseFlags,
+                        boolean       forceMinimal,
+                        SzFeatureMode featureMode,
+                        boolean       withFeatureStats,
+                        boolean       withInternalFeatures,
+                        boolean       withRelationships)
   {
-    int flags = baseFlags
+    long flags = baseFlags
         | G2_ENTITY_INCLUDE_RECORD_DATA
         | G2_SEARCH_INCLUDE_FEATURE_SCORES; // for searches
 
     // check for relationships
-    flags |= withRelationships ? G2_ENTITY_INCLUDE_ALL_RELATIONS : 0;
+    flags |= withRelationships ? G2_ENTITY_INCLUDE_ALL_RELATIONS : 0L;
 
     // check if forcing minimal format
     if (forceMinimal) {

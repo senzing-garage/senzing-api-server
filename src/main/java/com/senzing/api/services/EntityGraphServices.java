@@ -176,7 +176,7 @@ public class EntityGraphServices implements ServicesSupport {
     final String encodedSources = (withSources == null)
         ? null : this.nativeJsonEncodeDataSources(withSources);
 
-    final int flags = (forbidAvoided ? 0 : G2_FIND_PATH_PREFER_EXCLUDE)
+    final long flags = (forbidAvoided ? 0L : G2_FIND_PATH_PREFER_EXCLUDE)
                     | this.getFlags(forceMinimal,
                                     featureMode,
                                     withFeatureStats,
@@ -464,11 +464,11 @@ public class EntityGraphServices implements ServicesSupport {
     final String encodedEntityIds = (entities == null)
         ? null : this.nativeJsonEncodeEntityIds(entities);
 
-    final int flags = this.getFlags(forceMinimal,
-                                    featureMode,
-                                    withFeatureStats,
-                                    withInternalFeatures,
-                                    true);
+    final long flags = this.getFlags(forceMinimal,
+                                     featureMode,
+                                     withFeatureStats,
+                                     withInternalFeatures,
+                                     true);
 
     try {
       this.enteringQueue(timers);

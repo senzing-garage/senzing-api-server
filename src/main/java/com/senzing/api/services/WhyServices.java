@@ -69,11 +69,11 @@ public class WhyServices implements ServicesSupport {
 
       String rawData = null;
 
-      int flags = this.getFlags(forceMinimal,
-                                featureMode,
-                                withFeatureStats,
-                                withInternalFeatures,
-                                withRelationships);
+      long flags = this.getFlags(forceMinimal,
+                                 featureMode,
+                                 withFeatureStats,
+                                 withInternalFeatures,
+                                 withRelationships);
 
       this.enteringQueue(timers);
       rawData = provider.executeInThread(() -> {
@@ -157,11 +157,11 @@ public class WhyServices implements ServicesSupport {
 
       String rawData = null;
 
-      int flags = this.getFlags(forceMinimal,
-                                featureMode,
-                                withFeatureStats,
-                                withInternalFeatures,
-                                withRelationships);
+      long flags = this.getFlags(forceMinimal,
+                                 featureMode,
+                                 withFeatureStats,
+                                 withInternalFeatures,
+                                 withRelationships);
 
       this.enteringQueue(timers);
       rawData = provider.executeInThread(() -> {
@@ -273,11 +273,11 @@ public class WhyServices implements ServicesSupport {
 
       String rawData = null;
 
-      int flags = this.getFlags(forceMinimal,
-                                featureMode,
-                                withFeatureStats,
-                                withInternalFeatures,
-                                withRelationships);
+      long flags = this.getFlags(forceMinimal,
+                                 featureMode,
+                                 withFeatureStats,
+                                 withInternalFeatures,
+                                 withRelationships);
 
       this.enteringQueue(timers);
       rawData = provider.executeInThread(() -> {
@@ -504,11 +504,11 @@ public class WhyServices implements ServicesSupport {
 
       String rawData = null;
 
-      int flags = this.getFlags(forceMinimal,
-                                featureMode,
-                                withFeatureStats,
-                                withInternalFeatures,
-                                withRelationships);
+      long flags = this.getFlags(forceMinimal,
+                                 featureMode,
+                                 withFeatureStats,
+                                 withInternalFeatures,
+                                 withRelationships);
 
       this.enteringQueue(timers);
 
