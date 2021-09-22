@@ -37,25 +37,6 @@ public interface SzMatchedRecord extends SzEntityRecord {
   void setMatchLevel(Integer matchLevel);
 
   /**
-   * Gets the match score for how this record matched against the first record
-   * in the resolved entity.
-   *
-   * @return The match score for how this record matched against the first
-   *         record in the resolved entity.
-   */
-  @JsonInclude(NON_EMPTY)
-  Integer getMatchScore();
-
-  /**
-   * Sets the match score for how this record matched against the first record
-   * in the resolved entity.
-   *
-   * @param matchScore The match score for how this record matched against the
-   *                   first record in the resolved entity.
-   */
-  void setMatchScore(Integer matchScore);
-
-  /**
    * Gets the match key for how this record matched against the first record
    * in the resolved entity.
    *
@@ -232,14 +213,11 @@ public interface SzMatchedRecord extends SzEntityRecord {
     SzEntityRecord.parseEntityRecord(record, jsonObject);
 
     // now get the match fields
-    Optional<Integer> matchScore = SzBaseRelatedEntity.readMatchScore(jsonObject);
-
     String  matchKey    = JsonUtils.getString(jsonObject, "MATCH_KEY");
     Integer matchLevel  = JsonUtils.getInteger(jsonObject, "MATCH_LEVEL");
     Integer refScore    = JsonUtils.getInteger(jsonObject, "REF_SCORE");
     String  ruleCode    = JsonUtils.getString(jsonObject,"ERRULE_CODE");
 
-    record.setMatchScore(matchScore.orElse(null));
     record.setMatchKey(matchKey);
     record.setMatchLevel(matchLevel);
     record.setRefScore(refScore);

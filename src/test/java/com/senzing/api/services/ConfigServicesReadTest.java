@@ -1,6 +1,7 @@
 package com.senzing.api.services;
 
 import com.senzing.api.model.*;
+import com.senzing.api.server.SzApiServerOptions;
 import com.senzing.repomgr.RepositoryManager;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -97,6 +98,19 @@ public class ConfigServicesReadTest extends AbstractServiceTest
     ApiClient apiClient = new ApiClient();
     apiClient.setBasePath(this.formatServerUri(""));
     this.configApi = new ConfigApi(apiClient);
+  }
+
+  /**
+   * <p>
+   * Overidden to skip engine priming.
+   * </p>
+   *
+   * {@inheritDoc}
+   */
+  @Override
+  protected void initializeServerOptions(SzApiServerOptions options) {
+    super.initializeServerOptions(options);
+    options.setSkippingEnginePriming(true);
   }
 
   protected void doPostServerInitialization(SzApiProvider provider,

@@ -4,6 +4,8 @@ import com.senzing.api.model.*;
 
 import javax.ws.rs.core.UriInfo;
 
+import com.senzing.api.server.SzApiServer;
+import com.senzing.api.server.SzApiServerOptions;
 import com.senzing.util.JsonUtils;
 import org.junit.jupiter.api.*;
 import com.senzing.gen.api.invoker.*;
@@ -37,6 +39,19 @@ public class AdminServicesTest extends AbstractServiceTest {
     } finally {
       this.endTests();
     }
+  }
+
+  /**
+   * <p>
+   * Overidden to skip engine priming.
+   * </p>
+   *
+   * {@inheritDoc}
+   */
+  @Override
+  protected void initializeServerOptions(SzApiServerOptions options) {
+    super.initializeServerOptions(options);
+    options.setSkippingEnginePriming(true);
   }
 
   @Test public void rootTest() {

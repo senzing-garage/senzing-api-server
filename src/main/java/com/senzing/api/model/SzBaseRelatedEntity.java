@@ -33,25 +33,6 @@ public interface SzBaseRelatedEntity extends SzResolvedEntity {
   void setMatchLevel(Integer matchLevel);
 
   /**
-   * Gets the underlying match score from the entity resolution between
-   * the entities.
-   *
-   * @return The underlying match score from the entity resolution between
-   *         the entities.
-   */
-  @JsonInclude(NON_NULL)
-  Integer getMatchScore();
-
-  /**
-   * Sets the underlying match score from the entity resolution between
-   * the entities.
-   *
-   * @param matchScore The underlying match score from the entity resolution
-   *                   between the entities.
-   */
-  void setMatchScore(Integer matchScore);
-
-  /**
    * Gets the underlying match key from the entity resolution between
    * the entities.
    *
@@ -163,10 +144,7 @@ public interface SzBaseRelatedEntity extends SzResolvedEntity {
                            || (ruleCode == null));
 
     final JsonObject matchObject = matchInfo;
-    Optional<Integer> matchScore = readMatchScore(matchObject);
 
-    if (!matchScore.isPresent()) partial = true;
-    entity.setMatchScore(matchScore.orElse(null));
     entity.setMatchLevel(matchLevel);
     entity.setMatchKey(matchKey);
     entity.setResolutionRuleCode(ruleCode);
@@ -176,33 +154,5 @@ public interface SzBaseRelatedEntity extends SzResolvedEntity {
 
     // iterate over the feature map
     return entity;
-  }
-
-  /**
-   * Reads a MATCH_SCORE field from native Senzing JSON response.
-   *
-   * @param jsonObject The {@link JsonObject} to read the value from.
-   *
-   * @return The {@link Optional<Integer>} representing the match score.
-   */
-  static Optional<Integer> readMatchScore(JsonObject jsonObject) {
-    return Optional.ofNullable(JsonUtils.getJsonValue(jsonObject, "MATCH_SCORE"))
-        .map(o -> {
-          switch (o.getValueType()) {
-            case NUMBER:
-              return jsonObject.getJsonNumber("MATCH_SCORE").intValue();
-            case STRING:
-              // check for empty string
-              if (jsonObject.getString("MATCH_SCORE").trim().length() == 0) {
-                // empty string is the same as null
-                return null;
-              } else {
-                // if not an empty string then parse as an integer
-                return Integer.parseInt(jsonObject.getString("MATCH_SCORE"));
-              }
-            default:
-              return null;
-          }
-        });
   }
 }

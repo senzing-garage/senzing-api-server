@@ -105,12 +105,12 @@ public class AutoReinitializeTest extends AbstractServiceTest
                                      "g2-init.json");
 
         String initJson = readTextFileAsString(initJsonFile, "UTF-8");
-        this.configMgrApi.initV2(this.getModuleName("RepoMgr (reconfigure)"),
-                                 initJson,
-                                 this.isVerbose());
-        this.configApi.initV2(this.getModuleName("RepoMgr (reconfigure)"),
-                              initJson,
-                              this.isVerbose());
+        this.configMgrApi.init(this.getModuleName("RepoMgr (reconfigure)"),
+                               initJson,
+                               this.isVerbose());
+        this.configApi.init(this.getModuleName("RepoMgr (reconfigure)"),
+                            initJson,
+                            this.isVerbose());
 
       } catch (IOException e) {
         throw new RuntimeException(e);

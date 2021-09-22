@@ -16,11 +16,6 @@ public class SzMatchedRecordImpl extends SzEntityRecordImpl
   private Integer matchLevel;
 
   /**
-   * The match score.
-   */
-  private Integer matchScore;
-
-  /**
    * The match key for the relationship.
    */
   private String matchKey;
@@ -43,7 +38,6 @@ public class SzMatchedRecordImpl extends SzEntityRecordImpl
     this.matchKey           = null;
     this.resolutionRuleCode = null;
     this.matchLevel         = null;
-    this.matchScore         = null;
     this.refScore           = null;
   }
 
@@ -61,22 +55,6 @@ public class SzMatchedRecordImpl extends SzEntityRecordImpl
   @Override
   public void setMatchLevel(Integer matchLevel) {
     this.matchLevel = matchLevel;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Integer getMatchScore() {
-    return matchScore;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void setMatchScore(Integer matchScore) {
-    this.matchScore = matchScore;
   }
 
   /**
@@ -136,7 +114,6 @@ public class SzMatchedRecordImpl extends SzEntityRecordImpl
   protected String fieldsToString() {
     return super.fieldsToString() +
         ", matchLevel=" + matchLevel +
-        ", matchScore=" + matchScore +
         ", matchKey='" + matchKey + '\'' +
         ", resolutionRuleCode='" + resolutionRuleCode + '\'' +
         ", refScore=" + refScore;

@@ -36,6 +36,7 @@ public class ConfigServicesReadOnlyTest extends AbstractServiceTest
     super.initializeServerOptions(options);
     options.setAdminEnabled(true);
     options.setReadOnly(true);
+    options.setSkippingEnginePriming(true);
   }
 
   @BeforeAll public void initializeEnvironment() {

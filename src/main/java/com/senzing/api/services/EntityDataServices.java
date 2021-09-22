@@ -794,7 +794,7 @@ public class EntityDataServices implements ServicesSupport {
         G2Engine engineApi = provider.getEngineApi();
 
         this.callingNativeAPI(timers, "engine", "getRecord");
-        int result = engineApi.getRecordV2(
+        int result = engineApi.getRecord(
             dataSource, recordId, DEFAULT_RECORD_FLAGS, sb);
         this.calledNativeAPI(timers, "engine", "getRecord");
 
@@ -965,12 +965,12 @@ public class EntityDataServices implements ServicesSupport {
           // get the engine API and the config API
           G2Engine engineApi = provider.getEngineApi();
 
-          this.callingNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
+          this.callingNativeAPI(timers, "engine", "findNetworkByRecordID");
           // find the network and check the result
-          int result = engineApi.findNetworkByRecordIDV2(
+          int result = engineApi.findNetworkByRecordID(
               recordIds, maxDegrees, buildOutDegrees, maxEntityCount, flags, sb);
 
-          this.calledNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
+          this.calledNativeAPI(timers, "engine", "findNetworkByRecordID");
 
           if (result != 0) {
             throw this.newPossiblyNotFoundException(
@@ -1031,10 +1031,10 @@ public class EntityDataServices implements ServicesSupport {
           // get the engine API and the config API
           G2Engine engineApi = provider.getEngineApi();
 
-          this.callingNativeAPI(timers, "engine", "getEntityByRecordIDV2");
+          this.callingNativeAPI(timers, "engine", "getEntityByRecordID");
           // 1-degree relations are not required, so do a standard lookup
-          int result = engineApi.getEntityByRecordIDV2(dataSource, recordId, flags, sb);
-          this.calledNativeAPI(timers, "engine", "getEntityByRecordIDV2");
+          int result = engineApi.getEntityByRecordID(dataSource, recordId, flags, sb);
+          this.calledNativeAPI(timers, "engine", "getEntityByRecordID");
 
           String engineJSON = sb.toString();
           this.checkEntityResult(result, engineJSON, uriInfo, timers, engineApi);
@@ -1168,12 +1168,12 @@ public class EntityDataServices implements ServicesSupport {
           // get the engine API
           G2Engine engineApi = provider.getEngineApi();
 
-          this.callingNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
+          this.callingNativeAPI(timers, "engine", "findNetworkByEntityID");
           // find the network and check the result
-          int result = engineApi.findNetworkByEntityIDV2(
+          int result = engineApi.findNetworkByEntityID(
               entityIds, maxDegrees, buildOutDegrees, maxEntityCount, flags, sb);
 
-          this.calledNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
+          this.calledNativeAPI(timers, "engine", "findNetworkByEntityID");
 
           if (result != 0) {
             throw this.newPossiblyNotFoundException(
@@ -1208,10 +1208,10 @@ public class EntityDataServices implements ServicesSupport {
           // get the engine API
           G2Engine engineApi = provider.getEngineApi();
 
-          this.callingNativeAPI(timers, "engine", "getEntityByEntityIDV2");
+          this.callingNativeAPI(timers, "engine", "getEntityByEntityID");
           // 1-degree relations are not required, so do a standard lookup
-          int result = engineApi.getEntityByEntityIDV2(entityId, flags, sb);
-          this.calledNativeAPI(timers, "engine", "getEntityByEntityIDV2");
+          int result = engineApi.getEntityByEntityID(entityId, flags, sb);
+          this.calledNativeAPI(timers, "engine", "getEntityByEntityID");
 
           String engineJSON = sb.toString();
 
@@ -1571,9 +1571,9 @@ public class EntityDataServices implements ServicesSupport {
         // get the engine API
         G2Engine engineApi = provider.getEngineApi();
 
-        this.callingNativeAPI(timers, "engine", "searchByAttributesV2");
-        int result = engineApi.searchByAttributesV2(searchJson, flags, sb);
-        this.calledNativeAPI(timers, "engine", "searchByAttributesV2");
+        this.callingNativeAPI(timers, "engine", "searchByAttributes");
+        int result = engineApi.searchByAttributes(searchJson, flags, sb);
+        this.calledNativeAPI(timers, "engine", "searchByAttributes");
         if (result != 0) {
           throw this.newInternalServerErrorException(
               httpMethod, uriInfo, timers, engineApi);

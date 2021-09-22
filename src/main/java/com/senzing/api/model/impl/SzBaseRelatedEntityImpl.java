@@ -24,11 +24,6 @@ public abstract class SzBaseRelatedEntityImpl
   private Integer matchLevel;
 
   /**
-   * The match score.
-   */
-  private Integer matchScore;
-
-  /**
    * The match key for the relationship.
    */
   private String matchKey;
@@ -48,7 +43,6 @@ public abstract class SzBaseRelatedEntityImpl
    */
   public SzBaseRelatedEntityImpl() {
     this.matchLevel         = null;
-    this.matchScore         = null;
     this.matchKey           = null;
     this.resolutionRuleCode = null;
     this.refScore           = null;
@@ -75,29 +69,6 @@ public abstract class SzBaseRelatedEntityImpl
    */
   public void setMatchLevel(Integer matchLevel) {
     this.matchLevel = matchLevel;
-  }
-
-  /**
-   * Gets the underlying match score from the entity resolution between
-   * the entities.
-   *
-   * @return The underlying match score from the entity resolution between
-   *         the entities.
-   */
-  @JsonInclude(NON_NULL)
-  public Integer getMatchScore() {
-    return this.matchScore;
-  }
-
-  /**
-   * Sets the underlying match score from the entity resolution between
-   * the entities.
-   *
-   * @param matchScore The underlying match score from the entity resolution
-   *                   between the entities.
-   */
-  public void setMatchScore(Integer matchScore) {
-    this.matchScore = matchScore;
   }
 
   /**
@@ -173,7 +144,6 @@ public abstract class SzBaseRelatedEntityImpl
   public String toString() {
     return this.getClass().getSimpleName() + "{" +
         "matchLevel=" + matchLevel +
-        ", matchScore=" + matchScore +
         ", matchKey='" + matchKey + '\'' +
         ", resolutionRuleCode='" + resolutionRuleCode + '\'' +
         ", refScore=" + refScore +

@@ -2115,7 +2115,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       long after = System.nanoTime();
 
       // TODO(barry): remove this extra code
-      int flags = this.entityDataServices.getFlags(
+      long flags = this.entityDataServices.getFlags(
           (forceMinimal == null) ? false : forceMinimal,
           (featureMode != null ? featureMode : WITH_DUPLICATES),
           (withFeatureStats != null ? withFeatureStats : false),

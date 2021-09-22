@@ -2624,12 +2624,12 @@ public class SzApiServer implements SzApiProvider {
 
     boolean configInRepo = false;
     G2ConfigMgr configMgr = NativeApiFactory.createConfigMgrApi();
-    int returnCode = configMgr.initV2(moduleName, initJsonText, false);
+    int returnCode = configMgr.init(moduleName, initJsonText, false);
     if (returnCode != 0) {
       String msg = multilineFormat(
           "Failed to initialize with specified initialization parameters.",
           "",
-          formatError("G2ConfigMgr.initV2", configMgr)
+          formatError("G2ConfigMgr.init", configMgr)
           + "Initialization parameters:",
           "",
           (initJsonText.length() > 80
@@ -2679,7 +2679,7 @@ public class SzApiServer implements SzApiProvider {
       }
     }
     this.productApi = NativeApiFactory.createProductApi();
-    int initResult = this.productApi.initV2(
+    int initResult = this.productApi.init(
         this.moduleName, initJsonText, this.verbose);
 
     if (initResult < 0) {
@@ -2690,7 +2690,7 @@ public class SzApiServer implements SzApiProvider {
     }
 
     this.diagnosticApi = NativeApiFactory.createDiagnosticApi();
-    initResult = this.diagnosticApi.initV2(
+    initResult = this.diagnosticApi.init(
         this.moduleName, initJsonText, this.verbose);
     if (initResult < 0) {
       throw new RuntimeException(buildErrorMessage(
@@ -2700,7 +2700,7 @@ public class SzApiServer implements SzApiProvider {
     }
 
     this.configApi = NativeApiFactory.createConfigApi();
-    initResult = this.configApi.initV2(
+    initResult = this.configApi.init(
         this.moduleName, initJsonText, this.verbose);
     if (initResult < 0) {
       throw new RuntimeException(buildErrorMessage(
@@ -2714,12 +2714,12 @@ public class SzApiServer implements SzApiProvider {
 
     if (this.configType.isManaged() && this.configId != null) {
       // config ID is hard coded and config is in the repository
-      initResult = this.engineApi.initWithConfigIDV2(
+      initResult = this.engineApi.initWithConfigID(
           this.moduleName, initJsonText, this.configId, this.verbose);
 
     } else {
       // config is in the repository
-      initResult = this.engineApi.initV2(
+      initResult = this.engineApi.init(
           this.moduleName, initJsonText, this.verbose);
     }
 
@@ -2733,7 +2733,7 @@ public class SzApiServer implements SzApiProvider {
     // initialize the config manager API
     if (this.configType.isManaged() && this.configId == null) {
       this.configMgrApi = NativeApiFactory.createConfigMgrApi();
-      initResult = this.configMgrApi.initV2(this.moduleName, initJsonText, this.verbose);
+      initResult = this.configMgrApi.init(this.moduleName, initJsonText, this.verbose);
 
       if (initResult < 0) {
         throw new RuntimeException(buildErrorMessage(
@@ -3062,10 +3062,10 @@ public class SzApiServer implements SzApiProvider {
           this.echo("Reinitializing with config: " + defaultConfigId);
 
           // reinitialize with the default config ID
-          returnCode = this.engineApi.reinitV2(defaultConfigId);
+          returnCode = this.engineApi.reinit(defaultConfigId);
           if (returnCode != 0) {
             String errorMsg = formatError(
-                "G2Engine.reinitV2", this.engineApi);
+                "G2Engine.reinit", this.engineApi);
             System.err.println("Failed to reinitialize with config ID ("
                                    + defaultConfigId + "): " + errorMsg);
             return null;

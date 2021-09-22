@@ -57,33 +57,17 @@ class G2EngineRetryHandler implements InvocationHandler {
     Set<Method> unsupportedSet  = new LinkedHashSet<>();
     try {
       unsupportedSet.add(cls.getMethod(
-          "initV2", String.class, String.class, boolean.class));
+          "init", String.class, String.class, boolean.class));
       unsupportedSet.add(cls.getMethod(
-          "initWithConfigIDV2",
+          "initWithConfigID",
           String.class, String.class, long.class, boolean.class));
-      unsupportedSet.add(cls.getMethod("reinitV2", long.class));
+      unsupportedSet.add(cls.getMethod("reinit", long.class));
       unsupportedSet.add(cls.getMethod("destroy"));
-      unsupportedSet.add(cls.getMethod("exportJSONEntityReportV3",
-                                       int.class, Result.class));
-      unsupportedSet.add(cls.getMethod("exportCSVEntityReportV3",
-                                       String.class, int.class, Result.class));
-      unsupportedSet.add(cls.getMethod("fetchNextV3",
-                                       long.class, StringBuffer.class));
-      unsupportedSet.add(cls.getMethod("closeExportV3", long.class));
-
-      // handle unsupported methods that may not be in the version of g2.jar
-      // that is installed in the build/runtime environment
-      addMethodIfExists(unsupportedSet,"replaceRecordWithInfo",
-                        String.class, String.class, String.class,
-                        String.class, int.class, StringBuffer.class);
-      addMethodIfExists(unsupportedSet,"processRedoRecordWithInfo",
-                        int.class, StringBuffer.class, StringBuffer.class);
-      addMethodIfExists(unsupportedSet,"processWithInfo",
-                        String.class, int.class, StringBuffer.class);
-      addMethodIfExists(unsupportedSet,
-                        "addRecordWithInfoWithReturnedRecordID",
-                        String.class, String.class, String.class, int.class,
-                        StringBuffer.class, StringBuffer.class);
+      unsupportedSet.add(cls.getMethod("exportJSONEntityReport",
+                                       long.class, Result.class));
+      unsupportedSet.add(cls.getMethod("exportCSVEntityReport",
+                                       String.class, long.class, Result.class));
+      unsupportedSet.add(cls.getMethod("closeExport", long.class));
 
       directSet.add(cls.getMethod("primeEngine"));
       directSet.add(cls.getMethod("purgeRepository"));
@@ -93,10 +77,13 @@ class G2EngineRetryHandler implements InvocationHandler {
           "exportConfig", StringBuffer.class, Result.class));
       directSet.add(cls.getMethod("getActiveConfigID", Result.class));
       directSet.add(cls.getMethod("getRepositoryLastModifiedTime", Result.class));
-      directSet.add(cls.getMethod("exportJSONEntityReport", int.class));
       directSet.add(cls.getMethod(
-          "exportCSVEntityReportV2", String.class, int.class));
-      directSet.add(cls.getMethod("fetchNext", long.class));
+          "exportJSONEntityReport", long.class, Result.class));
+      directSet.add(cls.getMethod(
+          "exportCSVEntityReport",
+          String.class, long.class, Result.class));
+      directSet.add(cls.getMethod(
+          "fetchNext", long.class, StringBuffer.class));
       directSet.add(cls.getMethod("closeExport", long.class));
       directSet.add(cls.getMethod("getRedoRecord", StringBuffer.class));
       directSet.add(cls.getMethod("countRedoRecords"));
@@ -111,116 +98,146 @@ class G2EngineRetryHandler implements InvocationHandler {
           "replaceRecord",
           String.class, String.class, String.class, String.class));
       retrySet.add(cls.getMethod(
+          "replaceRecordWithInfo",
+                String.class, String.class, String.class,
+                String.class, long.class, StringBuffer.class));
+      retrySet.add(cls.getMethod(
           "addRecordWithReturnedRecordID",
           String.class, StringBuffer.class, String.class, String.class));
       retrySet.add(cls.getMethod(
           "addRecordWithInfo",
-                String.class, String.class, String.class, String.class, int.class, StringBuffer.class));
+                String.class, String.class, String.class, String.class,
+                long.class, StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "addRecordWithInfoWithReturnedRecordID",
+          String.class, String.class, String.class, long.class,
+          StringBuffer.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
           "deleteRecord", String.class, String.class, String.class));
       retrySet.add(cls.getMethod(
           "deleteRecordWithInfo", String.class, String.class,
-          String.class, int.class, StringBuffer.class));
+          String.class, long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
-          "reevaluateRecord", String.class, String.class, int.class));
+          "reevaluateRecord", String.class, String.class, long.class));
       retrySet.add(cls.getMethod(
           "reevaluateRecordWithInfo",
-          String.class, String.class, int.class, StringBuffer.class));
+          String.class, String.class, long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
-          "reevaluateEntity", long.class, int.class));
+          "reevaluateEntity", long.class, long.class));
       retrySet.add(cls.getMethod(
           "reevaluateEntityWithInfo",
-          long.class, int.class, StringBuffer.class));
+          long.class, long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
           "searchByAttributes", String.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
-          "searchByAttributesV2",
-          String.class, int.class, StringBuffer.class));
+          "searchByAttributes",
+          String.class, long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
           "getEntityByEntityID", long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
-          "getEntityByEntityIDV2",
-          long.class, int.class, StringBuffer.class));
+          "getEntityByEntityID",
+          long.class, long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
           "getEntityByRecordID",
           String.class, String.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
-          "getEntityByRecordIDV2",
-          String.class, String.class, int.class, StringBuffer.class));
+          "getEntityByRecordID",
+          String.class, String.class, long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
           "findPathByEntityID",
           long.class, long.class, int.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
-          "findPathByEntityIDV2",
-          long.class, long.class, int.class, int.class, StringBuffer.class));
+          "findPathByEntityID",
+          long.class, long.class, int.class, long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
           "findPathByRecordID",
           String.class, String.class, String.class, String.class,
           int.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
-          "findPathByRecordIDV2",
+          "findPathByRecordID",
           String.class, String.class, String.class, String.class, int.class,
-          int.class, StringBuffer.class));
+          long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
           "findPathExcludingByEntityID",
-          long.class, long.class, int.class, String.class, int.class,
+          long.class, long.class, int.class, String.class, StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "findPathExcludingByEntityID",
+          long.class, long.class, int.class, String.class, long.class,
           StringBuffer.class));
       retrySet.add(cls.getMethod(
           "findPathExcludingByRecordID",
           String.class, String.class, String.class, String.class, int.class,
-          String.class, int.class, StringBuffer.class));
+          String.class, StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "findPathExcludingByRecordID",
+          String.class, String.class, String.class, String.class, int.class,
+          String.class, long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
           "findPathIncludingSourceByEntityID",
           long.class, long.class, int.class, String.class, String.class,
-          int.class, StringBuffer.class));
+          StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "findPathIncludingSourceByEntityID",
+          long.class, long.class, int.class, String.class, String.class,
+          long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
           "findPathIncludingSourceByRecordID",
           String.class, String.class, String.class, String.class, int.class,
-          String.class, String.class, int.class, StringBuffer.class));
+          String.class, String.class, StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "findPathIncludingSourceByRecordID",
+          String.class, String.class, String.class, String.class, int.class,
+          String.class, String.class, long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
           "findNetworkByEntityID",
           String.class, int.class, int.class, int.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
-          "findNetworkByEntityIDV2",
-          String.class, int.class, int.class, int.class, int.class,
+          "findNetworkByEntityID",
+          String.class, int.class, int.class, int.class, long.class,
           StringBuffer.class));
       retrySet.add(cls.getMethod(
           "findNetworkByRecordID", String.class, int.class, int.class,
           int.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
-          "findNetworkByRecordIDV2", String.class, int.class, int.class,
-          int.class, int.class, StringBuffer.class));
+          "findNetworkByRecordID", String.class, int.class, int.class,
+          int.class, long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
           "getRecord", String.class, String.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
-          "getRecordV2", String.class, String.class, int.class,
+          "getRecord", String.class, String.class, long.class,
           StringBuffer.class));
       retrySet.add(cls.getMethod(
           "processRedoRecord", StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "processRedoRecordWithInfo",
+                long.class, StringBuffer.class, StringBuffer.class));
       retrySet.add(cls.getMethod("process", String.class));
       retrySet.add(cls.getMethod(
           "process", String.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
+          "processWithInfo",
+                String.class, long.class, StringBuffer.class));
+      retrySet.add(cls.getMethod(
           "whyEntityByRecordID", String.class, String.class,
           StringBuffer.class));
       retrySet.add(cls.getMethod(
-          "whyEntityByRecordIDV2",String.class, String.class, int.class,
+          "whyEntityByRecordID",String.class, String.class, long.class,
           StringBuffer.class));
       retrySet.add(cls.getMethod(
           "whyEntityByEntityID", long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
-          "whyEntityByEntityIDV2", long.class, int.class,
+          "whyEntityByEntityID", long.class, long.class,
           StringBuffer.class));
       retrySet.add(cls.getMethod(
           "whyRecords",String.class, String.class,
           String.class, String.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
-          "whyRecordsV2", String.class, String.class, String.class,
-          String.class, int.class, StringBuffer.class));
+          "whyRecords", String.class, String.class, String.class,
+          String.class, long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
           "whyEntities", long.class, long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
-          "whyEntitiesV2", long.class, long.class, int.class,
+          "whyEntities", long.class, long.class, long.class,
           StringBuffer.class));
 
       // check what we did not catch

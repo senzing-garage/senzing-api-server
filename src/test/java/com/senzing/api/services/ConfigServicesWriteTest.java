@@ -675,6 +675,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
   protected void initializeServerOptions(SzApiServerOptions options) {
     super.initializeServerOptions(options);
     options.setAdminEnabled(true);
+    options.setSkippingEnginePriming(true);
   }
 
   @BeforeAll public void initializeEnvironment() {

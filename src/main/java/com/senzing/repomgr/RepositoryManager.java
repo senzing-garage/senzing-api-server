@@ -645,15 +645,15 @@ public class RepositoryManager {
         }
         File iniJsonFile = new File(repository, "g2-init.json");
         String initJsonText = readTextFileAsString(iniJsonFile, "UTF-8");
-        int returnCode = CONFIG_API.initV2(moduleName, initJsonText, verbose);
+        int returnCode = CONFIG_API.init(moduleName, initJsonText, verbose);
         if (returnCode != 0) {
           logError("G2Config.init()", CONFIG_API);
           return;
         }
-        returnCode = CONFIG_MGR_API.initV2(moduleName, initJsonText, verbose);
+        returnCode = CONFIG_MGR_API.init(moduleName, initJsonText, verbose);
         if (returnCode != 0) {
           CONFIG_API.destroy();
-          logError("G2ConfigMgr.initV2()", CONFIG_MGR_API);
+          logError("G2ConfigMgr.init()", CONFIG_MGR_API);
           return;
         }
         baseInitializedWith = initializer;
@@ -680,7 +680,7 @@ public class RepositoryManager {
         }
         File iniJsonFile = new File(repository, "g2-init.json");
         String initJsonText = readTextFileAsString(iniJsonFile, "UTF-8");
-        int returnCode = ENGINE_API.initV2(moduleName, initJsonText, verbose);
+        int returnCode = ENGINE_API.init(moduleName, initJsonText, verbose);
         if (returnCode != 0) {
           destroyBaseApis();
           logError("G2Engine.init()", ENGINE_API);

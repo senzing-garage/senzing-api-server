@@ -1904,7 +1904,6 @@ public class ResponseValidators {
                                 false,
                                 "MATCH_LEVEL",
                                 "MATCH_KEY",
-                                "MATCH_SCORE",
                                 "ERRULE_CODE",
                                 "REF_SCORE",
                                 "FEATURE_SCORES");
@@ -2467,7 +2466,7 @@ public class ResponseValidators {
     // assume we can reinitialize the product API since it does not really do
     // anything when we initialize it
     G2Product product = NativeApiFactory.createProductApi();
-    product.initV2("testApiServer", repoInitJson, false);
+    product.init("testApiServer", repoInitJson, false);
     try {
       String versionJson = product.version();
 

@@ -30,12 +30,12 @@ public class EngineStatsLoggingHandler implements InvocationHandler {
     Set<Method> methodSet = new LinkedHashSet<>();
     try {
       methodSet.add(cls.getMethod(
-          "initV2",
+          "init",
           String.class, String.class, boolean.class));
       methodSet.add(cls.getMethod(
-          "initWithConfigIDV2",
+          "initWithConfigID",
           String.class, String.class, long.class, boolean.class));
-      methodSet.add(cls.getMethod("reinitV2", long.class));
+      methodSet.add(cls.getMethod("reinit", long.class));
       methodSet.add(cls.getMethod("destroy"));
       methodSet.add(cls.getMethod("primeEngine"));
       methodSet.add(cls.getMethod("purgeRepository"));
@@ -52,8 +52,8 @@ public class EngineStatsLoggingHandler implements InvocationHandler {
           "getRecord",
           String.class, String.class, StringBuffer.class));
       methodSet.add(cls.getMethod(
-          "getRecordV2",
-          String.class, String.class, int.class, StringBuffer.class));
+          "getRecord",
+          String.class, String.class, long.class, StringBuffer.class));
       methodSet.add(cls.getMethod("fetchNext", long.class));
       methodSet.add(cls.getMethod("closeExport", long.class));
       methodSet.add(cls.getMethod(
