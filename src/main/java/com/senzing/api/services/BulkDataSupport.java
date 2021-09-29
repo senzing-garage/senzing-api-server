@@ -221,9 +221,8 @@ public interface BulkDataSupport extends ServicesSupport {
                (record != null);
                record = recordReader.readRecord()) {
             String dataSrc = JsonUtils.getString(record, "DATA_SOURCE");
-            String entityType = JsonUtils.getString(record, "ENTITY_TYPE");
             String recordId = JsonUtils.getString(record, "RECORD_ID");
-            dataAnalysis.trackRecord(dataSrc, entityType, recordId);
+            dataAnalysis.trackRecord(dataSrc, recordId);
 
             // check if the progress period has expired
             if ((progressNanos != null) && (progressUpdater == null)
@@ -330,9 +329,6 @@ public interface BulkDataSupport extends ServicesSupport {
       String                      dataSource,
       String                      mapDataSources,
       List<String>                mapDataSourceList,
-      String                      entityType,
-      String                      mapEntityTypes,
-      List<String>                mapEntityTypeList,
       String                      explicitLoadId,
       int                         maxFailures,
       MediaType                   mediaType,
@@ -356,20 +352,15 @@ public interface BulkDataSupport extends ServicesSupport {
     SzBulkLoadResult bulkLoadResult = synchronizedProxy(
         SzBulkLoadResult.class, this.newBulkLoadResult(), progressState);
 
-    // populate the entity type and data source maps
+    // populate the data source map
     Map<String, String> dataSourceMap = new HashMap<>();
-    Map<String, String> entityTypeMap = new HashMap<>();
     this.prepareBulkDataMappings(provider,
                                  uriInfo,
                                  timers,
                                  dataSource,
                                  mapDataSources,
                                  mapDataSourceList,
-                                 entityType,
-                                 mapEntityTypes,
-                                 mapEntityTypeList,
-                                 dataSourceMap,
-                                 entityTypeMap);
+                                 dataSourceMap);
 
     try {
       BulkDataSet bulkDataSet = new BulkDataSet(mediaType, dataInputStream);
@@ -401,7 +392,6 @@ public interface BulkDataSupport extends ServicesSupport {
         RecordReader recordReader = new RecordReader(bulkDataSet.getFormat(),
                                                      br,
                                                      dataSourceMap,
-                                                     entityTypeMap,
                                                      loadId);
 
         bulkDataSet.setFormat(recordReader.getFormat());
@@ -445,16 +435,14 @@ public interface BulkDataSupport extends ServicesSupport {
               continue;
             }
 
-            // check if we have a data source and entity type
+            // check if we have a data source
             String resolvedDS = JsonUtils.getString(record, "DATA_SOURCE");
-            String resolvedET = JsonUtils.getString(record, "ENTITY_TYPE");
-            if (resolvedDS == null || resolvedDS.trim().length() == 0
-                || resolvedET == null || resolvedET.trim().length() == 0)
+            if (resolvedDS == null || resolvedDS.trim().length() == 0)
             {
               debugLog("INCOMPLETE RECORD NOT LOADED: "
                         + JsonUtils.toJsonText(record));
 
-              bulkLoadResult.trackIncompleteRecord(resolvedDS, resolvedET);
+              bulkLoadResult.trackIncompleteRecord(resolvedDS);
 
             } else {
               Timers subTimers = timerPool.remove(0);
@@ -618,7 +606,6 @@ public interface BulkDataSupport extends ServicesSupport {
       String                        loadId)
   {
     String dataSource = JsonUtils.getString(record, "DATA_SOURCE");
-    String entityType = JsonUtils.getString(record, "ENTITY_TYPE");
     String recordId   = JsonUtils.getString(record, "RECORD_ID");
     String recordJSON = JsonUtils.toJsonText(record);
 
@@ -640,13 +627,12 @@ public interface BulkDataSupport extends ServicesSupport {
                                           timers);
 
           return this.newAddRecordResult(
-              dataSource, entityType, timers, returnCode, engineApi);
+              dataSource, timers, returnCode, engineApi);
         });
 
       } catch (Exception e) {
         JsonObjectBuilder job = Json.createObjectBuilder();
         job.add("dataSource", dataSource);
-        job.add("entityType", entityType);
         String details = JsonUtils.toJsonText(job);
         throw new Exception(details, e);
       }
@@ -675,16 +661,14 @@ public interface BulkDataSupport extends ServicesSupport {
       for (JsonObject record : records) {
 
         String dataSource = JsonUtils.getString(record, "DATA_SOURCE");
-        String entityType = JsonUtils.getString(record, "ENTITY_TYPE");
         String recordId   = JsonUtils.getString(record, "RECORD_ID");
         String recordJSON = JsonUtils.toJsonText(record);
 
-        // check if we have a data source and entity type
-        if (dataSource == null || dataSource.trim().length() == 0
-            || entityType == null || entityType.trim().length() == 0) {
+        // check if we have a data source
+        if (dataSource == null || dataSource.trim().length() == 0) {
           debugLog("Incomplete record not loaded: " + recordJSON);
 
-          bulkLoadResult.trackIncompleteRecord(dataSource, entityType);
+          bulkLoadResult.trackIncompleteRecord(dataSource);
 
         } else {
           debugLog("Sync loading record: " + recordJSON);
@@ -698,7 +682,7 @@ public interface BulkDataSupport extends ServicesSupport {
                                           timers);
 
           AddRecordResult addRecordResult = this.newAddRecordResult(
-              dataSource, entityType, timers, returnCode, engineApi);
+              dataSource, timers, returnCode, engineApi);
 
           this.trackLoadResult(addRecordResult, bulkLoadResult);
         }
@@ -722,7 +706,6 @@ public interface BulkDataSupport extends ServicesSupport {
    * Constructs with the specified parameters.
    *
    * @param dataSource The data source for the record.
-   * @param entityType The entity type for the record.
    * @param timers The {@link Timers} for the operation.
    * @param returnCode The return code from native add-record function.
    * @param engine The {@link G2Engine} instance that was used.
@@ -730,13 +713,11 @@ public interface BulkDataSupport extends ServicesSupport {
    * @return The newly created instance of {@link AddRecordResult}.
    */
   default AddRecordResult newAddRecordResult(String    dataSource,
-                                             String    entityType,
                                              Timers    timers,
                                              int       returnCode,
                                              G2Engine  engine)
   {
     return new AddRecordResult(dataSource,
-                               entityType,
                                timers,
                                returnCode,
                                engine);
@@ -828,10 +809,9 @@ public interface BulkDataSupport extends ServicesSupport {
         JsonObject  jsonObj   = JsonUtils.parseJsonObject(jsonText);
 
         String failDataSource = JsonUtils.getString(jsonObj, "dataSource");
-        String failEntityType = JsonUtils.getString(jsonObj, "entityType");
         Throwable cause = e.getCause();
         bulkLoadResult.trackFailedRecord(
-            failDataSource, failEntityType, this.newError(cause.getMessage()));
+            failDataSource, this.newError(cause.getMessage()));
       }
 
       // track the result
@@ -852,13 +832,11 @@ public interface BulkDataSupport extends ServicesSupport {
       // adding the record failed, record the failure
       bulkLoadResult.trackFailedRecord(
           addRecordResult.getDataSource(),
-          addRecordResult.getEntityType(),
           addRecordResult.getErrorCode(),
           addRecordResult.getErrorMessage());
     } else {
       // adding the record succeeded, record the loaded record
-      bulkLoadResult.trackLoadedRecord(addRecordResult.getDataSource(),
-                                       addRecordResult.getEntityType());
+      bulkLoadResult.trackLoadedRecord(addRecordResult.getDataSource());
     }
   }
 
@@ -1038,11 +1016,6 @@ public interface BulkDataSupport extends ServicesSupport {
     protected String dataSource = null;
 
     /**
-     * The entity type for the record.
-     */
-    protected String entityType = null;
-
-    /**
      * The error code from the native add-record function if it failed, or
      * <tt>null</tt> if it succeeded.
      */
@@ -1063,19 +1036,16 @@ public interface BulkDataSupport extends ServicesSupport {
      * Constructs with the specified parameters.
      *
      * @param dataSource The data source for the record.
-     * @param entityType The entity type for the record.
      * @param timers The {@link Timers} for the operation.
      * @param returnCode The return code from native add-record function.
      * @param engine The {@link G2Engine} instance that was used.
      */
     public AddRecordResult(String    dataSource,
-                           String    entityType,
                            Timers    timers,
                            int       returnCode,
                            G2Engine  engine)
     {
       this.dataSource = dataSource;
-      this.entityType = entityType;
       this.returnCode = returnCode;
       this.timers     = timers;
       if (this.returnCode != 0) {
@@ -1100,15 +1070,6 @@ public interface BulkDataSupport extends ServicesSupport {
      */
     public String getDataSource() {
       return this.dataSource;
-    }
-
-    /**
-     * Gets the entity type for the record that was being added.
-     *
-     * @return The entity type for the record that was being added.
-     */
-    public String getEntityType() {
-      return this.entityType;
     }
 
     /**
@@ -1162,7 +1123,6 @@ public interface BulkDataSupport extends ServicesSupport {
     public String toString() {
       return "{ returnCode=[ " + this.returnCode
               + " ], dataSource=[ " + this.dataSource
-              + " ], entityType=[ " + this.entityType
               + " ], errorCode=[ " + this.errorCode
               + " ], errorMsg=[ " + this.errorMsg
               + " ] }";
@@ -1407,103 +1367,6 @@ public interface BulkDataSupport extends ServicesSupport {
   }
 
   /**
-   * Populates the specified {@link Map} with the entity type mappings found
-   * in the specified JSON text.
-   *
-   * @param entityTypeMap The {@link Map} to be populated.
-   * @param mapEntityTypes The JSON text describing the entity type mappings.
-   * @param provider The {@link SzApiProvider} to use.
-   * @param timers The {@link Timers} for the operation.
-   * @param uriInfo The {@link UriInfo} for the operation.
-   */
-  default void processEntityTypes(Map<String, String> entityTypeMap,
-                                  String              mapEntityTypes,
-                                  SzApiProvider       provider,
-                                  Timers              timers,
-                                  UriInfo             uriInfo)
-  {
-    // check if the mapDataSources parameter is provided
-    if (mapEntityTypes != null && mapEntityTypes.trim().length() > 0) {
-      try {
-        JsonObject jsonObject = JsonUtils.parseJsonObject(mapEntityTypes);
-        jsonObject.entrySet().forEach(entry -> {
-          String key = entry.getKey();
-          JsonValue value = entry.getValue();
-          if (value.getValueType() != JsonValue.ValueType.STRING) {
-            throw newBadRequestException(
-                POST, uriInfo, timers,
-                "At least one JSON property (\"" + key + "\") in the "
-                    + "\"mapEntityTypes\" parameter does NOT have a "
-                    + "String JSON value (" + JsonUtils.toJsonText(value)
-                    + "): " + mapEntityTypes);
-          }
-          String etype = ((JsonString) value).getString().trim().toUpperCase();
-          if (!provider.getEntityTypes(etype).contains(etype)) {
-            throw newBadRequestException(
-                POST, uriInfo, timers,
-                "The entity type mapping for \"" + key + "\" in the "
-                    + "\"mapEntityTypes\" parameter has a value (\"" + etype
-                    + "\") that is not a configured entity type: "
-                    + mapEntityTypes);
-          }
-          entityTypeMap.put(key, etype);
-        });
-      } catch (Exception e) {
-        throw newBadRequestException(
-            POST, uriInfo, timers,
-            "The \"mapEntityTypes\" parameter is not a valid URL-encoded JSON "
-                + "of String property names and String entity type code values: "
-                + mapEntityTypes);
-      }
-    }
-  }
-
-
-  /**
-   * Populates the specified {@link Map} with the entity type mappings found
-   * in the specified {@link List} of encoded strings.
-   *
-   * @param entityTypeMap The {@link Map} to be populated.
-   * @param mapEntityTypeList The {@link List} of encoded strings describing the
-   *                          entity type mappings.
-   * @param provider The {@link SzApiProvider} to use.
-   * @param timers The {@link Timers} for the operation.
-   * @param uriInfo The {@link UriInfo} for the operation.
-   */
-  default void processEntityTypes(Map<String, String> entityTypeMap,
-                                  List<String>        mapEntityTypeList,
-                                  SzApiProvider       provider,
-                                  Timers              timers,
-                                  UriInfo             uriInfo)
-  {
-    // check if the mapDataSources parameter is provided
-    if (mapEntityTypeList != null && mapEntityTypeList.size() > 0) {
-      for (String mapping : mapEntityTypeList) {
-        char sep = mapping.charAt(0);
-        int index = mapping.indexOf(sep, 1);
-        if (index < 0 || index == mapping.length() - 1) {
-          throw newBadRequestException(
-              POST, uriInfo, timers,
-              "The specified entity type mapping is not a valid "
-                  + "delimited string: " + mapping);
-        }
-        String etype1 = mapping.substring(1, index).trim();
-        String etype2 = mapping.substring(index + 1).trim().toUpperCase();
-
-        if (!provider.getEntityTypes(etype2).contains(etype2)) {
-          throw newBadRequestException(
-              POST, uriInfo, timers,
-              "The entity type mapping for \"" + etype1 + "\" in the "
-                  + "\"mapEntityType\" parameter has a value (\"" + etype2
-                  + "\") that is not a configured entity type: "
-                  + mapping);
-        }
-        entityTypeMap.put(etype1, etype2);
-      }
-    }
-  }
-
-  /**
    * Prepares for performing a bulk-loading operation by ensuring the server is
    * not in read-only mode and a long-running operation is authorized.
    *
@@ -1528,9 +1391,25 @@ public interface BulkDataSupport extends ServicesSupport {
   }
 
   /**
+   * Prepares for performing a bulk-loading operation by ensuring the
+   * required data sources are configured.
    *
-   * @throws BadRequestException If any of the data sources or entity types are
-   *                             not recognized.
+   * @parma provider The {@link SzApiProvider} to use.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} tracking timing for the operation.
+   * @param dataSource The data source to assign to the loaded records unless
+   *                   another data source mapping supercedes this default.
+   * @param mapDataSources The JSON string mapping specific data sources to
+   *                       alternate data source names.  A mapping from
+   *                       empty-string is used for mapping records with no
+   *                       data source specified.
+   * @param mapDataSourceList The {@link List} of delimited strings that begin
+   *                          the delimiter, followed by the "from" data source
+   *                          then the delimiter then the target data source.
+   * @param dataSourceMap The {@link Map} of configured data source codes to
+   *                      configured data sources.
+   *
+   * @throws BadRequestException If any of the data sources are not recognized.
    */
   default void prepareBulkDataMappings(SzApiProvider        provider,
                                        UriInfo              uriInfo,
@@ -1538,11 +1417,7 @@ public interface BulkDataSupport extends ServicesSupport {
                                        String               dataSource,
                                        String               mapDataSources,
                                        List<String>         mapDataSourceList,
-                                       String               entityType,
-                                       String               mapEntityTypes,
-                                       List<String>         mapEntityTypeList,
-                                       Map<String, String>  dataSourceMap,
-                                       Map<String, String>  entityTypeMap)
+                                       Map<String, String>  dataSourceMap)
   {
     // normalize and validate the data source
     if (dataSource != null) {
@@ -1556,34 +1431,13 @@ public interface BulkDataSupport extends ServicesSupport {
       }
     }
 
-    // normalize and validate the entity type
-    if (entityType != null) {
-      entityType = entityType.trim().toUpperCase();
-
-      if (!provider.getEntityTypes(entityType).contains(entityType)) {
-        throw this.newBadRequestException(
-            POST, uriInfo, timers,
-            "The value for the specified \"entityType\" parameter is not a "
-                + "configured entity type: " + entityType);
-      }
-    }
-
-    // by default we override missing entity types to GENERIC (though this may
-    // get overridden after processing the entity types)
-    entityTypeMap.put("", "GENERIC");
-
     this.processDataSources(
         dataSourceMap, mapDataSources, provider, timers, uriInfo);
     this.processDataSources(
         dataSourceMap, mapDataSourceList, provider, timers, uriInfo);
-    this.processEntityTypes(
-        entityTypeMap, mapEntityTypes, provider, timers, uriInfo);
-    this.processEntityTypes(
-        entityTypeMap, mapEntityTypeList, provider, timers, uriInfo);
 
     // put the default overrides in the map with the null key
     if (dataSource != null) dataSourceMap.put(null, dataSource);
-    if (entityType != null) entityTypeMap.put(null, entityType);
   }
 
   /**

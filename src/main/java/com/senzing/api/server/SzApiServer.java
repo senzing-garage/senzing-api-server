@@ -301,16 +301,6 @@ public class SzApiServer implements SzApiProvider {
   protected Set<String> dataSources;
 
   /**
-   * The set of configured entity classes.
-   */
-  protected Set<String> entityClasses;
-
-  /**
-   * The set of configured entity types.
-   */
-  protected Set<String> entityTypes;
-
-  /**
    * The {@link Map} of FTYPE_CODE values to ATTR_CLASS values from the config.
    */
   protected Map<String, String> featureToAttrClassMap;
@@ -726,8 +716,6 @@ public class SzApiServer implements SzApiProvider {
    */
   private static void evaluateConfig(JsonObject config,
                                      Set<String> dataSources,
-                                     Set<String> entityClasses,
-                                     Set<String> entityTypes,
                                      Map<String, String> ftypeCodeMap,
                                      Map<String, String> attrCodeMap) {
     // get the data sources from the config
@@ -738,26 +726,6 @@ public class SzApiServer implements SzApiProvider {
       JsonObject dataSource = val.asJsonObject();
       String dsrcCode = dataSource.getString("DSRC_CODE").toUpperCase();
       dataSources.add(dsrcCode);
-    }
-
-    // get the entity classes from the config
-    jsonValue = config.getValue("/G2_CONFIG/CFG_ECLASS");
-    jsonArray = jsonValue.asJsonArray();
-
-    for (JsonValue value : jsonArray) {
-      JsonObject entityClass = value.asJsonObject();
-      String classCode = entityClass.getString("ECLASS_CODE").toUpperCase();
-      entityClasses.add(classCode);
-    }
-
-    // get the entity types from the config
-    jsonValue = config.getValue("/G2_CONFIG/CFG_ETYPE");
-    jsonArray = jsonValue.asJsonArray();
-
-    for (JsonValue value : jsonArray) {
-      JsonObject entityType = value.asJsonObject();
-      String typeCode = entityType.getString("ETYPE_CODE").toUpperCase();
-      entityTypes.add(typeCode);
     }
 
     // get the attribute types from the config
@@ -807,46 +775,6 @@ public class SzApiServer implements SzApiProvider {
         }
       }
       return this.dataSources;
-    }
-  }
-
-  /**
-   * Returns the unmodifiable {@link Set} of configured entity class codes.
-   *
-   * @param expectedEntityClasses The zero or more entity class codes that the
-   *                              caller expects to exist.
-   * @return The unmodifiable {@link Set} of configured entity class codes.
-   */
-  public Set<String> getEntityClasses(String... expectedEntityClasses) {
-    synchronized (this.reinitMonitor) {
-      this.assertNotShutdown();
-      for (String entityClass : expectedEntityClasses) {
-        if (!this.entityClasses.contains(entityClass)) {
-          this.ensureConfigCurrent(false);
-          break;
-        }
-      }
-      return this.entityClasses;
-    }
-  }
-
-  /**
-   * Returns the unmodifiable {@link Set} of configured entity type codes.
-   *
-   * @param expectedEntityTypes The zero or more entity type codes that the
-   *                            caller expects to exist.
-   * @return The unmodifiable {@link Set} of configured entity type codes.
-   */
-  public Set<String> getEntityTypes(String... expectedEntityTypes) {
-    synchronized (this.reinitMonitor) {
-      this.assertNotShutdown();
-      for (String entityType : expectedEntityTypes) {
-        if (!this.entityTypes.contains(entityType)) {
-          this.ensureConfigCurrent(false);
-          break;
-        }
-      }
-      return this.entityTypes;
     }
   }
 
@@ -3153,21 +3081,15 @@ public class SzApiServer implements SzApiProvider {
       JsonObject config = JsonUtils.parseJsonObject(sb.toString());
 
       Set<String>         dataSourceSet   = new LinkedHashSet<>();
-      Set<String>         entityClassSet  = new LinkedHashSet<>();
-      Set<String>         entityTypeSet   = new LinkedHashSet<>();
       Map<String,String>  ftypeCodeMap    = new LinkedHashMap<>();
       Map<String,String>  attrCodeMap     = new LinkedHashMap<>();
 
       this.evaluateConfig(config,
                           dataSourceSet,
-                          entityClassSet,
-                          entityTypeSet,
                           ftypeCodeMap,
                           attrCodeMap);
 
       this.dataSources            = Collections.unmodifiableSet(dataSourceSet);
-      this.entityClasses          = Collections.unmodifiableSet(entityClassSet);
-      this.entityTypes            = Collections.unmodifiableSet(entityTypeSet);
       this.featureToAttrClassMap  = Collections.unmodifiableMap(ftypeCodeMap);
       this.attrCodeToAttrClassMap = Collections.unmodifiableMap(attrCodeMap);
     }

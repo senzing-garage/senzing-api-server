@@ -113,19 +113,16 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
     RepositoryManager.loadFile(repoDirectory,
                                passengerFile,
                                PASSENGERS,
-                               null,
                                true);
 
     RepositoryManager.loadFile(repoDirectory,
                                employeeFile,
                                EMPLOYEES,
-                               null,
                                true);
 
     RepositoryManager.loadFile(repoDirectory,
                                vipFile,
                                VIPS,
-                               null,
                                true);
   }
 

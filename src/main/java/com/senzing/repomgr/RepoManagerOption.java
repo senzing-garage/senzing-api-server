@@ -18,9 +18,7 @@ enum RepoManagerOption implements CommandLineOption<RepoManagerOption> {
   LOAD_FILE("--load-file", true, 1),
   ADD_RECORD("--add-record", true, 1),
   CONFIG_SOURCES("--config-sources", true),
-  CONFIG_ENTITY_TYPES("--config-entity-types", true),
   DATA_SOURCE("--data-source", false, 1),
-  ENTITY_TYPE("--entity-type", false, 1),
   REPOSITORY("--repo", false, 1),
   VERBOSE("--verbose", false,
           0, "false");
@@ -139,12 +137,12 @@ enum RepoManagerOption implements CommandLineOption<RepoManagerOption> {
     PURGE_REPO.dependencies = singleton(singleton(REPOSITORY));
     LOAD_FILE.conflicts = unmodifiableSet(new LinkedHashSet<>(
         complementOf(
-            of(LOAD_FILE, REPOSITORY, DATA_SOURCE, ENTITY_TYPE, VERBOSE))));
+            of(LOAD_FILE, REPOSITORY, DATA_SOURCE, VERBOSE))));
 
     LOAD_FILE.dependencies = singleton(singleton(REPOSITORY));
     ADD_RECORD.conflicts = unmodifiableSet(new LinkedHashSet<>(
         complementOf(
-            of(ADD_RECORD, REPOSITORY, DATA_SOURCE, ENTITY_TYPE, VERBOSE))));
+            of(ADD_RECORD, REPOSITORY, DATA_SOURCE, VERBOSE))));
 
     ADD_RECORD.dependencies = singleton(singleton(REPOSITORY));
 
@@ -153,21 +151,11 @@ enum RepoManagerOption implements CommandLineOption<RepoManagerOption> {
 
     CONFIG_SOURCES.dependencies = singleton(singleton(REPOSITORY));
 
-    CONFIG_ENTITY_TYPES.conflicts = unmodifiableSet(new LinkedHashSet<>(
-        complementOf(of(CONFIG_ENTITY_TYPES, REPOSITORY, VERBOSE))));
-
-    CONFIG_ENTITY_TYPES.dependencies = singleton(singleton(REPOSITORY));
     DATA_SOURCE.conflicts = unmodifiableSet(new LinkedHashSet<>(
         complementOf(
             of(DATA_SOURCE, LOAD_FILE, ADD_RECORD, VERBOSE, REPOSITORY))));
 
     DATA_SOURCE.dependencies = singleton(emptySet());
-
-    ENTITY_TYPE.conflicts = unmodifiableSet(new LinkedHashSet<>(
-        complementOf(
-            of(ENTITY_TYPE, LOAD_FILE, ADD_RECORD, VERBOSE, REPOSITORY))));
-
-    ENTITY_TYPE.dependencies = singleton(emptySet());
 
     REPOSITORY.conflicts = Set.of(HELP, CREATE_REPO);
     REPOSITORY.dependencies = singleton(emptySet());

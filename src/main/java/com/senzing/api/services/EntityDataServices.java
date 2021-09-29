@@ -91,7 +91,7 @@ public class EntityDataServices implements ServicesSupport {
           timers,
           recordJsonData,
           Collections.singletonMap("DATA_SOURCE", dataSource),
-          Collections.singletonMap("ENTITY_TYPE", "GENERIC"));
+          Collections.emptyMap());
 
       JsonObject  recordJson    = JsonUtils.parseJsonObject(recordText);
       String      jsonRecordId  = JsonUtils.getString(recordJson, "RECORD_ID");
@@ -318,7 +318,7 @@ public class EntityDataServices implements ServicesSupport {
       Map<String,String> map = Map.of("DATA_SOURCE", dataSource,
                                       "RECORD_ID", recordId);
 
-      Map<String,String> defaultMap = Map.of("ENTITY_TYPE", "GENERIC");
+      Map<String,String> defaultMap = Collections.emptyMap();
 
       String recordText = this.ensureJsonFields(PUT,
                                                 uriInfo,

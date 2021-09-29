@@ -55,21 +55,9 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   protected static final String STORES_DATA_SOURCE        = "STORES";
   protected static final String CONTACTS_DATA_SOURCE      = "CONTACTS";
 
-  protected static final String CUSTOMER_ENTITY_TYPE      = "CUSTOMER";
-  protected static final String EMPLOYEE_ENTITY_TYPE      = "EMPLOYEE";
-  protected static final String SUBSCRIBER_ENTITY_TYPE    = "SUBSCRIBER";
-  protected static final String VENDOR_ENTITY_TYPE        = "VENDOR";
-  protected static final String PARTNER_ENTITY_TYPE       = "PARTNER";
-  protected static final String STORE_ENTITY_TYPE         = "STORE";
-  protected static final String PERSON_ENTITY_TYPE        = "PERSON";
-  protected static final String ORGANIZATION_ENTITY_TYPE  = "ORGANIZATION";
-
   protected static final Map<String, String> DATA_SOURCE_MAP;
-  protected static final Map<String, String> ENTITY_TYPE_MAP;
 
   protected static final Map<String, RecordType> SOURCE_RECORD_TYPE_MAP;
-
-  protected static final Map<String, String> SOURCE_ENTITY_TYPE_MAP;
 
   protected final long SEED = 8736123213L;
 
@@ -106,7 +94,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   static {
     try {
       Map<String, String> dataSourceMap = new LinkedHashMap<>();
-      Map<String, String> entityTypeMap = new LinkedHashMap<>();
 
       dataSourceMap.put(CUSTOMER_DATA_SOURCE, CUSTOMERS_DATA_SOURCE);
       dataSourceMap.put(SUBSCRIBER_DATA_SOURCE, SUBSCRIBERS_DATA_SOURCE);
@@ -115,15 +102,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       dataSourceMap.put(PARTNER_DATA_SOURCE, PARTNERS_DATA_SOURCE);
       dataSourceMap.put(STORE_DATA_SOURCE, STORES_DATA_SOURCE);
 
-      entityTypeMap.put(CUSTOMER_ENTITY_TYPE, PERSON_ENTITY_TYPE);
-      entityTypeMap.put(EMPLOYEE_ENTITY_TYPE, PERSON_ENTITY_TYPE);
-      entityTypeMap.put(SUBSCRIBER_ENTITY_TYPE, PERSON_ENTITY_TYPE);
-      entityTypeMap.put(VENDOR_ENTITY_TYPE, ORGANIZATION_ENTITY_TYPE);
-      entityTypeMap.put(PARTNER_ENTITY_TYPE, ORGANIZATION_ENTITY_TYPE);
-      entityTypeMap.put(STORE_ENTITY_TYPE, ORGANIZATION_ENTITY_TYPE);
-
       DATA_SOURCE_MAP = Collections.unmodifiableMap(dataSourceMap);
-      ENTITY_TYPE_MAP = Collections.unmodifiableMap(entityTypeMap);
 
       Map<String, RecordType> sourceRecordTypeMap = new LinkedHashMap<>();
 
@@ -131,21 +110,10 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       sourceRecordTypeMap.put(EMPLOYEE_DATA_SOURCE, PERSON);
       sourceRecordTypeMap.put(SUBSCRIBER_DATA_SOURCE, PERSON);
       sourceRecordTypeMap.put(VENDOR_DATA_SOURCE, ORGANIZATION);
-      sourceRecordTypeMap.put(PARTNER_ENTITY_TYPE, ORGANIZATION);
-      sourceRecordTypeMap.put(STORE_ENTITY_TYPE, BUSINESS);
+      sourceRecordTypeMap.put(PARTNER_DATA_SOURCE, ORGANIZATION);
+      sourceRecordTypeMap.put(STORE_DATA_SOURCE, BUSINESS);
 
       SOURCE_RECORD_TYPE_MAP = Collections.unmodifiableMap(sourceRecordTypeMap);
-
-      Map<String, String> sourceEntityTypeMap = new LinkedHashMap<>();
-
-      sourceEntityTypeMap.put(CUSTOMER_DATA_SOURCE, CUSTOMER_ENTITY_TYPE);
-      sourceEntityTypeMap.put(EMPLOYEE_DATA_SOURCE, EMPLOYEE_ENTITY_TYPE);
-      sourceEntityTypeMap.put(SUBSCRIBER_DATA_SOURCE, SUBSCRIBER_ENTITY_TYPE);
-      sourceEntityTypeMap.put(VENDOR_DATA_SOURCE, VENDOR_ENTITY_TYPE);
-      sourceEntityTypeMap.put(PARTNER_ENTITY_TYPE, PARTNER_ENTITY_TYPE);
-      sourceEntityTypeMap.put(STORE_ENTITY_TYPE, STORE_ENTITY_TYPE);
-
-      SOURCE_ENTITY_TYPE_MAP = Collections.unmodifiableMap(sourceEntityTypeMap);
 
     } catch (Exception e) {
       e.printStackTrace();
@@ -171,14 +139,10 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   protected void prepareRepository() {
     Set<String> dataSourceSet = new LinkedHashSet<>(DATA_SOURCE_MAP.values());
     dataSourceSet.add(CONTACTS_DATA_SOURCE);
-    Set<String> entityTypeSet = new LinkedHashSet<>(ENTITY_TYPE_MAP.values());
 
     RepositoryManager.configSources(this.getRepositoryDirectory(),
                                     dataSourceSet,
                                     true);
-    RepositoryManager.configEntityTypes(this.getRepositoryDirectory(),
-                                        entityTypeSet,
-                                        true);
   }
 
   @AfterAll public void teardownEnvironment() {
@@ -240,18 +204,12 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       SzBulkDataAnalysis  analysis  = (SzBulkDataAnalysis) argArray[3];
 
       Set<String> dataSources     = new LinkedHashSet<>();
-      Set<String> entityTypes     = new LinkedHashSet<>();
 
       analysis.getAnalysisByDataSource().forEach(abds -> {
         dataSources.add(abds.getDataSource());
       });
 
-      analysis.getAnalysisByEntityType().forEach(abet -> {
-        entityTypes.add(abet.getEntityType());
-      });
-
       Map<String, String> dataSourceMap = new LinkedHashMap<>();
-      Map<String, String> entityTypeMap = new LinkedHashMap<>();
 
       for (String dataSource: dataSources) {
         if (dataSource != null) {
@@ -259,14 +217,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         }
       }
 
-      for (String entityType: entityTypes) {
-        if (entityType != null) {
-          entityTypeMap.put(entityType, ENTITY_TYPE_MAP.get(entityType));
-        }
-      }
-
-      testInfo = testInfo + ", dataSourceMap=[ " + dataSourceMap
-          + " ], entityTypeMap=[ " + entityTypeMap + " ]";
+      testInfo = testInfo + ", dataSourceMap=[ " + dataSourceMap + " ]";
 
       if (evenOdd) {
         result.add(Arguments.of(
@@ -282,8 +233,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
             mediaType,
             dataFile,
             analysis,
-            dataSourceMap,
-            entityTypeMap));
+            dataSourceMap));
       }
       evenOdd = !evenOdd;
     }
@@ -341,8 +291,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
     int dataFileIndex = 0;
 
-    // iterate over the entity types
-    FlagValue withEntityTypes = FlagValue.MIXED;
     FlagValue withRecordIds   = FlagValue.MIXED;
     boolean   fullValues      = false;
     boolean   flatten         = false;
@@ -385,13 +333,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       Map<FeatureType, FeatureDensity> featureDensityMap = featureDensityMap();
 
       // set the boolean/flag values
-      withEntityTypes = withEntityTypes.next();
       withRecordIds   = withRecordIds.next();
       fullValues      = !fullValues;
       flatten         = !flatten;
 
       String testInfo = "dataSources=[ " + dataSourceList
-          + " ], withEntityTypes=[ " + withEntityTypes
           + " ], withRecordIds=[ " + withRecordIds
           + " ], fullValues=[ " + fullValues
           + " ], flatten=[ " + flatten + " ]";
@@ -451,7 +397,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
             csvWriter,
             (withRecordIds != FlagValue.NO),
             (dataSourceList.size() > 0),
-            (withEntityTypes != FlagValue.NO),
             allFeatureGenMap,
             recordTypes,
             fullValues);
@@ -467,11 +412,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         int iteration = 0;
         for (String dataSource: dataSourceList) {
           RecordType recordType = SOURCE_RECORD_TYPE_MAP.get(dataSource);
-          String entityType = SOURCE_ENTITY_TYPE_MAP.get(dataSource);
-
-          if (!withEntityTypes.toBoolean(iteration)) {
-            entityType = null;
-          }
 
           int recordCount = (dataSourceList.size() == 1) ? 500
               : Math.max(500, ((iteration + 1) * 2000) % 2500);
@@ -486,7 +426,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                              recordCount,
                                              includeRecordIds,
                                              dataSource,
-                                             entityType,
                                              featureGenMap,
                                              featureDensityMap,
                                              fullValues,
@@ -495,7 +434,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
           for (SzBulkDataAnalysis analysis : analyses) {
             analysis.trackRecords(recordCount,
                                   dataSource,
-                                  entityType,
                                   includeRecordIds);
           }
         }
@@ -1318,11 +1256,9 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   }
 
   protected String formatLoadURL(String               defaultDataSource,
-                                 String               defaultEntityType,
                                  String               loadId,
                                  Integer              maxFailures,
                                  Map<String, String>  dataSourceMap,
-                                 Map<String, String>  entityTypeMap,
                                  String               progressPeriod)
   {
     try {
@@ -1332,11 +1268,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       if (defaultDataSource != null) {
         sb.append(prefix).append("dataSource=").append(
             URLEncoder.encode(defaultDataSource, UTF_8));
-        prefix = "&";
-      }
-      if (defaultEntityType != null) {
-        sb.append(prefix).append("entityType=").append(
-            URLEncoder.encode(defaultEntityType, UTF_8));
         prefix = "&";
       }
       if (loadId != null) {
@@ -1391,48 +1322,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         prefix = prefixArr[0];
       }
 
-      if (entityTypeMap != null) {
-        String[]          prefixArr   = { prefix };
-        boolean[]         jsonFlag    = { true };
-        boolean[]         overlapFlag = { true };
-        JsonObjectBuilder builder   = Json.createObjectBuilder();
-        entityTypeMap.entrySet().forEach(entry -> {
-          String  key   = entry.getKey();
-          String  value = entry.getValue();
-          if (jsonFlag[0] || overlapFlag[0]) {
-            builder.add(key, value);
-
-          } else {
-            String mapping = ":" + key + ":" + value;
-            try {
-              sb.append(prefixArr[0]).append("mapEntityType=").append(
-                  URLEncoder.encode(mapping, UTF_8));
-              prefixArr[0] = "&";
-            } catch (UnsupportedEncodingException cannotHappen) {
-              throw new IllegalStateException("UTF-8 encoding not supported");
-            }
-            overlapFlag[0] = !overlapFlag[0];
-          }
-          jsonFlag[0] = !jsonFlag[0];
-        });
-        JsonObject jsonObject = builder.build();
-        if (jsonObject.size() > 0) {
-          String mapEntityTypes = jsonObject.toString();
-          try {
-            sb.append(prefixArr[0]).append("mapEntityTypes=").append(
-                URLEncoder.encode(mapEntityTypes, UTF_8));
-
-            prefixArr[0] = "&";
-
-          } catch (UnsupportedEncodingException cannotHappen) {
-            throw new IllegalStateException("UTF-8 encoding not supported");
-          }
-        }
-
-        // update the prefix
-        prefix = prefixArr[0];
-      }
-
       if (progressPeriod != null) {
         sb.append(prefix).append("progressPeriod=").append(progressPeriod);
       }
@@ -1451,8 +1340,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       MediaType           mediaType,
       File                bulkDataFile,
       SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap,
-      Map<String,String>  entityTypeMap)
+      Map<String,String>  dataSourceMap)
   {
     this.performTest(() -> {
       this.livePurgeRepository();
@@ -1461,9 +1349,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       MultivaluedMap  queryParams       = new MultivaluedHashMap();
       String          mapDataSources    = null;
-      String          mapEntityTypes    = null;
       List<String>    mapDataSourceList = new LinkedList<>();
-      List<String>    mapEntityTypeList = new LinkedList<>();
       if (dataSourceMap != null) {
         boolean[]         jsonFlag    = { true };
         boolean[]         overlapFlag = { true };
@@ -1489,31 +1375,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         }
       }
 
-      if (entityTypeMap != null) {
-        boolean[]         jsonFlag    = { true };
-        boolean[]         overlapFlag = { true };
-        JsonObjectBuilder builder   = Json.createObjectBuilder();
-        entityTypeMap.entrySet().forEach(entry -> {
-          String  key   = entry.getKey();
-          String  value = entry.getValue();
-          if (jsonFlag[0] || overlapFlag[0]) {
-            builder.add(key, value);
-
-          } else {
-            String mapping = ":" + key + ":" + value;
-            mapEntityTypeList.add(mapping);
-            queryParams.add("mapEntityType", mapping);
-            overlapFlag[0] = !overlapFlag[0];
-          }
-          jsonFlag[0] = !jsonFlag[0];
-        });
-        JsonObject jsonObject = builder.build();
-        if (jsonObject.size() > 0) {
-          mapEntityTypes = jsonObject.toString();
-          queryParams.add("mapEntityTypes", mapDataSources);
-        }
-      }
-
       UriInfo uriInfo = this.newProxyUriInfo(uriText, queryParams);
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
@@ -1523,9 +1384,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                 CONTACTS_DATA_SOURCE,
                 mapDataSources,
                 mapDataSourceList,
-                GENERIC_ENTITY_TYPE,
-                mapEntityTypes,
-                mapEntityTypeList,
                 null,
                 0,
                 mediaType,
@@ -1539,10 +1397,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
         if (dataSourceMap != null) allDataSourceMap.putAll(dataSourceMap);
 
-        Map<String,String> allEntityTypeMap = new LinkedHashMap<>();
-        allEntityTypeMap.put(null, GENERIC_ENTITY_TYPE);
-        if (entityTypeMap != null) allEntityTypeMap.putAll(entityTypeMap);
-
         validateLoadResponse(testInfo,
                              response,
                              POST,
@@ -1553,8 +1407,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                              analysis,
                              analysis.getRecordCount(),
                              allDataSourceMap,
-                             allEntityTypeMap,
-                             null,
                              null,
                              after - before);
 
@@ -1574,15 +1426,14 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       MediaType           mediaType,
       File                bulkDataFile,
       SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap,
-      Map<String,String>  entityTypeMap)
+      Map<String,String>  dataSourceMap)
   {
     this.performTest(() -> {
       this.livePurgeRepository();
 
       String uriText = this.formatServerUri(formatLoadURL(
-          CONTACTS_DATA_SOURCE, GENERIC_ENTITY_TYPE, null, null,
-          dataSourceMap, entityTypeMap, null));
+          CONTACTS_DATA_SOURCE, null, null,
+          dataSourceMap, null));
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
         long before = System.nanoTime();
@@ -1597,10 +1448,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
         if (dataSourceMap != null) allDataSourceMap.putAll(dataSourceMap);
 
-        Map<String,String> allEntityTypeMap = new LinkedHashMap<>();
-        allEntityTypeMap.put(null, GENERIC_ENTITY_TYPE);
-        if (entityTypeMap != null) allEntityTypeMap.putAll(entityTypeMap);
-
         validateLoadResponse(testInfo,
                              response,
                              POST,
@@ -1611,8 +1458,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                              analysis,
                              analysis.getRecordCount(),
                              allDataSourceMap,
-                             allEntityTypeMap,
-                             null,
                              null,
                              after - before);
 
@@ -1632,15 +1477,14 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       MediaType           mediaType,
       File                bulkDataFile,
       SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap,
-      Map<String,String>  entityTypeMap)
+      Map<String,String>  dataSourceMap)
   {
     this.performTest(() -> {
       this.livePurgeRepository();
 
       String uriText = this.formatServerUri(formatLoadURL(
-          CONTACTS_DATA_SOURCE, GENERIC_ENTITY_TYPE, null, null,
-          dataSourceMap, entityTypeMap, null));
+          CONTACTS_DATA_SOURCE, null, null,
+          dataSourceMap, null));
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
         long before = System.nanoTime();
@@ -1656,10 +1500,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
         if (dataSourceMap != null) allDataSourceMap.putAll(dataSourceMap);
 
-        Map<String,String> allEntityTypeMap = new LinkedHashMap<>();
-        allEntityTypeMap.put(null, GENERIC_ENTITY_TYPE);
-        if (entityTypeMap != null) allEntityTypeMap.putAll(entityTypeMap);
-
         SzBulkLoadResponse response = jsonCopy(clientResponse,
                                                SzBulkLoadResponse.class);
 
@@ -1673,8 +1513,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                              analysis,
                              analysis.getRecordCount(),
                              allDataSourceMap,
-                             allEntityTypeMap,
-                             null,
                              null,
                              after - before);
 
@@ -1694,15 +1532,14 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       MediaType           mediaType,
       File                bulkDataFile,
       SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap,
-      Map<String,String>  entityTypeMap)
+      Map<String,String>  dataSourceMap)
   {
     this.performTest(() -> {
       this.livePurgeRepository();
 
       String uriText = this.formatServerUri(formatLoadURL(
-          CONTACTS_DATA_SOURCE, GENERIC_ENTITY_TYPE, null, null,
-          dataSourceMap, entityTypeMap, null));
+          CONTACTS_DATA_SOURCE,null, null,
+          dataSourceMap, null));
       uriText = uriText.replaceAll("^http:(.*)","ws:$1");
 
       try {
@@ -1765,10 +1602,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
         if (dataSourceMap != null) allDataSourceMap.putAll(dataSourceMap);
 
-        Map<String,String> allEntityTypeMap = new LinkedHashMap<>();
-        allEntityTypeMap.put(null, GENERIC_ENTITY_TYPE);
-        if (entityTypeMap != null) allEntityTypeMap.putAll(entityTypeMap);
-
         validateLoadResponse(testInfo,
                              finalResponse,
                              POST,
@@ -1779,8 +1612,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                              analysis,
                              analysis.getRecordCount(),
                              allDataSourceMap,
-                             allEntityTypeMap,
-                             null,
                              null,
                              after - before);
 
@@ -1800,15 +1631,14 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       MediaType           mediaType,
       File                bulkDataFile,
       SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap,
-      Map<String,String>  entityTypeMap)
+      Map<String,String>  dataSourceMap)
   {
     this.performTest(() -> {
       this.livePurgeRepository();
 
       String uriText = this.formatServerUri(formatLoadURL(
-          CONTACTS_DATA_SOURCE, GENERIC_ENTITY_TYPE, null, null,
-          dataSourceMap, entityTypeMap, null));
+          CONTACTS_DATA_SOURCE, null, null,
+          dataSourceMap, null));
 
       try {
         long before = System.nanoTime();
@@ -1869,10 +1699,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
         if (dataSourceMap != null) allDataSourceMap.putAll(dataSourceMap);
 
-        Map<String,String> allEntityTypeMap = new LinkedHashMap<>();
-        allEntityTypeMap.put(null, GENERIC_ENTITY_TYPE);
-        if (entityTypeMap != null) allEntityTypeMap.putAll(entityTypeMap);
-
         validateLoadResponse(testInfo,
                              finalResponse,
                              POST,
@@ -1883,8 +1709,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                              analysis,
                              analysis.getRecordCount(),
                              allDataSourceMap,
-                             allEntityTypeMap,
-                             null,
                              null,
                              after - before);
 
@@ -1917,14 +1741,14 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       Map<FeatureType, Set<UsageType>> featureGenMap = featureGenMap(PERSON);
       Map<FeatureType, FeatureDensity> featDensityMap = featureDensityMap();
 
-      // add 12 bad records mixed in with 10 good ones
+      // add 12 bad records mixed in with 10 good ones (the 12 bad ones have
+      // the data source as singular "CUSTOMER" rather than plural "CUSTOMERS")
       RecordHandler handler = new CompoundRecordHandler(handlers);
       this.dataGenerator.generateRecords(handler,
                                          PERSON,
                                          2,
                                          true,
                                          CUSTOMER_DATA_SOURCE,
-                                         GENERIC_ENTITY_TYPE,
                                          featureGenMap,
                                          featDensityMap,
                                          true,
@@ -1935,7 +1759,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                          10,
                                          true,
                                          CUSTOMERS_DATA_SOURCE,
-                                         PERSON_ENTITY_TYPE,
                                          featureGenMap,
                                          featDensityMap,
                                          true,
@@ -1946,7 +1769,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                          10,
                                          true,
                                          CUSTOMER_DATA_SOURCE,
-                                         PERSON_ENTITY_TYPE,
                                          featureGenMap,
                                          featDensityMap,
                                          true,
@@ -1959,7 +1781,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                          978,
                                          true,
                                          CUSTOMERS_DATA_SOURCE,
-                                         PERSON_ENTITY_TYPE,
                                          featureGenMap,
                                          featDensityMap,
                                          true,
@@ -1972,21 +1793,12 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                          979,
                                          true,
                                          CUSTOMERS_DATA_SOURCE,
-                                         PERSON_ENTITY_TYPE,
                                          featureGenMap,
                                          featDensityMap,
                                          true,
                                          true);
 
       List<Arguments> result = new LinkedList<>();
-
-      Map<String, Integer> entityTypeFailures12 = new LinkedHashMap<>();
-      entityTypeFailures12.put(GENERIC_ENTITY_TYPE, 2);
-      entityTypeFailures12.put(PERSON_ENTITY_TYPE, 10);
-
-      Map<String, Integer> entityTypeFailures5 = new LinkedHashMap<>();
-      entityTypeFailures5.put(GENERIC_ENTITY_TYPE, 2);
-      entityTypeFailures5.put(PERSON_ENTITY_TYPE, 3);
 
       for (int index = 0; index < tempFiles.length; index++) {
         File tempFile = tempFiles[index];
@@ -1996,7 +1808,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
             null,
             COMPLETED,
             Collections.singletonMap(CUSTOMER_DATA_SOURCE, 12),
-            entityTypeFailures12,
             tempFile));
 
         result.add(Arguments.of(
@@ -2004,7 +1815,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
             -1,
             COMPLETED,
             Collections.singletonMap(CUSTOMER_DATA_SOURCE, 12),
-            entityTypeFailures12,
             tempFile));
 
         result.add(Arguments.of(
@@ -2012,7 +1822,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
             5,
             ABORTED,
             Collections.singletonMap(CUSTOMER_DATA_SOURCE, 5),
-            entityTypeFailures5,
             tempFile));
       }
       return result;
@@ -2033,7 +1842,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       Integer               maxFailures,
       SzBulkDataStatus      expectedStatus,
       Map<String, Integer>  failuresByDataSource,
-      Map<String, Integer>  failuresByEntityType,
       File                  dataFile)
   {
     this.performTest(() -> {
@@ -2042,8 +1850,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       String testInfo = "recordCount=[ " + recordCount + " ], maxFailures=[ "
           + maxFailures + " ], status=[ "
           + expectedStatus + " ], failuresByDataSource=[ "
-          + failuresByDataSource + " ], failuresByEntityType=[ "
-          + failuresByEntityType + " ], dataFile=[ " + dataFile + " ]";
+          + failuresByDataSource + " ], dataFile=[ " + dataFile + " ]";
 
       String uriText = this.formatServerUri("bulk-data/load");
 
@@ -2058,9 +1865,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
            BufferedInputStream bis = new BufferedInputStream(is)) {
         long before = System.nanoTime();
         response = this.bulkDataServices.loadBulkRecordsViaForm(
-            null,
-            null,
-            null,
             null,
             null,
             null,
@@ -2084,9 +1888,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                   null,
                                   recordCount,
                                   null,
-                                  null,
                                   failuresByDataSource,
-                                  failuresByEntityType,
                                   after - before);
 
       } catch (Exception e) {
@@ -2135,11 +1937,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                  "Records with data source count not as expected: "
                  + testInfo);
 
-    assertEquals(expected.getRecordsWithEntityTypeCount(),
-                 actual.getRecordsWithEntityTypeCount(),
-                 "Records with entity type count not as expected: "
-                 + testInfo);
-
     // validate the analysis by data source fields
     List<SzDataSourceRecordAnalysis> actualSourceList
         = actual.getAnalysisByDataSource();
@@ -2176,57 +1973,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                    "The records with record ID counts for the "
                        + actualSource + " data source do not match: "
                        + testInfo);
-
-      assertEquals(expectedSourceAnalysis.getRecordsWithEntityTypeCount(),
-                   actualSourceAnalysis.getRecordsWithEntityTypeCount(),
-                   "The records with entity type counts for the "
-                       + actualSource + " data source do not match: "
-                       + testInfo);
-    }
-
-
-    // validate the analysis by entity type fields
-    List<SzEntityTypeRecordAnalysis> actualTypeList
-        = actual.getAnalysisByEntityType();
-
-    List<SzEntityTypeRecordAnalysis> expectedTypeList
-        = expected.getAnalysisByEntityType();
-
-    actualCount   = actualTypeList.size();
-    expectedCount = expectedTypeList.size();
-
-    assertEquals(expectedCount, actualCount,
-                 "The number of items in the analysis-by-entity-type "
-                 + "list is not as expected: " + testInfo);
-
-    for (int index = 0; index < actualCount; index++) {
-      SzEntityTypeRecordAnalysis actualTypeAnalysis
-          = actualTypeList.get(index);
-      SzEntityTypeRecordAnalysis expectedTypeAnalysis
-          = expectedTypeList.get(index);
-
-      String expectedEntityType = expectedTypeAnalysis.getEntityType();
-      String actualEntityType   = actualTypeAnalysis.getEntityType();
-
-      assertEquals(expectedEntityType, actualEntityType,
-                   "The entity types do not match: " + testInfo);
-
-      assertEquals(expectedTypeAnalysis.getRecordCount(),
-                   actualTypeAnalysis.getRecordCount(),
-                   "The record counts for the " + actualEntityType
-                       + " entity type do not match: " + testInfo);
-
-      assertEquals(expectedTypeAnalysis.getRecordsWithRecordIdCount(),
-                   actualTypeAnalysis.getRecordsWithRecordIdCount(),
-                   "The records with record ID counts for the "
-                       + actualEntityType + " entity type do not match: "
-                       + testInfo);
-
-      assertEquals(expectedTypeAnalysis.getRecordsWithDataSourceCount(),
-                   actualTypeAnalysis.getRecordsWithDataSourceCount(),
-                   "The records with data source counts for the "
-                       + actualEntityType + " entity type do not match: "
-                       + testInfo);
     }
   }
 
@@ -2243,9 +1989,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                                     SzBulkDataAnalysis         analysis,
                                     Integer                    totalRecordCount,
                                     Map<String, String>        dataSourceMap,
-                                    Map<String, String>        entityTypeMap,
                                     Map<String, Integer>       failuresBySource,
-                                    Map<String, Integer>       failuresByEType,
                                     long                       maxDuration)
   {
     validateBasics(testInfo,
@@ -2323,33 +2067,13 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     // check if nothing more to validate
     if (analysis == null) return;
 
-    // get the analyses for missing data source and missing entity type
-    SzDataSourceRecordAnalysis missingSourceAnalysis = null;
-    for (SzDataSourceRecordAnalysis item: analysis.getAnalysisByDataSource()) {
-      if (item.getDataSource() == null) {
-        missingSourceAnalysis = item;
-        break;
-      }
-    }
-
-    // determine how many records are missing only data source, only entity type
-    // as well as the number of them missing both
-    int missingBothCount = (missingSourceAnalysis == null) ? 0
-      : missingSourceAnalysis.getRecordCount()
-        - missingSourceAnalysis.getRecordsWithEntityTypeCount();
+    // determine how many records are missing only data source
     int missingDataSourceCount = analysis.getRecordCount()
-        - analysis.getRecordsWithDataSourceCount() - missingBothCount;
-    int missingEntityTypeCount = analysis.getRecordCount()
-        - analysis.getRecordsWithEntityTypeCount() - missingBothCount;
+        - analysis.getRecordsWithDataSourceCount();
 
-    // check if those missing data source and entity type are mapped
+    // check if those missing data source are mapped
     if (dataSourceMap.containsKey(null)) missingDataSourceCount = 0;
-    if (entityTypeMap.containsKey(null)) missingEntityTypeCount = 0;
-    if (dataSourceMap.containsKey(null) && entityTypeMap.containsKey(null)) {
-      missingBothCount = 0;
-    }
-    int incompleteCount = missingBothCount + missingDataSourceCount
-        + missingEntityTypeCount;
+    int incompleteCount = missingDataSourceCount;
 
     // check the total incomplete count
     assertEquals(incompleteCount, actual.getIncompleteRecordCount(),
@@ -2388,9 +2112,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         int incomplete = 0;
         if (dataSource == null) {
           incomplete = sourceCount;
-        } else if (!entityTypeMap.containsKey(null)) {
-          incomplete = sourceCount
-              - sourceAnalysis.getRecordsWithEntityTypeCount();
         }
 
         // update the incomplete count
@@ -2398,52 +2119,10 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       }
     });
 
-    // determine the expected counts by entity type
-    Map<String, Integer> entityTypeCountMap = new LinkedHashMap<>();
-    Map<String, Integer> etypeIncompleteMap = new LinkedHashMap<>();
-    analysis.getAnalysisByEntityType().forEach(etypeAnalysis -> {
-      String origEntityType = etypeAnalysis.getEntityType();
-
-      String entityType = entityTypeMap.containsKey(origEntityType)
-          ? entityTypeMap.get(origEntityType) : entityTypeMap.get(null);
-      if (entityTypeMap == null) {
-        entityType = origEntityType;
-      }
-
-      Integer currentCount = entityTypeCountMap.containsKey(entityType)
-          ? entityTypeCountMap.get(entityType) : ZERO;
-
-      Integer currentIncomplete = etypeIncompleteMap.containsKey(entityType)
-          ? etypeIncompleteMap.get(entityType) : ZERO;
-
-      // get the total number of records and increase the count accordingly
-      int etypeCount = etypeAnalysis.getRecordCount() + currentCount;
-      if (etypeCount > 0) {
-        entityTypeCountMap.put(entityType, etypeCount);
-
-        // determine how many are incomplete
-        int incomplete = 0;
-        if (entityType == null) {
-          incomplete = etypeCount;
-        } else if (!dataSourceMap.containsKey(null)) {
-          incomplete = etypeCount
-              - etypeAnalysis.getRecordsWithDataSourceCount();
-        }
-
-        // update the incomplete count
-        etypeIncompleteMap.put(entityType, currentIncomplete + incomplete);
-      }
-    });
-
     assertEquals(
         dataSourceCountMap.containsKey(null) ? dataSourceCountMap.get(null) : 0,
         actual.getMissingDataSourceCount(),
         "Missing data source count not as expected: " + testInfo);
-
-    assertEquals(
-        entityTypeCountMap.containsKey(null) ? entityTypeCountMap.get(null) : 0,
-        actual.getMissingEntityTypeCount(),
-        "Missing entity type count not as expected: " + testInfo);
 
     // validate the analysis by data source fields
     List<SzDataSourceBulkLoadResult> dataSourceResults
@@ -2490,53 +2169,6 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                    "The loaded counts for the " + dataSource
                        + " data source do not match: " + testInfo);
     }
-
-    // validate the analysis by data source fields
-    List<SzEntityTypeBulkLoadResult> entityTypeResults
-        = actual.getResultsByEntityType();
-
-    actualCount   = entityTypeResults.size();
-    expectedCount = entityTypeCountMap.size();
-
-    assertEquals(expectedCount, actualCount,
-                 "The number of items in the results-by-entity-type "
-                     + "list is not as expected: " + testInfo);
-
-    for (SzEntityTypeBulkLoadResult etypeResults : entityTypeResults) {
-      String entityType = etypeResults.getEntityType();
-
-      assertTrue(entityTypeCountMap.containsKey(entityType),
-                 "Entity type results for unexpected entity type ("
-                     + entityType + "): " + testInfo);
-
-      int etypeTotal        = entityTypeCountMap.get(entityType);
-      int etypeFailures     = (failuresByEType != null
-                               && failuresByEType.containsKey(entityType))
-                                ? failuresByEType.get(entityType) : 0;
-      int etypeIncomplete   = etypeIncompleteMap.get(entityType);
-      int etypeLoaded       = etypeTotal - etypeIncomplete - etypeFailures;
-
-      assertEquals(etypeTotal,
-                   etypeResults.getRecordCount(),
-                   "The record counts for the " + entityType
-                       + " entity type do not match: " + testInfo);
-
-      assertEquals(etypeIncomplete,
-                   etypeResults.getIncompleteRecordCount(),
-                   "The incomplete counts for the " + entityType
-                       + " entity type do not match: " + testInfo);
-
-      assertEquals(etypeFailures,
-                   etypeResults.getFailedRecordCount(),
-                   "The failed counts for the " + entityType
-                       + " entity type do not match: " + testInfo);
-
-      assertEquals(etypeLoaded,
-                   etypeResults.getLoadedRecordCount(),
-                   "The loaded counts for the " + entityType
-                       + " entity type do not match: " + testInfo);
-    }
-
   }
 }
 

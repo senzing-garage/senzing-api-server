@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Provides the minimum set of properties for describing the load of a set of
  * bulk data records either in entirety or by some aggregate group (e.g.: by
- * data source or entity type).
+ * data source).
  */
 public interface SzBaseBulkLoadResult {
   /**

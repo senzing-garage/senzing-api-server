@@ -79,7 +79,6 @@ public class CSVRecordHandler implements RecordHandler {
       Writer                            writer,
       boolean                           includeRecordId,
       boolean                           includeDataSource,
-      boolean                           includeEntityType,
       Map<FeatureType, Set<UsageType>>  featureGenMap,
       Set<RecordType>                   recordTypes,
       boolean                           fullValues)
@@ -92,10 +91,6 @@ public class CSVRecordHandler implements RecordHandler {
 
     if (includeDataSource) {
       this.columns.add(new Column("DATA_SOURCE"));
-    }
-
-    if (includeEntityType) {
-      this.columns.add(new Column("ENTITY_TYPE"));
     }
 
     featureGenMap.entrySet().forEach(entry -> {

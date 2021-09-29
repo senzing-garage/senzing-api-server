@@ -196,7 +196,6 @@ public class AutoReinitializeTest extends AbstractServiceTest
       job.add("NAME_LAST", "Schmoe");
       job.add("PHONE_NUMBER", "702-555-1212");
       job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
-      job.add("ENTITY_TYPE", "GENERIC");
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
@@ -238,7 +237,6 @@ public class AutoReinitializeTest extends AbstractServiceTest
       job.add("NAME_LAST", "Doe");
       job.add("PHONE_NUMBER", "818-555-1313");
       job.add("ADDR_FULL", "100 Main Street, Los Angeles, CA 90012");
-      job.add("ENTITY_TYPE", "GENERIC");
       JsonObject  jsonObject  = job.build();
       String      jsonText    = JsonUtils.toJsonText(jsonObject);
 
@@ -295,8 +293,16 @@ public class AutoReinitializeTest extends AbstractServiceTest
 
     // now modify the config
     sb.delete(0, sb.length());
-    long configId = this.configApi.load(configJsonText);
-    this.configApi.addDataSourceV2(configId, jsonText, sb);
+    Result<Long> configIdHandle = new Result<>();
+    returnCode = this.configApi.load(configJsonText, configIdHandle);
+    if (returnCode != 0) {
+      throw new IllegalStateException(
+          "Failed to load config.  errorCode=[ "
+          + this.configApi.getLastExceptionCode() + " ], failure=[ "
+          + this.configApi.getLastException() + " ]");
+    }
+    long configId = configIdHandle.getValue();
+    this.configApi.addDataSource(configId, jsonText, sb);
 
     jsonObject = JsonUtils.parseJsonObject(sb.toString());
     int dataSourceId = jsonObject.getInt("DSRC_ID");

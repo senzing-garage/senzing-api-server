@@ -50,7 +50,6 @@ public class RecordReaderTest {
     this.records = new ArrayList<>();
     JsonObjectBuilder job = Json.createObjectBuilder();
     job.add("DATA_SOURCE", "EMPLOYEES");
-    job.add("ENTITY_TYPE", "EMPL");
     job.add("NAME_FIRST", "JOE");
     job.add("NAME_LAST", "SCHMOE");
     job.add("PHONE_NUMBER", "702-555-1212");
@@ -64,7 +63,6 @@ public class RecordReaderTest {
 
     job = Json.createObjectBuilder();
     job.add("DATA_SOURCE", "CUSTOMERS");
-    job.add("ENTITY_TYPE", "CUST");
     job.add("NAME_FIRST", "JANE");
     job.add("NAME_LAST", "SMITH");
     job.add("PHONE_NUMBER", "702-444-1313");
@@ -92,11 +90,9 @@ public class RecordReaderTest {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
 
-    pw.println("DATA_SOURCE,ENTITY_TYPE,NAME_FIRST,NAME_LAST,PHONE_NUMBER");
+    pw.println("DATA_SOURCE,NAME_FIRST,NAME_LAST,PHONE_NUMBER");
     for (JsonObject obj: this.records) {
       pw.print(JsonUtils.getString(obj,"DATA_SOURCE", ""));
-      pw.print(",");
-      pw.print(obj.getString("ENTITY_TYPE", ""));
       pw.print(",");
       pw.print(obj.getString("NAME_FIRST"));
       pw.print(",");
@@ -211,8 +207,7 @@ public class RecordReaderTest {
     try {
       RecordReader rr = new RecordReader(sr);
       for (JsonObject expected : this.records) {
-        expected = augmentRecord(
-            expected, null, null, null);
+        expected = augmentRecord(expected, null, null);
         JsonObject actual = rr.readRecord();
         assertEquals(expected, actual,
                      multilineFormat(
@@ -264,13 +259,6 @@ public class RecordReaderTest {
     dataSourceMaps.add(specificMap1);
     dataSourceMaps.add(specificMap2);
 
-    List<Map<String,String>> entityTypeMaps = new LinkedList<>();
-    entityTypeMaps.add(null);
-    entityTypeMaps.add(Collections.emptyMap());
-    entityTypeMaps.add(Collections.singletonMap(null, "GENERIC"));
-    entityTypeMaps.add(specificMap3);
-    entityTypeMaps.add(specificMap4);
-
     String[] sourceIds = { null, "", "SomeFile" };
 
     List<Arguments> result = new LinkedList<>();
@@ -279,14 +267,11 @@ public class RecordReaderTest {
       List<JsonObject> expected = entry.getValue();
 
       for (Map<String,String> dataSourceMap : dataSourceMaps) {
-        for (Map<String, String> entityTypeMap: entityTypeMaps) {
-          for (String sourceId : sourceIds) {
-            result.add(arguments(recordsText,
-                                 expected,
-                                 dataSourceMap,
-                                 entityTypeMap,
-                                 sourceId));
-          }
+        for (String sourceId : sourceIds) {
+          result.add(arguments(recordsText,
+                               expected,
+                               dataSourceMap,
+                               sourceId));
         }
       }
     });
@@ -298,18 +283,14 @@ public class RecordReaderTest {
   public void readRecordsTest(String              recordsText,
                               List<JsonObject>    expectedRecords,
                               Map<String,String>  dataSourceMap,
-                              Map<String,String>  entityTypeMap,
                               String              sourceId)
   {
     StringReader sr = new StringReader(recordsText);
     Map<String,String> dsMap = dataSourceMap;
-    Map<String,String> etMap = entityTypeMap;
     try {
-      RecordReader rr = new RecordReader(
-          sr, dataSourceMap, entityTypeMap, sourceId);
+      RecordReader rr = new RecordReader(sr, dataSourceMap, sourceId);
       for (JsonObject expected : expectedRecords) {
-        expected = augmentRecord(
-            expected, dataSourceMap, entityTypeMap, sourceId);
+        expected = augmentRecord(expected, dataSourceMap, sourceId);
         JsonObject actual = rr.readRecord();
         assertEquals(expected, actual,
                      multilineFormat(
@@ -318,8 +299,6 @@ public class RecordReaderTest {
                          recordsText,
                          " --> dataSourceMap: "
                              + ((dsMap != null) ? dsMap.toString() : null),
-                         " --> entityTypeMap: "
-                             + ((etMap != null) ? etMap.toString() : null),
                          "EXPECTED: ",
                          JsonUtils.toJsonText(expected, true),
                          "ACTUAL: ",
@@ -333,17 +312,13 @@ public class RecordReaderTest {
 
   private static JsonObject augmentRecord(JsonObject          record,
                                           Map<String,String>  dataSourceMap,
-                                          Map<String,String>  entityTypeMap,
                                           String              sourceId)
   {
     JsonObjectBuilder job = Json.createObjectBuilder(record);
     String dataSource = JsonUtils.getString(
         record, "DATA_SOURCE", "");
-    String entityType = JsonUtils.getString(
-        record, "ENTITY_TYPE", "");
 
     dataSource = dataSource.trim().toUpperCase();
-    entityType = entityType.trim().toUpperCase();
 
     // map the data source
     if (dataSourceMap != null) {
@@ -364,27 +339,6 @@ public class RecordReaderTest {
       job.add("DATA_SOURCE", dataSource);
     } else {
       dataSource = "";
-    }
-
-    // map the entity type
-    if (entityTypeMap != null) {
-      String origET = entityType;
-      entityType = entityTypeMap.get(entityType);
-      if (entityType == null) {
-        entityType = entityTypeMap.get(null);
-      }
-      if (entityType == null) {
-        entityType = origET;
-      }
-    }
-    if (entityType != null && entityType.trim().length() > 0)
-    {
-      if (record.containsKey("ENTITY_TYPE")) {
-        job.remove("ENTITY_TYPE");
-      }
-      job.add("ENTITY_TYPE", entityType);
-    } else {
-      entityType = "";
     }
 
     // add the source ID

@@ -253,15 +253,6 @@ public class BulkDataServices implements BulkDataSupport {
    * @param mapDataSourceList The {@link List} of delimited strings that begin
    *                          the delimiter, followed by the "from" data source
    *                          then the delimiter then the target data source.
-   * @param entityType The entity type to assign to the loaded records unless
-   *                   another entity type mapping supercedes this default.
-   * @param mapEntityTypes The JSON string mapping specific entity types to
-   *                       alternate entity type names.  A mapping from
-   *                       empty-string is used for mapping records with no
-   *                       entity type specified.
-   * @param mapEntityTypeList The {@link List} of delimited strings that begin
-   *                          the delimiter, followed by the "from" entity type
-   *                          then the delimiter then the target entity type.
    * @param loadId The optional load ID to use for loading the records.
    * @param maxFailures The maximum number of failures or a negative number if
    *                    no maximum.
@@ -276,9 +267,6 @@ public class BulkDataServices implements BulkDataSupport {
       @QueryParam("dataSource") String dataSource,
       @QueryParam("mapDataSources") String mapDataSources,
       @QueryParam("mapDataSource") List<String> mapDataSourceList,
-      @QueryParam("entityType") String entityType,
-      @QueryParam("mapEntityTypes") String mapEntityTypes,
-      @QueryParam("mapEntityType") List<String> mapEntityTypeList,
       @QueryParam("loadId") String loadId,
       @DefaultValue("0") @QueryParam("maxFailures") int maxFailures,
       @HeaderParam("Content-Type") MediaType mediaType,
@@ -297,9 +285,6 @@ public class BulkDataServices implements BulkDataSupport {
                                   dataSource,
                                   mapDataSources,
                                   mapDataSourceList,
-                                  entityType,
-                                  mapEntityTypes,
-                                  mapEntityTypeList,
                                   loadId,
                                   maxFailures,
                                   mediaType,
@@ -337,15 +322,6 @@ public class BulkDataServices implements BulkDataSupport {
    * @param mapDataSourceList The {@link List} of delimited strings that begin
    *                          the delimiter, followed by the "from" data source
    *                          then the delimiter then the target data source.
-   * @param entityType The entity type to assign to the loaded records unless
-   *                   another entity type mapping supercedes this default.
-   * @param mapEntityTypes The JSON string mapping specific entity types to
-   *                       alternate entity type names.  A mapping from
-   *                       empty-string is used for mapping records with no
-   *                       entity type specified.
-   * @param mapEntityTypeList The {@link List} of delimited strings that begin
-   *                          the delimiter, followed by the "from" entity type
-   *                          then the delimiter then the target entity type.
    * @param loadId The optional load ID to use for loading the records.
    * @param maxFailures The maximum number of failures or a negative number if
    *                    no maximum.
@@ -360,9 +336,6 @@ public class BulkDataServices implements BulkDataSupport {
       @QueryParam("dataSource") String dataSource,
       @QueryParam("mapDataSources") String mapDataSources,
       @QueryParam("mapDataSource") List<String> mapDataSourceList,
-      @QueryParam("entityType") String entityType,
-      @QueryParam("mapEntityTypes") String mapEntityTypes,
-      @QueryParam("mapEntityType") List<String> mapEntityTypeList,
       @QueryParam("loadId") String loadId,
       @DefaultValue("0") @QueryParam("maxFailures") int maxFailures,
       @HeaderParam("Content-Type") MediaType mediaType,
@@ -380,9 +353,6 @@ public class BulkDataServices implements BulkDataSupport {
                                   dataSource,
                                   mapDataSources,
                                   mapDataSourceList,
-                                  entityType,
-                                  mapEntityTypes,
-                                  mapEntityTypeList,
                                   loadId,
                                   maxFailures,
                                   mediaType,
@@ -420,15 +390,6 @@ public class BulkDataServices implements BulkDataSupport {
    * @param mapDataSourceList The {@link List} of delimited strings that begin
    *                          the delimiter, followed by the "from" data source
    *                          then the delimiter then the target data source.
-   * @param entityType The entity type to assign to the loaded records unless
-   *                   another entity type mapping supercedes this default.
-   * @param mapEntityTypes The JSON string mapping specific entity types to
-   *                       alternate entity type names.  A mapping from
-   *                       empty-string is used for mapping records with no
-   *                       entity type specified.
-   * @param mapEntityTypeList The {@link List} of delimited strings that begin
-   *                          the delimiter, followed by the "from" entity type
-   *                          then the delimiter then the target entity type.
    * @param loadId The optional load ID to use for loading the records.
    * @param maxFailures The maximum number of failures or a negative number if
    *                    no maximum.
@@ -449,9 +410,6 @@ public class BulkDataServices implements BulkDataSupport {
       @QueryParam("dataSource") String dataSource,
       @QueryParam("mapDataSources") String mapDataSources,
       @QueryParam("mapDataSource") List<String> mapDataSourceList,
-      @QueryParam("entityType") String entityType,
-      @QueryParam("mapEntityTypes") String mapEntityTypes,
-      @QueryParam("mapEntityType") List<String> mapEntityTypeList,
       @QueryParam("loadId") String loadId,
       @DefaultValue("0") @QueryParam("maxFailures") int maxFailures,
       @HeaderParam("Content-Type") MediaType mediaType,
@@ -474,9 +432,6 @@ public class BulkDataServices implements BulkDataSupport {
                            dataSource,
                            mapDataSources,
                            mapDataSourceList,
-                           entityType,
-                           mapEntityTypes,
-                           mapEntityTypeList,
                            loadId,
                            maxFailures,
                            mediaType,
@@ -514,15 +469,6 @@ public class BulkDataServices implements BulkDataSupport {
    * @param mapDataSourceList The {@link List} of delimited strings that begin
    *                          the delimiter, followed by the "from" data source
    *                          then the delimiter then the target data source.
-   * @param entityType The entity type to assign to the loaded records unless
-   *                   another entity type mapping supercedes this default.
-   * @param mapEntityTypes The JSON string mapping specific entity types to
-   *                       alternate entity type names.  A mapping from
-   *                       empty-string is used for mapping records with no
-   *                       entity type specified.
-   * @param mapEntityTypeList The {@link List} of delimited strings that begin
-   *                          the delimiter, followed by the "from" entity type
-   *                          then the delimiter then the target entity type.
    * @param loadId The optional load ID to use for loading the records.
    * @param maxFailures The maximum number of failures or a negative number if
    *                    no maximum.
@@ -547,9 +493,6 @@ public class BulkDataServices implements BulkDataSupport {
       @QueryParam("dataSource") String dataSource,
       @QueryParam("mapDataSources") String mapDataSources,
       @QueryParam("mapDataSource") List<String> mapDataSourceList,
-      @QueryParam("entityType") String entityType,
-      @QueryParam("mapEntityTypes") String mapEntityTypes,
-      @QueryParam("mapEntityType") List<String> mapEntityTypeList,
       @QueryParam("loadId") String loadId,
       @DefaultValue("0") @QueryParam("maxFailures") int maxFailures,
       @HeaderParam("Content-Type") MediaType mediaType,
@@ -570,9 +513,6 @@ public class BulkDataServices implements BulkDataSupport {
                            dataSource,
                            mapDataSources,
                            mapDataSourceList,
-                           entityType,
-                           mapEntityTypes,
-                           mapEntityTypeList,
                            loadId,
                            maxFailures,
                            mediaType,

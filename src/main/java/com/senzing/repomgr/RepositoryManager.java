@@ -1,7 +1,6 @@
 package com.senzing.repomgr;
 
 import com.senzing.api.model.SzDataSource;
-import com.senzing.api.model.SzEntityType;
 import com.senzing.cmdline.CommandLineOption;
 import com.senzing.cmdline.CommandLineValue;
 import com.senzing.nativeapi.NativeApiFactory;
@@ -381,7 +380,6 @@ public class RepositoryManager {
 
     File repository = (File) options.get(REPOSITORY);
     String dataSource = (String) options.get(DATA_SOURCE);
-    String entityType = (String) options.get(ENTITY_TYPE);
     Boolean verbose = (Boolean) options.get(VERBOSE);
     if (verbose == null) verbose = Boolean.FALSE;
 
@@ -400,7 +398,7 @@ public class RepositoryManager {
       } else if (options.containsKey(RepoManagerOption.LOAD_FILE)) {
         File sourceFile = (File) options.get(RepoManagerOption.LOAD_FILE);
         try {
-          loadFile(repository, verbose, sourceFile, dataSource, entityType);
+          loadFile(repository, verbose, sourceFile, dataSource);
         } finally {
           destroyApis();
         }
@@ -408,7 +406,7 @@ public class RepositoryManager {
       } else if (options.containsKey(RepoManagerOption.ADD_RECORD)) {
         String jsonRecord = (String) options.get(RepoManagerOption.ADD_RECORD);
         try {
-          addRecord(repository, verbose, jsonRecord, dataSource, entityType);
+          addRecord(repository, verbose, jsonRecord, dataSource);
         } finally {
           destroyApis();
         }
@@ -562,13 +560,16 @@ public class RepositoryManager {
       // setup the initial configuration
       initBaseApis(directory, false);
       try {
-        long configId = CONFIG_API.create();
-        if (configId <= 0) {
+        Result<Long> configIdResult = new Result<>();
+        int returnCode = CONFIG_API.create(configIdResult);
+        if (returnCode != 0) {
+          System.err.println("RETURN CODE: " + returnCode);
           String msg = logError("G2Config.create()", CONFIG_API);
           throw new IllegalStateException(msg);
         }
+        long configId = configIdResult.getValue();
         StringBuffer sb = new StringBuffer();
-        int returnCode = CONFIG_API.save(configId, sb);
+        returnCode = CONFIG_API.save(configId, sb);
         if (returnCode != 0) {
           String msg = logError("G2Config.save()", CONFIG_API);
           throw new IllegalStateException(msg);
@@ -739,18 +740,6 @@ public class RepositoryManager {
     }
   }
 
-  private static Set<String> getEntityTypes() {
-    Result<Long> configId = new Result<>();
-    try {
-      return getEntityTypes(configId);
-
-    } finally {
-      if (configId.getValue() != null) {
-        CONFIG_API.close(configId.getValue());
-      }
-    }
-  }
-
   private static Long loadActiveConfig() {
     StringBuffer sb = new StringBuffer();
     int returnCode = ENGINE_API.exportConfig(sb);
@@ -758,11 +747,13 @@ public class RepositoryManager {
       logError("G2Engine.exportConfig()", ENGINE_API);
       return null;
     }
-    long handle = CONFIG_API.load(sb.toString());
-    if (handle < 0L) {
+    Result<Long> configHandleResult = new Result<>();
+    returnCode = CONFIG_API.load(sb.toString(), configHandleResult);
+    if (returnCode != 0) {
       logError("G2Config.load()", CONFIG_API);
       return null;
     }
+    long handle = configHandleResult.getValue();
     return handle;
   }
 
@@ -773,18 +764,11 @@ public class RepositoryManager {
     return getDataSources(handle);
   }
 
-  private static Set<String> getEntityTypes(Result<Long> configId) {
-    Long handle = loadActiveConfig();
-    if (handle == null) return null;
-    configId.setValue(handle);
-    return getEntityTypes(handle);
-  }
-
   private static Set<String> getDataSources(long configId) {
     StringBuffer sb = new StringBuffer();
-    int returnCode = CONFIG_API.listDataSourcesV2(configId, sb);
+    int returnCode = CONFIG_API.listDataSources(configId, sb);
     if (returnCode != 0) {
-      logError("G2Config.listDataSourcesV2()", CONFIG_API);
+      logError("G2Config.listDataSources()", CONFIG_API);
       return null;
     }
 
@@ -795,26 +779,6 @@ public class RepositoryManager {
     JsonArray jsonArray = jsonObject.getJsonArray("DATA_SOURCES");
     for (JsonObject dataSource : jsonArray.getValuesAs(JsonObject.class)) {
       existingSet.add(JsonUtils.getString(dataSource, "DSRC_CODE"));
-    }
-
-    return existingSet;
-  }
-
-  private static Set<String> getEntityTypes(long configId) {
-    StringBuffer sb = new StringBuffer();
-    int returnCode = CONFIG_API.listEntityTypesV2(configId, sb);
-    if (returnCode != 0) {
-      logError("G2Config.listEntityTypesV2()", CONFIG_API);
-      return null;
-    }
-
-    Set<String> existingSet = new LinkedHashSet<>();
-
-    // parse the raw data
-    JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
-    JsonArray jsonArray = jsonObject.getJsonArray("ENTITY_TYPES");
-    for (JsonObject entityType : jsonArray.getValuesAs(JsonObject.class)) {
-      existingSet.add(JsonUtils.getString(entityType, "ETYPE_CODE"));
     }
 
     return existingSet;
@@ -867,28 +831,22 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source and/or entity type for all the records.  NOTE: if the
-   * records in the file do not have a defined DATA_SOURCE then the specified
-   * data source is required.  If the records do not have a defined
-   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
-   * <tt>"GENERIC"</tt> is used.
+   * the data source for all the records.  NOTE: if the records in the file do
+   * not have a defined DATA_SOURCE then the specified data source is required.
    *
    * @param repository The directory for the repository.
    * @param sourceFile The source file to load (JSON or CSV).
    * @param dataSource The data source to use for loading the records.
-   * @param entityType The entity type to use for loading the records.
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
    */
   public static boolean loadFile(File   repository,
                                  File   sourceFile,
-                                 String dataSource,
-                                 String entityType)
+                                 String dataSource)
   {
     return loadFile(repository,
                     false,
                     sourceFile,
                     dataSource,
-                    entityType,
                     null,
                     null,
                     false);
@@ -896,16 +854,12 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source and/or entity type for all the records.  NOTE: if the
-   * records in the file do not have a defined DATA_SOURCE then the specified
-   * data source is required.  If the records do not have a defined
-   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
-   * <tt>"GENERIC"</tt> is used.
+   * the data source for all the records.  NOTE: if the records in the file do
+   * not have a defined DATA_SOURCE then the specified data source is required.
    *
    * @param repository The directory for the repository.
    * @param sourceFile The source file to load (JSON or CSV).
    * @param dataSource The data source to use for loading the records.
-   * @param entityType The entity type to use for loading the records.
    * @param silent <tt>true</tt> if no feedback should be given to the user
    *               upon completion, otherwise <tt>false</tt>
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
@@ -913,14 +867,12 @@ public class RepositoryManager {
   public static boolean loadFile(File     repository,
                                  File     sourceFile,
                                  String   dataSource,
-                                 String   entityType,
                                  boolean  silent)
   {
     return loadFile(repository,
                     false,
                     sourceFile,
                     dataSource,
-                    entityType,
                     null,
                     null,
                     silent);
@@ -928,16 +880,12 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source and/or entity type for all the records.  NOTE: if the
-   * records in the file do not have a defined DATA_SOURCE then the specified
-   * data source is required.  If the records do not have a defined
-   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
-   * <tt>"GENERIC"</tt> is used.
+   * the data source for all the records.  NOTE: if the records in the file do
+   * not have a defined DATA_SOURCE then the specified data source is required.
    *
    * @param repository The directory for the repository.
    * @param sourceFile The source file to load (JSON or CSV).
    * @param dataSource The data source to use for loading the records.
-   * @param entityType The entity type to use for loading the records.
    * @param loadedCount The output parameter for the number successfully loaded.
    * @param failedCount The output parameter for the number that failed to load.
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
@@ -945,7 +893,6 @@ public class RepositoryManager {
   public static boolean loadFile(File             repository,
                                  File             sourceFile,
                                  String           dataSource,
-                                 String           entityType,
                                  Result<Integer>  loadedCount,
                                  Result<Integer>  failedCount)
   {
@@ -953,7 +900,6 @@ public class RepositoryManager {
                     false,
                     sourceFile,
                     dataSource,
-                    entityType,
                     loadedCount,
                     failedCount,
                     false);
@@ -961,16 +907,12 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source and/or entity type for all the records.  NOTE: if the
-   * records in the file do not have a defined DATA_SOURCE then the specified
-   * data source is required.  If the records do not have a defined
-   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
-   * <tt>"GENERIC"</tt> is used.
+   * the data source for all the records.  NOTE: if the records in the file do
+   * not have a defined DATA_SOURCE then the specified data source is required.
    *
    * @param repository The directory for the repository.
    * @param sourceFile The source file to load (JSON or CSV).
    * @param dataSource The data source to use for loading the records.
-   * @param entityType The entity type to use for loading the records.
    * @param loadedCount The output parameter for the number successfully loaded.
    * @param failedCount The output parameter for the number that failed to load.
    * @param silent <tt>true</tt> if no feedback should be given to the user
@@ -980,7 +922,6 @@ public class RepositoryManager {
   public static boolean loadFile(File             repository,
                                  File             sourceFile,
                                  String           dataSource,
-                                 String           entityType,
                                  Result<Integer>  loadedCount,
                                  Result<Integer>  failedCount,
                                  boolean          silent)
@@ -989,7 +930,6 @@ public class RepositoryManager {
                     false,
                     sourceFile,
                     dataSource,
-                    entityType,
                     loadedCount,
                     failedCount,
                     silent);
@@ -997,32 +937,26 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source and/or entity type for all the records.  NOTE: if the
-   * records in the file do not have a defined DATA_SOURCE then the specified
-   * data source is required.  If the records do not have a defined
-   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
-   * <tt>"GENERIC"</tt> is used.
+   * the data source for all the records.  NOTE: if the records in the file do
+   * not have a defined DATA_SOURCE then the specified data source is required.
    *
    * @param repository The directory for the repository.
    * @param verbose <tt>true</tt> for verbose API logging, otherwise
    *                <tt>false</tt>
    * @param sourceFile The source file to load (JSON or CSV).
    * @param dataSource The data source to use for loading the records.
-   * @param entityType The entity type to use for loading the records.
    *
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
    */
   public static boolean loadFile(File     repository,
                                  boolean  verbose,
                                  File     sourceFile,
-                                 String   dataSource,
-                                 String   entityType)
+                                 String   dataSource)
   {
     return loadFile(repository,
                     verbose,
                     sourceFile,
                     dataSource,
-                    entityType,
                     null,
                     null,
                     false);
@@ -1030,18 +964,14 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source and/or entity type for all the records.  NOTE: if the
-   * records in the file do not have a defined DATA_SOURCE then the specified
-   * data source is required.  If the records do not have a defined
-   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
-   * <tt>"GENERIC"</tt> is used.
+   * the data source for all the records.  NOTE: if the records in the file do
+   * not have a defined DATA_SOURCE then the specified data source is required.
    *
    * @param repository The directory for the repository.
    * @param verbose <tt>true</tt> for verbose API logging, otherwise
    *                <tt>false</tt>
    * @param sourceFile The source file to load (JSON or CSV).
    * @param dataSource The data source to use for loading the records.
-   * @param entityType The entity type to use for loading the records.
    * @param silent <tt>true</tt> if no feedback should be given to the user
    *               upon completion, otherwise <tt>false</tt>
    *
@@ -1051,14 +981,12 @@ public class RepositoryManager {
                                  boolean  verbose,
                                  File     sourceFile,
                                  String   dataSource,
-                                 String   entityType,
                                  boolean  silent)
   {
     return loadFile(repository,
                     verbose,
                     sourceFile,
                     dataSource,
-                    entityType,
                     null,
                     null,
                     silent);
@@ -1066,18 +994,14 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source and/or entity type for all the records.  NOTE: if the
-   * records in the file do not have a defined DATA_SOURCE then the specified
-   * data source is required.  If the records do not have a defined
-   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
-   * <tt>"GENERIC"</tt> is used.
+   * the data source for all the records.  NOTE: if the records in the file do
+   * not have a defined DATA_SOURCE then the specified data source is required.
    *
    * @param repository The directory for the repository.
    * @param verbose <tt>true</tt> for verbose API logging, otherwise
    *                <tt>false</tt>
    * @param sourceFile The source file to load (JSON or CSV).
    * @param dataSource The data source to use for loading the records.
-   * @param entityType The entity type to use for loading the records.
    * @param loadedCount The output parameter for the number successfully loaded.
    * @param failedCount The output parameter for the number that failed to load.
    *
@@ -1087,7 +1011,6 @@ public class RepositoryManager {
                                  boolean          verbose,
                                  File             sourceFile,
                                  String           dataSource,
-                                 String           entityType,
                                  Result<Integer>  loadedCount,
                                  Result<Integer>  failedCount)
   {
@@ -1095,7 +1018,6 @@ public class RepositoryManager {
                     verbose,
                     sourceFile,
                     dataSource,
-                    entityType,
                     loadedCount,
                     failedCount,
                     false);
@@ -1103,11 +1025,8 @@ public class RepositoryManager {
 
   /**
    * Loads a single CSV or JSON file to the repository -- optionally setting
-   * the data source and/or entity type for all the records.  NOTE: if the
-   * records in the file do not have a defined DATA_SOURCE then the specified
-   * data source is required.  If the records do not have a defined
-   * ENTITY_TYPE and the specified entity type is <tt>null</tt> then
-   * <tt>"GENERIC"</tt> is used.
+   * the data source for all the records.  NOTE: if the records in the file do
+   * not have a defined DATA_SOURCE then the specified data source is required.
    *
    * @param repository The directory for the repository.
    * @param verbose <tt>true</tt> for verbose API logging, otherwise
@@ -1123,7 +1042,6 @@ public class RepositoryManager {
                                  boolean          verbose,
                                  File             sourceFile,
                                  String           dataSource,
-                                 String           entityType,
                                  Result<Integer>  loadedCount,
                                  Result<Integer>  failedCount,
                                  boolean          silent)
@@ -1141,8 +1059,6 @@ public class RepositoryManager {
     if (loadedCount != null) loadedCount.setValue(ZERO);
     if (failedCount != null) failedCount.setValue(ZERO);
     if (dataSource != null) dataSource = dataSource.toUpperCase();
-    if (entityType != null) entityType = entityType.toUpperCase();
-    else entityType = "GENERIC";
 
     Set<String> dataSources = getDataSources();
     // check if the data source is configured
@@ -1151,22 +1067,12 @@ public class RepositoryManager {
       dataSources.add(dataSource);
     }
 
-    Set<String> entityTypes = getEntityTypes();
-    // check if the entity type is configured
-    if (entityType != null && !entityTypes.contains(entityType)) {
-      if (!addEntityType(repository, entityType, verbose)) return false;
-      entityTypes.add(entityType);
-    }
-    if (!entityTypes.contains("GENERIC")) {
-      System.err.println("WARNING: The GENERIC entity type is not configured");
-    }
-
     RecordReader recordReader = null;
     // check the file type
     if (normalizedFileName.endsWith(".JSON")) {
-      recordReader = provideJsonRecords(sourceFile, dataSource, entityType);
+      recordReader = provideJsonRecords(sourceFile, dataSource);
     } else if (normalizedFileName.endsWith(".CSV")) {
-      recordReader = provideCsvRecords(sourceFile, dataSource, entityType);
+      recordReader = provideCsvRecords(sourceFile, dataSource);
     }
     if (recordReader == null) {
       return false;
@@ -1197,15 +1103,6 @@ public class RepositoryManager {
         if (!dataSources.contains(recordSource)) {
           if (!addDataSource(repository, recordSource, verbose)) return false;
           dataSources.add(recordSource);
-        }
-
-        // check for entity type and default to GENERIC if not found
-        String recordEntityType = JsonUtils.getString(record, "ENTITY_TYPE");
-        if (entityType == null || entityType.trim().length() == 0) {
-          JsonObjectBuilder builder = Json.createObjectBuilder(record);
-          builder.remove("ENTITY_TYPE");
-          builder.add("ENTITY_TYPE", "GENERIC");
-          record = builder.build();
         }
 
         StringBuffer sb = new StringBuffer();
@@ -1344,23 +1241,8 @@ public class RepositoryManager {
     return true;
   }
 
-  private static boolean addEntityType(File     repository,
-                                       String   entityType,
-                                       boolean  verbose)
-  {
-    // add the data source and reinitialize
-    Configuration config = configEntityTypes(repository,
-                                             Collections.singleton(entityType),
-                                             verbose);
-    if (config == null) return false;
-    destroyApis();
-    initApis(repository, verbose);
-    return true;
-  }
-
   private static RecordReader provideJsonRecords(File    sourceFile,
-                                                 String  dataSource,
-                                                 String  entityType)
+                                                 String  dataSource)
   {
     RecordReader recordReader = null;
     // check if we have a real JSON array
@@ -1369,7 +1251,7 @@ public class RepositoryManager {
       InputStreamReader  isr = new InputStreamReader(fis, "UTF-8");
       BufferedReader     br  = new BufferedReader(isr);
 
-      recordReader = new RecordReader(br, dataSource, entityType);
+      recordReader = new RecordReader(br, dataSource);
 
       RecordReader.Format format = recordReader.getFormat();
       if (format != JSON && format != JSON_LINES) {
@@ -1393,8 +1275,7 @@ public class RepositoryManager {
   }
 
   private static RecordReader provideCsvRecords(File   sourceFile,
-                                                String dataSource,
-                                                String entityType)
+                                                String dataSource)
   {
     RecordReader recordReader = null;
     // check if we have a real JSON array
@@ -1403,7 +1284,7 @@ public class RepositoryManager {
       InputStreamReader  isr = new InputStreamReader(fis, "UTF-8");
       BufferedReader     br  = new BufferedReader(isr);
 
-      recordReader = new RecordReader(CSV, br, dataSource, entityType);
+      recordReader = new RecordReader(CSV, br, dataSource);
 
     } catch (IOException e) {
       e.printStackTrace();
@@ -1419,86 +1300,69 @@ public class RepositoryManager {
 
   /**
    * Loads a single JSON record to the repository -- optionally setting
-   * the data source and entity type for the record.  NOTE: if the specified
-   * record does not have a DATA_SOURCE property then the specified data source
-   * is required.  If the record does not have a defined ENTITY_TYPE and the
-   * specified entity type is <tt>null</tt> then <tt>"GENERIC"</tt> is used.
+   * the data source for the record.  NOTE: if the specified record does not
+   * have a DATA_SOURCE property then the specified data source is required.
    *
    * @param repository The directory for the repository.
    * @param jsonRecord The JSON record to load.
    * @param dataSource The data source to use for loading the record.
-   * @param entityType The entity type to use for loading the record.
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
    */
   public static boolean addRecord(File    repository,
                                   String  jsonRecord,
-                                  String  dataSource,
-                                  String  entityType)
+                                  String  dataSource)
   {
-    return addRecord(
-        repository, false, jsonRecord, dataSource, entityType, false);
+    return addRecord(repository, false, jsonRecord, dataSource, false);
   }
 
   /**
    * Loads a single JSON record to the repository -- optionally setting
-   * the data source and entity type for the record.  NOTE: if the specified
-   * record does not have a DATA_SOURCE property then the specified data source
-   * is required.  If the record does not have a defined ENTITY_TYPE and the
-   * specified entity type is <tt>null</tt> then <tt>"GENERIC"</tt> is used.
+   * the data source for the record.  NOTE: if the specified record does not
+   * have a DATA_SOURCE property then the specified data source is required.
    *
    * @param repository The directory for the repository.
    * @param jsonRecord The JSON record to load.
    * @param dataSource The data source to use for loading the record.
-   * @param entityType The entity type to use for loading the record.
    *
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
    */
   public static boolean addRecord(File    repository,
                                   boolean verbose,
                                   String  jsonRecord,
-                                  String  dataSource,
-                                  String  entityType)
+                                  String  dataSource)
   {
-    return addRecord(
-        repository, verbose, jsonRecord, dataSource, entityType, false);
+    return addRecord(repository, verbose, jsonRecord, dataSource, false);
   }
 
   /**
    * Loads a single JSON record to the repository -- optionally setting
-   * the data source and entity type for the record.  NOTE: if the specified
-   * record does not have a DATA_SOURCE property then the specified data source
-   * is required.  If the record does not have a defined ENTITY_TYPE and the
-   * specified entity type is <tt>null</tt> then <tt>"GENERIC"</tt> is used.
+   * the data source for the record.  NOTE: if the specified record does not
+   * have a DATA_SOURCE property then the specified data source is required.
    *
    * @param repository The directory for the repository.
    * @param jsonRecord The JSON record to load.
    * @param dataSource The data source to use for loading the record.
-   * @param entityType The entity type to use for loading the record.
    *
    * @return <tt>true</tt> if successful, otherwise <tt>false</tt>
    */
   public static boolean addRecord(File    repository,
                                   String  jsonRecord,
                                   String  dataSource,
-                                  String  entityType,
                                   boolean silent)
   {
-    return addRecord(
-        repository, false, jsonRecord, dataSource, entityType, silent);
+    return addRecord(repository, false, jsonRecord, dataSource, silent);
   }
 
 
   /**
    * Loads a single JSON record to the repository -- optionally setting
-   * the data source and entity type for the record.  NOTE: if the specified
+   * the data source for the record.  NOTE: if the specified
    * record does not have a DATA_SOURCE property then the specified data source
-   * is required.  If the record does not have a defined ENTITY_TYPE and the
-   * specified entity type is <tt>null</tt> then <tt>"GENERIC"</tt> is used.
+   * is required.
    *
    * @param repository The directory for the repository.
    * @param jsonRecord The JSON record to load.
    * @param dataSource The data source to use for loading the record.
-   * @param entityType The entity type to use for loading the record.
    * @param verbose <tt>true</tt> for verbose API logging, otherwise
    *                <tt>false</tt>
    *
@@ -1508,13 +1372,11 @@ public class RepositoryManager {
                                   boolean  verbose,
                                   String   jsonRecord,
                                   String   dataSource,
-                                  String   entityType,
                                   boolean  silent)
   {
     initApis(repository, verbose);
 
     Set<String> dataSources = getDataSources();
-    Set<String> entityTypes = getEntityTypes();
     JsonObject jsonObject = JsonUtils.parseJsonObject(jsonRecord);
     if (dataSource == null) {
       dataSource = JsonUtils.getString(jsonObject, "DATA_SOURCE");
@@ -1531,19 +1393,6 @@ public class RepositoryManager {
     if (!dataSources.contains(dataSource)) {
       if (!addDataSource(repository, dataSource, verbose)) return false;
       dataSources.add(dataSource);
-    }
-
-    if (entityType == null) {
-      entityType = JsonUtils.getString(jsonObject, "ENTITY_TYPE");
-    }
-    if (entityType == null) {
-      entityType = "GENERIC";
-    } else {
-      entityType = entityType.toUpperCase();
-    }
-    if (!entityTypes.contains(entityType)) {
-      if (!addEntityType(repository, entityType, verbose)) return false;
-      entityTypes.add(entityType);
     }
 
     String recordId = JsonUtils.getString(jsonObject, "RECORD_ID");
@@ -1797,10 +1646,10 @@ public class RepositoryManager {
         }
         StringBuffer sb = new StringBuffer();
         SzDataSource dataSource = SzDataSource.FACTORY.create(dataSourceCode);
-        returnCode = CONFIG_API.addDataSourceV2(
+        returnCode = CONFIG_API.addDataSource(
             configId.getValue(), dataSource.toNativeJson(), sb);
         if (returnCode != 0) {
-          logError("G2Config.addDataSourceV2()", CONFIG_API);
+          logError("G2Config.addDataSource()", CONFIG_API);
           return null;
         }
         dataSourceActions.put(dataSourceCode, true);
@@ -1856,157 +1705,6 @@ public class RepositoryManager {
   }
 
   /**
-   * Configures the specified entity types for the specified repository
-   * if not already configured.
-   *
-   * @param repository The directory for the repository.
-   * @param entityTypes The {@link Set} of entity type codes.
-   *
-   * @return The {@link Configuration} describing the new configuration or
-   *         <tt>null</tt> if the operation failed.
-   */
-  public static Configuration configEntityTypes(File         repository,
-                                                Set<String>  entityTypes)
-  {
-    return configSources(repository, entityTypes, false);
-  }
-
-  /**
-   * Configures the specified entity types for the specified repository
-   * if not already configured.
-   *
-   * @param repository The directory for the repository.
-   * @param verbose <tt>true</tt> for verbose API logging, otherwise
-   *                <tt>false</tt>
-   * @param entityTypes The {@link Set} of entity type codes.
-   *
-   * @return The {@link Configuration} describing the new configuration or
-   *         <tt>null</tt> if the operation failed.
-   */
-  public static Configuration configEntityTypes(File         repository,
-                                                boolean      verbose,
-                                                Set<String>  entityTypes)
-  {
-    return configEntityTypes(repository, verbose, entityTypes, false);
-  }
-
-  /**
-   * Configures the specified entity types for the specified repository
-   * if not already configured.
-   *
-   * @param repository The directory for the repository.
-   * @param entityTypes The {@link Set} of entity type codes.
-   * @param silent <tt>true</tt> if no feedback should be given to the user
-   *               upon completion, otherwise <tt>false</tt>
-   *
-   * @return The {@link Configuration} describing the new configuration or
-   *         <tt>null</tt> if the operation failed.
-   */
-  public static Configuration configEntityTypes(File         repository,
-                                                Set<String>  entityTypes,
-                                                boolean      silent)
-  {
-    return configEntityTypes(repository, false, entityTypes, silent);
-  }
-
-  /**
-   * Configures the specified entity types for the specified repository
-   * if not already configured.
-   *
-   * @param repository The directory for the repository.
-   * @param verbose <tt>true</tt> for verbose API logging, otherwise
-   *                <tt>false</tt>
-   * @param entityTypes The {@link Set} of entity type codes.
-   * @param silent <tt>true</tt> if no feedback should be given to the user
-   *               upon completion, otherwise <tt>false</tt>
-   *
-   * @return The {@link Configuration} describing the new configuration or
-   *         <tt>null</tt> if the operation failed.
-   */
-  public static Configuration configEntityTypes(File         repository,
-                                                boolean      verbose,
-                                                Set<String>  entityTypes,
-                                                boolean      silent)
-  {
-    initApis(repository, verbose);
-    Long        resultConfigId  = null;
-    JsonObject  resultConfig    = null;
-
-    Result<Long> configId = new Result<>();
-    int returnCode = 0;
-    try {
-      Set<String> existingSet = getEntityTypes(configId);
-
-      Map<String, Boolean> entityTypeActions = new LinkedHashMap<>();
-      Set<String> addedEntityTypes = new LinkedHashSet<>();
-      int addedCount = 0;
-      for (String entityTypeCode : entityTypes) {
-        if (existingSet.contains(entityTypeCode)) {
-          entityTypeActions.put(entityTypeCode, false);
-          continue;
-        }
-        StringBuffer sb = new StringBuffer();
-        SzEntityType entityType = SzEntityType.FACTORY.create(
-            entityTypeCode, null, "ACTOR");
-        returnCode = CONFIG_API.addEntityTypeV2(
-            configId.getValue(), entityType.toNativeJson(), sb);
-        if (returnCode != 0) {
-          logError("G2Config.addEntityTypeV2()", CONFIG_API);
-          return null;
-        }
-        entityTypeActions.put(entityTypeCode, true);
-        addedEntityTypes.add(entityTypeCode);
-        addedCount++;
-      }
-
-      if (addedCount > 0) {
-        String comment = buildAddedComment(
-            "Added entity types: ", addedEntityTypes);
-
-        Result<Long> configIdResult = new Result<>();
-        resultConfig = addConfigAndSetDefault(
-            configId.getValue(), comment, configIdResult);
-
-        if (resultConfig == null) return null;
-
-        // get the result config and its ID for the result
-        resultConfigId  = configIdResult.getValue();
-      }
-
-      if (!silent) {
-        System.out.println();
-        System.out.println("Ensured specified entity types are configured.");
-        System.out.println("     Repository   : " + repository);
-        System.out.println("     Entity Types : ");
-        entityTypeActions.entrySet().forEach(entry -> {
-          System.out.println(
-              "          - " + entry.getKey()
-                  + " (" + ((entry.getValue()) ? "added" : "preconfigured") + ")");
-        });
-        System.out.println();
-      }
-
-      if (addedCount > 0) {
-        destroyApis();
-        initApis(repository, verbose);
-      }
-
-    } finally {
-      if (configId.getValue() != null) {
-        CONFIG_API.close(configId.getValue());
-      }
-    }
-
-    // check if the result config ID is not set (usually means that all the
-    // entity types to be added already existed)
-    if (resultConfigId == null) {
-      return getDefaultConfig();
-    }
-
-    return new Configuration(resultConfigId, resultConfig);
-  }
-
-  /**
    * Builds a comment for adding config objects.
    */
   private static String buildAddedComment(String prefix, Set<String> addedSet) {
@@ -2019,8 +1717,8 @@ public class RepositoryManager {
       Iterator<String> iter = addedSet.iterator();
       String sep = "";
       while (iter.hasNext()) {
-        String entityTypeCode = iter.next();
-        commentSB.append(sep).append(entityTypeCode);
+        String code = iter.next();
+        commentSB.append(sep).append(code);
         sep = iter.hasNext() ? ", " : " and ";
       }
       comment = commentSB.toString();

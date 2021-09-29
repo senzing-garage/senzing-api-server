@@ -85,42 +85,6 @@ public interface SzDataSourceRecordAnalysis {
    */
   int incrementRecordsWithRecordIdCount(int increment);
 
-  /**
-   * Gets the number of records that have the associated data source and also
-   * have an <tt>"ENTITY_TYPE"</tt>.
-   *
-   * @return The number of records that have the associated data source and
-   *         also have an <tt>"ENTITY_TYPE"</tt>.
-   */
-  int getRecordsWithEntityTypeCount();
-
-  /**
-   * Sets the number of records that have the associated data source and also
-   * have an <tt>"ENTITY_TYPE"</tt>.
-   *
-   * @param entityTypeCount The number of records that have the associated data
-   *                        source and also have an <tt>"ENTITY_TYPE"</tt>.
-   */
-  void setRecordsWithEntityTypeCount(int entityTypeCount);
-
-  /**
-   * Increments the number of records that have the associated data source
-   * and also have an <tt>"ENTITY_TYPE"</tt> and returns the new count.
-   *
-   * @return The new count after incrementing.
-   */
-  int incrementRecordsWithEntityTypeCount();
-
-  /**
-   * Increments the number of records that have the associated data source
-   * and also have an <tt>"ENTITY_TYPE"</tt> and returns the new count.
-   *
-   * @param increment The number of records to increment by.
-   *
-   * @return The new count after incrementing.
-   */
-  int incrementRecordsWithEntityTypeCount(int increment);
-
     /**
    * A {@link ModelProvider} for instances of {@link
    * SzDataSourceRecordAnalysis}.

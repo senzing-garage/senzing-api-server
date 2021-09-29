@@ -344,7 +344,8 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
       // handle G2Config.load()
       Set<Method> set = map.get(G2Config.class);
-      Method loadMethod = G2Config.class.getMethod("load", String.class);
+      Method loadMethod = G2Config.class.getMethod(
+          "load", String.class, Result.class);
       set.add(loadMethod);
 
       // handle G2ConfigMgr.addConfig()
@@ -1379,19 +1380,10 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
         JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
 
         String dataSource = JsonUtils.getString(jsonObject, "DATA_SOURCE");
-        String entityType = JsonUtils.getString(jsonObject, "ENTITY_TYPE");
 
         // add the data source to the hash
         if (dataSource != null) {
           md5.update(dataSource.toString().getBytes(UTF_8));
-        } else {
-          md5.update(ZEROES);
-        }
-        md5.update(ZEROES);
-
-        // add the entity type to the hash
-        if (entityType != null) {
-          md5.update(entityType.toString().getBytes(UTF_8));
         } else {
           md5.update(ZEROES);
         }
@@ -1487,10 +1479,8 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
 
       String dataSource = JsonUtils.getString(jsonObject, "DATA_SOURCE");
-      String entityType = JsonUtils.getString(jsonObject, "ENTITY_TYPE");
 
       sb.append(", dataSource=[ ").append(dataSource).append(" ]");
-      sb.append(", entityType=[ ").append(entityType).append(" ]");
 
     } else {
       Set<Method> methods = IRRELEVANT_METHODS_MAP.get(apiClass);
