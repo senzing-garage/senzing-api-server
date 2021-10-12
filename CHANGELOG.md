@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.5] - 2021-10-11
+
+### Changed in 2.7.5
+
+- Updated to senzing/senzing-base:1.6.2
+
 ## [2.7.4] - 2021-09-08
 
 ### Changed in 2.7.4
@@ -26,9 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   variable equivalent to enable API Server debug logging.
 - Added debug logging of every incoming request if --debug enabled.
 - Added debug logging for bulk-data related operations if --debug enabled.
-- Updated build-info.properties so the Maven build timestamp is properly 
+- Updated build-info.properties so the Maven build timestamp is properly
   filtered during build and token-replaced.
-- Minor bug fix for internal CommandLineUtilities class to process default 
+- Minor bug fix for internal CommandLineUtilities class to process default
   values for "base" options.  This allows others to extend the Senzing API
   Server code with new options but still have the default values from the
   base options be populated (required for `Senzing/senzing-poc-server`).
@@ -145,7 +151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added command-line option for `--url-base-path` / `-urlBasePath` (along with
   `SENZING_API_SERVER_URL_BASE_PATH` environment variable) to set the base path
   of the API server on startup
-- Updated usage string of `SzApiServer` to reflect all changes regarding 
+- Updated usage string of `SzApiServer` to reflect all changes regarding
   command-line options
 - Updated/fixed the output when running with `-version` command-line option
 - Modified `SzVersionInfo` to include `nativeApiBuildVersion` field on the
