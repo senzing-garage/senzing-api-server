@@ -923,21 +923,24 @@ public class SzApiServer implements SzApiProvider {
    * @param args The arguments to parse.
    * @return The {@link Map} describing the command-line arguments.
    */
-  protected static Map<CommandLineOption, Object> parseCommandLine(String[] args) {
+  protected static Map<CommandLineOption, Object> parseCommandLine(
+      String[] args, List<DeprecatedOptionWarning> deprecationWarnings)
+    throws CommandLineException
+  {
     Map<CommandLineOption, CommandLineValue> optionValues
         = CommandLineUtilities.parseCommandLine(
-        SzApiServerOption.class,
-        args,
-        SzApiServerOption.PARAMETER_PROCESSOR);
-
-    // create a result map
-    Map<CommandLineOption, Object> result = new LinkedHashMap<>();
+            SzApiServerOption.class,
+            args,
+            SzApiServerOption.PARAMETER_PROCESSOR,
+            deprecationWarnings);
 
     // iterate over the option values and handle them
     JsonObjectBuilder job = Json.createObjectBuilder();
     job.add("message", "Startup Options");
 
     StringBuilder sb = new StringBuilder();
+
+    Map<CommandLineOption, Object> result = new LinkedHashMap<>();
 
     CommandLineUtilities.processCommandLine(optionValues, result, job, sb);
 
@@ -948,8 +951,8 @@ public class SzApiServer implements SzApiProvider {
     }
 
     // check the ports
-    CommandLineValue httpPortValue  = optionValues.get(HTTP_PORT);
-    CommandLineValue keyStoreValue  = optionValues.get(KEY_STORE);
+    CommandLineValue httpPortValue = optionValues.get(HTTP_PORT);
+    CommandLineValue keyStoreValue = optionValues.get(KEY_STORE);
     if (httpPortValue.getSource() == DEFAULT && keyStoreValue != null) {
       result.remove(HTTP_PORT);
     }
@@ -1057,12 +1060,14 @@ public class SzApiServer implements SzApiProvider {
         "",
         "   --enable-admin [true|false]",
         "        Also -enableAdmin.  Enables administrative functions via the API",
-        "        server.  The true/false parameter is optional, if not specified then",
-        "        true is assumed.  If specified as false then it is the same as omitting",
-        "        the option with the exception that omission falls back to the",
-        "        environment variable setting whereas an explicit false overrides any",
-        "        environment variable.  If not specified then administrative functions",
-        "        will return a 403 Forbidden response.",
+        "        server.  Administrative functions include those that would modify",
+        "        the active configuration (e.g.: adding data sources, entity types,",
+        "        or entity classes).  The true/false parameter is optional, if not",
+        "        specified then true is assumed.  If specified as false then it is",
+        "        the same as omitting the option with the exception that omission",
+        "        falls back to the environment variable setting whereas an explicit",
+        "        false overrides any environment variable.  If not specified then",
+        "        administrative functions will return a 403 Forbidden response.",
         "        --> VIA ENVIRONMENT: " + ENABLE_ADMIN.getEnvironmentVariable(),
         "",
         "   --http-port <port-number>",
@@ -1621,6 +1626,7 @@ public class SzApiServer implements SzApiProvider {
    * @throws Exception
    */
   public static void main(String[] args) throws Exception {
+    System.out.println("SENSITIVE: " + RABBIT_INFO_PASSWORD.isSensitive());
     commandLineStart(args,
                      SzApiServer::parseCommandLine,
                      SzApiServer::getUsageString,
@@ -1642,12 +1648,13 @@ public class SzApiServer implements SzApiProvider {
    * @throws Exception
    */
   protected static void commandLineStart(
-      String[] args,
-      CommandLineParser cmdLineParser,
-      Supplier<String> usageMessage,
-      Supplier<String> versionMessage,
+      String[]                        args,
+      CommandLineParser               cmdLineParser,
+      Supplier<String>                usageMessage,
+      Supplier<String>                versionMessage,
       CommandLineBuilder<SzApiServer> serverBuilder)
-      throws Exception {
+      throws Exception
+  {
     if (args.length > 0 && (args[0].equals("--repomgr")
         || args[0].equals("--repo-mgr"))) {
       String[] args2 = shiftArguments(args, 1);
@@ -1661,23 +1668,32 @@ public class SzApiServer implements SzApiProvider {
       return;
     }
 
-    Map<CommandLineOption, Object> options = null;
+    Map<CommandLineOption, Object>  options   = null;
+    List<DeprecatedOptionWarning>   warnings  = new LinkedList<>();
     try {
-      options = cmdLineParser.parseCommandLine(args);
+      options = cmdLineParser.parseCommandLine(args, warnings);
 
-    } catch (Exception e) {
-      if (e instanceof NullPointerException) {
-        e.printStackTrace();
+      for (DeprecatedOptionWarning warning: warnings) {
+        System.out.println(warning);
+        System.out.println();
       }
-      if (!isLastLoggedException(e)) {
-        System.err.println();
-        System.err.println(e.getMessage());
-        System.err.println();
-      }
+
+    } catch (CommandLineException e) {
+      System.out.println(e.getMessage());
+
       System.err.println();
       System.err.println(
           "Try the " + HELP.getCommandLineFlag() + " option for help.");
       System.err.println();
+      System.exit(1);
+
+    } catch (Exception e) {
+      if (!isLastLoggedException(e)) {
+        System.err.println();
+        System.err.println(e.getMessage());
+        System.err.println();
+        e.printStackTrace();
+      }
       System.exit(1);
     }
 

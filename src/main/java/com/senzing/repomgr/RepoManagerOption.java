@@ -11,7 +11,9 @@ import java.util.*;
 import static java.util.EnumSet.*;
 import static java.util.Collections.*;
 
-enum RepoManagerOption implements CommandLineOption<RepoManagerOption> {
+enum RepoManagerOption
+    implements CommandLineOption<RepoManagerOption, RepoManagerOption>
+{
   HELP("--help", true, 0),
   CREATE_REPO("--create-repo", true, 1),
   PURGE_REPO("--purge-repo", true, 0),
