@@ -1626,7 +1626,6 @@ public class SzApiServer implements SzApiProvider {
    * @throws Exception
    */
   public static void main(String[] args) throws Exception {
-    System.out.println("SENSITIVE: " + RABBIT_INFO_PASSWORD.isSensitive());
     commandLineStart(args,
                      SzApiServer::parseCommandLine,
                      SzApiServer::getUsageString,
