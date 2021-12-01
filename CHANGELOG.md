@@ -13,11 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reduced footprint of cached test data to only the latest version of Senzing.
   For other versions the tests will have to be run with a live Senzing SDK.
 - Modified to factor out the `senzing-commons-java` dependency.
-- Renamed enum constant for debug logging from DEBUG to DEBUG_LOGGING.
-- Added debug option to SzApiServerOptions for programmatic configuration.
-- Added `com.senzing.api.test.debug=true` system property check to run
-  automated tests with debug logging enabled.
-- Modified usage message to include information on `--debug` option.
+- Modified to mask sensitive command-line option parameters when logging the
+  startup parameters as JSON.
 
 ## [2.7.5] - 2021-10-11
 
