@@ -1,9 +1,7 @@
 package com.senzing.configmgr;
 
-import com.senzing.cmdline.CommandLineOption;
-import com.senzing.cmdline.CommandLineValue;
+import com.senzing.cmdline.*;
 import com.senzing.nativeapi.NativeApiFactory;
-import com.senzing.cmdline.CommandLineUtilities;
 import com.senzing.g2.engine.*;
 import com.senzing.nativeapi.InstallLocations;
 import com.senzing.io.IOUtilities;
@@ -123,14 +121,24 @@ public class ConfigurationManager {
    * are provided.
    *
    * @param args The arguments to parse.
+   * @param deprecationWarnings The {@link List} to populate with any
+   *                            deprecation warnings that might be generated,
+   *                            or <code>null</code> if the caller is not
+   *                            interested.
    * @return The {@link Map} of options to their values.
-   * @throws IllegalArgumentException If command line arguments are invalid.
+   * @throws CommandLineException If command line arguments are invalid.
    */
-  private static Map<CommandLineOption, Object> parseCommandLine(String[] args)
+  private static Map<CommandLineOption, Object> parseCommandLine(
+      String[]                      args,
+      List<DeprecatedOptionWarning> deprecationWarnings)
+      throws CommandLineException
   {
     Map<CommandLineOption, CommandLineValue>
         optionValues = CommandLineUtilities.parseCommandLine(
-            ConfigManagerOption.class, args, PARAMETER_PROCESSOR);
+            ConfigManagerOption.class,
+            args,
+            PARAMETER_PROCESSOR,
+            deprecationWarnings);
 
     // create a result map
     Map<CommandLineOption, Object> result = new LinkedHashMap<>();
@@ -354,16 +362,27 @@ public class ConfigurationManager {
    * @throws Exception
    */
   public static void main(String[] args) throws Exception {
-    Map<CommandLineOption, Object> options = null;
+    Map<CommandLineOption, Object>  options = null;
+    List<DeprecatedOptionWarning>   warnings = new LinkedList<>();
     try {
-      options = parseCommandLine(args);
+      options = parseCommandLine(args, warnings);
+
+      for (DeprecatedOptionWarning warning: warnings) {
+        System.out.println(warning);
+        System.out.println();
+      }
+
+    } catch (CommandLineException e) {
+      System.out.println(e.getMessage());
+
+      System.out.println(ConfigurationManager.getUsageString(true));
+      System.exit(1);
+
     } catch (Exception e) {
-      if (!(e instanceof IllegalArgumentException)
-          && !isLastLoggedException(e))
+      if (!isLastLoggedException(e))
       {
         e.printStackTrace();
       }
-      System.out.println(ConfigurationManager.getUsageString(true));
       System.exit(1);
     }
 

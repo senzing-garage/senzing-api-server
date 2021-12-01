@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.0] - 2021-11-30
+
+### Changed in 2.8.0
+
+- Reduced footprint of cached test data to only the latest version of Senzing.
+  For other versions the tests will have to be run with a live Senzing SDK.
+- Modified to factor out the `senzing-commons-java` dependency.
+- Modified to mask sensitive command-line option parameters when logging the
+  startup parameters as JSON.
+
 ## [2.7.5] - 2021-10-11
 
 ### Changed in 2.7.5

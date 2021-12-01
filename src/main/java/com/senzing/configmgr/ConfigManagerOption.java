@@ -14,7 +14,9 @@ import static java.util.Collections.*;
 import static java.util.EnumSet.*;
 import static java.util.EnumSet.of;
 
-enum ConfigManagerOption implements CommandLineOption<ConfigManagerOption> {
+enum ConfigManagerOption
+    implements CommandLineOption<ConfigManagerOption, ConfigManagerOption>
+{
   /**
    * <p>
    * Option for displaying help/usage for the configuration manager.  This
