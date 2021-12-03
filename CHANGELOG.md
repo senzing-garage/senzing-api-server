@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modified to factor out the `senzing-commons-java` dependency.
 - Modified to mask sensitive command-line option parameters when logging the
   startup parameters as JSON.
+- Updated to senzing/senzing-base:1.6.3
 
 ## [2.7.5] - 2021-10-11
 
