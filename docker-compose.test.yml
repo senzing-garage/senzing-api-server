@@ -2,3 +2,4 @@ version: '3'
 services:
   sut:
     build: .
+    command: "--help"

@@ -1,5 +1,5 @@
 ARG BASE_IMAGE=senzing/senzing-base:1.6.3
-ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.4
+ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.6
 
 # -----------------------------------------------------------------------------
 # Stage: builder
@@ -9,16 +9,11 @@ FROM ${BASE_BUILDER_IMAGE} as builder
 
 # Set Shell to use for RUN commands in builder step.
 
-ENV REFRESHED_AT=2021-12-03
+ENV REFRESHED_AT=2021-12-07
 
 LABEL Name="senzing/senzing-api-server-builder" \
       Maintainer="support@senzing.com" \
-      Version="1.0.0"
-
-# Build arguments.
-
-ARG SENZING_G2_JAR_RELATIVE_PATHNAME=unknown
-ARG SENZING_G2_JAR_VERSION=unknown
+      Version="1.1.1"
 
 # Set environment variables.
 
@@ -36,10 +31,7 @@ COPY . /senzing-api-server
 WORKDIR /senzing-api-server
 
 RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
- && make \
-     SENZING_G2_JAR_PATHNAME=/senzing-api-server/${SENZING_G2_JAR_RELATIVE_PATHNAME} \
-     SENZING_G2_JAR_VERSION=${SENZING_G2_JAR_VERSION} \
-     package \
+ && make package \
  && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_JAR_VERSION}.jar "/senzing-api-server.jar"
 
 # -----------------------------------------------------------------------------
@@ -48,7 +40,7 @@ RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=pro
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2021-12-03
+ENV REFRESHED_AT=2021-12-07
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
