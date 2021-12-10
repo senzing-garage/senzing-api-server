@@ -7,8 +7,6 @@ ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.6
 
 FROM ${BASE_BUILDER_IMAGE} as builder
 
-# Set Shell to use for RUN commands in builder step.
-
 ENV REFRESHED_AT=2021-12-07
 
 LABEL Name="senzing/senzing-api-server-builder" \
@@ -22,17 +20,14 @@ ENV SENZING_G2_DIR=${SENZING_ROOT}/g2
 ENV PYTHONPATH=${SENZING_ROOT}/g2/python
 ENV LD_LIBRARY_PATH=${SENZING_ROOT}/g2/lib:${SENZING_ROOT}/g2/lib/debian
 
-# Copy Repo files to Builder step.
+# Build "senzing-api-server.jar".
 
 COPY . /senzing-api-server
-
-# Run the "make" command to create the artifacts.
-
 WORKDIR /senzing-api-server
 
-RUN export SENZING_API_SERVER_JAR_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
+RUN export SENZING_API_SERVER_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
  && make package \
- && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_JAR_VERSION}.jar "/senzing-api-server.jar"
+ && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_VERSION}.jar "/senzing-api-server.jar"
 
 # -----------------------------------------------------------------------------
 # Stage: Final
@@ -66,6 +61,10 @@ RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | a
  && apt update \
  && apt install -y adoptopenjdk-11-hotspot \
  && rm -rf /var/lib/apt/lists/*
+
+# Copy files from repository.
+
+COPY ./rootfs /
 
 # Service exposed on port 8080.
 
