@@ -27,10 +27,6 @@ jobs:
     if: always()
     runs-on: ubuntu-latest
     steps:
-      - name: Get Build Job Info From FIle
-        uses: actions/download-artifact@v2
-        with:
-          name: build_info
       - name: Set Variables With Build Info
         id: job_info
         run: |
@@ -51,7 +47,6 @@ jobs:
           SLACK_TITLE: Senzing API server failed to build on commit sha ${{ github.sha }}
           SLACK_MESSAGE: |
             OS: senzing/base-image-debian:1.0.3
-            Senzing RPM version: ${{ steps.job_info.outputs.g2_version }}
             DEB URL: https://senzing-staging-apt.s3.amazonaws.com/senzingstagingrepo_1.0.0-1_amd64.deb
             Branch Name: ${{ steps.job_info.outputs.branch_name }}
             The commit SHA is: ${{ github.sha }}
