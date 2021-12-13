@@ -21,15 +21,16 @@ jobs:
         run: git submodule update --init --recursive
       - name: Build Java API Server
         id: build_java_api_server
-        run: |
-          make docker-build
+        run: make docker-build
+      - name: Creating log folder
+        run: mkdir -p tmp/log
       - name: Persisting Variables
         id: persisting_log
         if: always()
         uses: actions/upload-artifact@v2
         with:
           name: build_info
-          path: build_info.json
+          path: ./build_info.json
   logPrBuildSenzingJavaApiServer:
     needs: prBuildSenzingJavaApiServer
     if: always()
