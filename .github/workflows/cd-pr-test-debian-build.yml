@@ -30,7 +30,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: build_info
-          path: tmp/log/
+          path: artifacts
   logPrBuildSenzingJavaApiServer:
     needs: prBuildSenzingJavaApiServer
     if: always()
