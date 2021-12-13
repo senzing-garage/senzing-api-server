@@ -22,15 +22,6 @@ jobs:
       - name: Build Java API Server
         id: build_java_api_server
         run: make docker-build
-      - name: Creating log folder
-        run: mkdir -p tmp/log
-      - name: Persisting Variables
-        id: persisting_log
-        if: always()
-        uses: actions/upload-artifact@v2
-        with:
-          name: build_info
-          path: artifacts/build_info.json
   logPrBuildSenzingJavaApiServer:
     needs: prBuildSenzingJavaApiServer
     if: always()
@@ -47,7 +38,6 @@ jobs:
           echo ::set-output name=log_url::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .url')
           echo ::set-output name=html_url::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .html_url')
           echo ::set-output name=status::$(cat job_info.json | jq --raw-output '.jobs | .[0] | .conclusion')
-          echo ::set-output name=g2_version::$(cat build_info/build_info.json | jq --raw-output '.g2_version')
           echo ::set-output name=branch_name::$(echo ${GITHUB_REF##*/})
       - name: Generate log file
         run: curl -v -L -u runner:${{ secrets.GITHUB_TOKEN }} -o build_logs.txt ${{ steps.job_info.outputs.log_url }}/logs
@@ -58,7 +48,7 @@ jobs:
         env:
           SLACK_CHANNEL: production-build-failures
           SLACK_COLOR: '#3278BD'
-          SLACK_TITLE: Senzing API server failed to build on commit sha ${{ github.sha }} using G2 Version ${{ steps.job_info.outputs.g2_version }}
+          SLACK_TITLE: Senzing API server failed to build on commit sha ${{ github.sha }}
           SLACK_MESSAGE: |
             OS: senzing/base-image-debian:1.0.3
             Senzing RPM version: ${{ steps.job_info.outputs.g2_version }}
