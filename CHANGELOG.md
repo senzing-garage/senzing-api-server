@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.1] - 2022-01-13
+
+### Changed in 2.8.1
+
+- Updated `README.MD` to include latest usage message for `--enable-admin`
+- Updated spring framework dependencies to resolve security vulnerability.
+- Updated cached test data to version 2.8.5 of Senzing
+
 ## [2.8.0] - 2021-11-30
 
 ### Changed in 2.8.0
