@@ -88,7 +88,7 @@ In order to install `g2.jar` you must:
 
         ```console
         export SENZING_G2_DIR=/opt/senzing/g2
-        export SENZING_G2_JAR_VERSION=2.8.0
+        export SENZING_G2_JAR_VERSION=2.8.1
 
         mvn install:install-file \
             -Dfile=${SENZING_G2_DIR}/lib/g2.jar \
@@ -170,16 +170,16 @@ in sync across multiple processes that may be using it.
 Other command-line options may be useful to you as well.  Execute
 
 ```console
-java -jar target/senzing-api-server-2.8.0.jar --help
+java -jar target/senzing-api-server-2.8.1.jar --help
 ```
 
 to obtain a help message describing all available options.
 For example:
 
 ```console
-$ java -jar senzing-api-server-2.8.0.jar <options>
+$ java -jar senzing-api-server-2.8.1.jar <options>
 
-java -jar senzing-api-server-2.8.0.jar <options>
+java -jar senzing-api-server-2.8.1.jar <options>
 
 <options> includes: 
 
