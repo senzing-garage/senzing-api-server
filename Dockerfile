@@ -1,4 +1,5 @@
-ARG BASE_IMAGE=senzing/senzing-base:1.6.4
+# ARG BASE_IMAGE=senzing/senzing-base:1.6.4
+ARG BASE_IMAGE=debian:11.2@sha256:084cbaefbcd3b9a230fe2a65ab8cc0ddfc01576176136d66f21060647e6aa124
 ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.7
 
 # -----------------------------------------------------------------------------
@@ -26,9 +27,17 @@ COPY . /senzing-api-server
 WORKDIR /senzing-api-server
 
 RUN export SENZING_API_SERVER_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
- && make package \
- && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_VERSION}.jar "/senzing-api-server.jar"
+      && make package \
+      && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_VERSION}.jar "/senzing-api-server.jar"
 
+# Install packages via apt.
+
+RUN apt update \
+      && apt -y install \
+      wget \
+      && rm -rf /var/lib/apt/lists/*
+
+RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public > /gpg.key
 # -----------------------------------------------------------------------------
 # Stage: Final
 # -----------------------------------------------------------------------------
@@ -50,17 +59,20 @@ USER root
 # Install packages via apt.
 
 RUN apt update \
- && apt -y install \
+      && apt -y install \
+      gnupg \
       software-properties-common \
- && rm -rf /var/lib/apt/lists/*
+      && rm -rf /var/lib/apt/lists/*
 
 # Install Java-11.
-
-RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add - \
- && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
- && apt update \
- && apt install -y adoptopenjdk-11-hotspot \
- && rm -rf /var/lib/apt/lists/*
+COPY --from=builder "/gpg.key" "gpg.key"
+# RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add - \
+RUN cat gpg.key | apt-key add - \
+      && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
+      && apt update \
+      && apt install -y adoptopenjdk-11-hotspot \
+      && rm -rf /var/lib/apt/lists/* \
+      && rm -f gpg.key
 
 # Copy files from repository.
 
