@@ -1,5 +1,5 @@
 # ARG BASE_IMAGE=senzing/senzing-base:1.6.4
-ARG BASE_IMAGE=debian:11.2@sha256:084cbaefbcd3b9a230fe2a65ab8cc0ddfc01576176136d66f21060647e6aa124
+ARG BASE_IMAGE=debian:11.2@sha256:2906804d2a64e8a13a434a1a127fe3f6a28bf7cf3696be4223b06276f32f1f2d
 ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.7
 
 # -----------------------------------------------------------------------------
