@@ -30,14 +30,10 @@ RUN export SENZING_API_SERVER_VERSION=$(mvn "help:evaluate" -Dexpression=project
       && make package \
       && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_VERSION}.jar "/senzing-api-server.jar"
 
-# Install packages via apt.
-
-RUN apt update \
-      && apt -y install \
-      wget \
-      && rm -rf /var/lib/apt/lists/*
+# Grab a gpg key for our final stage to install the JDK
 
 RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public > /gpg.key
+
 # -----------------------------------------------------------------------------
 # Stage: Final
 # -----------------------------------------------------------------------------
@@ -60,13 +56,13 @@ USER root
 
 RUN apt update \
       && apt -y install \
-      gnupg \
+      gnupg2 \
       software-properties-common \
       && rm -rf /var/lib/apt/lists/*
 
 # Install Java-11.
 COPY --from=builder "/gpg.key" "gpg.key"
-# RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | apt-key add - \
+
 RUN cat gpg.key | apt-key add - \
       && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
       && apt update \
