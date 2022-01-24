@@ -73,6 +73,18 @@ RUN cat gpg.key | apt-key add - \
 
 COPY ./rootfs /
 
+# Downgrade to TLSv1.1
+
+RUN sed -i 's/TLSv1.2/TLSv1.1/g' /etc/ssl/openssl.cnf
+
+# Set environment variables for root.
+
+ENV LD_LIBRARY_PATH=/opt/senzing/g2/lib:/opt/senzing/g2/lib/debian:/opt/IBM/db2/clidriver/lib
+ENV ODBCSYSINI=/etc/opt/senzing
+ENV PATH=${PATH}:/opt/senzing/g2/python:/opt/IBM/db2/clidriver/adm:/opt/IBM/db2/clidriver/bin
+ENV PYTHONPATH=/opt/senzing/g2/python
+ENV SENZING_ETC_PATH=/etc/opt/senzing
+
 # Service exposed on port 8080.
 
 EXPOSE 8080
@@ -84,6 +96,14 @@ COPY --from=builder "/senzing-api-server.jar" "/app/senzing-api-server.jar"
 # Make non-root container.
 
 USER 1001
+
+# Set environment variables for USER 1001.
+
+ENV LD_LIBRARY_PATH=/opt/senzing/g2/lib:/opt/senzing/g2/lib/debian:/opt/IBM/db2/clidriver/lib
+ENV ODBCSYSINI=/etc/opt/senzing
+ENV PATH=${PATH}:/opt/senzing/g2/python:/opt/IBM/db2/clidriver/adm:/opt/IBM/db2/clidriver/bin
+ENV PYTHONPATH=/opt/senzing/g2/python
+ENV SENZING_ETC_PATH=/etc/opt/senzing
 
 # Runtime execution.
 
