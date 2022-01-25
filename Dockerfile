@@ -56,6 +56,7 @@ USER root
 RUN apt update \
       && apt -y install \
       gnupg2 \
+      postgresql-client \
       software-properties-common \
       && rm -rf /var/lib/apt/lists/*
 
