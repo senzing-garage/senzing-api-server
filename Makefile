@@ -2,27 +2,16 @@
 # It should match <artifactId> in pom.xml
 PROGRAM_NAME := $(shell basename `git rev-parse --show-toplevel`)
 
-# User variables.
-
-SENZING_G2_JAR_PATHNAME ?= /opt/senzing/g2/lib/g2.jar
-SENZING_G2_JAR_VERSION ?= unknown
-
-# Information from git.
+# Git variables
 
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 GIT_REPOSITORY_NAME := $(shell basename `git rev-parse --show-toplevel`)
 GIT_SHA := $(shell git log --pretty=format:'%H' -n 1)
-GIT_TAG ?= $(shell git describe --always --tags | awk -F "-" '{print $$1}')
-GIT_TAG_END ?= HEAD
 GIT_VERSION := $(shell git describe --always --tags --long --dirty | sed -e 's/\-0//' -e 's/\-g.......//')
 GIT_VERSION_LONG := $(shell git describe --always --tags --long --dirty)
 
-# Docker.
+# Docker variables
 
-BASE_IMAGE ?= senzing/senzing-base:1.6.1
-BASE_BUILDER_IMAGE ?= senzing/base-image-debian:1.0.4
-DOCKER_IMAGE_PACKAGE := $(GIT_REPOSITORY_NAME)-package:$(GIT_VERSION)
-DOCKER_IMAGE_TAG ?= $(GIT_REPOSITORY_NAME):$(GIT_VERSION)
 DOCKER_IMAGE_NAME := senzing/senzing-api-server
 
 # Misc.
@@ -40,46 +29,40 @@ default: help
 # Local development
 # -----------------------------------------------------------------------------
 
-.PHONY: package
-package:
-
-	mvn install:install-file \
-		-Dfile=$(SENZING_G2_JAR_PATHNAME) \
-		-DgroupId=com.senzing \
-		-DartifactId=g2 \
-		-Dversion=$(SENZING_G2_JAR_VERSION) \
-		-Dpackaging=jar
-
-	mvn package \
-		-Dproject.version=$(GIT_VERSION) \
+.PHONY: install
+install:
+	mvn install \
 		-Dgit.branch=$(GIT_BRANCH) \
 		-Dgit.repository.name=$(GIT_REPOSITORY_NAME) \
 		-Dgit.sha=$(GIT_SHA) \
-		-Dgit.version.long=$(GIT_VERSION_LONG)
+		-Dgit.version.long=$(GIT_VERSION_LONG) \
+		-Dproject.version=$(GIT_VERSION) \
+		-DskipTests=True
+
+.PHONY: package
+package:
+	mvn package \
+		-Dgit.branch=$(GIT_BRANCH) \
+		-Dgit.repository.name=$(GIT_REPOSITORY_NAME) \
+		-Dgit.sha=$(GIT_SHA) \
+		-Dgit.version.long=$(GIT_VERSION_LONG) \
+		-Dproject.version=$(GIT_VERSION) \
+		-DskipTests=True
 
 # -----------------------------------------------------------------------------
 # Docker-based package
 # -----------------------------------------------------------------------------
 
 .PHONY: docker-package
-docker-package: docker-rmi-for-package
-	# Make docker image.
+docker-package: docker-build
 
-	mkdir -p $(TARGET)
-	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
-	docker build \
-		--build-arg SENZING_G2_JAR_RELATIVE_PATHNAME=$(TARGET)/g2.jar \
-		--build-arg SENZING_G2_JAR_VERSION=$(SENZING_G2_JAR_VERSION) \
-		--tag $(DOCKER_IMAGE_PACKAGE) \
-		--file Dockerfile-package \
-		.
-
-	# Run docker image which creates a docker container.
-	# Then, copy the maven output from the container to the local workstation.
+	# Build package in a docker container.
+	# Copy the maven output from the container to the local workstation.
 	# Finally, remove the docker container.
 
-	PID=$$(docker create $(DOCKER_IMAGE_PACKAGE) /bin/bash); \
-	docker cp $$PID:/git-repository/$(TARGET) .; \
+	mkdir $(TARGET) || true
+	PID=$$(docker create $(DOCKER_IMAGE_NAME) /bin/bash); \
+	docker cp $$PID:/app/ $(TARGET)/; \
 	docker rm -v $$PID
 
 # -----------------------------------------------------------------------------
@@ -87,26 +70,11 @@ docker-package: docker-rmi-for-package
 # -----------------------------------------------------------------------------
 
 .PHONY: docker-build
-docker-build: docker-rmi-for-build
-	mkdir -p $(TARGET)
-	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
+docker-build:
 	docker build \
-		--build-arg BASE_IMAGE=$(BASE_IMAGE) \
-		--build-arg BASE_BUILDER_IMAGE=$(BASE_BUILDER_IMAGE) \
-		--build-arg SENZING_G2_JAR_RELATIVE_PATHNAME=$(TARGET)/g2.jar \
-		--build-arg SENZING_G2_JAR_VERSION=$(SENZING_G2_JAR_VERSION) \
+		--no-cache \
 		--tag $(DOCKER_IMAGE_NAME) \
 		--tag $(DOCKER_IMAGE_NAME):$(GIT_VERSION) \
-		.
-
-.PHONY: docker-build-development-cache
-docker-build-development-cache: docker-rmi-for-build-development-cache
-	mkdir -p $(TARGET)
-	cp $(SENZING_G2_JAR_PATHNAME) $(TARGET)/
-	docker build \
-		--build-arg SENZING_G2_JAR_RELATIVE_PATHNAME=$(TARGET)/g2.jar \
-		--build-arg SENZING_G2_JAR_VERSION=$(SENZING_G2_JAR_VERSION) \
-		--tag $(DOCKER_IMAGE_TAG) \
 		.
 
 # -----------------------------------------------------------------------------
@@ -119,20 +87,12 @@ docker-rmi-for-build:
 		$(DOCKER_IMAGE_NAME):$(GIT_VERSION) \
 		$(DOCKER_IMAGE_NAME)
 
-.PHONY: docker-rmi-for-build-development-cache
-docker-rmi-for-build-development-cache:
-	-docker rmi --force $(DOCKER_IMAGE_TAG)
-
-.PHONY: docker-rmi-for-package
-docker-rmi-for-packagae:
-	-docker rmi --force $(DOCKER_IMAGE_PACKAGE)
-
 .PHONY: rm-target
 rm-target:
 	-rm -rf $(TARGET)
 
 .PHONY: clean
-clean: docker-rmi-for-build docker-rmi-for-build-development-cache docker-rmi-for-package rm-target
+clean: docker-rmi-for-build rm-target
 
 # -----------------------------------------------------------------------------
 # Help

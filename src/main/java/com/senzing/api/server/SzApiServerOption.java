@@ -21,7 +21,8 @@ import static com.senzing.util.LoggingUtilities.multilineFormat;
 /**
  * Describes the command-line options for {@link SzApiServer}.
  */
-public enum SzApiServerOption implements CommandLineOption<SzApiServerOption>
+public enum SzApiServerOption
+    implements CommandLineOption<SzApiServerOption, SzApiServerOption>
 {
   /**
    * <p>

@@ -1,8 +1,7 @@
 package com.senzing.datagen;
 
-import com.senzing.cmdline.CommandLineOption;
-import com.senzing.cmdline.CommandLineUtilities;
-import com.senzing.cmdline.CommandLineValue;
+import com.senzing.cmdline.*;
+import com.senzing.configmgr.ConfigurationManager;
 
 import javax.json.Json;
 import javax.json.JsonArrayBuilder;
@@ -1336,12 +1335,27 @@ public class DataGenerator {
    *
    */
   public static void main(String[] args) {
-    Map<CommandLineOption, Object> options = null;
+    Map<CommandLineOption, Object>  options = null;
+    List<DeprecatedOptionWarning>   warnings = new LinkedList<>();
     try {
-      options = parseCommandLine(args);
+      options = parseCommandLine(args, warnings);
+
+      for (DeprecatedOptionWarning warning: warnings) {
+        System.out.println(warning);
+        System.out.println();
+      }
+
+    } catch (CommandLineException e) {
+      System.out.println(e.getMessage());
+
+      System.out.println(DataGenerator.getUsageString(true));
+      System.exit(1);
+
     } catch (Exception e) {
-      if (!isLastLoggedException(e)) e.printStackTrace();
-      System.err.println(DataGenerator.getUsageString(false));
+      if (!isLastLoggedException(e))
+      {
+        e.printStackTrace();
+      }
       System.exit(1);
     }
 
@@ -1646,16 +1660,24 @@ public class DataGenerator {
    * are provided.
    *
    * @param args The arguments to parse.
+   * @param deprecationWarnings The {@link List} to populate with any
+   *                            deprecation warnings that might be generated,
+   *                            or <code>null</code> if the caller is not
+   *                            interested.
    * @return The {@link Map} of options to their values.
-   * @throws IllegalArgumentException If command line arguments are invalid.
+   * @throws CommandLineException If command line arguments are invalid.
    */
-  private static Map<CommandLineOption, Object> parseCommandLine(String[] args)
+  private static Map<CommandLineOption, Object> parseCommandLine(
+      String[]                      args,
+      List<DeprecatedOptionWarning> deprecationWarnings)
+      throws CommandLineException
   {
     Map<CommandLineOption, CommandLineValue> optionValues
         = CommandLineUtilities.parseCommandLine(
         DataGeneratorOption.class,
         args,
-        DataGeneratorOption.PARAMETER_PROCESSOR);
+        DataGeneratorOption.PARAMETER_PROCESSOR,
+        deprecationWarnings);
 
     // create a result map
     Map<CommandLineOption, Object> result = new LinkedHashMap<>();

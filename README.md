@@ -88,7 +88,7 @@ In order to install `g2.jar` you must:
 
         ```console
         export SENZING_G2_DIR=/opt/senzing/g2
-        export SENZING_G2_JAR_VERSION=2.8.0
+        export SENZING_G2_JAR_VERSION=2.8.1
 
         mvn install:install-file \
             -Dfile=${SENZING_G2_DIR}/lib/g2.jar \
@@ -170,14 +170,16 @@ in sync across multiple processes that may be using it.
 Other command-line options may be useful to you as well.  Execute
 
 ```console
-java -jar target/senzing-api-server-2.7.4.jar --help
+java -jar target/senzing-api-server-2.8.1.jar --help
 ```
 
 to obtain a help message describing all available options.
 For example:
 
 ```console
-$ java -jar senzing-api-server-2.7.4.jar <options>
+$ java -jar senzing-api-server-2.8.1.jar <options>
+
+java -jar senzing-api-server-2.8.1.jar <options>
 
 <options> includes: 
 
@@ -206,12 +208,14 @@ $ java -jar senzing-api-server-2.7.4.jar <options>
 
    --enable-admin [true|false]
         Also -enableAdmin.  Enables administrative functions via the API
-        server.  The true/false parameter is optional, if not specified then
-        true is assumed.  If specified as false then it is the same as omitting
-        the option with the exception that omission falls back to the
-        environment variable setting whereas an explicit false overrides any
-        environment variable.  If not specified then administrative functions
-        will return a 403 Forbidden response.
+        server.  Administrative functions include those that would modify
+        the active configuration (e.g.: adding data sources, entity types,
+        or entity classes).  The true/false parameter is optional, if not
+        specified then true is assumed.  If specified as false then it is
+        the same as omitting the option with the exception that omission
+        falls back to the environment variable setting whereas an explicit
+        false overrides any environment variable.  If not specified then
+        administrative functions will return a 403 Forbidden response.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_ENABLE_ADMIN
 
    --http-port <port-number>

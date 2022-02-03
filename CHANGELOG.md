@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.1] - 2022-01-13
+
+### Changed in 2.8.1
+
+- Updated `README.MD` to include latest usage message for `--enable-admin`
+- Updated spring framework dependencies to resolve security vulnerability.
+- Updated cached test data to version 2.8.5 of Senzing
+
+## [2.8.0] - 2021-11-30
+
+### Changed in 2.8.0
+
+- Reduced footprint of cached test data to only the latest version of Senzing.
+  For other versions the tests will have to be run with a live Senzing SDK.
+- Modified to factor out the `senzing-commons-java` dependency.
+- Modified to mask sensitive command-line option parameters when logging the
+  startup parameters as JSON.
+- Updated to senzing/senzing-base:1.6.3
+
+## [2.7.5] - 2021-10-11
+
+### Changed in 2.7.5
+
+- Updated to senzing/senzing-base:1.6.2
+
 ## [2.7.4] - 2021-09-08
 
 ### Changed in 2.7.4
@@ -26,9 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   variable equivalent to enable API Server debug logging.
 - Added debug logging of every incoming request if --debug enabled.
 - Added debug logging for bulk-data related operations if --debug enabled.
-- Updated build-info.properties so the Maven build timestamp is properly 
+- Updated build-info.properties so the Maven build timestamp is properly
   filtered during build and token-replaced.
-- Minor bug fix for internal CommandLineUtilities class to process default 
+- Minor bug fix for internal CommandLineUtilities class to process default
   values for "base" options.  This allows others to extend the Senzing API
   Server code with new options but still have the default values from the
   base options be populated (required for `Senzing/senzing-poc-server`).
@@ -145,7 +170,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added command-line option for `--url-base-path` / `-urlBasePath` (along with
   `SENZING_API_SERVER_URL_BASE_PATH` environment variable) to set the base path
   of the API server on startup
-- Updated usage string of `SzApiServer` to reflect all changes regarding 
+- Updated usage string of `SzApiServer` to reflect all changes regarding
   command-line options
 - Updated/fixed the output when running with `-version` command-line option
 - Modified `SzVersionInfo` to include `nativeApiBuildVersion` field on the

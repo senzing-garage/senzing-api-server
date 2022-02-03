@@ -9,7 +9,8 @@ import java.util.*;
 import static java.util.Collections.*;
 
 enum DataGeneratorOption
-    implements CommandLineOption<DataGeneratorOption> {
+    implements CommandLineOption<DataGeneratorOption, DataGeneratorOption>
+{
   HELP("-help", 0),
   PERSON_COUNT("-personCount", 1),
   ORGANIZATION_COUNT("-orgCount", 1),
