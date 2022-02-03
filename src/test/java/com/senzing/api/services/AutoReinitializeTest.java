@@ -4,7 +4,7 @@ import com.senzing.api.model.*;
 import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.g2.engine.*;
 import com.senzing.repomgr.RepositoryManager;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -198,7 +198,7 @@ public class AutoReinitializeTest extends AbstractServiceTest
       job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
       job.add("ENTITY_TYPE", "GENERIC");
       JsonObject  jsonObject  = job.build();
-      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+      String      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       // add the data source (so it is there for retry)
       this.addDataSource(newDataSource);
@@ -240,7 +240,7 @@ public class AutoReinitializeTest extends AbstractServiceTest
       job.add("ADDR_FULL", "100 Main Street, Los Angeles, CA 90012");
       job.add("ENTITY_TYPE", "GENERIC");
       JsonObject  jsonObject  = job.build();
-      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+      String      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       // add the data source (so it is there for retry)
       this.addDataSource(newDataSource);
@@ -291,14 +291,14 @@ public class AutoReinitializeTest extends AbstractServiceTest
     JsonObjectBuilder job = Json.createObjectBuilder();
     job.add("DSRC_CODE", newDataSource);
     JsonObject jsonObject = job.build();
-    String jsonText = JsonUtils.toJsonText(jsonObject);
+    String jsonText = JsonUtilities.toJsonText(jsonObject);
 
     // now modify the config
     sb.delete(0, sb.length());
     long configId = this.configApi.load(configJsonText);
     this.configApi.addDataSourceV2(configId, jsonText, sb);
 
-    jsonObject = JsonUtils.parseJsonObject(sb.toString());
+    jsonObject = JsonUtilities.parseJsonObject(sb.toString());
     int dataSourceId = jsonObject.getInt("DSRC_ID");
 
     // save the new config

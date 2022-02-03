@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzEntityDataImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -189,7 +189,7 @@ public interface SzEntityData {
         = SzResolvedEntity.parseResolvedEntity(null, resEntObj, mapper);
 
     JsonArray relatedArray
-        = JsonUtils.getJsonArray(jsonObject,"RELATED_ENTITIES");
+        = JsonUtilities.getJsonArray(jsonObject,"RELATED_ENTITIES");
 
     List<SzRelatedEntity> relatedEntities
         = SzRelatedEntity.parseRelatedEntityList(null,

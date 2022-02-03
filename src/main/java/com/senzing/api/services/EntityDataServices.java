@@ -2,7 +2,7 @@ package com.senzing.api.services;
 
 import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2Engine;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import com.senzing.util.SemanticVersion;
 import com.senzing.util.Timers;
 
@@ -93,8 +93,8 @@ public class EntityDataServices implements ServicesSupport {
           Collections.singletonMap("DATA_SOURCE", dataSource),
           Collections.singletonMap("ENTITY_TYPE", "GENERIC"));
 
-      JsonObject  recordJson    = JsonUtils.parseJsonObject(recordText);
-      String      jsonRecordId  = JsonUtils.getString(recordJson, "RECORD_ID");
+      JsonObject  recordJson    = JsonUtilities.parseJsonObject(recordText);
+      String      jsonRecordId  = JsonUtilities.getString(recordJson, "RECORD_ID");
       if (jsonRecordId != null) {
         if (jsonRecordId.trim().length() == 0) {
           // we have an empty record ID, we need to strip it from the JSON
@@ -102,7 +102,7 @@ public class EntityDataServices implements ServicesSupport {
           jsonBuilder.remove("RECORD_ID");
           recordJson    = jsonBuilder.build();
           jsonRecordId  = null;
-          recordText    = JsonUtils.toJsonText(recordJson);
+          recordText    = JsonUtilities.toJsonText(recordJson);
         }
       }
 
@@ -165,7 +165,7 @@ public class EntityDataServices implements ServicesSupport {
 
       if (withInfo || asyncInfo) {
         rawData = text;
-        JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
+        JsonObject jsonObject = JsonUtilities.parseJsonObject(rawData);
 
         // if info was requested or we need to return the record ID then we need
         // to parse the info so we can return it or extract the record ID
@@ -390,7 +390,7 @@ public class EntityDataServices implements ServicesSupport {
 
         // check if the info was requested
         if (withInfo) {
-          JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
+          JsonObject jsonObject = JsonUtilities.parseJsonObject(rawInfo);
           info = this.parseResolutionInfo(jsonObject);
         }
       }
@@ -524,7 +524,7 @@ public class EntityDataServices implements ServicesSupport {
 
         // check if the info was explicitly requested
         if (withInfo) {
-          JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
+          JsonObject jsonObject = JsonUtilities.parseJsonObject(rawInfo);
           info = this.parseResolutionInfo(jsonObject);
           if ((normalizeString(info.getDataSource()) == null)
               && (normalizeString(info.getRecordId()) == null)
@@ -690,7 +690,7 @@ public class EntityDataServices implements ServicesSupport {
 
         // check if the info was explicitly requested
         if (withInfo) {
-          JsonObject jsonObject = JsonUtils.parseJsonObject(rawInfo);
+          JsonObject jsonObject = JsonUtilities.parseJsonObject(rawInfo);
           info = this.parseResolutionInfo(jsonObject);
         }
       }
@@ -809,7 +809,7 @@ public class EntityDataServices implements ServicesSupport {
       this.processingRawData(timers);
 
       // parse the raw data
-      JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(rawData);
 
       SzEntityRecord entityRecord = this.parseEntityRecord(jsonObject);
 
@@ -951,7 +951,7 @@ public class EntityDataServices implements ServicesSupport {
         builder1.add("DATA_SOURCE", dataSource);
         builder2.add(builder1);
         builder3.add("RECORDS", builder2);
-        String recordIds = JsonUtils.toJsonText(builder3);
+        String recordIds = JsonUtilities.toJsonText(builder3);
 
         // set the other arguments
         final int maxDegrees = 1;
@@ -1045,7 +1045,7 @@ public class EntityDataServices implements ServicesSupport {
         this.processingRawData(timers);
         // parse the result
         entityData = this.parseEntityData(
-            JsonUtils.parseJsonObject(rawData),
+            JsonUtilities.parseJsonObject(rawData),
             (f) -> provider.getAttributeClassForFeature(f));
       }
 
@@ -1155,7 +1155,7 @@ public class EntityDataServices implements ServicesSupport {
         builder1.add("ENTITY_ID", entityId);
         builder2.add(builder1);
         builder3.add("ENTITIES", builder2);
-        String entityIds = JsonUtils.toJsonText(builder3);
+        String entityIds = JsonUtilities.toJsonText(builder3);
 
         // set the other arguments
         final int maxDegrees = 1;
@@ -1224,7 +1224,7 @@ public class EntityDataServices implements ServicesSupport {
 
         // parse the result
         entityData = this.parseEntityData(
-            JsonUtils.parseJsonObject(rawData),
+            JsonUtilities.parseJsonObject(rawData),
             (f) -> provider.getAttributeClassForFeature(f));
       }
 
@@ -1296,7 +1296,7 @@ public class EntityDataServices implements ServicesSupport {
       JsonObject searchCriteria = null;
       if (attrs != null && attrs.trim().length() > 0) {
         try {
-          searchCriteria = JsonUtils.parseJsonObject(attrs);
+          searchCriteria = JsonUtilities.parseJsonObject(attrs);
         } catch (Exception e) {
           throw this.newBadRequestException(
               GET, uriInfo, timers,
@@ -1436,7 +1436,7 @@ public class EntityDataServices implements ServicesSupport {
             POST, uriInfo, timers, "The request body must be provided");
       }
       try {
-        searchCriteria = JsonUtils.parseJsonObject(attrs);
+        searchCriteria = JsonUtilities.parseJsonObject(attrs);
       } catch (Exception e) {
         throw this.newBadRequestException(
             POST, uriInfo, timers,
@@ -1562,7 +1562,7 @@ public class EntityDataServices implements ServicesSupport {
                                 withRelationships);
 
       // format the search JSON
-      final String searchJson = JsonUtils.toJsonText(searchCriteria);
+      final String searchJson = JsonUtilities.toJsonText(searchCriteria);
 
       this.enteringQueue(timers);
       provider.executeInThread(() -> {
@@ -1583,7 +1583,7 @@ public class EntityDataServices implements ServicesSupport {
 
       this.processingRawData(timers);
 
-      JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(sb.toString());
       JsonArray jsonResults = jsonObject.getValue(
           "/RESOLVED_ENTITIES").asJsonArray();
 
@@ -1773,7 +1773,7 @@ public class EntityDataServices implements ServicesSupport {
 
         // if the info was requested, then we also want to parse and return it
         if (withInfo) {
-          info = this.parseResolutionInfo(JsonUtils.parseJsonObject(rawInfo));
+          info = this.parseResolutionInfo(JsonUtilities.parseJsonObject(rawInfo));
         }
       }
 
@@ -1879,7 +1879,7 @@ public class EntityDataServices implements ServicesSupport {
       String rawData, SzApiProvider provider)
   {
     // parse the raw response and extract the entities that were found
-    JsonObject jsonObj = JsonUtils.parseJsonObject(rawData);
+    JsonObject jsonObj = JsonUtilities.parseJsonObject(rawData);
     JsonArray jsonArr = jsonObj.getJsonArray("ENTITIES");
 
     List<SzEntityData> list = this.parseEntityDataList(
@@ -2013,16 +2013,16 @@ public class EntityDataServices implements ServicesSupport {
                                     Map<String, String> defaultMap)
   {
     try {
-      JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
       JsonObjectBuilder jsonBuilder = Json.createObjectBuilder(jsonObject);
 
       map.entrySet().forEach(entry -> {
         String key = entry.getKey();
         String val = entry.getValue();
 
-        String jsonVal = JsonUtils.getString(jsonObject, key.toUpperCase());
+        String jsonVal = JsonUtilities.getString(jsonObject, key.toUpperCase());
         if (jsonVal == null) {
-          jsonVal = JsonUtils.getString(jsonObject, key.toLowerCase());
+          jsonVal = JsonUtilities.getString(jsonObject, key.toLowerCase());
         }
         if (jsonVal != null && jsonVal.trim().length() > 0) {
           if (!jsonVal.equalsIgnoreCase(val)) {
@@ -2041,9 +2041,9 @@ public class EntityDataServices implements ServicesSupport {
       // iterate over the default values
       defaultMap.forEach((key, val) -> {
         // get the value for the key
-        String jsonVal = JsonUtils.getString(jsonObject, key.toUpperCase());
+        String jsonVal = JsonUtilities.getString(jsonObject, key.toUpperCase());
         if (jsonVal == null) {
-          jsonVal = JsonUtils.getString(jsonObject, key.toLowerCase());
+          jsonVal = JsonUtilities.getString(jsonObject, key.toLowerCase());
           if (jsonVal != null) key = key.toLowerCase();
         }
         if (jsonVal == null || jsonVal.trim().length() == 0) {
@@ -2052,7 +2052,7 @@ public class EntityDataServices implements ServicesSupport {
         }
       });
 
-      return JsonUtils.toJsonText(jsonBuilder);
+      return JsonUtilities.toJsonText(jsonBuilder);
 
     } catch (ServerErrorException e) {
       e.printStackTrace();

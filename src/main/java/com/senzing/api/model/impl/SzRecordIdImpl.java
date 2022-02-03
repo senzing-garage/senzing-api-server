@@ -3,7 +3,7 @@ package com.senzing.api.model.impl;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.SzEntityIdentifier;
 import com.senzing.api.model.SzRecordId;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -100,6 +100,6 @@ public class SzRecordIdImpl implements SzRecordId {
     JsonObjectBuilder builder = Json.createObjectBuilder();
     builder.add("src", this.getDataSourceCode());
     builder.add("id", this.getRecordId());
-    return JsonUtils.toJsonText(builder);
+    return JsonUtilities.toJsonText(builder);
   }
 }

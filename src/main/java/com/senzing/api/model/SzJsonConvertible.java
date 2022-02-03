@@ -1,6 +1,6 @@
 package com.senzing.api.model;
 
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -33,7 +33,7 @@ public interface SzJsonConvertible {
    * @return The {@link String} text representation of this object as JSON.
    */
   default String toJson() {
-    return JsonUtils.toJsonText(this.toJsonObject());
+    return JsonUtilities.toJsonText(this.toJsonObject());
   }
 
   /**
@@ -65,6 +65,6 @@ public interface SzJsonConvertible {
    *         Senzing JSON.
    */
   default String toNativeJson() {
-    return JsonUtils.toJsonText(this.toNativeJsonObject());
+    return JsonUtilities.toJsonText(this.toNativeJsonObject());
   }
 }

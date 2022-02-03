@@ -1,6 +1,6 @@
 package com.senzing.datagen;
 
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
@@ -59,7 +59,7 @@ public class JsonLinesRecordHandler implements RecordHandler {
     if (record.size() == 0) return;
 
     // get the JSON text WITHOUT pretty printing
-    String jsonText = JsonUtils.toJsonText(record, false);
+    String jsonText = JsonUtilities.toJsonText(record, false);
 
     // write the line
     this.writer.println(jsonText);

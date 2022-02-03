@@ -2,7 +2,7 @@ package com.senzing.api.services;
 
 import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2Engine;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import com.senzing.util.Timers;
 
 import javax.json.*;
@@ -293,7 +293,7 @@ public class EntityGraphServices implements ServicesSupport {
       });
 
       this.processingRawData(timers);
-      JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(rawData);
       SzEntityPathData entityPathData = this.parseEntityPathData(
           jsonObject,
           provider::getAttributeClassForFeature);
@@ -515,7 +515,7 @@ public class EntityGraphServices implements ServicesSupport {
 
       this.processingRawData(timers);
 
-      JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(rawData);
 
       SzEntityNetworkData entityNetworkData = this.parseEntityNetworkData(
               jsonObject,

@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzSearchFeatureScoreImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -186,9 +186,9 @@ public interface SzSearchFeatureScore {
   static SzSearchFeatureScore parseFeatureScore(JsonObject jsonObject,
                                                 String     featureType)
   {
-    Integer score     = JsonUtils.getInteger(jsonObject, "FULL_SCORE");
-    String  inbound   = JsonUtils.getString(jsonObject, "INBOUND_FEAT");
-    String  candidate = JsonUtils.getString(jsonObject, "CANDIDATE_FEAT");
+    Integer score     = JsonUtilities.getInteger(jsonObject, "FULL_SCORE");
+    String  inbound   = JsonUtilities.getString(jsonObject, "INBOUND_FEAT");
+    String  candidate = JsonUtilities.getString(jsonObject, "CANDIDATE_FEAT");
 
     SzNameScoring nameScoring = null;
     if (score == null || featureType.equalsIgnoreCase("NAME")) {

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzEntityRecordImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -414,7 +414,7 @@ public interface SzEntityRecord {
 
 
     // get the last seen date
-    String lastSeen = JsonUtils.getString(jsonObject, "LAST_SEEN_DT");
+    String lastSeen = JsonUtilities.getString(jsonObject, "LAST_SEEN_DT");
     Date lastSeenDate = null;
     if (lastSeen != null && lastSeen.trim().length() > 0) {
       LocalDateTime localDateTime
@@ -425,7 +425,7 @@ public interface SzEntityRecord {
 
     // get the raw data map
     JsonObject  jsonData    = jsonObject.getJsonObject("JSON_DATA");
-    String      sourceData  = JsonUtils.toJsonText(jsonData);
+    String      sourceData  = JsonUtilities.toJsonText(jsonData);
 
     record.setLastSeenTimestamp(lastSeenDate);
     record.setOriginalSourceDataFromText(sourceData);

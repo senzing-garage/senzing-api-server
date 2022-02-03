@@ -2,7 +2,7 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzEntityIdentifiersImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonNumber;
@@ -241,7 +241,7 @@ public interface SzEntityIdentifiers {
     if (first == '{' && last == '}') {
       try {
         // it appears we have a JSON object for a single entity identifier
-        JsonObject jsonObject = JsonUtils.parseJsonObject(text);
+        JsonObject jsonObject = JsonUtilities.parseJsonObject(text);
         SzRecordId recordId = SzRecordId.parse(jsonObject);
         return SzEntityIdentifiers.FACTORY.create(recordId);
 
@@ -295,7 +295,7 @@ public interface SzEntityIdentifiers {
    */
   private static SzEntityIdentifiers parseAsJsonArray(String text) {
     // it appears we have a JSON array of entity identifiers
-    JsonArray jsonArray = JsonUtils.parseJsonArray(text);
+    JsonArray jsonArray = JsonUtilities.parseJsonArray(text);
     List<SzEntityIdentifier> identifiers
         = new ArrayList<>(jsonArray.size());
     JsonValue.ValueType valueType = null;
@@ -351,7 +351,7 @@ public interface SzEntityIdentifiers {
       if (jsonStart != null && tok.startsWith("\"") && tok.endsWith("}")) {
         try {
           String jsonText = jsonStart + "," + rawToken;
-          JsonObject obj = JsonUtils.parseJsonObject(jsonText);
+          JsonObject obj = JsonUtilities.parseJsonObject(jsonText);
 
           tokens.add(jsonText);
 

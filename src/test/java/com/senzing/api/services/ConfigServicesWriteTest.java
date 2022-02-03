@@ -3,7 +3,7 @@ package com.senzing.api.services;
 import com.senzing.api.model.*;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
@@ -197,7 +197,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           for (SzDataSource value : values) {
             jab.add(value.getDataSourceCode());
           }
-          return JsonUtils.toJsonText(jab);
+          return JsonUtilities.toJsonText(jab);
         }
 
         case JSON_OBJECT:
@@ -209,7 +209,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           JsonObjectBuilder job     = Json.createObjectBuilder();
           value.buildJson(job);
           if (!withId) job.remove("dataSourceId");
-          return JsonUtils.toJsonText(job);
+          return JsonUtilities.toJsonText(job);
         }
 
         case JSON_OBJECT_ARRAY:
@@ -225,7 +225,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
             if (!withId) job.remove("dataSourceId");
             jab.add(job);
           }
-          return JsonUtils.toJsonText(jab);
+          return JsonUtilities.toJsonText(jab);
         }
 
         case MIXED_FORMATTING:
@@ -251,7 +251,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
               jab.add(value.getDataSourceCode());
             }
           }
-          return JsonUtils.toJsonText(jab);
+          return JsonUtilities.toJsonText(jab);
         }
 
         default:
@@ -355,7 +355,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           for (SzEntityClass value : values) {
             jab.add(value.getEntityClassCode());
           }
-          return JsonUtils.toJsonText(jab);
+          return JsonUtilities.toJsonText(jab);
         }
 
         case JSON_OBJECT:
@@ -370,7 +370,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           value.buildJson(job);
           if (!withId) job.remove("entityClassId");
           if (!withRes) job.remove("resolving");
-          return JsonUtils.toJsonText(job);
+          return JsonUtilities.toJsonText(job);
         }
 
         case JSON_OBJECT_ARRAY:
@@ -389,7 +389,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
             if (!withRes) job.remove("resolving");
             jab.add(job);
           }
-          return JsonUtils.toJsonText(jab);
+          return JsonUtilities.toJsonText(jab);
         }
 
         case MIXED_FORMATTING:
@@ -423,7 +423,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
               jab.add(value.getEntityClassCode());
             }
           }
-          return JsonUtils.toJsonText(jab);
+          return JsonUtilities.toJsonText(jab);
         }
 
         default:
@@ -589,7 +589,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           for (SzEntityType value : values) {
             jab.add(value.getEntityTypeCode());
           }
-          return JsonUtils.toJsonText(jab);
+          return JsonUtilities.toJsonText(jab);
         }
 
         case JSON_OBJECT:
@@ -601,7 +601,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           JsonObjectBuilder job     = Json.createObjectBuilder();
           value.buildJson(job);
           if (!withId) job.remove("entityTypeId");
-          return JsonUtils.toJsonText(job);
+          return JsonUtilities.toJsonText(job);
         }
 
         case JSON_OBJECT_ARRAY:
@@ -617,7 +617,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
             if (!withId) job.remove("entityTypeId");
             jab.add(job);
           }
-          return JsonUtils.toJsonText(jab);
+          return JsonUtilities.toJsonText(jab);
         }
 
         case MIXED_FORMATTING:
@@ -648,7 +648,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
               jab.add(value.getEntityTypeCode());
             }
           }
-          return JsonUtils.toJsonText(jab);
+          return JsonUtilities.toJsonText(jab);
         }
 
         default:

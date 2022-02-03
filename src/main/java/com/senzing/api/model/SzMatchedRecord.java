@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzMatchedRecordImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -234,10 +234,10 @@ public interface SzMatchedRecord extends SzEntityRecord {
     // now get the match fields
     Optional<Integer> matchScore = SzBaseRelatedEntity.readMatchScore(jsonObject);
 
-    String  matchKey    = JsonUtils.getString(jsonObject, "MATCH_KEY");
-    Integer matchLevel  = JsonUtils.getInteger(jsonObject, "MATCH_LEVEL");
-    Integer refScore    = JsonUtils.getInteger(jsonObject, "REF_SCORE");
-    String  ruleCode    = JsonUtils.getString(jsonObject,"ERRULE_CODE");
+    String  matchKey    = JsonUtilities.getString(jsonObject, "MATCH_KEY");
+    Integer matchLevel  = JsonUtilities.getInteger(jsonObject, "MATCH_LEVEL");
+    Integer refScore    = JsonUtilities.getInteger(jsonObject, "REF_SCORE");
+    String  ruleCode    = JsonUtilities.getString(jsonObject,"ERRULE_CODE");
 
     record.setMatchScore(matchScore.orElse(null));
     record.setMatchKey(matchKey);

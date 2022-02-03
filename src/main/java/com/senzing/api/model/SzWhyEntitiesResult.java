@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzWhyEntitiesResultImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -144,10 +144,10 @@ public interface SzWhyEntitiesResult {
    */
   static SzWhyEntitiesResult parseWhyEntitiesResult(JsonObject jsonObj)
   {
-    Long entityId1 = JsonUtils.getLong(jsonObj, "ENTITY_ID");
-    Long entityId2 = JsonUtils.getLong(jsonObj, "ENTITY_ID_2");
+    Long entityId1 = JsonUtilities.getLong(jsonObj, "ENTITY_ID");
+    Long entityId2 = JsonUtilities.getLong(jsonObj, "ENTITY_ID_2");
 
-    JsonObject infoJson = JsonUtils.getJsonObject(jsonObj, "MATCH_INFO");
+    JsonObject infoJson = JsonUtilities.getJsonObject(jsonObj, "MATCH_INFO");
 
     SzMatchInfo matchInfo
         = SzMatchInfo.parseMatchInfo(infoJson);

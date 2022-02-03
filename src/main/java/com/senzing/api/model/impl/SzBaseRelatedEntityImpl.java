@@ -3,7 +3,7 @@ package com.senzing.api.model.impl;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.senzing.api.model.SzBaseRelatedEntity;
 import com.senzing.api.model.SzResolvedEntity;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
 import java.util.Optional;

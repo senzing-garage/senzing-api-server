@@ -5,7 +5,7 @@ import com.senzing.g2.engine.*;
 import com.senzing.g2.engine.internal.*;
 import com.senzing.io.IOUtilities;
 import com.senzing.util.AccessToken;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.*;
 import java.io.*;
@@ -283,7 +283,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       G2Product productApi = new G2ProductJNI();
       String versionJson = productApi.version();
 
-      JsonObject versionObj = JsonUtils.parseJsonObject(versionJson);
+      JsonObject versionObj = JsonUtilities.parseJsonObject(versionJson);
       nativeVersion = versionObj.getString("VERSION");
 
     } catch (Throwable e) {
@@ -726,10 +726,10 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
           result.add(jsonArray.getJsonNumber(index).numberValue());
           break;
         case OBJECT:
-          result.add(JsonUtils.toJsonText(jsonArray.getJsonObject(index)));
+          result.add(JsonUtilities.toJsonText(jsonArray.getJsonObject(index)));
           break;
         case ARRAY:
-          result.add(JsonUtils.toJsonText(jsonArray.getJsonArray(index)));
+          result.add(JsonUtilities.toJsonText(jsonArray.getJsonArray(index)));
           break;
         default:
           throw new IllegalStateException("Unhandled value type: " + valueType);
@@ -775,13 +775,13 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
           result.put(key, jsonObject.getString(key));
           break;
         case NUMBER:
-          result.put(key, JsonUtils.getLong(jsonObject, key));
+          result.put(key, JsonUtilities.getLong(jsonObject, key));
           break;
         case OBJECT:
-          result.put(key, JsonUtils.toJsonText(jsonObject.getJsonObject(key)));
+          result.put(key, JsonUtilities.toJsonText(jsonObject.getJsonObject(key)));
           break;
         case ARRAY:
-          result.put(key, JsonUtils.toJsonText(jsonObject.getJsonArray(key)));
+          result.put(key, JsonUtilities.toJsonText(jsonObject.getJsonArray(key)));
           break;
         default:
           throw new IllegalStateException("Unhandled value type: " + valueType);
@@ -832,7 +832,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
     try {
       String      jsonText    = readTextFileAsString(cacheFile, UTF_8);
-      JsonObject  jsonObject  = JsonUtils.parseJsonObject(jsonText);
+      JsonObject  jsonObject  = JsonUtilities.parseJsonObject(jsonText);
 
       // load and check the dependencies and check for changes
       this.currentDependencies = new LinkedHashSet<>();
@@ -889,7 +889,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
         }
         cache.results = new LinkedList<>();
         for (JsonObject result : resultValues.getValuesAs(JsonObject.class)) {
-          int repeatCount = JsonUtils.getInteger(result, "repeatCount", 1);
+          int repeatCount = JsonUtilities.getInteger(result, "repeatCount", 1);
           JsonValue value = result.get("value");
           RecordedResult recordedResult = null;
           if (value.getValueType() == JsonValue.ValueType.STRING) {
@@ -1035,7 +1035,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     parameters.forEach(param -> {
       this.arrayAdd(paramJab, param);
     });
-    String jsonText = JsonUtils.toJsonText(paramJab, true);
+    String jsonText = JsonUtilities.toJsonText(paramJab, true);
     if (jsonText.length() < EXTERNALIZE_THRESHOLD) return null;
     String paramsHash = null;
     try {
@@ -1084,7 +1084,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       Object value = resultEntry.getValue();
       this.objectAdd(resultJob, key, value);
     });
-    String jsonText = JsonUtils.toJsonText(resultJob.build(), true);
+    String jsonText = JsonUtilities.toJsonText(resultJob.build(), true);
     if (jsonText.length() < EXTERNALIZE_THRESHOLD) return null;
     String resultHash = null;
     try {
@@ -1134,7 +1134,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
     try {
       String jsonText = IOUtilities.readTextFileAsString(resultFile, UTF_8);
-      JsonObject resultsObj = JsonUtils.parseJsonObject(jsonText);
+      JsonObject resultsObj = JsonUtilities.parseJsonObject(jsonText);
       return this.readResults(resultsObj);
 
     } catch (IOException e) {
@@ -1195,7 +1195,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
         boolean added = false;
         if (text.startsWith("{") && text.endsWith("}")) {
           try {
-            JsonObject jsonObject = JsonUtils.parseJsonObject(text);
+            JsonObject jsonObject = JsonUtilities.parseJsonObject(text);
             jab.add(Json.createObjectBuilder(jsonObject));
             added = true;
           } catch (Exception ignore) {
@@ -1203,7 +1203,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
           }
         } else if (text.startsWith("[") && text.endsWith("]")) {
           try {
-            JsonArray jsonArray = JsonUtils.parseJsonArray(text);
+            JsonArray jsonArray = JsonUtilities.parseJsonArray(text);
             jab.add(Json.createArrayBuilder(jsonArray));
             added = true;
           } catch (Exception ignore) {
@@ -1276,7 +1276,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
         boolean added = false;
         if (text.startsWith("{") && text.endsWith("}")) {
           try {
-            JsonObject jsonObject = JsonUtils.parseJsonObject(text);
+            JsonObject jsonObject = JsonUtilities.parseJsonObject(text);
             job.add(key, Json.createObjectBuilder(jsonObject));
             added = true;
           } catch (Exception ignore) {
@@ -1284,7 +1284,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
           }
         } else if (text.startsWith("[") && text.endsWith("]")) {
           try {
-            JsonArray jsonArray = JsonUtils.parseJsonArray(text);
+            JsonArray jsonArray = JsonUtilities.parseJsonArray(text);
             job.add(key, Json.createArrayBuilder(jsonArray));
             added = true;
           } catch (Exception ignore) {
@@ -1379,10 +1379,10 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
           && apiMethod.getName().startsWith("addRecord")) {
         // special case for "addMethod" since it is called concurrently
         String jsonText = (String) parameters.get(2);
-        JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
+        JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
 
-        String dataSource = JsonUtils.getString(jsonObject, "DATA_SOURCE");
-        String entityType = JsonUtils.getString(jsonObject, "ENTITY_TYPE");
+        String dataSource = JsonUtilities.getString(jsonObject, "DATA_SOURCE");
+        String entityType = JsonUtilities.getString(jsonObject, "ENTITY_TYPE");
 
         // add the data source to the hash
         if (dataSource != null) {
@@ -1487,10 +1487,10 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
       // special case for "addMethod" since it is called concurrently
       String jsonText = (String) parameters.get(2);
-      JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
 
-      String dataSource = JsonUtils.getString(jsonObject, "DATA_SOURCE");
-      String entityType = JsonUtils.getString(jsonObject, "ENTITY_TYPE");
+      String dataSource = JsonUtilities.getString(jsonObject, "DATA_SOURCE");
+      String entityType = JsonUtilities.getString(jsonObject, "ENTITY_TYPE");
 
       sb.append(", dataSource=[ ").append(dataSource).append(" ]");
       sb.append(", entityType=[ ").append(entityType).append(" ]");

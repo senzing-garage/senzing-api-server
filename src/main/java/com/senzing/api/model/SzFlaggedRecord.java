@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzFlaggedRecordImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -187,10 +187,10 @@ public interface SzFlaggedRecord {
       JsonObject jsonObject) {
     if (record == null) record = SzFlaggedRecord.FACTORY.create();
 
-    record.setDataSource(JsonUtils.getString(jsonObject, "DATA_SOURCE"));
-    record.setRecordId(JsonUtils.getString(jsonObject, "RECORD_ID"));
+    record.setDataSource(JsonUtilities.getString(jsonObject, "DATA_SOURCE"));
+    record.setRecordId(JsonUtilities.getString(jsonObject, "RECORD_ID"));
 
-    JsonArray jsonArray = JsonUtils.getJsonArray(jsonObject, "FLAGS");
+    JsonArray jsonArray = JsonUtilities.getJsonArray(jsonObject, "FLAGS");
     if (jsonArray != null) {
       for (JsonString flag : jsonArray.getValuesAs(JsonString.class)) {
         record.addFlag(flag.getString());

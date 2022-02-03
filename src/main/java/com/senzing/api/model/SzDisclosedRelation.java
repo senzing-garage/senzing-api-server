@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzDisclosedRelationImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -325,7 +325,7 @@ public interface SzDisclosedRelation {
       // loop through the array for the feature type
       for (JsonObject jsonObj: jsonArray.getValuesAs(JsonObject.class)) {
         // get the domain
-        String domain = JsonUtils.getString(jsonObj, "DOMAIN");
+        String domain = JsonUtilities.getString(jsonObj, "DOMAIN");
 
         // parse the feature pair
         SzRelatedFeatures features

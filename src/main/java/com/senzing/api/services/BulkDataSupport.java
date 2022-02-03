@@ -220,9 +220,9 @@ public interface BulkDataSupport extends ServicesSupport {
           for (JsonObject record = recordReader.readRecord();
                (record != null);
                record = recordReader.readRecord()) {
-            String dataSrc = JsonUtils.getString(record, "DATA_SOURCE");
-            String entityType = JsonUtils.getString(record, "ENTITY_TYPE");
-            String recordId = JsonUtils.getString(record, "RECORD_ID");
+            String dataSrc = JsonUtilities.getString(record, "DATA_SOURCE");
+            String entityType = JsonUtilities.getString(record, "ENTITY_TYPE");
+            String recordId = JsonUtilities.getString(record, "RECORD_ID");
             dataAnalysis.trackRecord(dataSrc, entityType, recordId);
 
             // check if the progress period has expired
@@ -446,13 +446,13 @@ public interface BulkDataSupport extends ServicesSupport {
             }
 
             // check if we have a data source and entity type
-            String resolvedDS = JsonUtils.getString(record, "DATA_SOURCE");
-            String resolvedET = JsonUtils.getString(record, "ENTITY_TYPE");
+            String resolvedDS = JsonUtilities.getString(record, "DATA_SOURCE");
+            String resolvedET = JsonUtilities.getString(record, "ENTITY_TYPE");
             if (resolvedDS == null || resolvedDS.trim().length() == 0
                 || resolvedET == null || resolvedET.trim().length() == 0)
             {
               debugLog("INCOMPLETE RECORD NOT LOADED: "
-                        + JsonUtils.toJsonText(record));
+                        + JsonUtilities.toJsonText(record));
 
               bulkLoadResult.trackIncompleteRecord(resolvedDS, resolvedET);
 
@@ -617,10 +617,10 @@ public interface BulkDataSupport extends ServicesSupport {
       JsonObject                    record,
       String                        loadId)
   {
-    String dataSource = JsonUtils.getString(record, "DATA_SOURCE");
-    String entityType = JsonUtils.getString(record, "ENTITY_TYPE");
-    String recordId   = JsonUtils.getString(record, "RECORD_ID");
-    String recordJSON = JsonUtils.toJsonText(record);
+    String dataSource = JsonUtilities.getString(record, "DATA_SOURCE");
+    String entityType = JsonUtilities.getString(record, "ENTITY_TYPE");
+    String recordId   = JsonUtilities.getString(record, "RECORD_ID");
+    String recordJSON = JsonUtilities.toJsonText(record);
 
     G2Engine engineApi = provider.getEngineApi();
     return asyncPool.execute(() -> {
@@ -647,7 +647,7 @@ public interface BulkDataSupport extends ServicesSupport {
         JsonObjectBuilder job = Json.createObjectBuilder();
         job.add("dataSource", dataSource);
         job.add("entityType", entityType);
-        String details = JsonUtils.toJsonText(job);
+        String details = JsonUtilities.toJsonText(job);
         throw new Exception(details, e);
       }
     });
@@ -674,10 +674,10 @@ public interface BulkDataSupport extends ServicesSupport {
       this.exitingQueue(timers);
       for (JsonObject record : records) {
 
-        String dataSource = JsonUtils.getString(record, "DATA_SOURCE");
-        String entityType = JsonUtils.getString(record, "ENTITY_TYPE");
-        String recordId   = JsonUtils.getString(record, "RECORD_ID");
-        String recordJSON = JsonUtils.toJsonText(record);
+        String dataSource = JsonUtilities.getString(record, "DATA_SOURCE");
+        String entityType = JsonUtilities.getString(record, "ENTITY_TYPE");
+        String recordId   = JsonUtilities.getString(record, "RECORD_ID");
+        String recordJSON = JsonUtilities.toJsonText(record);
 
         // check if we have a data source and entity type
         if (dataSource == null || dataSource.trim().length() == 0
@@ -825,10 +825,10 @@ public interface BulkDataSupport extends ServicesSupport {
       } catch (Exception e) {
         // an exception was thrown in trying to get the result
         String      jsonText  = e.getMessage();
-        JsonObject  jsonObj   = JsonUtils.parseJsonObject(jsonText);
+        JsonObject  jsonObj   = JsonUtilities.parseJsonObject(jsonText);
 
-        String failDataSource = JsonUtils.getString(jsonObj, "dataSource");
-        String failEntityType = JsonUtils.getString(jsonObj, "entityType");
+        String failDataSource = JsonUtilities.getString(jsonObj, "dataSource");
+        String failEntityType = JsonUtilities.getString(jsonObj, "entityType");
         Throwable cause = e.getCause();
         bulkLoadResult.trackFailedRecord(
             failDataSource, failEntityType, this.newError(cause.getMessage()));
@@ -1329,7 +1329,7 @@ public interface BulkDataSupport extends ServicesSupport {
     // check if the mapDataSources parameter is provided
     if (mapDataSources != null && mapDataSources.trim().length() > 0) {
       try {
-        JsonObject jsonObject = JsonUtils.parseJsonObject(mapDataSources);
+        JsonObject jsonObject = JsonUtilities.parseJsonObject(mapDataSources);
         jsonObject.entrySet().forEach(entry -> {
           String key = entry.getKey();
           JsonValue value = entry.getValue();
@@ -1338,7 +1338,7 @@ public interface BulkDataSupport extends ServicesSupport {
                 POST, uriInfo, timers,
                 "At least one JSON property (\"" + key + "\") in the "
                     + "\"mapDataSources\" parameter does NOT have a "
-                    + "String JSON value (" + JsonUtils.toJsonText(value)
+                    + "String JSON value (" + JsonUtilities.toJsonText(value)
                     + "): " + mapDataSources);
           }
           String source = ((JsonString) value).getString().trim().toUpperCase();
@@ -1425,7 +1425,7 @@ public interface BulkDataSupport extends ServicesSupport {
     // check if the mapDataSources parameter is provided
     if (mapEntityTypes != null && mapEntityTypes.trim().length() > 0) {
       try {
-        JsonObject jsonObject = JsonUtils.parseJsonObject(mapEntityTypes);
+        JsonObject jsonObject = JsonUtilities.parseJsonObject(mapEntityTypes);
         jsonObject.entrySet().forEach(entry -> {
           String key = entry.getKey();
           JsonValue value = entry.getValue();
@@ -1434,7 +1434,7 @@ public interface BulkDataSupport extends ServicesSupport {
                 POST, uriInfo, timers,
                 "At least one JSON property (\"" + key + "\") in the "
                     + "\"mapEntityTypes\" parameter does NOT have a "
-                    + "String JSON value (" + JsonUtils.toJsonText(value)
+                    + "String JSON value (" + JsonUtilities.toJsonText(value)
                     + "): " + mapEntityTypes);
           }
           String etype = ((JsonString) value).getString().trim().toUpperCase();

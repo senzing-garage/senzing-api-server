@@ -2,7 +2,7 @@ package com.senzing.api.server;
 
 import com.senzing.cmdline.CommandLineOption;
 import com.senzing.cmdline.ParameterProcessor;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import java.io.File;
 import java.io.IOException;
@@ -1715,7 +1715,7 @@ public enum SzApiServerOption
                     "Cause: " + e.getMessage()));
           }
           try {
-            return JsonUtils.parseJsonObject(jsonText);
+            return JsonUtilities.parseJsonObject(jsonText);
 
           } catch (Exception e) {
             throw new IllegalArgumentException(
@@ -1731,7 +1731,7 @@ public enum SzApiServerOption
                 "Environment variable is missing or empty: " + envVar);
           }
           try {
-            return JsonUtils.parseJsonObject(envValue);
+            return JsonUtilities.parseJsonObject(envValue);
 
           } catch (Exception e) {
             throw new IllegalArgumentException(
@@ -1747,7 +1747,7 @@ public enum SzApiServerOption
                 "Initialization JSON is missing or empty.");
           }
           try {
-            return JsonUtils.parseJsonObject(initJson);
+            return JsonUtilities.parseJsonObject(initJson);
 
           } catch (Exception e) {
             throw new IllegalArgumentException(

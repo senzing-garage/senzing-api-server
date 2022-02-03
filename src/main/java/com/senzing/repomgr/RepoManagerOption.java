@@ -2,7 +2,7 @@ package com.senzing.repomgr;
 
 import com.senzing.cmdline.CommandLineOption;
 import com.senzing.cmdline.ParameterProcessor;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
 import java.io.File;
@@ -260,7 +260,7 @@ enum RepoManagerOption
   private static void validateJsonRecord(String jsonRecord) {
     JsonObject jsonObject;
     try {
-      jsonObject = JsonUtils.parseJsonObject(jsonRecord);
+      jsonObject = JsonUtilities.parseJsonObject(jsonRecord);
 
     } catch (Exception e) {
       String msg = "The provided JSON record is invalid for loading: "

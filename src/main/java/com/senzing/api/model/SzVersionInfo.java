@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzVersionInfoImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -249,14 +249,14 @@ public interface SzVersionInfo {
   {
     if (info == null) info = SzVersionInfo.FACTORY.create();
 
-    String nativeVersion = JsonUtils.getString(jsonObject, "VERSION");
-    String buildVersion  = JsonUtils.getString(jsonObject, "BUILD_VERSION");
-    String buildNumber   = JsonUtils.getString(jsonObject, "BUILD_NUMBER");
+    String nativeVersion = JsonUtilities.getString(jsonObject, "VERSION");
+    String buildVersion  = JsonUtilities.getString(jsonObject, "BUILD_VERSION");
+    String buildNumber   = JsonUtilities.getString(jsonObject, "BUILD_NUMBER");
 
     JsonObject compatVersion
-        = JsonUtils.getJsonObject(jsonObject, "COMPATIBILITY_VERSION");
+        = JsonUtilities.getJsonObject(jsonObject, "COMPATIBILITY_VERSION");
 
-    String configCompatVersion = JsonUtils.getString(compatVersion,
+    String configCompatVersion = JsonUtilities.getString(compatVersion,
                                                      "CONFIG_VERSION");
 
     Date buildDate = null;

@@ -2,7 +2,7 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzEntityClassImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -202,7 +202,7 @@ public interface SzEntityClass extends SzEntityClassDescriptor {
    */
   static SzEntityClass valueOf(String text) {
     try {
-      JsonObject jsonObject = JsonUtils.parseJsonObject(text.trim());
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(text.trim());
 
       return SzEntityClass.parse(jsonObject);
 
@@ -219,17 +219,17 @@ public interface SzEntityClass extends SzEntityClassDescriptor {
    * @return The {@link SzEntityClass} that was created.
    */
   static SzEntityClass parse(JsonObject jsonObject) {
-    String code = JsonUtils.getString(jsonObject, "entityClassCode");
+    String code = JsonUtilities.getString(jsonObject, "entityClassCode");
     if (code == null) {
-      code = JsonUtils.getString(jsonObject, "ECLASS_CODE");
+      code = JsonUtilities.getString(jsonObject, "ECLASS_CODE");
     }
-    Integer id = JsonUtils.getInteger(jsonObject, "entityClassId");
+    Integer id = JsonUtilities.getInteger(jsonObject, "entityClassId");
     if (id == null) {
-      id = JsonUtils.getInteger(jsonObject, "ECLASS_ID");
+      id = JsonUtilities.getInteger(jsonObject, "ECLASS_ID");
     }
-    Boolean resolving = JsonUtils.getBoolean(jsonObject, "resolving");
+    Boolean resolving = JsonUtilities.getBoolean(jsonObject, "resolving");
     if (resolving == null) {
-      String flag = JsonUtils.getString(jsonObject, "RESOLVE");
+      String flag = JsonUtilities.getString(jsonObject, "RESOLVE");
       if (flag != null) {
         resolving = flag.trim().toUpperCase().equals("YES");
       }
@@ -278,9 +278,9 @@ public interface SzEntityClass extends SzEntityClassDescriptor {
   {
     if (entityClass == null) entityClass = SzEntityClass.FACTORY.create();
 
-    String  code    = JsonUtils.getString(jsonObject, "ECLASS_CODE");
-    Integer id      = JsonUtils.getInteger(jsonObject, "ECLASS_ID");
-    String  resolve = JsonUtils.getString(jsonObject, "RESOLVE");
+    String  code    = JsonUtilities.getString(jsonObject, "ECLASS_CODE");
+    Integer id      = JsonUtilities.getInteger(jsonObject, "ECLASS_ID");
+    String  resolve = JsonUtilities.getString(jsonObject, "RESOLVE");
 
     if (code == null) {
       throw new IllegalArgumentException(

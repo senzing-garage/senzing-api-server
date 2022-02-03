@@ -1,6 +1,6 @@
 package com.senzing.datagen;
 
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 
@@ -224,7 +224,7 @@ public class CSVRecordHandler implements RecordHandler {
 
         } else if (jsonObj.containsKey(attrType.toString())) {
           // the JSON property exists without a prefix, confirm the usage type
-          String usage = JsonUtils.getString(jsonObj, typeProp, "");
+          String usage = JsonUtilities.getString(jsonObj, typeProp, "");
           if (usage.trim().equalsIgnoreCase(usageValue)) {
             return jsonObj.getString(attrType.toString());
           }

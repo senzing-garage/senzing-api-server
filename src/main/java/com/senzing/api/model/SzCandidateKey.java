@@ -2,7 +2,7 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzCandidateKeyImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -139,8 +139,8 @@ public interface SzCandidateKey {
   static SzCandidateKey parseCandidateKey(JsonObject  jsonObject,
                                           String      featureType)
   {
-    Long    featureId     = JsonUtils.getLong(jsonObject, "FEAT_ID");
-    String  featureValue  = JsonUtils.getString(jsonObject, "FEAT_DESC");
+    Long    featureId     = JsonUtilities.getLong(jsonObject, "FEAT_ID");
+    String  featureValue  = JsonUtilities.getString(jsonObject, "FEAT_DESC");
 
     SzCandidateKey result = SzCandidateKey.FACTORY.create();
 

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.SzCandidateKey;
 import com.senzing.api.model.SzScoredFeature;
 import com.senzing.api.model.SzWhyPerspective;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
 import java.util.Objects;

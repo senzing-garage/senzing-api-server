@@ -2,7 +2,7 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzDataSourceImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.*;
 import java.math.BigDecimal;
@@ -167,7 +167,7 @@ public interface SzDataSource extends SzDataSourceDescriptor {
    */
   static SzDataSource valueOf(String text) {
     try {
-      JsonObject jsonObject = JsonUtils.parseJsonObject(text.trim());
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(text.trim());
 
       return SzDataSource.parse(jsonObject);
 
@@ -184,13 +184,13 @@ public interface SzDataSource extends SzDataSourceDescriptor {
    * @return The {@link SzDataSource} that was created.
    */
   static SzDataSource parse(JsonObject jsonObject) {
-    String code = JsonUtils.getString(jsonObject, "dataSourceCode");
+    String code = JsonUtilities.getString(jsonObject, "dataSourceCode");
     if (code == null) {
-      code = JsonUtils.getString(jsonObject, "DSRC_CODE");
+      code = JsonUtilities.getString(jsonObject, "DSRC_CODE");
     }
-    Integer id = JsonUtils.getInteger(jsonObject, "dataSourceId");
+    Integer id = JsonUtilities.getInteger(jsonObject, "dataSourceId");
     if (id == null) {
-      id = JsonUtils.getInteger(jsonObject, "DSRC_ID");
+      id = JsonUtilities.getInteger(jsonObject, "DSRC_ID");
     }
     return SzDataSource.FACTORY.create(code, id);
   }
@@ -236,8 +236,8 @@ public interface SzDataSource extends SzDataSourceDescriptor {
   {
     if (dataSource == null) dataSource = SzDataSource.FACTORY.create();
 
-    String  code  = JsonUtils.getString(jsonObject, "DSRC_CODE");
-    Integer id    = JsonUtils.getInteger(jsonObject, "DSRC_ID");
+    String  code  = JsonUtilities.getString(jsonObject, "DSRC_CODE");
+    Integer id    = JsonUtilities.getInteger(jsonObject, "DSRC_ID");
 
     if (code == null) {
       throw new IllegalArgumentException(

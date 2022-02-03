@@ -6,7 +6,7 @@ import com.senzing.api.model.SzBasicResponse;
 import com.senzing.api.model.SzLinks;
 import com.senzing.api.model.SzMeta;
 import com.senzing.api.model.SzResponseWithRawData;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 /**
  * Provides a default implementation of {@link SzResponseWithRawData}.
@@ -53,7 +53,7 @@ public class SzResponseWithRawDataImpl extends SzBasicResponseImpl
   public SzResponseWithRawDataImpl(SzMeta meta, SzLinks links, String rawData)
   {
     super(meta, links);
-    this.rawData = JsonUtils.normalizeJsonText(rawData);
+    this.rawData = JsonUtilities.normalizeJsonText(rawData);
   }
 
   /**
@@ -70,7 +70,7 @@ public class SzResponseWithRawDataImpl extends SzBasicResponseImpl
   @Override
   public void setRawData(Object rawData) {
     if (rawData instanceof String) {
-      this.rawData = JsonUtils.normalizeJsonText((String) rawData);
+      this.rawData = JsonUtilities.normalizeJsonText((String) rawData);
     } else {
       this.rawData = rawData;
     }

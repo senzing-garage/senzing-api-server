@@ -2,7 +2,7 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzEntityPathImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonNumber;
@@ -175,8 +175,8 @@ public interface SzEntityPath {
    */
   static SzEntityPath parseEntityPath(JsonObject jsonObject)
   {
-    Long startId = JsonUtils.getLong(jsonObject, "START_ENTITY_ID");
-    Long endId = JsonUtils.getLong(jsonObject, "END_ENTITY_ID");
+    Long startId = JsonUtilities.getLong(jsonObject, "START_ENTITY_ID");
+    Long endId = JsonUtilities.getLong(jsonObject, "END_ENTITY_ID");
     JsonArray entities = jsonObject.getJsonArray("ENTITIES");
     int count = entities.size();
 

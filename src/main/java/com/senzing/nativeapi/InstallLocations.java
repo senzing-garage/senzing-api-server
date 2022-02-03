@@ -1,6 +1,6 @@
 package com.senzing.nativeapi;
 
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
 import java.io.File;
@@ -225,8 +225,8 @@ public class InstallLocations {
           String dataVersion = null;
           if (versionFile.exists()) {
             String text = readTextFileAsString(versionFile, "UTF-8");
-            JsonObject jsonObject = JsonUtils.parseJsonObject(text);
-            dataVersion = JsonUtils.getString(jsonObject, "DATA_VERSION");
+            JsonObject jsonObject = JsonUtilities.parseJsonObject(text);
+            dataVersion = JsonUtilities.getString(jsonObject, "DATA_VERSION");
           }
 
           // try the data version directory
