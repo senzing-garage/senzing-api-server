@@ -4,7 +4,7 @@ import com.senzing.api.model.*;
 import com.senzing.gen.api.invoker.ApiClient;
 import com.senzing.gen.api.services.EntityDataApi;
 import com.senzing.repomgr.RepositoryManager;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -109,7 +109,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       job.add("PHONE_NUMBER", "702-555-1212");
       job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
       JsonObject  jsonObject  = job.build();
-      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+      String      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       long before = System.nanoTime();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
@@ -176,7 +176,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       job.add("PHONE_NUMBER", "818-555-1313");
       job.add("ADDR_FULL", "100 Main Street, Los Angeles, CA 90012");
       JsonObject  jsonObject  = job.build();
-      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+      String      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       long before = System.nanoTime();
       try {
@@ -274,7 +274,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       job.add("PHONE_NUMBER", "702-555-1212");
       job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
       JsonObject  jsonObject  = job.build();
-      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+      String      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       long before = System.nanoTime();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
@@ -315,7 +315,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       job.add("PHONE_NUMBER", "702-555-1212");
       job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
       jsonObject  = job.build();
-      jsonText    = JsonUtils.toJsonText(jsonObject);
+      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       before = System.nanoTime();
       response = this.entityDataServices.loadRecord(
@@ -515,7 +515,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       job.add("PHONE_NUMBER", "818-555-1313");
       job.add("ADDR_FULL", "100 Main Street, Los Angeles, CA 90012");
       JsonObject  jsonObject  = job.build();
-      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+      String      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       long before = System.nanoTime();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
@@ -593,7 +593,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       job.add("PHONE_NUMBER", "818-555-1313");
       job.add("ADDR_FULL", "100 Main Street, Los Angeles, CA 90012");
       JsonObject  jsonObject  = job.build();
-      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+      String      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       long before = System.nanoTime();
       try {
@@ -710,7 +710,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       job.add("PHONE_NUMBER", "818-555-1313");
       job.add("ADDR_FULL", "100 Main Street, Los Angeles, CA 90012");
       JsonObject  jsonObject  = job.build();
-      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+      String      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       long before = System.nanoTime();
       try {
@@ -837,7 +837,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       job.add("PHONE_NUMBER", "702-555-1212");
       job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
       JsonObject  jsonObject  = job.build();
-      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+      String      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       long before = System.nanoTime();
       SzLoadRecordResponse response = this.entityDataServices.loadRecord(
@@ -874,7 +874,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       job.add("PHONE_NUMBER", "702-555-1212");
       job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
       jsonObject  = job.build();
-      jsonText    = JsonUtils.toJsonText(jsonObject);
+      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       before = System.nanoTime();
       response = this.entityDataServices.loadRecord(
@@ -1082,7 +1082,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       job.add("PHONE_NUMBER", "702-555-1212");
       job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
       JsonObject  jsonObject  = job.build();
-      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+      String      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       long before = System.nanoTime();
       SzLoadRecordResponse loadResponse = this.entityDataServices.loadRecord(
@@ -1146,7 +1146,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       job.add("PHONE_NUMBER", "702-555-1212");
       job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
       jsonObject  = job.build();
-      jsonText    = JsonUtils.toJsonText(jsonObject);
+      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       before = System.nanoTime();
       loadResponse = this.entityDataServices.loadRecord(
@@ -1480,7 +1480,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       job.add("PHONE_NUMBER", "702-555-1212");
       job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
       JsonObject  jsonObject  = job.build();
-      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+      String      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       long before = System.nanoTime();
       SzLoadRecordResponse loadResponse = this.entityDataServices.loadRecord(
@@ -1782,7 +1782,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       job.add("PHONE_NUMBER", "702-555-1212");
       job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
       JsonObject  jsonObject  = job.build();
-      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+      String      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       long before = System.nanoTime();
       SzLoadRecordResponse loadResponse = this.entityDataServices.loadRecord(
@@ -1848,7 +1848,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       job.add("PHONE_NUMBER", "702-555-1212");
       job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
       jsonObject  = job.build();
-      jsonText    = JsonUtils.toJsonText(jsonObject);
+      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       before = System.nanoTime();
       loadResponse = this.entityDataServices.loadRecord(

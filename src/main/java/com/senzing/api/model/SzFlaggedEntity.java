@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzFlaggedEntityImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -218,17 +218,17 @@ public interface SzFlaggedEntity {
   {
     if (entity == null) entity = SzFlaggedEntity.FACTORY.create();
 
-    entity.setEntityId(JsonUtils.getLong(jsonObject, "ENTITY_ID"));
-    entity.setDegrees(JsonUtils.getInteger(jsonObject, "DEGREES"));
+    entity.setEntityId(JsonUtilities.getLong(jsonObject, "ENTITY_ID"));
+    entity.setDegrees(JsonUtilities.getInteger(jsonObject, "DEGREES"));
 
-    JsonArray jsonArray = JsonUtils.getJsonArray(jsonObject, "FLAGS");
+    JsonArray jsonArray = JsonUtilities.getJsonArray(jsonObject, "FLAGS");
     if (jsonArray != null) {
       for (JsonString flag : jsonArray.getValuesAs(JsonString.class)) {
         entity.addFlag(flag.getString());
       }
     }
 
-    jsonArray = JsonUtils.getJsonArray(jsonObject, "SAMPLE_RECORDS");
+    jsonArray = JsonUtilities.getJsonArray(jsonObject, "SAMPLE_RECORDS");
     if (jsonArray != null) {
       List<SzFlaggedRecord> sampleRecords
           = SzFlaggedRecord.parseFlaggedRecordList(

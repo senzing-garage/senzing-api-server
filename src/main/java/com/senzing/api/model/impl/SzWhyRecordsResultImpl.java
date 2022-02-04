@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.SzMatchInfo;
 import com.senzing.api.model.SzWhyPerspective;
 import com.senzing.api.model.SzWhyRecordsResult;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -130,7 +130,7 @@ public class SzWhyRecordsResultImpl implements SzWhyRecordsResult {
     SzWhyPerspective perspective2
         = SzWhyPerspective.parseWhyPerspective(jsonObject, "_2");
 
-    JsonObject infoJson = JsonUtils.getJsonObject(jsonObject, "MATCH_INFO");
+    JsonObject infoJson = JsonUtilities.getJsonObject(jsonObject, "MATCH_INFO");
 
     SzMatchInfo matchInfo
         = SzMatchInfo.parseMatchInfo(infoJson);

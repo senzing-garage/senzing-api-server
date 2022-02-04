@@ -4,7 +4,7 @@ import com.senzing.api.model.*;
 
 import javax.ws.rs.core.UriInfo;
 
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import org.junit.jupiter.api.*;
 import com.senzing.gen.api.invoker.*;
 import com.senzing.gen.api.services.AdminApi;
@@ -176,7 +176,7 @@ public class AdminServicesTest extends AbstractServiceTest {
 
       if (Boolean.TRUE.equals(asRaw)) {
         String jsonText = this.invokeServerViaHttp(GET, uriText, String.class);
-        Object openApiSpec = JsonUtils.normalizeJsonText(jsonText);
+        Object openApiSpec = JsonUtilities.normalizeJsonText(jsonText);
         validateOpenApiSpecResponse(openApiSpec, baseUri);
 
       } else {

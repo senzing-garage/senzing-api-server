@@ -2,7 +2,7 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzEntityClassCodeImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.Json;
 import javax.json.JsonObjectBuilder;

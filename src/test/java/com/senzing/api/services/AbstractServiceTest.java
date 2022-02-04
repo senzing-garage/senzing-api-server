@@ -18,7 +18,7 @@ import com.senzing.api.server.SzApiServerOptions;
 import com.senzing.g2.engine.*;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.AccessToken;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import org.junit.jupiter.params.provider.Arguments;
 
 import javax.json.*;
@@ -501,7 +501,7 @@ public abstract class AbstractServiceTest {
             formatError("G2Engine.exportConfig()", engineApi));
       }
 
-      JsonObject configJson = JsonUtils.parseJsonObject(sb.toString());
+      JsonObject configJson = JsonUtilities.parseJsonObject(sb.toString());
 
       Result<Long> result = new Result<>();
       returnCode = engineApi.getActiveConfigID(result);
@@ -1101,7 +1101,7 @@ public abstract class AbstractServiceTest {
       File        repoDirectory = this.getRepositoryDirectory();
       File        initJsonFile  = new File(repoDirectory, "g2-init.json");
       String      initJsonText  = readTextFileAsString(initJsonFile, "UTF-8");
-      JsonObject  initJson      = JsonUtils.parseJsonObject(initJsonText);
+      JsonObject  initJson      = JsonUtilities.parseJsonObject(initJsonText);
 
       System.out.println("Initializing with initialization file: "
                          + initJsonFile);
@@ -1712,7 +1712,7 @@ public abstract class AbstractServiceTest {
           jab.add(job);
         }
 
-        String jsonText = JsonUtils.toJsonText(jab);
+        String jsonText = JsonUtilities.toJsonText(jab);
         osw.write(jsonText);
         osw.flush();
       }
@@ -1761,7 +1761,7 @@ public abstract class AbstractServiceTest {
             String value = record[index];
             job.add(key, value);
           }
-          String jsonText = JsonUtils.toJsonText(job);
+          String jsonText = JsonUtilities.toJsonText(job);
           pw.println(jsonText);
           pw.flush();
         }
@@ -1791,7 +1791,7 @@ public abstract class AbstractServiceTest {
            OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
            PrintWriter pw = new PrintWriter(osw))
       {
-        String jsonText = JsonUtils.toJsonText(jsonArray, true);
+        String jsonText = JsonUtilities.toJsonText(jsonArray, true);
         pw.println(jsonText);
         pw.flush();
       }
@@ -1819,7 +1819,7 @@ public abstract class AbstractServiceTest {
            OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
            PrintWriter pw = new PrintWriter(osw)) {
         for (JsonObject record: jsonArray.getValuesAs(JsonObject.class)) {
-          String jsonText = JsonUtils.toJsonText(record);
+          String jsonText = JsonUtilities.toJsonText(record);
           pw.println(jsonText);
           pw.flush();
         }

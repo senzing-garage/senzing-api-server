@@ -1,6 +1,6 @@
 package com.senzing.api.server;
 
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.*;
 import java.io.*;
@@ -116,8 +116,8 @@ public class SzApiServerDisposer {
           }
 
           // get the port
-          port = JsonUtils.getInteger(jsonObj, "port");
-          heartbeat = JsonUtils.getLong(jsonObj, "heartbeat");
+          port = JsonUtilities.getInteger(jsonObj, "port");
+          heartbeat = JsonUtilities.getLong(jsonObj, "heartbeat");
 
         } catch (Exception e) {
           log("Error reading file: " + file);
@@ -142,10 +142,10 @@ public class SzApiServerDisposer {
              JsonWriter         jw  = Json.createWriter(osw))
         {
           JsonObjectBuilder builder = Json.createObjectBuilder();
-          JsonUtils.add(builder, "pid", pid);
-          JsonUtils.add(builder, "port", port);
-          JsonUtils.add(builder, "shutdown", true);
-          JsonUtils.add(builder, "heartbeat", heartbeat);
+          JsonUtilities.add(builder, "pid", pid);
+          JsonUtilities.add(builder, "port", port);
+          JsonUtilities.add(builder, "shutdown", true);
+          JsonUtilities.add(builder, "heartbeat", heartbeat);
 
           jw.writeObject(builder.build());
 

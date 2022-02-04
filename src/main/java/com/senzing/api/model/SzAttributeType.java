@@ -2,7 +2,7 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzAttributeTypeImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.*;
 import java.util.ArrayList;
@@ -270,11 +270,11 @@ public interface SzAttributeType {
     if (attributeType == null) attributeType = SzAttributeType.FACTORY.create();
 
     String  attrCode      = jsonObject.getString("ATTR_CODE");
-    String  defaultValue  = JsonUtils.getString(jsonObject, "DEFAULT_VALUE");
+    String  defaultValue  = JsonUtilities.getString(jsonObject, "DEFAULT_VALUE");
     String  felemReq      = jsonObject.getString("FELEM_REQ");
     String  rawAttrClass  = jsonObject.getString("ATTR_CLASS");
     boolean internal      = interpretBoolean(jsonObject, "INTERNAL");
-    String  ftypeCode     = JsonUtils.getString(jsonObject, "FTYPE_CODE");
+    String  ftypeCode     = JsonUtilities.getString(jsonObject, "FTYPE_CODE");
     boolean advanced      = interpretBoolean(jsonObject,"ADVANCED");
 
     if (ftypeCode != null && ftypeCode.trim().length() == 0) {

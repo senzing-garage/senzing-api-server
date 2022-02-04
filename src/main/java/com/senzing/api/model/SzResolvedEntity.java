@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzResolvedEntityImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -537,7 +537,7 @@ public interface SzResolvedEntity {
     if (entity == null) entity = SzResolvedEntity.FACTORY.create();
 
     long entityId     = jsonObject.getJsonNumber("ENTITY_ID").longValue();
-    String entityName = JsonUtils.getString(jsonObject, "ENTITY_NAME");
+    String entityName = JsonUtilities.getString(jsonObject, "ENTITY_NAME");
 
     Map<String,List<SzEntityFeature>> featureMap = null;
 
@@ -577,7 +577,7 @@ public interface SzResolvedEntity {
     }
 
     // get the last seen date
-    String lastSeen = JsonUtils.getString(jsonObject, "LAST_SEEN_DT");
+    String lastSeen = JsonUtilities.getString(jsonObject, "LAST_SEEN_DT");
     Date lastSeenDate = null;
     if (lastSeen != null && lastSeen.trim().length() > 0) {
       LocalDateTime localDateTime

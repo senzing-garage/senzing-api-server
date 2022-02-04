@@ -2,7 +2,7 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzEntityTypeImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -195,7 +195,7 @@ public interface SzEntityType extends SzEntityTypeDescriptor {
    */
   static SzEntityType valueOf(String text) {
     try {
-      JsonObject jsonObject = JsonUtils.parseJsonObject(text.trim());
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(text.trim());
 
       return SzEntityType.parse(jsonObject);
 
@@ -212,17 +212,17 @@ public interface SzEntityType extends SzEntityTypeDescriptor {
    * @return The {@link SzEntityType} that was created.
    */
   static SzEntityType parse(JsonObject jsonObject) {
-    String typeCode = JsonUtils.getString(jsonObject, "entityTypeCode");
+    String typeCode = JsonUtilities.getString(jsonObject, "entityTypeCode");
     if (typeCode == null) {
-      typeCode = JsonUtils.getString(jsonObject, "ETYPE_CODE");
+      typeCode = JsonUtilities.getString(jsonObject, "ETYPE_CODE");
     }
-    Integer id = JsonUtils.getInteger(jsonObject, "entityTypeId");
+    Integer id = JsonUtilities.getInteger(jsonObject, "entityTypeId");
     if (id == null) {
-      id = JsonUtils.getInteger(jsonObject, "ETYPE_ID");
+      id = JsonUtilities.getInteger(jsonObject, "ETYPE_ID");
     }
-    String classCode = JsonUtils.getString(jsonObject, "entityClassCode");
+    String classCode = JsonUtilities.getString(jsonObject, "entityClassCode");
     if (classCode == null) {
-      classCode = JsonUtils.getString(jsonObject, "ECLASS_CODE");
+      classCode = JsonUtilities.getString(jsonObject, "ECLASS_CODE");
     }
     return SzEntityType.FACTORY.create(typeCode, id, classCode);
   }
@@ -268,9 +268,9 @@ public interface SzEntityType extends SzEntityTypeDescriptor {
   {
     if (entityType == null) entityType = SzEntityType.FACTORY.create();
 
-    String  typeCode  = JsonUtils.getString(jsonObject, "ETYPE_CODE");
-    Integer id        = JsonUtils.getInteger(jsonObject, "ETYPE_ID");
-    String  classCode = JsonUtils.getString(jsonObject, "ECLASS_CODE");
+    String  typeCode  = JsonUtilities.getString(jsonObject, "ETYPE_CODE");
+    Integer id        = JsonUtilities.getInteger(jsonObject, "ETYPE_ID");
+    String  classCode = JsonUtilities.getString(jsonObject, "ECLASS_CODE");
 
     if (typeCode == null) {
       throw new IllegalArgumentException(

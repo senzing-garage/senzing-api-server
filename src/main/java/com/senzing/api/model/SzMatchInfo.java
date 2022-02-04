@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzMatchInfoImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -246,21 +246,21 @@ public interface SzMatchInfo {
   {
     SzMatchInfo result = SzMatchInfo.FACTORY.create();
 
-    String whyKey   = JsonUtils.getString(jsonObject, "WHY_KEY");
+    String whyKey   = JsonUtilities.getString(jsonObject, "WHY_KEY");
     if (whyKey != null && whyKey.trim().length() == 0) whyKey = null;
 
     SzMatchLevel matchLevel = NO_MATCH;
     String matchLevelCode
-        = JsonUtils.getString(jsonObject, "MATCH_LEVEL_CODE");
+        = JsonUtilities.getString(jsonObject, "MATCH_LEVEL_CODE");
     if (matchLevelCode != null && matchLevelCode.trim().length() > 0) {
       matchLevel = SzMatchLevel.valueOf(matchLevelCode);
     }
 
-    String ruleCode = JsonUtils.getString(jsonObject, "WHY_ERRULE_CODE");
+    String ruleCode = JsonUtilities.getString(jsonObject, "WHY_ERRULE_CODE");
     if (ruleCode != null && ruleCode.trim().length() == 0) ruleCode = null;
 
     JsonObject candidateKeysObject
-        = JsonUtils.getJsonObject(jsonObject, "CANDIDATE_KEYS");
+        = JsonUtilities.getJsonObject(jsonObject, "CANDIDATE_KEYS");
 
     Map<String, List<SzCandidateKey>> candidateKeyMap
         = new LinkedHashMap<>();
@@ -279,7 +279,7 @@ public interface SzMatchInfo {
     });
 
     JsonObject featureScoresObject
-        = JsonUtils.getJsonObject(jsonObject, "FEATURE_SCORES");
+        = JsonUtilities.getJsonObject(jsonObject, "FEATURE_SCORES");
 
     Map<String, List<SzFeatureScore>> featureScoreMap
         = new LinkedHashMap<>();
@@ -298,7 +298,7 @@ public interface SzMatchInfo {
     });
 
     JsonObject disclosedRelationshipObject
-        = JsonUtils.getJsonObject(jsonObject, "DISCLOSED_RELATIONS");
+        = JsonUtilities.getJsonObject(jsonObject, "DISCLOSED_RELATIONS");
 
     List<SzDisclosedRelation> disclosedRelations
         = SzDisclosedRelation.parseDisclosedRelationships(

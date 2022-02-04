@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzScoredFeatureImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
 import java.util.Objects;
@@ -198,15 +198,15 @@ public interface SzScoredFeature {
                                             String     prefix,
                                             String     featureType)
   {
-    Long featureId = JsonUtils.getLong(jsonObject, prefix + "FEAT_ID");
+    Long featureId = JsonUtilities.getLong(jsonObject, prefix + "FEAT_ID");
 
     String value = (jsonObject.containsKey(prefix + "FEAT"))
       ? jsonObject.getString(prefix + "FEAT")
-      : JsonUtils.getString(jsonObject, prefix + "FEAT_DESC");
+      : JsonUtilities.getString(jsonObject, prefix + "FEAT_DESC");
 
     String usage = (jsonObject.containsKey(prefix + "FEAT_USAGE_TYPE"))
       ? jsonObject.getString(prefix + "FEAT_USAGE_TYPE")
-      : JsonUtils.getString(jsonObject,prefix + "FEAT_UTYPE_CODE");
+      : JsonUtilities.getString(jsonObject,prefix + "FEAT_UTYPE_CODE");
 
     SzScoredFeature result = SzScoredFeature.FACTORY.create(featureId,
                                                             featureType,

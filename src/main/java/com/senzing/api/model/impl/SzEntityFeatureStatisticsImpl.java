@@ -2,7 +2,7 @@ package com.senzing.api.model.impl;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.SzEntityFeatureStatistics;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
 

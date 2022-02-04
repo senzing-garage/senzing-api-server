@@ -5,7 +5,7 @@ import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.g2.engine.*;
 import com.senzing.nativeapi.InstallLocations;
 import com.senzing.io.IOUtilities;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -306,7 +306,7 @@ public class ConfigurationManager {
                                              boolean     verbose,
                                              boolean     silent)
   {
-    String jsonText = JsonUtils.toJsonText(initJson);
+    String jsonText = JsonUtilities.toJsonText(initJson);
     String initKey  = "" + verbose + ":" + jsonText;
     if (initializationKey != null) {
       if (initializationKey.equals(initKey)) return false;
@@ -491,8 +491,8 @@ public class ConfigurationManager {
       }
 
       String jsonText = sb.toString();
-      JsonObject  jsonObj = JsonUtils.parseJsonObject(jsonText);
-      JsonArray   jsonArr = JsonUtils.getJsonArray(jsonObj,"CONFIGS");
+      JsonObject  jsonObj = JsonUtilities.parseJsonObject(jsonText);
+      JsonArray   jsonArr = JsonUtilities.getJsonArray(jsonObj,"CONFIGS");
       if (jsonArr == null) {
         throw new IllegalStateException(
             "Could not find CONFIGS element in getConfigList() result");
@@ -516,9 +516,9 @@ public class ConfigurationManager {
 
         // iterate over the configurations and output each
         for (JsonObject elem : jsonArr.getValuesAs(JsonObject.class)) {
-          Long    configId  = JsonUtils.getLong(elem, "CONFIG_ID");
-          String  timeStamp = JsonUtils.getString(elem, "SYS_CREATE_DT");
-          String  comments  = JsonUtils.getString(elem, "CONFIG_COMMENTS");
+          Long    configId  = JsonUtilities.getLong(elem, "CONFIG_ID");
+          String  timeStamp = JsonUtilities.getString(elem, "SYS_CREATE_DT");
+          String  comments  = JsonUtilities.getString(elem, "CONFIG_COMMENTS");
           if (line.length() > 0) line.delete(0, line.length());
           line.append(timeStamp);
           while (line.length() < 25) line.append(" ");
@@ -774,8 +774,8 @@ public class ConfigurationManager {
 
       // get the JSON text and parse it to be sure it parses as JSON
       String      jsonText  = sb.toString();
-      JsonObject  configObj = JsonUtils.parseJsonObject(jsonText);
-      jsonText = JsonUtils.toJsonText(configObj, true);
+      JsonObject  configObj = JsonUtilities.parseJsonObject(jsonText);
+      jsonText = JsonUtilities.toJsonText(configObj, true);
 
       // write the text to the specified file
       if (outputFile != null) {
@@ -858,7 +858,7 @@ public class ConfigurationManager {
 
       // make sure the file parses as JSON
       try {
-        JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
+        JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
         jsonObject.getJsonObject("G2_CONFIG");
 
       } catch (Exception e) {
@@ -952,11 +952,11 @@ public class ConfigurationManager {
     }
     Long        importedConfigId  = null;
     Long        defaultConfigId   = null;
-    JsonObject  initJson          = JsonUtils.iniToJson(iniFile);
+    JsonObject  initJson          = JsonUtilities.iniToJson(iniFile);
     File        configFile        = null;
-    JsonObject sqlSection = JsonUtils.getJsonObject(initJson, "SQL");
+    JsonObject sqlSection = JsonUtilities.getJsonObject(initJson, "SQL");
     if (sqlSection != null) {
-      String filePath = JsonUtils.getString(sqlSection, "G2CONFIGFILE");
+      String filePath = JsonUtilities.getString(sqlSection, "G2CONFIGFILE");
       if (filePath != null) configFile = new File(filePath);
     }
 
@@ -1081,7 +1081,7 @@ public class ConfigurationManager {
       }
 
       // now its time to output the init JSON
-      String initJsonText = JsonUtils.toJsonText(initJson);
+      String initJsonText = JsonUtilities.toJsonText(initJson);
       if (initJsonOutFile != null) {
         try (FileOutputStream   fos = new FileOutputStream(initJsonOutFile);
              OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8"))

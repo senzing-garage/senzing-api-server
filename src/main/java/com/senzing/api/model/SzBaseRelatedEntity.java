@@ -1,7 +1,7 @@
 package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
 import java.util.Optional;
@@ -136,12 +136,12 @@ public interface SzBaseRelatedEntity extends SzResolvedEntity {
     Function<String,String> mapper = featureToAttrClassMapper;
 
     // check if we have a MATCH_INFO object and if so use it for match information
-    JsonObject matchInfo = JsonUtils.getJsonObject(jsonObject,"MATCH_INFO");
+    JsonObject matchInfo = JsonUtilities.getJsonObject(jsonObject,"MATCH_INFO");
 
     // check if we have a RESOLVED_ENTITY object and if so use it for other fields
-    JsonObject entityObject = JsonUtils.getJsonObject(jsonObject, "ENTITY");
+    JsonObject entityObject = JsonUtilities.getJsonObject(jsonObject, "ENTITY");
     JsonObject resolvedObject
-        = JsonUtils.getJsonObject(entityObject, "RESOLVED_ENTITY");
+        = JsonUtilities.getJsonObject(entityObject, "RESOLVED_ENTITY");
     if (resolvedObject != null) {
       jsonObject = resolvedObject;
     }
@@ -151,10 +151,10 @@ public interface SzBaseRelatedEntity extends SzResolvedEntity {
     // if no match info, then assume the data is in the base object
     if (matchInfo == null) matchInfo = jsonObject;
 
-    Integer matchLevel  = JsonUtils.getInteger(matchInfo, "MATCH_LEVEL");
-    Integer refScore    = JsonUtils.getInteger(matchInfo, "REF_SCORE");
-    String  matchKey    = JsonUtils.getString(matchInfo, "MATCH_KEY");
-    String  ruleCode    = JsonUtils.getString(matchInfo,"ERRULE_CODE");
+    Integer matchLevel  = JsonUtilities.getInteger(matchInfo, "MATCH_LEVEL");
+    Integer refScore    = JsonUtilities.getInteger(matchInfo, "REF_SCORE");
+    String  matchKey    = JsonUtilities.getString(matchInfo, "MATCH_KEY");
+    String  ruleCode    = JsonUtilities.getString(matchInfo,"ERRULE_CODE");
     boolean partial     = (!jsonObject.containsKey("FEATURES")
                            || !jsonObject.containsKey("RECORDS")
                            || (matchLevel == null)
@@ -186,7 +186,7 @@ public interface SzBaseRelatedEntity extends SzResolvedEntity {
    * @return The {@link Optional<Integer>} representing the match score.
    */
   static Optional<Integer> readMatchScore(JsonObject jsonObject) {
-    return Optional.ofNullable(JsonUtils.getJsonValue(jsonObject, "MATCH_SCORE"))
+    return Optional.ofNullable(JsonUtilities.getJsonValue(jsonObject, "MATCH_SCORE"))
         .map(o -> {
           switch (o.getValueType()) {
             case NUMBER:

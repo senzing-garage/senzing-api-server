@@ -8,7 +8,7 @@ import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.g2.engine.*;
 import com.senzing.nativeapi.InstallLocations;
 import com.senzing.io.RecordReader;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.*;
 import java.io.*;
@@ -570,7 +570,7 @@ public class RepositoryManager {
       builder.add("C2", subBuilder);
 
       JsonObject  initJson      = builder.build();
-      String      initJsonText  = JsonUtils.toJsonText(initJson, true);
+      String      initJsonText  = JsonUtilities.toJsonText(initJson, true);
 
       try (FileOutputStream   fos = new FileOutputStream(jsonInitFile);
            OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8"))
@@ -597,7 +597,7 @@ public class RepositoryManager {
 
         String configJsonText = sb.toString();
 
-        resultConfig = JsonUtils.parseJsonObject(configJsonText);
+        resultConfig = JsonUtilities.parseJsonObject(configJsonText);
 
         Result<Long> result = new Result<>();
         returnCode = CONFIG_MGR_API.addConfig(configJsonText,
@@ -811,10 +811,10 @@ public class RepositoryManager {
     Set<String> existingSet = new LinkedHashSet<>();
 
     // parse the raw data
-    JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
+    JsonObject jsonObject = JsonUtilities.parseJsonObject(sb.toString());
     JsonArray jsonArray = jsonObject.getJsonArray("DATA_SOURCES");
     for (JsonObject dataSource : jsonArray.getValuesAs(JsonObject.class)) {
-      existingSet.add(JsonUtils.getString(dataSource, "DSRC_CODE"));
+      existingSet.add(JsonUtilities.getString(dataSource, "DSRC_CODE"));
     }
 
     return existingSet;
@@ -831,10 +831,10 @@ public class RepositoryManager {
     Set<String> existingSet = new LinkedHashSet<>();
 
     // parse the raw data
-    JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
+    JsonObject jsonObject = JsonUtilities.parseJsonObject(sb.toString());
     JsonArray jsonArray = jsonObject.getJsonArray("ENTITY_TYPES");
     for (JsonObject entityType : jsonArray.getValuesAs(JsonObject.class)) {
-      existingSet.add(JsonUtils.getString(entityType, "ETYPE_CODE"));
+      existingSet.add(JsonUtilities.getString(entityType, "ETYPE_CODE"));
     }
 
     return existingSet;
@@ -1203,8 +1203,8 @@ public class RepositoryManager {
            (record != null);
            record = recordReader.readRecord())
       {
-        String recordId = JsonUtils.getString(record, "RECORD_ID");
-        String recordSource = JsonUtils.getString(record, "DATA_SOURCE");
+        String recordId = JsonUtilities.getString(record, "RECORD_ID");
+        String recordSource = JsonUtilities.getString(record, "DATA_SOURCE");
         if (recordSource == null) {
           System.err.println();
           System.err.println(
@@ -1220,7 +1220,7 @@ public class RepositoryManager {
         }
 
         // check for entity type and default to GENERIC if not found
-        String recordEntityType = JsonUtils.getString(record, "ENTITY_TYPE");
+        String recordEntityType = JsonUtilities.getString(record, "ENTITY_TYPE");
         if (entityType == null || entityType.trim().length() == 0) {
           JsonObjectBuilder builder = Json.createObjectBuilder(record);
           builder.remove("ENTITY_TYPE");
@@ -1229,7 +1229,7 @@ public class RepositoryManager {
         }
 
         StringBuffer sb = new StringBuffer();
-        String jsonRecord = JsonUtils.toJsonText(record);
+        String jsonRecord = JsonUtilities.toJsonText(record);
 
         int returnCode
             = (recordId != null)
@@ -1535,9 +1535,9 @@ public class RepositoryManager {
 
     Set<String> dataSources = getDataSources();
     Set<String> entityTypes = getEntityTypes();
-    JsonObject jsonObject = JsonUtils.parseJsonObject(jsonRecord);
+    JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonRecord);
     if (dataSource == null) {
-      dataSource = JsonUtils.getString(jsonObject, "DATA_SOURCE");
+      dataSource = JsonUtilities.getString(jsonObject, "DATA_SOURCE");
     }
     if (dataSource == null) {
       System.err.println();
@@ -1554,7 +1554,7 @@ public class RepositoryManager {
     }
 
     if (entityType == null) {
-      entityType = JsonUtils.getString(jsonObject, "ENTITY_TYPE");
+      entityType = JsonUtilities.getString(jsonObject, "ENTITY_TYPE");
     }
     if (entityType == null) {
       entityType = "GENERIC";
@@ -1566,7 +1566,7 @@ public class RepositoryManager {
       entityTypes.add(entityType);
     }
 
-    String recordId = JsonUtils.getString(jsonObject, "RECORD_ID");
+    String recordId = JsonUtilities.getString(jsonObject, "RECORD_ID");
     StringBuffer sb = new StringBuffer();
     String loadId = (new Date()).toString();
     int returnCode
@@ -1682,7 +1682,7 @@ public class RepositoryManager {
 
     Result<Long> configId = new Result<>();
     int returnCode = 0;
-    String configJsonText = JsonUtils.toJsonText(configJson);
+    String configJsonText = JsonUtilities.toJsonText(configJson);
     Result<Long> result = new Result<>();
     returnCode = CONFIG_MGR_API.addConfig(configJsonText, comment, result);
     if (returnCode != 0) {
@@ -1704,7 +1704,7 @@ public class RepositoryManager {
     }
 
     // parse the configuration
-    resultConfig = JsonUtils.parseJsonObject(sb.toString());
+    resultConfig = JsonUtilities.parseJsonObject(sb.toString());
 
     if (!silent) {
       System.out.println();
@@ -2080,7 +2080,7 @@ public class RepositoryManager {
 
     // get the result config and its ID for the result
     resultConfig.setValue(result.getValue());
-    return JsonUtils.parseJsonObject(configJsonText);
+    return JsonUtilities.parseJsonObject(configJsonText);
   }
 
   /**
@@ -2100,7 +2100,7 @@ public class RepositoryManager {
       logError("G2ConfigMgr.getConfig()", CONFIG_MGR_API);
       return null;
     }
-    JsonObject config = JsonUtils.parseJsonObject(sb.toString());
+    JsonObject config = JsonUtilities.parseJsonObject(sb.toString());
     return new Configuration(result.getValue(), config);
   }
 
