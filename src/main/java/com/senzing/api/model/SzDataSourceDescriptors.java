@@ -2,7 +2,7 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzDataSourceDescriptorsImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.*;
 import java.util.*;
@@ -253,7 +253,7 @@ public interface SzDataSourceDescriptors {
       // data source code and build a JSON string array
       JsonArrayBuilder jab = Json.createArrayBuilder();
       jab.add(text);
-      String jsonText = JsonUtils.toJsonText(jab);
+      String jsonText = JsonUtilities.toJsonText(jab);
       return parseAsJsonArray(jsonText);
     }
 
@@ -271,7 +271,7 @@ public interface SzDataSourceDescriptors {
    */
   private static SzDataSourceDescriptors parseAsJsonArray(String text) {
     // it appears we have a JSON array of entity descriptors
-    JsonArray jsonArray = JsonUtils.parseJsonArray(text);
+    JsonArray jsonArray = JsonUtilities.parseJsonArray(text);
     List<SzDataSourceDescriptor> descriptors
         = new ArrayList<>(jsonArray.size());
     JsonValue.ValueType valueType = null;

@@ -6,7 +6,7 @@ import com.senzing.api.model.SzErrorResponse;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
 import com.senzing.g2.engine.*;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
@@ -113,7 +113,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
       job.add("PHONE_NUMBER", "702-555-1212");
       job.add("ADDR_FULL", "101 Main Street, Las Vegas, NV 89101");
       JsonObject  jsonObject  = job.build();
-      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+      String      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       // add the data source (so it is there for retry)
       this.addDataSource(newDataSource);
@@ -151,7 +151,7 @@ public class ExplicitConfigIdTest extends AutoReinitializeTest
       job.add("PHONE_NUMBER", "818-555-1313");
       job.add("ADDR_FULL", "100 Main Street, Los Angeles, CA 90012");
       JsonObject  jsonObject  = job.build();
-      String      jsonText    = JsonUtils.toJsonText(jsonObject);
+      String      jsonText    = JsonUtilities.toJsonText(jsonObject);
 
       // add the data source (so it is there for retry)
       this.addDataSource(newDataSource);

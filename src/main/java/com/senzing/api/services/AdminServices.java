@@ -11,7 +11,7 @@ import com.senzing.g2.engine.G2Engine;
 import com.senzing.g2.engine.G2Product;
 import com.senzing.g2.engine.Result;
 import com.senzing.io.IOUtilities;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import com.senzing.util.Timers;
 
 import java.io.IOException;
@@ -83,7 +83,7 @@ public class AdminServices implements ServicesSupport {
       jsonText = this.replaceOpenApiServers(jsonText, uriInfo.getBaseUri());
 
       // check if returning as raw Open API specification
-      if (asRaw) return JsonUtils.normalizeJsonText(jsonText);
+      if (asRaw) return JsonUtilities.normalizeJsonText(jsonText);
 
       // return the SzOpenApiSpecResponse
       return this.newOpenApiSpecResponse(uriInfo, timers, jsonText);
@@ -106,7 +106,7 @@ public class AdminServices implements ServicesSupport {
    */
   protected String replaceOpenApiServers(String jsonText, URI baseUri)
   {
-    JsonObject        jsonSpec      = JsonUtils.parseJsonObject(jsonText);
+    JsonObject        jsonSpec      = JsonUtilities.parseJsonObject(jsonText);
     JsonObjectBuilder specBuilder   = Json.createObjectBuilder(jsonSpec);
     JsonArrayBuilder  jabServers    = Json.createArrayBuilder();
     JsonObjectBuilder jobServer1    = Json.createObjectBuilder();
@@ -142,7 +142,7 @@ public class AdminServices implements ServicesSupport {
 
     jsonSpec = specBuilder.build();
 
-    return JsonUtils.toJsonText(jsonSpec);
+    return JsonUtilities.toJsonText(jsonSpec);
   }
 
   /**

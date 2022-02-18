@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzAttributeSearchResultImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -241,11 +241,11 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
 
     SzBaseRelatedEntity.parseBaseRelatedEntity(result, jsonObject, mapper);
 
-    JsonObject entityObject = JsonUtils.getJsonObject(jsonObject, "ENTITY");
+    JsonObject entityObject = JsonUtilities.getJsonObject(jsonObject, "ENTITY");
     if (entityObject == null) {
       entityObject = jsonObject;
     }
-    JsonArray relatedArray = JsonUtils.getJsonArray(entityObject,
+    JsonArray relatedArray = JsonUtilities.getJsonArray(entityObject,
                                                     "RELATED_ENTITIES");
 
     List<SzRelatedEntity> relatedEntities = null;
@@ -276,12 +276,12 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
     }
 
     // check if we have a MATCH_INFO object and if so use it for match information
-    JsonObject matchInfo = JsonUtils.getJsonObject(jsonObject,"MATCH_INFO");
+    JsonObject matchInfo = JsonUtilities.getJsonObject(jsonObject,"MATCH_INFO");
 
     // parse the feature scores
     if (matchInfo != null) {
       JsonObject featureScoresObject
-          = JsonUtils.getJsonObject(matchInfo, "FEATURE_SCORES");
+          = JsonUtilities.getJsonObject(matchInfo, "FEATURE_SCORES");
 
       Map<String, List<SzSearchFeatureScore>> featureScoreMap
           = new LinkedHashMap<>();

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.SzEntityRecord;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -394,7 +394,7 @@ public class SzEntityRecordImpl implements SzEntityRecord {
   @Override
   public void setOriginalSourceDataFromText(String jsonText)
   {
-    this.originalSourceData = JsonUtils.normalizeJsonText(jsonText);
+    this.originalSourceData = JsonUtilities.normalizeJsonText(jsonText);
   }
 
 

@@ -2,7 +2,7 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzEntityFeatureStatisticsImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
 
@@ -206,7 +206,7 @@ public interface SzEntityFeatureStatistics {
   {
     Boolean candidateUse = getBoolean(jsonObject, "USED_FOR_CAND");
     Boolean scoringUse   = getBoolean(jsonObject, "USED_FOR_SCORING");
-    Long    entityCount  = JsonUtils.getLong(jsonObject, "ENTITY_COUNT");
+    Long    entityCount  = JsonUtilities.getLong(jsonObject, "ENTITY_COUNT");
     Boolean candidateCap = getBoolean(jsonObject, "CANDIDATE_CAP_REACHED");
     Boolean scoringCap   = getBoolean(jsonObject, "SCORING_CAP_REACHED");
     Boolean suppressed   = getBoolean(jsonObject, "SUPPRESSED");
@@ -240,7 +240,7 @@ public interface SzEntityFeatureStatistics {
    *         empty string.
    */
   private static Boolean getBoolean(JsonObject jsonObject, String key) {
-    String text = JsonUtils.getString(jsonObject, key);
+    String text = JsonUtilities.getString(jsonObject, key);
     if (text == null || text.trim().length() == 0) return null;
     text = text.trim();
     return text.equals("Y");

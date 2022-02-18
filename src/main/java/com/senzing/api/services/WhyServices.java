@@ -2,7 +2,7 @@ package com.senzing.api.services;
 
 import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2Engine;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import com.senzing.util.Timers;
 
 import javax.json.*;
@@ -310,7 +310,7 @@ public class WhyServices implements ServicesSupport {
 
       this.processingRawData(timers);
       // parse the result
-      JsonObject  json        = JsonUtils.parseJsonObject(rawData);
+      JsonObject  json        = JsonUtilities.parseJsonObject(rawData);
       JsonArray   whyArray    = json.getJsonArray("WHY_RESULTS");
       JsonArray   entityArray = json.getJsonArray("ENTITIES");
 
@@ -614,7 +614,7 @@ public class WhyServices implements ServicesSupport {
   {
     this.processingRawData(timers);
     // parse the result
-    JsonObject  json        = JsonUtils.parseJsonObject(rawData);
+    JsonObject  json        = JsonUtilities.parseJsonObject(rawData);
     JsonArray   whyArray    = json.getJsonArray("WHY_RESULTS");
     JsonArray   entityArray = json.getJsonArray("ENTITIES");
 
@@ -717,7 +717,7 @@ public class WhyServices implements ServicesSupport {
   {
     this.processingRawData(timers);
     // parse the result
-    JsonObject  json        = JsonUtils.parseJsonObject(rawData);
+    JsonObject  json        = JsonUtilities.parseJsonObject(rawData);
     JsonArray   whyArray    = json.getJsonArray("WHY_RESULTS");
     JsonArray   entityArray = json.getJsonArray("ENTITIES");
 
@@ -829,11 +829,11 @@ public class WhyServices implements ServicesSupport {
       }
 
       // parse as a JSON object
-      JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(sb.toString());
       jsonObject = jsonObject.getJsonObject("RESOLVED_ENTITY");
 
       // get the entity ID
-      return JsonUtils.getLong(jsonObject, "ENTITY_ID");
+      return JsonUtilities.getLong(jsonObject, "ENTITY_ID");
     }
   }
 }

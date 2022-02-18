@@ -2,7 +2,7 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzFocusRecordIdImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -114,8 +114,8 @@ public interface SzFocusRecordId {
    * @return The {@link SzFocusRecordId} that was created.
    */
   static SzFocusRecordId parseFocusRecordId(JsonObject jsonObject) {
-    String src  = JsonUtils.getString(jsonObject, "DATA_SOURCE");
-    String id   = JsonUtils.getString(jsonObject, "RECORD_ID");
+    String src  = JsonUtilities.getString(jsonObject, "DATA_SOURCE");
+    String id   = JsonUtilities.getString(jsonObject, "RECORD_ID");
     return SzFocusRecordId.FACTORY.create(src, id);
   }
 

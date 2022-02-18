@@ -5,7 +5,7 @@ import com.senzing.g2.engine.G2Config;
 import com.senzing.g2.engine.G2ConfigMgr;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.g2.engine.Result;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import com.senzing.util.Timers;
 
 import javax.json.*;
@@ -206,7 +206,7 @@ public class ConfigServices implements ServicesSupport {
   {
     this.processingRawData(timers);
     // parse the raw data
-    JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
+    JsonObject jsonObject = JsonUtilities.parseJsonObject(rawData);
 
     // get the array and construct the response
     JsonArray jsonArray = jsonObject.getJsonArray("DATA_SOURCES");
@@ -300,7 +300,7 @@ public class ConfigServices implements ServicesSupport {
     dataSourceCode = dataSourceCode.trim().toUpperCase();
 
     // parse the raw data
-    JsonObject jsonObject = JsonUtils.parseJsonObject(rawData);
+    JsonObject jsonObject = JsonUtilities.parseJsonObject(rawData);
 
     // get the array of data sources
     JsonArray jsonArray = jsonObject.getJsonArray("DATA_SOURCES");
@@ -308,7 +308,7 @@ public class ConfigServices implements ServicesSupport {
     // find the one matching the specified data source code
     jsonObject = null;
     for (JsonObject jsonObj : jsonArray.getValuesAs(JsonObject.class)) {
-      String code = JsonUtils.getString(jsonObj, "DSRC_CODE");
+      String code = JsonUtilities.getString(jsonObj, "DSRC_CODE");
       if (code.contentEquals(dataSourceCode)) {
         jsonObject = jsonObj;
         break;
@@ -332,7 +332,7 @@ public class ConfigServices implements ServicesSupport {
     this.processedRawData(timers);
 
     // if including raw data then add it
-    if (withRaw) response.setRawData(JsonUtils.toJsonText(jsonObject));
+    if (withRaw) response.setRawData(JsonUtilities.toJsonText(jsonObject));
 
     return response;
   }
@@ -798,7 +798,7 @@ public class ConfigServices implements ServicesSupport {
       throw this.newInternalServerErrorException(
           httpMethod, uriInfo, timers, configApi);
     }
-    JsonObject jsonObject = JsonUtils.parseJsonObject(sb.toString());
+    JsonObject jsonObject = JsonUtilities.parseJsonObject(sb.toString());
     JsonArray jsonArray = jsonObject.getJsonArray("DATA_SOURCES");
 
     List<SzDataSource> dataSources = this.parseDataSourceList(jsonArray);
@@ -919,7 +919,7 @@ public class ConfigServices implements ServicesSupport {
         }
         JsonObjectBuilder job = Json.createObjectBuilder();
         job.add("CFG_ATTR", jsonArray);
-        String rawData = JsonUtils.toJsonText(job.build());
+        String rawData = JsonUtilities.toJsonText(job.build());
         this.processedRawData(timers);
         response.setRawData(rawData);
       }
@@ -1059,7 +1059,7 @@ public class ConfigServices implements ServicesSupport {
 
       // if including raw data then add it
       if (withRaw) {
-        String rawData = JsonUtils.toJsonText(jsonAttrType);
+        String rawData = JsonUtilities.toJsonText(jsonAttrType);
 
         response.setRawData(rawData);
       }
@@ -1160,14 +1160,14 @@ public class ConfigServices implements ServicesSupport {
 
         // parse the raw data
         this.processingRawData(timers);
-        JsonObject configObj = JsonUtils.parseJsonObject(config);
+        JsonObject configObj = JsonUtilities.parseJsonObject(config);
         this.processedRawData(timers);
 
         return configObj;
       });
 
       this.processingRawData(timers);
-      String rawData = JsonUtils.toJsonText(configObject);
+      String rawData = JsonUtilities.toJsonText(configObject);
       SzConfigResponse response = this.newConfigResponse(
           GET, 200, uriInfo, timers, rawData);
       this.processedRawData(timers);
@@ -1265,14 +1265,14 @@ public class ConfigServices implements ServicesSupport {
 
         // parse the raw data
         this.processingRawData(timers);
-        JsonObject configObj = JsonUtils.parseJsonObject(config);
+        JsonObject configObj = JsonUtilities.parseJsonObject(config);
         this.processedRawData(timers);
 
         return configObj;
       });
 
       this.processingRawData(timers);
-      String rawData = JsonUtils.toJsonText(configObject);
+      String rawData = JsonUtilities.toJsonText(configObject);
       SzConfigResponse response = this.newConfigResponse(
           GET, 200, uriInfo, timers, rawData);
       this.processedRawData(timers);
@@ -1337,7 +1337,7 @@ public class ConfigServices implements ServicesSupport {
 
     // parse the raw data
     this.processingRawData(timers);
-    JsonObject configObj = JsonUtils.parseJsonObject(config);
+    JsonObject configObj = JsonUtilities.parseJsonObject(config);
     this.processedRawData(timers);
     return configObj.getJsonObject("G2_CONFIG");
   }

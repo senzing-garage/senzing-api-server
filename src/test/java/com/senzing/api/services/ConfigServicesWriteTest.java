@@ -3,7 +3,7 @@ package com.senzing.api.services;
 import com.senzing.api.model.*;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
@@ -179,7 +179,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           for (SzDataSource value : values) {
             jab.add(value.getDataSourceCode());
           }
-          return JsonUtils.toJsonText(jab);
+          return JsonUtilities.toJsonText(jab);
         }
 
         case JSON_OBJECT:
@@ -191,7 +191,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
           JsonObjectBuilder job     = Json.createObjectBuilder();
           value.buildJson(job);
           if (!withId) job.remove("dataSourceId");
-          return JsonUtils.toJsonText(job);
+          return JsonUtilities.toJsonText(job);
         }
 
         case JSON_OBJECT_ARRAY:
@@ -207,7 +207,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
             if (!withId) job.remove("dataSourceId");
             jab.add(job);
           }
-          return JsonUtils.toJsonText(jab);
+          return JsonUtilities.toJsonText(jab);
         }
 
         case MIXED_FORMATTING:
@@ -233,7 +233,7 @@ public class ConfigServicesWriteTest extends AbstractServiceTest
               jab.add(value.getDataSourceCode());
             }
           }
-          return JsonUtils.toJsonText(jab);
+          return JsonUtilities.toJsonText(jab);
         }
 
         default:

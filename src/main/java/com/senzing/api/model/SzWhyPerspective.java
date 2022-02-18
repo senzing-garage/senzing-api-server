@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzWhyPerspectiveImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -180,9 +180,9 @@ public interface SzWhyPerspective {
   static SzWhyPerspective parseWhyPerspective(JsonObject jsonObject,
                                                      String     suffix)
   {
-    Long internalId = JsonUtils.getLong(jsonObject,"INTERNAL_ID" + suffix);
+    Long internalId = JsonUtilities.getLong(jsonObject,"INTERNAL_ID" + suffix);
 
-    Long entityId = JsonUtils.getLong(jsonObject,"ENTITY_ID" + suffix);
+    Long entityId = JsonUtilities.getLong(jsonObject,"ENTITY_ID" + suffix);
 
     JsonArray jsonArr = jsonObject.getJsonArray("FOCUS_RECORDS" + suffix);
 

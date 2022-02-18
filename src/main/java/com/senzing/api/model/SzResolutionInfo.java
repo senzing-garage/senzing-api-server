@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzResolutionInfoImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -195,19 +195,22 @@ public interface SzResolutionInfo {
   {
     if (info == null) info = SzResolutionInfo.FACTORY.create();
 
-    info.setDataSource(JsonUtils.getString(jsonObject, "DATA_SOURCE"));
-    info.setRecordId(JsonUtils.getString(jsonObject, "RECORD_ID"));
+    info.setDataSource(JsonUtilities.getString(jsonObject, "DATA_SOURCE"));
+    info.setRecordId(JsonUtilities.getString(jsonObject, "RECORD_ID"));
 
-    JsonArray jsonArray = JsonUtils.getJsonArray(jsonObject,
+    JsonArray jsonArray = JsonUtilities.getJsonArray(jsonObject,
                                                  "AFFECTED_ENTITIES");
 
     if (jsonArray != null) {
       for (JsonObject jsonObj : jsonArray.getValuesAs(JsonObject.class)) {
-        info.addAffectedEntity(JsonUtils.getLong(jsonObj, "ENTITY_ID"));
+        info.addAffectedEntity(JsonUtilities.getLong(jsonObj, "ENTITY_ID"));
       }
     }
 
-    jsonArray = JsonUtils.getJsonArray(jsonObject, "INTERESTING_ENTITIES");
+    JsonObject interestObj = JsonUtilities.getJsonObject(
+        jsonObject, "INTERESTING_ENTITIES");
+
+    jsonArray = JsonUtilities.getJsonArray(interestObj, "ENTITIES");
     if (jsonArray != null) {
       List<SzFlaggedEntity> flaggedEntities
           = SzFlaggedEntity.parseFlaggedEntityList(null, jsonArray);

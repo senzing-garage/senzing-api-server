@@ -1,6 +1,6 @@
 package com.senzing.configmgr;
 
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
 import static com.senzing.util.LoggingUtilities.*;
@@ -103,7 +103,7 @@ public class MigrationResult {
             + (this.defaultConfigId == null ? "NONE" : this.defaultConfigId),
         "Initialization JSON    : ",
         "-----------------------------------------------------------",
-        JsonUtils.toJsonText(this.initJson));
+        JsonUtilities.toJsonText(this.initJson));
   }
 }
 

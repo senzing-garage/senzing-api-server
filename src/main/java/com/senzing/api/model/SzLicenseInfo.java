@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzLicenseInfoImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -248,14 +248,14 @@ public interface SzLicenseInfo {
   {
     if (info == null) info = SzLicenseInfo.FACTORY.create();
 
-    String customer     = JsonUtils.getString(jsonObject, "customer");
-    String contract     = JsonUtils.getString(jsonObject, "contract");
-    String issueDate    = JsonUtils.getString(jsonObject, "issueDate");
-    String licenseType  = JsonUtils.getString(jsonObject, "licenseType");
-    String licenseLevel = JsonUtils.getString(jsonObject, "licenseLevel");
-    String billing      = JsonUtils.getString(jsonObject, "billing");
-    String expireDate   = JsonUtils.getString(jsonObject, "expireDate");
-    Long   recordLimit  = JsonUtils.getLong(jsonObject, "recordLimit");
+    String customer     = JsonUtilities.getString(jsonObject, "customer");
+    String contract     = JsonUtilities.getString(jsonObject, "contract");
+    String issueDate    = JsonUtilities.getString(jsonObject, "issueDate");
+    String licenseType  = JsonUtilities.getString(jsonObject, "licenseType");
+    String licenseLevel = JsonUtilities.getString(jsonObject, "licenseLevel");
+    String billing      = JsonUtilities.getString(jsonObject, "billing");
+    String expireDate   = JsonUtilities.getString(jsonObject, "expireDate");
+    Long   recordLimit  = JsonUtilities.getLong(jsonObject, "recordLimit");
 
     ZoneId defaultZone = ZoneId.systemDefault();
 

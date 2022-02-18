@@ -2,7 +2,7 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzRecordIdImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.Json;
 import javax.json.JsonArray;
@@ -128,7 +128,7 @@ public interface SzRecordId extends SzEntityIdentifier {
     // first try to parse as JSON
     if (length > 2 && text.charAt(0) == '{' && text.charAt(length - 1) == '}') {
       try {
-        JsonObject jsonObject = JsonUtils.parseJsonObject(text);
+        JsonObject jsonObject = JsonUtilities.parseJsonObject(text);
         String source = jsonObject.getString("src");
         String id = jsonObject.getString("id");
         return SzRecordId.FACTORY.create(source, id);
@@ -166,19 +166,19 @@ public interface SzRecordId extends SzEntityIdentifier {
    * @return The {@link SzRecordId} that was created.
    */
   static SzRecordId parse(JsonObject jsonObject) {
-    String src = JsonUtils.getString(jsonObject, "src");
+    String src = JsonUtilities.getString(jsonObject, "src");
     if (src == null) {
-      src = JsonUtils.getString(jsonObject, "dataSourceCode");
+      src = JsonUtilities.getString(jsonObject, "dataSourceCode");
     }
     if (src == null) {
-      src = JsonUtils.getString(jsonObject, "DATA_SOURCE");
+      src = JsonUtilities.getString(jsonObject, "DATA_SOURCE");
     }
-    String id = JsonUtils.getString(jsonObject, "id");
+    String id = JsonUtilities.getString(jsonObject, "id");
     if (id == null) {
-      id = JsonUtils.getString(jsonObject, "recordId");
+      id = JsonUtilities.getString(jsonObject, "recordId");
     }
     if (id == null) {
-      id = JsonUtils.getString(jsonObject, "RECORD_ID");
+      id = JsonUtilities.getString(jsonObject, "RECORD_ID");
     }
     if (src == null || id == null) {
       throw new IllegalArgumentException(
@@ -197,8 +197,8 @@ public interface SzRecordId extends SzEntityIdentifier {
    * @return The {@link SzRecordId} that was created.
    */
   static SzRecordId parseRecordId(JsonObject jsonObject) {
-    String src  = JsonUtils.getString(jsonObject, "DATA_SOURCE");
-    String id   = JsonUtils.getString(jsonObject, "RECORD_ID");
+    String src  = JsonUtilities.getString(jsonObject, "DATA_SOURCE");
+    String id   = JsonUtilities.getString(jsonObject, "RECORD_ID");
 
     if (src == null || id == null) {
       throw new IllegalArgumentException(

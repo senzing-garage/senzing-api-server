@@ -6,7 +6,7 @@ import com.senzing.g2.engine.G2Engine;
 import com.senzing.gen.api.invoker.ApiClient;
 import com.senzing.gen.api.services.EntityDataApi;
 import com.senzing.repomgr.RepositoryManager;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import com.senzing.util.SemanticVersion;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -2058,7 +2058,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           job.add(key, jab);
         }
       });
-      String attrs = JsonUtils.toJsonText(job);
+      String attrs = JsonUtilities.toJsonText(job);
 
       StringBuilder sb = new StringBuilder();
       sb.append(this.formatServerUri(
@@ -2187,7 +2187,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           job.add(key, jab);
         }
       });
-      String attrs = JsonUtils.toJsonText(job);
+      String attrs = JsonUtilities.toJsonText(job);
 
       StringBuilder sb = new StringBuilder();
       sb.append("entities?attrs=").append(urlEncode(attrs));
@@ -2278,7 +2278,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           job.add(key, jab);
         }
       });
-      String attrs = JsonUtils.toJsonText(job);
+      String attrs = JsonUtilities.toJsonText(job);
 
       StringBuilder sb = new StringBuilder();
       sb.append("entities?attrs=").append(urlEncode(attrs));
@@ -2392,7 +2392,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           job.add(key, jab);
         }
       });
-      String attrs = JsonUtils.toJsonText(job);
+      String attrs = JsonUtilities.toJsonText(job);
 
       StringBuilder sb = new StringBuilder();
       sb.append(this.formatServerUri("search-entities"));

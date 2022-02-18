@@ -1,7 +1,7 @@
 package com.senzing.api.server;
 
 import com.senzing.cmdline.CommandLineOption;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
 import java.io.File;
@@ -75,7 +75,7 @@ public class SzApiServerOptions {
    * @param jsonInitText The JSON initialization parameters as JSON text.
    */
   public SzApiServerOptions(String jsonInitText) {
-    this(JsonUtils.parseJsonObject(jsonInitText));
+    this(JsonUtilities.parseJsonObject(jsonInitText));
   }
 
   /**

@@ -6,7 +6,7 @@ import com.senzing.api.BuildInfo;
 import com.senzing.api.model.*;
 import com.senzing.nativeapi.NativeApiFactory;
 import com.senzing.g2.engine.G2Product;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -355,7 +355,7 @@ public class ResponseValidators {
                                                  String baseUri)
   {
     String      jsonText    = toJsonString(response);
-    JsonObject  jsonObject  = JsonUtils.parseJsonObject(jsonText);
+    JsonObject  jsonObject  = JsonUtilities.parseJsonObject(jsonText);
 
     // check for expected segments
     String[] segments = {
@@ -386,8 +386,8 @@ public class ResponseValidators {
     objectMapper.registerModule(new JodaModule());
     try {
       String jsonText = objectMapper.writeValueAsString(object);
-      JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
-      return JsonUtils.toJsonText(jsonObject, true);
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
+      return JsonUtilities.toJsonText(jsonObject, true);
 
     } catch (Exception e) {
       return "FAILED TO CONVERT TO JSON: " + e.getMessage();
@@ -1834,7 +1834,11 @@ public class ResponseValidators {
                 false,
                 "INTERESTING_ENTITIES");
 
-            Object array = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            Object object = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            validateRawDataMap(
+                testInfo, object, false, "ENTITIES");
+
+            Object array = ((Map) object).get("ENTITIES");
             validateRawDataMapArray(
                 testInfo, array, false,
                 "ENTITY_ID", "LENS_CODE", "DEGREES", "FLAGS",
@@ -1977,7 +1981,11 @@ public class ResponseValidators {
                 false,
                 "INTERESTING_ENTITIES");
 
-            Object array = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            Object object = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            validateRawDataMap(
+                testInfo, object, false, "ENTITIES");
+
+            Object array = ((Map) object).get("ENTITIES");
             validateRawDataMapArray(
                 testInfo, array, false,
                 "ENTITY_ID", "LENS_CODE", "DEGREES", "FLAGS",
@@ -2121,7 +2129,11 @@ public class ResponseValidators {
                 false,
                 "INTERESTING_ENTITIES");
 
-            Object array = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            Object object = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            validateRawDataMap(
+                testInfo, object, false, "ENTITIES");
+
+            Object array = ((Map) object).get("ENTITIES");
             validateRawDataMapArray(
                 testInfo, array, false,
                 "ENTITY_ID", "LENS_CODE", "DEGREES", "FLAGS",
@@ -2238,14 +2250,14 @@ public class ResponseValidators {
     try {
       String versionJson = product.version();
 
-      JsonObject jsonObject = JsonUtils.parseJsonObject(versionJson);
-      String expectedVersion = JsonUtils.getString(jsonObject, "VERSION");
-      String expectedBuildNum = JsonUtils.getString(jsonObject, "BUILD_NUMBER");
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(versionJson);
+      String expectedVersion = JsonUtilities.getString(jsonObject, "VERSION");
+      String expectedBuildNum = JsonUtilities.getString(jsonObject, "BUILD_NUMBER");
 
-      JsonObject subObject = JsonUtils.getJsonObject(
+      JsonObject subObject = JsonUtilities.getJsonObject(
           jsonObject, "COMPATIBILITY_VERSION");
 
-      String configCompatVers = JsonUtils.getString(subObject,
+      String configCompatVers = JsonUtilities.getString(subObject,
                                                     "CONFIG_VERSION");
 
       assertEquals(expectedVersion, info.getNativeApiVersion(),

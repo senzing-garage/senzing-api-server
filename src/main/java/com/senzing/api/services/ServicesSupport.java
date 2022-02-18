@@ -7,7 +7,7 @@ import com.senzing.g2.engine.G2ConfigMgr;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.g2.engine.G2Fallible;
 import com.senzing.util.AccessToken;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import com.senzing.util.Timers;
 
 import javax.json.*;
@@ -570,7 +570,7 @@ public interface ServicesSupport {
     for (String item : list) {
       jab.add(item);
     }
-    return JsonUtils.toJsonText(jab);
+    return JsonUtilities.toJsonText(jab);
   }
 
   /**
@@ -592,7 +592,7 @@ public interface ServicesSupport {
         jab.add(job);
       }
     }
-    return JsonUtils.toJsonText(jab);
+    return JsonUtilities.toJsonText(jab);
   }
 
   /**
@@ -625,7 +625,7 @@ public interface ServicesSupport {
     }
     JsonObjectBuilder builder = Json.createObjectBuilder();
     builder.add(propName, jab);
-    return JsonUtils.toJsonText(builder);
+    return JsonUtilities.toJsonText(builder);
   }
 
   /**
@@ -669,7 +669,7 @@ public interface ServicesSupport {
     }
     JsonObjectBuilder builder = Json.createObjectBuilder();
     builder.add("DATA_SOURCES", jab);
-    return JsonUtils.toJsonText(builder);
+    return JsonUtilities.toJsonText(builder);
   }
 
   /**
@@ -1191,8 +1191,8 @@ public interface ServicesSupport {
 
       if (!prettyPrint) return jsonText;
 
-      JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
-      return JsonUtils.toJsonText(jsonObject, true);
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
+      return JsonUtilities.toJsonText(jsonObject, true);
 
     } catch (Exception e) {
       return "FAILED TO CONVERT TO JSON: " + e.getMessage();

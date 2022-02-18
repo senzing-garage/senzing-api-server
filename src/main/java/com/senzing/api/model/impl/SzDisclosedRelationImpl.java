@@ -6,7 +6,7 @@ import com.senzing.api.model.SzDisclosedRelation;
 import com.senzing.api.model.SzRelatedFeatures;
 import com.senzing.api.model.SzRelationDirection;
 import com.senzing.api.model.SzScoredFeature;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;

@@ -5,7 +5,7 @@ import com.senzing.api.model.SzLinks;
 import com.senzing.api.model.SzMeta;
 import com.senzing.api.model.SzOpenApiSpecResponse;
 import com.senzing.api.model.SzResponseWithRawData;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
 
@@ -58,10 +58,10 @@ public class SzOpenApiSpecResponseImpl extends SzBasicResponseImpl
   {
     super(meta, links);
     if (openApiSpec instanceof JsonObject) {
-      openApiSpec = JsonUtils.toJsonText((JsonObject) openApiSpec);
+      openApiSpec = JsonUtilities.toJsonText((JsonObject) openApiSpec);
     }
     if (openApiSpec instanceof String) {
-      openApiSpec = JsonUtils.normalizeJsonText((String) openApiSpec);
+      openApiSpec = JsonUtilities.normalizeJsonText((String) openApiSpec);
     }
     this.openApiSpec = openApiSpec;
   }

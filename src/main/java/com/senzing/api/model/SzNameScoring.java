@@ -3,7 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzNameScoringImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonObject;
 
@@ -209,11 +209,11 @@ public interface SzNameScoring {
    * @return The {@link SzFeatureScore} that was created.
    */
   static SzNameScoring parseNameScoring(JsonObject jsonObject) {
-    Integer fnScore  = JsonUtils.getInteger(jsonObject, "GNR_FN");
-    Integer snScore  = JsonUtils.getInteger(jsonObject, "GNR_SN");
-    Integer gnScore  = JsonUtils.getInteger(jsonObject, "GNR_GN");
-    Integer genScore = JsonUtils.getInteger(jsonObject, "GENERATION_MATCH");
-    Integer orgScore = JsonUtils.getInteger(jsonObject, "GNR_ON");
+    Integer fnScore  = JsonUtilities.getInteger(jsonObject, "GNR_FN");
+    Integer snScore  = JsonUtilities.getInteger(jsonObject, "GNR_SN");
+    Integer gnScore  = JsonUtilities.getInteger(jsonObject, "GNR_GN");
+    Integer genScore = JsonUtilities.getInteger(jsonObject, "GENERATION_MATCH");
+    Integer orgScore = JsonUtilities.getInteger(jsonObject, "GNR_ON");
 
     // check if there are no name scoring values (we do this before converting
     // negative values to null -- checking for missing JSON properties)

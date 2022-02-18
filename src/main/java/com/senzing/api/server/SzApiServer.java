@@ -29,7 +29,7 @@ import com.senzing.api.model.SzLicenseInfo;
 import com.senzing.configmgr.ConfigurationManager;
 import com.senzing.g2.engine.*;
 import com.senzing.repomgr.RepositoryManager;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 import com.senzing.util.LoggingUtilities;
 import com.senzing.util.WorkerThreadPool;
 import com.senzing.util.AccessToken;
@@ -924,7 +924,7 @@ public class SzApiServer implements SzApiProvider {
     // use G2Product API without "init()" for now
     G2Product productApi = NativeApiFactory.createProductApi();
     String jsonText = productApi.version();
-    JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
+    JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
     SzVersionInfo info = SzVersionInfo.parseVersionInfo(null, jsonObject);
 
     String formattedBuildDate
@@ -1661,7 +1661,7 @@ public class SzApiServer implements SzApiProvider {
       while (!server.isShutdown()) {
         try {
           String license = product.license();
-          JsonObject jsonObject = JsonUtils.parseJsonObject(license);
+          JsonObject jsonObject = JsonUtilities.parseJsonObject(license);
           SzLicenseInfo licenseInfo
               = SzLicenseInfo.parseLicenseInfo(null, jsonObject);
 
@@ -1985,7 +1985,7 @@ public class SzApiServer implements SzApiProvider {
     if (this.initJson == null) {
       this.iniFile = (File) options.get(INI_FILE);
       if (this.iniFile != null) {
-        this.initJson = JsonUtils.iniToJson(this.iniFile);
+        this.initJson = JsonUtilities.iniToJson(this.iniFile);
       }
     }
 
@@ -2158,7 +2158,7 @@ public class SzApiServer implements SzApiProvider {
     this.initNativeApis();
 
     String versionJsonText = this.productApi.version();
-    JsonObject versionJson = JsonUtils.parseJsonObject(versionJsonText);
+    JsonObject versionJson = JsonUtilities.parseJsonObject(versionJsonText);
     this.versionInfo = SzVersionInfo.parseVersionInfo(null, versionJson);
 
     this.workerThreadPool
@@ -2492,9 +2492,9 @@ public class SzApiServer implements SzApiProvider {
    *         <tt>null</tt> if the G2CONFIGFILE parameter is not present.
    */
   protected static File extractIniConfigPath(JsonObject initJson) {
-    JsonObject sqlSection = JsonUtils.getJsonObject(initJson, "SQL");
+    JsonObject sqlSection = JsonUtilities.getJsonObject(initJson, "SQL");
     if (sqlSection == null) return null;
-    String configFile = JsonUtils.getString(sqlSection, "G2CONFIGFILE");
+    String configFile = JsonUtilities.getString(sqlSection, "G2CONFIGFILE");
     if (configFile == null) return null;
     return new File(configFile);
   }
@@ -2511,9 +2511,9 @@ public class SzApiServer implements SzApiProvider {
    *         any reference to "G2CONFIGFILE" property.
    */
   protected static JsonObject stripIniConfigPath(JsonObject initJson) {
-    JsonObject sqlSection = JsonUtils.getJsonObject(initJson, "SQL");
+    JsonObject sqlSection = JsonUtilities.getJsonObject(initJson, "SQL");
     if (sqlSection == null) return initJson;
-    String configFile = JsonUtils.getString(sqlSection, "G2CONFIGFILE");
+    String configFile = JsonUtilities.getString(sqlSection, "G2CONFIGFILE");
     if (configFile == null) return initJson;
 
     // create an object builder and remove the SQL section
@@ -2554,16 +2554,16 @@ public class SzApiServer implements SzApiProvider {
     }
     moduleName +=  " (getConfigType)";
     boolean configInIni = false;
-    JsonObject sqlSection = JsonUtils.getJsonObject(initJson, "SQL");
+    JsonObject sqlSection = JsonUtilities.getJsonObject(initJson, "SQL");
     if (sqlSection != null) {
-      String configFilePath = JsonUtils.getString(sqlSection, "G2CONFIGFILE");
+      String configFilePath = JsonUtilities.getString(sqlSection, "G2CONFIGFILE");
       configInIni = (configFilePath != null);
     }
 
     if (configInIni) {
       initJson = stripIniConfigPath(initJson);
     }
-    String initJsonText = JsonUtils.toJsonText(initJson);
+    String initJsonText = JsonUtilities.toJsonText(initJson);
 
     boolean configInRepo = false;
     G2ConfigMgr configMgr = NativeApiFactory.createConfigMgrApi();
@@ -2611,7 +2611,7 @@ public class SzApiServer implements SzApiProvider {
    */
   protected void initNativeApis()
   {
-    String  initJsonText  = JsonUtils.toJsonText(this.initJson);
+    String  initJsonText  = JsonUtilities.toJsonText(this.initJson);
     String  iniFilePath   = null;
     if (this.iniFile != null) {
       try {
@@ -3093,7 +3093,7 @@ public class SzApiServer implements SzApiProvider {
       StringBuffer sb = new StringBuffer();
       this.engineApi.exportConfig(sb);
 
-      JsonObject config = JsonUtils.parseJsonObject(sb.toString());
+      JsonObject config = JsonUtilities.parseJsonObject(sb.toString());
 
       Set<String>         dataSourceSet   = new LinkedHashSet<>();
       Map<String,String>  ftypeCodeMap    = new LinkedHashMap<>();
@@ -3151,12 +3151,12 @@ public class SzApiServer implements SzApiProvider {
 
       pw.println("DATABASE PERF CHECK RESULT: ");
       pw.println("----------------------------");
-      JsonObject jsonObject = JsonUtils.parseJsonObject(jsonText);
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
       jsonObject.forEach((key, value) -> {
         pw.println(key + " = " + value);
       });
 
-      JsonObject jsonObj = JsonUtils.parseJsonObject(jsonText);
+      JsonObject jsonObj = JsonUtilities.parseJsonObject(jsonText);
       long insertCount = jsonObj.getInt("numRecordsInserted");
       long insertTimeMS = jsonObj.getJsonNumber("insertTime").longValue();
       double insertTimeSec = ((double) insertTimeMS) / 1000.0;

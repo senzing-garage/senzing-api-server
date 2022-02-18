@@ -2,7 +2,7 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzRelatedFeaturesImpl;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -138,7 +138,7 @@ public interface SzRelatedFeatures {
     SzScoredFeature feature = SzScoredFeature.parseScoredFeature(
         jsonObject, "", featureType);
 
-    String linkedType = JsonUtils.getString(jsonObject, "LINKED_FEAT_TYPE");
+    String linkedType = JsonUtilities.getString(jsonObject, "LINKED_FEAT_TYPE");
 
     SzScoredFeature linkedFeature = SzScoredFeature.parseScoredFeature(
         jsonObject, "LINKED_", linkedType);

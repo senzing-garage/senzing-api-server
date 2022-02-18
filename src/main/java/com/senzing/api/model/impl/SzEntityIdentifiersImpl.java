@@ -5,7 +5,7 @@ import com.senzing.api.model.SzEntityId;
 import com.senzing.api.model.SzEntityIdentifier;
 import com.senzing.api.model.SzEntityIdentifiers;
 import com.senzing.api.model.SzRecordId;
-import com.senzing.util.JsonUtils;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonNumber;
