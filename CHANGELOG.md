@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.4] - 2022-03-07
+
+### Added to 2.8.4
+
+- Updates to `pom.xml` to prevent pulling beta `3.0.0` versions of 
+  `senzing-sdk-java` and `senzing-commons-java` via the Maven dependency range.
+
 ## [2.8.3] - 2022-02-04
 
 ### Changed in 2.8.3
