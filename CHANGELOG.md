@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.8.5] - 2022-03-29
+
+### Added to 2.8.5
+
+- Updates to latest dependency versions to resolve/avoid security issues.  
+  Specifically resolves CVE-2020-36518 for jackson-databind.
+- Added `@SuppressWarnings()` annotation to some files to eliminate specific
+  compile-time warnings.
+
 ## [2.8.4] - 2022-03-07
 
 ### Added to 2.8.4

@@ -369,6 +369,7 @@ public class RepositoryManager {
    * @param args
    * @throws Exception
    */
+  @SuppressWarnings("unchecked")
   public static void main(String[] args) throws Exception {
     Map<CommandLineOption, Object> options = null;
     List<DeprecatedOptionWarning> warnings = new LinkedList<>();

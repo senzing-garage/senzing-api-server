@@ -313,6 +313,7 @@ public class WebSocketFilter implements Filter {
    *         <tt>false</tt> if the upgrade should be prevented because an error
    *         has already been returned on the {@link HttpServletResponse}.
    */
+  @SuppressWarnings("unchecked")
   protected boolean preUpgrade(HttpServletRequest   request,
                                HttpServletResponse  response)
     throws ServletException, IOException
