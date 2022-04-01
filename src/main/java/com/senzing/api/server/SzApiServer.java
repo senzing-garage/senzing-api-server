@@ -1396,6 +1396,7 @@ public class SzApiServer implements SzApiProvider {
    * @return The newly created filtered {@link List} of classes or the specified
    * parameter if no classes were filtered.
    */
+  @SuppressWarnings("unchecked")
   protected List<Class> filterBaseServiceClasses(List<Class> classes) {
     // create the result
     Set<Class> removeSet = new HashSet<>();
@@ -1897,6 +1898,7 @@ public class SzApiServer implements SzApiProvider {
    *
    * @throws Exception If a failure occurs.
    */
+  @SuppressWarnings("deprecation")
   protected SzApiServer(AccessToken                     token,
                         Map<CommandLineOption, Object>  options,
                         boolean                         startServer)

@@ -460,7 +460,7 @@ public class DataGenerator {
   /**
    * Generates a list of business name variants that are close to one another.
    */
-  private List nextBizNameList() {
+  private List<String> nextBizNameList() {
     int approxGenCount = GIVEN_NAMES.size() * BUSINESS_PATTERNS.size() * 3;
     int cannedCount = BUSINESS_NAMES.size();
     if (this.nextInt(approxGenCount+cannedCount) < cannedCount) {
@@ -1334,6 +1334,7 @@ public class DataGenerator {
   /**
    *
    */
+  @SuppressWarnings("unchecked")
   public static void main(String[] args) {
     Map<CommandLineOption, Object>  options = null;
     List<DeprecatedOptionWarning>   warnings = new LinkedList<>();

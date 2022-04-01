@@ -22,6 +22,7 @@ import java.util.*;
  *
  * @param <T> The model class.
  */
+@SuppressWarnings("unchecked")
 public abstract class ModelFactory<T, P extends ModelProvider<T>>
   extends JsonDeserializer<T>
 {

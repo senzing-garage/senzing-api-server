@@ -144,6 +144,13 @@ class G2EngineRetryHandler implements InvocationHandler {
           "getEntityByRecordID",
           String.class, String.class, long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
+          "getVirtualEntityByRecordID",
+          String.class, long.class, StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "getVirtualEntityByRecordID",
+          String.class, StringBuffer.class));
+
+      retrySet.add(cls.getMethod(
           "findPathByEntityID",
           long.class, long.class, int.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
@@ -218,6 +225,12 @@ class G2EngineRetryHandler implements InvocationHandler {
           "processWithInfo",
                 String.class, long.class, StringBuffer.class));
       retrySet.add(cls.getMethod(
+          "findInterestingEntitiesByEntityID",
+          long.class, long.class, StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "findInterestingEntitiesByRecordID",
+          String.class, String.class, long.class, StringBuffer.class));
+      retrySet.add(cls.getMethod(
           "whyEntityByRecordID", String.class, String.class,
           StringBuffer.class));
       retrySet.add(cls.getMethod(
@@ -239,6 +252,11 @@ class G2EngineRetryHandler implements InvocationHandler {
       retrySet.add(cls.getMethod(
           "whyEntities", long.class, long.class, long.class,
           StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "howEntityByEntityID",
+          long.class, long.class, StringBuffer.class));
+      retrySet.add(cls.getMethod(
+          "howEntityByEntityID", long.class, StringBuffer.class));
 
       // check what we did not catch
       Method[] methods = cls.getMethods();
