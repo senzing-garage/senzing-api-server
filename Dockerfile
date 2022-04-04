@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=debian:11.2-slim@sha256:4c25ffa6ef572cf0d57da8c634769a08ae94529f7de5be5587ec8ce7b9b50f9c
+ARG BASE_IMAGE=senzing/senzing-base:1.6.6
 ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.7
 
 # -----------------------------------------------------------------------------
@@ -7,7 +7,7 @@ ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.7
 
 FROM ${BASE_BUILDER_IMAGE} as builder
 
-ENV REFRESHED_AT=2022-01-25
+ENV REFRESHED_AT=2022-04-01
 
 LABEL Name="senzing/senzing-api-server-builder" \
       Maintainer="support@senzing.com" \
@@ -39,7 +39,7 @@ RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public > /
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2022-01-25
+ENV REFRESHED_AT=2022-04-01
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
