@@ -54,7 +54,7 @@ public class EngineStatsLoggingHandler implements InvocationHandler {
       methodSet.add(cls.getMethod(
           "getRecord",
           String.class, String.class, long.class, StringBuffer.class));
-      methodSet.add(cls.getMethod("fetchNext", long.class));
+      methodSet.add(cls.getMethod("fetchNext", long.class, StringBuffer.class));
       methodSet.add(cls.getMethod("closeExport", long.class));
       methodSet.add(cls.getMethod(
           "getRedoRecord", StringBuffer.class));
