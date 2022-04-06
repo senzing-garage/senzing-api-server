@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=debian:11.2-slim@sha256:4c25ffa6ef572cf0d57da8c634769a08ae94529f7de5be5587ec8ce7b9b50f9c
+ARG BASE_IMAGE=debian:11.3-slim@sha256:78fd65998de7a59a001d792fe2d3a6d2ea25b6f3f068e5c84881250373577414
 ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.7
 
 # -----------------------------------------------------------------------------
@@ -7,11 +7,11 @@ ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.7
 
 FROM ${BASE_BUILDER_IMAGE} as builder
 
-ENV REFRESHED_AT=2022-01-25
+ENV REFRESHED_AT=2022-04-01
 
 LABEL Name="senzing/senzing-api-server-builder" \
       Maintainer="support@senzing.com" \
-      Version="1.1.1"
+      Version="3.0.0"
 
 # Set environment variables.
 
@@ -26,8 +26,8 @@ COPY . /senzing-api-server
 WORKDIR /senzing-api-server
 
 RUN export SENZING_API_SERVER_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
-      && make package \
-      && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_VERSION}.jar "/senzing-api-server.jar"
+ && make package \
+ && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_VERSION}.jar "/senzing-api-server.jar"
 
 # Grab a gpg key for our final stage to install the JDK
 
@@ -39,11 +39,11 @@ RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public > /
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2022-01-25
+ENV REFRESHED_AT=2022-04-01
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
-      Version="2.8.3"
+      Version="3.0.0"
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
 
@@ -54,21 +54,23 @@ USER root
 # Install packages via apt.
 
 RUN apt update \
-      && apt -y install \
+ && apt -y install \
       gnupg2 \
+      jq \
       postgresql-client \
       software-properties-common \
-      && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/*
 
 # Install Java-11.
+
 COPY --from=builder "/gpg.key" "gpg.key"
 
 RUN cat gpg.key | apt-key add - \
-      && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
-      && apt update \
-      && apt install -y adoptopenjdk-11-hotspot \
-      && rm -rf /var/lib/apt/lists/* \
-      && rm -f gpg.key
+ && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
+ && apt update \
+ && apt install -y adoptopenjdk-11-hotspot \
+ && rm -rf /var/lib/apt/lists/* \
+ && rm -f gpg.key
 
 # Copy files from repository.
 
@@ -94,6 +96,10 @@ EXPOSE 8080
 
 COPY --from=builder "/senzing-api-server.jar" "/app/senzing-api-server.jar"
 
+# Copy files from other docker containers.
+
+COPY --from=senzing/senzing-api-server:2.8.5 "/app/senzing-api-server.jar" "/appV2/senzing-api-server.jar"
+
 # Make non-root container.
 
 USER 1001
@@ -109,4 +115,6 @@ ENV SENZING_ETC_PATH=/etc/opt/senzing
 # Runtime execution.
 
 WORKDIR /app
-ENTRYPOINT ["java", "-jar", "senzing-api-server.jar"]
+
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+CMD ["java", "-jar", "senzing-api-server.jar"]
