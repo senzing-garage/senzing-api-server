@@ -26,8 +26,8 @@ COPY . /senzing-api-server
 WORKDIR /senzing-api-server
 
 RUN export SENZING_API_SERVER_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
-      && make package \
-      && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_VERSION}.jar "/senzing-api-server.jar"
+ && make package \
+ && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_VERSION}.jar "/senzing-api-server.jar"
 
 # Grab a gpg key for our final stage to install the JDK
 
@@ -54,23 +54,23 @@ USER root
 # Install packages via apt.
 
 RUN apt update \
-      && apt -y install \
+ && apt -y install \
       gnupg2 \
       jq \
       postgresql-client \
       software-properties-common \
-      && rm -rf /var/lib/apt/lists/*
+ && rm -rf /var/lib/apt/lists/*
 
 # Install Java-11.
 
 COPY --from=builder "/gpg.key" "gpg.key"
 
 RUN cat gpg.key | apt-key add - \
-      && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
-      && apt update \
-      && apt install -y adoptopenjdk-11-hotspot \
-      && rm -rf /var/lib/apt/lists/* \
-      && rm -f gpg.key
+ && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
+ && apt update \
+ && apt install -y adoptopenjdk-11-hotspot \
+ && rm -rf /var/lib/apt/lists/* \
+ && rm -f gpg.key
 
 # Copy files from repository.
 
