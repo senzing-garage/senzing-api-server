@@ -2,4 +2,5 @@ version: '3'
 services:
   sut:
     build: .
-    command: "--help"
+    entrypoint: [""]
+    command: ["/app/container-test.sh"]
