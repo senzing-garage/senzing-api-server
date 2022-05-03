@@ -284,19 +284,38 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       JsonObject versionObj = JsonUtilities.parseJsonObject(versionJson);
       nativeVersion = versionObj.getString("VERSION");
 
-    } catch (Throwable e) {
-      // looks like the product API is not available -- let the version be null
-      // so long as the direct or record flags are not set
+    } catch (UnsatisfiedLinkError e) {
+      // if Senzing is not installed then the UnsatisfiedLinkError will
+      // complain about libG2 not being in "java.library.path", otherwise
+      // the problem is libG2 trying to load a dependency, which is an error    
+      boolean installed = (!e.getMessage().contains("java.library.path"));
+
+      // check if the build requested "direct" API usage or for the test
+      // process to "record" the native API results.  this requires a
+      // working Senzing installation
       boolean direct = TRUE.toString().equalsIgnoreCase(
           getPropertyValue(DIRECT_PROPERTY));
+
       boolean record = TRUE.toString().equalsIgnoreCase(
           getPropertyValue(RECORD_PROPERTY));
-      if (direct || record || EXISTING_CACHE_DIRS.isEmpty()) {
+
+      // if Senzing is installed or "direct" API usage is required or
+      // recording is required or we have no cached API test directories
+      // to use for a "replay" test run THEN we have to fail with an error
+      if (installed || direct || record || EXISTING_CACHE_DIRS.isEmpty()) {
         e.printStackTrace();
         throw new ExceptionInInitializerError(
             "Failed to find valid Senzing installation for integration test "
             + "run.");
       }
+
+    } catch (Error e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
 
     } finally {
       String forceVersion = getPropertyValue(VERSION_PROPERTY);
