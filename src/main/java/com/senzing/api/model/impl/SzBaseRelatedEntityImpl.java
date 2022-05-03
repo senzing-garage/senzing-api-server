@@ -34,18 +34,12 @@ public abstract class SzBaseRelatedEntityImpl
   private String resolutionRuleCode;
 
   /**
-   * The ref score.
-   */
-  private Integer refScore;
-
-  /**
    * Default constructor.
    */
   public SzBaseRelatedEntityImpl() {
     this.matchLevel         = null;
     this.matchKey           = null;
     this.resolutionRuleCode = null;
-    this.refScore           = null;
   }
 
   /**
@@ -117,36 +111,12 @@ public abstract class SzBaseRelatedEntityImpl
     this.resolutionRuleCode = code;
   }
 
-  /**
-   * Gets the underlying ref score from the entity resolution between
-   * the entities.
-   *
-   * @return The underlying ref score from the entity resolution between
-   *         the entities.
-   */
-  @JsonInclude(NON_NULL)
-  public Integer getRefScore() {
-    return this.refScore;
-  }
-
-  /**
-   * Sets the underlying ref score from the entity resolution between
-   * the entities.
-   *
-   * @param refScore The underlying ref score from the entity resolution between
-   *                 the entities.
-   */
-  public void setRefScore(Integer refScore) {
-    this.refScore = refScore;
-  }
-
   @Override
   public String toString() {
     return this.getClass().getSimpleName() + "{" +
         "matchLevel=" + matchLevel +
         ", matchKey='" + matchKey + '\'' +
         ", resolutionRuleCode='" + resolutionRuleCode + '\'' +
-        ", refScore=" + refScore +
         ", super=" + super.toString() +
         '}';
   }

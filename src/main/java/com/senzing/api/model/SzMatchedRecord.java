@@ -76,25 +76,6 @@ public interface SzMatchedRecord extends SzEntityRecord {
   void setResolutionRuleCode(String resolutionRuleCode);
 
   /**
-   * Gets the ref score for how this record matched against the
-   * first record in the resolved entity.
-   *
-   * @return The ref score for how this record matched against the
-   *         first record in the resolved entity.
-   */
-  @JsonInclude(NON_EMPTY)
-  Integer getRefScore();
-
-  /**
-   * Sets the ref score for how this record matched against the first record
-   * in the resolved entity.
-   *
-   * @param refScore The ref score for how this record matched against the
-   *                 first record in the resolved entity.
-   */
-  void setRefScore(Integer refScore);
-
-  /**
    * A {@link ModelProvider} for instances of {@link SzMatchedRecord}.
    */
   interface Provider extends ModelProvider<SzMatchedRecord> {
@@ -215,12 +196,10 @@ public interface SzMatchedRecord extends SzEntityRecord {
     // now get the match fields
     String  matchKey    = JsonUtilities.getString(jsonObject, "MATCH_KEY");
     Integer matchLevel  = JsonUtilities.getInteger(jsonObject, "MATCH_LEVEL");
-    Integer refScore    = JsonUtilities.getInteger(jsonObject, "REF_SCORE");
     String  ruleCode    = JsonUtilities.getString(jsonObject,"ERRULE_CODE");
 
     record.setMatchKey(matchKey);
     record.setMatchLevel(matchLevel);
-    record.setRefScore(refScore);
     record.setResolutionRuleCode(ruleCode);
 
     return record;

@@ -71,25 +71,6 @@ public interface SzBaseRelatedEntity extends SzResolvedEntity {
   void setResolutionRuleCode(String code);
 
   /**
-   * Gets the underlying ref score from the entity resolution between
-   * the entities.
-   *
-   * @return The underlying ref score from the entity resolution between
-   *         the entities.
-   */
-  @JsonInclude(NON_NULL)
-  Integer getRefScore();
-
-  /**
-   * Sets the underlying ref score from the entity resolution between
-   * the entities.
-   *
-   * @param refScore The underlying ref score from the entity resolution between
-   *                 the entities.
-   */
-  void setRefScore(Integer refScore);
-
-  /**
    * Parses the entity feature from a {@link JsonObject} describing JSON
    * for the Senzing native API format for an entity feature and populates
    * the specified {@link SzBaseRelatedEntity} or creates a new instance.
@@ -133,13 +114,11 @@ public interface SzBaseRelatedEntity extends SzResolvedEntity {
     if (matchInfo == null) matchInfo = jsonObject;
 
     Integer matchLevel  = JsonUtilities.getInteger(matchInfo, "MATCH_LEVEL");
-    Integer refScore    = JsonUtilities.getInteger(matchInfo, "REF_SCORE");
     String  matchKey    = JsonUtilities.getString(matchInfo, "MATCH_KEY");
     String  ruleCode    = JsonUtilities.getString(matchInfo,"ERRULE_CODE");
     boolean partial     = (!jsonObject.containsKey("FEATURES")
                            || !jsonObject.containsKey("RECORDS")
                            || (matchLevel == null)
-                           || (refScore == null)
                            || (matchKey == null)
                            || (ruleCode == null));
 
@@ -148,7 +127,6 @@ public interface SzBaseRelatedEntity extends SzResolvedEntity {
     entity.setMatchLevel(matchLevel);
     entity.setMatchKey(matchKey);
     entity.setResolutionRuleCode(ruleCode);
-    entity.setRefScore(refScore);
 
     entity.setPartial(partial);
 

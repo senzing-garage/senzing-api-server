@@ -1673,7 +1673,6 @@ public class ResponseValidators {
                                 "MATCH_LEVEL",
                                 "MATCH_KEY",
                                 "ERRULE_CODE",
-                                "REF_SCORE",
                                 "FEATURE_SCORES");
         Object entity = ((Map) obj).get("ENTITY");
         Object resolvedEntity = ((Map) entity).get("RESOLVED_ENTITY");
@@ -1824,7 +1823,7 @@ public class ResponseValidators {
 
             Object array = ((Map) response.getRawData()).get("AFFECTED_ENTITIES");
             validateRawDataMapArray(
-                testInfo, array, false, "ENTITY_ID", "LENS_CODE");
+                testInfo, array, false, "ENTITY_ID");
           }
 
           // check the raw data interesting entities
@@ -1841,7 +1840,7 @@ public class ResponseValidators {
             Object array = ((Map) object).get("ENTITIES");
             validateRawDataMapArray(
                 testInfo, array, false,
-                "ENTITY_ID", "LENS_CODE", "DEGREES", "FLAGS",
+                "ENTITY_ID", "DEGREES", "FLAGS",
                 "SAMPLE_RECORDS");
           }
 
@@ -1971,7 +1970,7 @@ public class ResponseValidators {
 
             Object array = ((Map) response.getRawData()).get("AFFECTED_ENTITIES");
             validateRawDataMapArray(
-                testInfo, array, false, "ENTITY_ID", "LENS_CODE");
+                testInfo, array, false, "ENTITY_ID");
           }
 
           // check the raw data interesting entities
@@ -1988,7 +1987,7 @@ public class ResponseValidators {
             Object array = ((Map) object).get("ENTITIES");
             validateRawDataMapArray(
                 testInfo, array, false,
-                "ENTITY_ID", "LENS_CODE", "DEGREES", "FLAGS",
+                "ENTITY_ID", "DEGREES", "FLAGS",
                 "SAMPLE_RECORDS");
           }
 
@@ -2119,7 +2118,7 @@ public class ResponseValidators {
 
             Object array = ((Map) response.getRawData()).get("AFFECTED_ENTITIES");
             validateRawDataMapArray(
-                testInfo, array, false, "ENTITY_ID", "LENS_CODE");
+                testInfo, array, false, "ENTITY_ID");
           }
 
           // check the raw data interesting entities
@@ -2136,7 +2135,7 @@ public class ResponseValidators {
             Object array = ((Map) object).get("ENTITIES");
             validateRawDataMapArray(
                 testInfo, array, false,
-                "ENTITY_ID", "LENS_CODE", "DEGREES", "FLAGS",
+                "ENTITY_ID", "DEGREES", "FLAGS",
                 "SAMPLE_RECORDS");
           }
 

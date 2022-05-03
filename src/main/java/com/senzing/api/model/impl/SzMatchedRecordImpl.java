@@ -26,11 +26,6 @@ public class SzMatchedRecordImpl extends SzEntityRecordImpl
   private String resolutionRuleCode;
 
   /**
-   * The ref score.
-   */
-  private Integer refScore;
-
-  /**
    * Default constructor.
    */
   public SzMatchedRecordImpl() {
@@ -38,7 +33,6 @@ public class SzMatchedRecordImpl extends SzEntityRecordImpl
     this.matchKey           = null;
     this.resolutionRuleCode = null;
     this.matchLevel         = null;
-    this.refScore           = null;
   }
 
   /**
@@ -89,22 +83,6 @@ public class SzMatchedRecordImpl extends SzEntityRecordImpl
     this.resolutionRuleCode = resolutionRuleCode;
   }
 
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public Integer getRefScore() {
-    return refScore;
-  }
-
-  /**
-   * {@inheritDoc}
-   */
-  @Override
-  public void setRefScore(Integer refScore) {
-    this.refScore = refScore;
-  }
-
   @Override
   public String toString() {
     return "SzMatchedRecord{" + this.fieldsToString() + "}";
@@ -115,7 +93,6 @@ public class SzMatchedRecordImpl extends SzEntityRecordImpl
     return super.fieldsToString() +
         ", matchLevel=" + matchLevel +
         ", matchKey='" + matchKey + '\'' +
-        ", resolutionRuleCode='" + resolutionRuleCode + '\'' +
-        ", refScore=" + refScore;
+        ", resolutionRuleCode='" + resolutionRuleCode + '\'';
   }
 }

@@ -291,7 +291,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
           getPropertyValue(DIRECT_PROPERTY));
       boolean record = TRUE.toString().equalsIgnoreCase(
           getPropertyValue(RECORD_PROPERTY));
-      if (direct || record) {
+      if (direct || record || EXISTING_CACHE_DIRS.isEmpty()) {
         e.printStackTrace();
         throw new ExceptionInInitializerError(
             "Failed to find valid Senzing installation for integration test "
