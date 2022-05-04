@@ -88,7 +88,7 @@ In order to install `g2.jar` you must:
 
         ```console
         export SENZING_G2_DIR=/opt/senzing/g2
-        export SENZING_G2_JAR_VERSION=2.8.1
+        export SENZING_G2_JAR_VERSION=3.0.0
 
         mvn install:install-file \
             -Dfile=${SENZING_G2_DIR}/lib/g2.jar \
@@ -102,7 +102,7 @@ In order to install `g2.jar` you must:
 
         ```console
         set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
-        set SENZING_G2_JAR_VERSION=2.4.1
+        set SENZING_G2_JAR_VERSION=3.0.0
 
         mvn install:install-file \
             -Dfile="%SENZING_G2_DIR%\lib\g2.jar" \
@@ -170,16 +170,14 @@ in sync across multiple processes that may be using it.
 Other command-line options may be useful to you as well.  Execute
 
 ```console
-java -jar target/senzing-api-server-2.8.1.jar --help
+java -jar target/senzing-api-server-3.0.0.jar --help
 ```
 
 to obtain a help message describing all available options.
 For example:
 
 ```console
-$ java -jar senzing-api-server-2.8.1.jar <options>
-
-java -jar senzing-api-server-2.8.1.jar <options>
+java -jar senzing-api-server-3.0.0.jar <options>
 
 <options> includes: 
 
@@ -367,6 +365,7 @@ java -jar senzing-api-server-2.8.1.jar <options>
         determine when to shutdown.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_MONITOR_FILE
 
+
 [ HTTPS / SSL Options ]
    The following options pertain to HTTPS / SSL configuration.  The 
    --key-store and --key-store-password options are the minimum required
@@ -410,6 +409,7 @@ java -jar senzing-api-server-2.8.1.jar <options>
         Also -clientKeyStorePassword.  Specifies the password for decrypting
         the key store file specified with the --client-key-store option.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_CLIENT_KEY_STORE_PASSWORD
+
 
 [ Asynchronous Info Queue Options ]
    The following options pertain to configuring an asynchronous message
@@ -481,6 +481,7 @@ java -jar senzing-api-server-2.8.1.jar <options>
         Also -kafkaInfoTopic.  Used to specify the topic name for connecting to
         Kafka as part of specifying a Kafka info topic.
         --> VIA ENVIRONMENT: SENZING_KAFKA_INFO_TOPIC
+
 
 [ Advanced Options ]
    --config-mgr [config manager options]...
