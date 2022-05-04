@@ -37,25 +37,6 @@ public interface SzMatchedRecord extends SzEntityRecord {
   void setMatchLevel(Integer matchLevel);
 
   /**
-   * Gets the match score for how this record matched against the first record
-   * in the resolved entity.
-   *
-   * @return The match score for how this record matched against the first
-   *         record in the resolved entity.
-   */
-  @JsonInclude(NON_EMPTY)
-  Integer getMatchScore();
-
-  /**
-   * Sets the match score for how this record matched against the first record
-   * in the resolved entity.
-   *
-   * @param matchScore The match score for how this record matched against the
-   *                   first record in the resolved entity.
-   */
-  void setMatchScore(Integer matchScore);
-
-  /**
    * Gets the match key for how this record matched against the first record
    * in the resolved entity.
    *
@@ -93,25 +74,6 @@ public interface SzMatchedRecord extends SzEntityRecord {
    *                           resolved entity.
    */
   void setResolutionRuleCode(String resolutionRuleCode);
-
-  /**
-   * Gets the ref score for how this record matched against the
-   * first record in the resolved entity.
-   *
-   * @return The ref score for how this record matched against the
-   *         first record in the resolved entity.
-   */
-  @JsonInclude(NON_EMPTY)
-  Integer getRefScore();
-
-  /**
-   * Sets the ref score for how this record matched against the first record
-   * in the resolved entity.
-   *
-   * @param refScore The ref score for how this record matched against the
-   *                 first record in the resolved entity.
-   */
-  void setRefScore(Integer refScore);
 
   /**
    * A {@link ModelProvider} for instances of {@link SzMatchedRecord}.
@@ -232,17 +194,12 @@ public interface SzMatchedRecord extends SzEntityRecord {
     SzEntityRecord.parseEntityRecord(record, jsonObject);
 
     // now get the match fields
-    Optional<Integer> matchScore = SzBaseRelatedEntity.readMatchScore(jsonObject);
-
     String  matchKey    = JsonUtilities.getString(jsonObject, "MATCH_KEY");
     Integer matchLevel  = JsonUtilities.getInteger(jsonObject, "MATCH_LEVEL");
-    Integer refScore    = JsonUtilities.getInteger(jsonObject, "REF_SCORE");
     String  ruleCode    = JsonUtilities.getString(jsonObject,"ERRULE_CODE");
 
-    record.setMatchScore(matchScore.orElse(null));
     record.setMatchKey(matchKey);
     record.setMatchLevel(matchLevel);
-    record.setRefScore(refScore);
     record.setResolutionRuleCode(ruleCode);
 
     return record;

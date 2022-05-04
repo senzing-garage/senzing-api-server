@@ -37,6 +37,7 @@ public class ReadOnlyEntityDataWriteServicesTest
   protected void initializeServerOptions(SzApiServerOptions options) {
     super.initializeServerOptions(options);
     options.setReadOnly(true);
+    options.setSkippingEnginePriming(true);
   }
 
   @Test

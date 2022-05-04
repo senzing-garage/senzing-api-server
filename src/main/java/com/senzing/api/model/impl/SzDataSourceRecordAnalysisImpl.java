@@ -27,12 +27,6 @@ public class SzDataSourceRecordAnalysisImpl
   private int recordIdCount;
 
   /**
-   * The number of records with the associated data source that have an
-   * <tt>"ENTITY_TYPE"</tt> specified.
-   */
-  private int entityTypeCount;
-
-  /**
    * Default constructor that constructs with a <tt>null</tt> data source.
    */
   public SzDataSourceRecordAnalysisImpl() {
@@ -50,7 +44,6 @@ public class SzDataSourceRecordAnalysisImpl
     this.dataSource       = dataSource;
     this.recordCount      = 0;
     this.recordIdCount    = 0;
-    this.entityTypeCount  = 0;
   }
 
   /**
@@ -158,62 +151,12 @@ public class SzDataSourceRecordAnalysisImpl
     return this.recordIdCount;
   }
 
-  /**
-   * Gets the number of records that have the associated data source and also
-   * have an <tt>"ENTITY_TYPE"</tt>.
-   *
-   * @return The number of records that have the associated data source and
-   *         also have an <tt>"ENTITY_TYPE"</tt>.
-   */
-  @Override
-  public int getRecordsWithEntityTypeCount() {
-    return this.entityTypeCount;
-  }
-
-  /**
-   * Sets the number of records that have the associated data source and also
-   * have an <tt>"ENTITY_TYPE"</tt>.
-   *
-   * @param entityTypeCount The number of records that have the associated data
-   *                        source and also have an <tt>"ENTITY_TYPE"</tt>.
-   */
-  @Override
-  public void setRecordsWithEntityTypeCount(int entityTypeCount) {
-    this.entityTypeCount = entityTypeCount;
-  }
-
-  /**
-   * Increments the number of records that have the associated data source
-   * and also have an <tt>"ENTITY_TYPE"</tt> and returns the new count.
-   *
-   * @return The new count after incrementing.
-   */
-  @Override
-  public int incrementRecordsWithEntityTypeCount() {
-    return ++this.entityTypeCount;
-  }
-
-  /**
-   * Increments the number of records that have the associated data source
-   * and also have an <tt>"ENTITY_TYPE"</tt> and returns the new count.
-   *
-   * @param increment The number of records to increment by.
-   *
-   * @return The new count after incrementing.
-   */
-  @Override
-  public int incrementRecordsWithEntityTypeCount(int increment) {
-    this.entityTypeCount += increment;
-    return this.entityTypeCount;
-  }
-
   @Override
   public String toString() {
     return "SzDataSourceRecordAnalysis{" +
         "dataSource='" + dataSource + '\'' +
         ", recordCount=" + recordCount +
         ", recordIdCount=" + recordIdCount +
-        ", entityTypeCount=" + entityTypeCount +
         '}';
   }
 }

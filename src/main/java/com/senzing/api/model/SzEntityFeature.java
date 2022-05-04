@@ -3,6 +3,7 @@ package com.senzing.api.model;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzEntityFeatureImpl;
+import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
 import javax.json.JsonObject;
@@ -233,7 +234,7 @@ public interface SzEntityFeature {
 
     String featureDesc = jsonObject.getString("FEAT_DESC");
     long   libFeatId   = jsonObject.getJsonNumber("LIB_FEAT_ID").longValue();
-    String usageType   = jsonObject.getString("UTYPE_CODE", null);
+    String usageType   = JsonUtilities.getString(jsonObject, "USAGE_TYPE");
 
     feature.setPrimaryId(libFeatId);
     feature.setPrimaryValue(featureDesc);

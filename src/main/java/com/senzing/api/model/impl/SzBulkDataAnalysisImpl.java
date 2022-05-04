@@ -47,19 +47,9 @@ public class SzBulkDataAnalysisImpl implements SzBulkDataAnalysis {
   private int dataSourceCount;
 
   /**
-   * The number of records having an entity type.
-   */
-  private int entityTypeCount;
-
-  /**
    * Internal {@link Map} for tracking the analysis by data source.
    */
   private Map<String, SzDataSourceRecordAnalysis> analysisByDataSource;
-
-  /**
-   * Internal {@link Map} for tracking the analysis by entity type.
-   */
-  private Map<String, SzEntityTypeRecordAnalysis> analysisByEntityType;
 
   /**
    * Default constructor.
@@ -68,9 +58,7 @@ public class SzBulkDataAnalysisImpl implements SzBulkDataAnalysis {
     this.recordCount      = 0;
     this.recordIdCount    = 0;
     this.dataSourceCount  = 0;
-    this.entityTypeCount  = 0;
     this.analysisByDataSource = new HashMap<>();
-    this.analysisByEntityType = new HashMap<>();
     this.status = NOT_STARTED;
   }
 
@@ -282,57 +270,6 @@ public class SzBulkDataAnalysisImpl implements SzBulkDataAnalysis {
   }
 
   /**
-   * Gets the number of records in the bulk data set that have a
-   * <tt>"ENTITY_TYPE"</tt> property.
-   *
-   * @return The number of records in the bulk data set that have a
-   *         <tt>"ENTITY_TYPE"</tt> property.
-   */
-  @Override
-  public int getRecordsWithEntityTypeCount() {
-    return this.entityTypeCount;
-  }
-
-  /**
-   * Sets the number of records in the bulk data set that have a
-   * <tt>"ENTITY_TYPE"</tt> property.
-   *
-   * @param entityTypeCount The number of records in the bulk data set that
-   *                        have a <tt>"ENTITY_TYPE"</tt> property.
-   */
-  @Override
-  public void setRecordsWithEntityTypeCount(int entityTypeCount) {
-    this.entityTypeCount = entityTypeCount;
-  }
-
-  /**
-   * Increments the number of records in the bulk data set that have a
-   * <tt>"ENTITY_TYPE"</tt> property and returns the new count.
-   *
-   * @return The newly incremented count of records in the bulk data set that
-   *         have a <tt>"ENTITY_TYPE"</tt> property.
-   */
-  @Override
-  public int incrementRecordsWithEntityTypeCount() {
-    return ++this.entityTypeCount;
-  }
-
-  /**
-   * Increments the number of records in the bulk data set that have a
-   * <tt>"ENTITY_TYPE"</tt> property and returns the new count.
-   *
-   * @param increment The number of records to increment by.
-   *
-   * @return The newly incremented count of records in the bulk data set that
-   *         have a <tt>"ENTITY_TYPE"</tt> property.
-   */
-  @Override
-  public int incrementRecordsWithEntityTypeCount(int increment) {
-    this.entityTypeCount += increment;
-    return this.entityTypeCount;
-  }
-
-  /**
    * Gets the list of {@link SzDataSourceRecordAnalysis} instances for the
    * bulk data describing the statistics by data source (including those with
    * no data source).
@@ -397,104 +334,35 @@ public class SzBulkDataAnalysisImpl implements SzBulkDataAnalysis {
   }
 
   /**
-   * Gets the list of {@link SzEntityTypeRecordAnalysis} instances for the
-   * bulk data describing the statistics by entity type (including those with
-   * no entity type).
-   *
-   * @return A {@link List} of {@link SzEntityTypeRecordAnalysis} instances
-   *         describing the statistics for the bulk data.
-   */
-  @JsonInclude(NON_EMPTY)
-  @Override
-  public List<SzEntityTypeRecordAnalysis> getAnalysisByEntityType() {
-    List<SzEntityTypeRecordAnalysis> list
-        = new ArrayList<>(this.analysisByEntityType.values());
-    list.sort((a1, a2) -> {
-      int diff = a1.getRecordCount() - a2.getRecordCount();
-      if (diff != 0) return diff;
-      diff = a1.getRecordsWithRecordIdCount() - a2.getRecordsWithRecordIdCount();
-      if (diff != 0) return diff;
-      String et1 = a1.getEntityType();
-      String et2 = a2.getEntityType();
-      if (et1 == null) return -1;
-      if (et2 == null) return 1;
-      return et1.compareTo(et2);
-    });
-    return list;
-  }
-
-  /**
-   * Set the analysis by entity type for this instance.  This will reset the
-   * top-level counts according to what is discovered in the specified
-   * collection of {@link SzEntityTypeRecordAnalysis} instances.
-   *
-   * @param analysisList The {@link Collection} of
-   *                     {@link SzEntityTypeRecordAnalysis} instances.
-   */
-  @Override
-  public void setAnalysisByEntityType(
-      Collection<SzEntityTypeRecordAnalysis> analysisList)
-  {
-    // count the records
-    int recordCount = analysisList.stream()
-        .mapToInt(SzEntityTypeRecordAnalysis::getRecordCount).sum();
-    this.setRecordCount(recordCount);
-
-    // count the records having a data source specified
-    int entityTypeCount = analysisList.stream()
-        .filter(a -> a.getEntityType() != null)
-        .mapToInt(SzEntityTypeRecordAnalysis::getRecordCount)
-        .sum();
-    this.setRecordsWithEntityTypeCount(entityTypeCount);
-
-    // count the records having a record ID specified
-    int recordIdCount = analysisList.stream()
-        .mapToInt(SzEntityTypeRecordAnalysis::getRecordsWithRecordIdCount)
-        .sum();
-    this.setRecordsWithRecordIdCount(recordIdCount);
-
-    // clear the current analysis map and repopulate it
-    this.analysisByEntityType.clear();
-    for (SzEntityTypeRecordAnalysis analysis : analysisList) {
-      this.analysisByEntityType.put(analysis.getEntityType(), analysis);
-    }
-  }
-
-  /**
    * Utility method for tracking a record that has been analyzed with the
-   * specified data source, entity type and record ID (any of which may be
-   * <tt>null</tt> to indicate if they are absent in the record).
+   * specified data source and record ID (any of which may be <tt>null</tt> to
+   * indicate if they are absent in the record).
    *
    * @param dataSource The data source for the record, or <tt>null</tt> if it
    *                   does not have a <tt>"DATA_SOURCE"</tt> property.
-   * @param entityType The entity type for the record, or <tt>null</tt> if it
-   *                   does not have a <tt>"ENTITY_TYPE"</tt> property.
    * @param recordId The record ID for the record, or <tt>null</tt> if it does
    *                 not have a <tt>"RECORD_ID"</tt> property.
    */
   @Override
-  public void trackRecord(String dataSource, String entityType, String recordId)
+  public void trackRecord(String dataSource, String recordId)
   {
-    this.trackRecords(1, dataSource, entityType, (recordId != null));
+    this.trackRecords(1, dataSource, (recordId != null));
   }
 
   /**
    * Utility method for tracking a record that has been analyzed with the
-   * specified data source, entity type and record ID (any of which may be
-   * <tt>null</tt> to indicate if they are absent in the record).
+   * specified data source and record ID (any of which may be <tt>null</tt> to
+   * indicate if they are absent in the record).
    *
    * @param recordCount The number of records being tracked.
    * @param dataSource The data source for the record, or <tt>null</tt> if it
    *                   does not have a <tt>"DATA_SOURCE"</tt> property.
-   * @param entityType The entity type for the record, or <tt>null</tt> if it
-   *                   does not have a <tt>"ENTITY_TYPE"</tt> property.
    * @param withRecordId <tt>true</tt> if the records being tracked have record
    *                     ID's, and <tt>false</tt> if they do not.
    */
   @Override
   public void trackRecords(int      recordCount,
                            String   dataSource,
-                           String   entityType,
                            boolean  withRecordId)
   {
     if (recordCount < 0) {
@@ -503,25 +371,9 @@ public class SzBulkDataAnalysisImpl implements SzBulkDataAnalysis {
     }
     if (recordCount == 0) return;
 
-    // check if entity type is empty string and if so, normalize it to null
-    if (entityType != null && entityType.trim().length() == 0) {
-      entityType = null;
-    }
-
     // check if data source is empty string and if so, normalize it to null
     if (dataSource != null && dataSource.trim().length() == 0) {
       dataSource = null;
-    }
-
-    // get the analysis for that entity type
-    SzEntityTypeRecordAnalysis etypeAnalysis
-        = this.analysisByEntityType.get(entityType);
-
-    // check if it does not yet exist
-    if (etypeAnalysis == null) {
-      // if not, create it and store it for later
-      etypeAnalysis = SzEntityTypeRecordAnalysis.FACTORY.create(entityType);
-      this.analysisByEntityType.put(entityType, etypeAnalysis);
     }
 
     // get the analysis for that data source
@@ -535,25 +387,19 @@ public class SzBulkDataAnalysisImpl implements SzBulkDataAnalysis {
       this.analysisByDataSource.put(dataSource, dsrcAnalysis);
     }
 
-    // increment the global count, data-source count and entity type count
+    // increment the global count and data-source count
     dsrcAnalysis.incrementRecordCount(recordCount);
-    etypeAnalysis.incrementRecordCount(recordCount);
     this.incrementRecordCount(recordCount);
 
     if (withRecordId) {
       dsrcAnalysis.incrementRecordsWithRecordIdCount(recordCount);
-      etypeAnalysis.incrementRecordsWithRecordIdCount(recordCount);
       this.incrementRecordsWithRecordIdCount(recordCount);
     }
 
     if (dataSource != null) {
       this.incrementRecordsWithDataSourceCount(recordCount);
-      etypeAnalysis.incrementRecordsWithDataSourceCount(recordCount);
     }
-    if (entityType != null) {
-      this.incrementRecordsWithEntityTypeCount(recordCount);
-      dsrcAnalysis.incrementRecordsWithEntityTypeCount(recordCount);
-    }
+
     if (this.status == NOT_STARTED) this.status = IN_PROGRESS;
   }
 

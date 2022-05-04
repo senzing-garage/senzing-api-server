@@ -35,9 +35,9 @@ public class ConfigServicesExplicitConfigIdTest extends ConfigServicesReadOnlyTe
                                      "g2-init.json");
 
         String initJson = readTextFileAsString(initJsonFile, "UTF-8");
-        configMgrApi.initV2(this.getModuleName("RepoMgr (reconfigure)"),
-                            initJson,
-                            this.isVerbose());
+        configMgrApi.init(this.getModuleName("RepoMgr (reconfigure)"),
+                          initJson,
+                          this.isVerbose());
         Result<Long> result = new Result<>();
         int returnCode = configMgrApi.getDefaultConfigID(result);
         if (returnCode != 0) {

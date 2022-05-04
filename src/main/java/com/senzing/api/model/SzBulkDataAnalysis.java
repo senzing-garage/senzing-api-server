@@ -168,44 +168,6 @@ public interface SzBulkDataAnalysis {
   int incrementRecordsWithDataSourceCount(int increment);
 
   /**
-   * Gets the number of records in the bulk data set that have a
-   * <tt>"ENTITY_TYPE"</tt> property.
-   *
-   * @return The number of records in the bulk data set that have a
-   *         <tt>"ENTITY_TYPE"</tt> property.
-   */
-  int getRecordsWithEntityTypeCount();
-
-  /**
-   * Sets the number of records in the bulk data set that have a
-   * <tt>"ENTITY_TYPE"</tt> property.
-   *
-   * @param entityTypeCount The number of records in the bulk data set that
-   *                        have a <tt>"ENTITY_TYPE"</tt> property.
-   */
-  void setRecordsWithEntityTypeCount(int entityTypeCount);
-
-  /**
-   * Increments the number of records in the bulk data set that have a
-   * <tt>"ENTITY_TYPE"</tt> property and returns the new count.
-   *
-   * @return The newly incremented count of records in the bulk data set that
-   *         have a <tt>"ENTITY_TYPE"</tt> property.
-   */
-  int incrementRecordsWithEntityTypeCount();
-
-  /**
-   * Increments the number of records in the bulk data set that have a
-   * <tt>"ENTITY_TYPE"</tt> property and returns the new count.
-   *
-   * @param increment The number of records to increment by.
-   *
-   * @return The newly incremented count of records in the bulk data set that
-   *         have a <tt>"ENTITY_TYPE"</tt> property.
-   */
-  int incrementRecordsWithEntityTypeCount(int increment);
-
-  /**
    * Gets the list of {@link SzDataSourceRecordAnalysis} instances for the
    * bulk data describing the statistics by data source (including those with
    * no data source).
@@ -228,57 +190,30 @@ public interface SzBulkDataAnalysis {
       Collection<SzDataSourceRecordAnalysis> analysisList);
 
   /**
-   * Gets the list of {@link SzEntityTypeRecordAnalysis} instances for the
-   * bulk data describing the statistics by entity type (including those with
-   * no entity type).
-   *
-   * @return A {@link List} of {@link SzEntityTypeRecordAnalysis} instances
-   *         describing the statistics for the bulk data.
-   */
-  @JsonInclude(NON_EMPTY)
-  List<SzEntityTypeRecordAnalysis> getAnalysisByEntityType();
-
-  /**
-   * Set the analysis by entity type for this instance.  This will reset the
-   * top-level counts according to what is discovered in the specified
-   * collection of {@link SzEntityTypeRecordAnalysis} instances.
-   *
-   * @param analysisList The {@link Collection} of
-   *                     {@link SzEntityTypeRecordAnalysis} instances.
-   */
-  void setAnalysisByEntityType(
-      Collection<SzEntityTypeRecordAnalysis> analysisList);
-
-  /**
    * Utility method for tracking a record that has been analyzed with the
-   * specified data source, entity type and record ID (any of which may be
-   * <tt>null</tt> to indicate if they are absent in the record).
+   * specified data source and record ID (any of which may be <tt>null</tt> to
+   * indicate if they are absent in the record).
    *
    * @param dataSource The data source for the record, or <tt>null</tt> if it
    *                   does not have a <tt>"DATA_SOURCE"</tt> property.
-   * @param entityType The entity type for the record, or <tt>null</tt> if it
-   *                   does not have a <tt>"ENTITY_TYPE"</tt> property.
    * @param recordId The record ID for the record, or <tt>null</tt> if it does
    *                 not have a <tt>"RECORD_ID"</tt> property.
    */
-  void trackRecord(String dataSource, String entityType, String recordId);
+  void trackRecord(String dataSource, String recordId);
 
   /**
    * Utility method for tracking a record that has been analyzed with the
-   * specified data source, entity type and record ID (any of which may be
-   * <tt>null</tt> to indicate if they are absent in the record).
+   * specified data source and record ID (any of which may be <tt>null</tt>
+   * to indicate if they are absent in the record).
    *
    * @param recordCount The number of records being tracked.
    * @param dataSource The data source for the record, or <tt>null</tt> if it
    *                   does not have a <tt>"DATA_SOURCE"</tt> property.
-   * @param entityType The entity type for the record, or <tt>null</tt> if it
-   *                   does not have a <tt>"ENTITY_TYPE"</tt> property.
    * @param withRecordId <tt>true</tt> if the records being tracked have record
    *                     ID's, and <tt>false</tt> if they do not.
    */
   void trackRecords(int      recordCount,
                     String   dataSource,
-                    String   entityType,
                     boolean  withRecordId);
 
   /**

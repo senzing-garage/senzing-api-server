@@ -2,7 +2,6 @@ package com.senzing.nativeapi.replay;
 
 import com.senzing.nativeapi.NativeApiProvider;
 import com.senzing.g2.engine.*;
-import com.senzing.g2.engine.internal.*;
 import com.senzing.io.IOUtilities;
 import com.senzing.util.AccessToken;
 import com.senzing.util.JsonUtilities;
@@ -253,7 +252,6 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       map.put(G2Config.class, "com.senzing.g2.engine.G2ConfigJNI");
       map.put(G2ConfigMgr.class, "com.senzing.g2.engine.G2ConfigMgrJNI");
       map.put(G2Product.class, "com.senzing.g2.engine.G2ProductJNI");
-      map.put(G2Audit.class, "com.senzing.g2.engine.internal.G2AuditJNI");
       map.put(G2Diagnostic.class, "com.senzing.g2.engine.G2DiagnosticJNI");
     } finally {
       API_IMPLEMENTATIONS = Collections.unmodifiableMap(map);
@@ -286,19 +284,38 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       JsonObject versionObj = JsonUtilities.parseJsonObject(versionJson);
       nativeVersion = versionObj.getString("VERSION");
 
-    } catch (Throwable e) {
-      // looks like the product API is not available -- let the version be null
-      // so long as the direct or record flags are not set
+    } catch (UnsatisfiedLinkError e) {
+      // if Senzing is not installed then the UnsatisfiedLinkError will
+      // complain about libG2 not being in "java.library.path", otherwise
+      // the problem is libG2 trying to load a dependency, which is an error    
+      boolean installed = (!e.getMessage().contains("java.library.path"));
+
+      // check if the build requested "direct" API usage or for the test
+      // process to "record" the native API results.  this requires a
+      // working Senzing installation
       boolean direct = TRUE.toString().equalsIgnoreCase(
           getPropertyValue(DIRECT_PROPERTY));
+
       boolean record = TRUE.toString().equalsIgnoreCase(
           getPropertyValue(RECORD_PROPERTY));
-      if (direct || record) {
+
+      // if Senzing is installed or "direct" API usage is required or
+      // recording is required or we have no cached API test directories
+      // to use for a "replay" test run THEN we have to fail with an error
+      if (installed || direct || record || EXISTING_CACHE_DIRS.isEmpty()) {
         e.printStackTrace();
         throw new ExceptionInInitializerError(
             "Failed to find valid Senzing installation for integration test "
             + "run.");
       }
+
+    } catch (Error e) {
+      e.printStackTrace();
+      throw e;
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      throw new ExceptionInInitializerError(e);
 
     } finally {
       String forceVersion = getPropertyValue(VERSION_PROPERTY);
@@ -335,8 +352,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
           String name = method.getName();
           switch (name) {
             case "init":
-            case "initV2":
-            case "initWithConfigIDV2":
+            case "initWithConfigID":
               set.add(method);
               break;
             default:
@@ -347,7 +363,8 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
       // handle G2Config.load()
       Set<Method> set = map.get(G2Config.class);
-      Method loadMethod = G2Config.class.getMethod("load", String.class);
+      Method loadMethod = G2Config.class.getMethod(
+          "load", String.class, Result.class);
       set.add(loadMethod);
 
       // handle G2ConfigMgr.addConfig()
@@ -1382,19 +1399,10 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
         JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
 
         String dataSource = JsonUtilities.getString(jsonObject, "DATA_SOURCE");
-        String entityType = JsonUtilities.getString(jsonObject, "ENTITY_TYPE");
 
         // add the data source to the hash
         if (dataSource != null) {
           md5.update(dataSource.toString().getBytes(UTF_8));
-        } else {
-          md5.update(ZEROES);
-        }
-        md5.update(ZEROES);
-
-        // add the entity type to the hash
-        if (entityType != null) {
-          md5.update(entityType.toString().getBytes(UTF_8));
         } else {
           md5.update(ZEROES);
         }
@@ -1490,10 +1498,8 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
 
       String dataSource = JsonUtilities.getString(jsonObject, "DATA_SOURCE");
-      String entityType = JsonUtilities.getString(jsonObject, "ENTITY_TYPE");
 
       sb.append(", dataSource=[ ").append(dataSource).append(" ]");
-      sb.append(", entityType=[ ").append(entityType).append(" ]");
 
     } else {
       Set<Method> methods = IRRELEVANT_METHODS_MAP.get(apiClass);

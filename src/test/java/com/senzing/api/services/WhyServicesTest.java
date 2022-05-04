@@ -178,37 +178,31 @@ public class WhyServicesTest extends AbstractServiceTest {
     RepositoryManager.loadFile(repoDirectory,
                                passengerFile,
                                PASSENGERS,
-                               null,
                                true);
 
     RepositoryManager.loadFile(repoDirectory,
                                customerFile,
                                CUSTOMERS,
-                               null,
                                true);
 
     RepositoryManager.loadFile(repoDirectory,
                                vipFile,
                                VIPS,
-                               null,
                                true);
 
     RepositoryManager.loadFile(repoDirectory,
                                companyFile,
                                COMPANIES,
-                               null,
                                true);
 
     RepositoryManager.loadFile(repoDirectory,
                                employeeFile,
                                EMPLOYEES,
-                               null,
                                true);
 
     RepositoryManager.loadFile(repoDirectory,
                                contactFile,
                                CONTACTS,
-                               null,
                                true);
   }
 
@@ -273,7 +267,6 @@ public class WhyServicesTest extends AbstractServiceTest {
     JsonObjectBuilder job = Json.createObjectBuilder();
     job.add("RECORD_ID", COMPANY_1.getRecordId());
     job.add("DATA_SOURCE", COMPANY_1.getDataSourceCode());
-    job.add("ENTITY_TYPE", "GENERIC");
     job.add("NAME_ORG", "Acme Corporation");
     JsonArrayBuilder relJab = Json.createArrayBuilder();
     JsonObjectBuilder relJob = Json.createObjectBuilder();
@@ -300,7 +293,6 @@ public class WhyServicesTest extends AbstractServiceTest {
     job = Json.createObjectBuilder();
     job.add("RECORD_ID", COMPANY_2.getRecordId());
     job.add("DATA_SOURCE", COMPANY_2.getDataSourceCode());
-    job.add("ENTITY_TYPE", "GENERIC");
     job.add("NAME_ORG", "Coyote Solutions");
     relJab = Json.createArrayBuilder();
     relJob = Json.createObjectBuilder();
@@ -327,7 +319,6 @@ public class WhyServicesTest extends AbstractServiceTest {
     JsonObjectBuilder job = Json.createObjectBuilder();
     job.add("RECORD_ID", EMPLOYEE_1.getRecordId());
     job.add("DATA_SOURCE", EMPLOYEE_1.getDataSourceCode());
-    job.add("ENTITY_TYPE", "GENERIC");
     job.add("NAME_FULL", "Jeff Founder");
     JsonArrayBuilder relJab = Json.createArrayBuilder();
     JsonObjectBuilder relJob = Json.createObjectBuilder();
@@ -345,7 +336,6 @@ public class WhyServicesTest extends AbstractServiceTest {
     job = Json.createObjectBuilder();
     job.add("RECORD_ID", EMPLOYEE_2.getRecordId());
     job.add("DATA_SOURCE", EMPLOYEE_2.getDataSourceCode());
-    job.add("ENTITY_TYPE", "GENERIC");
     job.add("NAME_FULL", "Jane Leader");
     relJab = Json.createArrayBuilder();
     relJob = Json.createObjectBuilder();
@@ -368,7 +358,6 @@ public class WhyServicesTest extends AbstractServiceTest {
     job = Json.createObjectBuilder();
     job.add("RECORD_ID", EMPLOYEE_3.getRecordId());
     job.add("DATA_SOURCE", EMPLOYEE_3.getDataSourceCode());
-    job.add("ENTITY_TYPE", "GENERIC");
     job.add("NAME_FULL", "Joe Workman");
     relJab = Json.createArrayBuilder();
     relJob = Json.createObjectBuilder();
@@ -396,7 +385,6 @@ public class WhyServicesTest extends AbstractServiceTest {
     JsonObjectBuilder job = Json.createObjectBuilder();
     job.add("RECORD_ID", CONTACT_1.getRecordId());
     job.add("DATA_SOURCE", CONTACT_1.getDataSourceCode());
-    job.add("ENTITY_TYPE", "GENERIC");
     job.add("NAME_FULL", "Richard Couples");
     job.add("PHONE_NUMBER", "718-949-8812");
     job.add("ADDR_FULL", "10010 WOODLAND AVE; ATLANTA, GA 30334");
@@ -412,7 +400,6 @@ public class WhyServicesTest extends AbstractServiceTest {
     job = Json.createObjectBuilder();
     job.add("RECORD_ID", CONTACT_2.getRecordId());
     job.add("DATA_SOURCE", CONTACT_2.getDataSourceCode());
-    job.add("ENTITY_TYPE", "GENERIC");
     job.add("NAME_FULL", "Brianna Couples");
     job.add("PHONE_NUMBER", "718-949-8812");
     job.add("ADDR_FULL", "10010 WOODLAND AVE; ATLANTA, GA 30334");
@@ -428,7 +415,6 @@ public class WhyServicesTest extends AbstractServiceTest {
     job = Json.createObjectBuilder();
     job.add("RECORD_ID", CONTACT_3.getRecordId());
     job.add("DATA_SOURCE", CONTACT_3.getDataSourceCode());
-    job.add("ENTITY_TYPE", "GENERIC");
     job.add("NAME_FULL", "Samuel Strong");
     job.add("PHONE_NUMBER", "312-889-3340");
     job.add("ADDR_FULL", "10010 LAKE VIEW RD; SPRINGFIELD, MO 65807");
@@ -437,7 +423,6 @@ public class WhyServicesTest extends AbstractServiceTest {
     job = Json.createObjectBuilder();
     job.add("RECORD_ID", CONTACT_4.getRecordId());
     job.add("DATA_SOURCE", CONTACT_4.getDataSourceCode());
-    job.add("ENTITY_TYPE", "GENERIC");
     job.add("NAME_FULL", "Melissa Powers");
     job.add("PHONE_NUMBER", "312-885-4236");
     job.add("ADDR_FULL", "10010 LAKE VIEW RD; SPRINGFIELD, MO 65807");

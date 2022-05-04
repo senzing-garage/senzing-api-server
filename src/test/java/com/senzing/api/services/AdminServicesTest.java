@@ -4,6 +4,7 @@ import com.senzing.api.model.*;
 
 import javax.ws.rs.core.UriInfo;
 
+import com.senzing.api.server.SzApiServerOptions;
 import com.senzing.util.JsonUtilities;
 import org.junit.jupiter.api.*;
 import com.senzing.gen.api.invoker.*;
@@ -14,7 +15,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import static com.senzing.api.model.SzHttpMethod.*;
 import static org.junit.jupiter.api.TestInstance.*;
 import static com.senzing.api.services.ResponseValidators.*;
-import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class AdminServicesTest extends AbstractServiceTest {
@@ -37,6 +37,19 @@ public class AdminServicesTest extends AbstractServiceTest {
     } finally {
       this.endTests();
     }
+  }
+
+  /**
+   * <p>
+   * Overidden to skip engine priming.
+   * </p>
+   *
+   * {@inheritDoc}
+   */
+  @Override
+  protected void initializeServerOptions(SzApiServerOptions options) {
+    super.initializeServerOptions(options);
+    options.setSkippingEnginePriming(true);
   }
 
   @Test public void rootTest() {

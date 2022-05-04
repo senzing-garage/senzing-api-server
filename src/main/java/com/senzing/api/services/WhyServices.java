@@ -69,11 +69,11 @@ public class WhyServices implements ServicesSupport {
 
       String rawData = null;
 
-      int flags = this.getFlags(forceMinimal,
-                                featureMode,
-                                withFeatureStats,
-                                withInternalFeatures,
-                                withRelationships);
+      long flags = this.getFlags(forceMinimal,
+                                 featureMode,
+                                 withFeatureStats,
+                                 withInternalFeatures,
+                                 withRelationships);
 
       this.enteringQueue(timers);
       rawData = provider.executeInThread(() -> {
@@ -85,7 +85,7 @@ public class WhyServices implements ServicesSupport {
         this.callingNativeAPI(timers, "engine", "whyEntityByRecordID");
 
         // perform the "why" operation and check the result
-        int result = engineApi.whyEntityByRecordIDV2(
+        int result = engineApi.whyEntityByRecordID(
             dataSource, recordId, flags, sb);
 
         this.calledNativeAPI(timers, "engine", "whyEntityByRecordID");
@@ -157,11 +157,11 @@ public class WhyServices implements ServicesSupport {
 
       String rawData = null;
 
-      int flags = this.getFlags(forceMinimal,
-                                featureMode,
-                                withFeatureStats,
-                                withInternalFeatures,
-                                withRelationships);
+      long flags = this.getFlags(forceMinimal,
+                                 featureMode,
+                                 withFeatureStats,
+                                 withInternalFeatures,
+                                 withRelationships);
 
       this.enteringQueue(timers);
       rawData = provider.executeInThread(() -> {
@@ -173,7 +173,7 @@ public class WhyServices implements ServicesSupport {
         this.callingNativeAPI(timers, "engine", "whyEntityByEntityID");
 
         // perform the "why" operation and check the result
-        int result = engineApi.whyEntityByEntityIDV2(entityId, flags, sb);
+        int result = engineApi.whyEntityByEntityID(entityId, flags, sb);
 
         this.calledNativeAPI(timers, "engine", "whyEntityByEntityID");
 
@@ -273,11 +273,11 @@ public class WhyServices implements ServicesSupport {
 
       String rawData = null;
 
-      int flags = this.getFlags(forceMinimal,
-                                featureMode,
-                                withFeatureStats,
-                                withInternalFeatures,
-                                withRelationships);
+      long flags = this.getFlags(forceMinimal,
+                                 featureMode,
+                                 withFeatureStats,
+                                 withInternalFeatures,
+                                 withRelationships);
 
       this.enteringQueue(timers);
       rawData = provider.executeInThread(() -> {
@@ -289,7 +289,7 @@ public class WhyServices implements ServicesSupport {
         this.callingNativeAPI(timers, "engine", "whyRecords");
 
         // perform the "why" operation
-        int result = engineApi.whyRecordsV2(
+        int result = engineApi.whyRecords(
             dataSource1, recordId1, dataSource2, recordId2, flags, sb);
 
         this.calledNativeAPI(timers, "engine", "whyRecords");
@@ -504,11 +504,11 @@ public class WhyServices implements ServicesSupport {
 
       String rawData = null;
 
-      int flags = this.getFlags(forceMinimal,
-                                featureMode,
-                                withFeatureStats,
-                                withInternalFeatures,
-                                withRelationships);
+      long flags = this.getFlags(forceMinimal,
+                                 featureMode,
+                                 withFeatureStats,
+                                 withInternalFeatures,
+                                 withRelationships);
 
       this.enteringQueue(timers);
 
@@ -529,7 +529,7 @@ public class WhyServices implements ServicesSupport {
         this.callingNativeAPI(timers, "engine", "whyEntities");
 
         // perform the "why" operation
-        int result = engineApi.whyEntitiesV2(
+        int result = engineApi.whyEntities(
             entityId1, entityId2, flags, sb);
 
         this.calledNativeAPI(timers, "engine", "whyEntities");
@@ -819,9 +819,9 @@ public class WhyServices implements ServicesSupport {
       String      recordId    = recordIdent.getRecordId();
 
       StringBuffer sb = new StringBuffer();
-      this.callingNativeAPI(timers, "engine", "getEntityByRecordIDV2");
-      int result = engineApi.getEntityByRecordIDV2(dataSource, recordId, 0, sb);
-      this.calledNativeAPI(timers, "engine", "getEntityByRecordIDV2");
+      this.callingNativeAPI(timers, "engine", "getEntityByRecordID");
+      int result = engineApi.getEntityByRecordID(dataSource, recordId, 0, sb);
+      this.calledNativeAPI(timers, "engine", "getEntityByRecordID");
 
       if (result != 0) {
         throw this.newPossiblyBadRequestException(

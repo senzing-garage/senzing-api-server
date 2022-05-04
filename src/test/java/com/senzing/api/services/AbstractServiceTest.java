@@ -45,11 +45,6 @@ public abstract class AbstractServiceTest {
       = Boolean.valueOf("" + System.getProperty("com.senzing.api.test.debug"));
 
   /**
-   * The entity type code for the GENERIC entity type.
-   */
-  public static final String GENERIC_ENTITY_TYPE = "GENERIC";
-
-  /**
    * The replay provider to use.
    */
   private static final ReplayNativeApiProvider REPLAY_PROVIDER
@@ -152,17 +147,6 @@ public abstract class AbstractServiceTest {
   private Map<String, SzDataSource> defaultDataSources = Collections.emptyMap();
 
   /**
-   * The map of default entity types.
-   */
-  private Map<String, SzEntityType> defaultEntityTypes = Collections.emptyMap();
-
-  /**
-   * THe map of default entity classes.
-   */
-  private Map<String, SzEntityClass> defaultEntityClasses
-      = Collections.emptyMap();
-
-  /**
    * The map of default attribute types.
    */
   private Map<String, SzAttributeType> defaultAttributeTypes
@@ -172,17 +156,6 @@ public abstract class AbstractServiceTest {
    * The map of the initial data sources (after the repository is prepared).
    */
   private Map<String, SzDataSource> initialDataSources = Collections.emptyMap();
-
-  /**
-   * The map of initial entity types (after the repository is prepared).
-   */
-  private Map<String, SzEntityType> initialEntityTypes = Collections.emptyMap();
-
-  /**
-   * The map of initial entity classes (after the repository is prepared).
-   */
-  private Map<String, SzEntityClass> initialEntityClasses
-      = Collections.emptyMap();
 
   /**
    * The map of initial attribute types (after the repository is prepared).
@@ -463,23 +436,13 @@ public abstract class AbstractServiceTest {
    */
   private void processDefaultConfig(Configuration config) {
     this.defaultDataSources     = new LinkedHashMap<>();
-    this.defaultEntityTypes     = new LinkedHashMap<>();
-    this.defaultEntityClasses   = new LinkedHashMap<>();
     this.defaultAttributeTypes  = new LinkedHashMap<>();
     this.processConfig(config.getConfigJson(),
                        this.defaultDataSources,
-                       this.defaultEntityClasses,
-                       this.defaultEntityTypes,
                        this.defaultAttributeTypes);
 
     this.defaultDataSources
         = Collections.unmodifiableMap(this.defaultDataSources);
-
-    this.defaultEntityClasses
-        = Collections.unmodifiableMap(this.defaultEntityClasses);
-
-    this.defaultEntityTypes
-        = Collections.unmodifiableMap(this.defaultEntityTypes);
 
     this.defaultAttributeTypes
         = Collections.unmodifiableMap(this.defaultAttributeTypes);
@@ -513,23 +476,15 @@ public abstract class AbstractServiceTest {
     });
 
     this.initialDataSources     = new LinkedHashMap<>();
-    this.initialEntityClasses   = new LinkedHashMap<>();
-    this.initialEntityTypes     = new LinkedHashMap<>();
     this.initialAttributeTypes  = new LinkedHashMap<>();
 
     this.processConfig(config.getConfigJson(),
                        this.initialDataSources,
-                       this.initialEntityClasses,
-                       this.initialEntityTypes,
                        this.initialAttributeTypes);
 
     // make the maps unmodifiable
     this.initialDataSources
         = Collections.unmodifiableMap(this.initialDataSources);
-    this.initialEntityClasses
-        = Collections.unmodifiableMap(this.initialEntityClasses);
-    this.initialEntityTypes
-        = Collections.unmodifiableMap(this.initialEntityTypes);
     this.initialAttributeTypes
         = Collections.unmodifiableMap(this.initialAttributeTypes);
 
@@ -571,16 +526,13 @@ public abstract class AbstractServiceTest {
   }
 
   /**
-   * Process the specified config and puts the data sources, entity classes
-   * and entity types in the specified maps.
+   * Process the specified config and puts the data sources and attribute types
+   * in the specified maps.
    */
   private void processConfig(JsonObject                   config,
                              Map<String, SzDataSource>    dataSourceMap,
-                             Map<String, SzEntityClass>   entityClassMap,
-                             Map<String, SzEntityType>    entityTypeMap,
                              Map<String, SzAttributeType> attributeTypeMap)
   {
-    Map<Integer, SzEntityClass> entityClassesById = new LinkedHashMap<>();
     config = config.getJsonObject("G2_CONFIG");
 
     if (dataSourceMap != null) {
@@ -591,45 +543,6 @@ public abstract class AbstractServiceTest {
         int     dataSourceId    = jsonObject.getInt("DSRC_ID");
         SzDataSource dataSource = SzDataSource.FACTORY.create(dataSourceCode, dataSourceId);
         dataSourceMap.put(dataSource.getDataSourceCode(), dataSource);
-      }
-    }
-
-    if (entityClassMap != null) {
-      // get the entity classes
-      JsonArray jsonArray = config.getJsonArray("CFG_ECLASS");
-      for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
-        String  eclassCode  = jsonObject.getString("ECLASS_CODE");
-
-        //---------------------------------------------------------------------
-        // check the entity class code to ensure it is ACTOR
-        // TODO(bcaceres) -- remove this code when entity classes other than
-        // ACTOR are supported ** OR ** when the API server no longer supports
-        // product versions that ship with alternate entity classes
-        if (!eclassCode.equals("ACTOR")) continue; // skip this one
-        //---------------------------------------------------------------------
-
-        Integer eclassId    = jsonObject.getInt("ECLASS_ID");
-        String  resolve     = jsonObject.getString("RESOLVE");
-        SzEntityClass entityClass = SzEntityClass.FACTORY.create(
-            eclassCode, eclassId, "YES".equalsIgnoreCase(resolve));
-
-        entityClassMap.put(
-            entityClass.getEntityClassCode(), entityClass);
-        entityClassesById.put(entityClass.getEntityClassId(), entityClass);
-      }
-    }
-
-    if (entityClassMap != null && entityTypeMap != null) {
-      // get the entity types
-      JsonArray jsonArray = config.getJsonArray("CFG_ETYPE");
-      for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
-        String  etypeCode = jsonObject.getString("ETYPE_CODE");
-        Integer etypeId   = jsonObject.getInt("ETYPE_ID");
-        Integer eclassId  = jsonObject.getInt("ECLASS_ID");
-        SzEntityClass entityClass = entityClassesById.get(eclassId);
-        SzEntityType entityType = SzEntityType.FACTORY.create(
-            etypeCode, etypeId, entityClass.getEntityClassCode());
-        entityTypeMap.put(entityType.getEntityTypeCode(), entityType);
       }
     }
 
@@ -655,28 +568,6 @@ public abstract class AbstractServiceTest {
   }
 
   /**
-   * Return the unmodifiable {@link Map} of {@link String} entity type code
-   * keys to {@link SzEntityType} values describing the entity types
-   * included in the default base template configuration.
-   *
-   * @return The unmodifiable {@link Map} of default entity types.
-   */
-  protected Map<String, SzEntityType> getDefaultEntityTypes() {
-    return this.defaultEntityTypes;
-  }
-
-  /**
-   * Return the unmodifiable {@link Map} of {@link String} entity class code
-   * keys to {@link SzEntityClass} values describing the entity classes
-   * included in the default base template configuration.
-   *
-   * @return The unmodifiable {@link Map} of default entity classes.
-   */
-  protected Map<String, SzEntityClass> getDefaultEntityClasses() {
-    return this.defaultEntityClasses;
-  }
-
-  /**
    * Return the unmodifiable {@link Map} of {@link String} attribute tyoe code
    * keys to {@link SzAttributeType} values describing the attribute types
    * included in the default base template configuration.
@@ -699,34 +590,6 @@ public abstract class AbstractServiceTest {
    */
   protected Map<String, SzDataSource> getInitialDataSources() {
     return this.initialDataSources;
-  }
-
-  /**
-   * Gets the unmodifiable {@link Map} of {@link String} entity type code
-   * keys to {@link SzEntityType} values describing the entity types that
-   * were configured when the server was first initialized (after the
-   * repository has been prepared).
-   *
-   * @return The unmodifiable {@link Map} of {@link String} entity type code
-   *         keys to {@link SzEntityType} values describing the initial entity
-   *         types.
-   */
-  protected Map<String, SzEntityType> getInitialEntityTypes() {
-    return this.initialEntityTypes;
-  }
-
-  /**
-   * Gets the unmodifiable {@link Map} of {@link String} entity class code
-   * keys to {@link SzEntityClass} values describing the entity classes that
-   * were configured when the server was first initialized (after the
-   * repository has been prepared).
-   *
-   * @return The unmodifiable {@link Map} of {@link String} entity class code
-   *         keys to {@link SzEntityClass} values describing the initial entity
-   *         classes.
-   */
-  protected Map<String, SzEntityClass> getInitialEntityClasses() {
-    return this.initialEntityClasses;
   }
 
   /**

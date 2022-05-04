@@ -1,7 +1,6 @@
 package com.senzing.api.model.impl;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.senzing.api.model.SzEntityTypeRecordAnalysis;
 import com.senzing.api.model.SzError;
 import com.senzing.g2.engine.G2Fallible;
 

@@ -204,9 +204,8 @@ public interface SzScoredFeature {
       ? jsonObject.getString(prefix + "FEAT")
       : JsonUtilities.getString(jsonObject, prefix + "FEAT_DESC");
 
-    String usage = (jsonObject.containsKey(prefix + "FEAT_USAGE_TYPE"))
-      ? jsonObject.getString(prefix + "FEAT_USAGE_TYPE")
-      : JsonUtilities.getString(jsonObject,prefix + "FEAT_UTYPE_CODE");
+    String usage = JsonUtilities.getString(
+        jsonObject,prefix + "FEAT_USAGE_TYPE");
 
     SzScoredFeature result = SzScoredFeature.FACTORY.create(featureId,
                                                             featureType,

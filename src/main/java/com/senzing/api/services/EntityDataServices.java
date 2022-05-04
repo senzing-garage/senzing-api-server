@@ -38,11 +38,11 @@ public class EntityDataServices implements ServicesSupport {
    * The {@link Map} of {@link SzAttributeSearchResultType} keys to {@link
    * Integer} values representing the flags to apply.
    */
-  private static final Map<SzAttributeSearchResultType, Integer>
+  private static final Map<SzAttributeSearchResultType, Long>
       RESULT_TYPE_FLAG_MAP;
 
   static {
-    Map<SzAttributeSearchResultType, Integer> map = new LinkedHashMap<>();
+    Map<SzAttributeSearchResultType, Long> map = new LinkedHashMap<>();
     map.put(MATCH, G2_EXPORT_INCLUDE_RESOLVED);
     map.put(POSSIBLE_MATCH, G2_EXPORT_INCLUDE_POSSIBLY_SAME);
     map.put(POSSIBLE_RELATION, G2_EXPORT_INCLUDE_POSSIBLY_RELATED);
@@ -91,7 +91,7 @@ public class EntityDataServices implements ServicesSupport {
           timers,
           recordJsonData,
           Collections.singletonMap("DATA_SOURCE", dataSource),
-          Collections.singletonMap("ENTITY_TYPE", "GENERIC"));
+          Collections.emptyMap());
 
       JsonObject  recordJson    = JsonUtilities.parseJsonObject(recordText);
       String      jsonRecordId  = JsonUtilities.getString(recordJson, "RECORD_ID");
@@ -318,7 +318,7 @@ public class EntityDataServices implements ServicesSupport {
       Map<String,String> map = Map.of("DATA_SOURCE", dataSource,
                                       "RECORD_ID", recordId);
 
-      Map<String,String> defaultMap = Map.of("ENTITY_TYPE", "GENERIC");
+      Map<String,String> defaultMap = Collections.emptyMap();
 
       String recordText = this.ensureJsonFields(PUT,
                                                 uriInfo,
@@ -794,7 +794,7 @@ public class EntityDataServices implements ServicesSupport {
         G2Engine engineApi = provider.getEngineApi();
 
         this.callingNativeAPI(timers, "engine", "getRecord");
-        int result = engineApi.getRecordV2(
+        int result = engineApi.getRecord(
             dataSource, recordId, DEFAULT_RECORD_FLAGS, sb);
         this.calledNativeAPI(timers, "engine", "getRecord");
 
@@ -932,11 +932,11 @@ public class EntityDataServices implements ServicesSupport {
 
       SzEntityData entityData = null;
 
-      int flags = this.getFlags(forceMinimal,
-                                featureMode,
-                                withFeatureStats,
-                                withInternalFeatures,
-                                (withRelated != SzRelationshipMode.NONE));
+      long flags = this.getFlags(forceMinimal,
+                                 featureMode,
+                                 withFeatureStats,
+                                 withInternalFeatures,
+                                 (withRelated != SzRelationshipMode.NONE));
 
       String rawData = null;
 
@@ -965,12 +965,12 @@ public class EntityDataServices implements ServicesSupport {
           // get the engine API and the config API
           G2Engine engineApi = provider.getEngineApi();
 
-          this.callingNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
+          this.callingNativeAPI(timers, "engine", "findNetworkByRecordID");
           // find the network and check the result
-          int result = engineApi.findNetworkByRecordIDV2(
+          int result = engineApi.findNetworkByRecordID(
               recordIds, maxDegrees, buildOutDegrees, maxEntityCount, flags, sb);
 
-          this.calledNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
+          this.calledNativeAPI(timers, "engine", "findNetworkByRecordID");
 
           if (result != 0) {
             throw this.newPossiblyNotFoundException(
@@ -1031,10 +1031,10 @@ public class EntityDataServices implements ServicesSupport {
           // get the engine API and the config API
           G2Engine engineApi = provider.getEngineApi();
 
-          this.callingNativeAPI(timers, "engine", "getEntityByRecordIDV2");
+          this.callingNativeAPI(timers, "engine", "getEntityByRecordID");
           // 1-degree relations are not required, so do a standard lookup
-          int result = engineApi.getEntityByRecordIDV2(dataSource, recordId, flags, sb);
-          this.calledNativeAPI(timers, "engine", "getEntityByRecordIDV2");
+          int result = engineApi.getEntityByRecordID(dataSource, recordId, flags, sb);
+          this.calledNativeAPI(timers, "engine", "getEntityByRecordID");
 
           String engineJSON = sb.toString();
           this.checkEntityResult(result, engineJSON, uriInfo, timers, engineApi);
@@ -1139,11 +1139,11 @@ public class EntityDataServices implements ServicesSupport {
 
       String rawData = null;
 
-      int flags = this.getFlags(forceMinimal,
-                                featureMode,
-                                withFeatureStats,
-                                withInternalFeatures,
-                                (withRelated != SzRelationshipMode.NONE));
+      long flags = this.getFlags(forceMinimal,
+                                 featureMode,
+                                 withFeatureStats,
+                                 withInternalFeatures,
+                                 (withRelated != SzRelationshipMode.NONE));
 
       // check if we want 1-degree relations as well -- if so we need to
       // find the network instead of a simple lookup
@@ -1168,12 +1168,12 @@ public class EntityDataServices implements ServicesSupport {
           // get the engine API
           G2Engine engineApi = provider.getEngineApi();
 
-          this.callingNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
+          this.callingNativeAPI(timers, "engine", "findNetworkByEntityID");
           // find the network and check the result
-          int result = engineApi.findNetworkByEntityIDV2(
+          int result = engineApi.findNetworkByEntityID(
               entityIds, maxDegrees, buildOutDegrees, maxEntityCount, flags, sb);
 
-          this.calledNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
+          this.calledNativeAPI(timers, "engine", "findNetworkByEntityID");
 
           if (result != 0) {
             throw this.newPossiblyNotFoundException(
@@ -1208,10 +1208,10 @@ public class EntityDataServices implements ServicesSupport {
           // get the engine API
           G2Engine engineApi = provider.getEngineApi();
 
-          this.callingNativeAPI(timers, "engine", "getEntityByEntityIDV2");
+          this.callingNativeAPI(timers, "engine", "getEntityByEntityID");
           // 1-degree relations are not required, so do a standard lookup
-          int result = engineApi.getEntityByEntityIDV2(entityId, flags, sb);
-          this.calledNativeAPI(timers, "engine", "getEntityByEntityIDV2");
+          int result = engineApi.getEntityByEntityID(entityId, flags, sb);
+          this.calledNativeAPI(timers, "engine", "getEntityByEntityID");
 
           String engineJSON = sb.toString();
 
@@ -1534,7 +1534,7 @@ public class EntityDataServices implements ServicesSupport {
       }
 
       // augment the flags based on includeOnly parameter result types
-      int includeFlags = 0;
+      long includeFlags = 0L;
       SemanticVersion version
           = new SemanticVersion(provider.getNativeApiVersion());
 
@@ -1544,9 +1544,9 @@ public class EntityDataServices implements ServicesSupport {
       // only support the include flags on versions where it works
       if (supportFiltering) {
         for (SzAttributeSearchResultType resultType : resultTypes) {
-          Integer flag = RESULT_TYPE_FLAG_MAP.get(resultType);
+          Long flag = RESULT_TYPE_FLAG_MAP.get(resultType);
           if (flag == null) continue;
-          includeFlags |= flag.intValue();
+          includeFlags |= flag.longValue();
         }
       }
 
@@ -1554,12 +1554,12 @@ public class EntityDataServices implements ServicesSupport {
       StringBuffer sb = new StringBuffer();
 
       // get the flags
-      int flags = this.getFlags(includeFlags,
-                                forceMinimal,
-                                featureMode,
-                                withFeatureStats,
-                                withInternalFeatures,
-                                withRelationships);
+      long flags = this.getFlags(includeFlags,
+                                 forceMinimal,
+                                 featureMode,
+                                 withFeatureStats,
+                                 withInternalFeatures,
+                                 withRelationships);
 
       // format the search JSON
       final String searchJson = JsonUtilities.toJsonText(searchCriteria);
@@ -1571,9 +1571,9 @@ public class EntityDataServices implements ServicesSupport {
         // get the engine API
         G2Engine engineApi = provider.getEngineApi();
 
-        this.callingNativeAPI(timers, "engine", "searchByAttributesV2");
-        int result = engineApi.searchByAttributesV2(searchJson, flags, sb);
-        this.calledNativeAPI(timers, "engine", "searchByAttributesV2");
+        this.callingNativeAPI(timers, "engine", "searchByAttributes");
+        int result = engineApi.searchByAttributes(searchJson, flags, sb);
+        this.calledNativeAPI(timers, "engine", "searchByAttributes");
         if (result != 0) {
           throw this.newInternalServerErrorException(
               httpMethod, uriInfo, timers, engineApi);

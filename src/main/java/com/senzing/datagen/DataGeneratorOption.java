@@ -18,7 +18,6 @@ enum DataGeneratorOption
   PERSON_SOURCES("-personSources", 1, -1),
   ORGANIZATION_SOURCES("-orgSources", 1, -1),
   BUSINESS_SOURCES("-bizSources", 1, -1),
-  ENTITY_TYPE_STRATEGY("-entityTypeStrategy", 1),
   DEFAULT_NO_FEATURES("-defaultNoFeatures"),
   MAX_NAME_COUNT("-maxNames", 1),
   MAX_BIRTH_DATE_COUNT("-maxBirthDates", 1),
@@ -233,10 +232,6 @@ enum DataGeneratorOption
         case ORGANIZATION_SOURCES:
         case BUSINESS_SOURCES:
           return new ArrayList<>(params);
-
-        case ENTITY_TYPE_STRATEGY:
-          return EntityTypeStrategy.valueOf(
-              params.get(0).replace('-', '_').toUpperCase());
 
         case NAME_DENSITY:
         case BIRTH_DATE_DENSITY:

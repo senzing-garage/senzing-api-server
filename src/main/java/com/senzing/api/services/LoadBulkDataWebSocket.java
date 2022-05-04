@@ -42,25 +42,6 @@ public class LoadBulkDataWebSocket extends BulkDataWebSocket
   protected List<String> mapDataSourceList;
 
   /**
-   * The entity type to assign to the loaded records unless another entity
-   * type mapping supercedes this default.
-   */
-  protected String entityType;
-
-  /**
-   * The JSON string mapping specific entity types to alternate entity type
-   * names.  A mapping from empty-string is used for mapping records with no
-   * entity type specified.
-   */
-  protected String mapEntityTypes;
-
-  /**
-   * The {@link List} of delimited strings that begin the delimiter, followed
-   * by the "from" entity type then the delimiter then the target entity type.
-   */
-  protected List<String> mapEntityTypeList;
-
-  /**
    * The optional load ID to use for loading the records.
    */
   protected String loadId;
@@ -96,16 +77,6 @@ public class LoadBulkDataWebSocket extends BulkDataWebSocket
 
     this.mapDataSourceList = params.get("mapDataSource");
 
-    paramList = params.get("entityType");
-    this.entityType = (paramList == null || paramList.size() == 0) ? null
-        : paramList.get(0);
-
-    paramList = params.get("mapEntityTypes");
-    this.mapEntityTypes = (paramList == null || paramList.size() == 0) ? null
-        : paramList.get(0);
-
-    this.mapEntityTypeList = params.get("mapEntityType");
-
     paramList = params.get("loadId");
     this.loadId = (paramList == null || paramList.size() == 0) ? null
         : paramList.get(0);
@@ -134,9 +105,6 @@ public class LoadBulkDataWebSocket extends BulkDataWebSocket
                          this.dataSource,
                          this.mapDataSources,
                          this.mapDataSourceList,
-                         this.entityType,
-                         this.mapEntityTypes,
-                         this.mapEntityTypeList,
                          this.loadId,
                          this.maxFailures,
                          this.mediaType,

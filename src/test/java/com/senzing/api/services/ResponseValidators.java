@@ -1098,238 +1098,6 @@ public class ResponseValidators {
     }
   }
 
-  /**
-   * Validates an {@link SzEntityClassesResponse} instance.
-   *
-   * @param response The response to validate.
-   * @param selfLink The HTTP request URI
-   * @param maxDuration The maximum duration for the timers in nanoseconds.
-   * @param expectRawData Whether or not to expect raw data.
-   * @param expectedEntityClasses The expected entity classes.
-   */
-  public static void validateEntityClassesResponse(
-      String                      testInfo,
-      SzEntityClassesResponse     response,
-      SzHttpMethod                httpMethod,
-      String                      selfLink,
-      long                        maxDuration,
-      boolean                     expectRawData,
-      Boolean                     defaultResolving,
-      Map<String, SzEntityClass>  expectedEntityClasses)
-  {
-    validateBasics(testInfo,
-                   response,
-                   httpMethod,
-                   selfLink,
-                   maxDuration,
-                   expectRawData);
-
-    String testSuffix = (testInfo == null) ? "" : ": " + testInfo;
-    String info = (testInfo == null) ? "" : "testInfo=[ " + testInfo + " ], ";
-
-    SzEntityClassesResponseData data = response.getData();
-
-    assertNotNull(data, "Response data is null" + testSuffix);
-
-    Set<String> classes = data.getEntityClasses();
-    Map<String, SzEntityClass> details = data.getEntityClassDetails();
-
-    assertNotNull(classes, "Entity classes set is null" + testSuffix);
-    assertNotNull(details, "Entity class details map is null" + testSuffix);
-
-    assertEquals(expectedEntityClasses.keySet(), classes,
-                 "Unexpected or missing entity classes in set.  "
-                     + info
-                     + "unexpected=[ "
-                     + diffSets(classes, expectedEntityClasses.keySet())
-                     + " ], missing=[ "
-                     + diffSets(expectedEntityClasses.keySet(), classes)
-                     + " ]" + testSuffix);
-
-    assertEquals(expectedEntityClasses.keySet(), details.keySet(),
-                 "Unexpected or missing entity class details"
-                     + testSuffix);
-
-    details.entrySet().forEach(entry -> {
-      String code = entry.getKey();
-      SzEntityClass entityClass = entry.getValue();
-      assertEquals(code, entityClass.getEntityClassCode(),
-                   "Entity class code property key ("
-                       + code + ") in details does not match the entity class "
-                       + "code in the corresponding detail object: "
-                       + info + "detail=[ " + entityClass.toString() + " ]");
-    });
-
-    expectedEntityClasses.values().forEach(expected -> {
-      String code = expected.getEntityClassCode();
-      SzEntityClass actual = details.get(code);
-      if (expected.getEntityClassId() != null)
-      {
-        assertEquals(expected.getEntityClassId(), actual.getEntityClassId(),
-                     "Unexpected entity class ID for " + code
-                         + testSuffix);
-      }
-      Boolean expectedResolving = expected.isResolving();
-      if (expectedResolving == null) expectedResolving = defaultResolving;
-      if (expectedResolving == null) expectedResolving = true;
-      assertEquals(expectedResolving, actual.isResolving(),
-                   "Unexpected resolving flag for entity class ("
-                       + actual.getEntityClassCode() + ")" + info
-                       + "expectedEntityClass=[ " + expected + " ]");
-    });
-
-    if (expectRawData) {
-      validateRawDataMap(testInfo, response.getRawData(), "ENTITY_CLASSES");
-      Object array = ((Map) response.getRawData()).get("ENTITY_CLASSES");
-      validateRawDataMapArray(
-          testInfo, array,false,
-          "ECLASS_CODE", "ECLASS_ID", "RESOLVE");
-    }
-  }
-
-  /**
-   * Validates an {@link SzEntityClassResponse} instance.
-   *
-   * @param response The response to validate.
-   * @param selfLink The HTTP request URI
-   * @param maxDuration The maximum duration for the timers in nanoseconds.
-   * @param expectRawData Whether or not to expect raw data.
-   * @param expectedEntityClass The expected entity class.
-   */
-  public static void validateEntityClassResponse(
-      SzEntityClassResponse   response,
-      String                  selfLink,
-      long                    maxDuration,
-      boolean                 expectRawData,
-      SzEntityClass           expectedEntityClass)
-  {
-    validateBasics(response, selfLink, maxDuration, expectRawData);
-
-    SzEntityClassResponseData data = response.getData();
-
-    assertNotNull(data, "Response data is null");
-
-    SzEntityClass entityClass = data.getEntityClass();
-
-    assertNotNull(entityClass, "Entity class is null");
-
-    assertEquals(expectedEntityClass, entityClass,
-                 "Unexpected entity class");
-
-    if (expectRawData) {
-      validateRawDataMap(
-          response.getRawData(),
-          "ECLASS_CODE", "ECLASS_ID", "RESOLVE");
-    }
-  }
-
-  /**
-   * Validates an {@link SzEntityClassesResponse} instance.
-   *
-   * @param response The response to validate.
-   * @param selfLink The HTTP request URI
-   * @param maxDuration The maximum duration for the timers in nanoseconds.
-   * @param expectRawData Whether or not to expect raw data.
-   * @param expectedEntityTypes The expected entity types.
-   */
-  public static void validateEntityTypesResponse(
-      String                      testInfo,
-      SzEntityTypesResponse       response,
-      SzHttpMethod                httpMethod,
-      String                      selfLink,
-      long                        maxDuration,
-      boolean                     expectRawData,
-      Map<String, SzEntityType>   expectedEntityTypes)
-  {
-    validateBasics(testInfo,
-                   response,
-                   httpMethod,
-                   selfLink,
-                   maxDuration,
-                   expectRawData);
-
-    String testSuffix = (testInfo == null) ? "" : ": " + testInfo;
-    String info = (testInfo == null) ? "" : "testInfo=[ " + testInfo + " ], ";
-
-    SzEntityTypesResponseData data = response.getData();
-
-    assertNotNull(data, "Response data is null" + testSuffix);
-
-    Set<String> types = data.getEntityTypes();
-    Map<String, SzEntityType> details = data.getEntityTypeDetails();
-
-    assertNotNull(types, "Entity type set is null" + testSuffix);
-    assertNotNull(details, "Entity type details map is null" + testSuffix);
-
-    assertEquals(expectedEntityTypes.keySet(), types,
-                 "Unexpected or missing entity types in set.  "
-                     + info
-                     + "unexpected=[ "
-                     + diffSets(types, expectedEntityTypes.keySet())
-                     + " ], missing=[ "
-                     + diffSets(expectedEntityTypes.keySet(), types)
-                     + " ]");
-
-    expectedEntityTypes.values().forEach(expected -> {
-      String code = expected.getEntityTypeCode();
-      SzEntityType actual = details.get(code);
-      if (expected.getEntityTypeId() != null)
-      {
-        assertEquals(expected.getEntityTypeId(), actual.getEntityTypeId(),
-                     "Unexpected entity type ID for " + code + testSuffix);
-      }
-
-      assertEquals(expected.getEntityClassCode(), actual.getEntityClassCode(),
-                   "Unexpected entity class code for entity type ("
-                       + expected.getEntityTypeCode() + "): " + info
-                       + "expectedEntityType=[ " + expected + " ]");
-    });
-
-    if (expectRawData) {
-      validateRawDataMap(testInfo, response.getRawData(), "ENTITY_TYPES");
-      Object array = ((Map) response.getRawData()).get("ENTITY_TYPES");
-      validateRawDataMapArray(
-          testInfo, array,false,
-          "ETYPE_CODE", "ETYPE_ID", "ECLASS_CODE");
-    }
-  }
-
-  /**
-   * Validates an {@link SzEntityClassResponse} instance.
-   *
-   * @param response The response to validate.
-   * @param selfLink The HTTP request URI
-   * @param maxDuration The maximum duration for the timers in nanoseconds.
-   * @param expectRawData Whether or not to expect raw data.
-   * @param expectedEntityType The expected entity type.
-   */
-  public static void validateEntityTypeResponse(
-      SzEntityTypeResponse    response,
-      String                  selfLink,
-      long                    maxDuration,
-      boolean                 expectRawData,
-      SzEntityType            expectedEntityType)
-  {
-    validateBasics(response, selfLink, maxDuration, expectRawData);
-
-    SzEntityTypeResponseData data = response.getData();
-
-    assertNotNull(data, "Response data is null");
-
-    SzEntityType entityType = data.getEntityType();
-
-    assertNotNull(entityType, "Entity type is null");
-
-    assertEquals(expectedEntityType, entityType,
-                 "Unexpected entity type");
-
-    if (expectRawData) {
-      validateRawDataMap(
-          response.getRawData(),
-          "ETYPE_CODE", "ETYPE_ID", "ECLASS_CODE");
-    }
-  }
-
   private static Set diffSets(Set s1, Set s2) {
     Set diff = new LinkedHashSet<>(s1);
     diff.removeAll(s2);
@@ -1904,9 +1672,7 @@ public class ResponseValidators {
                                 false,
                                 "MATCH_LEVEL",
                                 "MATCH_KEY",
-                                "MATCH_SCORE",
                                 "ERRULE_CODE",
-                                "REF_SCORE",
                                 "FEATURE_SCORES");
         Object entity = ((Map) obj).get("ENTITY");
         Object resolvedEntity = ((Map) entity).get("RESOLVED_ENTITY");
@@ -2057,7 +1823,7 @@ public class ResponseValidators {
 
             Object array = ((Map) response.getRawData()).get("AFFECTED_ENTITIES");
             validateRawDataMapArray(
-                testInfo, array, false, "ENTITY_ID", "LENS_CODE");
+                testInfo, array, false, "ENTITY_ID");
           }
 
           // check the raw data interesting entities
@@ -2067,10 +1833,14 @@ public class ResponseValidators {
                 false,
                 "INTERESTING_ENTITIES");
 
-            Object array = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            Object object = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            validateRawDataMap(
+                testInfo, object, false, "ENTITIES");
+
+            Object array = ((Map) object).get("ENTITIES");
             validateRawDataMapArray(
                 testInfo, array, false,
-                "ENTITY_ID", "LENS_CODE", "DEGREES", "FLAGS",
+                "ENTITY_ID", "DEGREES", "FLAGS",
                 "SAMPLE_RECORDS");
           }
 
@@ -2200,7 +1970,7 @@ public class ResponseValidators {
 
             Object array = ((Map) response.getRawData()).get("AFFECTED_ENTITIES");
             validateRawDataMapArray(
-                testInfo, array, false, "ENTITY_ID", "LENS_CODE");
+                testInfo, array, false, "ENTITY_ID");
           }
 
           // check the raw data interesting entities
@@ -2210,10 +1980,14 @@ public class ResponseValidators {
                 false,
                 "INTERESTING_ENTITIES");
 
-            Object array = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            Object object = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            validateRawDataMap(
+                testInfo, object, false, "ENTITIES");
+
+            Object array = ((Map) object).get("ENTITIES");
             validateRawDataMapArray(
                 testInfo, array, false,
-                "ENTITY_ID", "LENS_CODE", "DEGREES", "FLAGS",
+                "ENTITY_ID", "DEGREES", "FLAGS",
                 "SAMPLE_RECORDS");
           }
 
@@ -2344,7 +2118,7 @@ public class ResponseValidators {
 
             Object array = ((Map) response.getRawData()).get("AFFECTED_ENTITIES");
             validateRawDataMapArray(
-                testInfo, array, false, "ENTITY_ID", "LENS_CODE");
+                testInfo, array, false, "ENTITY_ID");
           }
 
           // check the raw data interesting entities
@@ -2354,10 +2128,14 @@ public class ResponseValidators {
                 false,
                 "INTERESTING_ENTITIES");
 
-            Object array = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            Object object = ((Map) response.getRawData()).get("INTERESTING_ENTITIES");
+            validateRawDataMap(
+                testInfo, object, false, "ENTITIES");
+
+            Object array = ((Map) object).get("ENTITIES");
             validateRawDataMapArray(
                 testInfo, array, false,
-                "ENTITY_ID", "LENS_CODE", "DEGREES", "FLAGS",
+                "ENTITY_ID", "DEGREES", "FLAGS",
                 "SAMPLE_RECORDS");
           }
 
@@ -2467,7 +2245,7 @@ public class ResponseValidators {
     // assume we can reinitialize the product API since it does not really do
     // anything when we initialize it
     G2Product product = NativeApiFactory.createProductApi();
-    product.initV2("testApiServer", repoInitJson, false);
+    product.init("testApiServer", repoInitJson, false);
     try {
       String versionJson = product.version();
 

@@ -279,30 +279,6 @@ public interface SzApiProvider {
   Set<String> getDataSources(String... expectedDataSources);
 
   /**
-   * Gets the <b>unmodifiable</b> {@Link Set} of Entity Class codes that
-   * are configured.
-   *
-   * @param expectedEntityClasses The zero or more entity class codes that the
-   *                              caller expects to exist.
-   *
-   * @return The <b>unmodifiable</b> {@Link Set} of Entity Class codes that
-   *         are configured.
-   */
-  Set<String> getEntityClasses(String... expectedEntityClasses);
-
-  /**
-   * Gets the <b>unmodifiable</b> {@Link Set} of Entity Type codes that
-   * are configured.
-   *
-   * @param expectedEntityTypes The zero or more entity type codes that the
-   *                            caller expects to exist.
-   *
-   * @return The <b>unmodifiable</b> {@Link Set} of Entity Type codes that
-   *         are configured.
-   */
-  Set<String> getEntityTypes(String... expectedEntityTypes);
-
-  /**
    * Gets the attribute class associated with a feature type code.
    *
    * @param featureType The feature type code.

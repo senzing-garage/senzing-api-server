@@ -301,16 +301,6 @@ public class SzApiServer implements SzApiProvider {
   protected Set<String> dataSources;
 
   /**
-   * The set of configured entity classes.
-   */
-  protected Set<String> entityClasses;
-
-  /**
-   * The set of configured entity types.
-   */
-  protected Set<String> entityTypes;
-
-  /**
    * The {@link Map} of FTYPE_CODE values to ATTR_CLASS values from the config.
    */
   protected Map<String, String> featureToAttrClassMap;
@@ -726,8 +716,6 @@ public class SzApiServer implements SzApiProvider {
    */
   private static void evaluateConfig(JsonObject config,
                                      Set<String> dataSources,
-                                     Set<String> entityClasses,
-                                     Set<String> entityTypes,
                                      Map<String, String> ftypeCodeMap,
                                      Map<String, String> attrCodeMap) {
     // get the data sources from the config
@@ -738,26 +726,6 @@ public class SzApiServer implements SzApiProvider {
       JsonObject dataSource = val.asJsonObject();
       String dsrcCode = dataSource.getString("DSRC_CODE").toUpperCase();
       dataSources.add(dsrcCode);
-    }
-
-    // get the entity classes from the config
-    jsonValue = config.getValue("/G2_CONFIG/CFG_ECLASS");
-    jsonArray = jsonValue.asJsonArray();
-
-    for (JsonValue value : jsonArray) {
-      JsonObject entityClass = value.asJsonObject();
-      String classCode = entityClass.getString("ECLASS_CODE").toUpperCase();
-      entityClasses.add(classCode);
-    }
-
-    // get the entity types from the config
-    jsonValue = config.getValue("/G2_CONFIG/CFG_ETYPE");
-    jsonArray = jsonValue.asJsonArray();
-
-    for (JsonValue value : jsonArray) {
-      JsonObject entityType = value.asJsonObject();
-      String typeCode = entityType.getString("ETYPE_CODE").toUpperCase();
-      entityTypes.add(typeCode);
     }
 
     // get the attribute types from the config
@@ -807,46 +775,6 @@ public class SzApiServer implements SzApiProvider {
         }
       }
       return this.dataSources;
-    }
-  }
-
-  /**
-   * Returns the unmodifiable {@link Set} of configured entity class codes.
-   *
-   * @param expectedEntityClasses The zero or more entity class codes that the
-   *                              caller expects to exist.
-   * @return The unmodifiable {@link Set} of configured entity class codes.
-   */
-  public Set<String> getEntityClasses(String... expectedEntityClasses) {
-    synchronized (this.reinitMonitor) {
-      this.assertNotShutdown();
-      for (String entityClass : expectedEntityClasses) {
-        if (!this.entityClasses.contains(entityClass)) {
-          this.ensureConfigCurrent(false);
-          break;
-        }
-      }
-      return this.entityClasses;
-    }
-  }
-
-  /**
-   * Returns the unmodifiable {@link Set} of configured entity type codes.
-   *
-   * @param expectedEntityTypes The zero or more entity type codes that the
-   *                            caller expects to exist.
-   * @return The unmodifiable {@link Set} of configured entity type codes.
-   */
-  public Set<String> getEntityTypes(String... expectedEntityTypes) {
-    synchronized (this.reinitMonitor) {
-      this.assertNotShutdown();
-      for (String entityType : expectedEntityTypes) {
-        if (!this.entityTypes.contains(entityType)) {
-          this.ensureConfigCurrent(false);
-          break;
-        }
-      }
-      return this.entityTypes;
     }
   }
 
@@ -2641,12 +2569,12 @@ public class SzApiServer implements SzApiProvider {
 
     boolean configInRepo = false;
     G2ConfigMgr configMgr = NativeApiFactory.createConfigMgrApi();
-    int returnCode = configMgr.initV2(moduleName, initJsonText, false);
+    int returnCode = configMgr.init(moduleName, initJsonText, false);
     if (returnCode != 0) {
       String msg = multilineFormat(
           "Failed to initialize with specified initialization parameters.",
           "",
-          formatError("G2ConfigMgr.initV2", configMgr)
+          formatError("G2ConfigMgr.init", configMgr)
           + "Initialization parameters:",
           "",
           (initJsonText.length() > 80
@@ -2696,7 +2624,7 @@ public class SzApiServer implements SzApiProvider {
       }
     }
     this.productApi = NativeApiFactory.createProductApi();
-    int initResult = this.productApi.initV2(
+    int initResult = this.productApi.init(
         this.moduleName, initJsonText, this.verbose);
 
     if (initResult < 0) {
@@ -2707,7 +2635,7 @@ public class SzApiServer implements SzApiProvider {
     }
 
     this.diagnosticApi = NativeApiFactory.createDiagnosticApi();
-    initResult = this.diagnosticApi.initV2(
+    initResult = this.diagnosticApi.init(
         this.moduleName, initJsonText, this.verbose);
     if (initResult < 0) {
       throw new RuntimeException(buildErrorMessage(
@@ -2717,7 +2645,7 @@ public class SzApiServer implements SzApiProvider {
     }
 
     this.configApi = NativeApiFactory.createConfigApi();
-    initResult = this.configApi.initV2(
+    initResult = this.configApi.init(
         this.moduleName, initJsonText, this.verbose);
     if (initResult < 0) {
       throw new RuntimeException(buildErrorMessage(
@@ -2731,12 +2659,12 @@ public class SzApiServer implements SzApiProvider {
 
     if (this.configType.isManaged() && this.configId != null) {
       // config ID is hard coded and config is in the repository
-      initResult = this.engineApi.initWithConfigIDV2(
+      initResult = this.engineApi.initWithConfigID(
           this.moduleName, initJsonText, this.configId, this.verbose);
 
     } else {
       // config is in the repository
-      initResult = this.engineApi.initV2(
+      initResult = this.engineApi.init(
           this.moduleName, initJsonText, this.verbose);
     }
 
@@ -2750,7 +2678,7 @@ public class SzApiServer implements SzApiProvider {
     // initialize the config manager API
     if (this.configType.isManaged() && this.configId == null) {
       this.configMgrApi = NativeApiFactory.createConfigMgrApi();
-      initResult = this.configMgrApi.initV2(this.moduleName, initJsonText, this.verbose);
+      initResult = this.configMgrApi.init(this.moduleName, initJsonText, this.verbose);
 
       if (initResult < 0) {
         throw new RuntimeException(buildErrorMessage(
@@ -3079,10 +3007,10 @@ public class SzApiServer implements SzApiProvider {
           this.echo("Reinitializing with config: " + defaultConfigId);
 
           // reinitialize with the default config ID
-          returnCode = this.engineApi.reinitV2(defaultConfigId);
+          returnCode = this.engineApi.reinit(defaultConfigId);
           if (returnCode != 0) {
             String errorMsg = formatError(
-                "G2Engine.reinitV2", this.engineApi);
+                "G2Engine.reinit", this.engineApi);
             System.err.println("Failed to reinitialize with config ID ("
                                    + defaultConfigId + "): " + errorMsg);
             return null;
@@ -3170,21 +3098,15 @@ public class SzApiServer implements SzApiProvider {
       JsonObject config = JsonUtilities.parseJsonObject(sb.toString());
 
       Set<String>         dataSourceSet   = new LinkedHashSet<>();
-      Set<String>         entityClassSet  = new LinkedHashSet<>();
-      Set<String>         entityTypeSet   = new LinkedHashSet<>();
       Map<String,String>  ftypeCodeMap    = new LinkedHashMap<>();
       Map<String,String>  attrCodeMap     = new LinkedHashMap<>();
 
       this.evaluateConfig(config,
                           dataSourceSet,
-                          entityClassSet,
-                          entityTypeSet,
                           ftypeCodeMap,
                           attrCodeMap);
 
       this.dataSources            = Collections.unmodifiableSet(dataSourceSet);
-      this.entityClasses          = Collections.unmodifiableSet(entityClassSet);
-      this.entityTypes            = Collections.unmodifiableSet(entityTypeSet);
       this.featureToAttrClassMap  = Collections.unmodifiableMap(ftypeCodeMap);
       this.attrCodeToAttrClassMap = Collections.unmodifiableMap(attrCodeMap);
     }

@@ -176,7 +176,7 @@ public class EntityGraphServices implements ServicesSupport {
     final String encodedSources = (withSources == null)
         ? null : this.nativeJsonEncodeDataSources(withSources);
 
-    final int flags = (forbidAvoided ? 0 : G2_FIND_PATH_PREFER_EXCLUDE)
+    final long flags = (forbidAvoided ? 0L : G2_FIND_PATH_PREFER_EXCLUDE)
                     | this.getFlags(forceMinimal,
                                     featureMode,
                                     withFeatureStats,
@@ -201,15 +201,15 @@ public class EntityGraphServices implements ServicesSupport {
           String id2 = ((SzRecordId) to).getRecordId();
 
           if (encodedAvoid == null && encodedSources == null) {
-            this.callingNativeAPI(timers, "engine", "findPathByRecordIDV2");
-            result = engineApi.findPathByRecordIDV2(source1,
-                                                    id1,
-                                                    source2,
-                                                    id2,
-                                                    maxDegrees,
-                                                    flags,
-                                                    responseDataBuffer);
-            this.calledNativeAPI(timers, "engine", "findPathByRecordIDV2");
+            this.callingNativeAPI(timers, "engine", "findPathByRecordID");
+            result = engineApi.findPathByRecordID(source1,
+                                                  id1,
+                                                  source2,
+                                                  id2,
+                                                  maxDegrees,
+                                                  flags,
+                                                  responseDataBuffer);
+            this.calledNativeAPI(timers, "engine", "findPathByRecordID");
 
           } else if (encodedSources == null) {
             this.callingNativeAPI(timers, "engine", "findPathExcludingByRecordID");
@@ -246,13 +246,13 @@ public class EntityGraphServices implements ServicesSupport {
           SzEntityId id2 = (SzEntityId) to;
 
           if (encodedAvoid == null && encodedSources == null) {
-            this.callingNativeAPI(timers, "engine", "findPathByEntityIDV2");
-            result = engineApi.findPathByEntityIDV2(id1.getValue(),
+            this.callingNativeAPI(timers, "engine", "findPathByEntityID");
+            result = engineApi.findPathByEntityID(id1.getValue(),
                                                   id2.getValue(),
                                                   maxDegrees,
                                                   flags,
                                                   responseDataBuffer);
-            this.calledNativeAPI(timers, "engine", "findPathByEntityIDV2");
+            this.calledNativeAPI(timers, "engine", "findPathByEntityID");
 
           } else if (encodedSources == null) {
             this.callingNativeAPI(timers, "engine", "findPathExcludingByEntityID");
@@ -464,11 +464,11 @@ public class EntityGraphServices implements ServicesSupport {
     final String encodedEntityIds = (entities == null)
         ? null : this.nativeJsonEncodeEntityIds(entities);
 
-    final int flags = this.getFlags(forceMinimal,
-                                    featureMode,
-                                    withFeatureStats,
-                                    withInternalFeatures,
-                                    true);
+    final long flags = this.getFlags(forceMinimal,
+                                     featureMode,
+                                     withFeatureStats,
+                                     withInternalFeatures,
+                                     true);
 
     try {
       this.enteringQueue(timers);
@@ -483,26 +483,26 @@ public class EntityGraphServices implements ServicesSupport {
         int result;
 
         if (entities.iterator().next().getClass() == SzRecordId.class) {
-          this.callingNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
-          result = engineApi.findNetworkByRecordIDV2(
+          this.callingNativeAPI(timers, "engine", "findNetworkByRecordID");
+          result = engineApi.findNetworkByRecordID(
               encodedEntityIds,
               maxDegrees,
               buildOut,
               maxEntities,
               flags,
               sb);
-          this.calledNativeAPI(timers, "engine", "findNetworkByRecordIDV2");
+          this.calledNativeAPI(timers, "engine", "findNetworkByRecordID");
 
         } else {
-          this.callingNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
-          result = engineApi.findNetworkByEntityIDV2(
+          this.callingNativeAPI(timers, "engine", "findNetworkByEntityID");
+          result = engineApi.findNetworkByEntityID(
               encodedEntityIds,
               maxDegrees,
               buildOut,
               maxEntities,
               flags,
               sb);
-          this.calledNativeAPI(timers, "engine", "findNetworkByEntityIDV2");
+          this.calledNativeAPI(timers, "engine", "findNetworkByEntityID");
         }
 
         if (result != 0) {

@@ -39,7 +39,6 @@ public class AdminServices implements ServicesSupport {
    * Generates a root-level response -- similar to heartbeat.
    */
   @GET
-  @Path("")
   public SzBasicResponse root(@Context UriInfo uriInfo) {
     return this.heartbeat(uriInfo);
   }

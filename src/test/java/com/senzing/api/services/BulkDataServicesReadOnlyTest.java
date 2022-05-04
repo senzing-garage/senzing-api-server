@@ -55,19 +55,16 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       MediaType mediaType,
       File bulkDataFile,
       SzBulkDataAnalysis analysis,
-      Map<String,String> dataSourceMap,
-      Map<String,String>  entityTypeMap)
+      Map<String,String> dataSourceMap)
   {
     this.performTest(() -> {
       this.livePurgeRepository();
 
       String  uriText = this.formatServerUri("bulk-data/load");
 
-      MultivaluedMap queryParams       = new MultivaluedHashMap();
+      MultivaluedMap  queryParams       = new MultivaluedHashMap();
       String          mapDataSources    = null;
-      String          mapEntityTypes    = null;
-      List<String> mapDataSourceList = new LinkedList<>();
-      List<String>    mapEntityTypeList = new LinkedList<>();
+      List<String>    mapDataSourceList = new LinkedList<>();
       if (dataSourceMap != null) {
         boolean[]         jsonFlag    = { true };
         boolean[]         overlapFlag = { true };
@@ -93,31 +90,6 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
         }
       }
 
-      if (entityTypeMap != null) {
-        boolean[]         jsonFlag    = { true };
-        boolean[]         overlapFlag = { true };
-        JsonObjectBuilder builder   = Json.createObjectBuilder();
-        entityTypeMap.entrySet().forEach(entry -> {
-          String  key   = entry.getKey();
-          String  value = entry.getValue();
-          if (jsonFlag[0] || overlapFlag[0]) {
-            builder.add(key, value);
-
-          } else {
-            String mapping = ":" + key + ":" + value;
-            mapEntityTypeList.add(mapping);
-            queryParams.add("mapEntityType", mapping);
-            overlapFlag[0] = !overlapFlag[0];
-          }
-          jsonFlag[0] = !jsonFlag[0];
-        });
-        JsonObject jsonObject = builder.build();
-        if (jsonObject.size() > 0) {
-          mapEntityTypes = jsonObject.toString();
-          queryParams.add("mapEntityTypes", mapDataSources);
-        }
-      }
-
       UriInfo uriInfo = this.newProxyUriInfo(uriText, queryParams);
       long before = System.nanoTime();
 
@@ -127,9 +99,6 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
             CONTACTS_DATA_SOURCE,
             mapDataSources,
             mapDataSourceList,
-            GENERIC_ENTITY_TYPE,
-            mapEntityTypes,
-            mapEntityTypeList,
             null,
             0,
             mediaType,
@@ -164,15 +133,14 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       MediaType           mediaType,
       File                bulkDataFile,
       SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap,
-      Map<String,String>  entityTypeMap)
+      Map<String,String>  dataSourceMap)
   {
     this.performTest(() -> {
       this.livePurgeRepository();
 
       String uriText = this.formatServerUri(formatLoadURL(
-          CONTACTS_DATA_SOURCE, GENERIC_ENTITY_TYPE, null, null,
-          dataSourceMap, entityTypeMap, null));
+          CONTACTS_DATA_SOURCE, null, null,
+          dataSourceMap, null));
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
         long before = System.nanoTime();
@@ -203,15 +171,14 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       MediaType           mediaType,
       File                bulkDataFile,
       SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap,
-      Map<String,String>  entityTypeMap)
+      Map<String,String>  dataSourceMap)
   {
     this.performTest(() -> {
       this.livePurgeRepository();
 
       String uriText = this.formatServerUri(formatLoadURL(
-          CONTACTS_DATA_SOURCE, GENERIC_ENTITY_TYPE, null, null,
-          dataSourceMap, entityTypeMap, null));
+          CONTACTS_DATA_SOURCE, null, null,
+          dataSourceMap, null));
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
         long before = System.nanoTime();
@@ -245,15 +212,14 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       MediaType           mediaType,
       File                bulkDataFile,
       SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap,
-      Map<String,String>  entityTypeMap)
+      Map<String,String>  dataSourceMap)
   {
     this.performTest(() -> {
       this.livePurgeRepository();
 
       String uriText = this.formatServerUri(formatLoadURL(
-          CONTACTS_DATA_SOURCE, GENERIC_ENTITY_TYPE, null, null,
-          dataSourceMap, entityTypeMap, null));
+          CONTACTS_DATA_SOURCE, null, null,
+          dataSourceMap, null));
       uriText = uriText.replaceAll("^http:(.*)", "ws:$1");
 
       BulkDataWebSocketClient client = null;
@@ -294,15 +260,14 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       MediaType           mediaType,
       File                bulkDataFile,
       SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap,
-      Map<String,String>  entityTypeMap)
+      Map<String,String>  dataSourceMap)
   {
     this.performTest(() -> {
       this.livePurgeRepository();
 
       String uriText = this.formatServerUri(formatLoadURL(
-          CONTACTS_DATA_SOURCE, GENERIC_ENTITY_TYPE, null, null,
-          dataSourceMap, entityTypeMap, null));
+          CONTACTS_DATA_SOURCE, null, null,
+          dataSourceMap, null));
 
       try {
         long before = System.nanoTime();
@@ -366,7 +331,6 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       Integer               maxFailures,
       SzBulkDataStatus expectedStatus,
       Map<String, Integer>  failuresByDataSource,
-      Map<String, Integer>  failuresByEntityType,
       File                  dataFile)
   {
     this.performTest(() -> {
@@ -375,8 +339,7 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       String testInfo = "recordCount=[ " + recordCount + " ], maxFailures=[ "
           + maxFailures + " ], status=[ "
           + expectedStatus + " ], failuresByDataSource=[ "
-          + failuresByDataSource + " ], failuresByEntityType=[ "
-          + failuresByEntityType + " ], dataFile=[ " + dataFile + " ]";
+          + failuresByDataSource + " ], dataFile=[ " + dataFile + " ]";
 
       String uriText = this.formatServerUri("bulk-data/load");
 
@@ -390,9 +353,6 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       try (InputStream is = new FileInputStream(dataFile);
            BufferedInputStream bis = new BufferedInputStream(is)) {
         this.bulkDataServices.loadBulkRecordsViaForm(
-            null,
-            null,
-            null,
             null,
             null,
             null,

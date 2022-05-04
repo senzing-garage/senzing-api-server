@@ -32,11 +32,6 @@ public class SzBulkLoadResultImpl extends SzBaseBulkLoadResultImpl
   private int missingDataSourceCount;
 
   /**
-   * The number of incomplete records that are missing a ENTITY_TYPE.
-   */
-  private int missingEntityTypeCount;
-
-  /**
    * The status of the bulk load.
    */
   private SzBulkDataStatus status;
@@ -47,19 +42,12 @@ public class SzBulkLoadResultImpl extends SzBaseBulkLoadResultImpl
   private Map<String, SzDataSourceBulkLoadResult> resultsByDataSource;
 
   /**
-   * Internal {@link Map} for tracking the analysis by entity type.
-   */
-  private Map<String, SzEntityTypeBulkLoadResult> resultsByEntityType;
-
-  /**
    * Default constructor.
    */
   public SzBulkLoadResultImpl() {
     this.missingDataSourceCount = 0;
-    this.missingEntityTypeCount = 0;
     this.status = NOT_STARTED;
     this.resultsByDataSource = new HashMap<>();
-    this.resultsByEntityType = new HashMap<>();
   }
 
   /**
@@ -149,38 +137,6 @@ public class SzBulkLoadResultImpl extends SzBaseBulkLoadResultImpl
   }
 
   /**
-   * Return the number of records that are incomplete because they are missing
-   * the <tt>"ENTITY_TYPE"</tt> field.
-   *
-   * @return The number of records that are incomplete because they are missing
-   *         the <tt>"ENTITY_TYPE"</tt> field.
-   */
-  public int getMissingEntityTypeCount() {
-    return this.missingEntityTypeCount;
-  }
-
-  /**
-   * Sets the number of records that are incomplete because they are missing
-   * the <tt>"ENTITY_TYPE"</tt> field.
-   *
-   * @param recordCount The number of records that are incomplete because they
-   *                    are missing the <tt>"ENTITY_TYPE"</tt> field.
-   */
-  protected void setMissingEntityTypeCount(int recordCount) {
-    this.missingEntityTypeCount = recordCount;
-  }
-
-  /**
-   * Increments the number of records that are incomplete because they are
-   * missing the <tt>"ENTITY_TYPE"</tt> field.
-   *
-   * @return The incremented the count of records missing an entity type.
-   */
-  protected int incrementMissingEntityTypeCount() {
-    return ++this.missingEntityTypeCount;
-  }
-
-  /**
    * Internal method to help sort instances of {@link SzBaseBulkLoadResult}
    */
   protected static int compareCounts(SzBaseBulkLoadResult r1,
@@ -211,32 +167,6 @@ public class SzBulkLoadResultImpl extends SzBaseBulkLoadResultImpl
         if (ds1 == null) return -1;
         if (ds2 == null) return 1;
         return ds1.compareTo(ds2);
-      } else {
-        return diff;
-      }
-    });
-    return list;
-  }
-
-  /**
-   * Gets the list of {@link SzDataSourceRecordAnalysis} instances for the
-   * bulk data describing the statistics by data source (including those with
-   * no data source).
-   *
-   * @return A {@link List} of {@link SzEntityTypeBulkLoadResult} instances
-   * describing the statistics for the bulk data.
-   */
-  public List<SzEntityTypeBulkLoadResult> getResultsByEntityType() {
-    List<SzEntityTypeBulkLoadResult> list
-        = new ArrayList<>(this.resultsByEntityType.values());
-    list.sort((r1, r2) -> {
-      int diff = compareCounts(r1, r2);
-      if (diff == 0) {
-        String et1 = r1.getEntityType();
-        String et2 = r2.getEntityType();
-        if (et1 == null) return -1;
-        if (et2 == null) return 1;
-        return et1.compareTo(et2);
       } else {
         return diff;
       }
@@ -282,67 +212,25 @@ public class SzBulkLoadResultImpl extends SzBaseBulkLoadResultImpl
   }
 
   /**
-   * Set the bulk load results by data source for this instance.  This will
-   * reset the top-level counts according to what is discovered in the specified
-   * collection of {@link SzDataSourceBulkLoadResult} instances.
-   *
-   * @param resultList The {@link Collection} of
-   *                   {@link SzDataSourceBulkLoadResult} instances.
-   */
-  protected void setResultsByEntityType(
-      Collection<SzEntityTypeBulkLoadResult> resultList)
-  {
-    // count the records
-    int recordCount = resultList.stream()
-        .mapToInt(SzEntityTypeBulkLoadResult::getRecordCount).sum();
-    this.setRecordCount(recordCount);
-
-    // count the records that have been loaded
-    int loadedCount = resultList.stream()
-        .filter(a -> a.getEntityType() != null)
-        .mapToInt(SzEntityTypeBulkLoadResult::getLoadedRecordCount)
-        .sum();
-    this.setLoadedRecordCount(loadedCount);
-
-    // count the records that failed to load
-    int failedCount = resultList.stream()
-        .filter(a -> a.getEntityType() != null)
-        .mapToInt(SzEntityTypeBulkLoadResult::getFailedRecordCount)
-        .sum();
-    this.setFailedRecordCount(failedCount);
-
-    // clear the current analysis map and repopulate it
-    this.resultsByEntityType.clear();
-    for (SzEntityTypeBulkLoadResult loadResult : resultList) {
-      this.resultsByEntityType.put(loadResult.getEntityType(), loadResult);
-    }
-  }
-
-  /**
    * Utility method for tracking the successful loading of a record with the
    * specified non-null data source.
    *
    * @param dataSource The non-null data source for the record.
-   * @param entityType The non-null entity type for the record.
    * @throws NullPointerException If the specified parameter is <tt>null</tt>.
    */
-  public void trackLoadedRecord(String dataSource, String entityType) {
+  @Override
+  public void trackLoadedRecord(String dataSource) {
     Objects.requireNonNull(dataSource, "The data source cannot be null");
-    Objects.requireNonNull(entityType, "The entity type cannot be null");
 
-    // get the results for that data source and entity type
+    // get the results for that data source
     SzDataSourceBulkLoadResult dsrcResult
         = this.getDataSourceResult(dataSource);
-    SzEntityTypeBulkLoadResult etypeResult
-        = this.getEntityTypeResult(entityType);
 
     // increment the record counts
     dsrcResult.incrementRecordCount();
-    etypeResult.incrementRecordCount();
     this.incrementRecordCount();
 
     dsrcResult.incrementLoadedRecordCount();
-    etypeResult.incrementLoadedRecordCount();
     this.incrementLoadedRecordCount();
     if (this.status == NOT_STARTED) this.status = IN_PROGRESS;
   }
@@ -354,17 +242,15 @@ public class SzBulkLoadResultImpl extends SzBaseBulkLoadResultImpl
    *
    * @param dataSource The data source for the record, or <tt>null</tt> if it
    *                   does not have an <tt>"DATA_SOURCE"</tt> property.
-   * @param entityType The entity type for the record, or <tt>null</tt> if it
-   *                   does not have an <tt>"ENTITY_TYPE"</tt> property.
    * @param errorCode  The error code for the failure.
    * @param errorMsg   The error message associated with the failure.
    */
   public void trackFailedRecord(String dataSource,
-                                String entityType,
                                 String errorCode,
-                                String errorMsg) {
+                                String errorMsg)
+  {
     this.trackFailedRecord(
-        dataSource, entityType, SzError.FACTORY.create(errorCode, errorMsg));
+        dataSource, SzError.FACTORY.create(errorCode, errorMsg));
   }
 
   /**
@@ -374,15 +260,11 @@ public class SzBulkLoadResultImpl extends SzBaseBulkLoadResultImpl
    *
    * @param dataSource The data source for the record, or <tt>null</tt> if it
    *                   does not have a <tt>"DATA_SOURCE"</tt> property.
-   * @param entityType The entity type for the record, or <tt>null</tt> if it
-   *                   does not have an <tt>"ENTITY_TYPE"</tt> property.
    * @param g2Fallible The {@link G2Fallible} instance that had the failure.
    */
-  public void trackFailedRecord(String      dataSource,
-                                String      entityType,
-                                G2Fallible  g2Fallible) {
+  public void trackFailedRecord(String dataSource, G2Fallible g2Fallible) {
     this.trackFailedRecord(
-        dataSource, entityType, SzError.FACTORY.create(g2Fallible));
+        dataSource, SzError.FACTORY.create(g2Fallible));
   }
 
   /**
@@ -392,28 +274,19 @@ public class SzBulkLoadResultImpl extends SzBaseBulkLoadResultImpl
    *
    * @param dataSource The data source for the record, or <tt>null</tt> if it
    *                   does not have a <tt>"DATA_SOURCE"</tt> property.
-   * @param entityType The entity type for the record, or <tt>null</tt> if it
-   *                   does not have an <tt>"ENTITY_TYPE"</tt> property.
    * @param error      The {@link SzError} describing the error that occurred.
    */
-  public void trackFailedRecord(String  dataSource,
-                                String  entityType,
-                                SzError error) {
+  public void trackFailedRecord(String dataSource, SzError error) {
     // get the analysis for that data source
     SzDataSourceBulkLoadResult dsrcResult
         = this.getDataSourceResult(dataSource);
 
-    SzEntityTypeBulkLoadResult etypeResult
-        = this.getEntityTypeResult(entityType);
-
     // increment the global grouped record counts
     dsrcResult.incrementRecordCount();
-    etypeResult.incrementRecordCount();
     this.incrementRecordCount();
 
     // increment the failed record counts
     dsrcResult.trackFailedRecord(error);
-    etypeResult.trackFailedRecord(error);
     super.trackFailedRecord(error);
 
     if (this.status == NOT_STARTED) this.status = IN_PROGRESS;
@@ -422,14 +295,13 @@ public class SzBulkLoadResultImpl extends SzBaseBulkLoadResultImpl
   /**
    * Tracks the occurrence of an incomplete record.
    */
-  public void trackIncompleteRecord(String dataSource, String entityType) {
+  @Override
+  public void trackIncompleteRecord(String dataSource) {
     if (dataSource!=null && dataSource.trim().length()==0) dataSource = null;
-    if (entityType!=null && entityType.trim().length()==0) entityType = null;
-    if (dataSource != null && entityType != null) {
+    if (dataSource != null) {
       throw new IllegalArgumentException(
-          "Record is not incomplete if it has both a data source and an "
-          + "entity type.  dataSource=[ " + dataSource + " ], entityType=[ "
-          + entityType + " ]");
+          "Record is not incomplete if it has a data source.  dataSource=[ "
+          + dataSource + " ]");
     }
 
     // count the record as incomplete
@@ -445,14 +317,6 @@ public class SzBulkLoadResultImpl extends SzBaseBulkLoadResultImpl
       this.getDataSourceResult(dataSource).incrementIncompleteRecordCount();
     }
 
-    // check whether or not we have an entity type
-    if (entityType == null) {
-      // if no entity type then increment the missing entity type count
-      this.incrementMissingEntityTypeCount();
-
-    } else {
-      this.getEntityTypeResult(entityType).incrementIncompleteRecordCount();
-    }
     if (this.status == NOT_STARTED) this.status = IN_PROGRESS;
   }
 
@@ -477,32 +341,6 @@ public class SzBulkLoadResultImpl extends SzBaseBulkLoadResultImpl
       // if not, create it and store it for later
       result = SzDataSourceBulkLoadResult.FACTORY.create(dataSource);
       this.resultsByDataSource.put(dataSource, result);
-    }
-
-    return result;
-  }
-
-  /**
-   * Gets the {@link SzEntityTypeBulkLoadResult} for the specified entity type.
-   *
-   * @param entityType The entity type.
-   * @return The {@link SzEntityTypeBulkLoadResult} for the entity type.
-   */
-  protected SzEntityTypeBulkLoadResult getEntityTypeResult(String entityType) {
-    // check if entity type is empty string and if so, normalize it to null
-    if (entityType != null && entityType.trim().length() == 0) {
-      entityType = null;
-    }
-
-    // get the analysis for that data source
-    SzEntityTypeBulkLoadResult result
-        = this.resultsByEntityType.get(entityType);
-
-    // check if it does not yet exist
-    if (result == null) {
-      // if not, create it and store it for later
-      result = SzEntityTypeBulkLoadResult.FACTORY.create(entityType);
-      this.resultsByEntityType.put(entityType, result);
     }
 
     return result;

@@ -6,16 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2022-05-04
+
+### Changed in 3.0.0
+- Removed endpoints, classes and methods pertaining to Entity Types
+- Removed endpoints, classes and methods pertaining to Entity Classes
+- Removed `matchScore` and `refScore` from `SzBaseRelatedEntity` since 
+  `MATCH_SCORE` and `REF_SCORE` were removed from the native/raw JSON in v3.0 
+- Removed `refScore` from `SzMatchedRecord` since `REF_SCORE` was removed in v3.0
+- Updated `senzing-commons-java` dependency to version `3.x`
+- Updated `g2-sdk-java` dependency to version `3.x`
+- Updated supported API specification version to `3.0.0`
+
 ## [2.8.6] - 2022-04-18
 
 ### Added to 2.8.6
-
 - Modified `Dockerfile` to upgrade Debian base version to 11.3
 
 ## [2.8.5] - 2022-03-29
 
-### Added to 2.8.5
-
+### Changed in 2.8.5
 - Updates to latest dependency versions to resolve/avoid security issues.  
   Specifically resolves CVE-2020-36518 for jackson-databind.
 - Added `@SuppressWarnings()` annotation to some files to eliminate specific
@@ -23,15 +33,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.8.4] - 2022-03-07
 
-### Added to 2.8.4
-
+### Changed in 2.8.4
 - Updates to `pom.xml` to prevent pulling beta `3.0.0` versions of 
   `senzing-sdk-java` and `senzing-commons-java` via the Maven dependency range.
 
 ## [2.8.3] - 2022-02-04
 
 ### Changed in 2.8.3
-
 - Updated pom.xml to depend on `senzing-commons` release version `2.x`
 - Updated classes that previously used `com.senzing.util.JsonUtils` to 
   instead use `com.senzing.util.JsonUtilities`

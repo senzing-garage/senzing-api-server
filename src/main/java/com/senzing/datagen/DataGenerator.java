@@ -18,7 +18,6 @@ import static com.senzing.datagen.UsageType.*;
 import static com.senzing.datagen.FeatureDensity.*;
 import static com.senzing.util.LoggingUtilities.*;
 import static com.senzing.datagen.DataGeneratorOption.*;
-import static com.senzing.datagen.EntityTypeStrategy.*;
 import static com.senzing.io.IOUtilities.*;
 
 /**
@@ -1020,13 +1019,13 @@ public class DataGenerator {
 
   /**
    * Generates a single record with the specified {@link RecordType},
-   * optional record ID, optional data source, optional entity type, and
-   * optional feature generation {@link Map} of {@link FeatureType} keys
-   * indicating the feature types of each feature that should be generated
-   * and {@link Set} values containing {@link UsageType} instances to
-   * indicate how many features of that type should be generated and with which
-   * usage types with <tt>null</tt> values being interpretted as a single
-   * feature of that type with no {@link UsageType}.
+   * optional record ID, optional data source, and optional feature generation
+   * {@link Map} of {@link FeatureType} keys indicating the feature types of
+   * each feature that should be generated and {@link Set} values containing
+   * {@link UsageType} instances to indicate how many features of that type
+   * should be generated and with which usage types with <tt>null</tt> values
+   * being interpretted as a single feature of that type with no {@link
+   * UsageType}.
    *
    * @param recordType The {@link RecordType} describing the type of record
    *                   being generated.
@@ -1034,8 +1033,6 @@ public class DataGenerator {
    *                 record ID from the generated record.
    * @param dataSource The optional data source, or <tt>null</tt> to omit the
    *                   data source from the generated record.
-   * @param entityType The optional entity type, or <tt>null</tt> to omit the
-   *                   entity type from the generated record.
    * @param featureGenMap The {@link Map} of {@link FeatureType} keys to {@link
    *                      Set} values of {@link UsageType} describing the
    *                      features to be added to the record, or <tt>null</tt>
@@ -1051,7 +1048,6 @@ public class DataGenerator {
       RecordType                        recordType,
       String                            recordId,
       String                            dataSource,
-      String                            entityType,
       Map<FeatureType, Set<UsageType>>  featureGenMap,
       Map<FeatureType, FeatureDensity>  featureDensityMap,
       boolean                           fullValues,
@@ -1068,11 +1064,6 @@ public class DataGenerator {
     // check if a data source was specified
     if (dataSource != null) {
       builder.add("DATA_SOURCE", dataSource);
-    }
-
-    // check if an entity type was specified
-    if (entityType != null) {
-      builder.add("ENTITY_TYPE", entityType);
     }
 
     // end early if the feature generation map is null
@@ -1192,22 +1183,19 @@ public class DataGenerator {
 
   /**
    * Generates the specified number of records with the specified {@link
-   * RecordType}, {@link List} of data sources, {@link List} of entity types,
-   * and optional feature generation {@link Map} of {@link FeatureType} keys
-   * indicating the feature types of each feature that should be generated
-   * and {@link Set} values containing {@link UsageType} instances to
-   * indicate how many features of that type should be generated and with which
-   * usage types with <tt>null</tt> values being interpreted as a single
-   * feature of that type with no {@link UsageType}.
+   * RecordType}, {@link List} of data sources and optional feature generation
+   * {@link Map} of {@link FeatureType} keys indicating the feature types of
+   * each feature that should be generated and {@link Set} values containing
+   * {@link UsageType} instances to indicate how many features of that type
+   * should be generated and with which usage types with <tt>null</tt> values
+   * being interpreted as a single feature of that type with no {@link
+   * UsageType}.
    *
    * @param recordType The {@link RecordType} describing the type of record
    *                   being generated.
    * @param recordCount The non-negative number of records to generate.
    * @param dataSource The optional data source for each record, or
    *                   <tt>null</tt> to omit the data source from the generated
-   *                   records.
-   * @param entityType The optional entity type for each record, or
-   *                   <tt>null</tt> to omit the entity type from the generated
    *                   records.
    * @param featureGenMap The {@link Map} of {@link FeatureType} keys to {@link
    *                      Set} values of {@link UsageType} describing the
@@ -1229,7 +1217,6 @@ public class DataGenerator {
       int                               recordCount,
       boolean                           includeRecordIds,
       String                            dataSource,
-      String                            entityType,
       Map<FeatureType, Set<UsageType>>  featureGenMap,
       Map<FeatureType, FeatureDensity>  featureDensityMap,
       boolean                           fullValues,
@@ -1257,7 +1244,6 @@ public class DataGenerator {
       JsonObjectBuilder record = this.generateRecord(recordType,
                                                      recordId,
                                                      dataSource,
-                                                     entityType,
                                                      featureGenMap,
                                                      featureDensityMap,
                                                      fullValues,
@@ -1269,13 +1255,13 @@ public class DataGenerator {
 
   /**
    * Generates the specified number of records with the specified {@link
-   * RecordType}, {@link List} of data sources, {@link List} of entity types,
-   * and optional feature generation {@link Map} of {@link FeatureType} keys
-   * indicating the feature types of each feature that should be generated
-   * and {@link Set} values containing {@link UsageType} instances to
-   * indicate how many features of that type should be generated and with which
-   * usage types with <tt>null</tt> values being interpreted as a single
-   * feature of that type with no {@link UsageType}.
+   * RecordType}, {@link List} of data sources and optional feature generation
+   * {@link Map} of {@link FeatureType} keys indicating the feature types of
+   * each feature that should be generated and {@link Set} values containing
+   * {@link UsageType} instances to indicate how many features of that type
+   * should be generated and with which usage types with <tt>null</tt> values
+   * being interpreted as a single feature of that type with no {@link
+   * UsageType}.
    *
    * @param recordType The {@link RecordType} describing the type of record
    *                   being generated.
@@ -1284,10 +1270,6 @@ public class DataGenerator {
    *                    randomly select a data source for each record, or
    *                    <tt>null</tt> to omit the data source from the generated
    *                    records.
-   * @param entityTypeStrategy The {@link EntityTypeStrategy} that indicates how
-   *                           to generate the entity types for the records.  If
-   *                           this is <tt>null</tt> then {@link
-   *                           EntityTypeStrategy#NONE} is assumed.
    * @param featureGenMap The {@link Map} of {@link FeatureType} keys to {@link
    *                      Set} values of {@link UsageType} describing the
    *                      features to be added to the record, or <tt>null</tt>
@@ -1308,7 +1290,6 @@ public class DataGenerator {
       int                               recordCount,
       boolean                           includeRecordIds,
       List<String>                      dataSources,
-      EntityTypeStrategy                entityTypeStrategy,
       Map<FeatureType, Set<UsageType>>  featureGenMap,
       Map<FeatureType, FeatureDensity>  featureDensityMap,
       boolean                           fullValues,
@@ -1321,7 +1302,6 @@ public class DataGenerator {
     }
 
     if (featureDensityMap == null) featureDensityMap = Collections.emptyMap();
-    if (entityTypeStrategy == null) entityTypeStrategy = NONE;
 
     // check if no records
     if (recordCount == 0) return;
@@ -1338,31 +1318,10 @@ public class DataGenerator {
       String dataSource = (dataSources == null || dataSources.size() == 0)
           ? null : this.nextItem(dataSources);
 
-      // get the next entity type
-      String entityType = null;
-      switch (entityTypeStrategy) {
-        case NONE:
-          entityType = null;
-          break;
-        case GENERIC:
-          entityType = "GENERIC";
-          break;
-        case DATA_SOURCE:
-          entityType = dataSource;
-          break;
-        case RECORD_TYPE:
-          entityType = recordType.toString();
-          break;
-        default:
-          throw new IllegalStateException(
-              "Unhandled EntityTypeStrategy: " + entityTypeStrategy);
-      }
-
       // build the record
       JsonObjectBuilder record = this.generateRecord(recordType,
                                                      recordId,
                                                      dataSource,
-                                                     entityType,
                                                      featureGenMap,
                                                      featureDensityMap,
                                                      fullValues,
@@ -1453,11 +1412,6 @@ public class DataGenerator {
     recordSources.put(PERSON, personSources);
     recordSources.put(ORGANIZATION, orgSources);
     recordSources.put(RecordType.BUSINESS, bizSources);
-
-    // get the entity type strategy
-    EntityTypeStrategy entityTypeStrategy = (EntityTypeStrategy)
-        options.get(ENTITY_TYPE_STRATEGY);
-    if (entityTypeStrategy == null) entityTypeStrategy = NONE;
 
     // get the random number seed (if any)
     Long seed = (Long) options.get(SEED);
@@ -1613,7 +1567,6 @@ public class DataGenerator {
             writer,
             withRecordIds,
             includeSources,
-            (entityTypeStrategy != EntityTypeStrategy.NONE),
             aggregateFeatureGenMap,
             recordTypes,
             fullValues);
@@ -1687,7 +1640,6 @@ public class DataGenerator {
                                       recordCounts.get(recordType),
                                       withRecordIds,
                                       recordSources.get(recordType),
-                                      entityTypeStrategy,
                                       featureGenMaps.get(recordType),
                                       densityMap,
                                       fullValues,
@@ -1808,15 +1760,6 @@ public class DataGenerator {
         "         will be generated without the DATA_SOURCE property.",
         "        NOTE: This option requires that the -bizCount option has also been",
         "        specified.",
-        "",
-        "   -entityTypeStrategy [none|generic|record-type|data-source]",
-        "        Controls how to generate the ENTITY_TYPE property for the records.",
-        "        The possible values are as follows:",
-        "            - none        : no ENITTY_TYPE property will be generated",
-        "            - generic     : the GENERIC entity type will be used",
-        "            - record-type : the record type should be used as entity type",
-        "            - data-source : the data source should be used as entity type",
-        "        NOTE: if not specified then \"none\" is used as the default.",
         "",
         "   -maxNames <count>",
         "        Specifies the maximum number of names to generate for the records.",

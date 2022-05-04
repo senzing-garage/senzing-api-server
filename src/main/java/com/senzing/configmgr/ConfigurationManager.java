@@ -313,10 +313,10 @@ public class ConfigurationManager {
       destroyApi();
     }
     String moduleName = ConfigurationManager.class.getName();
-    int returnCode = CONFIG_MGR_API.initV2(moduleName, jsonText, verbose);
+    int returnCode = CONFIG_MGR_API.init(moduleName, jsonText, verbose);
     if (returnCode != 0) {
       String errorMsg = formatError(
-          "G2ConfigMgr.initV2()", CONFIG_MGR_API);
+          "G2ConfigMgr.init()", CONFIG_MGR_API);
       if (!silent) {
         System.err.println("Failed to initialize G2ConfigMgr");
         System.err.println(errorMsg);

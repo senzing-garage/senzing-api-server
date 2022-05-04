@@ -65,15 +65,6 @@ public interface SzBulkLoadResult extends SzBaseBulkLoadResult {
   int getMissingDataSourceCount();
 
   /**
-   * Return the number of records that are incomplete because they are missing
-   * the <tt>"ENTITY_TYPE"</tt> field.
-   *
-   * @return The number of records that are incomplete because they are missing
-   *         the <tt>"ENTITY_TYPE"</tt> field.
-   */
-  int getMissingEntityTypeCount();
-
-  /**
    * Gets the list of {@link SzDataSourceBulkLoadResult} instances for the
    * bulk data load describing the statistics by data source.
    *
@@ -83,24 +74,13 @@ public interface SzBulkLoadResult extends SzBaseBulkLoadResult {
   List<SzDataSourceBulkLoadResult> getResultsByDataSource();
 
   /**
-   * Gets the list of {@link SzDataSourceRecordAnalysis} instances for the
-   * bulk data describing the statistics by data source (including those with
-   * no data source).
-   *
-   * @return A {@link List} of {@link SzEntityTypeBulkLoadResult} instances
-   * describing the statistics for the bulk data.
-   */
-  List<SzEntityTypeBulkLoadResult> getResultsByEntityType();
-
-  /**
    * Utility method for tracking the successful loading of a record with the
    * specified non-null data source.
    *
    * @param dataSource The non-null data source for the record.
-   * @param entityType The non-null entity type for the record.
    * @throws NullPointerException If the specified parameter is <tt>null</tt>.
    */
-  void trackLoadedRecord(String dataSource, String entityType);
+  void trackLoadedRecord(String dataSource);
 
   /**
    * Utility method for tracking a failed attempt to load a record with the
@@ -109,15 +89,10 @@ public interface SzBulkLoadResult extends SzBaseBulkLoadResult {
    *
    * @param dataSource The data source for the record, or <tt>null</tt> if it
    *                   does not have an <tt>"DATA_SOURCE"</tt> property.
-   * @param entityType The entity type for the record, or <tt>null</tt> if it
-   *                   does not have an <tt>"ENTITY_TYPE"</tt> property.
    * @param errorCode  The error code for the failure.
    * @param errorMsg   The error message associated with the failure.
    */
-  void trackFailedRecord(String dataSource,
-                         String entityType,
-                         String errorCode,
-                         String errorMsg);
+  void trackFailedRecord(String dataSource, String errorCode, String errorMsg);
 
   /**
    * Utility method for tracking a failed attempt to load a record with the
@@ -126,13 +101,11 @@ public interface SzBulkLoadResult extends SzBaseBulkLoadResult {
    *
    * @param dataSource The data source for the record, or <tt>null</tt> if it
    *                   does not have a <tt>"DATA_SOURCE"</tt> property.
-   * @param entityType The entity type for the record, or <tt>null</tt> if it
-   *                   does not have an <tt>"ENTITY_TYPE"</tt> property.
    * @param g2Fallible The {@link G2Fallible} instance that had the failure.
    */
   void trackFailedRecord(String      dataSource,
-                         String      entityType,
                          G2Fallible  g2Fallible);
+
   /**
    * Utility method for tracking a failed attempt to load a record with the
    * specified non-null data source.  The failure is recorded with the specified
@@ -140,18 +113,14 @@ public interface SzBulkLoadResult extends SzBaseBulkLoadResult {
    *
    * @param dataSource The data source for the record, or <tt>null</tt> if it
    *                   does not have a <tt>"DATA_SOURCE"</tt> property.
-   * @param entityType The entity type for the record, or <tt>null</tt> if it
-   *                   does not have an <tt>"ENTITY_TYPE"</tt> property.
    * @param error      The {@link SzError} describing the error that occurred.
    */
-  void trackFailedRecord(String  dataSource,
-                         String  entityType,
-                         SzError error);
+  void trackFailedRecord(String dataSource, SzError error);
 
   /**
    * Tracks the occurrence of an incomplete record.
    */
-  void trackIncompleteRecord(String dataSource, String entityType);
+  void trackIncompleteRecord(String dataSource);
 
     /**
    * A {@link ModelProvider} for instances of {@link SzBulkLoadResult}.
