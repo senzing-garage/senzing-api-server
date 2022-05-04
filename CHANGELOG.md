@@ -18,10 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `g2-sdk-java` dependency to version `3.x`
 - Updated supported API specification version to `3.0.0`
 
+## [2.8.6] - 2022-04-18
+
+### Added to 2.8.6
+- Modified `Dockerfile` to upgrade Debian base version to 11.3
+
 ## [2.8.5] - 2022-03-29
 
 ### Changed in 2.8.5
-
 - Updates to latest dependency versions to resolve/avoid security issues.  
   Specifically resolves CVE-2020-36518 for jackson-databind.
 - Added `@SuppressWarnings()` annotation to some files to eliminate specific
@@ -30,14 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.8.4] - 2022-03-07
 
 ### Changed in 2.8.4
-
 - Updates to `pom.xml` to prevent pulling beta `3.0.0` versions of 
   `senzing-sdk-java` and `senzing-commons-java` via the Maven dependency range.
 
 ## [2.8.3] - 2022-02-04
 
 ### Changed in 2.8.3
-
 - Updated pom.xml to depend on `senzing-commons` release version `2.x`
 - Updated classes that previously used `com.senzing.util.JsonUtils` to 
   instead use `com.senzing.util.JsonUtilities`
