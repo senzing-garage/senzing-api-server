@@ -6,13 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.1] - 2022-05-06
+
+### Changed in 3.0.1
+
+- Added `libodbc1` to Dockerfile
+
 ## [3.0.0] - 2022-05-04
 
 ### Changed in 3.0.0
+
 - Removed endpoints, classes and methods pertaining to Entity Types
 - Removed endpoints, classes and methods pertaining to Entity Classes
-- Removed `matchScore` and `refScore` from `SzBaseRelatedEntity` since 
-  `MATCH_SCORE` and `REF_SCORE` were removed from the native/raw JSON in v3.0 
+- Removed `matchScore` and `refScore` from `SzBaseRelatedEntity` since
+  `MATCH_SCORE` and `REF_SCORE` were removed from the native/raw JSON in v3.0
 - Removed `refScore` from `SzMatchedRecord` since `REF_SCORE` was removed in v3.0
 - Updated `senzing-commons-java` dependency to version `3.x`
 - Updated `g2-sdk-java` dependency to version `3.x`
@@ -21,12 +28,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.8.6] - 2022-04-18
 
 ### Added to 2.8.6
+
 - Modified `Dockerfile` to upgrade Debian base version to 11.3
 
 ## [2.8.5] - 2022-03-29
 
 ### Changed in 2.8.5
-- Updates to latest dependency versions to resolve/avoid security issues.  
+
+- Updates to latest dependency versions to resolve/avoid security issues.
   Specifically resolves CVE-2020-36518 for jackson-databind.
 - Added `@SuppressWarnings()` annotation to some files to eliminate specific
   compile-time warnings.
@@ -34,14 +43,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.8.4] - 2022-03-07
 
 ### Changed in 2.8.4
-- Updates to `pom.xml` to prevent pulling beta `3.0.0` versions of 
+
+- Updates to `pom.xml` to prevent pulling beta `3.0.0` versions of
   `senzing-sdk-java` and `senzing-commons-java` via the Maven dependency range.
 
 ## [2.8.3] - 2022-02-04
 
 ### Changed in 2.8.3
+
 - Updated pom.xml to depend on `senzing-commons` release version `2.x`
-- Updated classes that previously used `com.senzing.util.JsonUtils` to 
+- Updated classes that previously used `com.senzing.util.JsonUtils` to
   instead use `com.senzing.util.JsonUtilities`
 
 ## [2.8.2] - 2022-01-25
@@ -241,10 +252,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   version 2.4.1 or later.
 - Modified `SzMeta` to include four new fields to be included in the meta
   section of each response:
-    - `nativeApiVersion`
-    - `nativeApiBuildNumber`
-    - `nativeApiBuildDate`
-    - `configCompatibilityVersion`
+  - `nativeApiVersion`
+  - `nativeApiBuildNumber`
+  - `nativeApiBuildDate`
+  - `configCompatibilityVersion`
 - Added `ServiceUtil.getFlags()` variant that takes a base flags parameter
 - Added automatic engine priming on startup
 - Added `-skipEnginePriming` option to skip engine priming on startup
@@ -314,7 +325,6 @@ and recorded mock test data.
 - Updated EntityDataWriteServicesTest to handle testing POST with various
 record ID variants.
 - Re-ran tests for all versions of native Senzing SDK from 2.0.0 to 2.2.1
-
 
 ## [2.2.0] - 2020-10-15
 

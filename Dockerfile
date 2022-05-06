@@ -7,11 +7,11 @@ ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.7
 
 FROM ${BASE_BUILDER_IMAGE} as builder
 
-ENV REFRESHED_AT=2022-04-01
+ENV REFRESHED_AT=2022-05-06
 
 LABEL Name="senzing/senzing-api-server-builder" \
       Maintainer="support@senzing.com" \
-      Version="3.0.0"
+      Version="3.0.1"
 
 # Set environment variables.
 
@@ -39,11 +39,11 @@ RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public > /
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2022-04-01
+ENV REFRESHED_AT=2022-05-06
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
-      Version="3.0.0"
+      Version="3.0.1"
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
 
@@ -57,8 +57,10 @@ RUN apt update \
  && apt -y install \
       gnupg2 \
       jq \
+      libodbc1 \
       postgresql-client \
       software-properties-common \
+      unixodbc \
  && rm -rf /var/lib/apt/lists/*
 
 # Install Java-11.
@@ -98,7 +100,7 @@ COPY --from=builder "/senzing-api-server.jar" "/app/senzing-api-server.jar"
 
 # Copy files from other docker containers.
 
-COPY --from=senzing/senzing-api-server:3.0.0 "/app/senzing-api-server.jar" "/appV2/senzing-api-server.jar"
+COPY --from=senzing/senzing-api-server:2.8.6 "/app/senzing-api-server.jar" "/appV2/senzing-api-server.jar"
 
 # Make non-root container.
 
