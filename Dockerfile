@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=debian:11.3-slim@sha256:fbaacd55d14bd0ae0c0441c2347217da77ad83c517054623357d1f9d07f79f5e
+ARG BASE_IMAGE=debian:11.3-slim@sha256:06a93cbdd49a265795ef7b24fe374fee670148a7973190fb798e43b3cf7c5d0f
 ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.8
 
 # -----------------------------------------------------------------------------
