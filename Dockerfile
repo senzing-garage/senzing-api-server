@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=debian:11.3-slim@sha256:f6957458017ec31c4e325a76f39d6323c4c21b0e31572efa006baa927a160891
+ARG BASE_IMAGE=senzing/senzingapi-runtime:0.1.0
 ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.9
 
 # -----------------------------------------------------------------------------
@@ -7,17 +7,17 @@ ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.9
 
 FROM ${BASE_BUILDER_IMAGE} as builder
 
-ENV REFRESHED_AT=2022-06-27
+ENV REFRESHED_AT=2022-07-06
 
 LABEL Name="senzing/senzing-api-server-builder" \
       Maintainer="support@senzing.com" \
-      Version="3.0.1"
+      Version="4.0.0"
 
 # Set environment variables.
 
 ENV SENZING_ROOT=/opt/senzing
 ENV SENZING_G2_DIR=${SENZING_ROOT}/g2
-ENV PYTHONPATH=${SENZING_ROOT}/g2/python
+ENV PYTHONPATH=${SENZING_ROOT}/g2/sdk/python
 ENV LD_LIBRARY_PATH=${SENZING_ROOT}/g2/lib:${SENZING_ROOT}/g2/lib/debian
 
 # Build "senzing-api-server.jar".
@@ -39,11 +39,11 @@ RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public > /
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2022-06-27
+ENV REFRESHED_AT=2022-07-06
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
-      Version="3.0.1"
+      Version="4.0.0"
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
 
@@ -78,17 +78,11 @@ RUN cat gpg.key | apt-key add - \
 
 COPY ./rootfs /
 
-# Downgrade to TLSv1.1
-
-RUN sed -i 's/TLSv1.2/TLSv1.1/g' /etc/ssl/openssl.cnf
-
 # Set environment variables for root.
 
 ENV LD_LIBRARY_PATH=/opt/senzing/g2/lib:/opt/senzing/g2/lib/debian:/opt/IBM/db2/clidriver/lib
 ENV ODBCSYSINI=/etc/opt/senzing
 ENV PATH=${PATH}:/opt/senzing/g2/python:/opt/IBM/db2/clidriver/adm:/opt/IBM/db2/clidriver/bin
-ENV PYTHONPATH=/opt/senzing/g2/python
-ENV SENZING_ETC_PATH=/etc/opt/senzing
 
 # Service exposed on port 8080.
 
@@ -111,8 +105,6 @@ USER 1001
 ENV LD_LIBRARY_PATH=/opt/senzing/g2/lib:/opt/senzing/g2/lib/debian:/opt/IBM/db2/clidriver/lib
 ENV ODBCSYSINI=/etc/opt/senzing
 ENV PATH=${PATH}:/opt/senzing/g2/python:/opt/IBM/db2/clidriver/adm:/opt/IBM/db2/clidriver/bin
-ENV PYTHONPATH=/opt/senzing/g2/python
-ENV SENZING_ETC_PATH=/etc/opt/senzing
 
 # Runtime execution.
 
