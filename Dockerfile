@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=senzing/senzingapi-runtime:3.1.0
+ARG BASE_IMAGE=senzing/senzingapi-runtime:3.1.1
 ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.9
 
 # -----------------------------------------------------------------------------
@@ -7,11 +7,11 @@ ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.9
 
 FROM ${BASE_BUILDER_IMAGE} as builder
 
-ENV REFRESHED_AT=2022-07-12
+ENV REFRESHED_AT=2022-07-19
 
 LABEL Name="senzing/senzing-api-server-builder" \
       Maintainer="support@senzing.com" \
-      Version="3.1.0"
+      Version="3.1.1"
 
 # Set environment variables.
 
@@ -39,11 +39,11 @@ RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public > /
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2022-07-12
+ENV REFRESHED_AT=2022-07-19
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
-      Version="3.1.0"
+      Version="3.1.1"
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
 
