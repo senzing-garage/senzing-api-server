@@ -1,15 +1,12 @@
-name: Pull request tests
-
+name: build-docker-container.yaml
 on:
   pull_request:
     branches:
       - main
   workflow_dispatch:
-
 jobs:
-
   buildDockerContainer:
-    name: Build the Docker container
+    name: Build Docker container
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
