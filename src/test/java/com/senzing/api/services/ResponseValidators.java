@@ -21,6 +21,7 @@ import static com.senzing.api.model.SzFeatureMode.REPRESENTATIVE;
 import static com.senzing.api.model.SzRelationshipMode.*;
 import static com.senzing.api.model.SzHttpMethod.GET;
 import static org.junit.jupiter.api.Assertions.*;
+import static com.senzing.api.model.SzDetailLevel.*;
 
 public class ResponseValidators {
   /**
@@ -651,6 +652,7 @@ public class ResponseValidators {
       SzResolvedEntity                    entity,
       List<SzRelatedEntity>               relatedEntities,
       Boolean                             forceMinimal,
+      SzDetailLevel                       detailLevel,
       SzFeatureMode                       featureMode,
       boolean                             withFeatureStats,
       boolean                             withInternalFeatures,
@@ -666,20 +668,56 @@ public class ResponseValidators {
       Set<String>                         expectedOtherDataValues)
   {
     if (expectedRecordCount != null) {
-      assertEquals(expectedRecordCount, entity.getRecords().size(),
-                   "Unexpected number of records: " + testInfo);
+      int recordCount = 0;
+      for (SzDataSourceRecordSummary summary : entity.getRecordSummaries()) {
+        recordCount += summary.getRecordCount();
+      }
+      assertEquals(expectedRecordCount, recordCount,
+                   "Unexpected number of records in summary: "
+                       + testInfo);
+
+      if (detailLevel != SUMMARY) {
+        assertEquals(expectedRecordCount, entity.getRecords().size(),
+                     "Unexpected number of records: " + testInfo);
+      }
     }
     if (expectedRecordIds != null) {
+      Map<String, Integer> expectedCounts = new HashMap<>();
+      for (SzRecordId recordId : expectedRecordIds) {
+        Integer count = expectedCounts.get(recordId);
+        if (count == null) {
+          expectedCounts.put(recordId.getDataSourceCode(), 1);
+        } else {
+          expectedCounts.put(recordId.getDataSourceCode(), count + 1);
+        }
+      }
       // get the records and convert to record ID set
       Set<SzRecordId> actualRecordIds = new HashSet<>();
+      Map<String, Integer> recordCounts = new HashMap<>();
       List<SzMatchedRecord> matchedRecords = entity.getRecords();
-      for (SzMatchedRecord record : matchedRecords) {
-        SzRecordId recordId = SzRecordId.FACTORY.create(record.getDataSource(),
-                                                        record.getRecordId());
-        actualRecordIds.add(recordId);
+      if (detailLevel != SUMMARY) {
+        for (SzMatchedRecord record : matchedRecords) {
+          SzRecordId recordId = SzRecordId.FACTORY.create(record.getDataSource(),
+                                                          record.getRecordId());
+          actualRecordIds.add(recordId);
+          Integer count = recordCounts.get(recordId.getDataSourceCode());
+          if (count == null) {
+            recordCounts.put(record.getDataSource(), 1);
+          } else {
+            recordCounts.put(record.getDataSource(), count + 1);
+          }
+        }
+        assertSameElements(expectedRecordIds, actualRecordIds,
+                           "record IDs: " + testInfo);
+      } else {
+        for (SzDataSourceRecordSummary summary : entity.getRecordSummaries()) {
+          recordCounts.put(summary.getDataSource(), summary.getRecordCount());
+        }
       }
-      assertSameElements(expectedRecordIds, actualRecordIds,
-                              "Unexpected record IDs: " + testInfo);
+      assertEquals(expectedCounts, recordCounts,
+                   "The record counts by data source do not match.  "
+                       + testInfo);
+
     }
 
     // check the features
@@ -819,7 +857,9 @@ public class ResponseValidators {
         });
       }
 
-      if (forceMinimal == null || !forceMinimal) {
+      if ((forceMinimal == null || !forceMinimal)
+          && (detailLevel != MINIMAL && detailLevel != BRIEF))
+      {
         Date lastSeenTimestamp = entity.getLastSeenTimestamp();
         assertNotNull(lastSeenTimestamp,
                       "Last-seen timestamp is null: " + testInfo);
@@ -1379,6 +1419,8 @@ public class ResponseValidators {
    *                not being validated.
    * @param withRelated The {@link SzRelationshipMode} value or <tt>null</tt>
    *                    if this aspect is not being validated.
+   * @param detailLevel The {@link SzDetailLevel} describing the level of
+   *                    detail that was requested for the entity.
    * @param forceMinimal <tt>true</tt> if requested with minimal data,
    *                     <tt>false</tt> if requested with standard data and
    *                     <tt>null</tt> if this aspect is not being validated.
@@ -1415,6 +1457,7 @@ public class ResponseValidators {
       Boolean                             withRaw,
       SzRelationshipMode                  withRelated,
       Boolean                             forceMinimal,
+      SzDetailLevel                       detailLevel,
       SzFeatureMode                       featureMode,
       boolean                             withFeatureStats,
       boolean                             withInternalFeatures,
@@ -1452,6 +1495,7 @@ public class ResponseValidators {
         resolvedEntity,
         relatedEntities,
         forceMinimal,
+        detailLevel,
         featureMode,
         withFeatureStats,
         withInternalFeatures,
@@ -1464,7 +1508,8 @@ public class ResponseValidators {
         primaryFeatureValues,
         duplicateFeatureValues,
         expectedDataValues,
-        expectedOtherDataValues);
+        (detailLevel != null && detailLevel != VERBOSE)
+            ? Collections.emptySet() : expectedOtherDataValues);
 
     if (withRaw != null && withRaw) {
       if ((withRelated == FULL) && (forceMinimal == null || !forceMinimal))
@@ -1482,27 +1527,13 @@ public class ResponseValidators {
                                 "RELATED_ENTITIES");
 
 
-        if (featureMode == NONE || (forceMinimal != null && forceMinimal)) {
-          for (Object entity : ((Collection) entities)) {
-            validateRawDataMap(testInfo,
-                               ((Map) entity).get("RESOLVED_ENTITY"),
-                               false,
-                               "ENTITY_ID",
-                               "RECORDS");
-          }
-
-        } else {
-          for (Object entity : ((Collection) entities)) {
-            validateRawDataMap(testInfo,
-                               ((Map) entity).get("RESOLVED_ENTITY"),
-                               false,
-                               "ENTITY_ID",
-                               "FEATURES",
-                               "RECORD_SUMMARY",
-                               "RECORDS");
-          }
+        for (Object entity : ((Collection) entities)) {
+          validateRawDataMap(
+              testInfo,
+              ((Map) entity).get("RESOLVED_ENTITY"),
+              false,
+              rawEntityKeys(forceMinimal, detailLevel, featureMode));
         }
-
 
       } else {
         if (withRelated == PARTIAL) {
@@ -1519,22 +1550,12 @@ public class ResponseValidators {
         }
 
         Object entity = ((Map) response.getRawData()).get("RESOLVED_ENTITY");
-        if (featureMode == NONE || (forceMinimal != null && forceMinimal)) {
-          validateRawDataMap(testInfo,
-                             entity,
-                             false,
-                             "ENTITY_ID",
-                             "RECORDS");
+        validateRawDataMap(
+            testInfo,
+            entity,
+            false,
+            rawEntityKeys(forceMinimal, detailLevel, featureMode));
 
-        } else {
-          validateRawDataMap(testInfo,
-                             entity,
-                             false,
-                             "ENTITY_ID",
-                             "FEATURES",
-                             "RECORD_SUMMARY",
-                             "RECORDS");
-        }
       }
     }
   }
@@ -1555,7 +1576,7 @@ public class ResponseValidators {
    * @param forceMinimal <tt>true</tt> if requested with minimal data,
    *                     <tt>false</tt> if requested with standard data and
    *                     <tt>null</tt> if this aspect is not being validated.
-   * @param featureInclusion The {@link SzFeatureMode} requested or
+   * @param featureMode The {@link SzFeatureMode} requested or
    *                         <tt>null</tt> if this is not being validated.
    * @param withFeatureStats <tt>true</tt> if request with feature statistics,
    *                         otherwise <tt>false</tt>.
@@ -1572,7 +1593,8 @@ public class ResponseValidators {
       Integer                   expectedCount,
       Boolean                   withRelationships,
       Boolean                   forceMinimal,
-      SzFeatureMode featureInclusion,
+      SzDetailLevel             detailLevel,
+      SzFeatureMode             featureMode,
       boolean                   withFeatureStats,
       boolean                   withInternalFeatures,
       long                      maxDuration,
@@ -1603,7 +1625,8 @@ public class ResponseValidators {
                      result,
                      result.getRelatedEntities(),
                      forceMinimal,
-                     featureInclusion,
+                     detailLevel,
+                     featureMode,
                      withFeatureStats,
                      withInternalFeatures,
                      null,
@@ -1620,7 +1643,7 @@ public class ResponseValidators {
       Map<String, List<SzSearchFeatureScore>> featureScores
           = result.getFeatureScores();
       assertNotNull(featureScores, "Feature scores was null for entity "
-                    + result.getEntityId() + ": " + testInfo);
+          + result.getEntityId() + ": " + testInfo);
       if (featureScores.containsKey("NAME")) {
         Integer bestNameScore = result.getBestNameScore();
         assertNotNull(bestNameScore, "Best name score is null for "
@@ -1634,9 +1657,9 @@ public class ResponseValidators {
           assertEquals(nameScore.getScore(),
                        nameScoringDetails.asFullScore(),
                        "Overall score not equal to overall name score "
-                       + "for entity " + result.getEntityId() + " with name "
-                       + "scoring details (" + nameScoringDetails
-                       + "): " + testInfo);
+                           + "for entity " + result.getEntityId() + " with name "
+                           + "scoring details (" + nameScoringDetails
+                           + "): " + testInfo);
           Integer fullNameScore = nameScoringDetails.getFullNameScore();
           Integer orgNameScore  = nameScoringDetails.getOrgNameScore();
           if (fullNameScore == null) fullNameScore = -1;
@@ -1647,55 +1670,82 @@ public class ResponseValidators {
           }
         }
         assertEquals(bestNameScore, expectedBestNameScore,
-          "Unexpected best name score for entity "
-              + result.getEntityId() + " with name feature scores ("
-              + nameScores + "): " + testInfo);
+                     "Unexpected best name score for entity "
+                         + result.getEntityId() + " with name feature scores ("
+                         + nameScores + "): " + testInfo);
 
       }
     }
 
     if (expectRawData) {
       validateRawDataMap(testInfo,
-                              response.getRawData(),
-                              false,
-                              "RESOLVED_ENTITIES");
+                         response.getRawData(),
+                         false,
+                         "RESOLVED_ENTITIES");
 
       Object entities = ((Map) response.getRawData()).get("RESOLVED_ENTITIES");
       validateRawDataMapArray(testInfo,
-                                   entities,
-                                   false,
-                                   "MATCH_INFO", "ENTITY");
+                              entities,
+                              false,
+                              "MATCH_INFO", "ENTITY");
       for (Object obj : ((Collection) entities)) {
         Object matchInfo = ((Map) obj).get("MATCH_INFO");
         validateRawDataMap(testInfo,
-                                matchInfo,
-                                false,
-                                "MATCH_LEVEL",
-                                "MATCH_KEY",
-                                "ERRULE_CODE",
-                                "FEATURE_SCORES");
+                           matchInfo,
+                           false,
+                           "MATCH_LEVEL",
+                           "MATCH_KEY",
+                           "ERRULE_CODE",
+                           "FEATURE_SCORES");
         Object entity = ((Map) obj).get("ENTITY");
         Object resolvedEntity = ((Map) entity).get("RESOLVED_ENTITY");
-        if (featureInclusion == NONE || (forceMinimal != null && forceMinimal)) {
-          validateRawDataMap(testInfo,
-                                  resolvedEntity,
-                                  false,
-                                  "ENTITY_ID",
-                                  "RECORDS");
+        validateRawDataMap(
+            testInfo,
+            resolvedEntity,
+            false,
+            rawEntityKeys(forceMinimal, detailLevel, featureMode));
+      }
+    }
 
-        } else {
-          validateRawDataMap(testInfo,
-                                  resolvedEntity,
-                                  false,
-                                  "ENTITY_ID",
-                                  "FEATURES",
-                                  "RECORD_SUMMARY",
-                                  "RECORDS");
+  }
 
-        }
+  /**
+   * Creates an array of {@link String} property names that are expected for an
+   * entity.
+   *
+   * @param forceMinimal Flag indicating if minimal format is forced.
+   * @param detailLevel The {@link SzDetailLevel} for the detail level.
+   * @param featureMode The {@link SzFeatureMode} for the expected features.
+   *
+   * @return An array of {@link String} property names that are expected for an
+   *         entity.
+   */
+  public static String[] rawEntityKeys(
+      Boolean                   forceMinimal,
+      SzDetailLevel             detailLevel,
+      SzFeatureMode             featureMode)
+  {
+    boolean minForced = (forceMinimal != null && forceMinimal.booleanValue());
+    List<String> expectedKeys = new LinkedList<>();
+    expectedKeys.add("ENTITY_ID");
+    if (minForced && detailLevel != SUMMARY) {
+      expectedKeys.add("RECORDS");
+    }
+
+    // check if minimal is not forced
+    if (!minForced) {
+      // check if features are expected
+      if (featureMode != NONE) {
+        expectedKeys.add("FEATURES");
       }
 
+      // check if the record summary is expected
+      if (detailLevel != MINIMAL && detailLevel != BRIEF) {
+        expectedKeys.add("RECORD_SUMMARY");
+      }
     }
+    String[] result = new String[expectedKeys.size()];
+    return expectedKeys.toArray(result);
   }
 
   /**
@@ -2057,7 +2107,7 @@ public class ResponseValidators {
                        "Unexpected data source in info: " + testInfo);
         }
         // check the affected entities
-        if (expectedAffectedCount != null && expectedAffectedCount > 0) {
+        if (expectedAffectedCount != null && expectedAffectedCount >= 0) {
           Set<Long> affected = info.getAffectedEntities();
           assertNotNull(affected,
                         "Affected entities set is null: " + testInfo);
@@ -2067,11 +2117,11 @@ public class ResponseValidators {
         }
 
         // check the interesting entites
-        if (expectedFlaggedCount != null && expectedFlaggedCount > 0) {
+        if (expectedFlaggedCount != null && expectedFlaggedCount >= 0) {
           List<SzFlaggedEntity> flagged = info.getFlaggedEntities();
           assertNotNull(flagged,
                         "Flagged entities list is null: " + testInfo);
-          assertEquals(expectedAffectedCount, flagged.size(),
+          assertEquals(expectedFlaggedCount, flagged.size(),
                        "Flagged entities set is the wrong size: "
                            + flagged);
 

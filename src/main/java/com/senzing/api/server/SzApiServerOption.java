@@ -310,7 +310,8 @@ public enum SzApiServerOption
    * </p>
    */
   INIT_JSON("--init-json", Set.of("-initJson"),
-            ENV_PREFIX + "INIT_JSON", null,
+            ENV_PREFIX + "INIT_JSON",
+            List.of("SENZING_ENGINE_CONFIGURATION_JSON"),
             true, 1),
 
   /**

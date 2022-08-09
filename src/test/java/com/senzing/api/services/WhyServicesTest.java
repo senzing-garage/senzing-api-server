@@ -22,17 +22,18 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.*;
 
-import static com.senzing.api.model.SzFeatureMode.NONE;
-import static com.senzing.api.model.SzFeatureMode.WITH_DUPLICATES;
+import static com.senzing.api.model.SzDetailLevel.*;
+import static com.senzing.api.model.SzFeatureMode.*;
 import static com.senzing.api.model.SzHttpMethod.GET;
 import static com.senzing.api.services.ResponseValidators.*;
-import static java.lang.Enum.valueOf;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class WhyServicesTest extends AbstractServiceTest {
+  private static final long RANDOM_SEED = 3456789012L;
+
   private static final String PASSENGERS = "PASSENGERS";
   private static final String CUSTOMERS = "CUSTOMERS";
   private static final String VIPS = "VIPS";
@@ -453,6 +454,7 @@ public class WhyServicesTest extends AbstractServiceTest {
         false,
         SzRelationshipMode.NONE,
         true,
+        MINIMAL,
         WITH_DUPLICATES,
         false,
         false,
@@ -469,6 +471,12 @@ public class WhyServicesTest extends AbstractServiceTest {
     Boolean[] booleanVariants = {null, true, false};
     List<Boolean> booleanVariantList = Arrays.asList(booleanVariants);
 
+    List<SzDetailLevel> detailLevels = new LinkedList<>();
+    detailLevels.add(null);
+    for (SzDetailLevel detailLevel : SzDetailLevel.values()) {
+      detailLevels.add(detailLevel);
+    }
+
     List<SzFeatureMode> featureModes = new LinkedList<>();
     featureModes.add(null);
     for (SzFeatureMode featureMode : SzFeatureMode.values()) {
@@ -477,22 +485,52 @@ public class WhyServicesTest extends AbstractServiceTest {
 
     List<SzRecordId> recordIds = RECORD_IDS;
 
-    List<List> parameters = generateCombinations(
-        recordIds.subList(0, 1),  // placeholder
-        booleanVariantList,       // forceMinimal
-        featureModes,             // featureMode
-        booleanVariantList,       // withFeatureStats
-        booleanVariantList,       // withInternalFeatures
-        booleanVariantList,       // withRelationships
-        booleanVariantList);      // withRaw
+    Random prng = new Random(RANDOM_SEED);
 
-    List<Arguments> result = new ArrayList<>(parameters.size());
+    List<List<Boolean>> booleanCombos = getBooleanVariants(5);
+    Collections.shuffle(booleanCombos, prng);
+    Iterator<List<Boolean>> booleansIter  = circularIterator(booleanCombos);
 
-    for (int index = 0; index < parameters.size(); index++) {
-      List params = parameters.get(index);
-      params.set(0, recordIds.get(index % recordIds.size()));
-      result.add(arguments(params.toArray()));
-    }
+    List<List> optionCombos = generateCombinations(detailLevels, featureModes);
+    Collections.shuffle(optionCombos, prng);
+    Iterator<List> optionsIter = circularIterator(optionCombos);
+
+    int loopCount
+        = Math.max(booleanCombos.size(), optionCombos.size()) * 15
+        / recordIds.size();
+
+    int totalCount = loopCount * recordIds.size();
+
+    List<Arguments> result = new ArrayList<>(totalCount);
+
+    recordIds.forEach(recordId -> {
+      for (int index = 0; index < loopCount; index++) {
+        List<Boolean> booleansList          = booleansIter.next();
+        List          optsList              = optionsIter.next();
+
+        Boolean       forceMinimal          = booleansList.get(0);
+        Boolean       withFeatureStats      = booleansList.get(1);
+        Boolean       withInternalFeatures  = booleansList.get(2);
+        Boolean       withRelationships     = booleansList.get(3);
+        Boolean       withRaw               = booleansList.get(4);
+
+        SzDetailLevel detailLevel           = (SzDetailLevel) optsList.get(0);
+        SzFeatureMode featureMode           = (SzFeatureMode) optsList.get(1);
+
+        Object[] args = {
+            recordId,
+            forceMinimal,
+            detailLevel,
+            featureMode,
+            withFeatureStats,
+            withInternalFeatures,
+            withRelationships,
+            withRaw
+        };
+
+        result.add(arguments(args));
+      }
+    });
 
     return result;
   }
@@ -503,22 +541,28 @@ public class WhyServicesTest extends AbstractServiceTest {
     List<Boolean> booleanVariantList = Arrays.asList(booleanVariants);
     List<Boolean> asRecordVariantList = Arrays.asList(asRecordVariants);
 
+    List<SzDetailLevel> detailLevels = new LinkedList<>();
+    detailLevels.add(null);
+    for (SzDetailLevel detailLevel : SzDetailLevel.values()) {
+      detailLevels.add(detailLevel);
+    }
+
     List<SzFeatureMode> featureModes = new LinkedList<>();
     featureModes.add(null);
     for (SzFeatureMode featureMode : SzFeatureMode.values()) {
       featureModes.add(featureMode);
     }
 
-    List<List> parameters = generateCombinations(
-        RELATED_RECORD_IDS.subList(0, 1), // placeholder
-        RELATED_RECORD_IDS.subList(1, 2), // placeholder
-        asRecordVariantList,  // asRecord
-        booleanVariantList,   // forceMinimal
-        featureModes,         // featureMode
-        booleanVariantList,   // withFeatureStats
-        booleanVariantList,   // withInternalFeatures
-        booleanVariantList,   // withRelationships
-        booleanVariantList);  // withRaw
+    Random prng = new Random(RANDOM_SEED);
+    List<List<Boolean>> booleanCombos = getBooleanVariants(5);
+    Collections.shuffle(booleanCombos, prng);
+    Iterator<List<Boolean>> booleansIter = circularIterator(booleanCombos);
+
+    List<List> optionCombos = generateCombinations(asRecordVariantList,
+                                                   detailLevels,
+                                                   featureModes);
+    Collections.shuffle(optionCombos, prng);
+    Iterator<List> optionsIter = circularIterator(optionCombos);
 
     // get the record ID combinations
     List<List> recordIdCombos = generateCombinations(
@@ -530,6 +574,8 @@ public class WhyServicesTest extends AbstractServiceTest {
       List list = (List) iter.next();
       SzRecordId arg0 = (SzRecordId) list.get(0);
       SzRecordId arg1 = (SzRecordId) list.get(1);
+
+      // thin the list out to reduce the number of tests
       int index1 = RELATED_RECORD_IDS.indexOf(arg0);
       int index2 = RELATED_RECORD_IDS.indexOf(arg1);
       if (Math.abs(index2 - index1) > 4) {
@@ -537,15 +583,45 @@ public class WhyServicesTest extends AbstractServiceTest {
       }
     }
 
-    List<Arguments> result = new ArrayList<>(parameters.size());
+    int loopCount
+        = Math.max(booleanCombos.size(), optionCombos.size()) * 25
+        / recordIdCombos.size();
 
-    for (int index = 0; index < parameters.size(); index++) {
-      List params = parameters.get(index);
-      List recordIds = recordIdCombos.get(index % recordIdCombos.size());
-      params.set(0, recordIds.get(0));
-      params.set(1, recordIds.get(1));
-      result.add(arguments(params.toArray()));
-    }
+    int totalCount = loopCount * recordIdCombos.size();
+
+    List<Arguments> result = new ArrayList<>(totalCount);
+
+    recordIdCombos.forEach(recordIds -> {
+      for (int index = 0; index < loopCount; index++) {
+        List<Boolean> booleansList          = booleansIter.next();
+        List          optsList              = optionsIter.next();
+
+        Boolean       forceMinimal          = booleansList.get(0);
+        Boolean       withFeatureStats      = booleansList.get(1);
+        Boolean       withInternalFeatures  = booleansList.get(2);
+        Boolean       withRelationships     = booleansList.get(3);
+        Boolean       withRaw               = booleansList.get(4);
+
+        Boolean       asRecord              = (Boolean) optsList.get(0);
+        SzDetailLevel detailLevel           = (SzDetailLevel) optsList.get(1);
+        SzFeatureMode featureMode           = (SzFeatureMode) optsList.get(2);
+
+        Object[] args = {
+            recordIds.get(0),
+            recordIds.get(1),
+            asRecord,
+            forceMinimal,
+            detailLevel,
+            featureMode,
+            withFeatureStats,
+            withInternalFeatures,
+            withRelationships,
+            withRaw
+        };
+
+        result.add(arguments(args));
+      }
+    });
 
     return result;
   }
@@ -554,46 +630,82 @@ public class WhyServicesTest extends AbstractServiceTest {
     Boolean[] booleanVariants = {null, true, false};
     List<Boolean> booleanVariantList = Arrays.asList(booleanVariants);
 
+    List<SzDetailLevel> detailLevels = new LinkedList<>();
+    detailLevels.add(null);
+    for (SzDetailLevel detailLevel : SzDetailLevel.values()) {
+      detailLevels.add(detailLevel);
+    }
+
     List<SzFeatureMode> featureModes = new LinkedList<>();
     featureModes.add(null);
     for (SzFeatureMode featureMode : SzFeatureMode.values()) {
       featureModes.add(featureMode);
     }
 
-    List<List> recordIdCombos = generateCombinations(RECORD_IDS,
-                                                     RECORD_IDS);
+    Random prng = new Random(RANDOM_SEED);
+    List<List<Boolean>> booleanCombos = getBooleanVariants(5);
+    Collections.shuffle(booleanCombos, prng);
+    Iterator<List<Boolean>> booleansIter = circularIterator(booleanCombos);
 
-    List<List> parameters = generateCombinations(
-        RECORD_IDS.subList(0, 1),   // placeholder
-        RECORD_IDS.subList(0, 1),   // placeholder
-        booleanVariantList,         // forceMinimal
-        featureModes,               // featureMode
-        booleanVariantList,         // withFeatureStats
-        booleanVariantList,         // withInternalFeatures
-        booleanVariantList,         // withRelationships
-        booleanVariantList);        // withRaw
+    List<List> optionCombos = generateCombinations(detailLevels,
+                                                   featureModes);
+    Collections.shuffle(optionCombos, prng);
+    Iterator<List> optionsIter = circularIterator(optionCombos);
 
-    List<Arguments> result = new ArrayList<>(parameters.size());
+    List<List> recordIdCombos = generateCombinations(RECORD_IDS, RECORD_IDS);
 
-    for (int index = 0; index < parameters.size(); index++) {
-      List params = parameters.get(index);
-      List recordIds = recordIdCombos.get(index % recordIdCombos.size());
-      params.set(0, recordIds.get(0));
-      params.set(1, recordIds.get(1));
-      result.add(arguments(params.toArray()));
-    }
+    int loopCount
+        = Math.max(booleanCombos.size(), optionCombos.size()) * 25
+        / recordIdCombos.size();
+
+    int totalCount = loopCount * recordIdCombos.size();
+
+    List<Arguments> result = new ArrayList<>(totalCount);
+
+
+    recordIdCombos.forEach(recordIds -> {
+      for (int index = 0; index < loopCount; index++) {
+        List<Boolean> booleansList          = booleansIter.next();
+        List          optsList              = optionsIter.next();
+
+        Boolean       forceMinimal          = booleansList.get(0);
+        Boolean       withFeatureStats      = booleansList.get(1);
+        Boolean       withInternalFeatures  = booleansList.get(2);
+        Boolean       withRelationships     = booleansList.get(3);
+        Boolean       withRaw               = booleansList.get(4);
+
+        SzDetailLevel detailLevel           = (SzDetailLevel) optsList.get(0);
+        SzFeatureMode featureMode           = (SzFeatureMode) optsList.get(1);
+
+        Object[] args = {
+            recordIds.get(0),
+            recordIds.get(1),
+            forceMinimal,
+            detailLevel,
+            featureMode,
+            withFeatureStats,
+            withInternalFeatures,
+            withRelationships,
+            withRaw
+        };
+
+        result.add(arguments(args));
+      }
+    });
 
     return result;
   }
 
   private StringBuilder buildWhyEntityQueryString(
       StringBuilder sb,
-      Boolean forceMinimal,
+      Boolean       forceMinimal,
+      SzDetailLevel detailLevel,
       SzFeatureMode featureMode,
-      Boolean withFeatureStats,
-      Boolean withInternalFeatures,
-      Boolean withRelationships,
-      Boolean withRaw) {
+      Boolean       withFeatureStats,
+      Boolean       withInternalFeatures,
+      Boolean       withRelationships,
+      Boolean       withRaw)
+  {
     String prefix = "?";
     if (withRelationships != null) {
       sb.append(prefix).append("withRelationships=").append(withRelationships);
@@ -606,6 +718,10 @@ public class WhyServicesTest extends AbstractServiceTest {
     if (withInternalFeatures != null) {
       sb.append(prefix).append("withInternalFeatures=")
           .append(withInternalFeatures);
+      prefix = "&";
+    }
+    if (detailLevel != null) {
+      sb.append(prefix).append("detailLevel=").append(detailLevel);
       prefix = "&";
     }
     if (featureMode != null) {
@@ -623,15 +739,17 @@ public class WhyServicesTest extends AbstractServiceTest {
   }
 
   private StringBuilder buildWhyEntitiesQueryString(
-      StringBuilder sb,
-      SzEntityIdentifier entity1,
-      SzEntityIdentifier entity2,
-      Boolean forceMinimal,
-      SzFeatureMode featureMode,
-      Boolean withFeatureStats,
-      Boolean withInternalFeatures,
-      Boolean withRelationships,
-      Boolean withRaw) {
+      StringBuilder       sb,
+      SzEntityIdentifier  entity1,
+      SzEntityIdentifier  entity2,
+      Boolean             forceMinimal,
+      SzDetailLevel       detailLevel,
+      SzFeatureMode       featureMode,
+      Boolean             withFeatureStats,
+      Boolean             withInternalFeatures,
+      Boolean             withRelationships,
+      Boolean             withRaw)
+  {
     try {
       sb.append("?entity1=").append(
           URLEncoder.encode(entity1.toString(), "UTF-8"));
@@ -651,6 +769,9 @@ public class WhyServicesTest extends AbstractServiceTest {
     if (withInternalFeatures != null) {
       sb.append("&withInternalFeatures=").append(withInternalFeatures);
     }
+    if (detailLevel != null) {
+      sb.append("&detailLevel=").append(detailLevel);
+    }
     if (featureMode != null) {
       sb.append("&featureMode=").append(featureMode);
     }
@@ -665,14 +786,16 @@ public class WhyServicesTest extends AbstractServiceTest {
 
   private StringBuilder buildWhyRecordsQueryString(
       StringBuilder sb,
-      SzRecordId recordId1,
-      SzRecordId recordId2,
-      Boolean forceMinimal,
+      SzRecordId    recordId1,
+      SzRecordId    recordId2,
+      Boolean       forceMinimal,
+      SzDetailLevel detailLevel,
       SzFeatureMode featureMode,
-      Boolean withFeatureStats,
-      Boolean withInternalFeatures,
-      Boolean withRelationships,
-      Boolean withRaw) {
+      Boolean       withFeatureStats,
+      Boolean       withInternalFeatures,
+      Boolean       withRelationships,
+      Boolean       withRaw)
+  {
     try {
       sb.append("?dataSource1=").append(
           URLEncoder.encode(recordId1.getDataSourceCode(), "UTF-8"));
@@ -695,6 +818,9 @@ public class WhyServicesTest extends AbstractServiceTest {
       if (withInternalFeatures != null) {
         sb.append("&withInternalFeatures=").append(withInternalFeatures);
       }
+      if (detailLevel != null) {
+        sb.append("&detailLevel=").append(detailLevel);
+      }
       if (featureMode != null) {
         sb.append("&featureMode=").append(featureMode);
       }
@@ -713,21 +839,23 @@ public class WhyServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getWhyEntitiesParameters")
-  public void whyEntitiesTest(SzRecordId recordId1,
-                              SzRecordId recordId2,
-                              boolean asRecordIds,
-                              Boolean forceMinimal,
+  public void whyEntitiesTest(SzRecordId    recordId1,
+                              SzRecordId    recordId2,
+                              boolean       asRecordIds,
+                              Boolean       forceMinimal,
+                              SzDetailLevel detailLevel,
                               SzFeatureMode featureMode,
-                              Boolean withFeatureStats,
-                              Boolean withInternalFeatures,
-                              Boolean withRelationships,
-                              Boolean withRaw)
+                              Boolean       withFeatureStats,
+                              Boolean       withInternalFeatures,
+                              Boolean       withRelationships,
+                              Boolean       withRaw)
   {
     this.performTest(() -> {
       String testInfo = "recordId1=[ " + recordId1
           + " ], recordId2=[ " + recordId2
           + " ], asRecordIds=[ " + asRecordIds
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -751,6 +879,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                   entityIdent1,
                                   entityIdent2,
                                   forceMinimal,
+                                  detailLevel,
                                   featureMode,
                                   withFeatureStats,
                                   withInternalFeatures,
@@ -766,6 +895,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           entityIdent1.toString(),
           entityIdent2.toString(),
           (forceMinimal == null ? false : forceMinimal),
+          (detailLevel == null ? VERBOSE : detailLevel),
           (featureMode == null ? WITH_DUPLICATES : featureMode),
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -786,6 +916,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           entityId1,
           entityId2,
           (forceMinimal == null ? false : forceMinimal),
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -801,6 +932,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                      SzRecordId     recordId2,
                                      boolean        asRecordIds,
                                      Boolean        forceMinimal,
+                                     SzDetailLevel  detailLevel,
                                      SzFeatureMode  featureMode,
                                      Boolean        withFeatureStats,
                                      Boolean        withInternalFeatures,
@@ -812,6 +944,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           + " ], recordId2=[ " + recordId2
           + " ], asRecordIds=[ " + asRecordIds
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -835,6 +968,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                   entityIdent1,
                                   entityIdent2,
                                   forceMinimal,
+                                  detailLevel,
                                   featureMode,
                                   withFeatureStats,
                                   withInternalFeatures,
@@ -862,6 +996,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           entityId1,
           entityId2,
           (forceMinimal == null ? false : forceMinimal),
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -877,6 +1012,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                            SzRecordId     recordId2,
                                            boolean        asRecordIds,
                                            Boolean        forceMinimal,
+                                           SzDetailLevel  detailLevel,
                                            SzFeatureMode  featureMode,
                                            Boolean        withFeatureStats,
                                            Boolean        withInternalFeatures,
@@ -888,6 +1024,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           + " ], recordId2=[ " + recordId2
           + " ], asRecordIds=[ " + asRecordIds
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -911,6 +1048,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                   entityIdent1,
                                   entityIdent2,
                                   forceMinimal,
+                                  detailLevel,
                                   featureMode,
                                   withFeatureStats,
                                   withInternalFeatures,
@@ -919,11 +1057,17 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
+      com.senzing.gen.api.model.SzDetailLevel clientDetailLevel
+          = (detailLevel == null)
+          ? null
+          : com.senzing.gen.api.model.SzDetailLevel.valueOf(
+              detailLevel.toString());
+
       com.senzing.gen.api.model.SzFeatureMode clientFeatureMode
           = (featureMode == null)
           ? null
           : com.senzing.gen.api.model.SzFeatureMode.valueOf(
-          featureMode.toString());
+              featureMode.toString());
 
       long before = System.nanoTime();
       com.senzing.gen.api.model.SzWhyEntitiesResponse clientResponse
@@ -933,6 +1077,7 @@ public class WhyServicesTest extends AbstractServiceTest {
               withRelationships,
               withFeatureStats,
               withInternalFeatures,
+              clientDetailLevel,
               clientFeatureMode,
               forceMinimal,
               withRaw);
@@ -952,6 +1097,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           entityId1,
           entityId2,
           (forceMinimal == null ? false : forceMinimal),
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -975,7 +1121,8 @@ public class WhyServicesTest extends AbstractServiceTest {
                                   recordId1,
                                   recordId2,
                                   false,
-                                  SzFeatureMode.REPRESENTATIVE,
+                                  MINIMAL,
+                                  REPRESENTATIVE,
                                   false,
                                   false,
                                   false,
@@ -991,6 +1138,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           recordId1.toString(),
           recordId2.toString(),
           false,
+          SzDetailLevel.MINIMAL,
           SzFeatureMode.REPRESENTATIVE,
           false,
           false,
@@ -1027,7 +1175,8 @@ public class WhyServicesTest extends AbstractServiceTest {
                                   recordId1,
                                   recordId2,
                                   false,
-                                  SzFeatureMode.REPRESENTATIVE,
+                                  MINIMAL,
+                                  REPRESENTATIVE,
                                   false,
                                   false,
                                   false,
@@ -1061,7 +1210,8 @@ public class WhyServicesTest extends AbstractServiceTest {
                                   recordId1,
                                   recordId2,
                                   false,
-                                  SzFeatureMode.REPRESENTATIVE,
+                                  VERBOSE,
+                                  REPRESENTATIVE,
                                   false,
                                   false,
                                   false,
@@ -1077,7 +1227,8 @@ public class WhyServicesTest extends AbstractServiceTest {
             recordId1.toString(),
             recordId2.toString(),
             false,
-            SzFeatureMode.REPRESENTATIVE,
+            VERBOSE,
+            REPRESENTATIVE,
             false,
             false,
             false,
@@ -1114,7 +1265,8 @@ public class WhyServicesTest extends AbstractServiceTest {
                                   recordId1,
                                   recordId2,
                                   false,
-                                  SzFeatureMode.REPRESENTATIVE,
+                                  VERBOSE,
+                                  REPRESENTATIVE,
                                   false,
                                   false,
                                   false,
@@ -1146,7 +1298,8 @@ public class WhyServicesTest extends AbstractServiceTest {
                                   entityId1,
                                   entityId2,
                                   false,
-                                  SzFeatureMode.REPRESENTATIVE,
+                                  VERBOSE,
+                                  REPRESENTATIVE,
                                   false,
                                   false,
                                   false,
@@ -1162,7 +1315,8 @@ public class WhyServicesTest extends AbstractServiceTest {
             entityId1.toString(),
             entityId2.toString(),
             false,
-            SzFeatureMode.REPRESENTATIVE,
+            VERBOSE,
+            REPRESENTATIVE,
             false,
             false,
             false,
@@ -1198,7 +1352,8 @@ public class WhyServicesTest extends AbstractServiceTest {
                                   entityId1,
                                   entityId2,
                                   false,
-                                  SzFeatureMode.REPRESENTATIVE,
+                                  VERBOSE,
+                                  REPRESENTATIVE,
                                   false,
                                   false,
                                   false,
@@ -1219,16 +1374,19 @@ public class WhyServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getWhyEntityParameters")
-  public void whyEntityByRecordIdTest(SzRecordId recordId,
-                                      Boolean forceMinimal,
+  public void whyEntityByRecordIdTest(SzRecordId    recordId,
+                                      Boolean       forceMinimal,
+                                      SzDetailLevel detailLevel,
                                       SzFeatureMode featureMode,
-                                      Boolean withFeatureStats,
-                                      Boolean withInternalFeatures,
-                                      Boolean withRelationships,
-                                      Boolean withRaw) {
+                                      Boolean       withFeatureStats,
+                                      Boolean       withInternalFeatures,
+                                      Boolean       withRelationships,
+                                      Boolean       withRaw)
+  {
     this.performTest(() -> {
       String testInfo = "recordId=[ " + recordId
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -1242,6 +1400,7 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       buildWhyEntityQueryString(sb,
                                 forceMinimal,
+                                detailLevel,
                                 featureMode,
                                 withFeatureStats,
                                 withInternalFeatures,
@@ -1257,6 +1416,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           recordId.getDataSourceCode(),
           recordId.getRecordId(),
           (forceMinimal == null ? false : forceMinimal),
+          (detailLevel == null ? VERBOSE : detailLevel),
           (featureMode == null ? WITH_DUPLICATES : featureMode),
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -1275,6 +1435,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           recordId,
           null,
           (forceMinimal == null ? false : forceMinimal),
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -1287,16 +1448,19 @@ public class WhyServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getWhyEntityParameters")
   public void whyEntityByRecordIdViaHttpTest(
-      SzRecordId recordId,
-      Boolean forceMinimal,
+      SzRecordId    recordId,
+      Boolean       forceMinimal,
+      SzDetailLevel detailLevel,
       SzFeatureMode featureMode,
-      Boolean withFeatureStats,
-      Boolean withInternalFeatures,
-      Boolean withRelationships,
-      Boolean withRaw) {
+      Boolean       withFeatureStats,
+      Boolean       withInternalFeatures,
+      Boolean       withRelationships,
+      Boolean       withRaw)
+  {
     this.performTest(() -> {
       String testInfo = "recordId=[ " + recordId
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -1310,6 +1474,7 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       buildWhyEntityQueryString(sb,
                                 forceMinimal,
+                                detailLevel,
                                 featureMode,
                                 withFeatureStats,
                                 withInternalFeatures,
@@ -1332,6 +1497,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           recordId,
           null,
           (forceMinimal == null ? false : forceMinimal),
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -1344,16 +1510,19 @@ public class WhyServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getWhyEntityParameters")
   public void whyEntityByRecordIdViaJavaClientTest(
-      SzRecordId recordId,
-      Boolean forceMinimal,
+      SzRecordId    recordId,
+      Boolean       forceMinimal,
+      SzDetailLevel detailLevel,
       SzFeatureMode featureMode,
-      Boolean withFeatureStats,
-      Boolean withInternalFeatures,
-      Boolean withRelationships,
-      Boolean withRaw) {
+      Boolean       withFeatureStats,
+      Boolean       withInternalFeatures,
+      Boolean       withRelationships,
+      Boolean       withRaw)
+  {
     this.performTest(() -> {
       String testInfo = "recordId=[ " + recordId
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -1367,6 +1536,7 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       buildWhyEntityQueryString(sb,
                                 forceMinimal,
+                                detailLevel,
                                 featureMode,
                                 withFeatureStats,
                                 withInternalFeatures,
@@ -1375,23 +1545,30 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
+      com.senzing.gen.api.model.SzDetailLevel clientDetailLevel
+          = (detailLevel == null)
+          ? null
+          : com.senzing.gen.api.model.SzDetailLevel.valueOf(
+              detailLevel.toString());
+
       com.senzing.gen.api.model.SzFeatureMode clientFeatureMode
           = (featureMode == null)
           ? null
           : com.senzing.gen.api.model.SzFeatureMode.valueOf(
-          featureMode.toString());
+              featureMode.toString());
 
       long before = System.nanoTime();
       com.senzing.gen.api.model.SzWhyEntityResponse clientResponse
           = this.entityDataApi.whyEntityByRecordID(
-          recordId.getDataSourceCode(),
-          recordId.getRecordId(),
-          withRelationships,
-          withFeatureStats,
-          withInternalFeatures,
-          clientFeatureMode,
-          forceMinimal,
-          withRaw);
+              recordId.getDataSourceCode(),
+              recordId.getRecordId(),
+              withRelationships,
+              withFeatureStats,
+              withInternalFeatures,
+              clientDetailLevel,
+              clientFeatureMode,
+              forceMinimal,
+              withRaw);
       long after = System.nanoTime();
 
       SzWhyEntityResponse response = jsonCopy(clientResponse,
@@ -1405,6 +1582,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           recordId,
           null,
           (forceMinimal == null ? false : forceMinimal),
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -1416,19 +1594,22 @@ public class WhyServicesTest extends AbstractServiceTest {
 
   @ParameterizedTest
   @MethodSource("getWhyEntityParameters")
-  public void whyEntityByEntityIdTest(SzRecordId recordId,
-                                      Boolean forceMinimal,
+  public void whyEntityByEntityIdTest(SzRecordId    recordId,
+                                      Boolean       forceMinimal,
+                                      SzDetailLevel detailLevel,
                                       SzFeatureMode featureMode,
-                                      Boolean withFeatureStats,
-                                      Boolean withInternalFeatures,
-                                      Boolean withRelationships,
-                                      Boolean withRaw) {
+                                      Boolean       withFeatureStats,
+                                      Boolean       withInternalFeatures,
+                                      Boolean       withRelationships,
+                                      Boolean       withRaw)
+  {
     this.performTest(() -> {
       long entityId = this.getEntityIdForRecordId(recordId);
 
       String testInfo = "recordId=[ " + recordId
           + " ], entityId=[ " + entityId
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -1440,6 +1621,7 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       buildWhyEntityQueryString(sb,
                                 forceMinimal,
+                                detailLevel,
                                 featureMode,
                                 withFeatureStats,
                                 withInternalFeatures,
@@ -1455,6 +1637,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           recordId.getDataSourceCode(),
           recordId.getRecordId(),
           (forceMinimal == null ? false : forceMinimal),
+          (detailLevel == null ? VERBOSE : detailLevel),
           (featureMode == null ? WITH_DUPLICATES : featureMode),
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -1473,6 +1656,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           recordId,
           null,
           (forceMinimal == null ? false : forceMinimal),
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -1485,19 +1669,22 @@ public class WhyServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getWhyEntityParameters")
   public void whyEntityByEntityIdViaHttpTest(
-      SzRecordId recordId,
-      Boolean forceMinimal,
+      SzRecordId    recordId,
+      Boolean       forceMinimal,
+      SzDetailLevel detailLevel,
       SzFeatureMode featureMode,
-      Boolean withFeatureStats,
-      Boolean withInternalFeatures,
-      Boolean withRelationships,
-      Boolean withRaw) {
+      Boolean       withFeatureStats,
+      Boolean       withInternalFeatures,
+      Boolean       withRelationships,
+      Boolean       withRaw)
+  {
     this.performTest(() -> {
       long entityId = this.getEntityIdForRecordId(recordId);
 
       String testInfo = "recordId=[ " + recordId
           + " ], entityId=[ " + entityId
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -1509,6 +1696,7 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       buildWhyEntityQueryString(sb,
                                 forceMinimal,
+                                detailLevel,
                                 featureMode,
                                 withFeatureStats,
                                 withInternalFeatures,
@@ -1531,6 +1719,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           recordId,
           null,
           (forceMinimal == null ? false : forceMinimal),
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -1543,19 +1732,22 @@ public class WhyServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getWhyEntityParameters")
   public void whyEntityByEntityIdTestViaJavaClient(
-      SzRecordId recordId,
-      Boolean forceMinimal,
+      SzRecordId    recordId,
+      Boolean       forceMinimal,
+      SzDetailLevel detailLevel,
       SzFeatureMode featureMode,
-      Boolean withFeatureStats,
-      Boolean withInternalFeatures,
-      Boolean withRelationships,
-      Boolean withRaw) {
+      Boolean       withFeatureStats,
+      Boolean       withInternalFeatures,
+      Boolean       withRelationships,
+      Boolean       withRaw)
+  {
     this.performTest(() -> {
       long entityId = this.getEntityIdForRecordId(recordId);
 
       String testInfo = "recordId=[ " + recordId
           + " ], entityId=[ " + entityId
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -1567,6 +1759,7 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       buildWhyEntityQueryString(sb,
                                 forceMinimal,
+                                detailLevel,
                                 featureMode,
                                 withFeatureStats,
                                 withInternalFeatures,
@@ -1575,11 +1768,17 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
+      com.senzing.gen.api.model.SzDetailLevel clientDetailLevel
+          = (detailLevel == null)
+          ? null
+          : com.senzing.gen.api.model.SzDetailLevel.valueOf(
+              detailLevel.toString());
+
       com.senzing.gen.api.model.SzFeatureMode clientFeatureMode
           = (featureMode == null)
           ? null
           : com.senzing.gen.api.model.SzFeatureMode.valueOf(
-          featureMode.toString());
+              featureMode.toString());
 
       long before = System.nanoTime();
       com.senzing.gen.api.model.SzWhyEntityResponse clientResponse
@@ -1588,6 +1787,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           withRelationships,
           withFeatureStats,
           withInternalFeatures,
+          clientDetailLevel,
           clientFeatureMode,
           forceMinimal,
           withRaw);
@@ -1604,6 +1804,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           recordId,
           null,
           (forceMinimal == null ? false : forceMinimal),
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -1621,6 +1822,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       SzRecordId          recordId,
       Long                entityId,
       boolean             forceMinimal,
+      SzDetailLevel       detailLevel,
       SzFeatureMode       featureMode,
       boolean             withFeatureStats,
       boolean             withInternalFeatures,
@@ -1679,7 +1881,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                      + entityIds + "): " + testInfo);
     }
 
-    if (recordId != null) {
+    if (recordId != null && detailLevel != SUMMARY) {
       Set<SzRecordId> recordIds = new LinkedHashSet<>();
       for (SzEntityData entityData : entities) {
         SzResolvedEntity entity = entityData.getResolvedEntity();
@@ -1727,6 +1929,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                      resolvedEntity,
                      relatedEntities,
                      forceMinimal,
+                     detailLevel,
                      featureMode,
                      withFeatureStats,
                      withInternalFeatures,
@@ -1774,21 +1977,11 @@ public class WhyServicesTest extends AbstractServiceTest {
       }
 
       for (Object entity : ((Collection) rawEntities)) {
-        if (featureMode == NONE || forceMinimal) {
-          validateRawDataMap(testInfo,
-                             ((Map) entity).get("RESOLVED_ENTITY"),
-                             false,
-                             "ENTITY_ID",
-                             "RECORDS");
-        } else {
-          validateRawDataMap(testInfo,
-                             ((Map) entity).get("RESOLVED_ENTITY"),
-                             false,
-                             "ENTITY_ID",
-                             "FEATURES",
-                             "RECORD_SUMMARY",
-                             "RECORDS");
-        }
+          validateRawDataMap(
+              testInfo,
+              ((Map) entity).get("RESOLVED_ENTITY"),
+              false,
+              rawEntityKeys(forceMinimal, detailLevel, featureMode));
       }
     }
   }
@@ -1803,6 +1996,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       Long                  entityId1,
       Long                  entityId2,
       boolean               forceMinimal,
+      SzDetailLevel         detailLevel,
       SzFeatureMode         featureMode,
       boolean               withFeatureStats,
       boolean               withInternalFeatures,
@@ -1851,17 +2045,17 @@ public class WhyServicesTest extends AbstractServiceTest {
                        + testInfo);
 
       assertTrue(entityIds.contains(entityId2),
-                 "First entity ID (" + entityId2 + ") not found "
+                 "Second entity ID (" + entityId2 + ") not found "
                      + "entities list (" + entityIds + "): " + testInfo);
     }
 
-    if (recordId1 != null) {
+    if (recordId1 != null && detailLevel != SUMMARY) {
       assertTrue(recordIds.contains(recordId1),
-                 "Second record ID (" + recordId1 + ") not present in "
+                 "First record ID (" + recordId1 + ") not present in "
                      + "record IDs of returned entities (" + recordIds + "): "
                      + testInfo);
     }
-    if (recordId2 != null) {
+    if (recordId2 != null && detailLevel != SUMMARY) {
       assertTrue(recordIds.contains(recordId2),
                  "Second record ID (" + recordId2 + ") not present in "
                      + "record IDs of returned entities (" + recordIds + "): "
@@ -1905,6 +2099,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                      resolvedEntity,
                      relatedEntities,
                      forceMinimal,
+                     detailLevel,
                      featureMode,
                      withFeatureStats,
                      withInternalFeatures,
@@ -1951,39 +2146,32 @@ public class WhyServicesTest extends AbstractServiceTest {
       }
 
       for (Object entity : ((Collection) rawEntities)) {
-        if (featureMode == NONE || forceMinimal) {
-          validateRawDataMap(testInfo,
-                             ((Map) entity).get("RESOLVED_ENTITY"),
-                             false,
-                             "ENTITY_ID",
-                             "RECORDS");
-        } else {
-          validateRawDataMap(testInfo,
-                             ((Map) entity).get("RESOLVED_ENTITY"),
-                             false,
-                             "ENTITY_ID",
-                             "FEATURES",
-                             "RECORD_SUMMARY",
-                             "RECORDS");
-        }
+          validateRawDataMap(
+              testInfo,
+              ((Map) entity).get("RESOLVED_ENTITY"),
+              false,
+              rawEntityKeys(forceMinimal, detailLevel, featureMode));
       }
     }
   }
 
   @ParameterizedTest
   @MethodSource("getWhyRecordsParameters")
-  public void whyRecordsTest(SzRecordId recordId1,
-                             SzRecordId recordId2,
-                             Boolean forceMinimal,
-                             SzFeatureMode featureMode,
-                             Boolean withFeatureStats,
-                             Boolean withInternalFeatures,
-                             Boolean withRelationships,
-                             Boolean withRaw) {
+  public void whyRecordsTest(SzRecordId     recordId1,
+                             SzRecordId     recordId2,
+                             Boolean        forceMinimal,
+                             SzDetailLevel  detailLevel,
+                             SzFeatureMode  featureMode,
+                             Boolean        withFeatureStats,
+                             Boolean        withInternalFeatures,
+                             Boolean        withRelationships,
+                             Boolean        withRaw)
+  {
     this.performTest(() -> {
       String testInfo = "recordId1=[ " + recordId1
           + " ], recordId2=[ " + recordId2
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -1997,6 +2185,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                  recordId1,
                                  recordId2,
                                  forceMinimal,
+                                 detailLevel,
                                  featureMode,
                                  withFeatureStats,
                                  withInternalFeatures,
@@ -2014,6 +2203,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           recordId2.getDataSourceCode(),
           recordId2.getRecordId(),
           (forceMinimal == null ? false : forceMinimal),
+          (detailLevel == null ? VERBOSE : detailLevel),
           (featureMode == null ? WITH_DUPLICATES : featureMode),
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -2032,6 +2222,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           recordId1,
           recordId2,
           (forceMinimal == null ? false : forceMinimal),
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -2044,18 +2235,21 @@ public class WhyServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getWhyRecordsParameters")
   public void whyRecordsViaHttpTest(
-      SzRecordId recordId1,
-      SzRecordId recordId2,
-      Boolean forceMinimal,
+      SzRecordId    recordId1,
+      SzRecordId    recordId2,
+      Boolean       forceMinimal,
+      SzDetailLevel detailLevel,
       SzFeatureMode featureMode,
-      Boolean withFeatureStats,
-      Boolean withInternalFeatures,
-      Boolean withRelationships,
-      Boolean withRaw) {
+      Boolean       withFeatureStats,
+      Boolean       withInternalFeatures,
+      Boolean       withRelationships,
+      Boolean       withRaw)
+  {
     this.performTest(() -> {
       String testInfo = "recordId1=[ " + recordId1
           + " ], recordId2=[ " + recordId2
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -2069,6 +2263,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                  recordId1,
                                  recordId2,
                                  forceMinimal,
+                                 detailLevel,
                                  featureMode,
                                  withFeatureStats,
                                  withInternalFeatures,
@@ -2091,6 +2286,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           recordId1,
           recordId2,
           (forceMinimal == null ? false : forceMinimal),
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -2103,18 +2299,21 @@ public class WhyServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getWhyRecordsParameters")
   public void whyRecordsTestViaJavaClient(
-      SzRecordId recordId1,
-      SzRecordId recordId2,
-      Boolean forceMinimal,
+      SzRecordId    recordId1,
+      SzRecordId    recordId2,
+      Boolean       forceMinimal,
+      SzDetailLevel detailLevel,
       SzFeatureMode featureMode,
-      Boolean withFeatureStats,
-      Boolean withInternalFeatures,
-      Boolean withRelationships,
-      Boolean withRaw) {
+      Boolean       withFeatureStats,
+      Boolean       withInternalFeatures,
+      Boolean       withRelationships,
+      Boolean       withRaw)
+  {
     this.performTest(() -> {
       String testInfo = "recordId1=[ " + recordId1
           + " ], recordId2=[ " + recordId2
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -2128,6 +2327,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                  recordId1,
                                  recordId2,
                                  forceMinimal,
+                                 detailLevel,
                                  featureMode,
                                  withFeatureStats,
                                  withInternalFeatures,
@@ -2136,11 +2336,17 @@ public class WhyServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
+      com.senzing.gen.api.model.SzDetailLevel clientDetailLevel
+          = (detailLevel == null)
+          ? null
+          : com.senzing.gen.api.model.SzDetailLevel.valueOf(
+              detailLevel.toString());
+
       com.senzing.gen.api.model.SzFeatureMode clientFeatureMode
           = (featureMode == null)
           ? null
           : com.senzing.gen.api.model.SzFeatureMode.valueOf(
-          featureMode.toString());
+              featureMode.toString());
 
       long before = System.nanoTime();
       com.senzing.gen.api.model.SzWhyRecordsResponse clientResponse
@@ -2151,6 +2357,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                                           withRelationships,
                                           withFeatureStats,
                                           withInternalFeatures,
+                                          clientDetailLevel,
                                           clientFeatureMode,
                                           forceMinimal,
                                           withRaw);
@@ -2167,6 +2374,7 @@ public class WhyServicesTest extends AbstractServiceTest {
           recordId1,
           recordId2,
           (forceMinimal == null ? false : forceMinimal),
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? true : withFeatureStats),
           (withInternalFeatures == null ? true : withInternalFeatures),
@@ -2184,6 +2392,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       SzRecordId            recordId1,
       SzRecordId            recordId2,
       boolean               forceMinimal,
+      SzDetailLevel         detailLevel,
       SzFeatureMode         featureMode,
       boolean               withFeatureStats,
       boolean               withInternalFeatures,
@@ -2235,15 +2444,17 @@ public class WhyServicesTest extends AbstractServiceTest {
       }
     }
 
-    assertTrue(recordIds.contains(recordId1),
-               "First requested record ID (" + recordId1
-                   + ") not represented in returned entities ("
-                   + recordIds + "): " + testInfo);
+    if (detailLevel != SUMMARY) {
+      assertTrue(recordIds.contains(recordId1),
+                 "First requested record ID (" + recordId1
+                     + ") not represented in returned entities ("
+                     + recordIds + "): " + testInfo);
 
-    assertTrue(recordIds.contains(recordId2),
-               "Second requested record ID (" + recordId2
-                   + ") not represented in returned entities ("
-                   + recordIds + "): " + testInfo);
+      assertTrue(recordIds.contains(recordId2),
+                 "Second requested record ID (" + recordId2
+                     + ") not represented in returned entities ("
+                     + recordIds + "): " + testInfo);
+    }
 
     Map<Long, SzResolvedEntity> entityMap = new LinkedHashMap<>();
     entities.forEach(entityData -> {
@@ -2278,6 +2489,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                      resolvedEntity,
                      relatedEntities,
                      forceMinimal,
+                     detailLevel,
                      featureMode,
                      withFeatureStats,
                      withInternalFeatures,
@@ -2328,21 +2540,11 @@ public class WhyServicesTest extends AbstractServiceTest {
       }
 
       for (Object entity : ((Collection) rawEntities)) {
-        if (featureMode == NONE || forceMinimal) {
-          validateRawDataMap(testInfo,
-                             ((Map) entity).get("RESOLVED_ENTITY"),
-                             false,
-                             "ENTITY_ID",
-                             "RECORDS");
-        } else {
-          validateRawDataMap(testInfo,
-                             ((Map) entity).get("RESOLVED_ENTITY"),
-                             false,
-                             "ENTITY_ID",
-                             "FEATURES",
-                             "RECORD_SUMMARY",
-                             "RECORDS");
-        }
+        validateRawDataMap(
+            testInfo,
+            ((Map) entity).get("RESOLVED_ENTITY"),
+            false,
+            rawEntityKeys(forceMinimal, detailLevel, featureMode));
       }
     }
   }

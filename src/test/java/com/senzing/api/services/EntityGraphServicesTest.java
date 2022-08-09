@@ -4,10 +4,12 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senzing.api.model.*;
+import com.senzing.api.model.impl.SzEntityPathImpl;
 import com.senzing.gen.api.invoker.ApiClient;
 import com.senzing.gen.api.services.EntityDataApi;
 import com.senzing.gen.api.services.EntityGraphApi;
 import com.senzing.repomgr.RepositoryManager;
+import com.senzing.util.CollectionUtilities;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
@@ -23,6 +25,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.*;
 
+import static com.senzing.api.model.SzDetailLevel.VERBOSE;
 import static com.senzing.api.model.SzFeatureMode.NONE;
 import static com.senzing.api.model.SzFeatureMode.WITH_DUPLICATES;
 import static com.senzing.api.model.SzHttpMethod.GET;
@@ -33,9 +36,12 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static com.senzing.api.services.ResponseValidators.*;
+import static java.util.Collections.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 public class EntityGraphServicesTest extends AbstractServiceTest {
+  private static final long RANDOM_SEED = 2345678910L;
+
   private static final int DEFAULT_PATH_DEGREES = 3;
   private static final int DEFAULT_NETWORK_DEGREES = 3;
   private static final int DEFAULT_BUILD_OUT = 1;
@@ -204,6 +210,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
         false,
         SzRelationshipMode.NONE,
         true,
+        null,
         WITH_DUPLICATES,
         false,
         false,
@@ -293,10 +300,11 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                  forbidVariant,
                  sources,
                  null,  // forceMinimal (7)
-                 null,  // featureMode (8)
-                 null,  // withFeatureStats (9)
-                 null,  // withInternalFeatures (10)
-                 null,  // withRaw (11)
+                 null,  // detailLevel (8)
+                 null,  // featureMode (9)
+                 null,  // withFeatureStats (10)
+                 null,  // withInternalFeatures (11)
+                 null,  // withRaw (12)
                  expectedPathLength,
                  expectedPath));
         });
@@ -352,36 +360,57 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
     Boolean[] booleanVariants = {null, true, false};
     List<Boolean> booleanVariantList = Arrays.asList(booleanVariants);
 
+    List<SzDetailLevel> detailLevels = new LinkedList<>();
+    detailLevels.add(null);
+    for (SzDetailLevel detailLevel : SzDetailLevel.values()) {
+      detailLevels.add(detailLevel);
+    }
+
     List<SzFeatureMode> featureModes = new LinkedList<>();
     featureModes.add(null);
     for (SzFeatureMode featureMode : SzFeatureMode.values()) {
       featureModes.add(featureMode);
     }
-    List<List> optionCombos = generateCombinations(
-        booleanVariantList,   // forceMinimal
-        featureModes,         // featureMode
-        booleanVariantList,   // withFeatureStats
-        booleanVariantList,   // withInternalFeatures
-        booleanVariantList);  // withRaw
 
-    int count = Math.max(baseArgs.size(), optionCombos.size()) * 2;
-    List<Arguments> result = new ArrayList<>(count);
+    Random prng = new Random(RANDOM_SEED);
+    List<List<Boolean>> booleanCombos = getBooleanVariants(4);
+    Collections.shuffle(booleanCombos, prng);
+    Iterator<List<Boolean>> booleansIter = circularIterator(booleanCombos);
 
-    for (int index = 0; index < count; index++) {
-      int argIndex      = index % baseArgs.size();
-      int optionsIndex  = index % optionCombos.size();
+    List<List> optionCombos = generateCombinations(detailLevels, featureModes);
+    Collections.shuffle(optionCombos, prng);
+    Iterator<List> optionsIter = circularIterator(optionCombos);
 
-      List baseArgList = baseArgs.get(argIndex);
-      List optionsList = optionCombos.get(optionsIndex);
+    int loopCount
+        = Math.max(booleanCombos.size(), optionCombos.size()) * 15
+        / baseArgs.size();
 
-      Object[] argArray = baseArgList.toArray();
-      argArray[7]   = optionsList.get(0);
-      argArray[8]   = optionsList.get(1);
-      argArray[9]   = optionsList.get(2);
-      argArray[10]  = optionsList.get(3);
-      argArray[11]  = optionsList.get(4);
-      result.add(arguments(argArray));
-    }
+    int totalCount = loopCount * baseArgs.size();
+    List<Arguments> result = new ArrayList<>(totalCount);
+
+    baseArgs.forEach(baseArgList -> {
+      for (int index = 0; index < loopCount; index++) {
+        List optsList               = optionsIter.next();
+        List<Boolean> booleansList  = booleansIter.next();
+
+        SzDetailLevel detailLevel           = (SzDetailLevel) optsList.get(0);
+        SzFeatureMode featureMode           = (SzFeatureMode) optsList.get(1);
+        Boolean       forceMinimal          = booleansList.get(0);
+        Boolean       withFeatureStats      = booleansList.get(1);
+        Boolean       withInternalFeatures  = booleansList.get(2);
+        Boolean       withRaw               = booleansList.get(3);
+
+        Object[] argArray = baseArgList.toArray();
+        argArray[7]   = forceMinimal;
+        argArray[8]   = detailLevel;
+        argArray[9]   = featureMode;
+        argArray[10]  = withFeatureStats;
+        argArray[11]  = withInternalFeatures;
+        argArray[12]  = withRaw;
+
+        result.add(arguments(argArray));
+      }
+    });
 
     return result;
   }
@@ -396,7 +425,8 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean               forbidAvoided,
       List<String>          sourcesParam,
       Boolean               forceMinimal,
-      SzFeatureMode featureMode,
+      SzDetailLevel         detailLevel,
+      SzFeatureMode         featureMode,
       Boolean               withFeatureStats,
       Boolean               withInternalFeatures,
       Boolean               withRaw)
@@ -427,6 +457,9 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
         for (String value: sourcesParam) {
           sb.append("&s=").append(URLEncoder.encode(value, "UTF-8"));
         }
+      }
+      if (detailLevel != null) {
+        sb.append("&detailLevel=").append(detailLevel);
       }
       if (featureMode != null) {
         sb.append("&featureMode=").append(featureMode);
@@ -528,6 +561,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                     Boolean                 forbidAvoided,
                                     List<String>            sourcesParam,
                                     Boolean                 forceMinimal,
+                                    SzDetailLevel           detailLevel,
                                     SzFeatureMode           featureMode,
                                     Boolean                 withFeatureStats,
                                     Boolean                 withInternalFeatures,
@@ -544,6 +578,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], forbidAvoided=[ " + forbidAvoided
           + " ], sources=[ " + sourcesParam
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -573,6 +608,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                            forbidAvoided,
                            sourcesParam,
                            forceMinimal,
+                           detailLevel,
                            featureMode,
                            withFeatureStats,
                            withInternalFeatures,
@@ -592,6 +628,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           (forbidAvoided == null ? false : forbidAvoided),
           sourcesParam,
           (forceMinimal == null ? false : forceMinimal),
+          (detailLevel == null ? VERBOSE : detailLevel),
           (featureMode == null ? WITH_DUPLICATES : featureMode),
           (withFeatureStats == null ? false : withFeatureStats),
           (withInternalFeatures == null ? false : withInternalFeatures),
@@ -614,6 +651,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           forbidAvoided,
           sourcesParam,
           forceMinimal,
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? false : withFeatureStats),
           (withInternalFeatures == null ? false : withInternalFeatures),
@@ -635,6 +673,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                 forbidAvoided,
       List<String>            sourcesParam,
       Boolean                 forceMinimal,
+      SzDetailLevel           detailLevel,
       SzFeatureMode           featureMode,
       Boolean                 withFeatureStats,
       Boolean                 withInternalFeatures,
@@ -651,6 +690,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], forbidAvoided=[ " + forbidAvoided
           + " ], sources=[ " + sourcesParam
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -680,6 +720,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                            forbidAvoided,
                            sourcesParam,
                            forceMinimal,
+                           detailLevel,
                            featureMode,
                            withFeatureStats,
                            withInternalFeatures,
@@ -707,6 +748,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           forbidAvoided,
           sourcesParam,
           forceMinimal,
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? false : withFeatureStats),
           (withInternalFeatures == null ? false : withInternalFeatures),
@@ -728,6 +770,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                 forbidAvoided,
       List<String>            sourcesParam,
       Boolean                 forceMinimal,
+      SzDetailLevel           detailLevel,
       SzFeatureMode           featureMode,
       Boolean                 withFeatureStats,
       Boolean                 withInternalFeatures,
@@ -744,6 +787,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], forbidAvoided=[ " + forbidAvoided
           + " ], sources=[ " + sourcesParam
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -773,6 +817,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                            forbidAvoided,
                            sourcesParam,
                            forceMinimal,
+                           detailLevel,
                            featureMode,
                            withFeatureStats,
                            withInternalFeatures,
@@ -780,11 +825,17 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
+      com.senzing.gen.api.model.SzDetailLevel clientDetailLevel
+          = (detailLevel == null)
+          ? null
+          : com.senzing.gen.api.model.SzDetailLevel.valueOf(
+              detailLevel.toString());
+
       com.senzing.gen.api.model.SzFeatureMode clientFeatureMode
           = (featureMode == null)
           ? null
           : com.senzing.gen.api.model.SzFeatureMode.valueOf(
-          featureMode.toString());
+              featureMode.toString());
 
       List<com.senzing.gen.api.model.SzEntityIdentifier> clientAvoidIds
           = this.toClientIdList(avoidParam, false);
@@ -808,6 +859,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                                clientAvoidList,
                                                forbidAvoided,
                                                sourcesParam,
+                                               clientDetailLevel,
                                                clientFeatureMode,
                                                withFeatureStats,
                                                withInternalFeatures,
@@ -831,6 +883,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           forbidAvoided,
           sourcesParam,
           forceMinimal,
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? false : withFeatureStats),
           (withInternalFeatures == null ? false : withInternalFeatures),
@@ -852,6 +905,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                     Boolean                 forbidAvoided,
                                     List<String>            sourcesParam,
                                     Boolean                 forceMinimal,
+                                    SzDetailLevel           detailLevel,
                                     SzFeatureMode           featureMode,
                                     Boolean                 withFeatureStats,
                                     Boolean                 withInternalFeatures,
@@ -868,6 +922,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], forbidAvoided=[ " + forbidAvoided
           + " ], sources=[ " + sourcesParam
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -897,6 +952,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                            forbidAvoided,
                            sourcesParam,
                            forceMinimal,
+                           detailLevel,
                            featureMode,
                            withFeatureStats,
                            withInternalFeatures,
@@ -916,6 +972,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           (forbidAvoided == null ? false : forbidAvoided),
           sourcesParam,
           (forceMinimal == null ? false : forceMinimal),
+          (detailLevel == null ? VERBOSE : detailLevel),
           (featureMode == null ? WITH_DUPLICATES : featureMode),
           (withFeatureStats == null ? false : withFeatureStats),
           (withInternalFeatures == null ? false : withInternalFeatures),
@@ -938,6 +995,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           forbidAvoided,
           sourcesParam,
           forceMinimal,
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? false : withFeatureStats),
           (withInternalFeatures == null ? false : withInternalFeatures),
@@ -959,7 +1017,8 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                 forbidAvoided,
       List<String>            sourcesParam,
       Boolean                 forceMinimal,
-      SzFeatureMode featureMode,
+      SzDetailLevel           detailLevel,
+      SzFeatureMode           featureMode,
       Boolean                 withFeatureStats,
       Boolean                 withInternalFeatures,
       Boolean                 withRaw,
@@ -975,6 +1034,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], forbidAvoided=[ " + forbidAvoided
           + " ], sources=[ " + sourcesParam
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -1004,6 +1064,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                            forbidAvoided,
                            sourcesParam,
                            forceMinimal,
+                           detailLevel,
                            featureMode,
                            withFeatureStats,
                            withInternalFeatures,
@@ -1031,6 +1092,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           forbidAvoided,
           sourcesParam,
           forceMinimal,
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? false : withFeatureStats),
           (withInternalFeatures == null ? false : withInternalFeatures),
@@ -1053,6 +1115,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean                 forbidAvoided,
       List<String>            sourcesParam,
       Boolean                 forceMinimal,
+      SzDetailLevel           detailLevel,
       SzFeatureMode           featureMode,
       Boolean                 withFeatureStats,
       Boolean                 withInternalFeatures,
@@ -1069,6 +1132,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], forbidAvoided=[ " + forbidAvoided
           + " ], sources=[ " + sourcesParam
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -1098,16 +1162,23 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                            forbidAvoided,
                            sourcesParam,
                            forceMinimal,
+                           detailLevel,
                            featureMode,
                            withFeatureStats,
                            withInternalFeatures,
                            withRaw);
 
+      com.senzing.gen.api.model.SzDetailLevel clientDetailLevel
+          = (detailLevel == null)
+          ? null
+          : com.senzing.gen.api.model.SzDetailLevel.valueOf(
+              detailLevel.toString());
+
       com.senzing.gen.api.model.SzFeatureMode clientFeatureMode
           = (featureMode == null)
           ? null
           : com.senzing.gen.api.model.SzFeatureMode.valueOf(
-          featureMode.toString());
+              featureMode.toString());
 
       String uriText = this.formatServerUri(sb.toString());
       List<com.senzing.gen.api.model.SzEntityIdentifier> clientAvoidIds
@@ -1132,6 +1203,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                                clientAvoidList,
                                                forbidAvoided,
                                                sourcesParam,
+                                               clientDetailLevel,
                                                clientFeatureMode,
                                                withFeatureStats,
                                                withInternalFeatures,
@@ -1155,6 +1227,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           forbidAvoided,
           sourcesParam,
           forceMinimal,
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? false : withFeatureStats),
           (withInternalFeatures == null ? false : withInternalFeatures),
@@ -1180,6 +1253,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Boolean               forbidAvoided,
       List<String>          sourcesParam,
       Boolean               forceMinimal,
+      SzDetailLevel         detailLevel,
       SzFeatureMode         featureMode,
       boolean               withFeatureStats,
       boolean               withInternalFeatures,
@@ -1292,6 +1366,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                      resolvedEntity,
                      relatedEntities,
                      forceMinimal,
+                     detailLevel,
                      featureMode,
                      withFeatureStats,
                      withInternalFeatures,
@@ -1331,21 +1406,11 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                               "RELATED_ENTITIES");
 
       for (Object entity : ((Collection) rawEntities)) {
-        if (featureMode == NONE || (forceMinimal != null && forceMinimal)) {
-          validateRawDataMap(testInfo,
-                             ((Map) entity).get("RESOLVED_ENTITY"),
-                             false,
-                             "ENTITY_ID",
-                             "RECORDS");
-        } else {
-          validateRawDataMap(testInfo,
-                             ((Map) entity).get("RESOLVED_ENTITY"),
-                             false,
-                             "ENTITY_ID",
-                             "FEATURES",
-                             "RECORD_SUMMARY",
-                             "RECORDS");
-        }
+        validateRawDataMap(
+            testInfo,
+            ((Map) entity).get("RESOLVED_ENTITY"),
+            false,
+            rawEntityKeys(forceMinimal, detailLevel, featureMode));
       }
     }
   }
@@ -1475,10 +1540,11 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                      buildOutVariant,
                      maxEntitiesVariant,
                      null,  // forceMinimal (5)
-                     null,  // featureMode (6)
-                     null,  // withFeatureStats (7)
-                     null,  // withInternalFeatures (8)
-                     null,  // withRaw (9)
+                     null,  // detailLevel (6)
+                     null,  // featureMode (7)
+                     null,  // withFeatureStats (8)
+                     null,  // withInternalFeatures (9)
+                     null,  // withRaw (10)
                      expectedPathCount,
                      expectedPaths,
                      expectedEntities));
@@ -1504,7 +1570,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
     baseArgs.addAll(networkArgs(
         set(ABC123,JKL456), 1, 0, null,
-        1, list(list()),
+        1, list(list(null, ABC123, JKL456)),
         set(ABC123,JKL456)));
 
     baseArgs.addAll(networkArgs(
@@ -1517,11 +1583,29 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
         set(ABC123,ABC567,JKL456), 3, 0, null,
         3,
         list(list(ABC123,MNO345,DEF890,JKL456),
-             list(ABC123,DEF456,PQR678,ABC567)),
+             list(ABC123,DEF456,PQR678,ABC567),
+             list(null, ABC567, JKL456)),
         set(ABC123,MNO345,DEF890,JKL456,DEF456,PQR678,ABC567)));
-    
-    Boolean[] booleanVariants = {null, true, false};
-    List<Boolean> booleanVariantList = Arrays.asList(booleanVariants);
+
+    baseArgs.addAll(networkArgs(
+        set(ABC567,GHI123,MNO345), 0, 1, null,
+        3,
+        list(list(null, ABC567, GHI123),
+             list(null, ABC567, MNO345),
+             list(null, GHI123, MNO345)),
+        set(ABC567,GHI123,MNO345,PQR678,XYZ234,STU901,ABC123,DEF890)));
+
+    baseArgs.addAll(networkArgs(
+        set(ABC123,DEF456), 0, 1, null,
+        1,
+        list(list(null, ABC123, DEF456)),
+        set(ABC123,DEF456,MNO345,GHI789,PQR678)));
+
+    List<SzDetailLevel> detailLevels = new LinkedList<>();
+    detailLevels.add(null);
+    for (SzDetailLevel detailLevel : SzDetailLevel.values()) {
+      detailLevels.add(detailLevel);
+    }
 
     List<SzFeatureMode> featureModes = new LinkedList<>();
     featureModes.add(null);
@@ -1532,31 +1616,45 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
     // convert to an array list for random access
     baseArgs = new ArrayList<>(baseArgs);
 
-    List<List> optionCombos = generateCombinations(
-        booleanVariantList,   // forceMinimal
-        featureModes,         // featureMode
-        booleanVariantList,   // withFeatureStats
-        booleanVariantList,   // withInternalFeatures
-        booleanVariantList);  // withRaw
+    Random prng = new Random(RANDOM_SEED);
+    List<List<Boolean>> booleanCombos = getBooleanVariants(4);
+    Collections.shuffle(booleanCombos, prng);
+    Iterator<List<Boolean>> booleansIter = circularIterator(booleanCombos);
 
-    int count = Math.max(baseArgs.size(), optionCombos.size()) * 2;
-    List<Arguments> result = new ArrayList<>(count);
+    List<List> optionCombos = generateCombinations(detailLevels, featureModes);
+    Collections.shuffle(optionCombos, prng);
+    Iterator<List> optionsIter = circularIterator(optionCombos);
 
-    for (int index = 0; index < count; index++) {
-      int argIndex      = index % baseArgs.size();
-      int optionsIndex  = index % optionCombos.size();
+    int loopCount
+        = Math.max(booleanCombos.size(), optionCombos.size()) * 15
+        / baseArgs.size();
 
-      List baseArgList = baseArgs.get(argIndex);
-      List optionsList = optionCombos.get(optionsIndex);
+    int totalCount = loopCount * baseArgs.size();
+    List<Arguments> result = new ArrayList<>(totalCount);
 
-      Object[] argArray = baseArgList.toArray();
-      argArray[5] = optionsList.get(0);
-      argArray[6] = optionsList.get(1);
-      argArray[7] = optionsList.get(2);
-      argArray[8] = optionsList.get(3);
-      argArray[9] = optionsList.get(4);
-      result.add(arguments(argArray));
-    }
+    baseArgs.forEach(baseArgList -> {
+      for (int index = 0; index < loopCount; index++) {
+        List          optsList      = optionsIter.next();
+        List<Boolean> booleansList  = booleansIter.next();
+
+        SzDetailLevel detailLevel           = (SzDetailLevel) optsList.get(0);
+        SzFeatureMode featureMode           = (SzFeatureMode) optsList.get(1);
+        Boolean       forceMinimal          = booleansList.get(0);
+        Boolean       withFeatureStats      = booleansList.get(1);
+        Boolean       withInternalFeatures  = booleansList.get(2);
+        Boolean       withRaw               = booleansList.get(3);
+
+        Object[] argArray = baseArgList.toArray();
+        argArray[5] = forceMinimal;
+        argArray[6] = detailLevel;
+        argArray[7] = featureMode;
+        argArray[8] = withFeatureStats;
+        argArray[9] = withInternalFeatures;
+        argArray[10] = withRaw;
+
+        result.add(arguments(argArray));
+      }
+    });
 
     return result;
 
@@ -1570,7 +1668,8 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Integer               buildOut,
       Integer               maxEntities,
       Boolean               forceMinimal,
-      SzFeatureMode featureMode,
+      SzDetailLevel         detailLevel,
+      SzFeatureMode         featureMode,
       Boolean               withFeatureStats,
       Boolean               withInternalFeatures,
       Boolean               withRaw)
@@ -1596,6 +1695,9 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       }
       if (maxEntities != null) {
         sb.append("&maxEntities=").append(maxEntities);
+      }
+      if (detailLevel != null) {
+        sb.append("&detailLevel=").append(detailLevel);
       }
       if (featureMode != null) {
         sb.append("&featureMode=").append(featureMode);
@@ -1628,6 +1730,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Integer                 buildOut,
       Integer                 maxEntities,
       Boolean                 forceMinimal,
+      SzDetailLevel           detailLevel,
       SzFeatureMode           featureMode,
       Boolean                 withFeatureStats,
       Boolean                 withInternalFeatures,
@@ -1638,105 +1741,12 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
   {
     this.performTest(() -> {
       String testInfo = "entityParam=[ " + entityParam
-        + " ], entityList=[ " + entityList
-        + " ], maxDegrees=[ " + maxDegrees
-        + " ], buildOut=[ " + buildOut
-        + " ], maxEntities=[ " + maxEntities
-        + " ], forceMinimal=[ " + forceMinimal
-        + " ], featureMode=[ " + featureMode
-        + " ], withFeatureStats=[ " + withFeatureStats
-        + " ], withInternalFeatures=[ " + withInternalFeatures
-        + " ], withRaw=[ " + withRaw + " ]";
-
-      SzEntityIdentifiers entityParamIds
-          = this.normalizeIdentifiers(entityParam,false);
-
-      SzEntityIdentifiers entityListIds
-          = this.normalizeIdentifiers(entityList,false);
-
-      StringBuilder sb = new StringBuilder();
-      sb.append("entity-networks");
-
-      buildNetworkQueryString(sb,
-                              entityParamIds,
-                              entityListIds,
-                              maxDegrees,
-                              buildOut,
-                              maxEntities,
-                              forceMinimal,
-                              featureMode,
-                              withFeatureStats,
-                              withInternalFeatures,
-                              withRaw);
-
-      String uriText = this.formatServerUri(sb.toString());
-      UriInfo uriInfo = this.newProxyUriInfo(uriText);
-
-      long before = System.nanoTime();
-
-      SzEntityNetworkResponse response
-          = this.entityGraphServices.getEntityNetwork(
-          formatIdentifierParam(entityParamIds),
-          formatIdentifierList(entityListIds),
-          (maxDegrees == null   ? DEFAULT_NETWORK_DEGREES : maxDegrees),
-          (buildOut == null     ? DEFAULT_BUILD_OUT : buildOut),
-          (maxEntities == null  ? DEFAULT_MAX_ENTITIES : maxEntities),
-          (forceMinimal == null ? false : forceMinimal),
-          (featureMode == null  ? WITH_DUPLICATES : featureMode),
-          (withFeatureStats == null ? false : withFeatureStats),
-          (withInternalFeatures == null ? false : withInternalFeatures),
-          (withRaw == null      ? false : withRaw),
-          uriInfo);
-
-      response.concludeTimers();
-      long after = System.nanoTime();
-
-      this.validateEntityNetworkResponse(
-          testInfo,
-          response,
-          GET,
-          uriText,
-          entityParamIds,
-          entityListIds,
-          (maxDegrees != null) ? maxDegrees : DEFAULT_NETWORK_DEGREES,
-          (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
-          (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
-          forceMinimal,
-          featureMode,
-          (withFeatureStats == null) ? false : withFeatureStats,
-          (withInternalFeatures == null) ? false : withInternalFeatures,
-          withRaw,
-          expectedPathCount,
-          expectedPaths,
-          expectedEntities,
-          after - before);
-    });
-  }
-
-  @ParameterizedTest
-  @MethodSource("getEntityNetworkParameters")
-  public void getNetworkByRecordIdViaHttpTest(
-      Collection<SzRecordId>   entityParam,
-      Collection<SzRecordId>   entityList,
-      Integer                  maxDegrees,
-      Integer                  buildOut,
-      Integer                  maxEntities,
-      Boolean                  forceMinimal,
-      SzFeatureMode            featureMode,
-      Boolean                  withFeatureStats,
-      Boolean                  withInternalFeatures,
-      Boolean                  withRaw,
-      Integer                  expectedPathCount,
-      List<List<SzRecordId>>   expectedPaths,
-      Set<SzRecordId>          expectedEntities)
-  {
-    this.performTest(() -> {
-      String testInfo = "entityParam=[ " + entityParam
           + " ], entityList=[ " + entityList
           + " ], maxDegrees=[ " + maxDegrees
           + " ], buildOut=[ " + buildOut
           + " ], maxEntities=[ " + maxEntities
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -1758,6 +1768,106 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                               buildOut,
                               maxEntities,
                               forceMinimal,
+                              detailLevel,
+                              featureMode,
+                              withFeatureStats,
+                              withInternalFeatures,
+                              withRaw);
+
+      String uriText = this.formatServerUri(sb.toString());
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      long before = System.nanoTime();
+
+      SzEntityNetworkResponse response
+          = this.entityGraphServices.getEntityNetwork(
+          formatIdentifierParam(entityParamIds),
+          formatIdentifierList(entityListIds),
+          (maxDegrees == null   ? DEFAULT_NETWORK_DEGREES : maxDegrees),
+          (buildOut == null     ? DEFAULT_BUILD_OUT : buildOut),
+          (maxEntities == null  ? DEFAULT_MAX_ENTITIES : maxEntities),
+          (forceMinimal == null ? false : forceMinimal),
+          (detailLevel == null ? VERBOSE : detailLevel),
+          (featureMode == null  ? WITH_DUPLICATES : featureMode),
+          (withFeatureStats == null ? false : withFeatureStats),
+          (withInternalFeatures == null ? false : withInternalFeatures),
+          (withRaw == null      ? false : withRaw),
+          uriInfo);
+
+      response.concludeTimers();
+      long after = System.nanoTime();
+
+      this.validateEntityNetworkResponse(
+          testInfo,
+          response,
+          GET,
+          uriText,
+          entityParamIds,
+          entityListIds,
+          (maxDegrees != null) ? maxDegrees : DEFAULT_NETWORK_DEGREES,
+          (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
+          (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
+          forceMinimal,
+          detailLevel,
+          featureMode,
+          (withFeatureStats == null) ? false : withFeatureStats,
+          (withInternalFeatures == null) ? false : withInternalFeatures,
+          withRaw,
+          expectedPathCount,
+          expectedPaths,
+          expectedEntities,
+          after - before);
+    });
+  }
+
+  @ParameterizedTest
+  @MethodSource("getEntityNetworkParameters")
+  public void getNetworkByRecordIdViaHttpTest(
+      Collection<SzRecordId>  entityParam,
+      Collection<SzRecordId>  entityList,
+      Integer                 maxDegrees,
+      Integer                 buildOut,
+      Integer                 maxEntities,
+      Boolean                 forceMinimal,
+      SzDetailLevel           detailLevel,
+      SzFeatureMode           featureMode,
+      Boolean                 withFeatureStats,
+      Boolean                 withInternalFeatures,
+      Boolean                 withRaw,
+      Integer                 expectedPathCount,
+      List<List<SzRecordId>>  expectedPaths,
+      Set<SzRecordId>         expectedEntities)
+  {
+    this.performTest(() -> {
+      String testInfo = "entityParam=[ " + entityParam
+          + " ], entityList=[ " + entityList
+          + " ], maxDegrees=[ " + maxDegrees
+          + " ], buildOut=[ " + buildOut
+          + " ], maxEntities=[ " + maxEntities
+          + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
+          + " ], featureMode=[ " + featureMode
+          + " ], withFeatureStats=[ " + withFeatureStats
+          + " ], withInternalFeatures=[ " + withInternalFeatures
+          + " ], withRaw=[ " + withRaw + " ]";
+
+      SzEntityIdentifiers entityParamIds
+          = this.normalizeIdentifiers(entityParam,false);
+
+      SzEntityIdentifiers entityListIds
+          = this.normalizeIdentifiers(entityList,false);
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("entity-networks");
+
+      buildNetworkQueryString(sb,
+                              entityParamIds,
+                              entityListIds,
+                              maxDegrees,
+                              buildOut,
+                              maxEntities,
+                              forceMinimal,
+                              detailLevel,
                               featureMode,
                               withFeatureStats,
                               withInternalFeatures,
@@ -1783,6 +1893,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
           (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
           forceMinimal,
+          detailLevel,
           featureMode,
           (withFeatureStats == null) ? false : withFeatureStats,
           (withInternalFeatures == null) ? false : withInternalFeatures,
@@ -1973,19 +2084,20 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getEntityNetworkParameters")
   public void getNetworkByRecordIdViaJavaClientTest(
-      Collection<SzRecordId>   entityParam,
-      Collection<SzRecordId>   entityList,
-      Integer                  maxDegrees,
-      Integer                  buildOut,
-      Integer                  maxEntities,
-      Boolean                  forceMinimal,
-      SzFeatureMode            featureMode,
-      Boolean                  withFeatureStats,
-      Boolean                  withInternalFeatures,
-      Boolean                  withRaw,
-      Integer                  expectedPathCount,
-      List<List<SzRecordId>>   expectedPaths,
-      Set<SzRecordId>          expectedEntities)
+      Collection<SzRecordId>  entityParam,
+      Collection<SzRecordId>  entityList,
+      Integer                 maxDegrees,
+      Integer                 buildOut,
+      Integer                 maxEntities,
+      Boolean                 forceMinimal,
+      SzDetailLevel           detailLevel,
+      SzFeatureMode           featureMode,
+      Boolean                 withFeatureStats,
+      Boolean                 withInternalFeatures,
+      Boolean                 withRaw,
+      Integer                 expectedPathCount,
+      List<List<SzRecordId>>  expectedPaths,
+      Set<SzRecordId>         expectedEntities)
   {
     this.performTest(() -> {
       String testInfo = "entityParam=[ " + entityParam
@@ -1994,6 +2106,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], buildOut=[ " + buildOut
           + " ], maxEntities=[ " + maxEntities
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -2015,6 +2128,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                               buildOut,
                               maxEntities,
                               forceMinimal,
+                              detailLevel,
                               featureMode,
                               withFeatureStats,
                               withInternalFeatures,
@@ -2022,11 +2136,17 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
+      com.senzing.gen.api.model.SzDetailLevel clientDetailLevel
+          = (detailLevel == null)
+          ? null
+          : com.senzing.gen.api.model.SzDetailLevel.valueOf(
+              detailLevel.toString());
+
       com.senzing.gen.api.model.SzFeatureMode clientFeatureMode
           = (featureMode == null)
           ? null
           : com.senzing.gen.api.model.SzFeatureMode.valueOf(
-          featureMode.toString());
+              featureMode.toString());
 
       List<com.senzing.gen.api.model.SzEntityIdentifier> clientParamIds
           = this.toClientIdList(entityParam, false);
@@ -2042,6 +2162,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                                 maxDegrees,
                                                 buildOut,
                                                 maxEntities,
+                                                clientDetailLevel,
                                                 clientFeatureMode,
                                                 withFeatureStats,
                                                 withInternalFeatures,
@@ -2064,6 +2185,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
           (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
           forceMinimal,
+          detailLevel,
           featureMode,
           (withFeatureStats == null) ? false : withFeatureStats,
           (withInternalFeatures == null) ? false : withInternalFeatures,
@@ -2078,19 +2200,20 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getEntityNetworkParameters")
   public void getNetworkByEntityIdTest(
-      Collection<SzRecordId>   entityParam,
-      Collection<SzRecordId>   entityList,
-      Integer                  maxDegrees,
-      Integer                  buildOut,
-      Integer                  maxEntities,
-      Boolean                  forceMinimal,
-      SzFeatureMode featureMode,
-      Boolean                  withFeatureStats,
-      Boolean                  withInternalFeatures,
-      Boolean                  withRaw,
-      Integer                  expectedPathCount,
-      List<List<SzRecordId>>   expectedPaths,
-      Set<SzRecordId>          expectedEntities)
+      Collection<SzRecordId>  entityParam,
+      Collection<SzRecordId>  entityList,
+      Integer                 maxDegrees,
+      Integer                 buildOut,
+      Integer                 maxEntities,
+      Boolean                 forceMinimal,
+      SzDetailLevel           detailLevel,
+      SzFeatureMode           featureMode,
+      Boolean                 withFeatureStats,
+      Boolean                 withInternalFeatures,
+      Boolean                 withRaw,
+      Integer                 expectedPathCount,
+      List<List<SzRecordId>>  expectedPaths,
+      Set<SzRecordId>         expectedEntities)
   {
     this.performTest(() -> {
       String testInfo = "entityParam=[ " + entityParam
@@ -2099,6 +2222,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], buildOut=[ " + buildOut
           + " ], maxEntities=[ " + maxEntities
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -2120,6 +2244,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                               buildOut,
                               maxEntities,
                               forceMinimal,
+                              detailLevel,
                               featureMode,
                               withFeatureStats,
                               withInternalFeatures,
@@ -2138,6 +2263,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           (buildOut == null     ? DEFAULT_BUILD_OUT : buildOut),
           (maxEntities == null  ? DEFAULT_MAX_ENTITIES : maxEntities),
           (forceMinimal == null ? false : forceMinimal),
+          (detailLevel == null ? VERBOSE : detailLevel),
           (featureMode == null  ? WITH_DUPLICATES : featureMode),
           (withFeatureStats == null ? false : withFeatureStats),
           (withInternalFeatures == null ? false : withInternalFeatures),
@@ -2158,6 +2284,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
           (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
           forceMinimal,
+          detailLevel,
           featureMode,
           (withFeatureStats == null) ? false : withFeatureStats,
           (withInternalFeatures == null) ? false : withInternalFeatures,
@@ -2172,19 +2299,20 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getEntityNetworkParameters")
   public void getNetworkByEntityIdViaHttpTest(
-      Collection<SzRecordId>   entityParam,
-      Collection<SzRecordId>   entityList,
-      Integer                  maxDegrees,
-      Integer                  buildOut,
-      Integer                  maxEntities,
-      Boolean                  forceMinimal,
-      SzFeatureMode            featureMode,
-      Boolean                  withFeatureStats,
-      Boolean                  withInternalFeatures,
-      Boolean                  withRaw,
-      Integer                  expectedPathCount,
-      List<List<SzRecordId>>   expectedPaths,
-      Set<SzRecordId>          expectedEntities)
+      Collection<SzRecordId>  entityParam,
+      Collection<SzRecordId>  entityList,
+      Integer                 maxDegrees,
+      Integer                 buildOut,
+      Integer                 maxEntities,
+      Boolean                 forceMinimal,
+      SzDetailLevel           detailLevel,
+      SzFeatureMode           featureMode,
+      Boolean                 withFeatureStats,
+      Boolean                 withInternalFeatures,
+      Boolean                 withRaw,
+      Integer                 expectedPathCount,
+      List<List<SzRecordId>>  expectedPaths,
+      Set<SzRecordId>         expectedEntities)
   {
     this.performTest(() -> {
       String testInfo = "entityParam=[ " + entityParam
@@ -2193,6 +2321,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], buildOut=[ " + buildOut
           + " ], maxEntities=[ " + maxEntities
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -2214,6 +2343,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                               buildOut,
                               maxEntities,
                               forceMinimal,
+                              detailLevel,
                               featureMode,
                               withFeatureStats,
                               withInternalFeatures,
@@ -2239,6 +2369,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
           (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
           forceMinimal,
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? false : withFeatureStats),
           (withInternalFeatures == null ? false : withInternalFeatures),
@@ -2253,19 +2384,20 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getEntityNetworkParameters")
   public void getNetworkByEntityIdViaJavaClientTest(
-      Collection<SzRecordId>   entityParam,
-      Collection<SzRecordId>   entityList,
-      Integer                  maxDegrees,
-      Integer                  buildOut,
-      Integer                  maxEntities,
-      Boolean                  forceMinimal,
-      SzFeatureMode            featureMode,
-      Boolean                  withFeatureStats,
-      Boolean                  withInternalFeatures,
-      Boolean                  withRaw,
-      Integer                  expectedPathCount,
-      List<List<SzRecordId>>   expectedPaths,
-      Set<SzRecordId>          expectedEntities)
+      Collection<SzRecordId>  entityParam,
+      Collection<SzRecordId>  entityList,
+      Integer                 maxDegrees,
+      Integer                 buildOut,
+      Integer                 maxEntities,
+      Boolean                 forceMinimal,
+      SzDetailLevel           detailLevel,
+      SzFeatureMode           featureMode,
+      Boolean                 withFeatureStats,
+      Boolean                 withInternalFeatures,
+      Boolean                 withRaw,
+      Integer                 expectedPathCount,
+      List<List<SzRecordId>>  expectedPaths,
+      Set<SzRecordId>         expectedEntities)
   {
     this.performTest(() -> {
       String testInfo = "entityParam=[ " + entityParam
@@ -2274,6 +2406,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           + " ], buildOut=[ " + buildOut
           + " ], maxEntities=[ " + maxEntities
           + " ], forceMinimal=[ " + forceMinimal
+          + " ], detailLevel=[ " + detailLevel
           + " ], featureMode=[ " + featureMode
           + " ], withFeatureStats=[ " + withFeatureStats
           + " ], withInternalFeatures=[ " + withInternalFeatures
@@ -2295,6 +2428,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                               buildOut,
                               maxEntities,
                               forceMinimal,
+                              detailLevel,
                               featureMode,
                               withFeatureStats,
                               withInternalFeatures,
@@ -2302,11 +2436,17 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
 
       String uriText = this.formatServerUri(sb.toString());
 
+      com.senzing.gen.api.model.SzDetailLevel clientDetailLevel
+          = (detailLevel == null)
+          ? null
+          : com.senzing.gen.api.model.SzDetailLevel.valueOf(
+              detailLevel.toString());
+
       com.senzing.gen.api.model.SzFeatureMode clientFeatureMode
           = (featureMode == null)
           ? null
           : com.senzing.gen.api.model.SzFeatureMode.valueOf(
-          featureMode.toString());
+              featureMode.toString());
 
       List<com.senzing.gen.api.model.SzEntityIdentifier> clientParamIds
           = this.toClientIdList(entityParam, true);
@@ -2322,6 +2462,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                                                   maxDegrees,
                                                   buildOut,
                                                   maxEntities,
+                                                  clientDetailLevel,
                                                   clientFeatureMode,
                                                   withFeatureStats,
                                                   withInternalFeatures,
@@ -2344,6 +2485,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
           (buildOut != null) ? buildOut : DEFAULT_BUILD_OUT,
           (maxEntities != null) ? maxEntities : DEFAULT_MAX_ENTITIES,
           forceMinimal,
+          detailLevel,
           featureMode,
           (withFeatureStats == null ? false : withFeatureStats),
           (withInternalFeatures == null ? false : withInternalFeatures),
@@ -2366,6 +2508,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       Integer                 buildOut,
       Integer                 maxEntities,
       Boolean                 forceMinimal,
+      SzDetailLevel           detailLevel,
       SzFeatureMode           featureMode,
       boolean                 withFeatureStats,
       boolean                 withInternalFeatures,
@@ -2427,17 +2570,33 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       }
     }
 
-    List<List<Long>>  expectedPathList  = null;
-    IdentityHashMap<List<Long>, List<SzRecordId>> epLookup = null;
+    List<SzEntityPath>  expectedPathList  = null;
+    IdentityHashMap<SzEntityPath, List<SzRecordId>> epLookup = null;
     if (expectedPaths != null) {
       epLookup = new IdentityHashMap<>();
       expectedPathList = new ArrayList<>(expectedPaths.size());
       for (List<SzRecordId> expectedPath : expectedPaths) {
-        List<Long> expectedPathIds = this.asEntityIds(expectedPath);
-        if (expectedPathIds != null) {
-          expectedPathList.add(expectedPathIds);
+        List<Long> entityIds = null;
+        List<Long> pathIds = null;
+        if (expectedPath.get(0) == null) {
+          entityIds = this.asEntityIds(
+              expectedPath.subList(1, expectedPath.size()));
+          pathIds = emptyList();
+        } else {
+          entityIds = this.asEntityIds(expectedPath);
+          pathIds = entityIds;
         }
-        epLookup.put(expectedPathIds, expectedPath);
+
+        if (entityIds != null) {
+          long entityId1 = entityIds.get(0).longValue();
+          long entityId2 = entityIds.get(entityIds.size() - 1).longValue();
+          long fromId = (entityId1 < entityId2) ? entityId1 : entityId2;
+          long toId = (entityId1 < entityId2) ? entityId2 : entityId1;
+
+          SzEntityPath entityPath = new SzEntityPathImpl(fromId, toId, pathIds);
+          expectedPathList.add(entityPath);
+          epLookup.put(entityPath, expectedPath);
+        }
       }
     }
 
@@ -2536,10 +2695,10 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       }
     }
     if (expectedPathList != null) {
-      for (List<Long> expectedPath : expectedPathList) {
+      for (SzEntityPath expectedPath : expectedPathList) {
         boolean found = false;
         for (SzEntityPath entityPath : entityPaths) {
-          if (expectedPath.equals(entityPath.getEntityIds())) {
+          if (expectedPath.equals(entityPath)) {
             found = true;
             break;
           }
@@ -2547,8 +2706,27 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
         if (!found) {
           String unexpectedPathMsg = this.formatUnexpectedPathMessage(
               epLookup.get(expectedPath), null, entityMap);
-          fail("Path found does not match expected paths (" + testInfo + ")"
-                   + unexpectedPathMsg);
+          fail("Expected path not found (" + testInfo + ")"
+                   + unexpectedPathMsg + "\n\nexpectedPaths=[ "
+                   + expectedPathList + " ]\n\nactualPaths=[ "
+                   + entityPaths + " ]");
+        }
+      }
+      for (SzEntityPath entityPath : entityPaths) {
+        boolean found = false;
+        for (SzEntityPath expectedPath : expectedPathList) {
+          if (expectedPath.equals(entityPath)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) {
+          String unexpectedPathMsg = this.formatUnexpectedPathMessage(
+              null, entityPath.getEntityIds(), entityMap);
+          fail("Unexpected path found (" + testInfo + ")"
+                   + unexpectedPathMsg + "\n\nexpectedPaths=[ "
+                   + expectedPathList + " ]\n\nactualPaths=[ "
+                   + entityPaths + " ]");
         }
       }
     }
@@ -2561,6 +2739,7 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                      resolvedEntity,
                      relatedEntities,
                      forceMinimal,
+                     detailLevel,
                      featureMode,
                      withFeatureStats,
                      withInternalFeatures,
@@ -2609,21 +2788,11 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
                               "RELATED_ENTITIES");
 
       for (Object entity : ((Collection) rawEntities)) {
-        if (featureMode == NONE || (forceMinimal != null && forceMinimal)) {
-          validateRawDataMap(testInfo,
-                             ((Map) entity).get("RESOLVED_ENTITY"),
-                             false,
-                             "ENTITY_ID",
-                             "RECORDS");
-        } else {
-          validateRawDataMap(testInfo,
-                             ((Map) entity).get("RESOLVED_ENTITY"),
-                             false,
-                             "ENTITY_ID",
-                             "FEATURES",
-                             "RECORD_SUMMARY",
-                             "RECORDS");
-        }
+          validateRawDataMap(
+              testInfo,
+              ((Map) entity).get("RESOLVED_ENTITY"),
+              false,
+              rawEntityKeys(forceMinimal, detailLevel, featureMode));
       }
     }
   }

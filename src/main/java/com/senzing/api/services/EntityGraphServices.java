@@ -44,7 +44,13 @@ public class EntityGraphServices implements ServicesSupport {
    *                     for entities included in the path.
    * @param forceMinimal Whether or not the returned entities should be in
    *                     the minimal format.
-   * @param featureMode The {@link SzFeatureMode} for the returned entities.
+   * @param detailLevel The {@link SzDetailLevel} describing the requested
+   *                    level of detail for the entity data, if
+   *                    <code>null</code> this defaults to {@link
+   *                    SzDetailLevel#VERBOSE}.
+   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
+   *                    the features should be returned, if <code>null</code>
+   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
    * @param withFeatureStats Whether or not feature stats should be included
    *                         with the returned entities.
    * @param withInternalFeatures Whether or not internal features should be
@@ -65,7 +71,8 @@ public class EntityGraphServices implements ServicesSupport {
       @DefaultValue("false") @QueryParam("forbidAvoided")         boolean             forbidAvoided,
       @QueryParam("s")                                            List<String>        sourcesParam,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
-      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
+      @DefaultValue("VERBOSE") @QueryParam("detailLevel")         SzDetailLevel       detailLevel,
+      @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode       featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
       @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean             withInternalFeatures,
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
@@ -178,6 +185,7 @@ public class EntityGraphServices implements ServicesSupport {
 
     final long flags = (forbidAvoided ? 0L : G2_FIND_PATH_PREFER_EXCLUDE)
                     | this.getFlags(forceMinimal,
+                                    detailLevel,
                                     featureMode,
                                     withFeatureStats,
                                     withInternalFeatures,
@@ -299,7 +307,7 @@ public class EntityGraphServices implements ServicesSupport {
           provider::getAttributeClassForFeature);
 
       entityPathData.getEntities().forEach(e -> {
-        this.postProcessEntityData(e, forceMinimal, featureMode);
+        this.postProcessEntityData(e, forceMinimal, detailLevel, featureMode);
       });
 
       this.processedRawData(timers);
@@ -377,7 +385,13 @@ public class EntityGraphServices implements ServicesSupport {
    * @param maxEntities The maximum number of build-out entities to return.
    * @param forceMinimal Whether or not the returned entities should be in
    *                     the minimal format.
-   * @param featureMode The {@link SzFeatureMode} for the returned entities.
+   * @param detailLevel The {@link SzDetailLevel} describing the requested
+   *                    level of detail for the entity data, if
+   *                    <code>null</code> this defaults to {@link
+   *                    SzDetailLevel#VERBOSE}.
+   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
+   *                    the features should be returned, if <code>null</code>
+   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
    * @param withFeatureStats Whether or not feature stats should be included
    *                         with the returned entities.
    * @param withInternalFeatures Whether or not internal features should be
@@ -396,6 +410,7 @@ public class EntityGraphServices implements ServicesSupport {
       @DefaultValue("1")      @QueryParam("buildOut")             int           buildOut,
       @DefaultValue("1000")   @QueryParam("maxEntities")          int           maxEntities,
       @DefaultValue("false")  @QueryParam("forceMinimal")         boolean       forceMinimal,
+      @DefaultValue("VERBOSE") @QueryParam("detailLevel")         SzDetailLevel detailLevel,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean       withFeatureStats,
       @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean       withInternalFeatures,
@@ -436,10 +451,10 @@ public class EntityGraphServices implements ServicesSupport {
                 + "types: " + entities);
       }
 
-      if (maxDegrees < 1) {
+      if (maxDegrees < 0) {
         throw this.newBadRequestException(
             GET, uriInfo, timers,
-            "Max degrees must be greater than zero: " + maxDegrees);
+            "Max degrees must not be negative: " + maxDegrees);
       }
 
       if (buildOut < 0) {
@@ -465,6 +480,7 @@ public class EntityGraphServices implements ServicesSupport {
         ? null : this.nativeJsonEncodeEntityIds(entities);
 
     final long flags = this.getFlags(forceMinimal,
+                                     detailLevel,
                                      featureMode,
                                      withFeatureStats,
                                      withInternalFeatures,
@@ -522,7 +538,7 @@ public class EntityGraphServices implements ServicesSupport {
               provider::getAttributeClassForFeature);
 
       entityNetworkData.getEntities().forEach(e -> {
-        this.postProcessEntityData(e, forceMinimal, featureMode);
+        this.postProcessEntityData(e, forceMinimal, detailLevel, featureMode);
       });
 
       this.processedRawData(timers);
