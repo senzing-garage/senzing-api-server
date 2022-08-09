@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2022-08-09
+
+### Changed in 3.2.0
+
+- Added support for `SENZING_ENGINE_CONFIGURATION_JSON` environment variable
+  for the `--init-json` command-line option.
+- Updated handling of `DELETE /data-sources/{code}/records/{id}?withInfo=true`
+  (`EntityDataServices.deleteRecord()`) when the record no longer exists to 
+  still produce an INFO message with no affected entity ID's, but still having a
+  data source code and record ID.
+- Added support for REST API Spec v3.1.0 including "detail levels"
+  - Added `SzDetailLevel` in support of REST API Spec v3.1.0 "detail levels"
+  - Added `detailLevel` parameter to `EntityDataServices` methods
+  - Added `detailLevel` parameter to `WhyServices` methods
+  - Added `detailLevel` parameter to `EntityGraphServices` methods
+  - Added `detailLevel` parameter to `ServicesSupport.getFlags()` method
+- Updated dependency versions
+  - Updated Jetty dependencies to version `9.4.45.v20220203`
+  - Updated Jersey dependencies to version `2.36`
+  - Updated ICU4j dependency to version `71.1`
+  - Updated test-scoped Spring Framework dependency to `[5.3.22,5.9999.9999)`
+  - Updated test-scoped Swagger Codegen dependency to `3.0.20`
+- Deleted test cache data for version `3.0.0`
+- Generated test cache data for version `3.2.0`
+- Updated `pom.xml` and `Dockerfile` to reflect version `3.2.0`
+
 ## [3.1.1] - 2022-07-20
 
 ### Changed in 3.1.1

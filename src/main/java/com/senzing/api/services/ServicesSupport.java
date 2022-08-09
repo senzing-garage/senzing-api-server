@@ -22,7 +22,6 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.function.Function;
@@ -32,6 +31,7 @@ import static com.senzing.api.model.SzFeatureMode.REPRESENTATIVE;
 import static com.senzing.g2.engine.G2Engine.*;
 import static com.senzing.g2.engine.G2Engine.G2_ENTITY_INCLUDE_RECORD_SUMMARY;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
+import static com.senzing.api.model.SzDetailLevel.*;
 
 /**
  * Provides a base interface for service implementations.
@@ -757,6 +757,7 @@ public interface ServicesSupport {
    * @return The flags to use given the parameters.
    */
   default long getFlags(boolean       forceMinimal,
+                        SzDetailLevel detailLevel,
                         SzFeatureMode featureMode,
                         boolean       withFeatureStats,
                         boolean       withInternalFeatures,
@@ -764,6 +765,7 @@ public interface ServicesSupport {
   {
     return this.getFlags(0L,
                          forceMinimal,
+                         detailLevel,
                          featureMode,
                          withFeatureStats,
                          withInternalFeatures,
@@ -790,37 +792,33 @@ public interface ServicesSupport {
    */
   default long getFlags(long          baseFlags,
                         boolean       forceMinimal,
+                        SzDetailLevel detailLevel,
                         SzFeatureMode featureMode,
                         boolean       withFeatureStats,
                         boolean       withInternalFeatures,
                         boolean       withRelationships)
   {
-    long flags = baseFlags
-        | G2_ENTITY_INCLUDE_RECORD_DATA
-        | G2_SEARCH_INCLUDE_FEATURE_SCORES; // for searches
-
-    // check for relationships
-    flags |= withRelationships ? G2_ENTITY_INCLUDE_ALL_RELATIONS : 0L;
-
     // check if forcing minimal format
     if (forceMinimal) {
       // minimal format, not much else to do
-      return flags;
+      return baseFlags | MINIMAL.getEntityFlags()
+          | (withRelationships ? MINIMAL.getRelatedFlags() : 0L);
     }
 
+    // check if no detail level was specified
+    if (detailLevel == null) detailLevel = VERBOSE;
+
     // add the standard flags
-    flags |= (G2_ENTITY_INCLUDE_ENTITY_NAME | DEFAULT_RECORD_FLAGS);
+    long flags = baseFlags | detailLevel.getEntityFlags();
 
     // add the standard relationship flags
     if (withRelationships) {
-      flags |= G2_ENTITY_INCLUDE_RELATED_ENTITY_NAME
-          | G2_ENTITY_INCLUDE_RELATED_RECORD_SUMMARY
-          | G2_ENTITY_INCLUDE_RELATED_MATCHING_INFO;
+      flags |= detailLevel.getRelatedFlags();
     }
 
     // add the feature flags
     if (featureMode != NONE) {
-      // get represenative features
+      // get representative features
       flags |= G2_ENTITY_INCLUDE_REPRESENTATIVE_FEATURES;
 
       // check if feature stats are requested
@@ -843,12 +841,16 @@ public interface ServicesSupport {
    *
    * @param forceMinimal Whether or not minimal format is forced.
    *
+   * @param detailLevel The {@link SzDetailLevel} describing the requested level
+   *                    of detail.
+   *
    * @param featureMode The {@link SzFeatureMode} describing how features
    *                    are retrieved.
    */
-  default void postProcessEntityData(SzEntityData  entityData,
-                                     boolean       forceMinimal,
-                                     SzFeatureMode featureMode)
+  default void postProcessEntityData(SzEntityData   entityData,
+                                     boolean        forceMinimal,
+                                     SzDetailLevel  detailLevel,
+                                     SzFeatureMode  featureMode)
   {
     // check if we need to strip out duplicate features
     if (featureMode == REPRESENTATIVE) {

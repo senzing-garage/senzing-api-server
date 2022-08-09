@@ -5,6 +5,7 @@ import com.senzing.api.model.SzEntityPath;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Provides a default implementation of {@link SzEntityPath}.
@@ -96,11 +97,28 @@ public class SzEntityPathImpl implements SzEntityPath {
   }
 
   @Override
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (obj == null || this.getClass() != obj.getClass()) return false;
+    SzEntityPathImpl that = (SzEntityPathImpl) obj;
+    return this.getStartEntityId() == that.getStartEntityId()
+        && this.getEndEntityId() == that.getEndEntityId()
+        && this.getEntityIds().equals(that.getEntityIds());
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(this.getStartEntityId(),
+                        this.getEndEntityId(),
+                        this.getEntityIds());
+  }
+
+  @Override
   public String toString() {
     return "SzEntityPath{" +
-        "startEntityId=" + startEntityId +
-        ", endEntityId=" + endEntityId +
-        ", entityIds=" + entityIds +
+        "startEntityId=" + this.getStartEntityId() +
+        ", endEntityId=" + this.getEndEntityId() +
+        ", entityIds=" + this.getEntityIds() +
         '}';
   }
 }

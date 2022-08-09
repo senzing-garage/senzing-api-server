@@ -21,6 +21,7 @@ import static com.senzing.api.model.SzAttributeSearchResultType.*;
 import static com.senzing.g2.engine.G2Engine.*;
 import static javax.ws.rs.core.MediaType.*;
 import static com.senzing.api.services.ServicesUtil.*;
+import static com.senzing.util.JsonUtilities.*;
 
 /**
  * Provides entity data related API services.
@@ -529,8 +530,13 @@ public class EntityDataServices implements ServicesSupport {
           if ((normalizeString(info.getDataSource()) == null)
               && (normalizeString(info.getRecordId()) == null)
               && (info.getAffectedEntities().size() == 0)
-              && (info.getFlaggedEntities().size() == 0)) {
-            info = null;
+              && (info.getFlaggedEntities().size() == 0))
+          {
+            // setup an SzResolutionInfo object to match what would be returned
+            // by version 3.2 and later which does set data source and record ID
+            info = SzResolutionInfo.FACTORY.create();
+            info.setDataSource(dataSource);
+            info.setRecordId(recordId);
           }
         }
       }
@@ -898,8 +904,13 @@ public class EntityDataServices implements ServicesSupport {
    * @param withRelated Flag indicating if related entities should be included.
    * @param forceMinimal Flag indicating if the minimal response format is
    *                     requested.
+   * @param detailLevel The {@link SzDetailLevel} describing the requested
+   *                    level of detail for the entity data, if
+   *                    <code>null</code> this defaults to {@link
+   *                    SzDetailLevel#VERBOSE}.
    * @param featureMode The {@link SzFeatureMode} query parameter indicating how
-   *                    the features should be returned.
+   *                    the features should be returned, if <code>null</code>
+   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
    * @param withFeatureStats Flag indicating if feature stats should be included
    *                         in the response.
    * @param withInternalFeatures Flag indicating if internal features should be
@@ -915,6 +926,7 @@ public class EntityDataServices implements ServicesSupport {
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
       @DefaultValue("PARTIAL") @QueryParam("withRelated")         SzRelationshipMode  withRelated,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
+      @DefaultValue("VERBOSE") @QueryParam("detailLevel")         SzDetailLevel       detailLevel,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode       featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
       @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean             withInternalFeatures,
@@ -933,6 +945,7 @@ public class EntityDataServices implements ServicesSupport {
       SzEntityData entityData = null;
 
       long flags = this.getFlags(forceMinimal,
+                                 detailLevel,
                                  featureMode,
                                  withFeatureStats,
                                  withInternalFeatures,
@@ -958,67 +971,104 @@ public class EntityDataServices implements ServicesSupport {
         final int buildOutDegrees = 1;
         final int maxEntityCount = 1000;
 
-        this.enteringQueue(timers);
-        rawData = provider.executeInThread(() -> {
-          this.exitingQueue(timers);
+        boolean                 retry     = false;
+        Map<Long, SzEntityData> dataMap   = null;
+        Long                    entityId  = null;
+        do {
+          // setup a place to store the entity ID if needed
+          final long[] entityIdArr = {0L};
 
-          // get the engine API and the config API
-          G2Engine engineApi = provider.getEngineApi();
+          this.enteringQueue(timers);
+          rawData = provider.executeInThread(() -> {
+            this.exitingQueue(timers);
 
-          this.callingNativeAPI(timers, "engine", "findNetworkByRecordID");
-          // find the network and check the result
-          int result = engineApi.findNetworkByRecordID(
-              recordIds, maxDegrees, buildOutDegrees, maxEntityCount, flags, sb);
+            // get the engine API and the config API
+            G2Engine engineApi = provider.getEngineApi();
 
-          this.calledNativeAPI(timers, "engine", "findNetworkByRecordID");
+            this.callingNativeAPI(timers, "engine", "findNetworkByRecordID");
+            // find the network and check the result
+            int result = engineApi.findNetworkByRecordID(
+                recordIds, maxDegrees, buildOutDegrees, maxEntityCount, flags, sb);
 
-          if (result != 0) {
-            throw this.newPossiblyNotFoundException(
-                GET, uriInfo, timers, engineApi);
+            this.calledNativeAPI(timers, "engine", "findNetworkByRecordID");
+
+            if (result != 0) {
+              throw this.newPossiblyNotFoundException(
+                  GET, uriInfo, timers, engineApi);
+            }
+
+            // check if records are not coming back
+            if ((flags & G2_ENTITY_INCLUDE_RECORD_DATA) == 0) {
+              StringBuffer sb2 = new StringBuffer();
+              result = engineApi.getEntityByRecordID(
+                  dataSource, recordId, 0L, sb2);
+              if (result != 0) {
+                throw this.newPossiblyNotFoundException(
+                    GET, uriInfo, timers, engineApi);
+              }
+              String jsonText = sb2.toString();
+              JsonObject jsonObj = parseJsonObject(jsonText);
+              jsonObj = getJsonObject(jsonObj, "RESOLVED_ENTITY");
+              entityIdArr[0] = getLong(jsonObj, "ENTITY_ID");
+            }
+
+            return sb.toString();
+          });
+
+          this.processingRawData(timers);
+
+          // organize all the entities into a map for lookup
+          dataMap = this.parseEntityDataList(sb.toString(), provider);
+
+          // check if no entities were found
+          if (dataMap.size() == 0) {
+            throw new IllegalStateException(
+                "ERROR: Possible database corruption.  No entity found for "
+                    + "record but Senzing API did not indicate an error code for "
+                    + "an unrecognized record ID.  dataSource=[ " + dataSource
+                    + " ], recordId=[ " + recordId + " ]");
           }
 
-          return sb.toString();
-        });
+          // find the entity ID matching the data source and record ID
+          for (SzEntityData edata : dataMap.values()) {
+            SzResolvedEntity resolvedEntity = edata.getResolvedEntity();
+            // check if records were not retrieved
+            if ((flags & G2_ENTITY_INCLUDE_RECORD_DATA) == 0) {
+              // no records, use the previous lookup
+              if (resolvedEntity.getEntityId() == entityIdArr[0]) {
+                entityId = entityIdArr[0];
+                break;
+              }
+            } else {
+              // check if this entity is the one that was requested by record ID
+              for (SzMatchedRecord record : resolvedEntity.getRecords()) {
+                if (record.getDataSource().equalsIgnoreCase(dataSource)
+                    && record.getRecordId().equals(recordId)) {
+                  // found the entity ID for the record ID
+                  entityId = resolvedEntity.getEntityId();
+                  break;
+                }
+              }
+            }
+            if (entityId != null) break;
+          }
 
-        this.processingRawData(timers);
+          // check for the entity not being found
+          if (entityId == null) {
+            // if records were not retrieved and we did not find the entity
+            // then we need retry because it changed between calls
+            retry = ((flags & G2_ENTITY_INCLUDE_RECORD_DATA) == 0L);
 
-        // organize all the entities into a map for lookup
-        Map<Long, SzEntityData> dataMap
-            = this.parseEntityDataList(sb.toString(), provider);
-
-        // check if no entities were found
-        if (dataMap.size() == 0) {
-          throw new IllegalStateException(
-              "ERROR: Possible database corruption.  No entity found for "
-              + "record but Senzing API did not indicate an error code for "
-              + "an unrecognized record ID.  dataSource=[ " + dataSource
-              + " ], recordId=[ " + recordId + " ]");
-        }
-
-        // find the entity ID matching the data source and record ID
-        Long entityId = null;
-        for (SzEntityData edata : dataMap.values()) {
-          SzResolvedEntity resolvedEntity = edata.getResolvedEntity();
-          // check if this entity is the one that was requested by record ID
-          for (SzMatchedRecord record : resolvedEntity.getRecords()) {
-            if (record.getDataSource().equalsIgnoreCase(dataSource)
-                && record.getRecordId().equals(recordId)) {
-              // found the entity ID for the record ID
-              entityId = resolvedEntity.getEntityId();
-              break;
+            // if no retry then we need throw an exception
+            if (!retry) {
+              throw new IllegalStateException(
+                  "ERROR: Possible database corruption.  No entity found for "
+                      + "record but Senzing API did not indicate an error code "
+                      + "for an unrecognized record ID.  dataSource=[ "
+                      + dataSource + " ], recordId=[ " + recordId + " ]");
             }
           }
-          if (entityId != null) break;
-        }
-
-        // check for the entity not being found
-        if (entityId == null) {
-          throw new IllegalStateException(
-              "ERROR: Possible database corruption.  No entity found for "
-                  + "record but Senzing API did not indicate an error code for "
-                  + "an unrecognized record ID.  dataSource=[ " + dataSource
-                  + " ], recordId=[ " + recordId + " ]");
-        }
+        } while (retry);
 
         // get the result entity data
         entityData = this.getAugmentedEntityData(entityId, dataMap, provider);
@@ -1049,7 +1099,8 @@ public class EntityDataServices implements ServicesSupport {
             (f) -> provider.getAttributeClassForFeature(f));
       }
 
-      this.postProcessEntityData(entityData, forceMinimal, featureMode);
+      this.postProcessEntityData(
+          entityData, forceMinimal, detailLevel, featureMode);
 
       this.processedRawData(timers);
 
@@ -1107,8 +1158,13 @@ public class EntityDataServices implements ServicesSupport {
    * @param withRelated Flag indicating if related entities should be included.
    * @param forceMinimal Flag indicating if the minimal response format is
    *                     requested.
+   * @param detailLevel The {@link SzDetailLevel} describing the requested
+   *                    level of detail for the entity data, if
+   *                    <code>null</code> this defaults to {@link
+   *                    SzDetailLevel#VERBOSE}.
    * @param featureMode The {@link SzFeatureMode} query parameter indicating how
-   *                    the features should be returned.
+   *                    the features should be returned, if <code>null</code>
+   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
    * @param withFeatureStats Flag indicating if feature stats should be included
    *                         in the response.
    * @param withInternalFeatures Flag indicating if internal features should be
@@ -1123,6 +1179,7 @@ public class EntityDataServices implements ServicesSupport {
       @DefaultValue("false") @QueryParam("withRaw")               boolean             withRaw,
       @DefaultValue("PARTIAL") @QueryParam("withRelated")         SzRelationshipMode  withRelated,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
+      @DefaultValue("VERBOSE") @QueryParam("detailLevel")         SzDetailLevel       detailLevel,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode       featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
       @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean             withInternalFeatures,
@@ -1140,6 +1197,7 @@ public class EntityDataServices implements ServicesSupport {
       String rawData = null;
 
       long flags = this.getFlags(forceMinimal,
+                                 detailLevel,
                                  featureMode,
                                  withFeatureStats,
                                  withInternalFeatures,
@@ -1228,7 +1286,8 @@ public class EntityDataServices implements ServicesSupport {
             (f) -> provider.getAttributeClassForFeature(f));
       }
 
-      this.postProcessEntityData(entityData, forceMinimal, featureMode);
+      this.postProcessEntityData(
+          entityData, forceMinimal, detailLevel, featureMode);
 
       this.processedRawData(timers);
 
@@ -1264,8 +1323,13 @@ public class EntityDataServices implements ServicesSupport {
    *                       included in the response.
    * @param forceMinimal Flag indicating if the minimal response format is
    *                     requested.
+   * @param detailLevel The {@link SzDetailLevel} describing the requested
+   *                    level of detail for the entity data, if
+   *                    <code>null</code> this defaults to {@link
+   *                    SzDetailLevel#VERBOSE}.
    * @param featureMode The {@link SzFeatureMode} query parameter indicating how
-   *                    the features should be returned.
+   *                    the features should be returned, if <code>null</code>
+   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
    * @param withFeatureStats Flag indicating if feature stats should be included
    *                         in the response.
    * @param withInternalFeatures Flag indicating if internal features should be
@@ -1284,6 +1348,7 @@ public class EntityDataServices implements ServicesSupport {
       @QueryParam("attr")                                         List<String>        attrList,
       @QueryParam("includeOnly")                                  Set<String>         includeOnlySet,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean             forceMinimal,
+      @DefaultValue("VERBOSE") @QueryParam("detailLevel")         SzDetailLevel       detailLevel,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode       featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean             withFeatureStats,
       @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean             withInternalFeatures,
@@ -1372,6 +1437,7 @@ public class EntityDataServices implements ServicesSupport {
       return this.searchByAttributes(searchCriteria,
                                      includeOnlySet,
                                      forceMinimal,
+                                     detailLevel,
                                      featureMode,
                                      withFeatureStats,
                                      withInternalFeatures,
@@ -1401,8 +1467,13 @@ public class EntityDataServices implements ServicesSupport {
    *                       included in the response.
    * @param forceMinimal Flag indicating if the minimal response format is
    *                     requested.
+   * @param detailLevel The {@link SzDetailLevel} describing the requested
+   *                    level of detail for the entity data, if
+   *                    <code>null</code> this defaults to {@link
+   *                    SzDetailLevel#VERBOSE}.
    * @param featureMode The {@link SzFeatureMode} query parameter indicating how
-   *                    the features should be returned.
+   *                    the features should be returned, if <code>null</code>
+   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
    * @param withFeatureStats Flag indicating if feature stats should be included
    *                         in the response.
    * @param withInternalFeatures Flag indicating if internal features should be
@@ -1420,6 +1491,7 @@ public class EntityDataServices implements ServicesSupport {
   public SzAttributeSearchResponse searchEntitiesByPost(
       @QueryParam("includeOnly")                                  Set<String>     includeOnlySet,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean         forceMinimal,
+      @DefaultValue("VERBOSE") @QueryParam("detailLevel")         SzDetailLevel       detailLevel,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode   featureMode,
       @DefaultValue("false") @QueryParam("withFeatureStats")      boolean         withFeatureStats,
       @DefaultValue("false") @QueryParam("withInternalFeatures")  boolean         withInternalFeatures,
@@ -1456,6 +1528,7 @@ public class EntityDataServices implements ServicesSupport {
       return this.searchByAttributes(searchCriteria,
                                      includeOnlySet,
                                      forceMinimal,
+                                     detailLevel,
                                      featureMode,
                                      withFeatureStats,
                                      withInternalFeatures,
@@ -1488,8 +1561,13 @@ public class EntityDataServices implements ServicesSupport {
    *                       included in the response.
    * @param forceMinimal Flag indicating if the minimal response format is
    *                     requested.
+   * @param detailLevel The {@link SzDetailLevel} describing the requested
+   *                    level of detail for the entity data, if
+   *                    <code>null</code> this defaults to {@link
+   *                    SzDetailLevel#VERBOSE}.
    * @param featureMode The {@link SzFeatureMode} query parameter indicating how
-   *                    the features should be returned.
+   *                    the features should be returned, if <code>null</code>
+   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
    * @param withFeatureStats Flag indicating if feature stats should be included
    *                         in the response.
    * @param withInternalFeatures Flag indicating if internal features should be
@@ -1505,6 +1583,7 @@ public class EntityDataServices implements ServicesSupport {
       JsonObject          searchCriteria,
       Set<String>         includeOnlySet,
       boolean             forceMinimal,
+      SzDetailLevel       detailLevel,
       SzFeatureMode       featureMode,
       boolean             withFeatureStats,
       boolean             withInternalFeatures,
@@ -1556,6 +1635,7 @@ public class EntityDataServices implements ServicesSupport {
       // get the flags
       long flags = this.getFlags(includeFlags,
                                  forceMinimal,
+                                 detailLevel,
                                  featureMode,
                                  withFeatureStats,
                                  withInternalFeatures,
@@ -1593,7 +1673,7 @@ public class EntityDataServices implements ServicesSupport {
 
 
       this.postProcessSearchResults(
-          list, forceMinimal, featureMode, withRelationships);
+          list, forceMinimal, detailLevel, featureMode, withRelationships);
 
       // construct the response
       SzAttributeSearchResponse response = this.newAttributeSearchResponse(
@@ -1875,8 +1955,8 @@ public class EntityDataServices implements ServicesSupport {
    * @return The {@link Map} of of {@link Long} entity ID keys to {@link
    *         SzEntityData} instances.
    */
-  protected Map<Long, SzEntityData> parseEntityDataList(
-      String rawData, SzApiProvider provider)
+  protected Map<Long, SzEntityData> parseEntityDataList(String        rawData,
+                                                        SzApiProvider provider)
   {
     // parse the raw response and extract the entities that were found
     JsonObject jsonObj = JsonUtilities.parseJsonObject(rawData);
@@ -2083,14 +2163,21 @@ public class EntityDataServices implements ServicesSupport {
    *
    * @param forceMinimal Whether or not minimal format is forced.
    *
-   * @param featureMode The {@link SzFeatureMode} describing how features
-   *                    are retrieved.
+   * @param detailLevel The {@link SzDetailLevel} describing the requested
+   *                    level of detail for the entity data, if
+   *                    <code>null</code> this defaults to {@link
+   *                    SzDetailLevel#VERBOSE}.
+   *
+   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
+   *                    the features should be returned, if <code>null</code>
+   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
    *
    * @param withRelationships Whether or not to include relationships.
    */
   protected void postProcessSearchResults(
       List<SzAttributeSearchResult>   searchResults,
       boolean                         forceMinimal,
+      SzDetailLevel                   detailLevel,
       SzFeatureMode                   featureMode,
       boolean                         withRelationships)
   {
@@ -2109,7 +2196,8 @@ public class EntityDataServices implements ServicesSupport {
    * Sets the partial flags for the resolved entity and related
    * entities in the {@link SzEntityData}.  Call this method only if it is
    * known that the entities only contain partial data.  This method is called
-   * by {@link #postProcessSearchResults(List, boolean, SzFeatureMode, boolean)}
+   * by {@link #postProcessSearchResults(List, boolean, SzDetailLevel,
+   * SzFeatureMode, boolean)}.
    *
    * @param searchResults The {@link List} of {@link SzAttributeSearchResult}
    *                      instances to mark as partial.

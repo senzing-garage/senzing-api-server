@@ -1068,6 +1068,9 @@ public class SzApiServer implements SzApiProvider {
         "        then it may be visible to other users via process monitoring.",
         "        EXAMPLE: -initJson \"{\"PIPELINE\":{ ... }}\"",
         "        --> VIA ENVIRONMENT: " + INIT_JSON.getEnvironmentVariable(),
+        "                             "
+            + INIT_JSON.getEnvironmentFallbacks().iterator().next()
+            + " (fallback)",
         "",
         "   --config-id <config-id>",
         "        Also -configId.  Use with the -iniFile, -initFile, -initEnvVar or",

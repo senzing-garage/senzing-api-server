@@ -19,6 +19,7 @@ import com.senzing.g2.engine.*;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.AccessToken;
 import com.senzing.util.JsonUtilities;
+import com.senzing.util.LoggingUtilities;
 import org.junit.jupiter.params.provider.Arguments;
 
 import javax.json.*;

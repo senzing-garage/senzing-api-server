@@ -17,7 +17,8 @@ import javax.ws.rs.core.UriInfo;
 
 import java.util.*;
 
-import static com.senzing.api.model.SzFeatureMode.WITH_DUPLICATES;
+import static com.senzing.api.model.SzDetailLevel.*;
+import static com.senzing.api.model.SzFeatureMode.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static com.senzing.api.model.SzHttpMethod.*;
 import static com.senzing.api.services.ResponseValidators.*;
@@ -1544,11 +1545,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       validateDeleteRecordResponse(response,
                                    DELETE,
                                    uriText,
-                                   false, // second delete, set false
+                                   (withInfo != null ? withInfo : false),
                                    (withRaw != null ? withRaw : false),
                                    WATCHLIST_DATA_SOURCE,
                                    recordId1,
-                                   1,
+                                   0, // second delete
                                    0,
                                    Collections.emptySet(),
                                    after - before);
@@ -1624,11 +1625,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       validateDeleteRecordResponse(response,
                                    DELETE,
                                    uriText,
-                                   false, // second delete, set false
+                                   (withInfo != null ? withInfo : false),
                                    (withRaw != null ? withRaw : false),
                                    WATCHLIST_DATA_SOURCE,
                                    recordId1,
-                                   1,
+                                   0, // second delete
                                    0,
                                    Collections.emptySet(),
                                    after - before);
@@ -1708,7 +1709,6 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
                                    Collections.emptySet(),
                                    after - before);
 
-      before = System.nanoTime();
       clientResponse = this.entityDataApi.deleteRecord(WATCHLIST_DATA_SOURCE,
                                                        recordId1,
                                                        null,
@@ -1721,11 +1721,11 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
       validateDeleteRecordResponse(response,
                                    DELETE,
                                    uriText,
-                                   false, // second delete, set false
+                                   (withInfo != null ? withInfo : false),
                                    (withRaw != null ? withRaw : false),
                                    WATCHLIST_DATA_SOURCE,
                                    recordId1,
-                                   1,
+                                   0, // second delete
                                    0,
                                    Collections.emptySet(),
                                    after - before);
@@ -1746,6 +1746,7 @@ public class EntityDataWriteServicesTest extends AbstractServiceTest {
         false,
         SzRelationshipMode.NONE,
         true,
+        VERBOSE,
         WITH_DUPLICATES,
         false,
         false,

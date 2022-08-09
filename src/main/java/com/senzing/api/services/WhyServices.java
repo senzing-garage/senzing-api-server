@@ -13,6 +13,7 @@ import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.*;
+import static com.senzing.g2.engine.G2Engine.*;
 
 /**
  * Provides "why" API services.
@@ -31,7 +32,13 @@ public class WhyServices implements ServicesSupport {
    *                 record that belongs to the entity.
    * @param forceMinimal Whether or not the returned entities should be in
    *                     the minimal format.
-   * @param featureMode The {@link SzFeatureMode} for the returned entities.
+   * @param detailLevel The {@link SzDetailLevel} describing the requested
+   *                    level of detail for the entity data, if
+   *                    <code>null</code> this defaults to {@link
+   *                    SzDetailLevel#VERBOSE}.
+   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
+   *                    the features should be returned, if <code>null</code>
+   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
    * @param withFeatureStats Whether or not feature stats should be included
    *                         with the returned entities.
    * @param withInternalFeatures Whether or not internal features should be
@@ -50,6 +57,7 @@ public class WhyServices implements ServicesSupport {
       @PathParam("dataSourceCode")                                String        dataSourceCode,
       @PathParam("recordId")                                      String        recordId,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean       forceMinimal,
+      @DefaultValue("VERBOSE") @QueryParam("detailLevel")         SzDetailLevel detailLevel,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
       @DefaultValue("true") @QueryParam("withFeatureStats")       boolean       withFeatureStats,
       @DefaultValue("true") @QueryParam("withInternalFeatures")   boolean       withInternalFeatures,
@@ -70,6 +78,7 @@ public class WhyServices implements ServicesSupport {
       String rawData = null;
 
       long flags = this.getFlags(forceMinimal,
+                                 detailLevel,
                                  featureMode,
                                  withFeatureStats,
                                  withInternalFeatures,
@@ -123,7 +132,13 @@ public class WhyServices implements ServicesSupport {
    * @param entityId The entity ID of the entity from the URI path.
    * @param forceMinimal Whether or not the returned entities should be in
    *                     the minimal format.
-   * @param featureMode The {@link SzFeatureMode} for the returned entities.
+   * @param detailLevel The {@link SzDetailLevel} describing the requested
+   *                    level of detail for the entity data, if
+   *                    <code>null</code> this defaults to {@link
+   *                    SzDetailLevel#VERBOSE}.
+   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
+   *                    the features should be returned, if <code>null</code>
+   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
    * @param withFeatureStats Whether or not feature stats should be included
    *                         with the returned entities.
    * @param withInternalFeatures Whether or not internal features should be
@@ -141,6 +156,7 @@ public class WhyServices implements ServicesSupport {
   public SzWhyEntityResponse whyEntityByEntityId(
       @PathParam("entityId")                                      long          entityId,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean       forceMinimal,
+      @DefaultValue("VERBOSE") @QueryParam("detailLevel")         SzDetailLevel detailLevel,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
       @DefaultValue("true") @QueryParam("withFeatureStats")       boolean       withFeatureStats,
       @DefaultValue("true") @QueryParam("withInternalFeatures")   boolean       withInternalFeatures,
@@ -158,6 +174,7 @@ public class WhyServices implements ServicesSupport {
       String rawData = null;
 
       long flags = this.getFlags(forceMinimal,
+                                 detailLevel,
                                  featureMode,
                                  withFeatureStats,
                                  withInternalFeatures,
@@ -212,7 +229,13 @@ public class WhyServices implements ServicesSupport {
    * @param recordId2 The record ID for the second subject record.
    * @param forceMinimal Whether or not the returned entities should be in
    *                     the minimal format.
-   * @param featureMode The {@link SzFeatureMode} for the returned entities.
+   * @param detailLevel The {@link SzDetailLevel} describing the requested
+   *                    level of detail for the entity data, if
+   *                    <code>null</code> this defaults to {@link
+   *                    SzDetailLevel#VERBOSE}.
+   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
+   *                    the features should be returned, if <code>null</code>
+   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
    * @param withFeatureStats Whether or not feature stats should be included
    *                         with the returned entities.
    * @param withInternalFeatures Whether or not internal features should be
@@ -232,6 +255,7 @@ public class WhyServices implements ServicesSupport {
       @QueryParam("dataSource2")                                  String        dataSourceCode2,
       @QueryParam("recordId2")                                    String        recordId2,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean       forceMinimal,
+      @DefaultValue("VERBOSE") @QueryParam("detailLevel")         SzDetailLevel detailLevel,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
       @DefaultValue("true") @QueryParam("withFeatureStats")       boolean       withFeatureStats,
       @DefaultValue("true") @QueryParam("withInternalFeatures")   boolean       withInternalFeatures,
@@ -247,7 +271,7 @@ public class WhyServices implements ServicesSupport {
       // check the parameters
       if (dataSourceCode1 == null || dataSourceCode1.trim().length() == 0) {
         throw this.newBadRequestException(
-            GET, uriInfo, timers, "The dataSourceCode1 parameter is required.");
+            GET, uriInfo, timers, "The dataSource1 parameter is required.");
       }
       if (recordId1 == null || recordId1.trim().length() == 0) {
         throw this.newBadRequestException(
@@ -255,7 +279,7 @@ public class WhyServices implements ServicesSupport {
       }
       if (dataSourceCode2 == null || dataSourceCode2.trim().length() == 0) {
         throw this.newBadRequestException(
-            GET, uriInfo, timers, "The dataSourceCode2 parameter is required.");
+            GET, uriInfo, timers, "The dataSource2 parameter is required.");
       }
       if (recordId2 == null || recordId2.trim().length() == 0) {
         throw this.newBadRequestException(
@@ -274,6 +298,7 @@ public class WhyServices implements ServicesSupport {
       String rawData = null;
 
       long flags = this.getFlags(forceMinimal,
+                                 detailLevel,
                                  featureMode,
                                  withFeatureStats,
                                  withInternalFeatures,
@@ -422,7 +447,13 @@ public class WhyServices implements ServicesSupport {
    *                SzEntityIdentifier} for the second subject entity.
    * @param forceMinimal Whether or not the returned entities should be in
    *                     the minimal format.
-   * @param featureMode The {@link SzFeatureMode} for the returned entities.
+   * @param detailLevel The {@link SzDetailLevel} describing the requested
+   *                    level of detail for the entity data, if
+   *                    <code>null</code> this defaults to {@link
+   *                    SzDetailLevel#VERBOSE}.
+   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
+   *                    the features should be returned, if <code>null</code>
+   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
    * @param withFeatureStats Whether or not feature stats should be included
    *                         with the returned entities.
    * @param withInternalFeatures Whether or not internal features should be
@@ -440,6 +471,7 @@ public class WhyServices implements ServicesSupport {
       @QueryParam("entity1")                                      String        entity1,
       @QueryParam("entity2")                                      String        entity2,
       @DefaultValue("false") @QueryParam("forceMinimal")          boolean       forceMinimal,
+      @DefaultValue("VERBOSE") @QueryParam("detailLevel")         SzDetailLevel detailLevel,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
       @DefaultValue("true") @QueryParam("withFeatureStats")       boolean       withFeatureStats,
       @DefaultValue("true") @QueryParam("withInternalFeatures")   boolean       withInternalFeatures,
@@ -505,6 +537,7 @@ public class WhyServices implements ServicesSupport {
       String rawData = null;
 
       long flags = this.getFlags(forceMinimal,
+                                 detailLevel,
                                  featureMode,
                                  withFeatureStats,
                                  withInternalFeatures,
