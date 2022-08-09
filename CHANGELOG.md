@@ -30,6 +30,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated test-scoped Swagger Codegen dependency to `3.0.20`
 - Deleted test cache data for version `3.0.0`
 - Generated test cache data for version `3.2.0`
+- Updated `pom.xml` and `Dockerfile` to reflect version `3.2.0`
+
+## [3.1.1] - 2022-07-20
+
+### Changed in 3.1.1
+
+- In `Dockerfile`, bump from `senzing/senzingapi-runtime:3.1.0` to `senzing/senzingapi-runtime:3.1.1`
+
+## [3.1.0] - 2022-07-12
+
+### Changed in 3.1.0
+
+- Migrated to `senzing/senzingapi-runtime` as Docker base image
 
 ## [3.0.2] - 2022-06-08
 

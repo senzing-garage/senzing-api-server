@@ -1,8 +1,7 @@
 # Based on
 # - https://github.com/srggrs/assign-one-project-github-action
 
-name: Auto Assign issue to project
-
+name: add-issue-to-project-t-ast.yaml
 on:
   issues:
     types:
@@ -10,12 +9,12 @@ on:
       - opened
 env:
   GITHUB_TOKEN: ${{ secrets.SENZING_GITHUB_ACCESS_TOKEN }}
-
 jobs:
   assign_one_project:
+    name: Add issue to Senzing App-Server project
     runs-on: ubuntu-latest
     steps:
-    - name: Assign issues to project
+    - name: Assign issue to project
       uses: Senzing/github-action-add-issue-to-project@main
       with:
         project: 'https://github.com/orgs/Senzing/projects/6'
