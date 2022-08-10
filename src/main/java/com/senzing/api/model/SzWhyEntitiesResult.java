@@ -48,20 +48,20 @@ public interface SzWhyEntitiesResult {
   void setEntityId2(Long entityId);
 
   /**
-   * Gets the {@link SzMatchInfo} providing the details of the result.
+   * Gets the {@link SzWhyMatchInfo} providing the details of the result.
    *
-   * @return The {@link SzMatchInfo} providing the details of the result.
+   * @return The {@link SzWhyMatchInfo} providing the details of the result.
    */
   @JsonInclude(NON_NULL)
-  SzMatchInfo getMatchInfo();
+  SzWhyMatchInfo getMatchInfo();
 
   /**
-   * Sets the {@link SzMatchInfo} providing the details of the result.
+   * Sets the {@link SzWhyMatchInfo} providing the details of the result.
    *
-   * @param matchInfo The {@link SzMatchInfo} providing the details of the
+   * @param matchInfo The {@link SzWhyMatchInfo} providing the details of the
    *                  result.
    */
-  void setMatchInfo(SzMatchInfo matchInfo);
+  void setMatchInfo(SzWhyMatchInfo matchInfo);
 
   /**
    * A {@link ModelProvider} for instances of {@link SzWhyEntitiesResult}.
@@ -149,8 +149,8 @@ public interface SzWhyEntitiesResult {
 
     JsonObject infoJson = JsonUtilities.getJsonObject(jsonObj, "MATCH_INFO");
 
-    SzMatchInfo matchInfo
-        = SzMatchInfo.parseMatchInfo(infoJson);
+    SzWhyMatchInfo matchInfo
+        = SzWhyMatchInfo.parseMatchInfo(infoJson);
 
     SzWhyEntitiesResult result = SzWhyEntitiesResult.FACTORY.create();
     result.setEntityId1(entityId1);

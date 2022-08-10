@@ -8,7 +8,6 @@ import com.senzing.util.JsonUtilities;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
@@ -38,20 +37,20 @@ public interface SzWhyEntityResult {
   void setPerspective(SzWhyPerspective perspective);
 
   /**
-   * Gets the {@link SzMatchInfo} providing the details of the result.
+   * Gets the {@link SzWhyMatchInfo} providing the details of the result.
    *
-   * @return The {@link SzMatchInfo} providing the details of the result.
+   * @return The {@link SzWhyMatchInfo} providing the details of the result.
    */
   @JsonInclude(NON_NULL)
-  SzMatchInfo getMatchInfo();
+  SzWhyMatchInfo getMatchInfo();
 
   /**
-   * Sets the {@link SzMatchInfo} providing the details of the result.
+   * Sets the {@link SzWhyMatchInfo} providing the details of the result.
    *
-   * @param matchInfo The {@link SzMatchInfo} providing the details of the
+   * @param matchInfo The {@link SzWhyMatchInfo} providing the details of the
    *                  result.
    */
-  void setMatchInfo(SzMatchInfo matchInfo);
+  void setMatchInfo(SzWhyMatchInfo matchInfo);
 
   /**
    * A {@link ModelProvider} for instances of {@link SzWhyEntityResult}.
@@ -139,8 +138,8 @@ public interface SzWhyEntityResult {
 
     JsonObject infoJson = JsonUtilities.getJsonObject(jsonObject, "MATCH_INFO");
 
-    SzMatchInfo matchInfo
-        = SzMatchInfo.parseMatchInfo(infoJson);
+    SzWhyMatchInfo matchInfo
+        = SzWhyMatchInfo.parseMatchInfo(infoJson);
 
     SzWhyEntityResult result = SzWhyEntityResult.FACTORY.create();
     result.setPerspective(perspective);

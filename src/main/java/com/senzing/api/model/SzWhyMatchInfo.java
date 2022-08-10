@@ -2,7 +2,7 @@ package com.senzing.api.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.senzing.api.model.impl.SzMatchInfoImpl;
+import com.senzing.api.model.impl.SzWhyMatchInfoImpl;
 import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
@@ -17,8 +17,8 @@ import static com.senzing.api.model.SzMatchLevel.*;
  * The match info describing why two entities (or records) resolve or
  * relate to one another.
  */
-@JsonDeserialize(using=SzMatchInfo.Factory.class)
-public interface SzMatchInfo {
+@JsonDeserialize(using= SzWhyMatchInfo.Factory.class)
+public interface SzWhyMatchInfo {
   /**
    * Gets the why key indicating the components of the match (similar to the
    * match key).
@@ -130,7 +130,7 @@ public interface SzMatchInfo {
   /**
    * Gets the <b>unmodifiable</b> {@link List} of {@link
    * SzDisclosedRelation} objects describing the disclosed relationships
-   * between two entities.  If this {@link SzMatchInfo} instance is for a
+   * between two entities.  If this {@link SzWhyMatchInfo} instance is for a
    * single entity then this list is empty.
    *
    * @return The <b>unmodifiable</b> {@link List} of {@link
@@ -166,48 +166,48 @@ public interface SzMatchInfo {
   void clearDisclosedRelations();
 
   /**
-   * A {@link ModelProvider} for instances of {@link SzMatchInfo}.
+   * A {@link ModelProvider} for instances of {@link SzWhyMatchInfo}.
    */
-  interface Provider extends ModelProvider<SzMatchInfo> {
+  interface Provider extends ModelProvider<SzWhyMatchInfo> {
     /**
-     * Creates a new instance of {@link SzMatchInfo}.
+     * Creates a new instance of {@link SzWhyMatchInfo}.
      *
-     * @return The new instance of {@link SzMatchInfo}
+     * @return The new instance of {@link SzWhyMatchInfo}
      */
-    SzMatchInfo create();
+    SzWhyMatchInfo create();
   }
 
   /**
    * Provides a default {@link Provider} implementation for {@link
-   * SzMatchInfo} that produces instances of {@link SzMatchInfoImpl}.
+   * SzWhyMatchInfo} that produces instances of {@link SzWhyMatchInfoImpl}.
    */
-  class DefaultProvider extends AbstractModelProvider<SzMatchInfo>
+  class DefaultProvider extends AbstractModelProvider<SzWhyMatchInfo>
       implements Provider
   {
     /**
      * Default constructor.
      */
     public DefaultProvider() {
-      super(SzMatchInfo.class, SzMatchInfoImpl.class);
+      super(SzWhyMatchInfo.class, SzWhyMatchInfoImpl.class);
     }
 
     @Override
-    public SzMatchInfo create() {
-      return new SzMatchInfoImpl();
+    public SzWhyMatchInfo create() {
+      return new SzWhyMatchInfoImpl();
     }
   }
 
   /**
-   * Provides a {@link ModelFactory} implementation for {@link SzMatchInfo}.
+   * Provides a {@link ModelFactory} implementation for {@link SzWhyMatchInfo}.
    */
-  class Factory extends ModelFactory<SzMatchInfo, Provider> {
+  class Factory extends ModelFactory<SzWhyMatchInfo, Provider> {
     /**
      * Default constructor.  This is public and can only be called after the
      * singleton master instance is created as it inherits the same state from
      * the master instance.
      */
     public Factory() {
-      super(SzMatchInfo.class);
+      super(SzWhyMatchInfo.class);
     }
 
     /**
@@ -220,10 +220,10 @@ public interface SzMatchInfo {
     }
 
     /**
-     * Creates a new instance of {@link SzMatchInfo}.
-     * @return The new instance of {@link SzMatchInfo}.
+     * Creates a new instance of {@link SzWhyMatchInfo}.
+     * @return The new instance of {@link SzWhyMatchInfo}.
      */
-    public SzMatchInfo create()
+    public SzWhyMatchInfo create()
     {
       return this.getProvider().create();
     }
@@ -235,16 +235,16 @@ public interface SzMatchInfo {
   Factory FACTORY = new Factory(new DefaultProvider());
 
   /**
-   * Parses the native API JSON to build an instance of {@link SzMatchInfo}.
+   * Parses the native API JSON to build an instance of {@link SzWhyMatchInfo}.
    *
    * @param jsonObject The {@link JsonObject} describing the match info using
    *                   the native API JSON format.
    *
-   * @return The created instance of {@link SzMatchInfo}.
+   * @return The created instance of {@link SzWhyMatchInfo}.
    */
-  static SzMatchInfo parseMatchInfo(JsonObject jsonObject)
+  static SzWhyMatchInfo parseMatchInfo(JsonObject jsonObject)
   {
-    SzMatchInfo result = SzMatchInfo.FACTORY.create();
+    SzWhyMatchInfo result = SzWhyMatchInfo.FACTORY.create();
 
     String whyKey   = JsonUtilities.getString(jsonObject, "WHY_KEY");
     if (whyKey != null && whyKey.trim().length() == 0) whyKey = null;

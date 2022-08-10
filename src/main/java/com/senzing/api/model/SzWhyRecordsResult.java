@@ -58,20 +58,20 @@ public interface SzWhyRecordsResult {
   void setPerspective2(SzWhyPerspective perspective);
 
   /**
-   * Gets the {@link SzMatchInfo} providing the details of the result.
+   * Gets the {@link SzWhyMatchInfo} providing the details of the result.
    *
-   * @return The {@link SzMatchInfo} providing the details of the result.
+   * @return The {@link SzWhyMatchInfo} providing the details of the result.
    */
   @JsonInclude(NON_NULL)
-  SzMatchInfo getMatchInfo();
+  SzWhyMatchInfo getMatchInfo();
 
   /**
-   * Sets the {@link SzMatchInfo} providing the details of the result.
+   * Sets the {@link SzWhyMatchInfo} providing the details of the result.
    *
-   * @param matchInfo The {@link SzMatchInfo} providing the details of the
+   * @param matchInfo The {@link SzWhyMatchInfo} providing the details of the
    *                  result.
    */
-  void setMatchInfo(SzMatchInfo matchInfo);
+  void setMatchInfo(SzWhyMatchInfo matchInfo);
 
   /**
    * A {@link ModelProvider} for instances of {@link SzWhyRecordsResult}.
@@ -162,8 +162,8 @@ public interface SzWhyRecordsResult {
 
     JsonObject infoJson = JsonUtilities.getJsonObject(jsonObject, "MATCH_INFO");
 
-    SzMatchInfo matchInfo
-        = SzMatchInfo.parseMatchInfo(infoJson);
+    SzWhyMatchInfo matchInfo
+        = SzWhyMatchInfo.parseMatchInfo(infoJson);
 
     SzWhyRecordsResult result = SzWhyRecordsResult.FACTORY.create();
     result.setPerspective1(perspective1);

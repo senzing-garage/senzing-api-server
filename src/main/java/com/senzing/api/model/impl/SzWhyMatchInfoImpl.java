@@ -6,10 +6,10 @@ import com.senzing.api.model.*;
 import java.util.*;
 
 /**
- * Provides a default implementation of {@link SzMatchInfo}.
+ * Provides a default implementation of {@link SzWhyMatchInfo}.
  */
 @JsonDeserialize
-public class SzMatchInfoImpl implements SzMatchInfo {
+public class SzWhyMatchInfoImpl implements SzWhyMatchInfo {
   /**
    * The why key indicating the components of the match (similar to the
    * match key).
@@ -58,7 +58,7 @@ public class SzMatchInfoImpl implements SzMatchInfo {
   /**
    * Default constructor.
    */
-  public SzMatchInfoImpl() {
+  public SzWhyMatchInfoImpl() {
     this.whyKey             = null;
     this.matchLevel         = null;
     this.resolutionRule     = null;
