@@ -78,8 +78,9 @@ public interface SzWhyPerspective {
    * Sets the {@link Set} of {@link SzFocusRecordId} instances identifying the
    * focus records for this perspective.
    *
-   * @param focusRecords The {@link Set} of {@link SzFocusRecordId} instances
-   *                     identifying the focus records for this perspective.
+   * @param focusRecords The {@link Collection} of {@link SzFocusRecordId}
+   *                     instances identifying the focus records for this
+   *                     perspective.
    */
   void setFocusRecords(Collection<SzFocusRecordId> focusRecords);
 

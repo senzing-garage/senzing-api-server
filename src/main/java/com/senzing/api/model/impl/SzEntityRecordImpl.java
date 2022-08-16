@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.SzEntityRecord;
+import com.senzing.api.model.SzFeatureReference;
 import com.senzing.util.JsonUtilities;
 
 import javax.json.JsonArray;
@@ -50,6 +51,13 @@ public class SzEntityRecordImpl implements SzEntityRecord {
    * The record ID for the record.
    */
   private String recordId;
+
+  /**
+   * The {@link List} of {@link SzFeatureReference} instances referencing the
+   * features that are contributed by this record along with their associated
+   * usage types.
+   */
+  private List<SzFeatureReference> featureReferences;
 
   /**
    * The list of address data strings.
@@ -106,6 +114,7 @@ public class SzEntityRecordImpl implements SzEntityRecord {
     this.dataSource         = null;
     this.recordId           = null;
     this.lastSeenTimestamp  = null;
+    this.featureReferences  = new LinkedList<>();
     this.addressData        = new LinkedList<>();
     this.characteristicData = new LinkedList<>();
     this.identifierData     = new LinkedList<>();
@@ -166,6 +175,22 @@ public class SzEntityRecordImpl implements SzEntityRecord {
   @Override
   public void setLastSeenTimestamp(Date timestamp) {
     this.lastSeenTimestamp = timestamp;
+  }
+
+  @Override
+  public List<SzFeatureReference> getFeatureReferences() {
+    return Collections.unmodifiableList(this.featureReferences);
+  }
+
+  @Override
+  public void setFeatureReferences(Collection<SzFeatureReference> featureRefs) {
+    this.featureReferences.clear();
+    this.featureReferences.addAll(featureRefs);
+  }
+
+  @Override
+  public void addFeatureReference(SzFeatureReference featureRef) {
+    this.featureReferences.add(featureRef);
   }
 
   /**
@@ -404,16 +429,18 @@ public class SzEntityRecordImpl implements SzEntityRecord {
   }
 
   protected String fieldsToString() {
-    return "dataSource='" + dataSource + '\'' +
-        ", recordId='" + recordId + '\'' +
-        ", lastSeenTimestamp=" + lastSeenTimestamp +
-        ", addressData=" + addressData +
-        ", characteristicData=" + characteristicData +
-        ", identifierData=" + identifierData +
-        ", nameData=" + nameData +
-        ", phoneData=" + phoneData +
-        ", relationshipData=" + relationshipData +
-        ", otherData=" + otherData +
-        ", originalSourceData=" + originalSourceData;
+    return "dataSource=[ " + this.getDataSource()
+        + " ], recordId=[ " + this.getRecordId()
+        + " ], lastSeenTimestamp=[ " + this.getLastSeenTimestamp()
+        + " ], featureReferences=[ " + this.getFeatureReferences()
+        + " ], addressData=[ " + this.getAddressData()
+        + " ], characteristicData=[ " + this.getCharacteristicData()
+        + " ], identifierData=[ " + this.getIdentifierData()
+        + " ], nameData=[ " + this.getNameData()
+        + " ], phoneData=[ " + this.getPhoneData()
+        + " ], relationshipData=[ " + this.getRelationshipData()
+        + " ], otherData=[ " + this.getOtherData()
+        + " ], originalSourceData=[ " + this.getOriginalSourceData()
+        + " ]";
   }
 }

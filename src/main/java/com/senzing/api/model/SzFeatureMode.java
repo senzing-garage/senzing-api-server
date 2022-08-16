@@ -26,5 +26,13 @@ public enum SzFeatureMode {
    * Group near-duplicate feature values and return a representative value along
    * with its near duplicate values.
    */
-  WITH_DUPLICATES;
+  WITH_DUPLICATES,
+
+  /**
+   * Same as `WITH_DUPLICATES` but with record-level references ({@link
+   * SzFeatureReference} instances) attributing each feature to the record(s)
+   * that provided it for the entity along with any usage type that might have
+   * been associated with the feature at the record level.
+   */
+  ATTRIBUTED;
 }

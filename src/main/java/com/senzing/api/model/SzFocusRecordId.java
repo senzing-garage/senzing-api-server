@@ -4,13 +4,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.impl.SzFocusRecordIdImpl;
 import com.senzing.util.JsonUtilities;
 
-import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonObject;
-import javax.json.JsonObjectBuilder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Describes a record ID with a data source.
@@ -131,7 +128,7 @@ public interface SzFocusRecordId {
    */
   static List<SzFocusRecordId> parseFocusRecordIdList(JsonArray jsonArray)
   {
-    return parseRecordIdList(null, jsonArray);
+    return parseFocusRecordIdList(null, jsonArray);
   }
 
   /**
@@ -147,7 +144,7 @@ public interface SzFocusRecordId {
    * @return The {@link List} of {@link SzFocusRecordId} instances that were
    *         populated.
    */
-  static List<SzFocusRecordId> parseRecordIdList(
+  static List<SzFocusRecordId> parseFocusRecordIdList(
       List<SzFocusRecordId> list,
       JsonArray             jsonArray)
   {

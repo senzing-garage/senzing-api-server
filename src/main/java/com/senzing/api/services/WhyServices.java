@@ -13,7 +13,6 @@ import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
 import static com.senzing.api.model.SzHttpMethod.*;
-import static com.senzing.g2.engine.G2Engine.*;
 
 /**
  * Provides "why" API services.
@@ -532,8 +531,6 @@ public class WhyServices implements ServicesSupport {
         throw this.newBadRequestException(GET, uriInfo, timers, e.getMessage());
       }
 
-      StringBuffer sb = new StringBuffer();
-
       String rawData = null;
 
       long flags = this.getFlags(forceMinimal,
@@ -549,33 +546,58 @@ public class WhyServices implements ServicesSupport {
       final SzEntityIdentifier entityIdent2 = ident2;
 
       rawData = provider.executeInThread(() -> {
+        StringBuffer sb = new StringBuffer();
+
         this.exitingQueue(timers);
 
         // get the engine API and the config API
         G2Engine engineApi = provider.getEngineApi();
 
-        Long entityId1 = this.resolveEntityId(
-            GET, uriInfo, timers, engineApi, entityIdent1);
-        Long entityId2 = this.resolveEntityId(
-            GET, uriInfo, timers, engineApi, entityIdent2);
+        Long    entityId1       = null;
+        Long    entityId2       = null;
+        boolean entitiesChanged = false;
+        do {
+          // set the entities changes flag to false
+          entitiesChanged = false;
+          sb.delete(0, sb.length());
 
-        this.callingNativeAPI(timers, "engine", "whyEntities");
+          // resolve the entity ID's
+          entityId1 = this.resolveEntityId(
+              GET, uriInfo, timers, engineApi, entityIdent1);
+          entityId2 = this.resolveEntityId(
+              GET, uriInfo, timers, engineApi, entityIdent2);
 
-        // perform the "why" operation
-        int result = engineApi.whyEntities(
-            entityId1, entityId2, flags, sb);
+          this.callingNativeAPI(timers, "engine", "whyEntities");
 
-        this.calledNativeAPI(timers, "engine", "whyEntities");
+          // perform the "why" operation
+          int result = engineApi.whyEntities(
+              entityId1, entityId2, flags, sb);
 
-        if (result != 0) {
-          int errorCode = engineApi.getLastExceptionCode();
-          if (errorCode == ENTITY_NOT_FOUND_CODE)
-          {
-            throw this.newBadRequestException(GET, uriInfo, timers, engineApi);
+          this.calledNativeAPI(timers, "engine", "whyEntities");
+
+          if (result != 0) {
+            int errorCode = engineApi.getLastExceptionCode();
+            if (errorCode == ENTITY_NOT_FOUND_CODE) {
+              throw this.newBadRequestException(GET, uriInfo, timers, engineApi);
+            }
+            throw this.newInternalServerErrorException(
+                GET, uriInfo, timers, engineApi);
           }
-          throw this.newInternalServerErrorException(
-              GET, uriInfo, timers, engineApi);
-        }
+
+          // check if we had record ID's
+          if (entityIdent1 instanceof SzRecordId) {
+            // resolve the entity ID's again, checking for a race condition
+            Long postEntityId1 = this.resolveEntityId(
+                GET, uriInfo, timers, engineApi, entityIdent1);
+            Long postEntityId2 = this.resolveEntityId(
+                GET, uriInfo, timers, engineApi, entityIdent2);
+
+            // confirm no changes
+            entitiesChanged = ((!entityId1.equals(postEntityId1))
+                || (!entityId2.equals(postEntityId2)));
+          }
+
+        } while (entitiesChanged);
 
         return sb.toString();
       });
@@ -824,49 +846,5 @@ public class WhyServices implements ServicesSupport {
     data.setWhyResult(whyResult);
     data.setEntities(entityDataList);
     return data;
-  }
-
-  /**
-   * Gets the entity ID for the entity identifier which may be a record ID.
-   *
-   * @param httpMethod The {@link SzHttpMethod} for the request.
-   * @param uriInfo The {@link UriInfo} for the request.
-   * @param timers The {@link Timers} for the operation.
-   * @param engineApi The {@link G2Engine} instance to use.
-   * @param identifier The {@link SzEntityIdentifier} to resolve.
-   * @return The {@link Long} entity ID.
-   */
-  private Long resolveEntityId(SzHttpMethod       httpMethod,
-                               UriInfo            uriInfo,
-                               Timers             timers,
-                               G2Engine           engineApi,
-                               SzEntityIdentifier identifier)
-  {
-    // get the entity IDs
-    if (identifier instanceof SzEntityId) {
-      return ((SzEntityId) identifier).getValue();
-
-    } else {
-      SzRecordId  recordIdent = (SzRecordId) identifier;
-      String      dataSource  = recordIdent.getDataSourceCode();
-      String      recordId    = recordIdent.getRecordId();
-
-      StringBuffer sb = new StringBuffer();
-      this.callingNativeAPI(timers, "engine", "getEntityByRecordID");
-      int result = engineApi.getEntityByRecordID(dataSource, recordId, 0, sb);
-      this.calledNativeAPI(timers, "engine", "getEntityByRecordID");
-
-      if (result != 0) {
-        throw this.newPossiblyBadRequestException(
-            httpMethod, uriInfo, timers, engineApi);
-      }
-
-      // parse as a JSON object
-      JsonObject jsonObject = JsonUtilities.parseJsonObject(sb.toString());
-      jsonObject = jsonObject.getJsonObject("RESOLVED_ENTITY");
-
-      // get the entity ID
-      return JsonUtilities.getLong(jsonObject, "ENTITY_ID");
-    }
   }
 }

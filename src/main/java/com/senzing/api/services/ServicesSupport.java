@@ -26,8 +26,7 @@ import java.net.URLEncoder;
 import java.util.*;
 import java.util.function.Function;
 
-import static com.senzing.api.model.SzFeatureMode.NONE;
-import static com.senzing.api.model.SzFeatureMode.REPRESENTATIVE;
+import static com.senzing.api.model.SzFeatureMode.*;
 import static com.senzing.g2.engine.G2Engine.*;
 import static com.senzing.g2.engine.G2Engine.G2_ENTITY_INCLUDE_RECORD_SUMMARY;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
@@ -147,18 +146,14 @@ public interface ServicesSupport {
   /**
    * Creates a new instance of {@link SzMeta}.
    *
-   * @param httpMethod The HTTP method with which to construct.
-   *
+   * @param httpMethod     The HTTP method with which to construct.
    * @param httpStatusCode The HTTP response code.
-   *
-   * @param timers The {@link Timers} instance that tracked timing.
-   *
+   * @param timers         The {@link Timers} instance that tracked timing.
    * @return The new instance of {@link SzMeta}.
    */
   default SzMeta newMeta(SzHttpMethod httpMethod,
-                         int          httpStatusCode,
-                         Timers       timers)
-  {
+                         int httpStatusCode,
+                         Timers timers) {
     return SzMeta.FACTORY.create(httpMethod, httpStatusCode, timers);
   }
 
@@ -167,7 +162,6 @@ public interface ServicesSupport {
    * HttpServletRequest}.
    *
    * @param request The {@link HttpServletRequest} to use for the links.
-   *
    * @return The new instance of {@link SzLinks}
    */
   default SzLinks newLinks(HttpServletRequest request) {
@@ -178,7 +172,6 @@ public interface ServicesSupport {
    * Creates a new instance of {@link SzLinks} with the specified self link.
    *
    * @param uriInfo The {@link UriInfo} containing the self link.
-   *
    * @return The new instance of {@link SzLinks}
    */
   default SzLinks newLinks(UriInfo uriInfo) {
@@ -221,11 +214,10 @@ public interface ServicesSupport {
    * @return The {@link ServiceUnavailableException}
    */
   default ServiceUnavailableException newServiceUnavailableErrorException(
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers,
-      String        message)
-  {
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers,
+      String message) {
     Response.ResponseBuilder builder = Response.status(SERVICE_UNAVAILABLE);
 
     builder.entity(this.newErrorResponse(
@@ -250,8 +242,7 @@ public interface ServicesSupport {
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
-      G2Fallible fallible)
-  {
+      G2Fallible fallible) {
     Response.ResponseBuilder builder = Response.status(SERVER_ERROR);
     SzErrorResponse errorResponse = this.newErrorResponse(
         this.newMeta(httpMethod, SERVER_ERROR, timers),
@@ -279,8 +270,7 @@ public interface ServicesSupport {
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
-      G2Fallible fallible)
-  {
+      G2Fallible fallible) {
     Response.ResponseBuilder builder = Response.status(NOT_FOUND);
     builder.entity(this.newErrorResponse(
         this.newMeta(httpMethod, NOT_FOUND, timers),
@@ -302,8 +292,7 @@ public interface ServicesSupport {
   default NotFoundException newNotFoundException(
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
-      Timers timers)
-  {
+      Timers timers) {
     Response.ResponseBuilder builder = Response.status(NOT_FOUND);
     builder.entity(this.newErrorResponse(
         this.newMeta(httpMethod, NOT_FOUND, timers),
@@ -326,8 +315,7 @@ public interface ServicesSupport {
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
-      String errorMessage)
-  {
+      String errorMessage) {
     Response.ResponseBuilder builder = Response.status(NOT_FOUND);
     builder.entity(this.newErrorResponse(
         this.newMeta(httpMethod, NOT_FOUND, timers),
@@ -350,8 +338,7 @@ public interface ServicesSupport {
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
-      String errorMessage)
-  {
+      String errorMessage) {
     Response.ResponseBuilder builder = Response.status(NOT_ALLOWED);
     builder.entity(this.newErrorResponse(
         this.newMeta(httpMethod, NOT_ALLOWED, timers),
@@ -375,8 +362,7 @@ public interface ServicesSupport {
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
-      G2Fallible fallible)
-  {
+      G2Fallible fallible) {
     Response.ResponseBuilder builder = Response.status(BAD_REQUEST);
     builder.entity(this.newErrorResponse(
         this.newMeta(httpMethod, BAD_REQUEST, timers),
@@ -401,8 +387,7 @@ public interface ServicesSupport {
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
-      String errorMessage)
-  {
+      String errorMessage) {
     Response.ResponseBuilder builder = Response.status(BAD_REQUEST);
     builder.entity(this.newErrorResponse(
         this.newMeta(httpMethod, BAD_REQUEST, timers),
@@ -426,8 +411,7 @@ public interface ServicesSupport {
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
-      Exception exception)
-  {
+      Exception exception) {
     Response.ResponseBuilder builder = Response.status(BAD_REQUEST);
     builder.entity(this.newErrorResponse(
         this.newMeta(httpMethod, BAD_REQUEST, timers),
@@ -451,8 +435,7 @@ public interface ServicesSupport {
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
-      String errorMessage)
-  {
+      String errorMessage) {
     Response.ResponseBuilder builder = Response.status(FORBIDDEN);
     builder.header("Content-Type", APPLICATION_JSON);
     builder.entity(this.newErrorResponse(
@@ -479,8 +462,7 @@ public interface ServicesSupport {
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
-      G2Engine engineApi)
-  {
+      G2Engine engineApi) {
     int errorCode = engineApi.getLastExceptionCode();
     if (errorCode == DATA_SOURCE_NOT_FOUND_CODE
         || errorCode == RECORD_NOT_FOUND_CODE
@@ -508,8 +490,7 @@ public interface ServicesSupport {
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
       Timers timers,
-      G2Engine engineApi)
-  {
+      G2Engine engineApi) {
     int errorCode = engineApi.getLastExceptionCode();
     if (errorCode == DATA_SOURCE_NOT_FOUND_CODE
         || errorCode == RECORD_NOT_FOUND_CODE
@@ -681,10 +662,9 @@ public interface ServicesSupport {
    * @param values    The {@link List} of values.
    * @return The multi-valued query string parameter.
    */
-  default String formatMultiValuedParam(String       prefix,
-                                        String       paramName,
-                                        List<String> values)
-  {
+  default String formatMultiValuedParam(String prefix,
+                                        String paramName,
+                                        List<String> values) {
     if (values == null || values.size() == 0) return "";
     StringBuilder sb = new StringBuilder();
     for (String val : values) {
@@ -714,8 +694,7 @@ public interface ServicesSupport {
       String paramName,
       SzHttpMethod httpMethod,
       UriInfo uriInfo,
-      Timers timers)
-  {
+      Timers timers) {
     Set<SzEntityIdentifier> result = new LinkedHashSet<>();
 
     // check if the params is null or missing
@@ -741,28 +720,64 @@ public interface ServicesSupport {
   }
 
   /**
+   * Combines multiple {@link String} record identifier parameters into a
+   * JSON array and parses it as JSON to produce a {@link Set} of {@link
+   * SzRecordId} instances.
+   *
+   * @param params     The paramter values to parse.
+   * @param paramName  The name of the parameter.
+   * @param httpMethod The HTTP method.
+   * @param uriInfo    The {@link UriInfo} from the request.
+   * @return The {@link Set} of {@link SzRecordId} instances that was
+   * parsed from the specified parameters.
+   */
+  default Set<SzRecordId> parseRecordIdentifiers(
+      List<String> params,
+      String paramName,
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers) {
+    Set<SzRecordId> result = new LinkedHashSet<>();
+
+    // check if the params is null or missing
+    if (params == null || params.size() == 0) {
+      return result;
+    }
+
+    // iterate over the params
+    for (String param : params) {
+      try {
+        SzRecordId id = SzRecordId.valueOf(param);
+        result.add(id);
+
+      } catch (Exception e) {
+        throw this.newBadRequestException(
+            httpMethod, uriInfo, timers,
+            "Improperly formatted record identifier parameter: "
+                + paramName + "=" + param);
+      }
+    }
+
+    return result;
+  }
+
+  /**
    * Gets the flags to use given the specified parameters.
    *
-   * @param forceMinimal Whether or not minimal format is forced.
-   *
-   * @param featureMode The {@link SzFeatureMode} describing how features
-   *                    are retrieved.
-   *
-   * @param withFeatureStats Whether or not feature stats should be included.
-   *
+   * @param forceMinimal         Whether or not minimal format is forced.
+   * @param featureMode          The {@link SzFeatureMode} describing how features
+   *                             are retrieved.
+   * @param withFeatureStats     Whether or not feature stats should be included.
    * @param withInternalFeatures Whether or not to include internal features.
-   *
-   * @param withRelationships Whether or not to include relationships.
-   *
+   * @param withRelationships    Whether or not to include relationships.
    * @return The flags to use given the parameters.
    */
-  default long getFlags(boolean       forceMinimal,
+  default long getFlags(boolean forceMinimal,
                         SzDetailLevel detailLevel,
                         SzFeatureMode featureMode,
-                        boolean       withFeatureStats,
-                        boolean       withInternalFeatures,
-                        boolean       withRelationships)
-  {
+                        boolean withFeatureStats,
+                        boolean withInternalFeatures,
+                        boolean withRelationships) {
     return this.getFlags(0L,
                          forceMinimal,
                          detailLevel,
@@ -775,29 +790,22 @@ public interface ServicesSupport {
   /**
    * Gets the flags to use given the specified parameters.
    *
-   * @param baseFlags The base flags to start out with.
-   *
-   * @param forceMinimal Whether or not minimal format is forced.
-   *
-   * @param featureMode The {@link SzFeatureMode} describing how features
-   *                    are retrieved.
-   *
-   * @param withFeatureStats Whether or not feature stats should be included.
-   *
+   * @param baseFlags            The base flags to start out with.
+   * @param forceMinimal         Whether or not minimal format is forced.
+   * @param featureMode          The {@link SzFeatureMode} describing how features
+   *                             are retrieved.
+   * @param withFeatureStats     Whether or not feature stats should be included.
    * @param withInternalFeatures Whether or not to include internal features.
-   *
-   * @param withRelationships Whether or not to include relationships.
-   *
+   * @param withRelationships    Whether or not to include relationships.
    * @return The flags to use given the parameters.
    */
-  default long getFlags(long          baseFlags,
-                        boolean       forceMinimal,
+  default long getFlags(long baseFlags,
+                        boolean forceMinimal,
                         SzDetailLevel detailLevel,
                         SzFeatureMode featureMode,
-                        boolean       withFeatureStats,
-                        boolean       withInternalFeatures,
-                        boolean       withRelationships)
-  {
+                        boolean withFeatureStats,
+                        boolean withInternalFeatures,
+                        boolean withRelationships) {
     // check if forcing minimal format
     if (forceMinimal) {
       // minimal format, not much else to do
@@ -830,6 +838,11 @@ public interface ServicesSupport {
       if (withInternalFeatures) {
         flags |= G2_ENTITY_OPTION_INCLUDE_INTERNAL_FEATURES;
       }
+
+      // check if the feature mode is attributed
+      if (featureMode == ATTRIBUTED) {
+        flags |= G2_ENTITY_INCLUDE_RECORD_FEATURE_IDS;
+      }
     }
     return flags;
   }
@@ -837,21 +850,17 @@ public interface ServicesSupport {
   /**
    * Post-processes the entity data according to the specified parameters.
    *
-   * @param entityData The {@link SzEntityData} to modify.
-   *
+   * @param entityData   The {@link SzEntityData} to modify.
    * @param forceMinimal Whether or not minimal format is forced.
-   *
-   * @param detailLevel The {@link SzDetailLevel} describing the requested level
-   *                    of detail.
-   *
-   * @param featureMode The {@link SzFeatureMode} describing how features
-   *                    are retrieved.
+   * @param detailLevel  The {@link SzDetailLevel} describing the requested level
+   *                     of detail.
+   * @param featureMode  The {@link SzFeatureMode} describing how features
+   *                     are retrieved.
    */
-  default void postProcessEntityData(SzEntityData   entityData,
-                                     boolean        forceMinimal,
-                                     SzDetailLevel  detailLevel,
-                                     SzFeatureMode  featureMode)
-  {
+  default void postProcessEntityData(SzEntityData entityData,
+                                     boolean forceMinimal,
+                                     SzDetailLevel detailLevel,
+                                     SzFeatureMode featureMode) {
     // check if we need to strip out duplicate features
     if (featureMode == REPRESENTATIVE) {
       this.stripDuplicateFeatureValues(entityData);
@@ -939,8 +948,8 @@ public interface ServicesSupport {
    * Transitions the specified {@link Timers} into the {@link
    * #NATIVE_API_TIMING} stage.
    *
-   * @param timers The {@link Timers} instance to transition.
-   * @param api The API being invoked.
+   * @param timers   The {@link Timers} instance to transition.
+   * @param api      The API being invoked.
    * @param function The function name on the API being invoked.
    */
   default void callingNativeAPI(Timers timers, String api, String function) {
@@ -953,8 +962,8 @@ public interface ServicesSupport {
    * Concludes the {@link #NATIVE_API_TIMING} stage for the specified
    * {@link Timers}.
    *
-   * @param timers The {@link Timers} instance to transition.
-   * @param api The API being invoked.
+   * @param timers   The {@link Timers} instance to transition.
+   * @param api      The API being invoked.
    * @param function The function name on the API being invoked.
    */
   default void calledNativeAPI(Timers timers, String api, String function) {
@@ -987,7 +996,7 @@ public interface ServicesSupport {
    * Transitions the specified {@link Timers} into the {@link
    * #LOCK_TIMING} stage.
    *
-   * @param timers The {@link Timers} instance to transition.
+   * @param timers   The {@link Timers} instance to transition.
    * @param lockName The name of the lock being obtained.
    */
   default void obtainingLock(Timers timers, String lockName) {
@@ -999,7 +1008,7 @@ public interface ServicesSupport {
    * Concludes the {@link #LOCK_TIMING} stage for the the specified
    * {@link Timers}.
    *
-   * @param timers The {@link Timers} instance to transition.
+   * @param timers   The {@link Timers} instance to transition.
    * @param lockName The name of the lock being obtained.
    */
   default void obtainedLock(Timers timers, String lockName) {
@@ -1011,7 +1020,7 @@ public interface ServicesSupport {
    * Transitions the specified {@link Timers} into the {@link
    * #LOCK_TIMING} stage.
    *
-   * @param timers The {@link Timers} instance to transition.
+   * @param timers    The {@link Timers} instance to transition.
    * @param queueName The name of the lock being obtained.
    */
   default void sendingAsyncMessage(Timers timers, String queueName) {
@@ -1023,7 +1032,7 @@ public interface ServicesSupport {
    * Concludes the {@link #LOCK_TIMING} stage for the the specified
    * {@link Timers}.
    *
-   * @param timers The {@link Timers} instance to transition.
+   * @param timers    The {@link Timers} instance to transition.
    * @param queueName The name of the lock being obtained.
    */
   default void sentAsyncMessage(Timers timers, String queueName) {
@@ -1036,19 +1045,17 @@ public interface ServicesSupport {
    * {@link ForbiddenException}.
    *
    * @param provider The {@link SzApiProvider} to check for read-only mode.
-   * @param method The {@link HttpMethod} used.
-   * @param uriInfo The {@link UriInfo} for the request path.
-   * @param timers The {@link Timers} being used by the request handler.
-   *
+   * @param method   The {@link HttpMethod} used.
+   * @param uriInfo  The {@link UriInfo} for the request path.
+   * @param timers   The {@link Timers} being used by the request handler.
    * @throws ForbiddenException If the specified {@link SzApiProvider} is in
    *                            read-only mode.
    */
   default void ensureLoadingIsAllowed(SzApiProvider provider,
-                                      SzHttpMethod  method,
-                                      UriInfo       uriInfo,
-                                      Timers        timers)
-      throws ForbiddenException
-  {
+                                      SzHttpMethod method,
+                                      UriInfo uriInfo,
+                                      Timers timers)
+      throws ForbiddenException {
     if (provider.isReadOnly()) {
       throw this.newForbiddenException(
           method, uriInfo, timers,
@@ -1063,19 +1070,17 @@ public interface ServicesSupport {
    *
    * @param provider The {@link SzApiProvider} to check for read-only mode and
    *                 admin mode.
-   * @param method The {@link HttpMethod} used.
-   * @param uriInfo The {@link UriInfo} for the request path.
-   * @param timers The {@link Timers} being used by the request handler.
-   *
+   * @param method   The {@link HttpMethod} used.
+   * @param uriInfo  The {@link UriInfo} for the request path.
+   * @param timers   The {@link Timers} being used by the request handler.
    * @throws ForbiddenException If the specified {@link SzApiProvider} is in
    *                            read-only mode.
    */
-  default void ensureConfigChangesAllowed(SzApiProvider  provider,
-                                          SzHttpMethod   method,
-                                          UriInfo        uriInfo,
-                                          Timers         timers)
-      throws ForbiddenException
-  {
+  default void ensureConfigChangesAllowed(SzApiProvider provider,
+                                          SzHttpMethod method,
+                                          UriInfo uriInfo,
+                                          Timers timers)
+      throws ForbiddenException {
     if (!provider.isAdminEnabled()) {
       throw this.newForbiddenException(
           method, uriInfo, timers,
@@ -1101,6 +1106,7 @@ public interface ServicesSupport {
 
   /**
    * Formats a test-info string using the URI text and the body content.
+   *
    * @param uriText
    * @param bodyContent
    * @return The formatted string.
@@ -1113,7 +1119,6 @@ public interface ServicesSupport {
    * Returns the Base {@link URI} given the specified request {@link URI}.
    *
    * @param requestUri The request {@link URI} for the request.
-   *
    * @return The Base {@link URI} for the specified request {@link URI}.
    */
   default URI getBaseUri(URI requestUri) {
@@ -1125,14 +1130,13 @@ public interface ServicesSupport {
    * back it.
    *
    * @param webSocketSession The Web Socket {@link Session}.
-   *
    * @return The proxied {@link UriInfo} object using the specified Web Socket
-   *                     {@link Session}.
+   * {@link Session}.
    */
   default UriInfo newProxyUriInfo(Session webSocketSession) {
     try {
-      final URI requestUri  = webSocketSession.getRequestURI();
-      final URI baseUri     = this.getBaseUri(requestUri);
+      final URI requestUri = webSocketSession.getRequestURI();
+      final URI baseUri = this.getBaseUri(requestUri);
 
       InvocationHandler handler = (p, m, a) -> {
         switch (m.getName()) {
@@ -1203,69 +1207,69 @@ public interface ServicesSupport {
 
   /**
    * Creates a new {@link SzErrorResponse} with the specified parameters.
-   * @param meta The {@link SzMeta} describing the meta-data.
+   *
+   * @param meta  The {@link SzMeta} describing the meta-data.
    * @param links The {@link SzLinks} describing the links.
    * @return The newly created {@link SzErrorResponse}.
    */
-  default SzErrorResponse newErrorResponse(SzMeta meta, SzLinks links)
-  {
+  default SzErrorResponse newErrorResponse(SzMeta meta, SzLinks links) {
     return SzErrorResponse.FACTORY.create(meta, links);
   }
 
   /**
    * Creates a new {@link SzErrorResponse} with the specified parameters.
-   * @param meta The {@link SzMeta} describing the meta-data.
-   * @param links The {@link SzLinks} describing the links.
+   *
+   * @param meta       The {@link SzMeta} describing the meta-data.
+   * @param links      The {@link SzLinks} describing the links.
    * @param firstError The first error for the response.
    * @return The newly created {@link SzErrorResponse}.
    */
-  default SzErrorResponse newErrorResponse(SzMeta   meta,
-                                           SzLinks  links,
-                                           SzError  firstError)
-  {
+  default SzErrorResponse newErrorResponse(SzMeta meta,
+                                           SzLinks links,
+                                           SzError firstError) {
     return SzErrorResponse.FACTORY.create(meta, links, firstError);
   }
 
   /**
    * Creates a new {@link SzErrorResponse} with the specified parameters.
-   * @param meta The {@link SzMeta} describing the meta-data.
-   * @param links The {@link SzLinks} describing the links.
+   *
+   * @param meta       The {@link SzMeta} describing the meta-data.
+   * @param links      The {@link SzLinks} describing the links.
    * @param firstError The first error for the response.
    * @return The newly created {@link SzErrorResponse}.
    */
-  default SzErrorResponse newErrorResponse(SzMeta   meta,
-                                           SzLinks  links,
-                                           String   firstError)
-  {
+  default SzErrorResponse newErrorResponse(SzMeta meta,
+                                           SzLinks links,
+                                           String firstError) {
     return SzErrorResponse.FACTORY.create(meta, links, firstError);
   }
 
   /**
    * Creates a new {@link SzErrorResponse} with the specified parameters.
-   * @param meta The {@link SzMeta} describing the meta-data.
-   * @param links The {@link SzLinks} describing the links.
+   *
+   * @param meta       The {@link SzMeta} describing the meta-data.
+   * @param links      The {@link SzLinks} describing the links.
    * @param firstError The first error for the response.
    * @return The newly created {@link SzErrorResponse}.
    */
-  default SzErrorResponse newErrorResponse(SzMeta     meta,
-                                           SzLinks    links,
-                                           Throwable  firstError)
-  {
+  default SzErrorResponse newErrorResponse(SzMeta meta,
+                                           SzLinks links,
+                                           Throwable firstError) {
     return SzErrorResponse.FACTORY.create(meta, links, firstError);
   }
 
   /**
    * Creates a new {@link SzErrorResponse} with the specified parameters.
-   * @param meta The {@link SzMeta} describing the meta-data.
-   * @param links The {@link SzLinks} describing the links.
+   *
+   * @param meta               The {@link SzMeta} describing the meta-data.
+   * @param links              The {@link SzLinks} describing the links.
    * @param firstErrorFallible The {@link G2Fallible} for the first error of
    *                           the response.
    * @return The newly created {@link SzErrorResponse}.
    */
-  default SzErrorResponse newErrorResponse(SzMeta     meta,
-                                           SzLinks    links,
-                                           G2Fallible firstErrorFallible)
-  {
+  default SzErrorResponse newErrorResponse(SzMeta meta,
+                                           SzLinks links,
+                                           G2Fallible firstErrorFallible) {
     return SzErrorResponse.FACTORY.create(meta, links, firstErrorFallible);
   }
 
@@ -1283,7 +1287,6 @@ public interface ServicesSupport {
    *
    * @param errorMessage The error message with which to construct the
    *                     {@link SzError}.
-   *
    * @return The newly created {@link SzError} instance.
    */
   default SzError newError(String errorMessage) {
@@ -1294,11 +1297,10 @@ public interface ServicesSupport {
    * Creates a new {@link SzError} instance with the specified error code and
    * error message.
    *
-   * @param errorCode The error code with which to construct the
-   *                  {@link SzError}.
+   * @param errorCode    The error code with which to construct the
+   *                     {@link SzError}.
    * @param errorMessage The error message with which to construct the
    *                     {@link SzError}.
-   *
    * @return The newly created {@link SzError} instance.
    */
   default SzError newError(String errorCode, String errorMessage) {
@@ -1311,7 +1313,6 @@ public interface ServicesSupport {
    *
    * @param throwable The {@link Throwable} with which to construct the
    *                  {@link SzError}.
-   *
    * @return The newly created {@link SzError} instance.
    */
   default SzError newError(Throwable throwable) {
@@ -1324,7 +1325,6 @@ public interface ServicesSupport {
    *
    * @param fallible The {@link G2Fallible} from which to extract the error
    *                 code and error message.
-   *
    * @return The newly created {@link SzError} instance.
    */
   default SzError newError(G2Fallible fallible) {
@@ -1355,24 +1355,57 @@ public interface ServicesSupport {
   }
 
   /**
+   * Parses the specified text as a {@link Set} of {@link SzRecordId}
+   * instances.
+   *
+   * @param text The text to parse.
+   * @return The parsed {@link Set} of {@link SzRecordId} instances.
+   */
+  default Set<SzRecordId> parseRecordIdentifiers(String text) {
+    try {
+      SzEntityIdentifiers identifiers = SzEntityIdentifiers.valueOf(text);
+      if (identifiers.isEmpty()) return new LinkedHashSet<>();
+      if (!identifiers.isHomogeneous()) throw new IllegalArgumentException();
+
+      List<SzEntityIdentifier> list = identifiers.getIdentifiers();
+      SzEntityIdentifier first = list.get(0);
+
+      // ensure we have record ID's
+      if (!(first instanceof SzRecordId)) {
+        throw new IllegalArgumentException();
+      }
+      Set<SzRecordId> result = new LinkedHashSet<>();
+
+      // add to the set
+      for (SzEntityIdentifier identifier : list) {
+        result.add((SzRecordId) identifier);
+      }
+
+      // return the result
+      return result;
+
+    } catch (IllegalArgumentException e) {
+      throw new IllegalArgumentException(
+          "Not an array of record identifiers: " + text);
+    }
+  }
+
+  /**
    * Parses a list of entity data instances from a {@link JsonArray}
    * describing a JSON array in the Senzing native API format for entity
    * features and creates and populates a new {@link List} of
    * {@link SzEntityData} instances.
    *
-   * @param jsonArray The {@link JsonArray} describing the JSON in the
-   *                  Senzing native API format.
-   *
+   * @param jsonArray                The {@link JsonArray} describing the JSON in the
+   *                                 Senzing native API format.
    * @param featureToAttrClassMapper Mapping function to map feature names to
    *                                 attribute classes.
-   *
    * @return The populated (or created) {@link List} of {@link
-   *         SzEntityData} instances.
+   * SzEntityData} instances.
    */
   default List<SzEntityData> parseEntityDataList(
-      JsonArray               jsonArray,
-      Function<String,String> featureToAttrClassMapper)
-  {
+      JsonArray jsonArray,
+      Function<String, String> featureToAttrClassMapper) {
     return SzEntityData.parseEntityDataList(
         null, jsonArray, featureToAttrClassMapper);
   }
@@ -1380,22 +1413,19 @@ public interface ServicesSupport {
   /**
    * Prepares for performing a long-running operation is authorized.
    *
-   * @parma provider The {@link SzApiProvider} to use.
-   * @param method The {@link SzHttpMethod} for the request.
+   * @param method  The {@link SzHttpMethod} for the request.
    * @param uriInfo The {@link UriInfo} for the request.
-   * @param timers The {@link Timers} tracking timing for the operation.
-   *
+   * @param timers  The {@link Timers} tracking timing for the operation.
    * @return The {@link AccessToken} for the prolonged operation.
-   *
    * @throws ServiceUnavailableException If too many long-running operaitons are
    *                                     already running.
+   * @parma provider The {@link SzApiProvider} to use.
    */
-  default AccessToken prepareProlongedOperation(SzApiProvider  provider,
-                                                SzHttpMethod   method,
-                                                UriInfo        uriInfo,
-                                                Timers         timers)
-      throws ForbiddenException, ServiceUnavailableException
-  {
+  default AccessToken prepareProlongedOperation(SzApiProvider provider,
+                                                SzHttpMethod method,
+                                                UriInfo uriInfo,
+                                                Timers timers)
+      throws ForbiddenException, ServiceUnavailableException {
     AccessToken accessToken = provider.authorizeProlongedOperation();
     if (accessToken == null) {
       throw this.newServiceUnavailableErrorException(
@@ -1419,4 +1449,83 @@ public interface ServicesSupport {
     if (text.trim().length() == 0) return null;
     return text.trim();
   }
+
+  /**
+   * Gets the entity ID for the entity identifier which may be a record ID.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param engineApi The {@link G2Engine} instance to use.
+   * @param identifier The {@link SzEntityIdentifier} to resolve.
+   * @return The {@link Long} entity ID.
+   */
+  default Long resolveEntityId(SzHttpMethod       httpMethod,
+                               UriInfo            uriInfo,
+                               Timers             timers,
+                               G2Engine           engineApi,
+                               SzEntityIdentifier identifier)
+  {
+    return this.resolveEntityId(httpMethod,
+                                uriInfo,
+                                timers,
+                                engineApi,
+                                identifier,
+                                false);
+  }
+
+  /**
+   * Gets the entity ID for the entity identifier which may be a record ID.
+   *
+   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the operation.
+   * @param engineApi The {@link G2Engine} instance to use.
+   * @param identifier The {@link SzEntityIdentifier} to resolve.
+   * @param throwNotFound <code>true</code> if a not-found exception should be
+   *                      thrown and <code>false</code> if a bad-request
+   *                      exception should be thrown if a data source code,
+   *                      record ID, or entity ID is not found.
+   * @return The {@link Long} entity ID.
+   */
+  default Long resolveEntityId(SzHttpMethod       httpMethod,
+                               UriInfo            uriInfo,
+                               Timers             timers,
+                               G2Engine           engineApi,
+                               SzEntityIdentifier identifier,
+                               boolean            throwNotFound)
+  {
+    // get the entity IDs
+    if (identifier instanceof SzEntityId) {
+      return ((SzEntityId) identifier).getValue();
+
+    } else {
+      SzRecordId  recordIdent = (SzRecordId) identifier;
+      String      dataSource  = recordIdent.getDataSourceCode();
+      String      recordId    = recordIdent.getRecordId();
+
+      StringBuffer sb = new StringBuffer();
+      this.callingNativeAPI(timers, "engine", "getEntityByRecordID");
+      int result = engineApi.getEntityByRecordID(dataSource, recordId, 0, sb);
+      this.calledNativeAPI(timers, "engine", "getEntityByRecordID");
+
+      if (result != 0) {
+        if (throwNotFound) {
+          throw this.newPossiblyNotFoundException(
+              httpMethod, uriInfo, timers, engineApi);
+        } else {
+          throw this.newPossiblyBadRequestException(
+              httpMethod, uriInfo, timers, engineApi);
+        }
+      }
+
+      // parse as a JSON object
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(sb.toString());
+      jsonObject = jsonObject.getJsonObject("RESOLVED_ENTITY");
+
+      // get the entity ID
+      return JsonUtilities.getLong(jsonObject, "ENTITY_ID");
+    }
+  }
+
 }
