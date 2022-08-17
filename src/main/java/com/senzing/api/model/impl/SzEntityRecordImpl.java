@@ -185,7 +185,9 @@ public class SzEntityRecordImpl implements SzEntityRecord {
   @Override
   public void setFeatureReferences(Collection<SzFeatureReference> featureRefs) {
     this.featureReferences.clear();
-    this.featureReferences.addAll(featureRefs);
+    if (featureRefs != null) {
+      this.featureReferences.addAll(featureRefs);
+    }
   }
 
   @Override

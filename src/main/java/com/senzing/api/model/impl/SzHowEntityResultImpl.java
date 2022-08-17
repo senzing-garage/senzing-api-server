@@ -47,7 +47,9 @@ public class SzHowEntityResultImpl implements SzHowEntityResult {
   @Override
   public void setFinalStates(Collection<SzVirtualEntity> finalStates) {
     this.finalStates.clear();
-    this.finalStates.addAll(finalStates);
+    if (finalStates != null) {
+      this.finalStates.addAll(finalStates);
+    }
   }
 
   @Override
@@ -63,8 +65,10 @@ public class SzHowEntityResultImpl implements SzHowEntityResult {
   @Override
   public void setResolutionSteps(Collection<SzResolutionStep> steps) {
     this.steps.clear();
-    for (SzResolutionStep step: steps) {
-      this.steps.put(step.getResolvedVirtualEntityId(), step);
+    if (steps != null) {
+      for (SzResolutionStep step : steps) {
+        this.steps.put(step.getResolvedVirtualEntityId(), step);
+      }
     }
   }
 

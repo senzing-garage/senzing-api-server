@@ -88,7 +88,7 @@ public class SzVirtualEntityImpl implements SzVirtualEntity {
   @Override
   public void setRecords(Collection<SzVirtualEntityRecord> records) {
     Long singletonId = null;
-    if (records.size() == 0) {
+    if (records == null || records.size() == 0) {
       singletonId = null;
     } else {
       singletonId = records.iterator().next().getInternalId();
@@ -108,7 +108,9 @@ public class SzVirtualEntityImpl implements SzVirtualEntity {
     }
     this.singletonId = singletonId;
     this.records.clear();
-    this.records.addAll(records);
+    if (records != null) {
+      this.records.addAll(records);
+    }
   }
 
   @Override

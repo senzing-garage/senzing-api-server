@@ -1,5 +1,8 @@
 package com.senzing.api.services;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.util.JsonUtilities;
@@ -430,5 +433,4 @@ public class HowRelatedServices implements ServicesSupport {
         this.newLinks(uriInfo),
         howEntityResult);
   }
-
 }

@@ -1385,6 +1385,7 @@ public interface ServicesSupport {
       return result;
 
     } catch (IllegalArgumentException e) {
+      e.printStackTrace();
       throw new IllegalArgumentException(
           "Not an array of record identifiers: " + text);
     }
