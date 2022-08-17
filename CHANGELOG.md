@@ -6,6 +6,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.0] - 2022-08-17
+
+### Changed in 3.3.0
+
+- Added ability to leverage `G2Engine.G2_ENTITY_INCLUDE_RECORD_FEATURE_IDS` 
+  flag when requesting entity data via REST API
+  - Added `SzFeatureMode.ATTRIBUTED` enumerated value
+  - Added `com.senzing.api.model.SzFeatureReference` interface
+  - Added `com.senzing.api.model.impl.SzFeatureReferenceImpl` class
+  - Added `featureReferences` property to the `SzEntityRecord` interface
+  - Added `featureReferences` property to the `SzEntityRecordImpl` class
+- Added ability to leverage `G2Engine.getVirtualEntityByRecordID()` via REST API
+  - Added `com.senzing.api.services.HowRelatedServices` class
+    - Added `HowRelatedServices.getVirtualEntity()` function to provide the
+      `GET /virtual-entities` operation.
+  - Added auto tests for `HowRelatedServiecs.getVirtualEntity()`
+  - Added `com.senzing.api.model.SzVirtualEntityResponse` interface
+  - Added `com.senzing.api.model.SzVirtualEntityData` interface
+  - Added `com.senzing.api.model.impl.SzVirtualEntityResponseImpl` class.
+  - Added `com.senzing.api.model.impl.SzVirtualEntityDataImpl` class
+  - Added functions in `ServicesSupport` class to handle record identifiers
+- Added ability to leverage `G2Engine.howEntityByEntityID()` via REST API
+  - Added `com.senzing.api.services.HowRelatedServices` class
+    - Added `HowRelatedServices.howEntityByRecordId()` function to provide the
+      `GET /data-sources/{dataSource}/records/{recordId}/entity/how` operation
+    - Added `HowRelatedServices.howEntityByEntityId()` function to provide the
+      `GET /entities/{entityId}/how` operation.
+  - Added `com.senzing.api.model.SzHowMatchInfo` interface
+  - Added `com.senzing.api.model.SzVirtualEntityRecord` interface
+  - Added `com.senzing.api.model.SzVirtualEntity` interface
+  - Added `com.senzing.api.model.SzResolutionStep` interface
+  - Added `com.senzing.api.model.SzHowEntityResult` interface
+  - Added `com.senzing.api.model.SzHowEntityResponse` interface
+  - Added `com.senzing.api.model.impl.SzHowMatchInfoImpl` class
+  - Added `com.senzing.api.model.impl.SzVirtualEntityRecordImpl` class
+  - Added `com.senzing.api.model.impl.SzVirtualEntityImpl` class
+  - Added `com.senzing.api.model.impl.SzResolutionStepImpl` class
+  - Added `com.senzing.api.model.impl.SzHowEntityResultImpl` class
+  - Added `com.senzing.api.model.impl.SzHowEntityResponseImpl` class
+- Updated `com.senzing.api.services.WhyServices` to handle `whyEntities()`
+  race conditions where the entity ID's associated with the specified 
+  record ID's change after looking up the entity ID's but before returning the
+  `WhyEntitiesResponse`.
+
 ## [3.2.0] - 2022-08-09
 
 ### Changed in 3.2.0

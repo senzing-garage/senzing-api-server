@@ -1791,7 +1791,7 @@ public abstract class AbstractServiceTest {
 //          File target  = new File(current, "target");
 //          File file = File.createTempFile("error-", ".txt", target);
 //          try (FileOutputStream   fos = new FileOutputStream(file);
-//               OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
+//          OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
 //               PrintWriter        pw  = new PrintWriter(osw))
 //          {
 //            JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);

@@ -62,6 +62,14 @@ public class SzVirtualEntityImpl implements SzVirtualEntity {
     return (this.singletonId != null);
   }
 
+  /**
+   * Place-holder method for setting the singleton property since the
+   * @param value
+   */
+  private void setSingleton(boolean value) {
+    // do nothing
+  }
+
   @Override
   public Set<SzVirtualEntityRecord> getRecords() {
     return Collections.unmodifiableSet(this.records);

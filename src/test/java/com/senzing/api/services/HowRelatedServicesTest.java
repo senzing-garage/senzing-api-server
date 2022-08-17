@@ -18,11 +18,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
-import javax.json.JsonObject;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.*;
 
 import static com.senzing.api.model.SzAttributeClass.*;
@@ -33,7 +30,7 @@ import static com.senzing.api.model.SzHttpMethod.GET;
 import static com.senzing.api.services.ResponseValidators.*;
 import static com.senzing.util.CollectionUtilities.list;
 import static com.senzing.util.CollectionUtilities.set;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static com.senzing.io.IOUtilities.*;
@@ -716,15 +713,11 @@ public class HowRelatedServicesTest extends AbstractServiceTest {
       int count = 0;
       for (SzRecordId recordId : recordIds) {
         if (count++ < arrayCount) continue;
-        try {
-          String encodedId = recordId.toString();
-          recordParamsList.add(encodedId);
-          sb.append(prefix).append("r=")
-              .append(URLEncoder.encode(encodedId, UTF_8));
-          prefix = "&";
-        } catch (UnsupportedEncodingException cannotHappen) {
-          throw new IllegalStateException("UTF-8 encoding is not supported");
-        }
+        String encodedId = recordId.toString();
+        recordParamsList.add(encodedId);
+        sb.append(prefix).append("r=")
+            .append(this.urlEncode(encodedId));
+        prefix = "&";
       }
     }
     if (arrayCount > 0) {
@@ -742,14 +735,10 @@ public class HowRelatedServicesTest extends AbstractServiceTest {
             "***** JSON ARRAY SIZE / ARRAY COUNT: " + jsonArray.size()
                 + " / " + arrayCount);
       }
-      try {
-        arrayBuilder.append(arrayParam);
-        sb.append(prefix).append("records=")
-            .append(URLEncoder.encode(arrayParam, UTF_8));
-        prefix = "&";
-      } catch (UnsupportedEncodingException cannotHappen) {
-        throw new IllegalStateException("UTF-8 encoding not supported");
-      }
+      arrayBuilder.append(arrayParam);
+      sb.append(prefix).append("records=")
+          .append(this.urlEncode(arrayParam));
+      prefix = "&";
     }
     if (detailLevel != null) {
       sb.append(prefix).append("detailLevel=").append(detailLevel);
@@ -873,6 +862,447 @@ public class HowRelatedServicesTest extends AbstractServiceTest {
       clientIds.add(clientId);
     }
     return clientIds;
+  }
+
+  public List<Arguments> getHowEntityParameters() {
+    List<Arguments> result = new LinkedList<>();
+
+    List<Set<SzRecordId>> recordSets = list(
+        set(ABC123, MNO345, STU901),  // Joe Schmoe
+        set(DEF456, PQR678, XYZ234),  // Joanne Smith
+        set(GHI789, STU234),          // John Doe
+        set(JKL012, XYZ456));         // Jane Doe
+
+    Boolean[] booleanVariants = { null, Boolean.TRUE, Boolean.FALSE };
+
+    for (Set<SzRecordId> set : recordSets) {
+      for (SzRecordId recordId : set) {
+        for (Boolean withRaw : booleanVariants) {
+          result.add(arguments(recordId,
+                               withRaw,
+                               set.size(),
+                               set));
+        }
+      }
+    }
+    return result;
+  }
+
+  @MethodSource("getHowEntityParameters")
+  @ParameterizedTest
+  public void howEntityByRecordIdTest(
+      SzRecordId      recordId,
+      Boolean         withRaw,
+      Integer         expectedRecordCount,
+      Set<SzRecordId> expectedRecordIds)
+  {
+    this.performTest(() -> {
+      String testInfo = "recordId=[ " + recordId
+          + " ], withRaw=[ " + withRaw + " ]";
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("data-sources/");
+      sb.append(this.urlEncode(recordId.getDataSourceCode()));
+      sb.append("/records/");
+      sb.append(this.urlEncode(recordId.getRecordId()));
+      sb.append("/entity/how");
+      if (withRaw != null) {
+        sb.append("?withRaw=").append(withRaw);
+      }
+
+      String uriText = this.formatServerUri(sb.toString());
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      long before = System.nanoTime();
+
+      SzHowEntityResponse response
+          = this.howRelatedServices.howEntityByRecordId(
+              recordId.getDataSourceCode(),
+              recordId.getRecordId(),
+              (withRaw != null ? withRaw : false),
+              uriInfo);
+
+      response.concludeTimers();
+      long after = System.nanoTime();
+
+      validateHowEntityResponse(
+          testInfo,
+          response,
+          GET,
+          uriText,
+          withRaw,
+          expectedRecordCount,
+          expectedRecordIds,
+          after - before);
+    });
+
+  }
+
+  @MethodSource("getHowEntityParameters")
+  @ParameterizedTest
+  public void howEntityByRecordIdViaHttpTest(
+      SzRecordId      recordId,
+      Boolean         withRaw,
+      Integer         expectedRecordCount,
+      Set<SzRecordId> expectedRecordIds)
+  {
+    this.performTest(() -> {
+      String testInfo = "recordId=[ " + recordId
+          + " ], withRaw=[ " + withRaw + " ]";
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("data-sources/");
+      sb.append(this.urlEncode(recordId.getDataSourceCode()));
+      sb.append("/records/");
+      sb.append(this.urlEncode(recordId.getRecordId()));
+      sb.append("/entity/how");
+      if (withRaw != null) {
+        sb.append("?withRaw=").append(withRaw);
+      }
+
+      String uriText = this.formatServerUri(sb.toString());
+
+      long before = System.nanoTime();
+
+      SzHowEntityResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzHowEntityResponse.class);
+
+      response.concludeTimers();
+      long after = System.nanoTime();
+
+      validateHowEntityResponse(
+          testInfo,
+          response,
+          GET,
+          uriText,
+          withRaw,
+          expectedRecordCount,
+          expectedRecordIds,
+          after - before);
+    });
+
+  }
+
+  @MethodSource("getHowEntityParameters")
+  @ParameterizedTest
+  public void howEntityByRecordIdViaJavaClientTest(
+      SzRecordId      recordId,
+      Boolean         withRaw,
+      Integer         expectedRecordCount,
+      Set<SzRecordId> expectedRecordIds)
+  {
+    this.performTest(() -> {
+      String testInfo = "recordId=[ " + recordId
+          + " ], withRaw=[ " + withRaw + " ]";
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("data-sources/");
+      sb.append(this.urlEncode(recordId.getDataSourceCode()));
+      sb.append("/records/");
+      sb.append(this.urlEncode(recordId.getRecordId()));
+      sb.append("/entity/how");
+      if (withRaw != null) {
+        sb.append("?withRaw=").append(withRaw);
+      }
+
+      String uriText = this.formatServerUri(sb.toString());
+
+      long before = System.nanoTime();
+
+      com.senzing.gen.api.model.SzHowEntityResponse clientResponse
+          = this.entityDataApi.howEntityByRecordID(
+              recordId.getDataSourceCode(),
+              recordId.getRecordId(),
+              withRaw);
+
+      long after = System.nanoTime();
+
+      SzHowEntityResponse response
+          = jsonCopy(clientResponse, SzHowEntityResponse.class);
+
+      validateHowEntityResponse(
+          testInfo,
+          response,
+          GET,
+          uriText,
+          withRaw,
+          expectedRecordCount,
+          expectedRecordIds,
+          after - before);
+    });
+  }
+
+  @MethodSource("getHowEntityParameters")
+  @ParameterizedTest
+  public void howEntityByEntityIdTest(
+      SzRecordId      recordId,
+      Boolean         withRaw,
+      Integer         expectedRecordCount,
+      Set<SzRecordId> expectedRecordIds)
+  {
+    this.performTest(() -> {
+      String testInfo = "recordId=[ " + recordId
+          + " ], withRaw=[ " + withRaw + " ]";
+
+      long entityId = this.getEntityIdForRecordId(recordId);
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("entities/").append(entityId).append("/how");
+      if (withRaw != null) {
+        sb.append("?withRaw=").append(withRaw);
+      }
+
+      String uriText = this.formatServerUri(sb.toString());
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      long before = System.nanoTime();
+
+      SzHowEntityResponse response
+          = this.howRelatedServices.howEntityByEntityId(
+              entityId,
+              (withRaw != null ? withRaw : false),
+              uriInfo);
+
+      response.concludeTimers();
+      long after = System.nanoTime();
+
+      validateHowEntityResponse(
+          testInfo,
+          response,
+          GET,
+          uriText,
+          withRaw,
+          expectedRecordCount,
+          expectedRecordIds,
+          after - before);
+    });
+
+  }
+
+  @MethodSource("getHowEntityParameters")
+  @ParameterizedTest
+  public void howEntityByEntityIdViaHttpTest(
+      SzRecordId      recordId,
+      Boolean         withRaw,
+      Integer         expectedRecordCount,
+      Set<SzRecordId> expectedRecordIds)
+  {
+    this.performTest(() -> {
+      String testInfo = "recordId=[ " + recordId
+          + " ], withRaw=[ " + withRaw + " ]";
+
+      long entityId = this.getEntityIdForRecordId(recordId);
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("entities/").append(entityId).append("/how");
+      if (withRaw != null) {
+        sb.append("?withRaw=").append(withRaw);
+      }
+
+      String uriText = this.formatServerUri(sb.toString());
+
+      long before = System.nanoTime();
+
+      SzHowEntityResponse response = this.invokeServerViaHttp(
+          GET, uriText, SzHowEntityResponse.class);
+
+      response.concludeTimers();
+      long after = System.nanoTime();
+
+      validateHowEntityResponse(
+          testInfo,
+          response,
+          GET,
+          uriText,
+          withRaw,
+          expectedRecordCount,
+          expectedRecordIds,
+          after - before);
+    });
+
+  }
+
+  @MethodSource("getHowEntityParameters")
+  @ParameterizedTest
+  public void howEntityByEntityIdViaJavaClientTest(
+      SzRecordId      recordId,
+      Boolean         withRaw,
+      Integer         expectedRecordCount,
+      Set<SzRecordId> expectedRecordIds)
+  {
+    this.performTest(() -> {
+      String testInfo = "recordId=[ " + recordId
+          + " ], withRaw=[ " + withRaw + " ]";
+
+      long entityId = this.getEntityIdForRecordId(recordId);
+
+      StringBuilder sb = new StringBuilder();
+      sb.append("entities/").append(entityId).append("/how");
+      if (withRaw != null) {
+        sb.append("?withRaw=").append(withRaw);
+      }
+
+      String uriText = this.formatServerUri(sb.toString());
+
+      long before = System.nanoTime();
+
+      com.senzing.gen.api.model.SzHowEntityResponse clientResponse
+          = this.entityDataApi.howEntityByEntityID(entityId, withRaw);
+
+      long after = System.nanoTime();
+
+      SzHowEntityResponse response
+          = jsonCopy(clientResponse, SzHowEntityResponse.class);
+
+      validateHowEntityResponse(
+          testInfo,
+          response,
+          GET,
+          uriText,
+          withRaw,
+          expectedRecordCount,
+          expectedRecordIds,
+          after - before);
+    });
+
+  }
+
+  protected void validateHowEntityResponse(
+      String              testInfo,
+      SzHowEntityResponse response,
+      SzHttpMethod        httpMethod,
+      String              selfLink,
+      Boolean             withRaw,
+      Integer             expectedRecordCount,
+      Set<SzRecordId>     expectedRecordIds,
+      long                maxDuration)
+  {
+    validateBasics(testInfo,
+                   response,
+                   httpMethod,
+                   selfLink,
+                   maxDuration);
+
+    SzHowEntityResult result = response.getData();
+
+    assertNotNull(result, "Response data is null: " + testInfo);
+
+    if (withRaw != null && withRaw) {
+      validateRawDataMap(testInfo,
+                         response.getRawData(),
+                         true,
+                         "HOW_RESULTS");
+      Object howResult = ((Map) response.getRawData()).get("HOW_RESULTS");
+      validateRawDataMap(testInfo,
+                         howResult,
+                         true,
+                         "RESOLUTION_STEPS", "FINAL_STATE");
+      Object steps = ((Map) howResult).get("RESOLUTION_STEPS");
+      validateRawDataMapArray(testInfo,
+                              steps,
+                              true,
+                              "STEP",
+                              "VIRTUAL_ENTITY_1",
+                              "VIRTUAL_ENTITY_2",
+                              "INBOUND_VIRTUAL_ENTITY_ID",
+                              "RESULT_VIRTUAL_ENTITY_ID",
+                              "MATCH_INFO");
+      Object finalState = ((Map) howResult).get("FINAL_STATE");
+      validateRawDataMap(testInfo,
+                         finalState,
+                         true,
+                         "NEED_REEVALUATION",
+                         "VIRTUAL_ENTITIES");
+    }
+
+    // check if we need to validate the records
+    if (expectedRecordCount != null || expectedRecordIds != null) {
+      // create a set of record ID's
+      Set<SzRecordId> recordIds = new LinkedHashSet<>();
+
+      // get all the records from the final states
+      List<SzVirtualEntity> finalStates
+          = response.getData().getFinalStates();
+
+      // iterate over the virtual entities
+      for (SzVirtualEntity virtualEntity : finalStates) {
+        // get the records
+        Set<SzVirtualEntityRecord> records
+            = virtualEntity.getRecords();
+
+        // for each record, build an SzRecordId
+        for (SzVirtualEntityRecord record : records) {
+          SzRecordId recordId = SzRecordId.FACTORY.create(
+              record.getDataSource(), record.getRecordId());
+          recordIds.add(recordId);
+        }
+      }
+
+      if (expectedRecordCount != null) {
+        assertEquals(expectedRecordCount, recordIds.size(),
+                     "Unexpected number of records: " + testInfo);
+      }
+
+      if (expectedRecordIds != null) {
+        Set<SzRecordId> extras = new LinkedHashSet<>(recordIds);
+        extras.removeAll(expectedRecordIds);
+        Set<SzRecordId> missing = new LinkedHashSet<>(expectedRecordIds);
+        missing.removeAll(recordIds);
+
+        assertEquals(expectedRecordIds, recordIds,
+                     "Unexpected records: extras=[ " + extras
+                     + " ], missing=[ " + missing + " ]");
+      }
+    }
+
+    // verify the traversal of the tree
+    Map<String, SzResolutionStep> steps = result.getResolutionSteps();
+    List<SzVirtualEntity> virtualEntities = new LinkedList<>();
+    virtualEntities.addAll(result.getFinalStates());
+    while (virtualEntities.size() > 0) {
+      SzVirtualEntity virtualEntity = virtualEntities.remove(0);
+      String virtualEntityId = virtualEntity.getVirtualEntityId();
+      SzResolutionStep step = steps.get(virtualEntityId);
+      boolean found = (step != null);
+      if (virtualEntity.isSingleton()) {
+        assertFalse(found,
+                   "Resolution step was found for a singleton virtual "
+                       + "entity.  virtualEntityId=[ " + virtualEntityId
+                       + " ], virtualEntity=[ " + virtualEntity + " ]");
+      } else {
+        assertTrue(found,
+                    "No resolution step found for non-singleton virtual "
+                        + "entity.  virtualEntityId=[ " + virtualEntityId
+                        + " ], virtualEntity=[ " + virtualEntity + " ]");
+      }
+      if (step != null) {
+        virtualEntities.add(step.getInboundVirtualEntity());
+        virtualEntities.add(step.getCandidateVirtualEntity());
+      }
+    }
+
+    if (withRaw != null && withRaw) {
+      Map<String, String> inboundMap = new LinkedHashMap<>();
+      Map<String, String> rawInboundMap = new LinkedHashMap<>();
+      for (SzResolutionStep step : result.getResolutionSteps().values()) {
+        inboundMap.put(step.getResolvedVirtualEntityId(),
+                       step.getInboundVirtualEntity().getVirtualEntityId());
+      }
+      Map rawData   = (Map) response.getRawData();
+      Map rawResult = (Map) rawData.get("HOW_RESULTS");
+      Collection rawSteps = (Collection) rawResult.get("RESOLUTION_STEPS");
+      for (Object step : rawSteps) {
+        Map stepMap = (Map) step;
+        String resultId   = (String) stepMap.get("RESULT_VIRTUAL_ENTITY_ID");
+        String inboundId  = (String) stepMap.get("INBOUND_VIRTUAL_ENTITY_ID");
+        rawInboundMap.put(resultId, inboundId);
+      }
+
+      assertEquals(rawInboundMap, inboundMap,
+                   "Inbound virtual entities of steps do not match "
+                       + "the raw data.  expected=[ " + rawInboundMap
+                       + " ], actual=[ " + inboundMap + " ]");
+    }
   }
 
 }

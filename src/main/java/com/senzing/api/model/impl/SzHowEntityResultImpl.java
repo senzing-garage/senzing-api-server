@@ -1,5 +1,7 @@
 package com.senzing.api.model.impl;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.SzHowEntityResult;
 import com.senzing.api.model.SzResolutionStep;
@@ -55,6 +57,17 @@ public class SzHowEntityResultImpl implements SzHowEntityResult {
   @Override
   public Map<String, SzResolutionStep> getResolutionSteps() {
     return Collections.unmodifiableMap(this.steps);
+  }
+
+  /**
+   * Private setter for deserialization.
+   *
+   * @param stepMap The {@link Map} of {@link String} virtual entity ID keys to
+   *                {@link SzResolutionStep} instances.
+   */
+  @JsonSetter("resolutionSteps")
+  private void setResolutionSteps(Map<String, SzResolutionStep> stepMap) {
+    this.setResolutionSteps(stepMap == null ? null : stepMap.values());
   }
 
   @Override
