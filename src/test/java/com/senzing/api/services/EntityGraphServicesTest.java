@@ -1988,6 +1988,9 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
     }
   }
 
+  /**
+   * Implements {@link com.senzing.gen.api.model.SzEntityIdentifier}
+   */
   protected static class ClientEntityId
       extends com.senzing.gen.api.model.SzEntityIdentifier
   {

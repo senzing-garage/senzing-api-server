@@ -1857,7 +1857,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       }
 
       // check the why result why key
-      SzMatchInfo matchInfo = result.getMatchInfo();
+      SzWhyMatchInfo matchInfo = result.getMatchInfo();
       this.validateMatchInfo(testInfo, matchInfo);
     }
 
@@ -2063,7 +2063,7 @@ public class WhyServicesTest extends AbstractServiceTest {
     }
 
     // check the why result why key
-    SzMatchInfo matchInfo = whyResult.getMatchInfo();
+    SzWhyMatchInfo matchInfo = whyResult.getMatchInfo();
     this.validateMatchInfo(testInfo, matchInfo);
 
     Map<Long, SzResolvedEntity> entityMap = new LinkedHashMap<>();
@@ -2549,7 +2549,7 @@ public class WhyServicesTest extends AbstractServiceTest {
     }
   }
 
-  private void validateMatchInfo(String testInfo, SzMatchInfo matchInfo)
+  private void validateMatchInfo(String testInfo, SzWhyMatchInfo matchInfo)
   {
     String whyKey = matchInfo.getWhyKey();
 

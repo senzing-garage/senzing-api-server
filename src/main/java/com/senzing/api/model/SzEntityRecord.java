@@ -16,6 +16,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Consumer;
 
+import static com.senzing.util.JsonUtilities.*;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
@@ -51,6 +52,36 @@ public interface SzEntityRecord {
    * @param recordId The record ID for the record.
    */
   void setRecordId(String recordId);
+
+  /**
+   * Gets the {@link List} of {@link SzFeatureReference} instances for the
+   * entity features contributed by this record and the associated usage type
+   * associated with that feature.
+   *
+   * @return The {@link List} of {@link SzFeatureReference} instances
+   *         identifying the entity features contributed by this record along
+   *         with the associated usage type for each feature.
+   */
+  @JsonInclude(NON_EMPTY)
+  List<SzFeatureReference> getFeatureReferences();
+
+  /**
+   * Sets the {@link SzFeatureReference} instances for this record to those
+   * in the specified {@link Collection}.
+   *
+   * @param featureRefs The {@link Collection} of {@link SzFeatureReference}
+   *                    instances to set for this entity record.
+   */
+  void setFeatureReferences(Collection<SzFeatureReference> featureRefs);
+
+  /**
+   * Adds the specified {@link SzFeatureReference} to the feature reference
+   * instances for this record.
+   *
+   * @param featureRef The {@link SzFeatureReference} to add to the feature
+   *                   references for this record.
+   */
+  void addFeatureReference(SzFeatureReference featureRef);
 
   /**
    * Gets the last-seen timestamp for the entity.
@@ -376,7 +407,7 @@ public interface SzEntityRecord {
                                    String           key,
                                    Consumer<String> consumer)
   {
-    JsonArray jsonArray = jsonObject.getJsonArray(key);
+    JsonArray jsonArray = getJsonArray(jsonObject, key);
     if (jsonArray == null) return;
     for (JsonString value : jsonArray.getValuesAs(JsonString.class)) {
       consumer.accept(value.getString());
@@ -412,6 +443,11 @@ public interface SzEntityRecord {
     record.setDataSource(dataSource);
     record.setRecordId(recordId);
 
+    JsonArray featureArray = getJsonArray(jsonObject, "FEATURES");
+    if (featureArray != null) {
+      record.setFeatureReferences(
+          SzFeatureReference.parseFeatureReferenceList(null, featureArray));
+    }
 
     // get the last seen date
     String lastSeen = JsonUtilities.getString(jsonObject, "LAST_SEEN_DT");

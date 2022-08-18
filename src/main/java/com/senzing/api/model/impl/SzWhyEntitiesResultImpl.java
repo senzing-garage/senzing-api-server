@@ -1,7 +1,7 @@
 package com.senzing.api.model.impl;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.senzing.api.model.SzMatchInfo;
+import com.senzing.api.model.SzWhyMatchInfo;
 import com.senzing.api.model.SzWhyEntitiesResult;
 
 /**
@@ -20,9 +20,9 @@ public class SzWhyEntitiesResultImpl implements SzWhyEntitiesResult {
   private Long entityId2;
 
   /**
-   * The {@link SzMatchInfo} providing the details of the result.
+   * The {@link SzWhyMatchInfo} providing the details of the result.
    */
-  private SzMatchInfo matchInfo;
+  private SzWhyMatchInfo matchInfo;
 
   /**
    * Default constructor.
@@ -69,7 +69,7 @@ public class SzWhyEntitiesResultImpl implements SzWhyEntitiesResult {
    * {@inheritDoc}
    */
   @Override
-  public SzMatchInfo getMatchInfo() {
+  public SzWhyMatchInfo getMatchInfo() {
     return this.matchInfo;
   }
 
@@ -77,7 +77,7 @@ public class SzWhyEntitiesResultImpl implements SzWhyEntitiesResult {
    * {@inheritDoc}
    */
   @Override
-  public void setMatchInfo(SzMatchInfo matchInfo) {
+  public void setMatchInfo(SzWhyMatchInfo matchInfo) {
     this.matchInfo = matchInfo;
   }
 }

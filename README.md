@@ -53,67 +53,14 @@ documents the available API methods, their parameters and the response formats.
 To build the Senzing REST API Server you will need Apache Maven (recommend version 3.6.1 or later)
 as well as OpenJDK version 11.0.x (recommend version 11.0.6+10 or later).
 
-You will also need the Senzing `g2.jar` file installed in your Maven repository.
-The Senzing REST API Server requires version 2.x or later of the Senzing API and Senzing App.
-In order to install `g2.jar` you must:
+You will also need the Senzing product installation to run the Senzing REST API Server,
+but you should not need it to build the server.  The Senzing REST API Server should 
+build (including running of auto tests) without Senzing installed.  The notable exception
+to that rule is if you want to run the auto tests as end-to-end (E2E) tests using a live
+Senzing product installation rather than cached test data (more on that below).
 
-1. Locate your
-   [SENZING_G2_DIR](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_g2_dir)
-   directory.
-   The default locations are:
-    1. [Linux](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/install-senzing-api.md#centos): `/opt/senzing/g2`
-    1. Windows MSI Installer: `C:\Program Files\Senzing\`
-
-1. Determine your `SENZING_G2_JAR_VERSION` version number:
-    1. Locate your `g2BuildVersion.json` file:
-        1. Linux: `${SENZING_G2_DIR}/g2BuildVersion.json`
-        1. Windows: `${SENZING_G2_DIR}\data\g2BuildVersion.json`
-    1. Find the value for the `"VERSION"` property in the JSON contents.
-       Example:
-
-        ```console
-        {
-           "PLATFORM": "Linux",
-           "VERSION": "2.4.1",
-           "BUILD_VERSION": "2.4.1.21064",
-           "BUILD_NUMBER": "2021_03_05__02_00",
-           "DATA_VERSION": "1.0.0"
-        }
-        ```
-
-1. Install the `g2.jar` file in your local Maven repository, replacing the
-   `${SENZING_G2_DIR}` and `${SENZING_G2_JAR_VERSION}` variables as determined above:
-
-    1. Linux:
-
-        ```console
-        export SENZING_G2_DIR=/opt/senzing/g2
-        export SENZING_G2_JAR_VERSION=3.0.0
-
-        mvn install:install-file \
-            -Dfile=${SENZING_G2_DIR}/lib/g2.jar \
-            -DgroupId=com.senzing \
-            -DartifactId=g2 \
-            -Dversion=${SENZING_G2_JAR_VERSION} \
-            -Dpackaging=jar
-        ```
-
-    1. Windows:
-
-        ```console
-        set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
-        set SENZING_G2_JAR_VERSION=3.0.0
-
-        mvn install:install-file \
-            -Dfile="%SENZING_G2_DIR%\lib\g2.jar" \
-            -DgroupId=com.senzing \
-            -DartifactId=g2 \
-            -Dversion="%SENZING_G2_JAR_VERSION%" \
-            -Dpackaging=jar
-        ```
-
-1. Setup your environment.  The API's rely on native libraries and the
-   environment must be properly setup to find those libraries:
+1. Setup your environment.  As previously stated, the API's rely on native libraries and
+   the environment must be properly setup to find those libraries:
 
     1. Linux
 
@@ -123,7 +70,7 @@ In order to install `g2.jar` you must:
         export LD_LIBRARY_PATH=${SENZING_G2_DIR}/lib:${SENZING_G2_DIR}/lib/debian:$LD_LIBRARY_PATH
         ```
 
-    1. Windows
+    2. Windows
 
         ```console
         set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
@@ -131,7 +78,7 @@ In order to install `g2.jar` you must:
         set Path=%SENZING_G2_DIR%\lib;%Path%
         ```
 
-1. Ensure the OpenAPI specification GIT submodule (senzing-rest-api-specification) is cloned:
+3. Ensure the OpenAPI specification GIT submodule (senzing-rest-api-specification) is cloned:
 
     ```console
     git submodule update --init --recursive
@@ -145,6 +92,15 @@ To build simply execute:
 mvn install
 ```
 
+**NOTE**: If you want to run the automated tests as end-to-end (E2E) tests with a live
+Senzing product you can bypass the replay of the cached test data and execute the API's
+directly using the following alternate build command:
+
+```console
+mvn install -Dcom.senzing.api.test.replay.direct=true
+```
+
+
 The JAR file will be contained in the `target` directory under the name `senzing-api-server-[version].jar`.
 
 Where `[version]` is the version number from the `pom.xml` file.
@@ -155,29 +111,32 @@ To execute the server you will use `java -jar`.  It assumed that your environmen
 is properly configured as described in the "Dependencies" section above.
 
 To start up you must provide the initialization parameters for the Senzing
-native API.  This is done through one of: `-initFile`, `-initEnvVar` or the
-`-initJson` options to specify how to obtain the initialization JSON parameters.
-The `G2CONFIGFILE` path is excluded from the initialization parameters in favor
-of loading the default configuration that has been set for the repository.
+native API.  This is done through **one** of the following options:
+   - `--init-file` (specifies a path to a JSON file containing the init parameters)
+   - `--init-json` (specifies the actual JSON text containing the init parameters)
+   - `--ini-file` (specifies a path to an INI file containing the init parameters)
+   - `--init-env-var`  (specifies an environment variable to read the JSON text from)
 
-The deprecated `-iniFile` option can also be used to startup with a deprecated
-INI file with a `G2CONFIGFILE` parameter referencing a configuration on the
-file system.  However, when starting up this way you do not get auto
+The `G2CONFIGFILE` path should normally be excluded from the initialization
+parameters to load the default configuration that has been set for the repository.
+The `G2CONFIGFILE` parameter referencing a configuration on the file system may 
+still be specified; however, when starting up this way you do not get auto
 reinitialization of the configuration when it changes (i.e.: when the default
 configuration changes) and you will be responsible for keeping the configuration
-in sync across multiple processes that may be using it.
+in sync across multiple processes that may be using it and restarting the Senzing
+REST API Server manually to refresh the configuration.
 
 Other command-line options may be useful to you as well.  Execute
 
 ```console
-java -jar target/senzing-api-server-3.0.0.jar --help
+java -jar target/senzing-api-server-3.3.0.jar --help
 ```
 
 to obtain a help message describing all available options.
 For example:
 
 ```console
-java -jar senzing-api-server-3.0.0.jar <options>
+java -jar senzing-api-server-3.3.0.jar <options>
 
 <options> includes: 
 

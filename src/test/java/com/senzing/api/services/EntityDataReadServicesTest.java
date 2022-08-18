@@ -105,7 +105,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     File passengerFile = this.preparePassengerFile();
     File employeeFile = this.prepareEmployeeFile();
     File vipFile = this.prepareVipFile();
-    File marriagesFile = this.prepareMariagesFile();
+    File marriagesFile = this.prepareMarriagesFile();
 
     employeeFile.deleteOnExit();
     passengerFile.deleteOnExit();
@@ -204,7 +204,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     return this.prepareJsonFile("test-vips-", headers, vips);
   }
 
-  private File prepareMariagesFile() {
+  private File prepareMarriagesFile() {
     String[] headers = {
         "RECORD_ID", "NAME_FULL", "AKA_NAME_FULL", "PHONE_NUMBER", "ADDR_FULL",
         "MARRIAGE_DATE", "DATE_OF_BIRTH", "GENDER", "RELATIONSHIP_TYPE",

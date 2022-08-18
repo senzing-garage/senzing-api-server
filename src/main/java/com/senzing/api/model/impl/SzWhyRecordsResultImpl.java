@@ -2,7 +2,7 @@ package com.senzing.api.model.impl;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.senzing.api.model.SzMatchInfo;
+import com.senzing.api.model.SzWhyMatchInfo;
 import com.senzing.api.model.SzWhyPerspective;
 import com.senzing.api.model.SzWhyRecordsResult;
 import com.senzing.util.JsonUtilities;
@@ -32,9 +32,9 @@ public class SzWhyRecordsResultImpl implements SzWhyRecordsResult {
   private SzWhyPerspective perspective2;
 
   /**
-   * The {@link SzMatchInfo} providing the details of the result.
+   * The {@link SzWhyMatchInfo} providing the details of the result.
    */
-  private SzMatchInfo matchInfo;
+  private SzWhyMatchInfo matchInfo;
 
   /**
    * Default constructor.
@@ -94,22 +94,22 @@ public class SzWhyRecordsResultImpl implements SzWhyRecordsResult {
   }
 
   /**
-   * Gets the {@link SzMatchInfo} providing the details of the result.
+   * Gets the {@link SzWhyMatchInfo} providing the details of the result.
    *
-   * @return The {@link SzMatchInfo} providing the details of the result.
+   * @return The {@link SzWhyMatchInfo} providing the details of the result.
    */
   @JsonInclude(NON_NULL)
-  public SzMatchInfo getMatchInfo() {
+  public SzWhyMatchInfo getMatchInfo() {
     return this.matchInfo;
   }
 
   /**
-   * Sets the {@link SzMatchInfo} providing the details of the result.
+   * Sets the {@link SzWhyMatchInfo} providing the details of the result.
    *
-   * @param matchInfo The {@link SzMatchInfo} providing the details of the
+   * @param matchInfo The {@link SzWhyMatchInfo} providing the details of the
    *                  result.
    */
-  public void setMatchInfo(SzMatchInfo matchInfo) {
+  public void setMatchInfo(SzWhyMatchInfo matchInfo) {
     this.matchInfo = matchInfo;
   }
 
@@ -132,8 +132,8 @@ public class SzWhyRecordsResultImpl implements SzWhyRecordsResult {
 
     JsonObject infoJson = JsonUtilities.getJsonObject(jsonObject, "MATCH_INFO");
 
-    SzMatchInfo matchInfo
-        = SzMatchInfo.parseMatchInfo(infoJson);
+    SzWhyMatchInfo matchInfo
+        = SzWhyMatchInfo.parseMatchInfo(infoJson);
 
     SzWhyRecordsResultImpl result = new SzWhyRecordsResultImpl();
     result.setPerspective1(perspective1);

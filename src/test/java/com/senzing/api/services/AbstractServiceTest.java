@@ -1786,12 +1786,46 @@ public abstract class AbstractServiceTest {
       if (jsonText != null) {
         System.err.println("JSON TEXT: " + jsonText);
         e.printStackTrace();
+//        try {
+//          File current = new File(System.getProperty("user.dir"));
+//          File target  = new File(current, "target");
+//          File file = File.createTempFile("error-", ".txt", target);
+//          try (FileOutputStream   fos = new FileOutputStream(file);
+//          OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
+//               PrintWriter        pw  = new PrintWriter(osw))
+//          {
+//            JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
+//            pw.println(JsonUtilities.toJsonText(jsonObject, true));
+//            pw.println();
+//            e.printStackTrace(pw);
+//            pw.flush();
+//          }
+//        } catch (IOException exception) {
+//          // ignore
+//        }
       }
       throw e;
     } catch (Exception e) {
       if (jsonText != null) {
         System.err.println("JSON TEXT: " + jsonText);
         e.printStackTrace();
+//        try {
+//          File current = new File(System.getProperty("user.dir"));
+//          File target  = new File(current, "target");
+//          File file = File.createTempFile("error-", ".txt", target);
+//          try (FileOutputStream   fos = new FileOutputStream(file);
+//               OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
+//               PrintWriter        pw  = new PrintWriter(osw))
+//          {
+//            JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
+//            pw.println(JsonUtilities.toJsonText(jsonObject, true));
+//            pw.println();
+//            e.printStackTrace(pw);
+//            pw.flush();
+//          }
+//        } catch (IOException exception) {
+//          // ignore
+//        }
       }
       throw new RuntimeException(e);
     }

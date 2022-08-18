@@ -684,7 +684,7 @@ public class ResponseValidators {
     if (expectedRecordIds != null) {
       Map<String, Integer> expectedCounts = new HashMap<>();
       for (SzRecordId recordId : expectedRecordIds) {
-        Integer count = expectedCounts.get(recordId);
+        Integer count = expectedCounts.get(recordId.getDataSourceCode());
         if (count == null) {
           expectedCounts.put(recordId.getDataSourceCode(), 1);
         } else {
@@ -1557,6 +1557,113 @@ public class ResponseValidators {
             rawEntityKeys(forceMinimal, detailLevel, featureMode));
 
       }
+    }
+  }
+
+  /**
+   * Validates an {@link SzEntityResponse} instance.
+   *
+   * @param testInfo The test information describing the test.
+   * @param response The response to validate.
+   * @param selfLink The expected meta data self link.
+   * @param withRaw <tt>true</tt> if requested with raw data, <tt>false</tt>
+   *                if requested without raw data and <tt>null</tt> if this is
+   *                not being validated.
+   * @param detailLevel The {@link SzDetailLevel} describing the level of
+   *                    detail that was requested for the entity.
+   * @param forceMinimal <tt>true</tt> if requested with minimal data,
+   *                     <tt>false</tt> if requested with standard data and
+   *                     <tt>null</tt> if this aspect is not being validated.
+   * @param featureMode The {@link SzFeatureMode} requested or
+   *                    <tt>null</tt> if this is not being validated.
+   * @param withFeatureStats <tt>true</tt> if request with feature statistics,
+   *                         otherwise <tt>false</tt>.
+   * @param withInternalFeatures <tt>true</tt> if request with internal features,
+   *                            otherwise <tt>false</tt>.
+   * @param expectedRecordCount The number of expected records for the entity,
+   *                            or <tt>null</tt> if this is not being validated.
+   * @param expectedRecordIds The expected record IDs for the entity to have or
+   *                          <tt>null</tt> if this is not being validated.
+   * @param expectedFeatureCounts The expected number of features by feature
+   *                              type, or <tt>null</tt> if this is not being
+   *                              validated.
+   * @param primaryFeatureValues The expected primary feature values by feature
+   *                             type, or <tt>null</tt> if this is not being
+   *                             validated.
+   * @param duplicateFeatureValues The expected duplicate fature values by
+   *                               feature type, or <tt>null</tt> if this is not
+   *                               being validated.
+   * @param expectedDataValues The expected data values by attribute class, or
+   *                           <tt>null</tt> if this is not being validated.
+   * @param maxDuration The maximum duration for the timers in nanoseconds.
+   */
+  public static void validateVirtualEntityResponse(
+      String                              testInfo,
+      SzVirtualEntityResponse             response,
+      SzHttpMethod                        httpMethod,
+      String                              selfLink,
+      Boolean                             withRaw,
+      Boolean                             forceMinimal,
+      SzDetailLevel                       detailLevel,
+      SzFeatureMode                       featureMode,
+      boolean                             withFeatureStats,
+      boolean                             withInternalFeatures,
+      Integer                             expectedRecordCount,
+      Set<SzRecordId>                     expectedRecordIds,
+      Map<String,Integer>                 expectedFeatureCounts,
+      Map<String,Set<String>>             primaryFeatureValues,
+      Map<String,Set<String>>             duplicateFeatureValues,
+      Map<SzAttributeClass, Set<String>>  expectedDataValues,
+      Set<String>                         expectedOtherDataValues,
+      long                                maxDuration)
+  {
+    validateBasics(testInfo,
+                   response,
+                   httpMethod,
+                   selfLink,
+                   maxDuration);
+
+    SzVirtualEntityData entityData = response.getData();
+
+    assertNotNull(entityData, "Response data is null: " + testInfo);
+
+    SzResolvedEntity resolvedEntity = entityData.getResolvedEntity();
+
+    assertNotNull(resolvedEntity, "Resolved entity is null: " + testInfo);
+
+    validateEntity(
+        testInfo,
+        resolvedEntity,
+        null,
+        forceMinimal,
+        detailLevel,
+        featureMode,
+        withFeatureStats,
+        withInternalFeatures,
+        expectedRecordCount,
+        expectedRecordIds,
+        true,
+        null,
+        null,
+        expectedFeatureCounts,
+        primaryFeatureValues,
+        duplicateFeatureValues,
+        expectedDataValues,
+        (detailLevel != null && detailLevel != VERBOSE)
+            ? Collections.emptySet() : expectedOtherDataValues);
+
+    if (withRaw != null && withRaw) {
+      validateRawDataMap(testInfo,
+                         response.getRawData(),
+                         false,
+                         "RESOLVED_ENTITY");
+
+      Object entity = ((Map) response.getRawData()).get("RESOLVED_ENTITY");
+      validateRawDataMap(
+          testInfo,
+          entity,
+          false,
+          rawEntityKeys(forceMinimal, detailLevel, featureMode));
     }
   }
 

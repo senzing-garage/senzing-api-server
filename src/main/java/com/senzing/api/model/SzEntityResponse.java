@@ -5,7 +5,6 @@ import com.senzing.api.model.impl.SzEntityResponseImpl;
 
 /**
  * A response object that contains entity data.
- *
  */
 @JsonDeserialize(using=SzEntityResponse.Factory.class)
 public interface SzEntityResponse extends SzResponseWithRawData {
@@ -20,7 +19,7 @@ public interface SzEntityResponse extends SzResponseWithRawData {
   /**
    * Sets the data associated with this response with an {@link SzEntityData}.
    *
-   * @param data The {@link SzEntityData} describing the record.
+   * @param data The {@link SzEntityData} describing the entity.
    */
   void setData(SzEntityData data);
 
