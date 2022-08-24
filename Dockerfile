@@ -111,4 +111,4 @@ ENV PATH=${PATH}:/opt/senzing/g2/python:/opt/IBM/db2/clidriver/adm:/opt/IBM/db2/
 WORKDIR /app
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["java", "-jar", "senzing-api-server.jar"]
+CMD ["java", "-jar", "senzing-api-server.jar", "--bind-addr", "all"]
