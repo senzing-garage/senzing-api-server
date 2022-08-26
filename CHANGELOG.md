@@ -6,19 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.2] - 2022-08-26
+
+### Changed in 3.3.2
+
+- In `Dockerfile`, bump from `senzing/senzingapi-runtime:3.1.1` to `senzing/senzingapi-runtime:3.2.0`
+
 ## [3.3.1] - 2022-08-23
 
 ### Changed in 3.3.1
 
 - Updated dependency on `Senzing/senzing-commons-java` to a minimum version of
-  `3.0.1` to resolve issue with environment variable fallbacks for primary  
+  `3.0.1` to resolve issue with environment variable fallbacks for primary
   options which typically lack dependencies.
 
 ## [3.3.0] - 2022-08-17
 
 ### Changed in 3.3.0
 
-- Added ability to leverage `G2Engine.G2_ENTITY_INCLUDE_RECORD_FEATURE_IDS` 
+- Added ability to leverage `G2Engine.G2_ENTITY_INCLUDE_RECORD_FEATURE_IDS`
   flag when requesting entity data via REST API
   - Added `SzFeatureMode.ATTRIBUTED` enumerated value
   - Added `com.senzing.api.model.SzFeatureReference` interface
@@ -54,7 +60,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `com.senzing.api.model.impl.SzHowEntityResultImpl` class
   - Added `com.senzing.api.model.impl.SzHowEntityResponseImpl` class
 - Updated `com.senzing.api.services.WhyServices` to handle `whyEntities()`
-  race conditions where the entity ID's associated with the specified 
+  race conditions where the entity ID's associated with the specified
   record ID's change after looking up the entity ID's but before returning the
   `WhyEntitiesResponse`.
 
@@ -65,7 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for `SENZING_ENGINE_CONFIGURATION_JSON` environment variable
   for the `--init-json` command-line option.
 - Updated handling of `DELETE /data-sources/{code}/records/{id}?withInfo=true`
-  (`EntityDataServices.deleteRecord()`) when the record no longer exists to 
+  (`EntityDataServices.deleteRecord()`) when the record no longer exists to
   still produce an INFO message with no affected entity ID's, but still having a
   data source code and record ID.
 - Added support for REST API Spec v3.1.0 including "detail levels"
