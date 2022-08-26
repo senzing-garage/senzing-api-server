@@ -54,7 +54,7 @@ To build the Senzing REST API Server you will need Apache Maven (recommend versi
 as well as OpenJDK version 11.0.x (recommend version 11.0.6+10 or later).
 
 You will also need the Senzing product installation to run the Senzing REST API Server,
-but you should not need it to build the server.  The Senzing REST API Server should 
+but you should not need it to build the server.  The Senzing REST API Server should
 build (including running of auto tests) without Senzing installed.  The notable exception
 to that rule is if you want to run the auto tests as end-to-end (E2E) tests using a live
 Senzing product installation rather than cached test data (more on that below).
@@ -78,7 +78,7 @@ Senzing product installation rather than cached test data (more on that below).
         set Path=%SENZING_G2_DIR%\lib;%Path%
         ```
 
-3. Ensure the OpenAPI specification GIT submodule (senzing-rest-api-specification) is cloned:
+1. Ensure the OpenAPI specification GIT submodule (senzing-rest-api-specification) is cloned:
 
     ```console
     git submodule update --init --recursive
@@ -100,7 +100,6 @@ directly using the following alternate build command:
 mvn install -Dcom.senzing.api.test.replay.direct=true
 ```
 
-
 The JAR file will be contained in the `target` directory under the name `senzing-api-server-[version].jar`.
 
 Where `[version]` is the version number from the `pom.xml` file.
@@ -112,14 +111,15 @@ is properly configured as described in the "Dependencies" section above.
 
 To start up you must provide the initialization parameters for the Senzing
 native API.  This is done through **one** of the following options:
-   - `--init-file` (specifies a path to a JSON file containing the init parameters)
-   - `--init-json` (specifies the actual JSON text containing the init parameters)
-   - `--ini-file` (specifies a path to an INI file containing the init parameters)
-   - `--init-env-var`  (specifies an environment variable to read the JSON text from)
+
+- `--init-file` (specifies a path to a JSON file containing the init parameters)
+- `--init-json` (specifies the actual JSON text containing the init parameters)
+- `--ini-file` (specifies a path to an INI file containing the init parameters)
+- `--init-env-var`  (specifies an environment variable to read the JSON text from)
 
 The `G2CONFIGFILE` path should normally be excluded from the initialization
 parameters to load the default configuration that has been set for the repository.
-The `G2CONFIGFILE` parameter referencing a configuration on the file system may 
+The `G2CONFIGFILE` parameter referencing a configuration on the file system may
 still be specified; however, when starting up this way you do not get auto
 reinitialization of the configuration when it changes (i.e.: when the default
 configuration changes) and you will be responsible for keeping the configuration
@@ -138,7 +138,7 @@ For example:
 ```console
 java -jar senzing-api-server-3.3.0.jar <options>
 
-<options> includes: 
+<options> includes:
 
 [ Standard Options ]
    --help
@@ -198,7 +198,7 @@ java -jar senzing-api-server-3.3.0.jar <options>
         --> VIA ENVIRONMENT: SENZING_API_SERVER_ALLOWED_ORIGINS
 
    --concurrency <thread-count>
-        Also -concurrency.  Sets the number of threads available for executing 
+        Also -concurrency.  Sets the number of threads available for executing
         Senzing API functions (i.e.: the number of engine threads).
         If not specified, then this defaults to 8.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_CONCURRENCY
@@ -326,7 +326,7 @@ java -jar senzing-api-server-3.3.0.jar <options>
 
 
 [ HTTPS / SSL Options ]
-   The following options pertain to HTTPS / SSL configuration.  The 
+   The following options pertain to HTTPS / SSL configuration.  The
    --key-store and --key-store-password options are the minimum required
    options to enable HTTPS / SSL communication.  If HTTPS / SSL communication
    is enabled, then HTTP communication is disabled UNLESS the --http-port
@@ -468,7 +468,7 @@ java -jar target/senzing-api-server-[version].jar \
 
 By default, the Senzing REST API Server will only accept connections on a single
 port that supports HTTP communication.  The default HTTP port is `2080` and can
-be changed via the `--http-port` command-line option.  Alternatively, the 
+be changed via the `--http-port` command-line option.  Alternatively, the
 Senzing REST API Server can be started with only HTTPS support on a single port
 or with both HTTP and HTTPS support (on separate ports).
 
@@ -485,11 +485,13 @@ option.
 both by explicitly providing the `--http-port` option as well.
 
 Let's look at some examples for enabling HTTPS with a self-signed certificate.
- 
-##### Example with Java KeyTool
+
+##### Example with Java KeyTool fore basic SSL support
+
 1. Create the server PKCS12 key store (`sz-api-server-store.p12`).
    **NOTE:** you will be prompted to provide the 7 fields for the Distinguished Name
    ("DN") for the certificate being generated.
+
    ```console
    keytool -genkey \
            -alias sz-api-server \
@@ -500,7 +502,9 @@ Let's look at some examples for enabling HTTPS with a self-signed certificate.
            -validity 730 \
            -keysize 2048
    ```
+
 1. Start the Senzing API Server with the server key store:
+
    ```console
    java -jar senzing-api-server-2.7.0.jar \
              --ini-file /etc/opt/senzing/G2Module.ini \
@@ -508,15 +512,19 @@ Let's look at some examples for enabling HTTPS with a self-signed certificate.
              --key-store-password change-it \
              --key-alias sz-api-server
    ```
+
 1. Now let's test it with `curl`.  Keep in mind that our certificate is
    self-signed, so we need to use the `-k` option with curl so it does not
    reject the self-signed certificate:
+
    ```console
    curl -k https://localhost:2443/heartbeat
    ```
+
 1. So far so good, but if you need your application client or browser to
    trust the self-signed certificate you may need to export it to a file
    (`sz-api-server.cer`) and then import to a keychain:
+
    ```console
    keytool -export \
            -keystore sz-api-server-store.p12 \
@@ -525,8 +533,10 @@ Let's look at some examples for enabling HTTPS with a self-signed certificate.
            -alias sz-api-server \
            -file sz-api-server.cer
    ```
-1. If your client application uses PKCS12 key store for its trusted 
+
+1. If your client application uses PKCS12 key store for its trusted
    certificates then you can add the certificate to a trust store:
+
    ```console
    keytool -import \
            -file sz-api-server.cer \
@@ -541,22 +551,24 @@ Let's look at some examples for enabling HTTPS with a self-signed certificate.
 In addition to supporting HTTPS on the server, you can also configure the server
 to only accept connections from clients communicating with specific SSL
 certificates.  If SSL Client Authentication is configured then HTTP support
-is not allowed because clients cannot be identified over HTTP, thus the 
+is not allowed because clients cannot be identified over HTTP, thus the
 `--http-port` command-line option is prohibited.
 
 SSL Client authentication is configured by providing an encrypted PKCS12 key
-store containing the public keys of the authorized clients via the 
+store containing the public keys of the authorized clients via the
 `--client-key-store` option.  The client key store is decrypted using the
 password provided by the `--client-key-store-password` option.
 
 Let's look at some examples for enabling SSL client authentication with a
 self-signed certificate.
 
-##### Example with Java KeyTool
+##### Example with Java KeyTool for SSL Client Authentication
+
 1. We will assume a single authorized client certificate for our example
    purposes.  So first, let's create the client key and certificate for the
    client to use.  **NOTE:** you will be prompted to provide the 7 fields for
    the Distinguished Name ("DN") for the certificate being generated.
+
    ```console
    keytool -genkey \
            -alias my-client \
@@ -567,7 +579,9 @@ self-signed certificate.
            -validity 730 \
            -keysize 2048
    ```
+
 1. Export the client certificate and create a trust store containing it.
+
    ```console
    keytool -export \
            -keystore my-client-store.p12 \
@@ -575,16 +589,18 @@ self-signed certificate.
            -storetype PKCS12 \
            -alias my-client \
            -file my-client.cer
-   
+
    keytool -import \
            -file my-client.cer \
            -alias my-client \
            -keystore client-trust-store.p12 \
            -storetype PKCS12 \
-           -storepass change-it   
+           -storepass change-it
    ```
+
 1. Start the Senzing API Server with the server key store (from the previous
    section) and this time we will use the client trust store options.
+
    ```console
    java -jar senzing-api-server-2.7.0.jar \
              --ini-file /etc/opt/senzing/G2Module.ini \
@@ -594,17 +610,21 @@ self-signed certificate.
              --client-key-store client-trust-store.p12 \
              --client-key-store-password change-it
    ```
+
 1. Now let's test it with `curl` and the `-k` option as we did in the
    previous example, but we won't provide the client certificate to `curl`.
    The expectation is that the server will reject the request.
+
    ```console
    curl -k https://localhost:2443/heartbeat
-   
+
    > curl: (35) error:1401E412:SSL routines:CONNECT_CR_FINISHED:sslv3 alert bad certificate
 
    ```
+
 1. Now try `curl` again with the `--cert` and `--cert-type` options to get
    `curl` to authenticate itself with the SSL certificate.
+
    ```console
    curl -k https://localhost:2443/heartbeat \
         --cert my-client-store.p12:change-it \
