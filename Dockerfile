@@ -112,4 +112,3 @@ ENV SENZING_API_SERVER_BIND_ADDR=all
 WORKDIR /app
 
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["java", "-jar", "senzing-api-server.jar"]
