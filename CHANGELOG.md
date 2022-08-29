@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.3] - 2022-08-30
+
+### Changed in 3.3.3
+
+- In `Dockerfile`, removed `CMD` to simplify input parameters
+
 ## [3.3.2] - 2022-08-26
 
 ### Changed in 3.3.2

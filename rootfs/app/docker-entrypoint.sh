@@ -10,4 +10,17 @@ then
   cd /appV2
 fi
 
-"$@"
+# Remove "java -jar senzing-api-server.jar" from input parameters.
+
+PARAMETERS=$(
+    echo "$@" \
+    | sed \
+        -e s/java// \
+        -e s/-jar// \
+        -e s/senzing-api-server.jar//
+)
+TOKENIZED_PARAMETERS=(${PARAMETERS})
+
+# Run Java command.
+
+java -jar senzing-api-server.jar "${TOKENIZED_PARAMETERS[@]}"
