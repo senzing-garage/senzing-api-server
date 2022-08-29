@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed in 3.3.3
 
-- In `Dockerfile`, removed `CMD` so that parameters can be passed in i-runtime:3.2.0`
+- In `Dockerfile`, removed `CMD` to simplify input parameters
 
 ## [3.3.2] - 2022-08-26
 
