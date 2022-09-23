@@ -178,7 +178,7 @@ java -jar senzing-api-server-3.3.0.jar <options>
 
    --http-port <port-number>
         Also -httpPort.  Sets the port for HTTP communication.  If not
-        specified, then the default port (2080) is used.
+        specified, then the default port (8250) is used.
         Specify 0 for a randomly selected available port number.  This
         option cannot be specified if SSL client authentication is configured.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_PORT
@@ -337,7 +337,7 @@ java -jar senzing-api-server-3.3.0.jar <options>
 
    --https-port <port-number>
         Also -httpsPort.  Sets the port for secure HTTPS communication.
-        While the default HTTPS port is 2443 if not specified,
+        While the default HTTPS port is 8263 if not specified,
         HTTPS is only enabled if the --key-store option is specified.
         Specify 0 for a randomly selected available port number.
         --> VIA ENVIRONMENT: SENZING_API_SERVER_SECURE_PORT
@@ -468,7 +468,7 @@ java -jar target/senzing-api-server-[version].jar \
 #### Enabling Basic SSL Support
 
 By default, the Senzing REST API Server will only accept connections on a single
-port that supports HTTP communication.  The default HTTP port is `2080` and can
+port that supports HTTP communication.  The default HTTP port is `8250` and can
 be changed via the `--http-port` command-line option.  Alternatively, the
 Senzing REST API Server can be started with only HTTPS support on a single port
 or with both HTTP and HTTPS support (on separate ports).
@@ -479,7 +479,7 @@ decrypted by a password provided via the `--key-store-password` option.  If the
 key store contains more than one key and a key other than the first should be
 used then specific key alias can be provided via the `--key-alias` option.  By
 providing the server's private key HTTPS is enabled on the default port of
-`2443`.  The HTTPS port can be configured via the `--https-port` command-line
+`8263`.  The HTTPS port can be configured via the `--https-port` command-line
 option.
 
 **NOTE:** By enabling HTTPS, HTTP will be disabled by default.  You can enable
@@ -519,7 +519,7 @@ Let's look at some examples for enabling HTTPS with a self-signed certificate.
    reject the self-signed certificate:
 
    ```console
-   curl -k https://localhost:2443/heartbeat
+   curl -k https://localhost:8263/heartbeat
    ```
 
 1. So far so good, but if you need your application client or browser to
@@ -617,7 +617,7 @@ self-signed certificate.
    The expectation is that the server will reject the request.
 
    ```console
-   curl -k https://localhost:2443/heartbeat
+   curl -k https://localhost:8263/heartbeat
 
    > curl: (35) error:1401E412:SSL routines:CONNECT_CR_FINISHED:sslv3 alert bad certificate
 
@@ -627,7 +627,7 @@ self-signed certificate.
    `curl` to authenticate itself with the SSL certificate.
 
    ```console
-   curl -k https://localhost:2443/heartbeat \
+   curl -k https://localhost:8263/heartbeat \
         --cert my-client-store.p12:change-it \
         --cert-type P12
    ```
