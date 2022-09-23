@@ -16,6 +16,12 @@ public enum SzFeatureMode {
   NONE,
 
   /**
+   * Same as {@link #NONE} in that no "features" are returned, but the singular
+   * entity name value is determined will be determined and returned.
+   */
+  ENTITY_NAME_ONLY,
+
+  /**
    * Include only a single representative value per "unique" value of a feature.
    * If there are multiple values that are near duplicates then only one value
    * is included and the others are suppressed.

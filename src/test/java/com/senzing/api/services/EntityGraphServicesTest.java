@@ -1309,22 +1309,24 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       entityMap.put(resolvedEntity.getEntityId(), resolvedEntity);
     });
 
-    if (sourcesParam != null && sourcesParam.size() > 0) {
-      boolean sourcesSatisifed = false;
-      for (Long entityId : entityPath.getEntityIds()) {
-        if (entityId.equals(entityPath.getStartEntityId())) continue;
-        if (entityId.equals(entityPath.getEndEntityId())) continue;
-        SzResolvedEntity entity = entityMap.get(entityId);
-        for (SzDataSourceRecordSummary summary : entity.getRecordSummaries()) {
-          if (sourcesParam.contains(summary.getDataSource())) {
-            sourcesSatisifed = true;
-            break;
+    if (DETAIL_LEVELS_WITH_SUMMARIES.contains(detailLevel)) {
+      if (sourcesParam != null && sourcesParam.size() > 0) {
+        boolean sourcesSatisifed = false;
+        for (Long entityId : entityPath.getEntityIds()) {
+          if (entityId.equals(entityPath.getStartEntityId())) continue;
+          if (entityId.equals(entityPath.getEndEntityId())) continue;
+          SzResolvedEntity entity = entityMap.get(entityId);
+          for (SzDataSourceRecordSummary summary : entity.getRecordSummaries()) {
+            if (sourcesParam.contains(summary.getDataSource())) {
+              sourcesSatisifed = true;
+              break;
+            }
           }
+          if (sourcesSatisifed) break;
         }
-        if (sourcesSatisifed) break;
-      }
-      if (!sourcesSatisifed) {
-        fail("Entity path does not contain required data sources: " + testInfo);
+        if (!sourcesSatisifed) {
+          fail("Entity path does not contain required data sources: " + testInfo);
+        }
       }
     }
 
