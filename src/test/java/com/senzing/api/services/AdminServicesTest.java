@@ -9,6 +9,8 @@ import com.senzing.util.JsonUtilities;
 import org.junit.jupiter.api.*;
 import com.senzing.gen.api.invoker.*;
 import com.senzing.gen.api.services.AdminApi;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -17,6 +19,7 @@ import static org.junit.jupiter.api.TestInstance.*;
 import static com.senzing.api.services.ResponseValidators.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
 public class AdminServicesTest extends AbstractServiceTest {
   private AdminServices adminServices;
   private AdminApi adminApi;

@@ -8,6 +8,8 @@ import com.senzing.io.ChunkedEncodingInputStream;
 import com.senzing.io.IOUtilities;
 import com.senzing.repomgr.RepositoryManager;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -40,6 +42,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static com.senzing.api.model.SzBulkDataStatus.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
 public class BulkDataServicesTest extends AbstractServiceTest {
   protected static final String CUSTOMER_DATA_SOURCE      = "CUSTOMER";
   protected static final String SUBSCRIBER_DATA_SOURCE    = "SUBSCRIBER";

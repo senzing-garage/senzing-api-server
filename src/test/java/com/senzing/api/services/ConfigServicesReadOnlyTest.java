@@ -7,6 +7,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.core.UriInfo;
@@ -19,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.TestInstance.Lifecycle;
 
 @TestInstance(Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
 public class ConfigServicesReadOnlyTest extends AbstractServiceTest
 {
   /**
