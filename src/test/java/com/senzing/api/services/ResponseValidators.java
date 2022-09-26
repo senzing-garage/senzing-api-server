@@ -16,14 +16,77 @@ import java.util.regex.Pattern;
 
 import static com.senzing.api.BuildInfo.MAVEN_VERSION;
 import static com.senzing.api.BuildInfo.REST_API_VERSION;
-import static com.senzing.api.model.SzFeatureMode.NONE;
-import static com.senzing.api.model.SzFeatureMode.REPRESENTATIVE;
+import static com.senzing.api.model.SzFeatureMode.*;
 import static com.senzing.api.model.SzRelationshipMode.*;
 import static com.senzing.api.model.SzHttpMethod.GET;
 import static org.junit.jupiter.api.Assertions.*;
 import static com.senzing.api.model.SzDetailLevel.*;
 
 public class ResponseValidators {
+  /**
+   * The {@link Set} of {@link SzDetailLevel} instances that include records
+   * in the response.
+   */
+  public static final Set<SzDetailLevel> DETAIL_LEVELS_WITH_RECORDS;
+
+  /**
+   * The {@link Set} of {@link SzDetailLevel} instances that include a
+   * last-seen timestamp.
+   */
+  public static final Set<SzDetailLevel> DETAIL_LEVELS_WITH_TIMESTAMP;
+
+  /**
+   * The {@link Set} of {@link SzDetailLevel} instances that include a
+   * record summary in the raw JSON.
+   */
+  public static final Set<SzDetailLevel> DETAIL_LEVELS_WITH_RAW_SUMMARIES;
+
+  /**
+   * The {@link Set} of {@link SzDetailLevel} instances that include a
+   * record summary in the processed JSON.
+   */
+  public static final Set<SzDetailLevel> DETAIL_LEVELS_WITH_SUMMARIES;
+
+  static {
+    Set<SzDetailLevel> set = new LinkedHashSet<>();
+    set.add(MINIMAL);
+    set.add(BRIEF);
+    set.add(VERBOSE);
+    set.add(null);
+
+    DETAIL_LEVELS_WITH_RECORDS = Collections.unmodifiableSet(set);
+
+    set = new LinkedHashSet<>();
+    set.add(MINIMAL);
+    set.add(BRIEF);
+    set.add(SUMMARY);
+    set.add(VERBOSE);
+    set.add(null);
+
+    DETAIL_LEVELS_WITH_SUMMARIES = Collections.unmodifiableSet(set);
+
+    set = new LinkedHashSet<>();
+    set.add(SUMMARY);
+    set.add(VERBOSE);
+    set.add(null);
+
+    DETAIL_LEVELS_WITH_RAW_SUMMARIES  = Collections.unmodifiableSet(set);
+    DETAIL_LEVELS_WITH_TIMESTAMP      = Collections.unmodifiableSet(set);
+  }
+
+  /**
+   * The {@link Set} of {@link SzFeatureMode} instances that do not return
+   * features.
+   */
+  public static final Set<SzFeatureMode> NO_FEATURE_MODES;
+
+  static {
+    Set<SzFeatureMode> set = new LinkedHashSet<>();
+    set.add(SzFeatureMode.NONE);
+    set.add(SzFeatureMode.ENTITY_NAME_ONLY);
+    NO_FEATURE_MODES = Collections.unmodifiableSet(set);
+  }
+
   /**
    * Validates the basic response fields for the specified {@link
    * SzBasicResponse} using the specified self link, and the maximum duration
@@ -672,11 +735,13 @@ public class ResponseValidators {
       for (SzDataSourceRecordSummary summary : entity.getRecordSummaries()) {
         recordCount += summary.getRecordCount();
       }
-      assertEquals(expectedRecordCount, recordCount,
-                   "Unexpected number of records in summary: "
-                       + testInfo);
+      if (DETAIL_LEVELS_WITH_SUMMARIES.contains(detailLevel)) {
+        assertEquals(expectedRecordCount, recordCount,
+                     "Unexpected number of records in summary: "
+                         + testInfo);
+      }
 
-      if (detailLevel != SUMMARY) {
+      if (DETAIL_LEVELS_WITH_RECORDS.contains(detailLevel)) {
         assertEquals(expectedRecordCount, entity.getRecords().size(),
                      "Unexpected number of records: " + testInfo);
       }
@@ -695,28 +760,31 @@ public class ResponseValidators {
       Set<SzRecordId> actualRecordIds = new HashSet<>();
       Map<String, Integer> recordCounts = new HashMap<>();
       List<SzMatchedRecord> matchedRecords = entity.getRecords();
-      if (detailLevel != SUMMARY) {
-        for (SzMatchedRecord record : matchedRecords) {
-          SzRecordId recordId = SzRecordId.FACTORY.create(record.getDataSource(),
-                                                          record.getRecordId());
-          actualRecordIds.add(recordId);
-          Integer count = recordCounts.get(recordId.getDataSourceCode());
-          if (count == null) {
-            recordCounts.put(record.getDataSource(), 1);
-          } else {
-            recordCounts.put(record.getDataSource(), count + 1);
+      if (DETAIL_LEVELS_WITH_SUMMARIES.contains(detailLevel)) {
+        if (DETAIL_LEVELS_WITH_RECORDS.contains(detailLevel)) {
+          for (SzMatchedRecord record : matchedRecords) {
+            SzRecordId recordId = SzRecordId.FACTORY.create(
+                record.getDataSource(), record.getRecordId());
+            actualRecordIds.add(recordId);
+            Integer count = recordCounts.get(recordId.getDataSourceCode());
+            if (count == null) {
+              recordCounts.put(record.getDataSource(), 1);
+            } else {
+              recordCounts.put(record.getDataSource(), count + 1);
+            }
+          }
+          assertSameElements(expectedRecordIds, actualRecordIds,
+                             "record IDs: " + testInfo);
+
+        } else {
+          for (SzDataSourceRecordSummary summary : entity.getRecordSummaries()) {
+            recordCounts.put(summary.getDataSource(), summary.getRecordCount());
           }
         }
-        assertSameElements(expectedRecordIds, actualRecordIds,
-                           "record IDs: " + testInfo);
-      } else {
-        for (SzDataSourceRecordSummary summary : entity.getRecordSummaries()) {
-          recordCounts.put(summary.getDataSource(), summary.getRecordCount());
-        }
+        assertEquals(expectedCounts, recordCounts,
+                     "The record counts by data source do not match.  "
+                         + testInfo);
       }
-      assertEquals(expectedCounts, recordCounts,
-                   "The record counts by data source do not match.  "
-                       + testInfo);
 
     }
 
@@ -725,7 +793,7 @@ public class ResponseValidators {
       assertEquals(0, entity.getFeatures().size(),
                    "Features included in minimal results: " + testInfo
                        + " / " + entity.getFeatures());
-    } else if (featureMode != null && featureMode == NONE) {
+    } else if (NO_FEATURE_MODES.contains(featureMode)) {
       assertEquals(
           0, entity.getFeatures().size(),
           "Features included despite NONE feature mode: " + testInfo
@@ -858,7 +926,7 @@ public class ResponseValidators {
       }
 
       if ((forceMinimal == null || !forceMinimal)
-          && (detailLevel != MINIMAL && detailLevel != BRIEF))
+          && (DETAIL_LEVELS_WITH_TIMESTAMP.contains(detailLevel)))
       {
         Date lastSeenTimestamp = entity.getLastSeenTimestamp();
         assertNotNull(lastSeenTimestamp,
@@ -919,11 +987,14 @@ public class ResponseValidators {
                            + testInfo);
         }
 
-        // check if verifying if related entities are partial
-        if (relatedPartial != null || (forceMinimal != null && forceMinimal)) {
+        // check if verifying related entities are partial
+        if (relatedPartial != null || (forceMinimal != null && forceMinimal)
+            || (!DETAIL_LEVELS_WITH_RECORDS.contains(detailLevel)))
+        {
           boolean partial = ((relatedPartial != null && relatedPartial)
               || (forceMinimal != null && forceMinimal)
-              || (featureMode == NONE));
+              || (NO_FEATURE_MODES.contains(featureMode))
+              || (detailLevel != null && detailLevel != VERBOSE));
 
           for (SzRelatedEntity related : relatedEntities) {
             if (related.isPartial() != partial) {
@@ -944,7 +1015,7 @@ public class ResponseValidators {
 
     if (expectedDataValues != null
         && (forceMinimal == null || !forceMinimal)
-        && (featureMode == null || featureMode != NONE))
+        && (!NO_FEATURE_MODES.contains(featureMode)))
     {
       expectedDataValues.entrySet().forEach(entry -> {
         SzAttributeClass attrClass      = entry.getKey();
@@ -1835,19 +1906,19 @@ public class ResponseValidators {
     boolean minForced = (forceMinimal != null && forceMinimal.booleanValue());
     List<String> expectedKeys = new LinkedList<>();
     expectedKeys.add("ENTITY_ID");
-    if (minForced && detailLevel != SUMMARY) {
+    if (minForced && DETAIL_LEVELS_WITH_RECORDS.contains(detailLevel)) {
       expectedKeys.add("RECORDS");
     }
 
     // check if minimal is not forced
     if (!minForced) {
       // check if features are expected
-      if (featureMode != NONE) {
+      if (!NO_FEATURE_MODES.contains(featureMode)) {
         expectedKeys.add("FEATURES");
       }
 
       // check if the record summary is expected
-      if (detailLevel != MINIMAL && detailLevel != BRIEF) {
+      if (DETAIL_LEVELS_WITH_RAW_SUMMARIES.contains(detailLevel)) {
         expectedKeys.add("RECORD_SUMMARY");
       }
     }

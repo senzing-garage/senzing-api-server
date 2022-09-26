@@ -9,6 +9,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -25,6 +27,7 @@ import static com.senzing.util.LoggingUtilities.*;
 import static com.senzing.api.services.ResponseValidators.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
 public class AutoReinitializeTest extends AbstractServiceTest
 {
   protected static final Map<String, SzDataSource> CUSTOM_DATA_SOURCES;

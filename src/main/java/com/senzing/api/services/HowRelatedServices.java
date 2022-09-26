@@ -1,8 +1,5 @@
 package com.senzing.api.services;
 
-import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.senzing.api.model.*;
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.util.JsonUtilities;
@@ -16,8 +13,7 @@ import javax.ws.rs.core.UriInfo;
 import java.util.List;
 import java.util.Set;
 
-import static com.senzing.api.model.SzFeatureMode.NONE;
-import static com.senzing.api.model.SzFeatureMode.REPRESENTATIVE;
+import static com.senzing.api.model.SzFeatureMode.*;
 import static com.senzing.api.model.SzHttpMethod.GET;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 import static com.senzing.util.JsonUtilities.*;
@@ -173,7 +169,8 @@ public class HowRelatedServices implements ServicesSupport {
     }
 
     // check if fields are going to be null if they would otherwise be set
-    if (featureMode == NONE || forceMinimal) {
+    if (featureMode == NONE || featureMode == ENTITY_NAME_ONLY || forceMinimal)
+    {
       entityData.getResolvedEntity().setPartial(true);
     }
   }

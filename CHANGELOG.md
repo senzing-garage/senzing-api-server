@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.0] - 2022-09-23
+
+### Changed in 3.4.0
+
+- Updated to REST API Specification version 3.3.0
+- Added `SzDetailLevel.BARE_MINIMAL` and `SzDetailLevel.NETWORK_MINIMAL`
+- Added tests for new `SzDetailLevel` values
+- Added `SzFeatureMode.ENTITY_NAME_ONLY`
+- Added tests for new `SzFeatureMode`
+- Changed default HTTP port to 8250 from 2080
+- Changed default HTTPS port to 8263 from 2443
+
 ## [3.3.4] - 2022-08-31
 
 ### Changed in 3.3.4

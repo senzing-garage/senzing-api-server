@@ -4,6 +4,8 @@ import com.senzing.api.model.*;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -34,6 +36,7 @@ import static com.senzing.api.model.SzHttpMethod.POST;
 import static com.senzing.api.model.SzHttpMethod.GET;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
 public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
   /**
    * Sets the desired options for the {@link SzApiServer} during server

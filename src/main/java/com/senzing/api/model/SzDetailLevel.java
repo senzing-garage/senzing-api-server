@@ -10,14 +10,31 @@ import static com.senzing.g2.engine.G2Engine.*;
  */
 public enum SzDetailLevel {
   /**
+   * The entities returned will include only their entity ID's.  No record
+   * information is returned and if related entities are included they too will
+   * only be described by their entity ID's and will <b>not</b> include any
+   * matching info.
+   */
+  BARE_MINIMAL(G2_SEARCH_INCLUDE_FEATURE_SCORES,
+               G2_ENTITY_INCLUDE_ALL_RELATIONS),
+
+  /**
+   * Identical to {@link #BARE_MINIMAL} except that in the case of related
+   * entities being included they will also include matching info.
+   */
+  NETWORK_MINIMAL(BARE_MINIMAL.getEntityFlags(),
+                  BARE_MINIMAL.getRelatedFlags()
+                      | G2_ENTITY_INCLUDE_RELATED_MATCHING_INFO),
+
+  /**
    * The entities returned will include at most their entity ID's as well as
    * identifiers for their constituent records (i.e.: data source code and
    * record ID for each record).  This detail level is optimized for the fastest
-   * possible processing time.
+   * possible processing time.`
    */
-  MINIMAL(G2_ENTITY_INCLUDE_RECORD_DATA
-              | G2_SEARCH_INCLUDE_FEATURE_SCORES,
-          G2_ENTITY_INCLUDE_ALL_RELATIONS
+  MINIMAL(BARE_MINIMAL.getEntityFlags()
+              | G2_ENTITY_INCLUDE_RECORD_DATA,
+          BARE_MINIMAL.getRelatedFlags()
               | G2_ENTITY_INCLUDE_RELATED_RECORD_DATA),
 
   /**
@@ -39,13 +56,12 @@ public enum SzDetailLevel {
    * than `BRIEF` but less data is returned as well, speeding up network
    * transfer times.
    */
-  SUMMARY(G2_ENTITY_INCLUDE_ENTITY_NAME
-              | G2_ENTITY_INCLUDE_RECORD_SUMMARY
-              | G2_SEARCH_INCLUDE_FEATURE_SCORES,
-          G2_ENTITY_INCLUDE_ALL_RELATIONS
+  SUMMARY(NETWORK_MINIMAL.getEntityFlags()
+              | G2_ENTITY_INCLUDE_ENTITY_NAME
+              | G2_ENTITY_INCLUDE_RECORD_SUMMARY,
+          NETWORK_MINIMAL.getRelatedFlags()
               | G2_ENTITY_INCLUDE_RELATED_ENTITY_NAME
-              | G2_ENTITY_INCLUDE_RELATED_RECORD_SUMMARY
-              | G2_ENTITY_INCLUDE_RELATED_MATCHING_INFO),
+              | G2_ENTITY_INCLUDE_RELATED_RECORD_SUMMARY),
 
   /**
    * <p>

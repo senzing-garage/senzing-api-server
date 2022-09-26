@@ -11,7 +11,7 @@ public final class SzApiServerConstants {
   /**
    * The default port for the API Server ({@value}).
    */
-  public static final int DEFAULT_PORT = 2080;
+  public static final int DEFAULT_PORT = 8250;
 
   /**
    * The default port as a string.
@@ -21,7 +21,7 @@ public final class SzApiServerConstants {
   /**
    * The default secure port for the API Server ({@value}).
    */
-  public static final int DEFAULT_SECURE_PORT = 2443;
+  public static final int DEFAULT_SECURE_PORT = 8263;
 
   /**
    * The default secure port as a string.

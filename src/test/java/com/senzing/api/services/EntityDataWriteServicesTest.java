@@ -6,6 +6,8 @@ import com.senzing.gen.api.services.EntityDataApi;
 import com.senzing.repomgr.RepositoryManager;
 import com.senzing.util.JsonUtilities;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -27,6 +29,7 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
 public class EntityDataWriteServicesTest extends AbstractServiceTest {
   protected static final String CUSTOMER_DATA_SOURCE = "CUSTOMERS";
   protected static final String WATCHLIST_DATA_SOURCE = "WATCHLIST";

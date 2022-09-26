@@ -8,6 +8,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -31,6 +33,7 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 @TestInstance(Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
 public class WhyServicesTest extends AbstractServiceTest {
   private static final long RANDOM_SEED = 3456789012L;
 
@@ -1881,7 +1884,7 @@ public class WhyServicesTest extends AbstractServiceTest {
                      + entityIds + "): " + testInfo);
     }
 
-    if (recordId != null && detailLevel != SUMMARY) {
+    if (recordId != null && DETAIL_LEVELS_WITH_RECORDS.contains(detailLevel)) {
       Set<SzRecordId> recordIds = new LinkedHashSet<>();
       for (SzEntityData entityData : entities) {
         SzResolvedEntity entity = entityData.getResolvedEntity();
@@ -2049,13 +2052,13 @@ public class WhyServicesTest extends AbstractServiceTest {
                      + "entities list (" + entityIds + "): " + testInfo);
     }
 
-    if (recordId1 != null && detailLevel != SUMMARY) {
+    if (recordId1 != null && DETAIL_LEVELS_WITH_RECORDS.contains(detailLevel)) {
       assertTrue(recordIds.contains(recordId1),
                  "First record ID (" + recordId1 + ") not present in "
                      + "record IDs of returned entities (" + recordIds + "): "
                      + testInfo);
     }
-    if (recordId2 != null && detailLevel != SUMMARY) {
+    if (recordId2 != null && DETAIL_LEVELS_WITH_RECORDS.contains(detailLevel)) {
       assertTrue(recordIds.contains(recordId2),
                  "Second record ID (" + recordId2 + ") not present in "
                      + "record IDs of returned entities (" + recordIds + "): "
@@ -2444,7 +2447,7 @@ public class WhyServicesTest extends AbstractServiceTest {
       }
     }
 
-    if (detailLevel != SUMMARY) {
+    if (DETAIL_LEVELS_WITH_RECORDS.contains(detailLevel)) {
       assertTrue(recordIds.contains(recordId1),
                  "First requested record ID (" + recordId1
                      + ") not represented in returned entities ("

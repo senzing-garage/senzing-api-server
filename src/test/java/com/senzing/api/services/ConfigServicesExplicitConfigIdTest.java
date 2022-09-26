@@ -6,6 +6,8 @@ import com.senzing.api.server.SzApiServerOptions;
 import com.senzing.g2.engine.G2ConfigMgr;
 import com.senzing.g2.engine.Result;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,6 +18,7 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static com.senzing.io.IOUtilities.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
 public class ConfigServicesExplicitConfigIdTest extends ConfigServicesReadOnlyTest
 {
   /**

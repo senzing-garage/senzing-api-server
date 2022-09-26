@@ -13,6 +13,8 @@ import com.senzing.util.CollectionUtilities;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -39,6 +41,7 @@ import static com.senzing.api.services.ResponseValidators.*;
 import static java.util.Collections.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
 public class EntityGraphServicesTest extends AbstractServiceTest {
   private static final long RANDOM_SEED = 2345678910L;
 
@@ -1309,22 +1312,24 @@ public class EntityGraphServicesTest extends AbstractServiceTest {
       entityMap.put(resolvedEntity.getEntityId(), resolvedEntity);
     });
 
-    if (sourcesParam != null && sourcesParam.size() > 0) {
-      boolean sourcesSatisifed = false;
-      for (Long entityId : entityPath.getEntityIds()) {
-        if (entityId.equals(entityPath.getStartEntityId())) continue;
-        if (entityId.equals(entityPath.getEndEntityId())) continue;
-        SzResolvedEntity entity = entityMap.get(entityId);
-        for (SzDataSourceRecordSummary summary : entity.getRecordSummaries()) {
-          if (sourcesParam.contains(summary.getDataSource())) {
-            sourcesSatisifed = true;
-            break;
+    if (DETAIL_LEVELS_WITH_SUMMARIES.contains(detailLevel)) {
+      if (sourcesParam != null && sourcesParam.size() > 0) {
+        boolean sourcesSatisifed = false;
+        for (Long entityId : entityPath.getEntityIds()) {
+          if (entityId.equals(entityPath.getStartEntityId())) continue;
+          if (entityId.equals(entityPath.getEndEntityId())) continue;
+          SzResolvedEntity entity = entityMap.get(entityId);
+          for (SzDataSourceRecordSummary summary : entity.getRecordSummaries()) {
+            if (sourcesParam.contains(summary.getDataSource())) {
+              sourcesSatisifed = true;
+              break;
+            }
           }
+          if (sourcesSatisifed) break;
         }
-        if (sourcesSatisifed) break;
-      }
-      if (!sourcesSatisifed) {
-        fail("Entity path does not contain required data sources: " + testInfo);
+        if (!sourcesSatisifed) {
+          fail("Entity path does not contain required data sources: " + testInfo);
+        }
       }
     }
 

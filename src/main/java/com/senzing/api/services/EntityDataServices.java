@@ -1938,7 +1938,10 @@ public class EntityDataServices implements ServicesSupport {
       // set the records and record summaries
       relatedEntity.setRecords(records);
       relatedEntity.setRecordSummaries(summaries);
-      relatedEntity.setPartial(false);
+      relatedEntity.setPartial(
+          related.isPartial() || relatedEntity.getMatchKey() == null
+              || relatedEntity.getMatchLevel() == null
+              || relatedEntity.getResolutionRuleCode() == null);
     }
 
     return entityData;

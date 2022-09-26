@@ -9,6 +9,8 @@ import com.senzing.g2.engine.*;
 import com.senzing.util.JsonUtilities;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 
 import javax.json.Json;
 import javax.json.JsonObject;
@@ -23,6 +25,7 @@ import static org.junit.jupiter.api.TestInstance.Lifecycle;
 import static com.senzing.api.services.ResponseValidators.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
 public class ExplicitConfigIdTest extends AutoReinitializeTest
 {
   /**

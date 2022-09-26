@@ -825,7 +825,17 @@ public interface ServicesSupport {
     }
 
     // add the feature flags
-    if (featureMode != NONE) {
+    if (featureMode == ENTITY_NAME_ONLY) {
+      // ensure the entity name flag
+      flags |= G2_ENTITY_INCLUDE_ENTITY_NAME;
+
+      // check if related entities are being included
+      if (withRelationships) {
+        // ensure the related entity name flag
+        flags |= G2_ENTITY_INCLUDE_RELATED_ENTITY_NAME;
+      }
+
+    } else if (featureMode != NONE) {
       // get representative features
       flags |= G2_ENTITY_INCLUDE_REPRESENTATIVE_FEATURES;
 
@@ -857,17 +867,18 @@ public interface ServicesSupport {
    * @param featureMode  The {@link SzFeatureMode} describing how features
    *                     are retrieved.
    */
-  default void postProcessEntityData(SzEntityData entityData,
-                                     boolean forceMinimal,
-                                     SzDetailLevel detailLevel,
-                                     SzFeatureMode featureMode) {
+  default void postProcessEntityData(SzEntityData   entityData,
+                                     boolean        forceMinimal,
+                                     SzDetailLevel  detailLevel,
+                                     SzFeatureMode  featureMode) {
     // check if we need to strip out duplicate features
     if (featureMode == REPRESENTATIVE) {
       this.stripDuplicateFeatureValues(entityData);
     }
 
     // check if fields are going to be null if they would otherwise be set
-    if (featureMode == NONE || forceMinimal) {
+    if (featureMode == NONE || featureMode == ENTITY_NAME_ONLY || forceMinimal)
+    {
       this.setEntitiesPartial(entityData);
     }
   }

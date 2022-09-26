@@ -17,6 +17,7 @@ import java.util.function.Function;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
+import static com.senzing.util.JsonUtilities.*;
 
 /**
  * Describes a resolved entity.
@@ -541,8 +542,12 @@ public interface SzResolvedEntity {
 
     Map<String,List<SzEntityFeature>> featureMap = null;
 
-    boolean partial = (!jsonObject.containsKey("FEATURES")
-                      || !jsonObject.containsKey("RECORDS"));
+    boolean partial
+        = (!jsonObject.containsKey("FEATURES"))
+        || (getJsonObject(jsonObject, "FEATURES").size() == 0)
+        || (!jsonObject.containsKey("RECORDS"))
+        || (getJsonArray(jsonObject, "RECORDS").size() == 0)
+        || (!getJsonArray(jsonObject, "RECORDS").getJsonObject(0).containsKey("JSON_DATA"));
 
     if (jsonObject.containsKey("FEATURES")) {
       JsonObject features = jsonObject.getJsonObject("FEATURES");
