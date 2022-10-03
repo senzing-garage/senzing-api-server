@@ -68,3 +68,4 @@ target-v*
 *.iws
 
 .bash_history
+.history
