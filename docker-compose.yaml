@@ -1,0 +1,34 @@
+version: '3'
+services:
+
+  api:
+    environment:
+      SENZING_API_SERVER_ALLOWED_ORIGINS: '*'
+      SENZING_API_SERVER_ENABLE_ADMIN: 'true'
+      SENZING_ENGINE_CONFIGURATION_JSON: >-
+        {
+          "PIPELINE": {
+            "CONFIGPATH": "/etc/opt/senzing",
+            "LICENSESTRINGBASE64": "${SENZING_LICENSE_BASE64_ENCODED}",
+            "RESOURCEPATH": "/opt/senzing/g2/resources",
+            "SUPPORTPATH": "/opt/senzing/data"
+          },
+          "SQL": {
+            "BACKEND": "SQL",
+            "CONNECTION": "${SENZING_SQL_CONNECTION:-postgresql://postgres:postgres@senzing-postgres:5432:G2/"
+          }
+        }
+    image: senzing/senzing-api-server:${SENZING_DOCKER_IMAGE_VERSION_SENZING_API_SERVER:-latest}
+    networks:
+      - senzing
+    ports:
+      - 8250:8250
+    read_only: true
+    restart: always
+    tmpfs:
+      - /tmp
+
+networks:
+  senzing:
+    external: true
+    name: ${SENZING_DOCKER_NETWORK:-senzing-network}
