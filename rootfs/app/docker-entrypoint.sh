@@ -17,7 +17,7 @@ PARAMETERS=$(
     | sed \
         -e s/java// \
         -e s/-jar// \
-        -e s/senzing-poc-server.jar//
+        -e s/senzing-api-server.jar//
 )
 TOKENIZED_PARAMETERS=(${PARAMETERS})
 
