@@ -10,4 +10,4 @@ then
   cd /appV2
 fi
 
-"$@"
+java -jar senzing-api-server.jar "$@"
