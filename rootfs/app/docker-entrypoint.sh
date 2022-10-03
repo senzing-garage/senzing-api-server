@@ -23,4 +23,4 @@ TOKENIZED_PARAMETERS=(${PARAMETERS})
 
 # Run Java command.
 
-java -jar senzing-poc-server.jar "${TOKENIZED_PARAMETERS[@]}"
+java -jar senzing-api-server.jar "${TOKENIZED_PARAMETERS[@]}"
