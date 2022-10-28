@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.4] - 2022-10-28
+
+### Changed in 3.4.4
+
+- Updated `G2EngineRetryHandler` to retry calls that return engine error codes
+  that indicate auto-reconnection can cause the call to succeed.
+- Added additional logging to `G2EngineRetryHandler` to better log retry 
+  failures so the original and secondary failure are both logged.
+- Removed unused `com.senzing.server.AppLifeCycle` class
+- In `pom.xml`,
+  - Updated `jackson-databind` to 2.13.4.2
+
 ## [3.4.3] - 2022-10-11
 
 ### Changed in 3.4.3
