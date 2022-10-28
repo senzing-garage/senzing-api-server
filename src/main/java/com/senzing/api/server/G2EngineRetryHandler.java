@@ -384,7 +384,7 @@ class G2EngineRetryHandler implements InvocationHandler {
 
     // check if it should be directly called
     if (DIRECT_METHODS.contains(method)) {
-      Object result = method.invoke(this.engineApi, args);
+      return method.invoke(this.engineApi, args);
     }
 
     // check if it should be retried if failure
