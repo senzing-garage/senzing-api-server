@@ -2,6 +2,7 @@ package com.senzing.api.server;
 
 import com.senzing.g2.engine.G2Engine;
 import com.senzing.g2.engine.Result;
+import com.senzing.util.LoggingUtilities;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -9,7 +10,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import static com.senzing.util.LoggingUtilities.multilineFormat;
+import static com.senzing.util.LoggingUtilities.*;
 
 /**
  * Provides an invocation handler for the {@link G2Engine} proxy.
@@ -29,6 +30,27 @@ class G2EngineRetryHandler implements InvocationHandler {
    * The set of methods that are explicitly unsupported.
    */
   private static Set<Method> UNSUPPORTED_METHODS;
+
+  /**
+   * The engine error codes
+   */
+  private static Set<Integer> RECONNECT_ERROR_CODES;
+
+  /**
+   * The engine failed to create a database connection.
+   */
+  private static final int ERR_DATABASE_CONNECTION_FAILURE = 1006;
+
+  /**
+   * The engine discovered a database connection that was disconnected.
+   */
+  private static final int ERR_DATABASE_CONNECTION_LOST = 1007;
+
+  /**
+   * Error code when attempt is made by the engine to create a statement (or
+   * other object) on an invalid database connection.
+   */
+  private static final int ERR_DB_CREATE_ON_INVALID_CONN = 7208;
 
   /**
    * Utility method to get an optional method that may not exist on the version
@@ -52,9 +74,10 @@ class G2EngineRetryHandler implements InvocationHandler {
    */
   static {
     Class<G2Engine> cls = G2Engine.class;
-    Set<Method> retrySet        = new LinkedHashSet<>();
-    Set<Method> directSet       = new LinkedHashSet<>();
-    Set<Method> unsupportedSet  = new LinkedHashSet<>();
+    Set<Method>   retrySet            = new LinkedHashSet<>();
+    Set<Method>   directSet           = new LinkedHashSet<>();
+    Set<Method>   unsupportedSet      = new LinkedHashSet<>();
+    Set<Integer>  reconnectErrorCodes = new LinkedHashSet<>();
     try {
       unsupportedSet.add(cls.getMethod(
           "init", String.class, String.class, boolean.class));
@@ -290,6 +313,12 @@ class G2EngineRetryHandler implements InvocationHandler {
                   method.toString()));
         }
       }
+
+      // populate the set of error codes
+      reconnectErrorCodes.add(ERR_DATABASE_CONNECTION_FAILURE);
+      reconnectErrorCodes.add(ERR_DATABASE_CONNECTION_LOST);
+      reconnectErrorCodes.add(ERR_DB_CREATE_ON_INVALID_CONN);
+
     } catch (Exception e) {
       e.printStackTrace();
       throw new ExceptionInInitializerError(e);
@@ -298,6 +327,7 @@ class G2EngineRetryHandler implements InvocationHandler {
       UNSUPPORTED_METHODS = Collections.unmodifiableSet(unsupportedSet);
       DIRECT_METHODS = Collections.unmodifiableSet(directSet);
       RETRY_METHODS = Collections.unmodifiableSet(retrySet);
+      RECONNECT_ERROR_CODES = Collections.unmodifiableSet(reconnectErrorCodes);
     }
   }
 
@@ -360,11 +390,29 @@ class G2EngineRetryHandler implements InvocationHandler {
     // check if it should be retried if failure
     if (RETRY_METHODS.contains(method)) {
       Number  returnCode;
-      boolean retried = false;
+      boolean retried         = false;
+      String  operation       = "G2Engine." + method.getName() + "()";
+      String  formattedError  = null;
       do {
         returnCode = (Number) method.invoke(this.engineApi, args);
+
+        if (returnCode.intValue() != 0) {
+          formattedError = formatError(operation, this.engineApi);
+        }
+
       } while (returnCode.intValue() != 0
-               && (retried = this.checkRetryNeeded(retried)));
+               && (retried = this.checkRetryNeeded(retried, operation)));
+
+      // check if we failed on retry and log that
+      if (returnCode.intValue() != 0 && retried && formattedError != null) {
+        System.err.println("-------------------------------------------------");
+        System.err.println("FAILED RETRY OF " + operation);
+        System.err.println("ORIGINAL ERROR:");
+        System.err.println(formattedError);
+        System.err.println();
+        System.err.println("RETRY ERROR:");
+        logError(operation, this.engineApi);
+      }
 
       // return the result
       return returnCode;
@@ -385,15 +433,45 @@ class G2EngineRetryHandler implements InvocationHandler {
    * <tt>true</tt> is returned.
    *
    * @param retried Indicates if we have already retried once.
+   * @param operation The description of the operation which we may retry.
    * @return <tt>true</tt> if the last operation should be retried, otherwise
    *         <tt>false</tt>.
    */
-  private boolean checkRetryNeeded(boolean retried) {
+  private boolean checkRetryNeeded(boolean retried, String operation) {
     if (retried) return false;
 
-    Boolean result = this.apiServer.ensureConfigCurrent(false);
-    if (result == null) return false;
-    return result;
+    // get the error code
+    int errorCode = this.engineApi.getLastExceptionCode();
+
+    String formattedError = formatError(operation, this.engineApi);
+
+    try {
+      // check if the error code indicates an engine reconnect failure
+      if (RECONNECT_ERROR_CODES.contains(errorCode)) {
+        // make sure the configuration is current before retrying just so we
+        // don't retry and then get a configuration failure
+        this.apiServer.ensureConfigCurrent(false);
+
+        // return true for retry
+        return true;
+      }
+
+      // if not a reconnect error then let's check if the config is current
+      Boolean result = this.apiServer.ensureConfigCurrent(false);
+      if (result == null) return false;
+      return result;
+
+    } catch (Exception e) {
+      System.err.println("-------------------------------------------------");
+      System.err.println("EXCEPTION WHILE CHECKING FOR RETRY " + operation);
+      System.err.println("ORIGINAL ERROR:");
+      System.err.println(formattedError);
+      System.err.println();
+      System.err.println("EXCEPTION DURING RETRY CHECK:");
+      System.err.println(e.getMessage());
+      e.printStackTrace();
+      return false;
+    }
   }
 
 }
