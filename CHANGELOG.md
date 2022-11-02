@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.6] - 2022-11-02
+
+### Changed in 3.4.6
+
+- Changes `senzing-commons-java` dependency to a minimum of version `3.0.2` to
+  address Issue #265 (handling whitepsace between delimeters and quoted strings 
+  in bulk record CSV files)
+- Updated tests to include a test for surrounding whitespace in CSV's
+- Updated dependency for `slf4j-api` to version `2.0.3`
+- Updated dependency for `swagger-annotations` to version `2.2.4`
+
 ## [3.4.5] - 2022-10-30
 
 ### Changed in 3.4.5
