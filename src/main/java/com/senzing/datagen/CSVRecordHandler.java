@@ -135,7 +135,8 @@ public class CSVRecordHandler implements RecordHandler {
 
     // create the printer
     this.csvPrinter = new CSVPrinter(
-        this.writer, CSVFormat.DEFAULT.withHeader(headers));
+        this.writer,
+        CSVFormat.Builder.create(CSVFormat.DEFAULT).setHeader(headers).build());
   }
 
   /**
