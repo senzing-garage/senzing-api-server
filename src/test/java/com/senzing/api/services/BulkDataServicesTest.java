@@ -493,6 +493,78 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     return result;
   }
 
+  @Test
+  public void analyzeBulkRecordsWithSpaces() {
+    this.performTest(() -> {
+      String  uriText = this.formatServerUri("bulk-data/analyze");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      String    testInfo      = "Test CSV with suppressed spaces";
+      File      bulkDataFile  = null;
+      String    CSV_SPEC      = "text/csv";
+      MediaType mediaType     = MediaType.valueOf(CSV_SPEC);
+
+      SzBulkDataAnalysis expected = SzBulkDataAnalysis.FACTORY.create();
+      SzDataSourceRecordAnalysis sourceAnalysis
+          = SzDataSourceRecordAnalysis.FACTORY.create(CUSTOMER_DATA_SOURCE);
+      sourceAnalysis.setRecordCount(3);
+      sourceAnalysis.setRecordsWithRecordIdCount(3);
+
+      expected.setMediaType(mediaType.toString());
+      expected.setAnalysisByDataSource(List.of(sourceAnalysis));
+      expected.setCharacterEncoding(UTF_8);
+      expected.setRecordsWithRecordIdCount(3);
+      expected.setStatus(COMPLETED);
+      expected.setRecordsWithDataSourceCount(3);
+
+      try {
+        bulkDataFile = File.createTempFile("bulk-data-", ".csv");
+
+        try (FileOutputStream   fos = new FileOutputStream(bulkDataFile);
+             OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
+             PrintWriter        pw  = new PrintWriter(new BufferedWriter(osw)))
+        {
+          pw.println("RECORD_ID,DATA_SOURCE,NAME_FULL,PHONE_NUMBER");
+          pw.println("ABC123,\"" + CUSTOMER_DATA_SOURCE
+                         + "\"  ,\"JOE SCHMOE\"  ,702-555-1212");
+          pw.println("DEF456,   \"" + CUSTOMER_DATA_SOURCE
+                         + "\",  \"JOHN DOE\",702-555-1313");
+          pw.println("GHI789,   \"" + CUSTOMER_DATA_SOURCE
+                         + "\"  ,  \"JANE SMITH\"  ,702-555-1313");
+          pw.flush();
+        }
+
+      } catch (IOException e) {
+        fail(e);
+      }
+
+      try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
+        long before = System.nanoTime();
+        SzBulkDataAnalysisResponse response
+            = this.bulkDataServices.analyzeBulkRecordsViaForm(
+            mediaType, fis, uriInfo);
+        response.concludeTimers();
+        long after = System.nanoTime();
+
+        System.err.println(response.getData().getAnalysisByDataSource());
+        validateAnalyzeResponse(null,
+                                response,
+                                POST,
+                                uriText,
+                                mediaType,
+                                bulkDataFile,
+                                expected,
+                                after - before);
+
+      } catch (Exception e) {
+        System.err.println("********** FAILED TEST: " + testInfo);
+        e.printStackTrace();
+        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        throw new RuntimeException(e);
+      }
+    });
+  }
+
   @ParameterizedTest
   @MethodSource("getAnalyzeBulkRecordsParameters")
   public void analyzeBulkRecordsViaFormTest(
