@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.7] - 2023-01-04
+
+### Changed in 3.4.7
+
+- Updated dependency versions to newer releases.
+
 ## [3.4.6] - 2022-11-02
 
 ### Changed in 3.4.6
