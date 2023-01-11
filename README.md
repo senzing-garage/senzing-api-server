@@ -659,43 +659,43 @@ This repository assumes a working knowledge of:
 
 Configuration values specified by environment variable or command line parameter.
 
-- **[SENZING_API_SERVER_BIND_ADDR](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_PORT](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_ENABLE_ADMIN](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_READ_ONLY](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_CONCURRENCY](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_ALLOWED_ORIGINS](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_MODULE_NAME](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_INI_FILE](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_INIT_FILE](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_INIT_ENV_VAR](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_INIT_JSON](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_CONFIG_ID](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_AUTO_REFRESH_PERIOD](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_STATS_INTERVAL](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_SKIP_STARTUP_PERF](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_VERBOSE](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_QUIET](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_API_SERVER_MONITOR_FILE](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_SQS_INFO_QUEUE_URL](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_RABBITMQ_INFO_HOST](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_RABBITMQ_HOST](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_RABBITMQ_INFO_PORT](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_RABBITMQ_PORT](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_RABBITMQ_INFO_USERNAME](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_RABBITMQ_USERNAME](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_RABBITMQ_INFO_PASSWORD](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_RABBITMQ_PASSWORD](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_RABBITMQ_INFO_VIRTUAL_HOST](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_RABBITMQ_VIRTUAL_HOST](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_RABBITMQ_INFO_EXCHANGE](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_RABBITMQ_EXCHANGE](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_RABBITMQ_INFO_ROUTING_KEY](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_KAFKA_INFO_BOOTSTRAP_SERVER](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_KAFKA_BOOTSTRAP_SERVER](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_KAFKA_INFO_GROUP](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_KAFKA_GROUP](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
-- **[SENZING_KAFKA_INFO_TOPIC](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_service_port)**
+- **[SENZING_API_SERVER_BIND_ADDR](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_bind_addr)**
+- **[SENZING_API_SERVER_PORT](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_port)**
+- **[SENZING_API_SERVER_ENABLE_ADMIN](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_enable_admin)**
+- **[SENZING_API_SERVER_READ_ONLY](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_read_only)**
+- **[SENZING_API_SERVER_CONCURRENCY](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_concurrency)**
+- **[SENZING_API_SERVER_ALLOWED_ORIGINS](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_allowed_origins)**
+- **[SENZING_API_SERVER_MODULE_NAME](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_module_name)**
+- **[SENZING_API_SERVER_INI_FILE](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_ini_file)**
+- **[SENZING_API_SERVER_INIT_FILE](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_init_file)**
+- **[SENZING_API_SERVER_INIT_ENV_VAR](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_init_env_var)**
+- **[SENZING_API_SERVER_INIT_JSON](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_init_json)**
+- **[SENZING_API_SERVER_CONFIG_ID](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_config_id)**
+- **[SENZING_API_SERVER_AUTO_REFRESH_PERIOD](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_auto_refresh_period)**
+- **[SENZING_API_SERVER_STATS_INTERVAL](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_stats_interval)**
+- **[SENZING_API_SERVER_SKIP_STARTUP_PERF](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_skip_startup_perf)**
+- **[SENZING_API_SERVER_VERBOSE](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_verbose)**
+- **[SENZING_API_SERVER_QUIET](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_quiet)**
+- **[SENZING_API_SERVER_MONITOR_FILE](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_monitor_file)**
+- **[SENZING_SQS_INFO_QUEUE_URL](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_sqs_info_queue_url)**
+- **[SENZING_RABBITMQ_INFO_HOST](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_host)**
+- **[SENZING_RABBITMQ_HOST](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_host)**
+- **[SENZING_RABBITMQ_INFO_PORT](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_port)**
+- **[SENZING_RABBITMQ_PORT](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_port)**
+- **[SENZING_RABBITMQ_INFO_USERNAME](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_username)**
+- **[SENZING_RABBITMQ_USERNAME](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_username)**
+- **[SENZING_RABBITMQ_INFO_PASSWORD](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_password)**
+- **[SENZING_RABBITMQ_PASSWORD](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_password)**
+- **[SENZING_RABBITMQ_INFO_VIRTUAL_HOST](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_virtual_host)**
+- **[SENZING_RABBITMQ_VIRTUAL_HOST](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_virtual_host)**
+- **[SENZING_RABBITMQ_INFO_EXCHANGE](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_exchange)**
+- **[SENZING_RABBITMQ_EXCHANGE](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_exchange)**
+- **[SENZING_RABBITMQ_INFO_ROUTING_KEY](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_routing_key)**
+- **[SENZING_KAFKA_INFO_BOOTSTRAP_SERVER](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_bootstrap_server)**
+- **[SENZING_KAFKA_BOOTSTRAP_SERVER](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_bootstrap_server)**
+- **[SENZING_KAFKA_INFO_GROUP](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_kafka_info_group)**
+- **[SENZING_KAFKA_GROUP](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_kafka_group)**
+- **[SENZING_KAFKA_INFO_TOPIC](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_kafka_info_topic)**
 - **[SENZING_DATA_VERSION_DIR](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_data_version_dir)**
 - **[SENZING_DATABASE_URL](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_database_url)**
 - **[SENZING_DEBUG](https://github.com/Senzing/knowledge-base/blob/main/lists/environment-variables.md#senzing_debug)**
@@ -844,7 +844,7 @@ For other databases, these steps may be skipped.
    Example:
 
     ```console
-    export SENZING_API_SERVICE_PORT=8250
+    export SENZING_API_SERVER_PORT=8250
     ```
 
 1. Run docker container.
@@ -853,7 +853,7 @@ For other databases, these steps may be skipped.
     ```console
     sudo docker run \
       --interactive \
-      --publish ${SENZING_API_SERVICE_PORT}:8250 \
+      --publish ${SENZING_API_SERVER_PORT}:8250 \
       --rm \
       --tty \
       --volume ${SENZING_DATA_VERSION_DIR}:/opt/senzing/data \
@@ -887,7 +887,7 @@ For other databases, these steps may be skipped.
 
 1. Test Senzing REST API server.
    *Note:* port 8250 on the localhost has been mapped to port 8250 in the docker container.
-   See `SENZING_API_SERVICE_PORT` definition.
+   See `SENZING_API_SERVER_PORT` definition.
    Example:
 
     ```console
