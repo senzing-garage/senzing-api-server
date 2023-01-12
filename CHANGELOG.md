@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.8] - 2023-01-12
+
+### Changed in 3.4.8
+
+- In `Dockerfile`, updated FROM instruction to `senzing/senzingapi-tools:3.4.0`
+
 ## [3.4.7] - 2023-01-04
 
 ### Changed in 3.4.7
@@ -17,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed in 3.4.6
 
 - Changes `senzing-commons-java` dependency to a minimum of version `3.0.2` to
-  address Issue #265 (handling whitespace between delimiters and quoted strings 
+  address Issue #265 (handling whitespace between delimiters and quoted strings
   in bulk record CSV files)
 - Updated tests to include a test for surrounding whitespace in CSV's
 - Updated dependency for `slf4j-api` to version `2.0.3`

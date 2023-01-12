@@ -11,7 +11,7 @@ ENV REFRESHED_AT=2023-01-12
 
 LABEL Name="senzing/senzing-api-server-builder" \
       Maintainer="support@senzing.com" \
-      Version="3.4.7"
+      Version="3.4.8"
 
 # Set environment variables.
 
@@ -43,7 +43,7 @@ ENV REFRESHED_AT=2023-01-12
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
-      Version="3.4.7"
+      Version="3.4.8"
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
 
@@ -94,7 +94,7 @@ COPY --from=builder "/senzing-api-server.jar" "/app/senzing-api-server.jar"
 
 # Copy files from other docker containers.
 
-COPY --from=senzing/senzing-api-server:2.8.6 "/app/senzing-api-server.jar" "/appV2/senzing-api-server.jar"
+COPY --from=senzing/senzing-api-server:2.8.7 "/app/senzing-api-server.jar" "/appV2/senzing-api-server.jar"
 
 # Make non-root container.
 
