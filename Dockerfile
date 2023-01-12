@@ -59,7 +59,6 @@ RUN apt update \
       jq \
       libodbc1 \
       postgresql-client \
-      software-properties-common \
       unixodbc \
  && rm -rf /var/lib/apt/lists/*
 
@@ -67,8 +66,10 @@ RUN apt update \
 
 COPY --from=builder "/gpg.key" "gpg.key"
 
+RUN echo "deb https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ bullseye main" >> /etc/apt/sources.list \
+    echo "# deb-src https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ bullseye main" >> /etc/apt/sources.list
+
 RUN cat gpg.key | apt-key add - \
- && add-apt-repository --yes https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ \
  && apt update \
  && apt install -y adoptopenjdk-11-hotspot \
  && rm -rf /var/lib/apt/lists/* \
