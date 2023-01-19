@@ -54,6 +54,9 @@ public class BulkDataServices implements BulkDataSupport {
                                      null,
                                      null);
 
+    } catch (ClientErrorException e) {
+      throw e;
+
     } catch (RuntimeException e) {
       throw logOnceAndThrow(e);
 
@@ -95,6 +98,9 @@ public class BulkDataServices implements BulkDataSupport {
                                      null,
                                      null,
                                      null);
+
+    } catch (ClientErrorException e) {
+      throw e;
 
     } catch (RuntimeException e) {
       throw logOnceAndThrow(e);
@@ -153,6 +159,9 @@ public class BulkDataServices implements BulkDataSupport {
                                 sseEventSink,
                                 sse,
                                 null);
+
+      } catch (ClientErrorException e) {
+        throw e;
 
       } catch (RuntimeException e) {
         throw logOnceAndThrow(e);
@@ -219,6 +228,9 @@ public class BulkDataServices implements BulkDataSupport {
                                 sseEventSink,
                                 sse,
                                 null);
+
+      } catch (ClientErrorException e) {
+        throw e;
 
       } catch (RuntimeException e) {
         throw logOnceAndThrow(e);
@@ -296,7 +308,7 @@ public class BulkDataServices implements BulkDataSupport {
                                   null,
                                   null);
 
-    } catch (ForbiddenException e) {
+    } catch (ClientErrorException e) {
       throw e;
 
     } catch (RuntimeException e) {
@@ -364,7 +376,7 @@ public class BulkDataServices implements BulkDataSupport {
                                   null,
                                   null);
 
-    } catch (ForbiddenException e) {
+    } catch (ClientErrorException e) {
       throw e;
 
     } catch (RuntimeException e) {
@@ -443,7 +455,7 @@ public class BulkDataServices implements BulkDataSupport {
                            sse,
                            null);
 
-    } catch (ForbiddenException e) {
+    } catch (ClientErrorException e) {
       throw e;
 
     } catch (RuntimeException e) {
@@ -524,7 +536,7 @@ public class BulkDataServices implements BulkDataSupport {
                            sse,
                            null);
 
-    } catch (ForbiddenException e) {
+    } catch (ClientErrorException e) {
       throw e;
 
     } catch (RuntimeException e) {

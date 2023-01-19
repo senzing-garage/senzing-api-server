@@ -24,6 +24,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Supplier;
 
+import static com.senzing.io.RecordReader.Format.*;
 import static com.senzing.api.model.SzBulkDataStatus.ABORTED;
 import static com.senzing.api.model.SzBulkDataStatus.COMPLETED;
 import static com.senzing.api.model.SzHttpMethod.POST;
@@ -166,9 +167,14 @@ public interface BulkDataSupport extends ServicesSupport {
       Sse                         sse,
       Session                     webSocketSession)
   {
+    MediaType specifiedMediaType = mediaType;
+
     // convert progress period to nanoseconds
     Long progressNanos = (progressPeriod == null)
         ? null : progressPeriod * 1000000L;
+
+    // check if the media type is null
+    if (mediaType == null) mediaType = TEXT_PLAIN_TYPE;
 
     OutboundSseEvent.Builder eventBuilder
         = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
@@ -204,8 +210,14 @@ public interface BulkDataSupport extends ServicesSupport {
            BufferedReader     br  = new BufferedReader(isr))
       {
         // if format is null then RecordReader will auto-detect
-        RecordReader recordReader
-            = new RecordReader(bulkDataSet.getFormat(), br);
+        RecordReader recordReader = new RecordReader(null, br);
+
+        this.verifyBulkDataFormat(specifiedMediaType,
+                                  bulkDataSet.getFormat(),
+                                  recordReader.getFormat(),
+                                  uriInfo,
+                                  timers);
+
         bulkDataSet.setFormat(recordReader.getFormat());
         debugLog("Analyze bulk data format: "+ bulkDataSet.getFormat());
 
@@ -340,6 +352,11 @@ public interface BulkDataSupport extends ServicesSupport {
       Sse                         sse,
       Session                     webSocketSession)
   {
+    MediaType specifiedMediaType = mediaType;
+
+    // check if the media type is null
+    if (mediaType == null) mediaType = TEXT_PLAIN_TYPE;
+
     // convert the progress period to nanoseconds
     Long progressNanos = (progressPeriod == null)
         ? null : progressPeriod * 1000000L;
@@ -389,11 +406,18 @@ public interface BulkDataSupport extends ServicesSupport {
            BufferedReader     br  = new BufferedReader(isr))
       {
         // if format is null then RecordReader will auto-detect
-        RecordReader recordReader = new RecordReader(bulkDataSet.getFormat(),
+        RecordReader recordReader = new RecordReader(null,
                                                      br,
                                                      dataSourceMap,
                                                      loadId);
 
+        this.verifyBulkDataFormat(specifiedMediaType,
+                                  bulkDataSet.getFormat(),
+                                  recordReader.getFormat(),
+                                  uriInfo,
+                                  timers);
+
+        // override the format accordingly
         bulkDataSet.setFormat(recordReader.getFormat());
         debugLog("Load bulk data format: " + bulkDataSet.getFormat());
 
@@ -568,6 +592,56 @@ public interface BulkDataSupport extends ServicesSupport {
                                   progressState.nextEventId(),
                                   webSocketSession,
                                   response);
+  }
+
+  /**
+   * Verifies the format of the bulk data matches the Content-Type that was
+   * specified (if any).  This allows any format if there is no specified
+   * Content-Type or if the specified Content-Type is <code>text/plain</code>.
+   * This allows either {@link RecordReader.Format#JSON} or {@link
+   * RecordReader.Format#JSON_LINES} if the specified Content-Type is
+   * <code>application/json</code>.  Otherwise, the format needs to match the
+   * specified media type.
+   *
+   * @param specifiedMediaType The specified Content-Type.
+   * @param specifiedFormat The {@link RecordReader.Format} for the specified
+   *                        Content-Type.
+   * @param detectedFormat The {@link RecordReader.Format} that was detected.
+   * @param uriInfo The {@link UriInfo} for the request.
+   * @param timers The {@link Timers} for the request.
+   *
+   * @throws BadRequestException If the specified Content-Type does not match
+   *                             the detected {@link RecordReader.Format}
+   */
+  default void verifyBulkDataFormat(MediaType           specifiedMediaType,
+                                    RecordReader.Format specifiedFormat,
+                                    RecordReader.Format detectedFormat,
+                                    UriInfo             uriInfo,
+                                    Timers              timers)
+    throws BadRequestException
+  {
+    // check for a format mismatch
+    if (specifiedFormat != null) {
+      switch (specifiedFormat) {
+        case JSON:
+          if (detectedFormat != JSON && detectedFormat != JSON_LINES) {
+            throw this.newBadRequestException(
+                POST, uriInfo, timers,
+                "Specified Content-Type was " + specifiedMediaType
+                    + ", but the format of the bulk data appears to be "
+                    + detectedFormat.getMediaType());
+          }
+          break;
+        default:
+          if (detectedFormat != specifiedFormat) {
+            throw this.newBadRequestException(
+                POST, uriInfo, timers,
+                "Specified Content-Type was " + specifiedMediaType
+                    + ", but the format of the bulk data appears to be "
+                    + detectedFormat.getMediaType());
+          }
+      }
+    }
   }
 
   /**
@@ -920,6 +994,9 @@ public interface BulkDataSupport extends ServicesSupport {
     public BulkDataSet(MediaType mediaType, InputStream inputStream)
         throws IOException
     {
+      // check if the media type is null
+      if (mediaType == null) mediaType = TEXT_PLAIN_TYPE;
+
       this.characterEncoding = mediaType.getParameters().get("charset");
       String baseMediaType = mediaType.getType() + "/" + mediaType.getSubtype();
       if (baseMediaType != null) baseMediaType = baseMediaType.toLowerCase();
