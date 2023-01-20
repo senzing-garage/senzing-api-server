@@ -3,6 +3,8 @@ package com.senzing.api.services;
 import com.senzing.api.model.*;
 import com.senzing.api.server.SzApiServer;
 import com.senzing.api.server.SzApiServerOptions;
+import com.senzing.util.JsonUtilities;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
@@ -10,20 +12,19 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import javax.json.Json;
+import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.websocket.ContainerProvider;
 import javax.websocket.Session;
 import javax.websocket.WebSocketContainer;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.ForbiddenException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedHashMap;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.UriInfo;
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.util.LinkedList;
@@ -31,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 
 import static com.senzing.api.services.ResponseValidators.validateBasics;
+import static com.senzing.io.IOUtilities.UTF_8;
+import static com.senzing.io.RecordReader.Format.*;
 import static org.junit.jupiter.api.Assertions.fail;
 import static com.senzing.api.model.SzHttpMethod.POST;
 import static com.senzing.api.model.SzHttpMethod.GET;
@@ -49,6 +52,323 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
     options.setReadOnly(true);
   }
 
+  @Test
+  public void testCSVWithBadMediaType() {
+    this.performTest(() -> {
+      String  uriText1 = this.formatServerUri("bulk-data/analyze");
+      UriInfo uriInfo1 = this.newProxyUriInfo(uriText1);
+
+      String  uriText2 = this.formatServerUri("bulk-data/load");
+      UriInfo uriInfo2 = this.newProxyUriInfo(uriText2);
+
+      String    testInfo      = "Test CSV analyze with bad media type";
+      File      bulkDataFile  = null;
+
+      try {
+        bulkDataFile = File.createTempFile("bulk-data-", ".csv");
+
+        try (FileOutputStream fos = new FileOutputStream(bulkDataFile);
+             OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
+             PrintWriter        pw  = new PrintWriter(new BufferedWriter(osw)))
+        {
+          pw.println("RECORD_ID,DATA_SOURCE,NAME_FULL,PHONE_NUMBER");
+          pw.println("ABC123,\"" + CUSTOMER_DATA_SOURCE
+                         + "\"  ,\"JOE SCHMOE\"  ,702-555-1212");
+          pw.println("DEF456,   \"" + CUSTOMER_DATA_SOURCE
+                         + "\",  \"JOHN DOE\",702-555-1313");
+          pw.println("GHI789,   \"" + CUSTOMER_DATA_SOURCE
+                         + "\"  ,  \"JANE SMITH\"  ,702-555-1313");
+          pw.flush();
+        }
+
+      } catch (IOException e) {
+        fail(e);
+      }
+
+      MediaType[] badMediaTypes = {
+          MediaType.valueOf(JSON.getMediaType()),
+          MediaType.valueOf(JSON_LINES.getMediaType()) };
+
+      for (MediaType badMediaType : badMediaTypes) {
+        try (FileInputStream fis1 = new FileInputStream(bulkDataFile);
+             FileInputStream fis2 = new FileInputStream(bulkDataFile))
+        {
+          try {
+            this.bulkDataServices.analyzeBulkRecordsViaForm(badMediaType,
+                                                            fis1,
+                                                            uriInfo1);
+
+            fail("Unexpectedly analyzed CSV records with wrong media type "
+                     + "with no error: " + badMediaType);
+
+          } catch (BadRequestException e) {
+            // all good -- this is expected
+
+          } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpectedly analyzed CSV records with wrong media type ("
+                     + badMediaType + ") with an exception other than "
+                     + "BadRequestException: " + e);
+
+            throw e;
+          }
+
+          try {
+            this.bulkDataServices.loadBulkRecordsDirect(null,
+                                                        null,
+                                                        null,
+                                                        "FOO",
+                                                        -1,
+                                                        badMediaType,
+                                                        fis2,
+                                                        uriInfo2);
+
+
+            fail("Unexpectedly loaded CSV records with wrong media type "
+                     + "with no error: " + badMediaType);
+
+          } catch (ForbiddenException e) {
+            // all good -- this is expected
+
+          } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpectedly loaded CSV records with wrong media type ("
+                     + badMediaType + ") with an exception other than "
+                     + "ForbiddenException: " + e);
+
+            throw e;
+          }
+
+        } catch (Exception e) {
+          System.err.println("********** FAILED TEST: " + testInfo);
+          e.printStackTrace();
+          if (e instanceof RuntimeException) throw ((RuntimeException) e);
+          throw new RuntimeException(e);
+        }
+      }
+    });
+  }
+
+  @Test
+  public void testJsonWithBadMediaType() {
+    this.performTest(() -> {
+      String  uriText1 = this.formatServerUri("bulk-data/analyze");
+      UriInfo uriInfo1 = this.newProxyUriInfo(uriText1);
+
+      String  uriText2 = this.formatServerUri("bulk-data/load");
+      UriInfo uriInfo2 = this.newProxyUriInfo(uriText2);
+
+      String    testInfo      = "Test JSON analyze with bad media type";
+      File      bulkDataFile  = null;
+
+      try {
+        bulkDataFile = File.createTempFile("bulk-data-", ".csv");
+
+        try (FileOutputStream   fos = new FileOutputStream(bulkDataFile);
+             OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8))
+        {
+          JsonArrayBuilder jab = Json.createArrayBuilder();
+          JsonObjectBuilder job = Json.createObjectBuilder();
+          job.add("RECORD_ID", "ABC123")
+              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("NAME_FULL", "JOE_SCHMOE")
+              .add("PHONE_NUMBER", "702-555-1212");
+
+          jab.add(job);
+          job = Json.createObjectBuilder();
+          job.add("RECORD_ID", "DEF456")
+              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("NAME_FULL", "JOHN DOE")
+              .add("PHONE_NUMBER", "702-555-1313");
+          jab.add(job);
+
+          job = Json.createObjectBuilder();
+          job.add("RECORD_ID", "GHI789")
+              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("NAME_FULL", "JANE SMITH")
+              .add("PHONE_NUMBER", "702-555-1313");
+          jab.add(job);
+
+          osw.write(JsonUtilities.toJsonText(jab));
+          osw.flush();
+        }
+
+      } catch (IOException e) {
+        fail(e);
+      }
+
+      MediaType[] badMediaTypes = {
+          MediaType.valueOf(CSV.getMediaType()),
+          MediaType.valueOf(JSON_LINES.getMediaType()) };
+
+      for (MediaType badMediaType : badMediaTypes) {
+        try (FileInputStream fis1 = new FileInputStream(bulkDataFile);
+             FileInputStream fis2 = new FileInputStream(bulkDataFile))
+        {
+          try {
+            this.bulkDataServices.analyzeBulkRecordsViaForm(badMediaType,
+                                                            fis1,
+                                                            uriInfo1);
+
+            fail("Unexpectedly analyzed JSON records with wrong media type "
+                     + "with no error: " + badMediaType);
+
+          } catch (BadRequestException e) {
+            // all good -- this is expected
+
+          } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpectedly analyzed JSON records with wrong media type ("
+                     + badMediaType + ") with an exception other than "
+                     + "BadRequestException: " + e);
+
+            throw e;
+          }
+
+          try {
+            this.bulkDataServices.loadBulkRecordsDirect(null,
+                                                        null,
+                                                        null,
+                                                        "FOO",
+                                                        -1,
+                                                        badMediaType,
+                                                        fis2,
+                                                        uriInfo2);
+
+            fail("Unexpectedly loaded JSON records with wrong media type "
+                     + "with no error: " + badMediaType);
+
+          } catch (ForbiddenException e) {
+            // all good -- this is expected
+
+          } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpectedly loaded JSON records with wrong media type ("
+                     + badMediaType + ") with an exception other than "
+                     + "ForbiddenException: " + e);
+
+            throw e;
+          }
+
+        } catch (Exception e) {
+          System.err.println("********** FAILED TEST: " + testInfo);
+          e.printStackTrace();
+          if (e instanceof RuntimeException) throw ((RuntimeException) e);
+          throw new RuntimeException(e);
+        }
+      }
+    });
+  }
+
+  @Test
+  public void testJsonLinesWithBadMediaType() {
+    this.performTest(() -> {
+      String  uriText1 = this.formatServerUri("bulk-data/analyze");
+      UriInfo uriInfo1 = this.newProxyUriInfo(uriText1);
+
+      String  uriText2 = this.formatServerUri("bulk-data/load");
+      UriInfo uriInfo2 = this.newProxyUriInfo(uriText2);
+
+      String    testInfo      = "Test JSON-Lines analyze with bad media type";
+      File      bulkDataFile  = null;
+
+      try {
+        bulkDataFile = File.createTempFile("bulk-data-", ".csv");
+
+        try (FileOutputStream   fos = new FileOutputStream(bulkDataFile);
+             OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
+             PrintWriter        pw  = new PrintWriter(osw))
+        {
+          JsonObjectBuilder job = Json.createObjectBuilder();
+          job.add("RECORD_ID", "ABC123")
+              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("NAME_FULL", "JOE_SCHMOE")
+              .add("PHONE_NUMBER", "702-555-1212");
+
+          pw.println(JsonUtilities.toJsonText(job));
+
+          job = Json.createObjectBuilder();
+          job.add("RECORD_ID", "DEF456")
+              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("NAME_FULL", "JOHN DOE")
+              .add("PHONE_NUMBER", "702-555-1313");
+          pw.println(JsonUtilities.toJsonText(job));
+
+          job = Json.createObjectBuilder();
+          job.add("RECORD_ID", "GHI789")
+              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("NAME_FULL", "JANE SMITH")
+              .add("PHONE_NUMBER", "702-555-1313");
+          pw.println(JsonUtilities.toJsonText(job));
+
+          pw.flush();
+        }
+
+      } catch (IOException e) {
+        fail(e);
+      }
+
+      MediaType[] badMediaTypes = {
+          MediaType.valueOf(CSV.getMediaType()) };
+
+      for (MediaType badMediaType : badMediaTypes) {
+        try (FileInputStream fis1 = new FileInputStream(bulkDataFile);
+             FileInputStream fis2 = new FileInputStream(bulkDataFile))
+        {
+          try {
+            this.bulkDataServices.analyzeBulkRecordsViaForm(badMediaType,
+                                                            fis1,
+                                                            uriInfo1);
+
+            fail("Unexpectedly analyzed JSON-lines records with wrong media "
+                     + "type with no error: " + badMediaType);
+
+          } catch (BadRequestException e) {
+            // all good -- this is expected
+
+          } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpectedly analyzed JSON-lines records with wrong media "
+                     + "type (" + badMediaType + ") with an exception other "
+                     + "than BadRequestException: " + e);
+
+            throw e;
+          }
+
+          try {
+            this.bulkDataServices.loadBulkRecordsDirect(null,
+                                                        null,
+                                                        null,
+                                                        "FOO",
+                                                        -1,
+                                                        badMediaType,
+                                                        fis2,
+                                                        uriInfo2);
+
+            fail("Unexpectedly loaded JSON records with wrong media type "
+                     + "with no error: " + badMediaType);
+
+          } catch (ForbiddenException e) {
+            // all good -- this is expected
+
+          } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpectedly loaded JSON records with wrong media type ("
+                     + badMediaType + ") with an exception other than "
+                     + "ForbiddenException: " + e);
+
+            throw e;
+          }
+
+        } catch (Exception e) {
+          System.err.println("********** FAILED TEST: " + testInfo);
+          e.printStackTrace();
+          if (e instanceof RuntimeException) throw ((RuntimeException) e);
+          throw new RuntimeException(e);
+        }
+      }
+    });
+  }
 
   @ParameterizedTest
   @MethodSource("getLoadBulkRecordsParameters")
@@ -139,6 +459,14 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       Map<String,String>  dataSourceMap)
   {
     this.performTest(() -> {
+      // check if media type is null
+      if (mediaType == null) {
+        // we cannot send a null media type via HTTP, so text/plain would be
+        // substituted, but we already handled a test with text/plain so just
+        // short-circuit here and mark the test as passed
+        return;
+      }
+
       this.livePurgeRepository();
 
       String uriText = this.formatServerUri(formatLoadURL(
@@ -148,7 +476,7 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
         long before = System.nanoTime();
         SzErrorResponse response = this.invokeServerViaHttp(
-            POST, uriText, null, mediaType.toString(),
+            POST, uriText, null, String.valueOf(mediaType),
             bulkDataFile.length(), new FileInputStream(bulkDataFile),
             SzErrorResponse.class);
         response.concludeTimers();
@@ -177,6 +505,14 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       Map<String,String>  dataSourceMap)
   {
     this.performTest(() -> {
+      // check if media type is null
+      if (mediaType == null) {
+        // we cannot send a null media type via HTTP, so text/plain would be
+        // substituted, but we already handled a test with text/plain so just
+        // short-circuit here and mark the test as passed
+        return;
+      }
+
       this.livePurgeRepository();
 
       String uriText = this.formatServerUri(formatLoadURL(
@@ -187,7 +523,7 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
         long before = System.nanoTime();
         com.senzing.gen.api.model.SzErrorResponse clientResponse
             = this.invokeServerViaHttp(
-            POST, uriText, null, mediaType.toString(),
+            POST, uriText, null, String.valueOf(mediaType),
             bulkDataFile.length(), new FileInputStream(bulkDataFile),
             com.senzing.gen.api.model.SzErrorResponse.class);
         long after = System.nanoTime();
