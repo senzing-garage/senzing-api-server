@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed in 3.4.12
 
+- Removed `LICENSEFILE` from `g2-init.json` file produced by `RepositoryManager`
 - Updated dependency versions to newer releases.
 
 ## [3.4.11] - 2023-02-09
