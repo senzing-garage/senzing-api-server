@@ -540,7 +540,6 @@ public class RepositoryManager {
       } else if (CONFIG_DIR != null) {
         subBuilder.add("CONFIGPATH", CONFIG_DIR.toString());
       }
-      subBuilder.add("LICENSEFILE", licensePath.getCanonicalPath());
       builder.add("PIPELINE", subBuilder);
 
       subBuilder = Json.createObjectBuilder();
