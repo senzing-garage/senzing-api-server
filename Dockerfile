@@ -1,5 +1,5 @@
-ARG BASE_IMAGE=senzing/senzingapi-runtime:3.4.0
-ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.10
+ARG BASE_IMAGE=senzing/senzingapi-runtime:3.5.0
+ARG BASE_BUILDER_IMAGE=debian:11.6-slim@sha256:7acda01e55b086181a6fa596941503648e423091ca563258e2c1657d140355b1
 
 # -----------------------------------------------------------------------------
 # Stage: builder
@@ -7,7 +7,7 @@ ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.10
 
 FROM ${BASE_BUILDER_IMAGE} as builder
 
-ENV REFRESHED_AT=2023-01-13
+ENV REFRESHED_AT=2023-04-03
 
 LABEL Name="senzing/senzing-api-server-builder" \
       Maintainer="support@senzing.com" \
@@ -39,7 +39,7 @@ RUN wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public > /
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2023-01-13
+ENV REFRESHED_AT=2023-04-03
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
