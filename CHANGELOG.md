@@ -6,12 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.4.12] - 2023-03-09
+## [3.5.0] - 2023-04-03
 
-### Changed in 3.4.12
+### Changed in 3.5.0
 
-- Removed `LICENSEFILE` from `g2-init.json` file produced by `RepositoryManager`
+- Fixed parsing of raw data in `SzHowMatchInfo`.
+- Updated `EntityDataReadServicesTest` tests for new default config which 
+  prefers relates as possible matches for name-only matches.
 - Updated dependency versions to newer releases.
+- Updated underlying Docker images.
 
 ## [3.4.11] - 2023-02-09
 
