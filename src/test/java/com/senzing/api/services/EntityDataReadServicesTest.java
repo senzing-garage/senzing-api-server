@@ -80,6 +80,9 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   private static final SzRecordId FGH012
       = SzRecordId.FACTORY.create(MARRIAGES, "FGH012");
 
+  public static final SemanticVersion MAXIMUM_NAME_ONLY_VERSION
+      = new SemanticVersion("3.5.0");
+
   private EntityDataServices entityDataServices;
   private EntityDataApi entityDataApi;
 
@@ -1927,6 +1930,9 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     boolean supportFiltering = (version == null) ? true // assume latest version
         : (MINIMUM_SEARCH_FILTERING_VERSION.compareTo(version) <= 0);
 
+    boolean supportNameOnly = (version == null) ? false // assume latest version
+        : (MAXIMUM_NAME_ONLY_VERSION.compareTo(version) > 0);
+
     Map<Map<String, Set<String>>, Map<SzAttributeSearchResultType, Integer>>
         searchCountMap = new LinkedHashMap<>();
 
@@ -1972,7 +1978,9 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "Mark Hightower"),
                  criterion("PHONE_NUMBER", "563-927-2833")),
-        sortedMap(Map.of(MATCH, 1, NAME_ONLY_MATCH, 1)));
+        sortedMap(Map.of(
+            MATCH, 1,
+            (supportNameOnly ? NAME_ONLY_MATCH : POSSIBLE_MATCH), 1)));
 
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "Mark Hightower"),

@@ -166,7 +166,7 @@ public interface SzHowMatchInfo {
     String matchKey = JsonUtilities.getString(jsonObject, "MATCH_KEY");
     if (matchKey != null && matchKey.trim().length() == 0) matchKey = null;
 
-    String ruleCode = JsonUtilities.getString(jsonObject, "WHY_ERRULE_CODE");
+    String ruleCode = JsonUtilities.getString(jsonObject, "ERRULE_CODE");
     if (ruleCode != null && ruleCode.trim().length() == 0) ruleCode = null;
 
     JsonObject featureScoresObject
