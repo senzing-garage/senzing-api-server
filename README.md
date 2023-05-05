@@ -650,11 +650,6 @@ This repository assumes a working knowledge of:
 
 1. [Docker](https://github.com/Senzing/knowledge-base/blob/main/WHATIS/docker.md)
 
-### Initialize Senzing
-
-1. If Senzing has not been initialized, visit
-   "[How to initialize Senzing with Docker](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/initialize-senzing-with-docker.md)".
-
 ### Configuration
 
 Configuration values specified by environment variable or command line parameter.
@@ -708,8 +703,6 @@ Configuration values specified by environment variable or command line parameter
 ### Volumes
 
 1. :pencil2: Specify the directory containing the Senzing installation.
-   Use the same `SENZING_VOLUME` value used when performing
-   "[How to initialize Senzing with Docker](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/initialize-senzing-with-docker.md)".
    Example:
 
     ```console
@@ -906,10 +899,10 @@ For other databases, these steps may be skipped.
 
 The following software programs need to be installed:
 
-1. [git](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/install-git.md)
-1. [make](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/install-make.md)
-1. [jq](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/install-jq.md)
-1. [docker](https://github.com/Senzing/knowledge-base/blob/main/HOWTO/install-docker.md)
+1. [git](https://github.com/Senzing/knowledge-base/blob/main/WHATIS/git.md)
+1. [make](https://github.com/Senzing/knowledge-base/blob/main/WHATIS/make.md)
+1. [jq](https://github.com/Senzing/knowledge-base/blob/main/WHATIS/jq.md)
+1. [docker](https://github.com/Senzing/knowledge-base/blob/main/WHATIS/docker.md)
 
 ### Clone repository
 
