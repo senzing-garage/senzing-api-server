@@ -1,1 +1,1 @@
-# Errors, Warnings, and Info messages
+# senzing-api-server errors
