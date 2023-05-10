@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated REST API specification sub-repo to version 3.4.1
 - Updated auto test cache to Senzing version `3.5.2`
 - Updated `BuildInfo` to reflect REST API spec version `3.4.1`
+- In `Dockerfile`, updated FROM instruction to `senzing/senzingapi-runtime:3.5.2`
 
 ## [3.5.0] - 2023-04-03
 
