@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.5.1] - 2023-05-09
+## [3.5.1] - 2023-05-10
 
 ### Changed in 3.5.1
 
@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded `swagger-annotations` to version `2.2.9`
 - Upgraded `maven-resources-plugin` to version `3.3.1`
 - Updated REST API specification sub-repo to version 3.4.1
-- Updated auto test cache to Senzing version `3.5.1`
+- Updated auto test cache to Senzing version `3.5.2`
 - Updated `BuildInfo` to reflect REST API spec version `3.4.1`
 
 ## [3.5.0] - 2023-04-03
