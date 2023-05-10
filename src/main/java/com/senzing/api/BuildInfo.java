@@ -16,7 +16,7 @@ public class BuildInfo {
   /**
    * The REST API specification version implemented by the API Server.
    */
-  public static final String REST_API_VERSION = "3.3.0";
+  public static final String REST_API_VERSION = "3.4.1";
 
   static {
     String resource = "/com/senzing/api/build-info.properties";
