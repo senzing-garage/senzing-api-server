@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [3.5.4] - 2023-06-29
+
+### Changed in 3.5.4
+
+- In `Dockerfile`, updated FROM instruction to `senzing/senzingapi-runtime:3.6.0`
+
 ## [3.5.3] - 2023-06-15
 
 ### Changed in 3.5.3
