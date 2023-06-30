@@ -21,7 +21,7 @@
     <dependency>
      <groupId>org.xerial</groupId>
      <artifactId>sqlite-jdbc</artifactId>
-       <version>3.41.2.1</version>
+       <version>3.42.0.0</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
@@ -97,7 +97,7 @@
     <dependency>
       <groupId>org.glassfish.jersey.containers</groupId>
       <artifactId>jersey-container-jetty-http</artifactId>
-      <version>2.39</version>
+      <version>2.40</version>
       <exclusions>
         <exclusion>
           <groupId>org.eclipse.jetty</groupId>
@@ -108,17 +108,17 @@
     <dependency>
       <groupId>org.glassfish.jersey.media</groupId>
       <artifactId>jersey-media-json-jackson</artifactId>
-      <version>2.39</version>
+      <version>2.40</version>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.media</groupId>
       <artifactId>jersey-media-multipart</artifactId>
-      <version>2.39</version>
+      <version>2.40</version>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.inject</groupId>
       <artifactId>jersey-hk2</artifactId>
-      <version>2.39</version>
+      <version>2.40</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -164,7 +164,7 @@
     <dependency>
       <groupId>com.ibm.icu</groupId>
       <artifactId>icu4j</artifactId>
-      <version>73.1</version>
+      <version>73.2</version>
     </dependency>
     <dependency>
       <groupId>org.ini4j</groupId>
@@ -174,17 +174,17 @@
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>sqs</artifactId>
-      <version>2.20.20</version>
+      <version>2.20.94</version>
     </dependency>
     <dependency>
       <groupId>com.rabbitmq</groupId>
       <artifactId>amqp-client</artifactId>
-      <version>5.17.0</version>
+      <version>5.18.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
       <artifactId>kafka-clients</artifactId>
-      <version>3.4.0</version>
+      <version>3.5.0</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
