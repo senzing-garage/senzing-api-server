@@ -40,7 +40,8 @@ To build the Senzing REST API Server you will need Apache Maven (recommend versi
 as well as OpenJDK version 11.0.x (recommend version 11.0.6+10 or later).
 
 You will also need the Senzing product installation to run the Senzing REST API Server,
-but you should not need it to build the server.  The Senzing REST API Server should
+but you should not need it to build the server.
+The Senzing REST API Server should
 build (including running of auto tests) without Senzing installed.  The notable exception
 to that rule is if you want to run the auto tests as end-to-end (E2E) tests using a live
 Senzing product installation rather than cached test data (more on that below).
