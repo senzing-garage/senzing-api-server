@@ -61,7 +61,7 @@ target-v*
 
 # VS Code files
 .vscode/
-*.project
+.project
 
 # Intellij
 .idea/
