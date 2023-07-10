@@ -47,8 +47,10 @@ test-repos
 # Ignore Sass Cache
 .sass-cache
 
-# Ignore rubymine
+# Ignore IDE project files
 .idea/
+.vscode/
+.project
 
 # MAC OSX
 .DS_Store
