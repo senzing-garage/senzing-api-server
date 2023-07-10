@@ -47,11 +47,6 @@ test-repos
 # Ignore Sass Cache
 .sass-cache
 
-# Ignore IDE project files
-.idea/
-.vscode/
-.project
-
 # MAC OSX
 .DS_Store
 
@@ -63,6 +58,10 @@ artifacts/
 dist
 target
 target-v*
+
+# VS Code files
+.vscode/
+*.project
 
 # Intellij
 .idea/
