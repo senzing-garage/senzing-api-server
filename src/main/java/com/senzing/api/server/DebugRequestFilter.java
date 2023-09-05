@@ -25,19 +25,19 @@ public class DebugRequestFilter implements Filter {
       requestUri = requestUri + "?" + queryString;
     }
     long start = System.nanoTime();
-    debugLog("Received request on thread " + threadId + ": " + requestUri);
+    logDebug("Received request on thread " + threadId + ": " + requestUri);
     try {
       filterChain.doFilter(servletRequest, servletResponse);
 
     } catch (IOException|ServletException|RuntimeException e) {
-      debugLog("Request failed on thread " + threadId + ": " + requestUri,
+      logDebug("Request failed on thread " + threadId + ": " + requestUri,
                e.toString());
       throw e;
 
     } finally {
       long end = System.nanoTime();
       long millis = (end - start) / 1000000L;
-      debugLog("Request concluded in " + millis + "ms on thread "
+      logDebug("Request concluded in " + millis + "ms on thread "
                    + threadId + ": " + requestUri);
     }
   }

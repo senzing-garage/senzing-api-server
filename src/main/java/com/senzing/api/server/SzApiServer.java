@@ -1759,6 +1759,7 @@ public class SzApiServer implements SzApiProvider {
    * @throws Exception If a failure occurs.
    * @deprecated Use {@link #SzApiServer(SzApiServerOptions)} instead.
    */
+  @Deprecated
   public SzApiServer(Integer httpPort,
                      InetAddress bindAddress,
                      Integer concurrency,
@@ -1794,6 +1795,7 @@ public class SzApiServer implements SzApiProvider {
    * @throws Exception If a failure occurs.
    * @deprecated Use {@link #SzApiServer(SzApiServerOptions)} instead.
    */
+  @Deprecated
   public SzApiServer(AccessToken accessToken,
                      Integer httpPort,
                      InetAddress bindAddress,
