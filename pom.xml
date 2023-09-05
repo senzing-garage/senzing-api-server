@@ -308,6 +308,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.4.0</version>
         <executions>
           <execution>
             <phase>generate-test-sources</phase>
@@ -403,7 +404,7 @@
               <resources>
                 <resource>
                   <directory>${basedir}/src/main/resources</directory>
-                  <filtering>true</filtering>
+                  <filtering>true</filtering> 
                 </resource>
                 <resource>
                   <directory>${project.build.directory}/generated-api-spec</directory>
@@ -412,6 +413,7 @@
                   </includes>
                 </resource>
               </resources>
+              <propertiesEncoding>ISO-8859-1</propertiesEncoding>
             </configuration>
           </execution>
         </executions>
