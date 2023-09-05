@@ -19,7 +19,7 @@ enum RepoManagerOption
   PURGE_REPO("--purge-repo", true, 0),
   LOAD_FILE("--load-file", true, 1),
   ADD_RECORD("--add-record", true, 1),
-  CONFIG_SOURCES("--config-sources", true),
+  CONFIG_SOURCES("--config-sources", true, 1, -1),
   DATA_SOURCE("--data-source", false, 1),
   REPOSITORY("--repo", false, 1),
   VERBOSE("--verbose", false,
