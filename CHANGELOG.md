@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.6] - 2023-09-06
+
+### Changed in 3.5.6
+
+- Updated remaining `2.39` Jersey dependencies to version `2.40`
+- Updated pom.xml dependencies for Jetty, Swagger, and Amazon SQS
+- Minor pom.xml fixes (added encoding for filtering resources, added version for `build-helper-maven-plugin`)
+- Fixed RepoManagerOption parameter settings for `--config-sources` (`CONFIG_SOURCES`)
+- Added version 3.7.0 test data cache
 
 ## [3.5.5] - 2023-06-30
 

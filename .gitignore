@@ -50,6 +50,9 @@ test-repos
 # Ignore rubymine
 .idea/
 
+# Ignore VScode
+.vscode/
+
 # MAC OSX
 .DS_Store
 
@@ -61,6 +64,10 @@ artifacts/
 dist
 target
 target-v*
+
+# VS Code files
+.vscode/
+.project
 
 # Intellij
 .idea/
