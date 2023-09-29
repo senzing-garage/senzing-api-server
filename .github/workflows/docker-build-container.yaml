@@ -1,0 +1,24 @@
+name: docker-build-container.yaml
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  docker-build-container:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - name: Git Update submodules
+        run: git submodule update --init --recursive
+      - name: Build docker image
+        uses: Senzing/github-action-docker-buildx-build@latest
+        with:
+          image-repository: senzing/senzing-api-server
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
