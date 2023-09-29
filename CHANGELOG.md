@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.7] - 2023-09-29
+
+### Changed in 3.5.7
+
+- In `Dockerfile`, updated FROM instruction to `senzing/senzingapi-runtime:3.7.1`
+- In `Dockerfile`, update to Java 11 JDK
+
 ## [3.5.6] - 2023-09-06
 
 ### Changed in 3.5.6
@@ -42,6 +49,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [3.5.2] - 2023-06-08
 
 ### Changed in 3.5.2
+
 - Upgraded "Jackson" libraries to version `2.15.2`
 - Upgraded "icu4J" to version `73.1`
 - Upgraded "slf4j" to version `2.0.7`
@@ -96,6 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed in 3.4.8
 
 - In `Dockerfile`, updated FROM instruction to `senzing/senzingapi-tools:3.4.0`
+
 >>>>>>> main
 
 ## [3.4.7] - 2023-01-04
