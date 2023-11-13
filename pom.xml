@@ -4,7 +4,7 @@
   <groupId>com.senzing</groupId>
   <artifactId>senzing-api-server</artifactId>
   <packaging>jar</packaging>
-  <version>3.5.7</version>
+  <version>3.5.7.1</version>
   <name>senzing-api-server</name>
   <url>http://maven.apache.org</url>
   <dependencies>
@@ -21,7 +21,7 @@
     <dependency>
      <groupId>org.xerial</groupId>
      <artifactId>sqlite-jdbc</artifactId>
-       <version>3.43.0.0</version>
+       <version>3.42.0.1</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
