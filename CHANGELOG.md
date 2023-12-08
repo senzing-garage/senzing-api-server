@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.9] - 2023-12-08
+
+### Changed in 3.5.9
+
+- Reverted sqlite-jdbc to 3.42.0.1 because the SQLite team haphazardly removed
+  functionality that has been supported for 16 years.
+- Added method to ServicesSupport for creating InternalServerErrorExceptions
+  with a String message rather than a G2Fallible or another Exception
+- Updated other dependencies to newer versions to match other Senzing projects
+
 ## [3.5.8] - 2023-11-14
 
 ### Changed in 3.5.8
