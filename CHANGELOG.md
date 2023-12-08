@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.8] - 2023-11-14
+
+### Changed in 3.5.8
+
+- In `Dockerfile`, updated FROM instruction to `senzing/senzingapi-runtime:3.8.0`
+- In `pom.xml`, updated:
+  - sqlite-jdbc 3.43.0.0
+  - jackson-annotations 2.15.3
+  - amqp-client 5.19.0
+
 ## [3.5.7] - 2023-09-29
 
 ### Changed in 3.5.7
