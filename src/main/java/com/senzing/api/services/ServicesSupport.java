@@ -203,6 +203,31 @@ public interface ServicesSupport {
   }
 
   /**
+   * Creates an {@link InternalServerErrorException} and builds a response
+   * with an {@link SzErrorResponse} using the specified {@link UriInfo}
+   * and the specified error message.
+   *
+   * @param httpMethod The HTTP method for the request.
+   * @param uriInfo    The {@link UriInfo} from the request.
+   * @param timers     The {@link Timers} object for the timings that were taken.
+   * @param message    The error message describing the error.
+   * @return The {@link InternalServerErrorException}
+   */
+  default InternalServerErrorException newInternalServerErrorException(
+      SzHttpMethod  httpMethod,
+      UriInfo       uriInfo,
+      Timers        timers,
+      String        message) 
+  {
+    Response.ResponseBuilder builder = Response.status(SERVER_ERROR);
+    builder.entity(this.newErrorResponse(
+        this.newMeta(httpMethod, SERVER_ERROR, timers),
+        this.newLinks(uriInfo), message));
+    builder.type(APPLICATION_JSON);
+    return new InternalServerErrorException(builder.build());
+  }
+
+  /**
    * Creates an {@link ServiceUnavailableException} and builds a response
    * with an {@link SzErrorResponse} using the specified {@link UriInfo}
    * and the specified exception.
@@ -211,7 +236,7 @@ public interface ServicesSupport {
    * @param uriInfo    The {@link UriInfo} from the request.
    * @param timers     The {@link Timers} object for the timings that were taken.
    * @param message    The message describing the error.
-   * @return The {@link ServiceUnavailableException}
+   * @return The {@link ServiceUnavailableException} that was created.
    */
   default ServiceUnavailableException newServiceUnavailableErrorException(
       SzHttpMethod httpMethod,
@@ -236,7 +261,7 @@ public interface ServicesSupport {
    * @param uriInfo    The {@link UriInfo} from the request.
    * @param timers     The {@link Timers} object for the timings that were taken.
    * @param fallible   The {@link G2Fallible} to get the last exception from.
-   * @return The {@link InternalServerErrorException}
+   * @return The {@link InternalServerErrorException} that was created.
    */
   default InternalServerErrorException newInternalServerErrorException(
       SzHttpMethod httpMethod,
@@ -264,7 +289,7 @@ public interface ServicesSupport {
    * @param uriInfo    The {@link UriInfo} from the request.
    * @param timers     The {@link Timers} object for the timings that were taken.
    * @param fallible   The {@link G2Fallible} to get the last exception from.
-   * @return The {@link InternalServerErrorException}
+   * @return The {@link NotFoundException} that was created.
    */
   default NotFoundException newNotFoundException(
       SzHttpMethod httpMethod,
@@ -287,7 +312,7 @@ public interface ServicesSupport {
    * @param httpMethod The HTTP method for the request.
    * @param uriInfo    The {@link UriInfo} from the request.
    * @param timers     The {@link Timers} object for the timings that were taken.
-   * @return The {@link InternalServerErrorException}
+   * @return The {@link NotFoundException} that was created.
    */
   default NotFoundException newNotFoundException(
       SzHttpMethod httpMethod,
@@ -309,7 +334,7 @@ public interface ServicesSupport {
    * @param uriInfo      The {@link UriInfo} from the request.
    * @param timers       The {@link Timers} object for the timings that were taken.
    * @param errorMessage The error message.
-   * @return The {@link InternalServerErrorException}
+   * @return The {@link NotFoundException} that was created.
    */
   default NotFoundException newNotFoundException(
       SzHttpMethod httpMethod,
@@ -332,7 +357,7 @@ public interface ServicesSupport {
    * @param uriInfo      The {@link UriInfo} from the request.
    * @param timers       The {@link Timers} object for the timings that were taken.
    * @param errorMessage The error message.
-   * @return The {@link InternalServerErrorException}
+   * @return The {@link NotAllowedException} that was created.
    */
   default NotAllowedException newNotAllowedException(
       SzHttpMethod httpMethod,
@@ -397,7 +422,7 @@ public interface ServicesSupport {
   }
 
   /**
-   * Creates an {@link InternalServerErrorException} and builds a response
+   * Creates an {@link BadRequestException} and builds a response
    * with an {@link SzErrorResponse} using the specified {@link UriInfo}
    * and the specified exception.
    *
@@ -405,7 +430,7 @@ public interface ServicesSupport {
    * @param uriInfo    The {@link UriInfo} from the request.
    * @param timers     The {@link Timers} object for the timings that were taken.
    * @param exception  The exception that caused the error.
-   * @return The {@link InternalServerErrorException}
+   * @return The {@link BadRequestException} that was created.
    */
   default BadRequestException newBadRequestException(
       SzHttpMethod httpMethod,
@@ -456,7 +481,7 @@ public interface ServicesSupport {
    * @param timers     The {@link Timers} object for the timings that were taken.
    * @param engineApi  The {@link G2Fallible} to get the last exception from.
    * @return A newly created {@link NotFoundException} or {@link
-   * InternalServerErrorException}.
+   *         InternalServerErrorException}.
    */
   default WebApplicationException newPossiblyNotFoundException(
       SzHttpMethod httpMethod,
