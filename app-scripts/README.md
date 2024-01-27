@@ -112,7 +112,7 @@ EXAMPLE: run-rest-api-server.sh --force "My Project" ./senzing-api-server.jar -h
    <senzing-api-server-jar-path>
             The path to the senzing-api-server-[version].jar file
             that was built from the associated github project.
-            See https://github.com/Senzing/senzing-api-server
+            See https://github.com/senzing-garage/senzing-api-server
 
 
    [api-server-options*]

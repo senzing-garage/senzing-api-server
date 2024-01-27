@@ -16,7 +16,7 @@ jobs:
       - name: Git Update submodules
         run: git submodule update --init --recursive
       - name: Build docker image and push to DockerHub
-        uses: Senzing/github-action-docker-buildx-build@latest
+        uses: senzing-factory/github-action-docker-buildx-build@latest
         with:
           build-options: "--push"
           image-repository: senzing/senzing-api-server
