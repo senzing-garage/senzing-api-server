@@ -1,0 +1,14 @@
+name: 'add to project app server dependabot'
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+
+  add-to-project-dependabot:
+    secrets:
+      SENZING_GITHUB_PROJECT_RW_TOKEN: ${{ secrets.SENZING_GITHUB_PROJECT_RW_TOKEN }}
+    uses: senzing-factory/build-resources/.github/workflows/add-to-project-dependabot.yaml@main
+    with:
+      project: ${{ vars.SENZING_PROJECT_APP_SERVER }}
