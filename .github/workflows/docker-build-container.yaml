@@ -1,20 +1,27 @@
-name: docker-build-container.yaml
+name: docker build container
 
 on: [push]
 
 jobs:
   docker-build-container:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      - name: checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: '0'
-      - name: Git Update submodules
-        run: git submodule update --init --recursive
-      - name: Build docker image
-        uses: senzing-factory/github-action-docker-buildx-build@latest
+          submodules: recursive
+
+      - name: get repo name
+        id: repo-basename
+        run: |
+          echo "repo=$(basename ${{ github.repository }})" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: build docker image
+        uses: senzing-factory/github-action-docker-buildx-build@v1
         with:
-          image-repository: senzing/senzing-api-server
+          image-repository: senzing/${{ steps.repo-basename.outputs.repo }}
           password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
           username: ${{ secrets.DOCKERHUB_USERNAME }}
