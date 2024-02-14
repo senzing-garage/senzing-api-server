@@ -15,7 +15,7 @@ jobs:
         with:
           fetch-depth: '0'
           submodules: recursive
-        
+  
       - name: get repo name
         id: repo-basename
         run: |
