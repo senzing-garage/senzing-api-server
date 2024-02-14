@@ -1,4 +1,4 @@
-name: docker-push-containers-to-dockerhub.yaml
+name: docker push containers to dockerhub
 
 on:
   push:
@@ -8,18 +8,25 @@ on:
 jobs:
   docker-push-containers-to-dockerhub:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repository
+      - name: checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: '0'
-      - name: Git Update submodules
-        run: git submodule update --init --recursive
-      - name: Build docker image and push to DockerHub
-        uses: senzing-factory/github-action-docker-buildx-build@latest
+          submodules: recursive
+        
+      - name: get repo name
+        id: repo-basename
+        run: |
+          echo "repo=$(basename ${{ github.repository }})" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: build docker image and push to DockerHub
+        uses: senzing-factory/github-action-docker-buildx-build@v1
         with:
           build-options: "--push"
-          image-repository: senzing/senzing-api-server
+          image-repository: senzing/${{ steps.repo-basename.outputs.repo }}
           image-tag: ${{ github.ref_name }}
           password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
           platforms: "linux/amd64,linux/arm64"
