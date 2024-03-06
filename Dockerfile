@@ -11,7 +11,7 @@ ENV REFRESHED_AT=2023-11-14
 
 LABEL Name="senzing/senzing-api-server-builder" \
       Maintainer="support@senzing.com" \
-      Version="3.5.8"
+      Version="3.5.10"
 
 # Set environment variables.
 
@@ -40,7 +40,7 @@ ENV REFRESHED_AT=2023-11-14
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
-      Version="3.5.8"
+      Version="3.5.10"
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
 

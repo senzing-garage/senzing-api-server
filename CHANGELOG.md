@@ -6,6 +6,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.10] - 2024-03-06
+
+### Changed in 3.5.10
+
+- Updated dependencies:
+  - Updated `senzing-commons` to version `3.2.0` from version `3.1.4` 
+  - Updated Jetty dependencies to version `9.4.54.v20240208`
+    from version `9.4.53.v20231009` 
+  - Updated Jackson dependencies to version `2.16.1` from version `2.15.3`
+  - Updated `junit-jupiter` to version `5.10.2` from version `5.10.1`
+  - Updated `icu4j` to version `74.2` from version `74.1`
+  - qUpdated `sqs` to version `2.24.12` from version `2.21.40`
+  - Updated `kafka-clients` to version `3.7.0` from version `3.6.1`
+  - Updated SLF4J dependencies to version `2.0.12` from version `2.0.9`
+  - Updated `org.glassfish/javax.annotation` to `jakarta.annotation-api` version `2.1.1`
+  - Updated Spring dependencies to version `5.3.32` from version `5.3.30`
+  - Updated `swagger-annotations` to version `2.2.20` from version `2.2.18`
+  - Updated `build-helper-manve-plugin` to version `3.5.0` from version `3.4.0`
+  - Updated `maven-surefire-plugin` to version `3.2.5` from version `3.1.2`
+  - Updated `maven-compiler-plugin` to version `3.12.1` from version `3.11.0`
+  - Updated `maven-shade-plugin` to version `3.5.2` from version `3.5.1`
+
 ## [3.5.9] - 2023-12-08
 
 ### Changed in 3.5.9
