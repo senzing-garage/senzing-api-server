@@ -23,7 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated `org.glassfish/javax.annotation` to `jakarta.annotation-api` version `2.1.1`
   - Updated Spring dependencies to version `5.3.32` from version `5.3.30`
   - Updated `swagger-annotations` to version `2.2.20` from version `2.2.18`
-  - Updated `swagger-codegen-maven-plugin` to version `3.0.54` from version `3.0.20`
   - Updated `build-helper-manve-plugin` to version `3.5.0` from version `3.4.0`
   - Updated `maven-surefire-plugin` to version `3.2.5` from version `3.1.2`
   - Updated `maven-compiler-plugin` to version `3.12.1` from version `3.11.0`
