@@ -1,5 +1,5 @@
-ARG BASE_IMAGE=senzing/senzingapi-runtime:3.8.0
-ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.21
+ARG BASE_IMAGE=senzing/senzingapi-runtime:3.9.0
+ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.22
 
 # -----------------------------------------------------------------------------
 # Stage: builder
@@ -7,7 +7,7 @@ ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.21
 
 FROM ${BASE_BUILDER_IMAGE} as builder
 
-ENV REFRESHED_AT=2023-11-14
+ENV REFRESHED_AT=2024-03-18
 
 LABEL Name="senzing/senzing-api-server-builder" \
       Maintainer="support@senzing.com" \
@@ -36,7 +36,7 @@ RUN export SENZING_API_SERVER_VERSION=$(mvn "help:evaluate" -Dexpression=project
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2023-11-14
+ENV REFRESHED_AT=2024-03-18
 
 LABEL Name="senzing/senzing-api-server" \
       Maintainer="support@senzing.com" \
