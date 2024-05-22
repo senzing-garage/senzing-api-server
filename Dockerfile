@@ -1,5 +1,5 @@
-ARG BASE_IMAGE=senzing/senzingapi-runtime:3.9.0
-ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.22
+ARG BASE_IMAGE=senzing/senzingapi-runtime:3.10.1
+ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.23
 
 # -----------------------------------------------------------------------------
 # Stage: builder
@@ -7,11 +7,7 @@ ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.22
 
 FROM ${BASE_BUILDER_IMAGE} as builder
 
-ENV REFRESHED_AT=2024-03-18
-
-LABEL Name="senzing/senzing-api-server-builder" \
-      Maintainer="support@senzing.com" \
-      Version="3.5.10"
+ENV REFRESHED_AT=2024-05-22
 
 # Set environment variables.
 
@@ -26,8 +22,8 @@ COPY . /senzing-api-server
 WORKDIR /senzing-api-server
 
 RUN export SENZING_API_SERVER_VERSION=$(mvn "help:evaluate" -Dexpression=project.version -q -DforceStdout) \
- && make package \
- && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_VERSION}.jar "/senzing-api-server.jar"
+  && make package \
+  && cp /senzing-api-server/target/senzing-api-server-${SENZING_API_SERVER_VERSION}.jar "/senzing-api-server.jar"
 
 
 # -----------------------------------------------------------------------------
@@ -36,11 +32,11 @@ RUN export SENZING_API_SERVER_VERSION=$(mvn "help:evaluate" -Dexpression=project
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2024-03-18
+ENV REFRESHED_AT=2024-05-22
 
 LABEL Name="senzing/senzing-api-server" \
-      Maintainer="support@senzing.com" \
-      Version="3.5.10"
+  Maintainer="support@senzing.com" \
+  Version="3.5.11"
 
 HEALTHCHECK CMD ["/app/healthcheck.sh"]
 
@@ -51,24 +47,24 @@ USER root
 # Install packages via apt.
 
 RUN apt update \
- && apt -y install \
-      gnupg2 \
-      jq \
-      libodbc1 \
-      postgresql-client \
-      unixodbc \
- && rm -rf /var/lib/apt/lists/*
+  && apt -y install \
+  gnupg2 \
+  jq \
+  libodbc1 \
+  postgresql-client \
+  unixodbc \
+  && rm -rf /var/lib/apt/lists/*
 
 # Install Java-11.
 
 RUN mkdir -p /etc/apt/keyrings \
- && wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public > /etc/apt/keyrings/adoptium.asc
+  && wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public > /etc/apt/keyrings/adoptium.asc
 
 RUN echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" >> /etc/apt/sources.list
 
 RUN apt update \
- && apt install -y temurin-11-jdk \
- && rm -rf /var/lib/apt/lists/*
+  && apt install -y temurin-11-jdk \
+  && rm -rf /var/lib/apt/lists/*
 
 # Copy files from repository.
 
