@@ -2,6 +2,9 @@ name: docker build container
 
 on: [push]
 
+permissions:
+  contents: read
+
 jobs:
   docker-build-container:
     runs-on: ubuntu-latest

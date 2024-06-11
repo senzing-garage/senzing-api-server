@@ -44,10 +44,10 @@ HEALTHCHECK CMD ["/app/healthcheck.sh"]
 
 USER root
 
-# Install packages via apt.
+# Install packages via apt-get.
 
-RUN apt update \
-  && apt -y install \
+RUN apt-get update \
+  && apt-get -y install \
   gnupg2 \
   jq \
   libodbc1 \
@@ -62,8 +62,8 @@ RUN mkdir -p /etc/apt/keyrings \
 
 RUN echo "deb [signed-by=/etc/apt/keyrings/adoptium.asc] https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" >> /etc/apt/sources.list
 
-RUN apt update \
-  && apt install -y temurin-11-jdk \
+RUN apt-get update \
+  && apt-get install -y temurin-11-jdk \
   && rm -rf /var/lib/apt/lists/*
 
 # Copy files from repository.
