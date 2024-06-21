@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.12] - 2024-06-21
+
+### Changed in 3.5.12
+
+- Updated auto test cache to Senzing version `3.10.3`
+- Updated dependencies:
+  - Updated `senzing-commons` from version `3.2.0` to `3.3.0`
+  - Updated `jersey-xxxx` dependencies from version `2.41` to `2.43`
+  - Updated `jackson-xxxx` dependencies from version `2.16.1` to `2.17.1`
+  - Updated `commons-csv` from version `1.10.0` to `1.11.0`
+  - Updated `icu4j` from version `74.2` to `75.1`
+  - Updated Amazon `sqs` from version `2.24.12` to `2.26.4`
+  - Updated `amqp-client` from version `5.20.0` to `5.21.0`
+  - Updated `slf4j-api` and `slf4j-simple` from version `2.0.12` to `2.0.13`
+  - Updated `maven-surefire-plugin` from version `3.2.5` to `3.3.0`
+  - Updated `maven-compiler-plugin` from version `3.12.1` to `3.13.0`
+  - Updated `maven-shade-plugin` from version `3.5.2` to `3.6.0`
+
 ## [3.5.11] - 2024-05-22
 
 ### Changed in 3.5.11
