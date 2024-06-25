@@ -9,6 +9,10 @@ FROM ${BASE_BUILDER_IMAGE} as builder
 
 ENV REFRESHED_AT=2024-06-24
 
+# Run as "root" for system installation.
+
+USER root
+
 # Set environment variables.
 
 ENV SENZING_ROOT=/opt/senzing
