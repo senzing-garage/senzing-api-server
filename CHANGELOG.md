@@ -17,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated Amazon `sqs` from version `2.26.4` to `2.26.27`
   - Updated `kafka-clients` dependencies from version `3.7.0` to `3.8.0`
   - Updated `junit-jupiter` from version `5.10.2` to `5.10.3`
-  - Updated `maven-surefire-plugin` from version `3.3.1` to `3.6.0`
 
 ## [3.5.13] - 2024-06-24
 
