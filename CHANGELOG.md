@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.14] - 2024-08-02
+
+### Changed in 3.5.14
+
+- Updated dependencies:
+  - Updated `jetty-xxxx` dependencies from version `9.4.54.v20240208` to `9.4.55.v20240627`
+  - Updated `jersey-xxxx` dependencies from version `2.43` to `2.44`
+  - Updated `jackson-xxxx` dependencies from version `2.17.1` to `2.17.2`
+  - Updated Amazon `sqs` from version `2.26.4` to `2.26.27`
+  - Updated `kafka-clients` dependencies from version `3.7.0` to `3.8.0`
+  - Updated `junit-jupiter` from version `5.10.2` to `5.10.3`
+
 ## [3.5.13] - 2024-06-24
 
 ### Changed in 3.5.13
