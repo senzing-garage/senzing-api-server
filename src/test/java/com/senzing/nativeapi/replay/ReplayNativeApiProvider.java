@@ -304,9 +304,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       // to use for a "replay" test run THEN we have to fail with an error
       if (installed || direct || record || EXISTING_CACHE_DIRS.isEmpty()) {
         e.printStackTrace();
-        throw new ExceptionInInitializerError(
-            "Failed to find valid Senzing installation for integration test "
-            + "run.");
+        throw new ExceptionInInitializerError(e);
       }
 
     } catch (Error e) {
