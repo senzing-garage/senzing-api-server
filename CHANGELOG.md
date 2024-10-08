@@ -6,6 +6,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 [markdownlint](https://dlaa.me/markdownlint/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.15] - 2024-10-08
+
+### Changed in 3.5.15
+
+- Updated dependencies:
+  - Updated `senzing-commons-java` dependencies from version `3.3.0` to `3.3.1`
+  - Updated `jetty-xxxx` dependencies from version `9.4.55.v20240627` to `9.4.56.v20240826`
+  - Updated `jersey-xxxx` dependencies from version `2.44` to `2.45`
+  - Updated `jackson-xxxx` dependencies from version `2.17.2` to `2.18.0`
+  - Updated `commons-csv` dependencies from version `1.11.0` to `1.12.0`
+  - Updated Amazon `sqs` from version `2.26.27` to `2.28.17`
+  - Updated `amqp-client` dependencies from version `5.21.0` to `5.22.0`
+  - Updated `slf4j-xxxxx` dependencies from version `2.0.13` to `2.0.16`
+  - Updated `junit-jupiter` from version `5.10.3` to `5.11.2`
+
 ## [3.5.14] - 2024-08-02
 
 ### Changed in 3.5.14
