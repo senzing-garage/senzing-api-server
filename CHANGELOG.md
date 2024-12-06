@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed in 3.5.16
 
+- Updated test data cache to use Senzing version 3.12.3
 - Updated dependencies:
   - Updated `senzing-commons-java` dependencies from version `3.3.1` to `3.3.2`
   - Updated `jackson-xxxx` dependencies from version `2.18.0` to `2.18.2`
