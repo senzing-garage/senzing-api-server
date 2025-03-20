@@ -13,7 +13,7 @@ jobs:
       - name: checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: '0'
+          fetch-depth: "0"
           submodules: recursive
 
       - name: get repo name
@@ -23,7 +23,7 @@ jobs:
         shell: bash
 
       - name: build docker image
-        uses: senzing-factory/github-action-docker-buildx-build@v1
+        uses: senzing-factory/github-action-docker-buildx-build@v2
         with:
           image-repository: senzing/${{ steps.repo-basename.outputs.repo }}
           password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
