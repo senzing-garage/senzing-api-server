@@ -5,7 +5,7 @@ ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.24
 # Stage: builder
 # -----------------------------------------------------------------------------
 
-FROM ${BASE_BUILDER_IMAGE} as builder
+FROM ${BASE_BUILDER_IMAGE} AS builder
 
 ENV REFRESHED_AT=2024-06-24
 
