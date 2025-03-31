@@ -32,4 +32,5 @@ jobs:
           image-tag: ${{ github.ref_name }}
           password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
           push: true
+          sign-image: true
           username: ${{ secrets.DOCKERHUB_USERNAME }}
