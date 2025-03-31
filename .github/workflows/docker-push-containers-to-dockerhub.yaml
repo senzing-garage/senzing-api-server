@@ -8,7 +8,7 @@ on:
 permissions:
   attestations: write
   contents: write
-  id-token: writed
+  id-token: write
 
 jobs:
   docker-push-containers-to-dockerhub:
