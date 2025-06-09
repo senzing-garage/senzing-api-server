@@ -75,18 +75,16 @@ public class SzApiServer implements SzApiProvider {
   public static final String SERVER_DESCRIPTION = "Senzing REST API Server";
 
   /**
-   * The resource file for the service endpoint classes.  The value of this is
+   * The resource file for the service endpoint classes. The value of this is
    * {@value}.
    */
-  public static final String SERVICES_RESOURCE_FILE
-      = "service-endpoints.properties";
+  public static final String SERVICES_RESOURCE_FILE = "service-endpoints.properties";
 
   /**
-   * The resource file for the Web Socket endpoint classes.  The value of this
+   * The resource file for the Web Socket endpoint classes. The value of this
    * is {@value}.
    */
-  public static final String WEB_SOCKETS_RESOURCE_FILE
-      = "web-socket-endpoints.properties";
+  public static final String WEB_SOCKETS_RESOURCE_FILE = "web-socket-endpoints.properties";
 
   /**
    * The GZIP inflate buffer size.
@@ -101,8 +99,7 @@ public class SzApiServer implements SzApiProvider {
   /**
    * The HTTP output aggregation size for HTTP connections.
    */
-  private static final int HTTP_OUTPUT_AGGREGATION_SIZE
-      = HTTP_OUTPUT_BUFFER_SIZE / 4;
+  private static final int HTTP_OUTPUT_AGGREGATION_SIZE = HTTP_OUTPUT_BUFFER_SIZE / 4;
 
   /**
    * The HTTP request header size for HTTP connections.
@@ -140,18 +137,17 @@ public class SzApiServer implements SzApiProvider {
   private static final ZoneId BUILD_ZONE = ZoneId.of("America/Los_Angeles");
 
   /**
-   * The {@link DateTimeFormatter} for interpretting the build number as a
+   * The {@link DateTimeFormatter} for interpreting the build number as a
    * LocalDateTime instance.
    */
-  private static final DateTimeFormatter BUILD_DATE_FORMATTER
-      = DateTimeFormatter.ofPattern(BUILD_DATE_PATTERN).withZone(BUILD_ZONE);
+  private static final DateTimeFormatter BUILD_DATE_FORMATTER = DateTimeFormatter.ofPattern(BUILD_DATE_PATTERN)
+      .withZone(BUILD_ZONE);
 
   /**
    * The number of milliseconds to provide advance warning of an expiring
    * license.
    */
-  private static final long EXPIRATION_WARNING_PERIOD
-      = 1000L * 60L * 60L * 24L * 30L;
+  private static final long EXPIRATION_WARNING_PERIOD = 1000L * 60L * 60L * 24L * 30L;
 
   private static final String JAR_FILE_NAME = getJarName(SzApiServer.class);
 
@@ -347,7 +343,7 @@ public class SzApiServer implements SzApiProvider {
   protected JsonObject initJson;
 
   /**
-   * The forced config ID to use for initialiaation -- this disables the
+   * The forced config ID to use for initialization -- this disables the
    * ability to detect config changes and reload.
    */
   protected Long configId = null;
@@ -374,8 +370,8 @@ public class SzApiServer implements SzApiProvider {
   protected boolean adminEnabled;
 
   /**
-   * The minimum period of time between logging of stats.  If this is zero (0)
-   * then stats will not be logged.  The time is a minimum because stats will
+   * The minimum period of time between logging of stats. If this is zero (0)
+   * then stats will not be logged. The time is a minimum because stats will
    * not be logged if no operations are taking place within the process that are
    * affecting entity scoring.
    */
@@ -471,7 +467,7 @@ public class SzApiServer implements SzApiProvider {
    * the server is bound.
    *
    * @return The {@link InetAddress} for the IP address interface to which
-   * the server is bound.
+   *         the server is bound.
    */
   public InetAddress getIPAddress() {
     this.assertNotShutdown();
@@ -540,7 +536,8 @@ public class SzApiServer implements SzApiProvider {
   public G2Engine getEngineApi() {
     this.assertNotShutdown();
     return (this.retryEngineApi == null)
-        ? this.engineApi : this.retryEngineApi;
+        ? this.engineApi
+        : this.retryEngineApi;
   }
 
   /**
@@ -549,8 +546,8 @@ public class SzApiServer implements SzApiProvider {
    * default configuration.
    *
    * @return The {@link G2ConfigMgr} API interface, or <tt>null</tt> if the
-   * configuration is not automatically being picked up as the current
-   * default configuration.
+   *         configuration is not automatically being picked up as the current
+   *         default configuration.
    */
   @Override
   public G2ConfigMgr getConfigMgrApi() {
@@ -572,7 +569,7 @@ public class SzApiServer implements SzApiProvider {
    * Checks whether or not only read operations are being allowed.
    *
    * @return <tt>true</tt> if only read operations are allowed, and
-   * <tt>false</tt> if all operations are being supported.
+   *         <tt>false</tt> if all operations are being supported.
    */
   @Override
   public boolean isReadOnly() {
@@ -584,7 +581,7 @@ public class SzApiServer implements SzApiProvider {
    * Checks whether or not admin operations are enabled.
    *
    * @return <tt>true</tt> if admin operations are enabled, and
-   * <tt>false</tt> if admin operations are disabled.
+   *         <tt>false</tt> if admin operations are disabled.
    */
   @Override
   public boolean isAdminEnabled() {
@@ -593,16 +590,16 @@ public class SzApiServer implements SzApiProvider {
   }
 
   /**
-   * Returns the minimum time interval for logging stats.  This is the minimum
+   * Returns the minimum time interval for logging stats. This is the minimum
    * period between logging of stats assuming the API Server is performing
    * operations that will affect stats (i.e.: activities pertaining to entity
-   * scoring).  If the API Server is idle or active, but not performing entity
+   * scoring). If the API Server is idle or active, but not performing entity
    * scoring activities then stats logging will be delayed until activities are
-   * performed that will affect stats.  If the returned interval is zero (0)
+   * performed that will affect stats. If the returned interval is zero (0)
    * then stats logging will be suppressed.
    *
    * @return The interval for logging stats, or zero (0) if stats logging is
-   * suppressed.
+   *         suppressed.
    */
   public long getStatsInterval() {
     return this.statsInterval;
@@ -612,7 +609,7 @@ public class SzApiServer implements SzApiProvider {
    * Checks if we are skipping the performance check on startup.
    *
    * @return <tt>true</tt> if skipping the performance check, and
-   * <tt>false</tt> otherwise.
+   *         <tt>false</tt> otherwise.
    */
   public boolean isSkippingStartupPerformance() {
     return this.skipStartupPerf;
@@ -623,7 +620,7 @@ public class SzApiServer implements SzApiProvider {
    * the Senzing repository.
    *
    * @return The number of worker threads initialized to do work against
-   * the Senzing repository.
+   *         the Senzing repository.
    */
   @Override
   public int getConcurrency() {
@@ -662,43 +659,50 @@ public class SzApiServer implements SzApiProvider {
 
   @Override
   public String getApiProviderVersion() {
-    if (this.versionInfo == null) return null;
+    if (this.versionInfo == null)
+      return null;
     return this.versionInfo.getApiServerVersion();
   }
 
   @Override
   public String getRestApiVersion() {
-    if (this.versionInfo == null) return null;
+    if (this.versionInfo == null)
+      return null;
     return this.versionInfo.getRestApiVersion();
   }
 
   @Override
   public String getNativeApiVersion() {
-    if (this.versionInfo == null) return null;
+    if (this.versionInfo == null)
+      return null;
     return this.versionInfo.getNativeApiVersion();
   }
 
   @Override
   public String getNativeApiBuildVersion() {
-    if (this.versionInfo == null) return null;
+    if (this.versionInfo == null)
+      return null;
     return this.versionInfo.getNativeApiBuildVersion();
   }
 
   @Override
   public String getNativeApiBuildNumber() {
-    if (this.versionInfo == null) return null;
+    if (this.versionInfo == null)
+      return null;
     return this.versionInfo.getNativeApiBuildNumber();
   }
 
   @Override
   public Date getNativeApiBuildDate() {
-    if (this.versionInfo == null) return null;
+    if (this.versionInfo == null)
+      return null;
     return this.versionInfo.getNativeApiBuildDate();
   }
 
   @Override
   public String getConfigCompatibilityVersion() {
-    if (this.versionInfo == null) return null;
+    if (this.versionInfo == null)
+      return null;
     return this.versionInfo.getConfigCompatibilityVersion();
   }
 
@@ -715,9 +719,9 @@ public class SzApiServer implements SzApiProvider {
    *                     to populate.
    */
   private static void evaluateConfig(JsonObject config,
-                                     Set<String> dataSources,
-                                     Map<String, String> ftypeCodeMap,
-                                     Map<String, String> attrCodeMap) {
+      Set<String> dataSources,
+      Map<String, String> ftypeCodeMap,
+      Map<String, String> attrCodeMap) {
     // get the data sources from the config
     JsonValue jsonValue = config.getValue("/G2_CONFIG/CFG_DSRC");
     JsonArray jsonArray = jsonValue.asJsonArray();
@@ -818,11 +822,12 @@ public class SzApiServer implements SzApiProvider {
    *
    */
   private static String buildErrorMessage(String heading,
-                                          Integer errorCode,
-                                          String errorMessage) {
+      Integer errorCode,
+      String errorMessage) {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
-    if (heading != null) pw.println(heading);
+    if (heading != null)
+      pw.println(heading);
     if (errorCode != null) {
       pw.println("ERROR CODE: " + errorCode);
       pw.println();
@@ -853,14 +858,12 @@ public class SzApiServer implements SzApiProvider {
    */
   protected static Map<CommandLineOption, Object> parseCommandLine(
       String[] args, List<DeprecatedOptionWarning> deprecationWarnings)
-    throws CommandLineException
-  {
-    Map<CommandLineOption, CommandLineValue> optionValues
-        = CommandLineUtilities.parseCommandLine(
-            SzApiServerOption.class,
-            args,
-            SzApiServerOption.PARAMETER_PROCESSOR,
-            deprecationWarnings);
+      throws CommandLineException {
+    Map<CommandLineOption, CommandLineValue> optionValues = CommandLineUtilities.parseCommandLine(
+        SzApiServerOption.class,
+        args,
+        SzApiServerOption.PARAMETER_PROCESSOR,
+        deprecationWarnings);
 
     // iterate over the option values and handle them
     JsonObjectBuilder job = Json.createObjectBuilder();
@@ -911,7 +914,7 @@ public class SzApiServer implements SzApiProvider {
    */
   protected static void printJarVersion(PrintWriter pw) {
     pw.println("[ " + JAR_FILE_NAME + " version "
-                   + BuildInfo.MAVEN_VERSION + " ]");
+        + BuildInfo.MAVEN_VERSION + " ]");
   }
 
   /**
@@ -927,8 +930,7 @@ public class SzApiServer implements SzApiProvider {
     JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
     SzVersionInfo info = SzVersionInfo.parseVersionInfo(null, jsonObject);
 
-    String formattedBuildDate
-        = BUILD_DATE_FORMATTER.format(
+    String formattedBuildDate = BUILD_DATE_FORMATTER.format(
         Instant.ofEpochMilli(info.getNativeApiBuildDate().getTime()));
 
     pw.println(" - REST API Server Version      : " + info.getApiServerVersion());
@@ -1352,17 +1354,18 @@ public class SzApiServer implements SzApiProvider {
    * @param message
    */
   protected void echo(String message) {
-    if (this.quiet) return;
+    if (this.quiet)
+      return;
     System.out.println(message);
   }
 
   /**
    * Gets the {@link List} of {@link Class} instances containing the endpoints
-   * to be added to the REST API Server.  The returned {@link List} may be
+   * to be added to the REST API Server. The returned {@link List} may be
    * modified directly.
    *
    * @return The {@link List} of {@link Class} instances containing the
-   * endpoints to be added to the REST API Server.
+   *         endpoints to be added to the REST API Server.
    */
   protected List<Class> getServicesClassList() {
     try {
@@ -1391,13 +1394,13 @@ public class SzApiServer implements SzApiProvider {
 
   /**
    * Filters the specified {@link List} of {@link Class} instances to remove
-   * classes that are base classes to others.  The derived classes will contain
+   * classes that are base classes to others. The derived classes will contain
    * the same methods and annotations as the base ones and therefore the base
    * ones are redundant.
    *
    * @param classes The {@link List} of classes.
    * @return The newly created filtered {@link List} of classes or the specified
-   * parameter if no classes were filtered.
+   *         parameter if no classes were filtered.
    */
   @SuppressWarnings("unchecked")
   protected List<Class> filterBaseServiceClasses(List<Class> classes) {
@@ -1417,7 +1420,8 @@ public class SzApiServer implements SzApiProvider {
       // loop through the other classes
       for (Class c2 : classes) {
         // if the same class then skip this one
-        if (c1 == c2) continue;
+        if (c1 == c2)
+          continue;
 
         // check if the second class is assignable to the first
         if (c1.isAssignableFrom(c2)) {
@@ -1428,7 +1432,8 @@ public class SzApiServer implements SzApiProvider {
     }
 
     // check if none are to be removed
-    if (removeSet.size() == 0) return classes;
+    if (removeSet.size() == 0)
+      return classes;
 
     // create the result list
     List<Class> result = new ArrayList<>(classes.size() - removeSet.size());
@@ -1449,8 +1454,8 @@ public class SzApiServer implements SzApiProvider {
    * @param initOrder The init order for the servlet.
    */
   protected void addJerseyServlet(ServletContextHandler context,
-                                  String path,
-                                  int initOrder) {
+      String path,
+      int initOrder) {
     ServletHolder jerseyServlet = context.addServlet(
         org.glassfish.jersey.servlet.ServletContainer.class, path);
 
@@ -1479,7 +1484,7 @@ public class SzApiServer implements SzApiProvider {
 
   /**
    * This method is called to install any custom model providers for the model
-   * factories.  The default implementation does nothing.
+   * factories. The default implementation does nothing.
    */
   protected void installModelProviders() {
     // do nothing
@@ -1495,12 +1500,11 @@ public class SzApiServer implements SzApiProvider {
    *                      to the context.
    */
   protected static void addWebSocketHandler(ServletContextHandler context,
-                                            Class... socketClasses) {
+      Class... socketClasses) {
     final int maxSize = WEB_SOCKETS_MESSAGE_MAX_SIZE;
     WebSocketServerContainerInitializer.configure(
         context,
-        ((servletContext, wsContainer) ->
-        {
+        ((servletContext, wsContainer) -> {
           wsContainer.setDefaultMaxTextMessageBufferSize(maxSize);
           wsContainer.setDefaultMaxBinaryMessageBufferSize(maxSize);
           wsContainer.setDefaultMaxSessionIdleTimeout(WEB_SOCKET_TIMEOUT);
@@ -1519,11 +1523,11 @@ public class SzApiServer implements SzApiProvider {
    * @param initOrder
    */
   protected static void addProxyServlet(ServletContextHandler context,
-                                        String path,
-                                        String viaHost,
-                                        boolean preserveHost,
-                                        String hostHeader,
-                                        int initOrder) {
+      String path,
+      String viaHost,
+      boolean preserveHost,
+      String hostHeader,
+      int initOrder) {
     ServletHolder proxyServlet = context.addServlet(
         org.eclipse.jetty.proxy.ProxyServlet.class, path);
 
@@ -1559,10 +1563,10 @@ public class SzApiServer implements SzApiProvider {
    */
   public static void main(String[] args) throws Exception {
     commandLineStart(args,
-                     SzApiServer::parseCommandLine,
-                     SzApiServer::getUsageString,
-                     SzApiServer::getVersionString,
-                     SzApiServer::build);
+        SzApiServer::parseCommandLine,
+        SzApiServer::getUsageString,
+        SzApiServer::getVersionString,
+        SzApiServer::build);
   }
 
   /**
@@ -1579,13 +1583,12 @@ public class SzApiServer implements SzApiProvider {
    * @throws Exception
    */
   protected static void commandLineStart(
-      String[]                        args,
-      CommandLineParser               cmdLineParser,
-      Supplier<String>                usageMessage,
-      Supplier<String>                versionMessage,
+      String[] args,
+      CommandLineParser cmdLineParser,
+      Supplier<String> usageMessage,
+      Supplier<String> versionMessage,
       CommandLineBuilder<SzApiServer> serverBuilder)
-      throws Exception
-  {
+      throws Exception {
     if (args.length > 0 && (args[0].equals("--repomgr")
         || args[0].equals("--repo-mgr"))) {
       String[] args2 = shiftArguments(args, 1);
@@ -1599,12 +1602,12 @@ public class SzApiServer implements SzApiProvider {
       return;
     }
 
-    Map<CommandLineOption, Object>  options   = null;
-    List<DeprecatedOptionWarning>   warnings  = new LinkedList<>();
+    Map<CommandLineOption, Object> options = null;
+    List<DeprecatedOptionWarning> warnings = new LinkedList<>();
     try {
       options = cmdLineParser.parseCommandLine(args, warnings);
 
-      for (DeprecatedOptionWarning warning: warnings) {
+      for (DeprecatedOptionWarning warning : warnings) {
         System.out.println(warning);
         System.out.println();
       }
@@ -1656,8 +1659,7 @@ public class SzApiServer implements SzApiProvider {
 
     final SzApiServer server = SzApiServer.getInstance();
 
-    final DateTimeFormatter formatter
-        = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
+    final DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
         .withZone(ZoneId.systemDefault());
 
     Thread thread = new Thread(() -> {
@@ -1666,8 +1668,7 @@ public class SzApiServer implements SzApiProvider {
         try {
           String license = product.license();
           JsonObject jsonObject = JsonUtilities.parseJsonObject(license);
-          SzLicenseInfo licenseInfo
-              = SzLicenseInfo.parseLicenseInfo(null, jsonObject);
+          SzLicenseInfo licenseInfo = SzLicenseInfo.parseLicenseInfo(null, jsonObject);
 
           Date expirationDate = licenseInfo.getExpirationDate();
 
@@ -1729,8 +1730,7 @@ public class SzApiServer implements SzApiProvider {
 
       try {
         SzApiServer.INSTANCE = serverBuilder.build(options);
-        SzApiServer.PROVIDER_TOKEN
-            = SzApiProvider.Factory.installProvider(SzApiServer.INSTANCE);
+        SzApiServer.PROVIDER_TOKEN = SzApiProvider.Factory.installProvider(SzApiServer.INSTANCE);
 
       } catch (RuntimeException e) {
         throw e;
@@ -1745,35 +1745,35 @@ public class SzApiServer implements SzApiProvider {
   /**
    * Constructs with the specified parameters.
    *
-   * @param httpPort    The HTTP port to bind to.  Use zero to bind to a random
+   * @param httpPort    The HTTP port to bind to. Use zero to bind to a random
    *                    port and <tt>null</tt> to bind to the default port.
    * @param bindAddress The {@link InetAddress} for the address to bind to.
    *                    If <tt>null</tt> then the loopback address is used.
    * @param concurrency The number of threads to create for the engine, or
    *                    <tt>null</tt> for the default number of threads.
-   * @param moduleName  The module name to bind to.  If <tt>null</tt> then the
+   * @param moduleName  The module name to bind to. If <tt>null</tt> then the
    *                    {@link SzApiServerConstants#DEFAULT_MODULE_NAME} is used.
    * @param iniFile     The non-null {@link File} with which to initialize.
-   * @param verbose     Whether or not to initialize as verbose or not.  If
+   * @param verbose     Whether or not to initialize as verbose or not. If
    *                    <tt>null</tt> then the default setting is invoked.
    * @throws Exception If a failure occurs.
    * @deprecated Use {@link #SzApiServer(SzApiServerOptions)} instead.
    */
   @Deprecated
   public SzApiServer(Integer httpPort,
-                     InetAddress bindAddress,
-                     Integer concurrency,
-                     String moduleName,
-                     File iniFile,
-                     Boolean verbose)
+      InetAddress bindAddress,
+      Integer concurrency,
+      String moduleName,
+      File iniFile,
+      Boolean verbose)
       throws Exception {
     this(null,
-         httpPort,
-         bindAddress,
-         concurrency,
-         moduleName,
-         iniFile,
-         verbose);
+        httpPort,
+        bindAddress,
+        concurrency,
+        moduleName,
+        iniFile,
+        verbose);
   }
 
   /**
@@ -1781,36 +1781,36 @@ public class SzApiServer implements SzApiProvider {
    *
    * @param accessToken The {@link AccessToken} for later accessing privileged
    *                    functions.
-   * @param httpPort    The HTTP port to bind to.  Use zero to bind to a random
+   * @param httpPort    The HTTP port to bind to. Use zero to bind to a random
    *                    port and <tt>null</tt> to bind to the default port.
    * @param bindAddress The {@link InetAddress} for the address to bind to.
    *                    If <tt>null</tt> then the loopback address is used.
    * @param concurrency The number of threads to create for the engine, or
    *                    <tt>nul</tt> for the default number of threads.
-   * @param moduleName  The module name to bind to.  If <tt>null</tt> then the
+   * @param moduleName  The module name to bind to. If <tt>null</tt> then the
    *                    {@link SzApiServerConstants#DEFAULT_MODULE_NAME} is used.
    * @param iniFile     The non-null {@link File} with which to initialize.
-   * @param verbose     Whether or not to initialize as verbose or not.  If
+   * @param verbose     Whether or not to initialize as verbose or not. If
    *                    <tt>null</tt> then the default setting is invoked.
    * @throws Exception If a failure occurs.
    * @deprecated Use {@link #SzApiServer(SzApiServerOptions)} instead.
    */
   @Deprecated
   public SzApiServer(AccessToken accessToken,
-                     Integer httpPort,
-                     InetAddress bindAddress,
-                     Integer concurrency,
-                     String moduleName,
-                     File iniFile,
-                     Boolean verbose)
+      Integer httpPort,
+      InetAddress bindAddress,
+      Integer concurrency,
+      String moduleName,
+      File iniFile,
+      Boolean verbose)
       throws Exception {
     this(accessToken,
-         buildOptionsMap(httpPort,
-                         bindAddress,
-                         concurrency,
-                         moduleName,
-                         iniFile,
-                         verbose));
+        buildOptionsMap(httpPort,
+            bindAddress,
+            concurrency,
+            moduleName,
+            iniFile,
+            verbose));
   }
 
   /**
@@ -1864,39 +1864,44 @@ public class SzApiServer implements SzApiProvider {
       File iniFile,
       Boolean verbose) {
     Map<CommandLineOption, Object> map = new HashMap<>();
-    if (httpPort != null) map.put(HTTP_PORT, httpPort);
-    if (bindAddress != null) map.put(BIND_ADDRESS, bindAddress);
-    if (concurrency != null) map.put(CONCURRENCY, concurrency);
-    if (moduleName != null) map.put(MODULE_NAME, moduleName);
-    if (iniFile != null) map.put(INI_FILE, iniFile);
-    if (verbose != null) map.put(VERBOSE, verbose);
+    if (httpPort != null)
+      map.put(HTTP_PORT, httpPort);
+    if (bindAddress != null)
+      map.put(BIND_ADDRESS, bindAddress);
+    if (concurrency != null)
+      map.put(CONCURRENCY, concurrency);
+    if (moduleName != null)
+      map.put(MODULE_NAME, moduleName);
+    if (iniFile != null)
+      map.put(INI_FILE, iniFile);
+    if (verbose != null)
+      map.put(VERBOSE, verbose);
     return map;
   }
 
   /**
    * Constructs with the specified parameters.
    *
-   * @param token The {@link AccessToken} for later accessing privileged
-   *              functions.
+   * @param token   The {@link AccessToken} for later accessing privileged
+   *                functions.
    *
    * @param options The options with which to initialize.
    *
    * @throws Exception If a failure occurs.
    */
-  protected SzApiServer(AccessToken                     token,
-                        Map<CommandLineOption, Object>  options)
-      throws Exception
-  {
+  protected SzApiServer(AccessToken token,
+      Map<CommandLineOption, Object> options)
+      throws Exception {
     this(token, options, true);
   }
 
   /**
    * Constructs with the specified parameters.
    *
-   * @param token The {@link AccessToken} for later accessing privileged
-   *              functions.
+   * @param token       The {@link AccessToken} for later accessing privileged
+   *                    functions.
    *
-   * @param options The options with which to initialize.
+   * @param options     The options with which to initialize.
    *
    * @param startServer <tt>true</tt> if the server should be started, otherwise
    *                    <tt>false</tt>.
@@ -1904,11 +1909,10 @@ public class SzApiServer implements SzApiProvider {
    * @throws Exception If a failure occurs.
    */
   @SuppressWarnings("deprecation")
-  protected SzApiServer(AccessToken                     token,
-                        Map<CommandLineOption, Object>  options,
-                        boolean                         startServer)
-      throws Exception
-  {
+  protected SzApiServer(AccessToken token,
+      Map<CommandLineOption, Object> options,
+      boolean startServer)
+      throws Exception {
     this.accessToken = token;
 
     // check the debug flag
@@ -1971,14 +1975,12 @@ public class SzApiServer implements SzApiProvider {
 
     this.statsInterval = DEFAULT_STATS_INTERVAL;
     if (options.containsKey(STATS_INTERVAL)) {
-      this.statsInterval
-          = (Long) options.get(STATS_INTERVAL);
+      this.statsInterval = (Long) options.get(STATS_INTERVAL);
     }
 
     this.skipStartupPerf = false;
     if (options.containsKey(SKIP_STARTUP_PERF)) {
-      this.skipStartupPerf
-          = (Boolean) options.get(SKIP_STARTUP_PERF);
+      this.skipStartupPerf = (Boolean) options.get(SKIP_STARTUP_PERF);
     }
 
     // determine the init JSON
@@ -2128,11 +2130,14 @@ public class SzApiServer implements SzApiProvider {
     // organize options into option groups
     options.forEach((option, optionValue) -> {
       // check if its an API server option
-      if (optionValue == null) return;
-      if (!(option instanceof SzApiServerOption)) return;
+      if (optionValue == null)
+        return;
+      if (!(option instanceof SzApiServerOption))
+        return;
       SzApiServerOption serverOption = (SzApiServerOption) option;
       String groupName = serverOption.getGroupName();
-      if (groupName == null) return;
+      if (groupName == null)
+        return;
       Map<String, Object> groupMap = optionGroups.get(groupName);
       if (groupMap == null) {
         groupMap = new LinkedHashMap<>();
@@ -2145,7 +2150,8 @@ public class SzApiServer implements SzApiProvider {
     // count the number of specified info queues
     Map<String, Object> infoQueueProps = null;
     for (String key : INFO_QUEUE_GROUPS) {
-      if (!optionGroups.containsKey(key)) continue;
+      if (!optionGroups.containsKey(key))
+        continue;
       infoQueueProps = optionGroups.get(key);
       break;
     }
@@ -2153,7 +2159,7 @@ public class SzApiServer implements SzApiProvider {
     // build the info endpoint
     this.infoEndpoint = (infoQueueProps == null) ? null
         : SzMessagingEndpointFactory.createEndpoint(infoQueueProps,
-                                                    this.concurrency);
+            this.concurrency);
 
     this.autoRefreshPeriod = (Long) options.get(AUTO_REFRESH_PERIOD);
     if (this.autoRefreshPeriod != null) {
@@ -2168,11 +2174,10 @@ public class SzApiServer implements SzApiProvider {
     JsonObject versionJson = JsonUtilities.parseJsonObject(versionJsonText);
     this.versionInfo = SzVersionInfo.parseVersionInfo(null, versionJson);
 
-    this.workerThreadPool
-        = new WorkerThreadPool(this.getClass().getName(), this.concurrency);
+    this.workerThreadPool = new WorkerThreadPool(this.getClass().getName(), this.concurrency);
 
     this.echo("Created Senzing engine thread pool with " + this.concurrency
-                  + " thread(s).");
+        + " thread(s).");
 
     if (this.configMgrApi != null) {
       // check if the auto refresh period is null
@@ -2181,16 +2186,15 @@ public class SzApiServer implements SzApiProvider {
       }
       if (!this.autoRefreshPeriod.equals(0)) {
         this.reinitializer = new Reinitializer(this.configMgrApi,
-                                               this.engineApi,
-                                               this);
+            this.engineApi,
+            this);
       }
     }
 
     this.initializeConfigData();
 
     // prime the engine unless told mot to
-    Boolean skipPriming = (Boolean)
-        options.get(SzApiServerOption.SKIP_ENGINE_PRIMING);
+    Boolean skipPriming = (Boolean) options.get(SzApiServerOption.SKIP_ENGINE_PRIMING);
     if (!Boolean.TRUE.equals(skipPriming)) {
       // prime the engine
       long start = System.currentTimeMillis();
@@ -2212,8 +2216,7 @@ public class SzApiServer implements SzApiProvider {
     this.servletContext.setContextPath(this.basePath);
 
     // add web socket filters first
-    EnumSet<DispatcherType> requestDispatch
-        = EnumSet.of(DispatcherType.REQUEST);
+    EnumSet<DispatcherType> requestDispatch = EnumSet.of(DispatcherType.REQUEST);
     this.getWebSocketClasses().forEach((implClass, path) -> {
       // check if we have a pre-flight OnUpgrade annotation
       WebSocketFilter filter = WebSocketFilter.createIfOnUpgrade(implClass);
@@ -2224,9 +2227,8 @@ public class SzApiServer implements SzApiProvider {
     });
 
     // configure web sockets
-    ServerContainer container
-        = WebSocketServerContainerInitializer.configureContext(
-            this.servletContext);
+    ServerContainer container = WebSocketServerContainerInitializer.configureContext(
+        this.servletContext);
 
     this.getWebSocketClasses().forEach((implClass, path) -> {
       try {
@@ -2244,7 +2246,6 @@ public class SzApiServer implements SzApiProvider {
       this.servletContext.addFilter(DebugRequestFilter.class, "/*", requestDispatch);
     }
 
-
     // diagnose requests with errors
     this.servletContext.addFilter(DiagnoseRequestFilter.class, "/*", requestDispatch);
 
@@ -2254,7 +2255,8 @@ public class SzApiServer implements SzApiProvider {
       filterHolder.setInitParameter(CrossOriginFilter.ALLOWED_ORIGINS_PARAM, this.allowedOrigins);
       filterHolder.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,POST,PUT,DELETE,PATCH,HEAD,OPTIONS");
       filterHolder.setInitParameter(CrossOriginFilter.ALLOWED_HEADERS_PARAM, "*");
-      //filterHolder.setInitParameter(CrossOriginFilter.PREFLIGHT_MAX_AGE_PARAM, "10"); // for testing to see OPTIONS requests
+      // filterHolder.setInitParameter(CrossOriginFilter.PREFLIGHT_MAX_AGE_PARAM,
+      // "10"); // for testing to see OPTIONS requests
     }
 
     // find how this class was loaded so we can find the path to the static content
@@ -2277,16 +2279,15 @@ public class SzApiServer implements SzApiProvider {
     ThreadPool threadPool = new QueuedThreadPool(this.httpConcurrency);
     this.jettyServer = new Server(threadPool);
 
-    this.httpsPort              = (Integer) options.get(HTTPS_PORT);
-    this.keyStoreFile           = (File) options.get(KEY_STORE);
-    this.keyStorePassword       = (String) options.get(KEY_STORE_PASSWORD);
-    this.keyAlias               = (String) options.get(KEY_ALIAS);
-    this.clientKeyStoreFile     = (File) options.get(CLIENT_KEY_STORE);
-    this.clientKeyStorePassword = (String)
-        options.get(CLIENT_KEY_STORE_PASSWORD);
+    this.httpsPort = (Integer) options.get(HTTPS_PORT);
+    this.keyStoreFile = (File) options.get(KEY_STORE);
+    this.keyStorePassword = (String) options.get(KEY_STORE_PASSWORD);
+    this.keyAlias = (String) options.get(KEY_ALIAS);
+    this.clientKeyStoreFile = (File) options.get(CLIENT_KEY_STORE);
+    this.clientKeyStorePassword = (String) options.get(CLIENT_KEY_STORE_PASSWORD);
 
     // setup the HTTP configuration
-    HttpConfiguration httpConfig  = new HttpConfiguration();
+    HttpConfiguration httpConfig = new HttpConfiguration();
     httpConfig.setOutputBufferSize(HTTP_OUTPUT_BUFFER_SIZE);
     httpConfig.setOutputAggregationSize(HTTP_OUTPUT_AGGREGATION_SIZE);
     httpConfig.setRequestHeaderSize(HTTP_REQUEST_HEADER_SIZE);
@@ -2325,20 +2326,20 @@ public class SzApiServer implements SzApiProvider {
       ServerConnector httpsConnector = new ServerConnector(
           this.jettyServer,
           new SslConnectionFactory(sslContextFactory,
-                                   HttpVersion.HTTP_1_1.asString()),
+              HttpVersion.HTTP_1_1.asString()),
           new HttpConnectionFactory(httpsConfig));
       httpsConnector.setPort(this.httpsPort);
       this.jettyServer.addConnector(httpsConnector);
 
     } else {
-      if (this.httpPort == null) this.httpPort = DEFAULT_PORT;
-      InetSocketAddress inetAddr
-          = new InetSocketAddress(this.ipAddr, this.httpPort);
+      if (this.httpPort == null)
+        this.httpPort = DEFAULT_PORT;
+      InetSocketAddress inetAddr = new InetSocketAddress(this.ipAddr, this.httpPort);
       ServerConnector connector = new ServerConnector(
           this.jettyServer, new HttpConnectionFactory(httpConfig));
       connector.setHost(inetAddr.getHostName());
       connector.setPort(inetAddr.getPort());
-      this.jettyServer.setConnectors(new Connector[]{connector});
+      this.jettyServer.setConnectors(new Connector[] { connector });
     }
 
     this.fileMonitor = null;
@@ -2348,21 +2349,21 @@ public class SzApiServer implements SzApiProvider {
 
     this.jettyServer.setHandler(gzipHandler);
 
-    LifeCycleListener lifeCycleListener
-        = new LifeCycleListener(this.getDescription(),
-                                this.jettyServer,
-                                this.httpPort,
-                                (this.keyStoreFile == null)
-                                    ? null : this.httpsPort,
-                                this.basePath,
-                                this.ipAddr,
-                                this.fileMonitor);
+    LifeCycleListener lifeCycleListener = new LifeCycleListener(this.getDescription(),
+        this.jettyServer,
+        this.httpPort,
+        (this.keyStoreFile == null)
+            ? null
+            : this.httpsPort,
+        this.basePath,
+        this.ipAddr,
+        this.fileMonitor);
     this.jettyServer.addLifeCycleListener(lifeCycleListener);
     int initOrder = 0;
     String apiPath = "/*";
 
-    //addProxyServlet(context, "/www/*", "https://www.senzing.com", false,
-    //                "www.senzing.com", initOrder++);
+    // addProxyServlet(context, "/www/*", "https://www.senzing.com", false,
+    // "www.senzing.com", initOrder++);
 
     this.addJerseyServlet(this.servletContext, apiPath, initOrder++);
 
@@ -2382,8 +2383,8 @@ public class SzApiServer implements SzApiProvider {
     // install any custom model providers
     this.installModelProviders();
 
-
-    if (startServer) this.startHttpServer(options);
+    if (startServer)
+      this.startHttpServer(options);
   }
 
   /**
@@ -2392,20 +2393,20 @@ public class SzApiServer implements SzApiProvider {
    * @param options The startup options.
    */
   protected void startHttpServer(Map<CommandLineOption, Object> options)
-    throws Exception
-  {
+      throws Exception {
     try {
       this.jettyServer.start();
       Connector[] connectors = this.jettyServer.getConnectors();
       if (connectors.length == 1) {
         if (this.httpPort == null) {
-          this.httpsPort  = ((ServerConnector) connectors[0]).getLocalPort();
-        } {
-          this.httpPort   = ((ServerConnector) connectors[0]).getLocalPort();
+          this.httpsPort = ((ServerConnector) connectors[0]).getLocalPort();
+        }
+        {
+          this.httpPort = ((ServerConnector) connectors[0]).getLocalPort();
         }
       } else if (connectors.length > 1) {
-        this.httpPort   = ((ServerConnector) connectors[0]).getLocalPort();
-        this.httpsPort  = ((ServerConnector) connectors[1]).getLocalPort();
+        this.httpPort = ((ServerConnector) connectors[0]).getLocalPort();
+        this.httpsPort = ((ServerConnector) connectors[1]).getLocalPort();
       }
 
       if (options.containsKey(MONITOR_FILE)) {
@@ -2429,7 +2430,8 @@ public class SzApiServer implements SzApiProvider {
           this.echo("    RECEIVED SHUTDOWN SIGNAL");
           this.echo("********************************************** ");
           try {
-            if (this.reinitializer != null) this.reinitializer.complete();
+            if (this.reinitializer != null)
+              this.reinitializer.complete();
             this.servletContext.stop();
             this.jettyServer.stop();
             this.jettyServer.join();
@@ -2468,8 +2470,7 @@ public class SzApiServer implements SzApiProvider {
             formatError("G2Engine.purgeRepository()", engineApi));
       }
       this.workerThreadPool.close(true);
-      this.workerThreadPool
-          = new WorkerThreadPool(this.getClass().getName(), this.concurrency);
+      this.workerThreadPool = new WorkerThreadPool(this.getClass().getName(), this.concurrency);
 
     } finally {
       this.purgeLock.writeLock().unlock();
@@ -2484,7 +2485,8 @@ public class SzApiServer implements SzApiProvider {
    */
   public long getConfigAutoRefreshPeriod() {
     return ((this.autoRefreshPeriod == null)
-            ? DEFAULT_CONFIG_REFRESH_PERIOD : this.autoRefreshPeriod);
+        ? DEFAULT_CONFIG_REFRESH_PERIOD
+        : this.autoRefreshPeriod);
   }
 
   /**
@@ -2500,16 +2502,18 @@ public class SzApiServer implements SzApiProvider {
    */
   protected static File extractIniConfigPath(JsonObject initJson) {
     JsonObject sqlSection = JsonUtilities.getJsonObject(initJson, "SQL");
-    if (sqlSection == null) return null;
+    if (sqlSection == null)
+      return null;
     String configFile = JsonUtilities.getString(sqlSection, "G2CONFIGFILE");
-    if (configFile == null) return null;
+    if (configFile == null)
+      return null;
     return new File(configFile);
   }
 
   /**
    * Returns a new {@link JsonObject} which mirrors the specified {@link
    * JsonObject} but does not contain the "G2CONFIGFILE" property in the
-   * "SQL" section (if one exists).  If no such property (or section) exists
+   * "SQL" section (if one exists). If no such property (or section) exists
    * then the specified object is returned as-is.
    *
    * @param initJson The {@link JsonObject} representation of the INI parameters.
@@ -2519,9 +2523,11 @@ public class SzApiServer implements SzApiProvider {
    */
   protected static JsonObject stripIniConfigPath(JsonObject initJson) {
     JsonObject sqlSection = JsonUtilities.getJsonObject(initJson, "SQL");
-    if (sqlSection == null) return initJson;
+    if (sqlSection == null)
+      return initJson;
     String configFile = JsonUtilities.getString(sqlSection, "G2CONFIGFILE");
-    if (configFile == null) return initJson;
+    if (configFile == null)
+      return initJson;
 
     // create an object builder and remove the SQL section
     JsonObjectBuilder job = Json.createObjectBuilder(initJson);
@@ -2545,21 +2551,20 @@ public class SzApiServer implements SzApiProvider {
    *
    * @param moduleName The module name to use when initializing.
    *
-   * @param initJson The {@link JsonObject} representation of the Senzing
-   *                intitialization parameters.
+   * @param initJson   The {@link JsonObject} representation of the Senzing
+   *                   initialization parameters.
    *
    * @return Zero (0) if no configuration file is provided by the INI, One (1)
    *         if a configuration file is provided and no default configuration
    *         is configured and negative one (-1) if a configuration file is
    *         provided and there is a default configuration configured.
    */
-  protected static ConfigType getConfigType(String      moduleName,
-                                            JsonObject  initJson)
-  {
+  protected static ConfigType getConfigType(String moduleName,
+      JsonObject initJson) {
     if (moduleName == null) {
       moduleName = SzApiServer.class.getSimpleName();
     }
-    moduleName +=  " (getConfigType)";
+    moduleName += " (getConfigType)";
     boolean configInIni = false;
     JsonObject sqlSection = JsonUtilities.getJsonObject(initJson, "SQL");
     if (sqlSection != null) {
@@ -2580,11 +2585,11 @@ public class SzApiServer implements SzApiProvider {
           "Failed to initialize with specified initialization parameters.",
           "",
           formatError("G2ConfigMgr.init", configMgr)
-          + "Initialization parameters:",
+              + "Initialization parameters:",
           "",
           (initJsonText.length() > 80
-            ? initJsonText.substring(0, 64) + " ... [truncated]"
-            : initJsonText),
+              ? initJsonText.substring(0, 64) + " ... [truncated]"
+              : initJsonText),
           "");
 
       throw new RuntimeException(msg);
@@ -2616,10 +2621,9 @@ public class SzApiServer implements SzApiProvider {
   /**
    * Initializes the native Senzing API's for this instance.
    */
-  protected void initNativeApis()
-  {
-    String  initJsonText  = JsonUtilities.toJsonText(this.initJson);
-    String  iniFilePath   = null;
+  protected void initNativeApis() {
+    String initJsonText = JsonUtilities.toJsonText(this.initJson);
+    String iniFilePath = null;
     if (this.iniFile != null) {
       try {
         iniFilePath = this.iniFile.getCanonicalPath();
@@ -2692,23 +2696,20 @@ public class SzApiServer implements SzApiProvider {
             this.configMgrApi.getLastException()));
       }
 
-      Class[]     interfaces  = { G2Engine.class };
+      Class[] interfaces = { G2Engine.class };
       ClassLoader classLoader = this.getClass().getClassLoader();
 
       // check if logging stats
       if (this.getStatsInterval() > 0L) {
         // proxy the engine API to log stats
-        EngineStatsLoggingHandler statsHandler
-            = new EngineStatsLoggingHandler(this.engineApi,
-                                            this.getStatsInterval(),
-                                            System.out);
+        EngineStatsLoggingHandler statsHandler = new EngineStatsLoggingHandler(this.engineApi,
+            this.getStatsInterval(),
+            System.out);
         this.engineApi = (G2Engine) Proxy.newProxyInstance(
             classLoader, interfaces, statsHandler);
       }
 
-
-      this.engineRetryHandler
-          = new G2EngineRetryHandler(this.engineApi, this);
+      this.engineRetryHandler = new G2EngineRetryHandler(this.engineApi, this);
       this.retryEngineApi = (G2Engine) Proxy.newProxyInstance(
           classLoader, interfaces, this.engineRetryHandler);
     }
@@ -2745,15 +2746,17 @@ public class SzApiServer implements SzApiProvider {
    * @throws UnsupportedOperationException If this instance was not constructed
    *                                       with an {@link AccessToken}.
    *
-   * @throws IllegalArgumentException If the specified {@link AccessToken} does
-   *                                  not match the one with which this instance
-   *                                  was constructed.
+   * @throws IllegalArgumentException      If the specified {@link AccessToken}
+   *                                       does
+   *                                       not match the one with which this
+   *                                       instance
+   *                                       was constructed.
    */
   public void shutdown(AccessToken token) {
     if (this.accessToken == null) {
       throw new UnsupportedOperationException(
           "This instance has no access token, so this operation is not "
-          + "supported for this instance.");
+              + "supported for this instance.");
     }
     if (this.accessToken != token) {
       throw new IllegalArgumentException(
@@ -2818,8 +2821,7 @@ public class SzApiServer implements SzApiProvider {
    * @throws Exception If the task has a failure.
    */
   public <T, E extends Exception> T executeInThread(Task<T, E> task)
-    throws E
-  {
+      throws E {
     this.purgeLock.readLock().lock();
     try {
       return this.workerThreadPool.execute(task);
@@ -2847,7 +2849,8 @@ public class SzApiServer implements SzApiProvider {
       int prolongedCount = this.prolongedAuthSet.size();
 
       // check if too many concurrent prolonged operations and return null if so
-      if (prolongedCount >= ((this.httpConcurrency - 4) / 2)) return null;
+      if (prolongedCount >= ((this.httpConcurrency - 4) / 2))
+        return null;
 
       // create the access token
       AccessToken accessToken = new AccessToken();
@@ -2927,8 +2930,8 @@ public class SzApiServer implements SzApiProvider {
 
   /**
    * Prompts the reinitializer thread to check the config is current and
-   * refresh it.  This is primarily used for testing the reinitializer thread.
-   * This will wait until the request completes before returning.  If there is
+   * refresh it. This is primarily used for testing the reinitializer thread.
+   * This will wait until the request completes before returning. If there is
    * no reinitializer thread then this method has no effect.
    *
    * <b>NOTE:</b> This differs from {@link #ensureConfigCurrent()} in that it
@@ -2936,7 +2939,8 @@ public class SzApiServer implements SzApiProvider {
    * nothing if there is no reinitializer thread.
    */
   public void requestConfigRefreshCheck() {
-    if (this.reinitializer == null) return;
+    if (this.reinitializer == null)
+      return;
     this.reinitializer.requestRefresh();
   }
 
@@ -2966,8 +2970,9 @@ public class SzApiServer implements SzApiProvider {
   protected Boolean ensureConfigCurrent(boolean pauseWorkers) {
     this.purgeLock.readLock().lock();
     try {
-      // if not capable of reinitialization then return alse
-      if (this.configMgrApi == null) return false;
+      // if not capable of reinitialization then return false
+      if (this.configMgrApi == null)
+        return false;
 
       Long defaultConfigId = null;
       try {
@@ -2976,7 +2981,8 @@ public class SzApiServer implements SzApiProvider {
         // if we get an exception then return null
         return null;
       }
-      if (defaultConfigId == null) return false;
+      if (defaultConfigId == null)
+        return false;
 
       this.echo("Detected configuration change.");
       AccessToken pauseToken = null;
@@ -3017,7 +3023,7 @@ public class SzApiServer implements SzApiProvider {
             String errorMsg = formatError(
                 "G2Engine.reinit", this.engineApi);
             System.err.println("Failed to reinitialize with config ID ("
-                                   + defaultConfigId + "): " + errorMsg);
+                + defaultConfigId + "): " + errorMsg);
             return null;
           }
 
@@ -3085,7 +3091,8 @@ public class SzApiServer implements SzApiProvider {
     long defaultConfigId = result.getValue();
 
     // check if they differ
-    if (activeConfigId == defaultConfigId) return null;
+    if (activeConfigId == defaultConfigId)
+      return null;
 
     // return the new default config ID
     return defaultConfigId;
@@ -3102,17 +3109,17 @@ public class SzApiServer implements SzApiProvider {
 
       JsonObject config = JsonUtilities.parseJsonObject(sb.toString());
 
-      Set<String>         dataSourceSet   = new LinkedHashSet<>();
-      Map<String,String>  ftypeCodeMap    = new LinkedHashMap<>();
-      Map<String,String>  attrCodeMap     = new LinkedHashMap<>();
+      Set<String> dataSourceSet = new LinkedHashSet<>();
+      Map<String, String> ftypeCodeMap = new LinkedHashMap<>();
+      Map<String, String> attrCodeMap = new LinkedHashMap<>();
 
       this.evaluateConfig(config,
-                          dataSourceSet,
-                          ftypeCodeMap,
-                          attrCodeMap);
+          dataSourceSet,
+          ftypeCodeMap,
+          attrCodeMap);
 
-      this.dataSources            = Collections.unmodifiableSet(dataSourceSet);
-      this.featureToAttrClassMap  = Collections.unmodifiableMap(ftypeCodeMap);
+      this.dataSources = Collections.unmodifiableSet(dataSourceSet);
+      this.featureToAttrClassMap = Collections.unmodifiableMap(ftypeCodeMap);
       this.attrCodeToAttrClassMap = Collections.unmodifiableMap(attrCodeMap);
     }
   }
@@ -3122,12 +3129,13 @@ public class SzApiServer implements SzApiProvider {
    */
   protected void logDiagnostics() {
     long now = System.currentTimeMillis();
-    if ((now - this.lastDiagnosticsRun) <= DIAGNOSTIC_PERIOD) return;
+    if ((now - this.lastDiagnosticsRun) <= DIAGNOSTIC_PERIOD)
+      return;
     boolean firstRun = (this.lastDiagnosticsRun < 0L);
     this.lastDiagnosticsRun = now;
 
-    StringWriter  sw = new StringWriter();
-    PrintWriter   pw = new PrintWriter(sw);
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
 
     pw.println();
     pw.println("=============================================================");
@@ -3143,9 +3151,9 @@ public class SzApiServer implements SzApiProvider {
       int logicalCores = this.diagnosticApi.getLogicalCores();
 
       pw.println("TOTAL SYSTEM MEMORY     : "
-                     + numFormat.format(totalMem) + "GB");
+          + numFormat.format(totalMem) + "GB");
       pw.println("AVAILABLE SYSTEM MEMORY : "
-                     + numFormat.format(availMem) + "GB");
+          + numFormat.format(availMem) + "GB");
       pw.println("PHYSICAL CORE COUNT     : " + physicalCores);
       pw.println("LOGICAL CORE COUNT      : " + logicalCores);
     }
@@ -3177,9 +3185,9 @@ public class SzApiServer implements SzApiProvider {
     } else {
       pw.println("****** DATABASE PERF CHECK FAILED: " + result);
       pw.println("****** ERROR CODE : "
-                     + this.diagnosticApi.getLastExceptionCode());
+          + this.diagnosticApi.getLastExceptionCode());
       pw.println("****** ERROR      : "
-                     + this.diagnosticApi.getLastException());
+          + this.diagnosticApi.getLastException());
     }
     System.out.println(sw.toString());
   }
@@ -3194,7 +3202,8 @@ public class SzApiServer implements SzApiProvider {
   protected Map<Class, String> getWebSocketClasses() {
     synchronized (this.monitor) {
       // check the web socket classes is already initialized
-      if (this.webSocketClasses != null) return this.webSocketClasses;
+      if (this.webSocketClasses != null)
+        return this.webSocketClasses;
 
       // if not then initialize
       Map<Class, String> webSocketMap = new LinkedHashMap<>();
@@ -3213,12 +3222,11 @@ public class SzApiServer implements SzApiProvider {
    * files and populates the specified {@link Map} with the {@link Class}
    * keys and path values found in the properties.
    *
-   * @param webSocketMap The {@link Map} to populate.
+   * @param webSocketMap   The {@link Map} to populate.
    * @param propertyStream The {@link InputStream} with the properties.
    */
-  protected void populateWebSocketClasses(Map<Class, String>  webSocketMap,
-                                          InputStream         propertyStream)
-  {
+  protected void populateWebSocketClasses(Map<Class, String> webSocketMap,
+      InputStream propertyStream) {
     // if not then initialize
     try {
       Properties webSocketProps = new Properties();
@@ -3227,7 +3235,7 @@ public class SzApiServer implements SzApiProvider {
       webSocketProps.forEach((className, path) -> {
         try {
           webSocketMap.put(Class.forName(className.toString()),
-                           path.toString());
+              path.toString());
 
         } catch (ClassNotFoundException e) {
           throw new RuntimeException(e);

@@ -21,14 +21,14 @@ import static com.senzing.configmgr.ConfigManagerOption.*;
 import static com.senzing.cmdline.CommandLineUtilities.*;
 
 /**
- * Utlity class for managing the Senzing configurations.
+ * Utility class for managing the Senzing configurations.
  */
 public class ConfigurationManager {
-  private static final InstallLocations INSTALL_LOCATIONS
-      = InstallLocations.findLocations();
+  private static final InstallLocations INSTALL_LOCATIONS = InstallLocations.findLocations();
 
   private static final File INSTALL_DIR = (INSTALL_LOCATIONS == null)
-      ? null : INSTALL_LOCATIONS.getInstallDirectory();
+      ? null
+      : INSTALL_LOCATIONS.getInstallDirectory();
 
   private static final G2ConfigMgr CONFIG_MGR_API;
 
@@ -37,7 +37,7 @@ public class ConfigurationManager {
   private static final int CONFIG_NOT_FOUND_ERROR_CODE = 7221;
 
   static {
-    G2ConfigMgr configMgrApi  = null;
+    G2ConfigMgr configMgrApi = null;
     try {
       configMgrApi = NativeApiFactory.createConfigMgrApi();
 
@@ -80,8 +80,8 @@ public class ConfigurationManager {
   private static final String JAR_BASE_URL;
 
   static {
-    String jarBaseUrl   = null;
-    String jarFileName  = null;
+    String jarBaseUrl = null;
+    String jarFileName = null;
 
     try {
       Class<ConfigurationManager> cls = ConfigurationManager.class;
@@ -110,17 +110,17 @@ public class ConfigurationManager {
       }
 
     } finally {
-      JAR_BASE_URL  = jarBaseUrl;
+      JAR_BASE_URL = jarBaseUrl;
       JAR_FILE_NAME = jarFileName;
     }
   }
 
   /**
    * Parses the command line arguments and returns a {@link Map} of those
-   * arguments.  This will throw an exception if invalid command line arguments
+   * arguments. This will throw an exception if invalid command line arguments
    * are provided.
    *
-   * @param args The arguments to parse.
+   * @param args                The arguments to parse.
    * @param deprecationWarnings The {@link List} to populate with any
    *                            deprecation warnings that might be generated,
    *                            or <code>null</code> if the caller is not
@@ -129,16 +129,14 @@ public class ConfigurationManager {
    * @throws CommandLineException If command line arguments are invalid.
    */
   private static Map<CommandLineOption, Object> parseCommandLine(
-      String[]                      args,
+      String[] args,
       List<DeprecatedOptionWarning> deprecationWarnings)
-      throws CommandLineException
-  {
-    Map<CommandLineOption, CommandLineValue>
-        optionValues = CommandLineUtilities.parseCommandLine(
-            ConfigManagerOption.class,
-            args,
-            PARAMETER_PROCESSOR,
-            deprecationWarnings);
+      throws CommandLineException {
+    Map<CommandLineOption, CommandLineValue> optionValues = CommandLineUtilities.parseCommandLine(
+        ConfigManagerOption.class,
+        args,
+        PARAMETER_PROCESSOR,
+        deprecationWarnings);
 
     // create a result map
     Map<CommandLineOption, Object> result = new LinkedHashMap<>();
@@ -169,7 +167,7 @@ public class ConfigurationManager {
     Class<ConfigurationManager> cls = ConfigurationManager.class;
     if (checkClassIsMain(cls)) {
       pw.println("USAGE: java -cp " + JAR_FILE_NAME + " "
-                     + cls.getName() + " <options>");
+          + cls.getName() + " <options>");
     } else {
       pw.println("USAGE: java -jar " + JAR_FILE_NAME + " --configmgr <options>");
     }
@@ -263,53 +261,51 @@ public class ConfigurationManager {
     return sw.toString();
   }
 
-
   /**
    * Initializing the Senzing Configuration Manager API and returns
    * <tt>true</tt> if initialized by this call and <tt>false</tt> if already
-   * initialized with the same initialization JSON and verbose setting.  If
+   * initialized with the same initialization JSON and verbose setting. If
    * initialized with different settings, the {@link #destroyApi()}
    * method is called first and then initialization proceeds with the new
    * settings.
    *
    * @param initJson The {@link JsonObject} describing the initialization
    *                 parameters for the Senzing repository.
-   * @param verbose <tt>true</tt> to initialize in verbose, otherwise
-   *                <tt>false</tt>.
+   * @param verbose  <tt>true</tt> to initialize in verbose, otherwise
+   *                 <tt>false</tt>.
    * @return <tt>true</tt> if initialized by this call and <tt>false</tt> if
    *         already initialized with the same settings.
    */
-  public static synchronized boolean initApi(JsonObject  initJson,
-                                             boolean     verbose)
-  {
+  public static synchronized boolean initApi(JsonObject initJson,
+      boolean verbose) {
     return initApi(initJson, verbose, false);
   }
 
   /**
    * Initializing the Senzing Configuration Manager API and returns
    * <tt>true</tt> if initialized by this call and <tt>false</tt> if already
-   * initialized with the same initialization JSON and verbose setting.  If
+   * initialized with the same initialization JSON and verbose setting. If
    * initialized with different settings, the {@link #destroyApi(boolean)}
    * method is called first and then initialization proceeds with the new
    * settings.
    *
    * @param initJson The {@link JsonObject} describing the initialization
    *                 parameters for the Senzing repository.
-   * @param verbose <tt>true</tt> to initialize in verbose, otherwise
-   *                <tt>false</tt>.
-   * @param silent <tt>false</tt> if output should be written to stdout, and
-   *               <tt>true</tt> if not.
+   * @param verbose  <tt>true</tt> to initialize in verbose, otherwise
+   *                 <tt>false</tt>.
+   * @param silent   <tt>false</tt> if output should be written to stdout, and
+   *                 <tt>true</tt> if not.
    * @return <tt>true</tt> if initialized by this call and <tt>false</tt> if
    *         already initialized with the same settings.
    */
-  public static synchronized boolean initApi(JsonObject  initJson,
-                                             boolean     verbose,
-                                             boolean     silent)
-  {
+  public static synchronized boolean initApi(JsonObject initJson,
+      boolean verbose,
+      boolean silent) {
     String jsonText = JsonUtilities.toJsonText(initJson);
-    String initKey  = "" + verbose + ":" + jsonText;
+    String initKey = "" + verbose + ":" + jsonText;
     if (initializationKey != null) {
-      if (initializationKey.equals(initKey)) return false;
+      if (initializationKey.equals(initKey))
+        return false;
       destroyApi();
     }
     String moduleName = ConfigurationManager.class.getName();
@@ -343,7 +339,8 @@ public class ConfigurationManager {
    *               <tt>true</tt> if not.
    */
   public static synchronized boolean destroyApi(boolean silent) {
-    if (initializationKey == null) return false;
+    if (initializationKey == null)
+      return false;
     int returnCode = CONFIG_MGR_API.destroy();
     if (returnCode != 0) {
       String errorMsg = formatError(
@@ -362,12 +359,12 @@ public class ConfigurationManager {
    * @throws Exception
    */
   public static void main(String[] args) throws Exception {
-    Map<CommandLineOption, Object>  options = null;
-    List<DeprecatedOptionWarning>   warnings = new LinkedList<>();
+    Map<CommandLineOption, Object> options = null;
+    List<DeprecatedOptionWarning> warnings = new LinkedList<>();
     try {
       options = parseCommandLine(args, warnings);
 
-      for (DeprecatedOptionWarning warning: warnings) {
+      for (DeprecatedOptionWarning warning : warnings) {
         System.out.println(warning);
         System.out.println();
       }
@@ -379,8 +376,7 @@ public class ConfigurationManager {
       System.exit(1);
 
     } catch (Exception e) {
-      if (!isLastLoggedException(e))
-      {
+      if (!isLastLoggedException(e)) {
         e.printStackTrace();
       }
       System.exit(1);
@@ -406,7 +402,7 @@ public class ConfigurationManager {
         return;
       }
 
-      JsonObject  initJson  = null;
+      JsonObject initJson = null;
       // determine the init JSON
       initJson = (JsonObject) options.get(INIT_FILE);
       if (initJson == null) {
@@ -427,7 +423,7 @@ public class ConfigurationManager {
         setDefaultConfigId(initJson, verbose, configId);
 
       } else if (options.containsKey(EXPORT_CONFIG)) {
-        Long configId   = (Long) options.get(CONFIG_ID);
+        Long configId = (Long) options.get(CONFIG_ID);
         File outputFile = (File) options.get(EXPORT_CONFIG);
         exportConfig(initJson, verbose, configId, outputFile);
 
@@ -435,12 +431,14 @@ public class ConfigurationManager {
         Object[] params = (Object[]) options.get(IMPORT_CONFIG);
         File configFile = (File) params[0];
         String description = null;
-        if (params.length > 1) description = (String) params[1];
+        if (params.length > 1)
+          description = (String) params[1];
         importConfig(initJson, verbose, configFile, description);
       }
 
     } catch (Exception e) {
-      if (!isLastLoggedException(e)) e.printStackTrace();
+      if (!isLastLoggedException(e))
+        e.printStackTrace();
     }
   }
 
@@ -451,8 +449,8 @@ public class ConfigurationManager {
    *
    * @param initJson The {@link JsonObject} describing the initialization
    *                 parameters for the Senzing repository.
-   * @param verbose <tt>true</tt> to initialize in verbose, otherwise
-   *                <tt>false</tt>.
+   * @param verbose  <tt>true</tt> to initialize in verbose, otherwise
+   *                 <tt>false</tt>.
    * @return The {@link JsonArray} describing the configurations.
    */
   public static JsonArray listConfigs(JsonObject initJson, boolean verbose) {
@@ -466,16 +464,15 @@ public class ConfigurationManager {
    *
    * @param initJson The {@link JsonObject} describing the initialization
    *                 parameters for the Senzing repository.
-   * @param verbose <tt>true</tt> to initialize in verbose, otherwise
-   *                <tt>false</tt>.
-   * @param silent <tt>false</tt> if output should be written to stdout, and
-   *               <tt>true</tt> if not.
+   * @param verbose  <tt>true</tt> to initialize in verbose, otherwise
+   *                 <tt>false</tt>.
+   * @param silent   <tt>false</tt> if output should be written to stdout, and
+   *                 <tt>true</tt> if not.
    * @return The {@link JsonArray} describing the configurations.
    */
-  public static synchronized JsonArray listConfigs(JsonObject  initJson,
-                                                   boolean     verbose,
-                                                   boolean     silent)
-  {
+  public static synchronized JsonArray listConfigs(JsonObject initJson,
+      boolean verbose,
+      boolean silent) {
     boolean initialized = initApi(initJson, verbose);
     try {
       StringBuffer sb = new StringBuffer();
@@ -491,8 +488,8 @@ public class ConfigurationManager {
       }
 
       String jsonText = sb.toString();
-      JsonObject  jsonObj = JsonUtilities.parseJsonObject(jsonText);
-      JsonArray   jsonArr = JsonUtilities.getJsonArray(jsonObj,"CONFIGS");
+      JsonObject jsonObj = JsonUtilities.parseJsonObject(jsonText);
+      JsonArray jsonArr = JsonUtilities.getJsonArray(jsonObj, "CONFIGS");
       if (jsonArr == null) {
         throw new IllegalStateException(
             "Could not find CONFIGS element in getConfigList() result");
@@ -501,29 +498,37 @@ public class ConfigurationManager {
         // output a header for the table of configurations
         StringBuilder line = new StringBuilder();
         line.append("TIMESTAMP");
-        while (line.length() < 25) line.append(" ");
+        while (line.length() < 25)
+          line.append(" ");
         line.append("CONFIGURATION ID");
-        while (line.length() < 48) line.append(" ");
+        while (line.length() < 48)
+          line.append(" ");
         line.append("COMMENTS/DESCRIPTION");
         System.out.println(line.toString());
         line.delete(0, line.length());
-        while (line.length() < 24) line.append("-");
+        while (line.length() < 24)
+          line.append("-");
         line.append(" ");
-        while (line.length() < 47) line.append("-");
+        while (line.length() < 47)
+          line.append("-");
         line.append(" ");
-        while (line.length() < 80) line.append("-");
+        while (line.length() < 80)
+          line.append("-");
         System.out.println(line.toString());
 
         // iterate over the configurations and output each
         for (JsonObject elem : jsonArr.getValuesAs(JsonObject.class)) {
-          Long    configId  = JsonUtilities.getLong(elem, "CONFIG_ID");
-          String  timeStamp = JsonUtilities.getString(elem, "SYS_CREATE_DT");
-          String  comments  = JsonUtilities.getString(elem, "CONFIG_COMMENTS");
-          if (line.length() > 0) line.delete(0, line.length());
+          Long configId = JsonUtilities.getLong(elem, "CONFIG_ID");
+          String timeStamp = JsonUtilities.getString(elem, "SYS_CREATE_DT");
+          String comments = JsonUtilities.getString(elem, "CONFIG_COMMENTS");
+          if (line.length() > 0)
+            line.delete(0, line.length());
           line.append(timeStamp);
-          while (line.length() < 25) line.append(" ");
+          while (line.length() < 25)
+            line.append(" ");
           line.append("" + configId);
-          while (line.length() < 48) line.append(" ");
+          while (line.length() < 48)
+            line.append(" ");
           line.append(comments);
           System.out.println(line.toString());
         }
@@ -531,20 +536,21 @@ public class ConfigurationManager {
       return jsonArr;
 
     } finally {
-      if (initialized) destroyApi();
+      if (initialized)
+        destroyApi();
     }
   }
 
   /**
    * Gets the default configuration ID for the repository described by the
    * specified initialization {@link JsonObject} and using the specified verbose
-   * flag for initialization.  This method returns <tt>null</tt> if the
+   * flag for initialization. This method returns <tt>null</tt> if the
    * repository has no default configuration.
    *
    * @param initJson The {@link JsonObject} describing the initialization
    *                 parameters for the Senzing repository.
-   * @param verbose <tt>true</tt> to initialize in verbose, otherwise
-   *                <tt>false</tt>.
+   * @param verbose  <tt>true</tt> to initialize in verbose, otherwise
+   *                 <tt>false</tt>.
    * @return The default configuration ID or <tt>null</tt> if the repository
    *         has no default configuration.
    */
@@ -555,22 +561,21 @@ public class ConfigurationManager {
   /**
    * Gets the default configuration ID for the repository described by the
    * specified initialization {@link JsonObject} and using the specified verbose
-   * flag for initialization.  This method returns <tt>null</tt> if the
+   * flag for initialization. This method returns <tt>null</tt> if the
    * repository has no default configuration.
    *
    * @param initJson The {@link JsonObject} describing the initialization
    *                 parameters for the Senzing repository.
-   * @param verbose <tt>true</tt> to initialize in verbose, otherwise
-   *                <tt>false</tt>.
-   * @param silent <tt>false</tt> if output should be written to stdout, and
-   *               <tt>true</tt> if not.
+   * @param verbose  <tt>true</tt> to initialize in verbose, otherwise
+   *                 <tt>false</tt>.
+   * @param silent   <tt>false</tt> if output should be written to stdout, and
+   *                 <tt>true</tt> if not.
    * @return The default configuration ID or <tt>null</tt> if the repository
    *         has no default configuration.
    */
-  public static synchronized Long getDefaultConfigId(JsonObject  initJson,
-                                                     boolean     verbose,
-                                                     boolean     silent)
-  {
+  public static synchronized Long getDefaultConfigId(JsonObject initJson,
+      boolean verbose,
+      boolean silent) {
     boolean initialized = initApi(initJson, verbose);
     try {
       Result<Long> result = new Result<>();
@@ -589,14 +594,15 @@ public class ConfigurationManager {
       if (!silent) {
         System.out.println(
             "DEFAULT CONFIGURATION ID: "
-            + ((configId == null) ? "** NONE **" : configId.toString()));
+                + ((configId == null) ? "** NONE **" : configId.toString()));
       }
 
       // return null if not found
       return (configId == null || configId == 0) ? null : configId;
 
     } finally {
-      if (initialized) destroyApi();
+      if (initialized)
+        destroyApi();
     }
 
   }
@@ -608,17 +614,16 @@ public class ConfigurationManager {
    *
    * @param initJson The {@link JsonObject} describing the initialization
    *                 parameters for the Senzing repository.
-   * @param verbose <tt>true</tt> to initialize in verbose, otherwise
-   *                <tt>false</tt>.
+   * @param verbose  <tt>true</tt> to initialize in verbose, otherwise
+   *                 <tt>false</tt>.
    * @param configId The configuration ID to set as a default for the
    *                 repository.
    * @return <tt>true</tt> if the specified configuration ID was found and
    *         set as the default configuration, or <tt>false</tt> if not found.
    */
   public static boolean setDefaultConfigId(JsonObject initJson,
-                                           boolean    verbose,
-                                           long       configId)
-  {
+      boolean verbose,
+      long configId) {
     return setDefaultConfigId(initJson, verbose, configId, false);
   }
 
@@ -629,30 +634,30 @@ public class ConfigurationManager {
    *
    * @param initJson The {@link JsonObject} describing the initialization
    *                 parameters for the Senzing repository.
-   * @param verbose <tt>true</tt> to initialize in verbose, otherwise
-   *                <tt>false</tt>.
+   * @param verbose  <tt>true</tt> to initialize in verbose, otherwise
+   *                 <tt>false</tt>.
    * @param configId The configuration ID to set as a default for the
    *                 repository.
-   * @param silent <tt>false</tt> if output should be written to stdout, and
-   *               <tt>true</tt> if not.
+   * @param silent   <tt>false</tt> if output should be written to stdout, and
+   *                 <tt>true</tt> if not.
    * @return <tt>true</tt> if the specified configuration ID was found and
    *         set as the default configuration, or <tt>false</tt> if not found.
    */
-  public static synchronized boolean setDefaultConfigId(JsonObject  initJson,
-                                                        boolean     verbose,
-                                                        long        configId,
-                                                        boolean     silent)
-  {
+  public static synchronized boolean setDefaultConfigId(JsonObject initJson,
+      boolean verbose,
+      long configId,
+      boolean silent) {
     boolean initialized = initApi(initJson, verbose);
     try {
       int returnCode = CONFIG_MGR_API.setDefaultConfigID(configId);
-      if (returnCode == CONFIG_NOT_FOUND_ERROR_CODE) return false;
+      if (returnCode == CONFIG_NOT_FOUND_ERROR_CODE)
+        return false;
       if (returnCode != 0) {
         String errorMsg = formatError(
             "G2ConfigMgr.setDefaultConfigID()", CONFIG_MGR_API);
         if (!silent) {
           System.err.println("Failed to set the default configuration ID: "
-                             + configId);
+              + configId);
           System.err.println(errorMsg);
         }
         throw new RuntimeException(errorMsg);
@@ -664,91 +669,90 @@ public class ConfigurationManager {
       return true;
 
     } finally {
-      if (initialized) destroyApi();
+      if (initialized)
+        destroyApi();
     }
   }
 
   /**
    * Exports the configuration for the specified configuration ID or the default
-   * configuration if the specified configuration ID is <tt>null</tt>.  If the
+   * configuration if the specified configuration ID is <tt>null</tt>. If the
    * specified configuration ID is <tt>null</tt> and the repository has no
    * default configuration then <tt>null</tt> is returned.
    *
-   * @param initJson The {@link JsonObject} describing the initialization
-   *                 parameters for the Senzing repository.
-   * @param verbose <tt>true</tt> to initialize in verbose, otherwise
-   *                <tt>false</tt>.
-   * @param configId The configuration ID of the configuration to export, or
-   *                 <tt>null</tt> if the default configuration should be
-   *                 exported.
+   * @param initJson   The {@link JsonObject} describing the initialization
+   *                   parameters for the Senzing repository.
+   * @param verbose    <tt>true</tt> to initialize in verbose, otherwise
+   *                   <tt>false</tt>.
+   * @param configId   The configuration ID of the configuration to export, or
+   *                   <tt>null</tt> if the default configuration should be
+   *                   exported.
    * @param outputFile The file to export the configuration to.
    *
    * @return The {@link JsonObject} describing the configuration that was
    *         exported, or <tt>null</tt> if the configuration ID was
    *         <tt>null</tt> and the repository has no default configuration.
    */
-  public static JsonObject exportConfig(JsonObject  initJson,
-                                        boolean     verbose,
-                                        Long        configId,
-                                        File        outputFile)
-  {
+  public static JsonObject exportConfig(JsonObject initJson,
+      boolean verbose,
+      Long configId,
+      File outputFile) {
     return exportConfig(initJson, verbose, configId, outputFile, false);
   }
 
   /**
    * Exports the configuration for the specified configuration ID or the default
-   * configuration if the specified configuration ID is <tt>null</tt>.  If the
+   * configuration if the specified configuration ID is <tt>null</tt>. If the
    * specified configuration ID is <tt>null</tt> and the repository has no
-   * default configuration then <tt>null</tt> is returned.  The configuration
+   * default configuration then <tt>null</tt> is returned. The configuration
    * is returned as a {@link JsonObject} and will be written to a file as well
    * as UTF-8 encoded JSON text if the specified output file is not
    * <tt>null</tt>.
    *
-   * @param initJson The {@link JsonObject} describing the initialization
-   *                 parameters for the Senzing repository.
-   * @param verbose <tt>true</tt> to initialize in verbose, otherwise
-   *                <tt>false</tt>.
-   * @param configId The configuration ID of the configuration to export, or
-   *                 <tt>null</tt> if the default configuration should be
-   *                 exported.
+   * @param initJson   The {@link JsonObject} describing the initialization
+   *                   parameters for the Senzing repository.
+   * @param verbose    <tt>true</tt> to initialize in verbose, otherwise
+   *                   <tt>false</tt>.
+   * @param configId   The configuration ID of the configuration to export, or
+   *                   <tt>null</tt> if the default configuration should be
+   *                   exported.
    * @param outputFile The file to export the configuration to, or <tt>null</tt>
    *                   if the configuration should just be returned and not
    *                   written to a file.
-   * @param silent <tt>false</tt> if output should be written to stdout, and
-   *               <tt>true</tt> if not.
+   * @param silent     <tt>false</tt> if output should be written to stdout, and
+   *                   <tt>true</tt> if not.
    *
    * @return The {@link JsonObject} describing the configuration that was
    *         exported, or <tt>null</tt> if the configuration ID was
    *         <tt>null</tt> and the repository has no default configuration.
    */
-  public static JsonObject exportConfig(JsonObject  initJson,
-                                        boolean     verbose,
-                                        Long        configId,
-                                        File        outputFile,
-                                        boolean     silent)
-  {
+  public static JsonObject exportConfig(JsonObject initJson,
+      boolean verbose,
+      Long configId,
+      File outputFile,
+      boolean silent) {
     boolean initialized = initApi(initJson, verbose);
     try {
       int returnCode;
       // if we don't have a config ID then get the default config ID
       if (configId == null) {
         Result<Long> result = new Result<>();
-         returnCode = CONFIG_MGR_API.getDefaultConfigID(result);
-         if (returnCode != 0) {
-           String errorMsg = formatError(
-               "G2ConfigMgr.getDefaultConfigID()", CONFIG_MGR_API);
-           if (!silent) {
-             System.err.println("Failed to get the default configuration ID");
-             System.err.println(errorMsg);
-           }
-         }
-         configId = result.getValue();
+        returnCode = CONFIG_MGR_API.getDefaultConfigID(result);
+        if (returnCode != 0) {
+          String errorMsg = formatError(
+              "G2ConfigMgr.getDefaultConfigID()", CONFIG_MGR_API);
+          if (!silent) {
+            System.err.println("Failed to get the default configuration ID");
+            System.err.println(errorMsg);
+          }
+        }
+        configId = result.getValue();
       }
       // if we still don't have a config ID then return null
       if (configId == null || configId == 0) {
         if (!silent) {
           System.err.println("Unable to export.  No default configuration "
-                             + "found in repository.");
+              + "found in repository.");
         }
         return null;
       }
@@ -758,7 +762,7 @@ public class ConfigurationManager {
       if (returnCode == CONFIG_NOT_FOUND_ERROR_CODE) {
         if (!silent) {
           System.err.println("Unable to export.  Configuration not found for "
-                             + "configuration ID: " + configId);
+              + "configuration ID: " + configId);
         }
       }
       if (returnCode != 0) {
@@ -766,21 +770,21 @@ public class ConfigurationManager {
             "G2ConfigMgr.getConfig()", CONFIG_MGR_API);
         if (!silent) {
           System.err.println("Failed to export configuration for configuration "
-                             + "ID: " + configId);
+              + "ID: " + configId);
           System.err.println(errorMsg);
         }
         throw new RuntimeException(errorMsg);
       }
 
       // get the JSON text and parse it to be sure it parses as JSON
-      String      jsonText  = sb.toString();
-      JsonObject  configObj = JsonUtilities.parseJsonObject(jsonText);
+      String jsonText = sb.toString();
+      JsonObject configObj = JsonUtilities.parseJsonObject(jsonText);
       jsonText = JsonUtilities.toJsonText(configObj, true);
 
       // write the text to the specified file
       if (outputFile != null) {
         try (FileOutputStream fos = new FileOutputStream(outputFile);
-             OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8")) {
+            OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8")) {
           osw.write(jsonText);
           osw.flush();
 
@@ -804,7 +808,8 @@ public class ConfigurationManager {
       return configObj;
 
     } finally {
-      if (initialized) destroyApi();
+      if (initialized)
+        destroyApi();
     }
   }
 
@@ -812,20 +817,19 @@ public class ConfigurationManager {
    * Imports the configuration contained in the specified file and returns the
    * configuration ID of the imported configuration.
    *
-   * @param initJson The {@link JsonObject} describing the initialization
-   *                 parameters for the Senzing repository.
-   * @param verbose <tt>true</tt> to initialize in verbose, otherwise
-   *                <tt>false</tt>.
-   * @param configFile The file containing the configuration to import.
+   * @param initJson    The {@link JsonObject} describing the initialization
+   *                    parameters for the Senzing repository.
+   * @param verbose     <tt>true</tt> to initialize in verbose, otherwise
+   *                    <tt>false</tt>.
+   * @param configFile  The file containing the configuration to import.
    * @param description The comment/description to associate with the
    *                    configuration.
    * @return The configuration ID of the imported configuration.
    */
-  public static long importConfig(JsonObject  initJson,
-                                  boolean     verbose,
-                                  File        configFile,
-                                  String      description)
-  {
+  public static long importConfig(JsonObject initJson,
+      boolean verbose,
+      File configFile,
+      String description) {
     return importConfig(initJson, verbose, configFile, description, false);
   }
 
@@ -833,24 +837,23 @@ public class ConfigurationManager {
    * Imports the configuration contained in the specified file and returns the
    * configuration ID of the imported configuration.
    *
-   * @param initJson The {@link JsonObject} describing the initialization
-   *                 parameters for the Senzing repository.
-   * @param verbose <tt>true</tt> to initialize in verbose, otherwise
-   *                <tt>false</tt>.
-   * @param configFile The file containing the configuration to import.
+   * @param initJson    The {@link JsonObject} describing the initialization
+   *                    parameters for the Senzing repository.
+   * @param verbose     <tt>true</tt> to initialize in verbose, otherwise
+   *                    <tt>false</tt>.
+   * @param configFile  The file containing the configuration to import.
    * @param description The comment/description to associate with the
    *                    configuration.
-   * @param silent <tt>false</tt> if output should be written to stdout, and
-   *               <tt>true</tt> if not.
+   * @param silent      <tt>false</tt> if output should be written to stdout, and
+   *                    <tt>true</tt> if not.
    *
    * @return The configuration ID of the imported configuration.
    */
-  public static long importConfig(JsonObject  initJson,
-                                  boolean     verbose,
-                                  File        configFile,
-                                  String      description,
-                                  boolean     silent)
-  {
+  public static long importConfig(JsonObject initJson,
+      boolean verbose,
+      File configFile,
+      String description,
+      boolean silent) {
     boolean initialized = initApi(initJson, verbose);
     try {
       // read the JSON text
@@ -867,8 +870,8 @@ public class ConfigurationManager {
               "File does not contain a valid configuration: " + configFile);
         }
         throw new IllegalArgumentException(
-                "The file does not contain a valid configuration: "
-                    + configFile);
+            "The file does not contain a valid configuration: "
+                + configFile);
 
       }
 
@@ -883,7 +886,7 @@ public class ConfigurationManager {
             "G2ConfigMgr.addConfig()", CONFIG_MGR_API);
         if (!silent) {
           System.err.println("Failed to import configuration from file: "
-                             + configFile);
+              + configFile);
           System.err.println(errorMsg);
         }
         throw new RuntimeException(errorMsg);
@@ -903,7 +906,8 @@ public class ConfigurationManager {
       throw new RuntimeException(e);
 
     } finally {
-      if (initialized) destroyApi();
+      if (initialized)
+        destroyApi();
     }
   }
 
@@ -913,17 +917,16 @@ public class ConfigurationManager {
    * This method returns the {@link MigrationResult} describing the result of
    * the migration.
    *
-   * @param iniFile The legacy INI file.
-   * @param verbose <tt>true</tt> to initialize in verbose, otherwise
-   *                <tt>false</tt>.
+   * @param iniFile         The legacy INI file.
+   * @param verbose         <tt>true</tt> to initialize in verbose, otherwise
+   *                        <tt>false</tt>.
    * @param initJsonOutFile The output file for the initialization JSON
    *                        parameters.
    * @return The {@link MigrationResult} describing the result of the migration.
    */
-  public static MigrationResult migrateFromIniFile(File     iniFile,
-                                                   boolean  verbose,
-                                                   File     initJsonOutFile)
-  {
+  public static MigrationResult migrateFromIniFile(File iniFile,
+      boolean verbose,
+      File initJsonOutFile) {
     return migrateFromIniFile(iniFile, verbose, initJsonOutFile, false);
   }
 
@@ -933,31 +936,32 @@ public class ConfigurationManager {
    * This method returns the {@link MigrationResult} describing the result of
    * the migration.
    *
-   * @param iniFile The legacy INI file.
-   * @param verbose <tt>true</tt> to initialize in verbose, otherwise
-   *                <tt>false</tt>.
+   * @param iniFile         The legacy INI file.
+   * @param verbose         <tt>true</tt> to initialize in verbose, otherwise
+   *                        <tt>false</tt>.
    * @param initJsonOutFile The output file for the initialization JSON
    *                        parameters.
-   * @param silent <tt>false</tt> if output should be written to stdout, and
-   *               <tt>true</tt> if not.
+   * @param silent          <tt>false</tt> if output should be written to stdout,
+   *                        and
+   *                        <tt>true</tt> if not.
    * @return The {@link MigrationResult} describing the result of the migration.
    */
-  public static MigrationResult migrateFromIniFile(File     iniFile,
-                                                   boolean  verbose,
-                                                   File     initJsonOutFile,
-                                                   boolean  silent)
-  {
+  public static MigrationResult migrateFromIniFile(File iniFile,
+      boolean verbose,
+      File initJsonOutFile,
+      boolean silent) {
     if (!silent) {
       System.out.println("Migrating INI file: " + iniFile);
     }
-    Long        importedConfigId  = null;
-    Long        defaultConfigId   = null;
-    JsonObject  initJson          = JsonUtilities.iniToJson(iniFile);
-    File        configFile        = null;
+    Long importedConfigId = null;
+    Long defaultConfigId = null;
+    JsonObject initJson = JsonUtilities.iniToJson(iniFile);
+    File configFile = null;
     JsonObject sqlSection = JsonUtilities.getJsonObject(initJson, "SQL");
     if (sqlSection != null) {
       String filePath = JsonUtilities.getString(sqlSection, "G2CONFIGFILE");
-      if (filePath != null) configFile = new File(filePath);
+      if (filePath != null)
+        configFile = new File(filePath);
     }
 
     // strip the G2CONFIGFILE from the initialization parameters
@@ -983,7 +987,7 @@ public class ConfigurationManager {
       if (configFile != null) {
         if (!silent) {
           System.out.println("Found G2CONFIGFILE setting in INI file: "
-                             + configFile);
+              + configFile);
         }
         try {
           String description = "Imported when migrating INI (" + iniFile
@@ -999,7 +1003,7 @@ public class ConfigurationManager {
                 "G2ConfigMgr.addConfig()", CONFIG_MGR_API);
             if (!silent) {
               System.err.println("Failed to add configuration file from INI: "
-                                 + configFile);
+                  + configFile);
               System.err.println(errorMsg);
             }
             throw new RuntimeException(errorMsg);
@@ -1009,13 +1013,13 @@ public class ConfigurationManager {
 
           if (!silent) {
             System.out.println("Imported configuration with ID: "
-                               + importedConfigId);
+                + importedConfigId);
           }
 
         } catch (IOException e) {
           if (!silent) {
             System.err.println("Failed to read configuration file from INI: "
-                                   + configFile);
+                + configFile);
           }
           throw new RuntimeException(e);
         }
@@ -1034,8 +1038,8 @@ public class ConfigurationManager {
               "G2ConfigMgr.getDefaultConfigID()", CONFIG_MGR_API);
           if (!silent) {
             System.err.println("Failed to check for existing default "
-                               + "configuration while migrating INI file: "
-                               + iniFile);
+                + "configuration while migrating INI file: "
+                + iniFile);
             System.err.println(errorMsg);
           }
           throw new RuntimeException(errorMsg);
@@ -1050,29 +1054,29 @@ public class ConfigurationManager {
                 "G2ConfigMgr.setDefaultConfigID()", CONFIG_MGR_API);
             if (!silent) {
               System.err.println("Failed to set the default configuration to "
-                                 + importedConfigId
-                                 + " while migrating INI file: " + iniFile);
+                  + importedConfigId
+                  + " while migrating INI file: " + iniFile);
               System.err.println(errorMsg);
             }
             throw new RuntimeException(errorMsg);
           }
           if (!silent) {
             System.out.println("Set default configuration to configuration ID: "
-                               + importedConfigId);
+                + importedConfigId);
           }
           defaultConfigId = importedConfigId;
 
         } else if (!silent) {
           if (defaultConfigId.longValue() == importedConfigId.longValue()) {
             System.out.println("Imported configuration already configured as "
-                  + "default for the repository: " + defaultConfigId);
+                + "default for the repository: " + defaultConfigId);
 
           } else {
             System.out.println("Repository already has default configuration: "
-                                   + defaultConfigId);
+                + defaultConfigId);
             System.out.println(
                 "Cowardly refusing to override default configuration with "
-                  + importedConfigId);
+                    + importedConfigId);
             System.out.println(
                 "You may manually set the default configuration with the "
                     + SET_DEFAULT_CONFIG_ID.getCommandLineFlag() + " option.");
@@ -1083,9 +1087,8 @@ public class ConfigurationManager {
       // now its time to output the init JSON
       String initJsonText = JsonUtilities.toJsonText(initJson);
       if (initJsonOutFile != null) {
-        try (FileOutputStream   fos = new FileOutputStream(initJsonOutFile);
-             OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8"))
-        {
+        try (FileOutputStream fos = new FileOutputStream(initJsonOutFile);
+            OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8")) {
           osw.write(initJsonText);
           osw.flush();
           if (!silent) {
@@ -1094,7 +1097,7 @@ public class ConfigurationManager {
         } catch (IOException e) {
           if (!silent) {
             System.err.println("Failed to write initialization JSON to file: "
-                               + initJsonOutFile);
+                + initJsonOutFile);
             System.out.println(
                 multilineFormat(
                     "--------------------------------------------",
@@ -1113,7 +1116,8 @@ public class ConfigurationManager {
       return new MigrationResult(initJson, importedConfigId, defaultConfigId);
 
     } finally {
-      if (initialized) destroyApi();
+      if (initialized)
+        destroyApi();
     }
 
   }

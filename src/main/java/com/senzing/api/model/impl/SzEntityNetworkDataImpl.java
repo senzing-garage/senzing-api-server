@@ -30,8 +30,8 @@ public class SzEntityNetworkDataImpl implements SzEntityNetworkData {
    * Package-private default constructor.
    */
   public SzEntityNetworkDataImpl() {
-    this.entityPaths  = null;
-    this.entities     = null;
+    this.entityPaths = null;
+    this.entities = null;
   }
 
   /**
@@ -42,16 +42,15 @@ public class SzEntityNetworkDataImpl implements SzEntityNetworkData {
    * @param entityPaths The {@link List} of {@link SzEntityPath} instances
    *                    describing the entity paths.
    *
-   * @param entities The {@link List} of {@link SzEntityData} instances
-   *                 describing the entities in the path.
+   * @param entities    The {@link List} of {@link SzEntityData} instances
+   *                    describing the entities in the path.
    *
    * @throws IllegalArgumentException If the entities list is not consistent
    *                                  with the specified entity paths.
    */
-  public SzEntityNetworkDataImpl(List<SzEntityPath>  entityPaths,
-                                 List<SzEntityData>  entities)
-    throws IllegalArgumentException
-  {
+  public SzEntityNetworkDataImpl(List<SzEntityPath> entityPaths,
+      List<SzEntityData> entities)
+      throws IllegalArgumentException {
     // check the sets of entity IDs
     Set<Long> set1 = new HashSet<>();
     Set<Long> set2 = new HashSet<>();
@@ -61,8 +60,8 @@ public class SzEntityNetworkDataImpl implements SzEntityNetworkData {
     if (!set1.containsAll(set2)) {
       throw new IllegalArgumentException(
           "Some of the entities on the paths are not in included in the "
-          + "enitty list.  pathEntities=[ " + set2 + " ], listEntities=[ "
-          + set1 + " ]");
+              + "entity list.  pathEntities=[ " + set2 + " ], listEntities=[ "
+              + set1 + " ]");
     }
 
     this.entityPaths = Collections.unmodifiableList(

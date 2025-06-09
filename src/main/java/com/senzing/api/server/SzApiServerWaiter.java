@@ -10,6 +10,7 @@ public class SzApiServerWaiter {
   public static final int TIMEOUT = 3;
   public static final int BAD_ARGS = 4;
   public static final int UNKNOWN_ERROR = 5;
+
   /**
    *
    */
@@ -29,7 +30,7 @@ public class SzApiServerWaiter {
       }
 
       arg = args[argIndex++];
-      int pid= 0;
+      int pid = 0;
       try {
         pid = Integer.parseInt(arg);
 
@@ -64,11 +65,11 @@ public class SzApiServerWaiter {
       int readExceptionCount = 0;
       boolean done = false;
       long start = System.currentTimeMillis();
-      long now   = start;
+      long now = start;
       boolean wrongPID = false;
 
       // wait for the file to be created
-      while (((now-start) < wait) && (!file.exists())) {
+      while (((now - start) < wait) && (!file.exists())) {
         try {
           Thread.sleep(Math.min(1000L, (wait / 5L)));
         } catch (InterruptedException ignore) {
@@ -80,8 +81,8 @@ public class SzApiServerWaiter {
       while (!done && ((now - start) < wait) && file.exists()) {
         // read the monitoring file
         try (FileInputStream fis = new FileInputStream(file);
-             InputStreamReader isr = new InputStreamReader(fis, utf8);
-             JsonReader jr = Json.createReader(isr)) {
+            InputStreamReader isr = new InputStreamReader(fis, utf8);
+            JsonReader jr = Json.createReader(isr)) {
           // read the object
           JsonObject jsonObj = jr.readObject();
 
@@ -134,7 +135,7 @@ public class SzApiServerWaiter {
         System.exit(SUCCESS);
       }
 
-      // signal an unreognized error
+      // signal an unrecognized error
       System.exit(UNKNOWN_ERROR);
 
     } catch (Exception e) {

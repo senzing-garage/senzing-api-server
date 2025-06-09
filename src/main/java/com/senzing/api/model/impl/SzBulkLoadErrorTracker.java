@@ -25,10 +25,9 @@ public class SzBulkLoadErrorTracker {
   private static final int TOP_ERROR_COUNT = 20;
 
   /**
-   * Comparator touse for comparing tracked records.
+   * Comparator to use for comparing tracked records.
    */
-  private static final TrackedErrorComparator TRACKED_ERROR_COMPARATOR
-      = new TrackedErrorComparator();
+  private static final TrackedErrorComparator TRACKED_ERROR_COMPARATOR = new TrackedErrorComparator();
 
   /**
    * The {@link Map} of top errors.
@@ -58,7 +57,7 @@ public class SzBulkLoadErrorTracker {
    * for the specified data source.
    *
    * @param error The {@link SzError} for which the {@link SzBulkLoadError}
-   *               is being requested.
+   *              is being requested.
    * @return The {@link SzBulkLoadError} for the specified {@link SzError}.
    */
   private SzBulkLoadError getBulkLoadError(SzError error) {
@@ -83,16 +82,16 @@ public class SzBulkLoadErrorTracker {
    * If not too many tracked errors then this method does nothing.
    */
   private void trimTrackedErrors() {
-    if (this.topErrorMap.size() < MAX_TRACKED_ERRORS) return;
+    if (this.topErrorMap.size() < MAX_TRACKED_ERRORS)
+      return;
     int count = this.topErrorMap.size();
     List<TrackedError> trackedErrors = new ArrayList<>(count);
     trackedErrors.addAll(this.topErrorMap.values());
     Collections.sort(trackedErrors, TRACKED_ERROR_COMPARATOR);
 
-    List<TrackedError> staleList
-        = trackedErrors.subList(TRACKED_ERROR_TRIM_COUNT, trackedErrors.size());
+    List<TrackedError> staleList = trackedErrors.subList(TRACKED_ERROR_TRIM_COUNT, trackedErrors.size());
 
-    for (TrackedError te: staleList) {
+    for (TrackedError te : staleList) {
       this.topErrorMap.remove(te.loadError.getError());
     }
   }
@@ -109,7 +108,8 @@ public class SzBulkLoadErrorTracker {
     int count = this.topErrorMap.size();
 
     // if none return an empty list
-    if (count == 0) return Collections.emptyList();
+    if (count == 0)
+      return Collections.emptyList();
 
     // sort the tracked errors
     List<TrackedError> trackedErrors = new ArrayList<>(count);
@@ -136,7 +136,7 @@ public class SzBulkLoadErrorTracker {
   public void setTopErrors(Collection<SzBulkLoadError> errors) {
     this.topErrorMap.clear();
     if (errors != null) {
-      for (SzBulkLoadError loadError: errors) {
+      for (SzBulkLoadError loadError : errors) {
         TrackedError trackedError = new TrackedError(loadError);
         this.topErrorMap.put(loadError.getError(), trackedError);
       }
@@ -145,15 +145,17 @@ public class SzBulkLoadErrorTracker {
 
   /**
    * Encapsulates an error being tracked for frequency to later determine the
-   * "top error" list.  This needs a construction timestamp for sorting
+   * "top error" list. This needs a construction timestamp for sorting
    * purposes.
    */
   static class TrackedError {
     private SzBulkLoadError loadError;
     private long timestamp;
+
     private TrackedError(SzError error) {
       this(SzBulkLoadError.FACTORY.create(error));
     }
+
     private TrackedError(SzBulkLoadError error) {
       this.loadError = error;
       this.timestamp = System.currentTimeMillis();
@@ -163,21 +165,23 @@ public class SzBulkLoadErrorTracker {
   /**
    * Comparator to compare two {@link TrackedError} instances to sort by
    * highest occurrence and then by construction time and then by the underlying
-   * {@link SzError} error code and mesasge.
+   * {@link SzError} error code and message.
    */
   static class TrackedErrorComparator
-      implements Comparator<TrackedError>
-  {
+      implements Comparator<TrackedError> {
     public int compare(TrackedError e1, TrackedError e2) {
       // handle nulls
-      if (e1 == null && e2 == null) return 0;
-      if (e1 == null && e2 != null) return 1;
+      if (e1 == null && e2 == null)
+        return 0;
+      if (e1 == null && e2 != null)
+        return 1;
 
       // first sort by occurrence count
       int c1 = e1.loadError.getOccurrenceCount();
       int c2 = e2.loadError.getOccurrenceCount();
       int diff = c1 - c2;
-      if (diff != 0) return diff;
+      if (diff != 0)
+        return diff;
 
       // then sort by timestamp of first occurrence
       if (e1.timestamp != e2.timestamp) {
@@ -188,7 +192,8 @@ public class SzBulkLoadErrorTracker {
       String code1 = e1.loadError.getError().getCode();
       String code2 = e2.loadError.getError().getCode();
       diff = code1.compareTo(code2);
-      if (diff != 0) return diff;
+      if (diff != 0)
+        return diff;
 
       // finally by error message
       String msg1 = e1.loadError.getError().getMessage();

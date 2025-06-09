@@ -12,7 +12,7 @@ import java.util.List;
  * Describes a Senzing attribute type which helps describe a feature of an
  * entity and/or record in part or in whole.
  */
-@JsonDeserialize(using=SzAttributeType.Factory.class)
+@JsonDeserialize(using = SzAttributeType.Factory.class)
 public interface SzAttributeType {
   /**
    * Returns the unique attribute code identifying this attribute type.
@@ -51,7 +51,7 @@ public interface SzAttributeType {
    * Gets the {@linkplain SzAttributeNecessity necessity} for an attribute
    * of this type with the associated feature type.
    *
-   * @return The {@link SzAttributeNecessity} describing the neccessity.
+   * @return The {@link SzAttributeNecessity} describing the necessity.
    */
   SzAttributeNecessity getNecessity();
 
@@ -60,7 +60,7 @@ public interface SzAttributeType {
    * of this type with the associated feature type.
    *
    * @param necessity The {@link SzAttributeNecessity} describing the
-   *                  neccessity.
+   *                  necessity.
    */
   void setNecessity(SzAttributeNecessity necessity);
 
@@ -84,7 +84,7 @@ public interface SzAttributeType {
 
   /**
    * Gets the name of feature type to which this attribute type belongs (if
-   * any).  If <tt>null</tt> is returned, then the attribute type is stand-alone
+   * any). If <tt>null</tt> is returned, then the attribute type is stand-alone
    * and not part of a feature type.
    *
    * @return The name of the feature type to which this attribute type belongs,
@@ -94,7 +94,7 @@ public interface SzAttributeType {
 
   /**
    * Sets the name of feature type to which this attribute type belongs (if
-   * any).  If <tt>null</tt> is specified, then the attribute type is
+   * any). If <tt>null</tt> is specified, then the attribute type is
    * stand-alone and not part of a feature type.
    *
    * @param featureType The name of the feature type to which this attribute
@@ -131,8 +131,8 @@ public interface SzAttributeType {
 
   /**
    * Checks whether or not an attribute type that is typically generated
-   * internally based on other attribute types.  These are not commonly used by
-   * the user except in some rare cases.  Examples include pre-hashed versions
+   * internally based on other attribute types. These are not commonly used by
+   * the user except in some rare cases. Examples include pre-hashed versions
    * of attributes that are hashed.
    *
    * @return <tt>true</tt> if this attribute type is internal, otherwise
@@ -142,8 +142,8 @@ public interface SzAttributeType {
 
   /**
    * Sets whether or not an attribute type that is typically generated
-   * internally based on other attribute types.  These are not commonly used by
-   * the user except in some rare cases.  Examples include pre-hashed versions
+   * internally based on other attribute types. These are not commonly used by
+   * the user except in some rare cases. Examples include pre-hashed versions
    * of attributes that are hashed.
    *
    * @param internal <tt>true</tt> if this attribute type is internal,
@@ -157,9 +157,9 @@ public interface SzAttributeType {
    * features and populates the specified {@link List} or creates a new
    * {@link List}.
    *
-   * @param list The {@link List} of {@link SzAttributeType} instances to
-   *             populate, or <tt>null</tt> if a new {@link List}
-   *             should be created.
+   * @param list      The {@link List} of {@link SzAttributeType} instances to
+   *                  populate, or <tt>null</tt> if a new {@link List}
+   *                  should be created.
    *
    * @param jsonArray The {@link JsonArray} describing the JSON in the
    *                  Senzing native API format.
@@ -169,8 +169,7 @@ public interface SzAttributeType {
    */
   static List<SzAttributeType> parseAttributeTypeList(
       List<SzAttributeType> list,
-      JsonArray             jsonArray)
-  {
+      JsonArray jsonArray) {
     if (list == null) {
       list = new ArrayList<>(jsonArray.size());
     }
@@ -197,8 +196,7 @@ public interface SzAttributeType {
    * SzVersionInfo} that produces instances of {@link SzAttributeTypeImpl}.
    */
   class DefaultProvider extends AbstractModelProvider<SzAttributeType>
-      implements Provider
-  {
+      implements Provider {
     /**
      * Default constructor.
      */
@@ -217,7 +215,7 @@ public interface SzAttributeType {
    */
   class Factory extends ModelFactory<SzAttributeType, Provider> {
     /**
-     * Default constructor.  This is public and can only be called after the
+     * Default constructor. This is public and can only be called after the
      * singleton master instance is created as it inherits the same state from
      * the master instance.
      */
@@ -226,8 +224,9 @@ public interface SzAttributeType {
     }
 
     /**
-     * Constructs with the default provider.  This constructor is private and
+     * Constructs with the default provider. This constructor is private and
      * is used for the master singleton instance.
+     * 
      * @param defaultProvider The default provider.
      */
     private Factory(Provider defaultProvider) {
@@ -236,10 +235,10 @@ public interface SzAttributeType {
 
     /**
      * Creates a new instance of {@link SzAttributeType}.
+     * 
      * @return The new instance of {@link SzAttributeType}.
      */
-    public SzAttributeType create()
-    {
+    public SzAttributeType create() {
       return this.getProvider().create();
     }
   }
@@ -258,24 +257,24 @@ public interface SzAttributeType {
    * @param attributeType The {@link SzAttributeType} instance to populate, or
    *                      <tt>null</tt> if a new instance should be created.
    *
-   * @param jsonObject The {@link JsonObject} describing the JSON in the
-   *                   Senzing native CFG_ATTR config format.
+   * @param jsonObject    The {@link JsonObject} describing the JSON in the
+   *                      Senzing native CFG_ATTR config format.
    *
    * @return The populated (or created) {@link SzAttributeType}.
    */
   static SzAttributeType parseAttributeType(
-      SzAttributeType   attributeType,
-      JsonObject        jsonObject)
-  {
-    if (attributeType == null) attributeType = SzAttributeType.FACTORY.create();
+      SzAttributeType attributeType,
+      JsonObject jsonObject) {
+    if (attributeType == null)
+      attributeType = SzAttributeType.FACTORY.create();
 
-    String  attrCode      = jsonObject.getString("ATTR_CODE");
-    String  defaultValue  = JsonUtilities.getString(jsonObject, "DEFAULT_VALUE");
-    String  felemReq      = jsonObject.getString("FELEM_REQ");
-    String  rawAttrClass  = jsonObject.getString("ATTR_CLASS");
-    boolean internal      = interpretBoolean(jsonObject, "INTERNAL");
-    String  ftypeCode     = JsonUtilities.getString(jsonObject, "FTYPE_CODE");
-    boolean advanced      = interpretBoolean(jsonObject,"ADVANCED");
+    String attrCode = jsonObject.getString("ATTR_CODE");
+    String defaultValue = JsonUtilities.getString(jsonObject, "DEFAULT_VALUE");
+    String felemReq = jsonObject.getString("FELEM_REQ");
+    String rawAttrClass = jsonObject.getString("ATTR_CLASS");
+    boolean internal = interpretBoolean(jsonObject, "INTERNAL");
+    String ftypeCode = JsonUtilities.getString(jsonObject, "FTYPE_CODE");
+    boolean advanced = interpretBoolean(jsonObject, "ADVANCED");
 
     if (ftypeCode != null && ftypeCode.trim().length() == 0) {
       ftypeCode = null;
@@ -300,15 +299,15 @@ public interface SzAttributeType {
    *
    * @param jsonObject The {@link JsonObject} from which to extract the value.
    *
-   * @param key The key for extracting the value from the {@link JsonObject}
+   * @param key        The key for extracting the value from the
+   *                   {@link JsonObject}
    *
    * @return <tt>true</tt> or <tt>false</tt> depending on the interpreted value.
    */
   static boolean interpretBoolean(JsonObject jsonObject, String key) {
     JsonValue jsonValue = jsonObject.getValue("/" + key);
     switch (jsonValue.getValueType()) {
-      case NUMBER:
-      {
+      case NUMBER: {
         int num = ((JsonNumber) jsonValue).intValue();
         return (num != 0);
       }
@@ -316,17 +315,18 @@ public interface SzAttributeType {
         return true;
       case FALSE:
         return false;
-      case STRING:
-      {
+      case STRING: {
         String text = ((JsonString) jsonValue).getString();
-        if ("YES".equalsIgnoreCase(text))   return true;
-        if ("TRUE".equalsIgnoreCase(text))  return true;
+        if ("YES".equalsIgnoreCase(text))
+          return true;
+        if ("TRUE".equalsIgnoreCase(text))
+          return true;
         return false;
       }
       default:
         throw new IllegalArgumentException(
             "The JsonValue does not appear to be a boolean: "
-            + jsonValue.toString());
+                + jsonValue.toString());
     }
   }
 }

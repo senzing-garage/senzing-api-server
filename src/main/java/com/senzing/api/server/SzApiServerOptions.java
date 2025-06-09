@@ -19,42 +19,42 @@ import static com.senzing.api.server.SzApiServerOption.*;
  *
  */
 public class SzApiServerOptions {
-  private int         httpPort                  = DEFAULT_PORT;
-  private InetAddress bindAddress               = null;
-  private int         httpsPort                 = DEFAULT_SECURE_PORT;
-  private File        keyStoreFile              = null;
-  private String      keyStorePassword          = null;
-  private String      keyAlias                  = null;
-  private File        clientKeyStoreFile        = null;
-  private String      clientKeyStorePassword    = null;
-  private String      urlBasePath               = null;
-  private int         concurrency               = DEFAULT_CONCURRENCY;
-  private int         httpConcurrency           = DEFAULT_HTTP_CONCURRENCY;
-  private String      moduleName                = DEFAULT_MODULE_NAME;
-  private boolean     verbose                   = false;
-  private boolean     quiet                     = false;
-  private boolean     readOnly                  = false;
-  private boolean     adminEnabled              = false;
-  private boolean     skipStartupPerf           = false;
-  private boolean     skipEnginePriming         = false;
-  private boolean     debugLogging              = false;
-  private long        statsInterval             = DEFAULT_STATS_INTERVAL;
-  private String      allowedOrigins            = null;
-  private Long        configId                  = null;
-  private Integer     webSocketsMessageMaxSize  = null;
-  private Long        autoRefreshPeriod         = null;
-  private JsonObject  jsonInit                  = null;
-  private String      kafkaInfoServers          = null;
-  private String      kafkaInfoGroupId          = null;
-  private String      kafkaInfoTopic            = null;
-  private String      rabbitInfoUser            = null;
-  private String      rabbitInfoPassword        = null;
-  private String      rabbitInfoHost            = null;
-  private Integer     rabbitInfoPort            = null;
-  private String      rabbitInfoVHost           = null;
-  private String      rabbitInfoExchange        = null;
-  private String      rabbitInfoRoutingKey      = null;
-  private String      sqsInfoUrl                = null;
+  private int httpPort = DEFAULT_PORT;
+  private InetAddress bindAddress = null;
+  private int httpsPort = DEFAULT_SECURE_PORT;
+  private File keyStoreFile = null;
+  private String keyStorePassword = null;
+  private String keyAlias = null;
+  private File clientKeyStoreFile = null;
+  private String clientKeyStorePassword = null;
+  private String urlBasePath = null;
+  private int concurrency = DEFAULT_CONCURRENCY;
+  private int httpConcurrency = DEFAULT_HTTP_CONCURRENCY;
+  private String moduleName = DEFAULT_MODULE_NAME;
+  private boolean verbose = false;
+  private boolean quiet = false;
+  private boolean readOnly = false;
+  private boolean adminEnabled = false;
+  private boolean skipStartupPerf = false;
+  private boolean skipEnginePriming = false;
+  private boolean debugLogging = false;
+  private long statsInterval = DEFAULT_STATS_INTERVAL;
+  private String allowedOrigins = null;
+  private Long configId = null;
+  private Integer webSocketsMessageMaxSize = null;
+  private Long autoRefreshPeriod = null;
+  private JsonObject jsonInit = null;
+  private String kafkaInfoServers = null;
+  private String kafkaInfoGroupId = null;
+  private String kafkaInfoTopic = null;
+  private String rabbitInfoUser = null;
+  private String rabbitInfoPassword = null;
+  private String rabbitInfoHost = null;
+  private Integer rabbitInfoPort = null;
+  private String rabbitInfoVHost = null;
+  private String rabbitInfoExchange = null;
+  private String rabbitInfoRoutingKey = null;
+  private String sqsInfoUrl = null;
 
   /**
    * Constructs with the native Senzing JSON initialization parameters as a
@@ -64,7 +64,7 @@ public class SzApiServerOptions {
    */
   public SzApiServerOptions(JsonObject jsonInit) {
     Objects.requireNonNull(jsonInit,
-                           "JSON init parameters cannot be null");
+        "JSON init parameters cannot be null");
     this.jsonInit = jsonInit;
   }
 
@@ -90,8 +90,8 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Returns the HTTP port to bind to.  Zero (0) is returned if binding to
-   * a random available port.  This is initialized to the {@linkplain
+   * Returns the HTTP port to bind to. Zero (0) is returned if binding to
+   * a random available port. This is initialized to the {@linkplain
    * SzApiServerConstants#DEFAULT_PORT default port number} if not explicitly
    * set.
    *
@@ -103,7 +103,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the HTTP port to bind to.  Use zero to bind to a random port and
+   * Sets the HTTP port to bind to. Use zero to bind to a random port and
    * <tt>null</tt> to bind to the {@linkplain SzApiServerConstants#DEFAULT_PORT
    * default port}.
    *
@@ -119,8 +119,8 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Returns the HTTPS port to bind to.  Zero (0) is returned if binding to
-   * a random available port.  This is initialized to the {@linkplain
+   * Returns the HTTPS port to bind to. Zero (0) is returned if binding to
+   * a random available port. This is initialized to the {@linkplain
    * SzApiServerConstants#DEFAULT_SECURE_PORT default secure port number} if
    * not explicitly set.
    *
@@ -132,7 +132,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the HTTPS port to bind to.  Use zero to bind to a random port and
+   * Sets the HTTPS port to bind to. Use zero to bind to a random port and
    * <tt>null</tt> to bind to the {@linkplain
    * SzApiServerConstants#DEFAULT_SECURE_PORT default port}.
    *
@@ -149,7 +149,7 @@ public class SzApiServerOptions {
 
   /**
    * Gets the {@link InetAddress} for the address that the server will bind
-   * to.  If this returns <tt>null</tt> then the loopback address is to be used.
+   * to. If this returns <tt>null</tt> then the loopback address is to be used.
    *
    * @return The {@link InetAddress} for the address that the server will
    *         bind, or <tt>null</tt> then the loopback address is to be used.
@@ -160,7 +160,7 @@ public class SzApiServerOptions {
 
   /**
    * Sets the {@link InetAddress} for the address that the server will bind
-   * to.  Set to <tt>null</tt> to bind to the loopback address.
+   * to. Set to <tt>null</tt> to bind to the loopback address.
    *
    * @param addr The {@link InetAddress} for the address that the server will
    *             bind, or <tt>null</tt> if the loopback address is to be used.
@@ -173,7 +173,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Gets the {@link File} for the key store for HTTPS support.  This returns
+   * Gets the {@link File} for the key store for HTTPS support. This returns
    * <tt>null</tt> if HTTPS is not supported.
    *
    * @return The {@link File} for the key store for HTTPS support.
@@ -183,7 +183,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the {@link File} for the key store for HTTPS support.  Set this to
+   * Sets the {@link File} for the key store for HTTPS support. Set this to
    * <tt>null</tt> if HTTPS is not supported.
    *
    * @param keyStoreFile The {@link File} for the key store for HTTPS support.
@@ -194,7 +194,7 @@ public class SzApiServerOptions {
 
   /**
    * Gets the password for decrypting the {@linkplain #getKeyStoreFile() key
-   * store file}.  This returns <tt>null</tt> if HTTPS is not supported.
+   * store file}. This returns <tt>null</tt> if HTTPS is not supported.
    *
    * @return The password for decrypting the key store file or <tt>null</tt>
    *         if HTTPS is not supported.
@@ -205,7 +205,7 @@ public class SzApiServerOptions {
 
   /**
    * Sets the password for decrypting the {@linkplain #getKeyStoreFile() key
-   * store file}.  Set this to <tt>null</tt> if HTTPS is not supported.
+   * store file}. Set this to <tt>null</tt> if HTTPS is not supported.
    *
    * @param password The password for decrypting the key store file or
    *                 <tt>null</tt> if HTTPS is not supported.
@@ -216,7 +216,7 @@ public class SzApiServerOptions {
 
   /**
    * Gets the alias for the server key to use from the {@linkplain
-   * #getKeyStoreFile() key store file}.  This returns <tt>null</tt> if
+   * #getKeyStoreFile() key store file}. This returns <tt>null</tt> if
    * HTTPS is not supported <b>or</b> if HTTPS is supported, but the {@linkplain
    * #getKeyStoreFile() key store file} only contains a single key and it is
    * therefore not required.
@@ -231,7 +231,7 @@ public class SzApiServerOptions {
 
   /**
    * Sets the alias for the server key to use from the {@linkplain
-   * #getKeyStoreFile() key store file}.  Set this to <tt>null</tt> if HTTPS
+   * #getKeyStoreFile() key store file}. Set this to <tt>null</tt> if HTTPS
    * is not supported <b>or</b> if HTTPS is supported, but the {@linkplain
    * #getKeyStoreFile() key store file} only contains a single key and it is
    * therefore not required.
@@ -246,7 +246,7 @@ public class SzApiServerOptions {
 
   /**
    * Gets the {@link File} for the client key store for SSL client
-   * authentication.  This returns <tt>null</tt> if SSL client authentication
+   * authentication. This returns <tt>null</tt> if SSL client authentication
    * is not required.
    *
    * @return The {@link File} for the client key store for SSL client
@@ -259,7 +259,7 @@ public class SzApiServerOptions {
 
   /**
    * Sets the {@link File} for the client key store for SSL client
-   * authentication.  Set this to <tt>null</tt> if SSL client authentication is
+   * authentication. Set this to <tt>null</tt> if SSL client authentication is
    * not required.
    *
    * @param keyStoreFile The {@link File} for the client key store for SSL
@@ -272,7 +272,7 @@ public class SzApiServerOptions {
 
   /**
    * Gets the password for decrypting the {@linkplain #getClientKeyStoreFile()
-   * client key store file}.  This returns <tt>null</tt> if SSL client
+   * client key store file}. This returns <tt>null</tt> if SSL client
    * authentication is not required.
    *
    * @return The password for decrypting the client key store file or
@@ -284,7 +284,7 @@ public class SzApiServerOptions {
 
   /**
    * Sets the password for decrypting the {@linkplain #getClientKeyStoreFile()
-   * client key store file}.  Set this to <tt>null</tt> if SSL client
+   * client key store file}. Set this to <tt>null</tt> if SSL client
    * authentication is not required.
    *
    * @param password The password for decrypting the client key store file or
@@ -335,13 +335,14 @@ public class SzApiServerOptions {
    */
   public SzApiServerOptions setConcurrency(Integer concurrency) {
     this.concurrency = (concurrency != null)
-        ? concurrency : DEFAULT_CONCURRENCY;
+        ? concurrency
+        : DEFAULT_CONCURRENCY;
     return this;
   }
 
   /**
    * Gets the maximum number of threads that will be used for the web server
-   * thread pool.  If the value is not {@linkplain #setHttpConcurrency(Integer)
+   * thread pool. If the value is not {@linkplain #setHttpConcurrency(Integer)
    * explicitly set} then {@link SzApiServerConstants#DEFAULT_HTTP_CONCURRENCY}
    * is returned.
    *
@@ -353,7 +354,7 @@ public class SzApiServerOptions {
 
   /**
    * Sets the maximum number of threads that will be used for the web server
-   * thread pool.  Set to <tt>null</tt> to use the {@linkplain
+   * thread pool. Set to <tt>null</tt> to use the {@linkplain
    * SzApiServerConstants#DEFAULT_HTTP_CONCURRENCY default number of threads}.
    * If set less than {@link SzApiServerConstants#MINIMUM_HTTP_CONCURRENCY} then
    * an {@link IllegalArgumentException} is thrown.
@@ -368,18 +369,18 @@ public class SzApiServerOptions {
    *                                  {@link SzApiServerConstants#MINIMUM_HTTP_CONCURRENCY}.
    */
   public SzApiServerOptions setHttpConcurrency(Integer concurrency) {
-    concurrency = (concurrency!=null) ? concurrency : DEFAULT_HTTP_CONCURRENCY;
+    concurrency = (concurrency != null) ? concurrency : DEFAULT_HTTP_CONCURRENCY;
     if (concurrency < MINIMUM_HTTP_CONCURRENCY) {
       throw new IllegalArgumentException(
           "The specified HTTP concurrency cannot be less than "
-          + MINIMUM_HTTP_CONCURRENCY);
+              + MINIMUM_HTTP_CONCURRENCY);
     }
     this.httpConcurrency = concurrency;
     return this;
   }
 
   /**
-   * Gets the module name to initialize with.  If <tt>null</tt> is returned
+   * Gets the module name to initialize with. If <tt>null</tt> is returned
    * then {@link SzApiServerConstants#DEFAULT_MODULE_NAME} is used.
    *
    * @return The module name to initialize with, or <tt>null</tt> is returned
@@ -390,7 +391,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the module name to initialize with.  Set to <tt>null</tt> if the
+   * Sets the module name to initialize with. Set to <tt>null</tt> if the
    * default value of {@link SzApiServerConstants#DEFAULT_MODULE_NAME} is to be
    * used.
    *
@@ -459,7 +460,7 @@ public class SzApiServerOptions {
 
   /**
    * Checks whether or not the API server should allow access to admin
-   * operations.  If the admin features have not been {@linkplain
+   * operations. If the admin features have not been {@linkplain
    * #setAdminEnabled(boolean) explicitly enabled} then <tt>false</tt> is
    * returned.
    *
@@ -486,7 +487,7 @@ public class SzApiServerOptions {
 
   /**
    * Checks whether or not the API server should reduce the number of messages
-   * sent to standard output.  This applies to messages specific to the API
+   * sent to standard output. This applies to messages specific to the API
    * server and NOT messages generated by the underlying native API (especially
    * if the API is initialized in verbose mode).
    *
@@ -499,7 +500,7 @@ public class SzApiServerOptions {
 
   /**
    * Sets whether or not the API server should reduce the number of messages
-   * sent to standard output.  This applies to messages specific to the API
+   * sent to standard output. This applies to messages specific to the API
    * server and NOT messages generated by the underlying native API (especially
    * if the API is initialized in verbose mode).
    *
@@ -514,7 +515,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Checks whether or not debug logging is enabled.  If debug has not been
+   * Checks whether or not debug logging is enabled. If debug has not been
    * {@linkplain #setDebugLogging(boolean) explicitly enabled} then
    * <tt>false</tt> is returned.
    *
@@ -540,7 +541,7 @@ public class SzApiServerOptions {
 
   /**
    * Returns the CORS Access-Control-Allow-Origin header to use for responses
-   * from all HTTP REST API endpoints.  This returns <tt>null</tt> if the
+   * from all HTTP REST API endpoints. This returns <tt>null</tt> if the
    * CORS Access-Control-Allow-Origin header is to be omitted from the HTTP
    * responses.
    *
@@ -554,7 +555,7 @@ public class SzApiServerOptions {
 
   /**
    * Sets the CORS Access-Control-Allow-Origin header to use for responses
-   * from all HTTP REST API endpoints.  Set this to <tt>null</tt> if the
+   * from all HTTP REST API endpoints. Set this to <tt>null</tt> if the
    * CORS Access-Control-Allow-Origin header is to be omitted from the HTTP
    * responses.
    *
@@ -572,9 +573,9 @@ public class SzApiServerOptions {
 
   /**
    * Gets the explicit configuration ID with which to initialize the Senzing
-   * native engine API.  This method returns <tt>null</tt> if the API server
+   * native engine API. This method returns <tt>null</tt> if the API server
    * should use the current default configuration ID from the entity
-   * repository.  This method returns <tt>null</tt> if the value has not been
+   * repository. This method returns <tt>null</tt> if the value has not been
    * {@linkplain #setConfigurationId(Long) explicitly set}.
    *
    * @return The explicit configuration ID with which to initialize the
@@ -588,7 +589,7 @@ public class SzApiServerOptions {
 
   /**
    * Sets the explicit configuration ID with which to initialize the Senzing
-   * native engine API.  Set the value to <tt>null</tt> if the API server
+   * native engine API. Set the value to <tt>null</tt> if the API server
    * should use the current default configuration ID from the entity
    * repository.
    *
@@ -617,7 +618,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the configuration auto refresh period.  Set the value to <tt>null</tt>
+   * Sets the configuration auto refresh period. Set the value to <tt>null</tt>
    * if the API server should use {@link
    * SzApiServerConstants#DEFAULT_CONFIG_REFRESH_PERIOD}.
    *
@@ -631,12 +632,12 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Gets the minimum time interval for logging stats.  This is the minimum
+   * Gets the minimum time interval for logging stats. This is the minimum
    * period between logging of stats assuming the API Server is performing
    * operations that will affect stats (i.e.: activities pertaining to entity
-   * scoring).  If the API Server is idle or active, but not performing entity
+   * scoring). If the API Server is idle or active, but not performing entity
    * scoring activities then stats logging will be delayed until activities are
-   * performed that will affect stats.  If the returned interval is zero (0)
+   * performed that will affect stats. If the returned interval is zero (0)
    * then stats logging will be suppressed.
    *
    * @return The interval for logging stats, or zero (0) if stats logging is
@@ -647,13 +648,13 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the minimum interval for logging stats.  This is the minimum
+   * Sets the minimum interval for logging stats. This is the minimum
    * period between logging of stats assuming the API Server is performing
    * operations that will affect stats (i.e.: activities pertaining to entity
-   * scoring).  If the API Server is idle or active, but not performing entity
+   * scoring). If the API Server is idle or active, but not performing entity
    * scoring activities then stats logging will be delayed until activities are
-   * performed that will affect stats.  If the specified value is zero (0)
-   * then stats logging will be suppressed.  If the specified value is less-than
+   * performed that will affect stats. If the specified value is zero (0)
+   * then stats logging will be suppressed. If the specified value is less-than
    * zero (0) then the value will be set to zero (0).
    *
    * @param statsInterval The stats interval, or a non-positive number (e.g.:
@@ -750,7 +751,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the Kafka server to connect to for the "info" queue.  This is part
+   * Sets the Kafka server to connect to for the "info" queue. This is part
    * of the info queue configuration to push "info" messages when records are
    * loaded or deleted or entities are reevaluated.
    *
@@ -758,14 +759,13 @@ public class SzApiServerOptions {
    *
    * @return A reference to this instance.
    */
-  public SzApiServerOptions setKafkaInfoBootstrapServers(String servers)
-  {
+  public SzApiServerOptions setKafkaInfoBootstrapServers(String servers) {
     this.kafkaInfoServers = servers;
     return this;
   }
 
   /**
-   * Returns the Kafka group ID to for the "info" queue.  This is part of the
+   * Returns the Kafka group ID to for the "info" queue. This is part of the
    * info queue configuration to push "info" messages when records are loaded
    * or deleted or entities are reevaluated.
    *
@@ -776,7 +776,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the Kafka group ID to for the "info" queue.  This is part of the info
+   * Sets the Kafka group ID to for the "info" queue. This is part of the info
    * queue configuration to push "info" messages when records are loaded or
    * deleted or entities are reevaluated.
    *
@@ -790,7 +790,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Returns the Kafka topic for the "info" queue.  This is part of the info
+   * Returns the Kafka topic for the "info" queue. This is part of the info
    * queue configuration to push "info" messages when records are loaded or
    * deleted or entities are reevaluated.
    *
@@ -801,7 +801,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the Kafka topic for the "info" queue.  This is part of the info
+   * Sets the Kafka topic for the "info" queue. This is part of the info
    * queue configuration to push "info" messages when records are loaded or
    * deleted or entities are reevaluated.
    *
@@ -815,7 +815,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Returns the RabbitMQ user for the "info" queue.  This is part of the info
+   * Returns the RabbitMQ user for the "info" queue. This is part of the info
    * queue configuration to push "info" messages when records are loaded or
    * deleted or entities are reevaluated.
    *
@@ -826,7 +826,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the RabbitMQ user for the "info" queue.  This is part of the info
+   * Sets the RabbitMQ user for the "info" queue. This is part of the info
    * queue configuration to push "info" messages when records are loaded or
    * deleted or entities are reevaluated.
    *
@@ -840,7 +840,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Returns the RabbitMQ password for the "info" queue.  This is part of the
+   * Returns the RabbitMQ password for the "info" queue. This is part of the
    * info queue configuration to push "info" messages when records are loaded
    * or deleted or entities are reevaluated.
    *
@@ -851,7 +851,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the RabbitMQ password for the "info" queue.  This is part of the info
+   * Sets the RabbitMQ password for the "info" queue. This is part of the info
    * queue configuration to push "info" messages when records are loaded or
    * deleted or entities are reevaluated.
    *
@@ -865,7 +865,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Returns the RabbitMQ host for the "info" queue.  This is part of the
+   * Returns the RabbitMQ host for the "info" queue. This is part of the
    * info queue configuration to push "info" messages when records are loaded
    * or deleted or entities are reevaluated.
    *
@@ -876,7 +876,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the RabbitMQ host for the "info" queue.  This is part of the info
+   * Sets the RabbitMQ host for the "info" queue. This is part of the info
    * queue configuration to push "info" messages when records are loaded or
    * deleted or entities are reevaluated.
    *
@@ -890,7 +890,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Returns the RabbitMQ port for the "info" queue.  This is part of the
+   * Returns the RabbitMQ port for the "info" queue. This is part of the
    * info queue configuration to push "info" messages when records are loaded
    * or deleted or entities are reevaluated.
    *
@@ -901,7 +901,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the RabbitMQ port for the "info" queue.  This is part of the info
+   * Sets the RabbitMQ port for the "info" queue. This is part of the info
    * queue configuration to push "info" messages when records are loaded or
    * deleted or entities are reevaluated.
    *
@@ -915,7 +915,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Returns the RabbitMQ virtual host for the "info" queue.  This is part of
+   * Returns the RabbitMQ virtual host for the "info" queue. This is part of
    * the info queue configuration to push "info" messages when records are
    * loaded or deleted or entities are reevaluated.
    *
@@ -926,7 +926,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the RabbitMQ virtual host for the "info" queue.  This is part of the
+   * Sets the RabbitMQ virtual host for the "info" queue. This is part of the
    * info queue configuration to push "info" messages when records are loaded
    * or deleted or entities are reevaluated.
    *
@@ -940,7 +940,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Returns the RabbitMQ exchange for the "info" queue.  This is part of
+   * Returns the RabbitMQ exchange for the "info" queue. This is part of
    * the info queue configuration to push "info" messages when records are
    * loaded or deleted or entities are reevaluated.
    *
@@ -951,7 +951,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the RabbitMQ exchange for the "info" queue.  This is part of the
+   * Sets the RabbitMQ exchange for the "info" queue. This is part of the
    * info queue configuration to push "info" messages when records are loaded
    * or deleted or entities are reevaluated.
    *
@@ -965,7 +965,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Returns the RabbitMQ routing key for the "info" queue.  This is part of
+   * Returns the RabbitMQ routing key for the "info" queue. This is part of
    * the info queue configuration to push "info" messages when records are
    * loaded or deleted or entities are reevaluated.
    *
@@ -976,7 +976,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the RabbitMQ routing key for the "info" queue.  This is part of the
+   * Sets the RabbitMQ routing key for the "info" queue. This is part of the
    * info queue configuration to push "info" messages when records are loaded
    * or deleted or entities are reevaluated.
    *
@@ -990,7 +990,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Returns the SQS URL for the "info" queue.  This is part of
+   * Returns the SQS URL for the "info" queue. This is part of
    * the info queue configuration to push "info" messages when records are
    * loaded or deleted or entities are reevaluated.
    *
@@ -1001,7 +1001,7 @@ public class SzApiServerOptions {
   }
 
   /**
-   * Sets the SQS URL for the "info" queue.  This is part of the info queue
+   * Sets the SQS URL for the "info" queue. This is part of the info queue
    * configuration to push "info" messages when records are loaded or deleted
    * or entities are reevaluated.
    *
@@ -1019,45 +1019,45 @@ public class SzApiServerOptions {
    * values for initializing an {@link SzApiServer} instance.
    *
    * @return The {@link Map} of {@link CommandLineOption} keys to {@link Object}
-   *         values for initializing an {@link SzApiServer} instanc
+   *         values for initializing an {@link SzApiServer} instance
    */
   protected Map<CommandLineOption, Object> buildOptionsMap() {
     Map<CommandLineOption, Object> map = new HashMap<>();
-    put(map, HTTP_PORT,                    this.getHttpPort());
-    put(map, BIND_ADDRESS,                 this.getBindAddress());
-    put(map, HTTPS_PORT,                   this.getHttpsPort());
-    put(map, KEY_STORE,                    this.getKeyStoreFile());
-    put(map, KEY_STORE_PASSWORD,           this.getKeyStorePassword());
-    put(map, KEY_ALIAS,                    this.getKeyAlias());
-    put(map, CLIENT_KEY_STORE,             this.getClientKeyStoreFile());
-    put(map, CLIENT_KEY_STORE_PASSWORD,    this.getClientKeyStorePassword());
-    put(map, URL_BASE_PATH,                this.getUrlBasePath());
-    put(map, CONCURRENCY,                  this.getConcurrency());
-    put(map, HTTP_CONCURRENCY,             this.getHttpConcurrency());
-    put(map, MODULE_NAME,                  this.getModuleName());
-    put(map, VERBOSE,                      this.isVerbose());
-    put(map, QUIET,                        this.isQuiet());
-    put(map, DEBUG_LOGGING,                this.isDebugLogging());
-    put(map, READ_ONLY,                    this.isReadOnly());
-    put(map, ENABLE_ADMIN,                 this.isAdminEnabled());
-    put(map, ALLOWED_ORIGINS,              this.getAllowedOrigins());
-    put(map, CONFIG_ID,                    this.getConfigurationId());
-    put(map, INIT_JSON,                    this.getJsonInitParameters());
-    put(map, AUTO_REFRESH_PERIOD,          this.getAutoRefreshPeriod());
-    put(map, STATS_INTERVAL,               this.getStatsInterval());
-    put(map, SKIP_STARTUP_PERF,            this.isSkippingStartupPerformance());
-    put(map, SKIP_ENGINE_PRIMING,          this.isSkippingEnginePriming());
-    put(map, KAFKA_INFO_BOOTSTRAP_SERVER,  this.getKafkaInfoBootstrapServers());
-    put(map, KAFKA_INFO_GROUP,             this.getKafkaInfoGroupId());
-    put(map, KAFKA_INFO_TOPIC,             this.getKafkaInfoTopic());
-    put(map, RABBIT_INFO_USER,             this.getRabbitInfoUser());
-    put(map, RABBIT_INFO_PASSWORD,         this.getRabbitInfoPassword());
-    put(map, RABBIT_INFO_HOST,             this.getRabbitInfoHost());
-    put(map, RABBIT_INFO_PORT,             this.getRabbitInfoPort());
-    put(map, RABBIT_INFO_VIRTUAL_HOST,     this.getRabbitInfoVirtualHost());
-    put(map, RABBIT_INFO_EXCHANGE,         this.getRabbitInfoExchange());
-    put(map, RABBIT_INFO_ROUTING_KEY,      this.getRabbitInfoRoutingKey());
-    put(map, SQS_INFO_URL,                 this.getSqsInfoUrl());
+    put(map, HTTP_PORT, this.getHttpPort());
+    put(map, BIND_ADDRESS, this.getBindAddress());
+    put(map, HTTPS_PORT, this.getHttpsPort());
+    put(map, KEY_STORE, this.getKeyStoreFile());
+    put(map, KEY_STORE_PASSWORD, this.getKeyStorePassword());
+    put(map, KEY_ALIAS, this.getKeyAlias());
+    put(map, CLIENT_KEY_STORE, this.getClientKeyStoreFile());
+    put(map, CLIENT_KEY_STORE_PASSWORD, this.getClientKeyStorePassword());
+    put(map, URL_BASE_PATH, this.getUrlBasePath());
+    put(map, CONCURRENCY, this.getConcurrency());
+    put(map, HTTP_CONCURRENCY, this.getHttpConcurrency());
+    put(map, MODULE_NAME, this.getModuleName());
+    put(map, VERBOSE, this.isVerbose());
+    put(map, QUIET, this.isQuiet());
+    put(map, DEBUG_LOGGING, this.isDebugLogging());
+    put(map, READ_ONLY, this.isReadOnly());
+    put(map, ENABLE_ADMIN, this.isAdminEnabled());
+    put(map, ALLOWED_ORIGINS, this.getAllowedOrigins());
+    put(map, CONFIG_ID, this.getConfigurationId());
+    put(map, INIT_JSON, this.getJsonInitParameters());
+    put(map, AUTO_REFRESH_PERIOD, this.getAutoRefreshPeriod());
+    put(map, STATS_INTERVAL, this.getStatsInterval());
+    put(map, SKIP_STARTUP_PERF, this.isSkippingStartupPerformance());
+    put(map, SKIP_ENGINE_PRIMING, this.isSkippingEnginePriming());
+    put(map, KAFKA_INFO_BOOTSTRAP_SERVER, this.getKafkaInfoBootstrapServers());
+    put(map, KAFKA_INFO_GROUP, this.getKafkaInfoGroupId());
+    put(map, KAFKA_INFO_TOPIC, this.getKafkaInfoTopic());
+    put(map, RABBIT_INFO_USER, this.getRabbitInfoUser());
+    put(map, RABBIT_INFO_PASSWORD, this.getRabbitInfoPassword());
+    put(map, RABBIT_INFO_HOST, this.getRabbitInfoHost());
+    put(map, RABBIT_INFO_PORT, this.getRabbitInfoPort());
+    put(map, RABBIT_INFO_VIRTUAL_HOST, this.getRabbitInfoVirtualHost());
+    put(map, RABBIT_INFO_EXCHANGE, this.getRabbitInfoExchange());
+    put(map, RABBIT_INFO_ROUTING_KEY, this.getRabbitInfoRoutingKey());
+    put(map, SQS_INFO_URL, this.getSqsInfoUrl());
     return map;
   }
 
@@ -1065,14 +1065,13 @@ public class SzApiServerOptions {
    * Utility method to only put non-null values in the specified {@link Map}
    * with the specified {@link SzApiServerOption} key and {@link Object} value.
    *
-   * @param map The {@link Map} to put the key-value pair into.
+   * @param map    The {@link Map} to put the key-value pair into.
    * @param option The {@link SzApiServerOption} key.
-   * @param value The {@link Object} value.
+   * @param value  The {@link Object} value.
    */
-  private static void put(Map<CommandLineOption, Object>  map,
-                          SzApiServerOption               option,
-                          Object                          value)
-  {
+  private static void put(Map<CommandLineOption, Object> map,
+      SzApiServerOption option,
+      Object value) {
     if (value != null) {
       map.put(option, value);
     }

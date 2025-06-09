@@ -18,12 +18,12 @@ public interface SzMessagingEndpoint extends SzMessageSink, AutoCloseable {
     /**
      * Given the specified {@link Map} of {@link String} keys to {@lnk Object}
      * values this method will create an instance of {@link SzMessagingEndpoint}
-     * if the specified URL is in the format expected for this builder.  If the
+     * if the specified URL is in the format expected for this builder. If the
      * specified URL format is not handled by this instance then <tt>null</tt>
      * is returned.
      *
-     * @param props The {@link Map} of {@link String} keys to {@link Object}
-     *              values to use for establishing the endpoint conenction.
+     * @param props       The {@link Map} of {@link String} keys to {@link Object}
+     *                    values to use for establishing the endpoint connection.
      *
      * @param concurrency The concurrency of the {@link SzApiServer} to use for
      *                    creating pooled resources.
@@ -36,10 +36,10 @@ public interface SzMessagingEndpoint extends SzMessageSink, AutoCloseable {
 
     /**
      * Gets the <b>unmodifiable</b> {@link Set} of property keys recognized by
-     * this inititator.
+     * this initiator.
      *
      * @return The <b>unmodifiable</b> {@link Set} of property keys recognized
-     *         by this inititator.
+     *         by this initiator.
      */
     Set<String> getPropertyKeys();
   }

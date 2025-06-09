@@ -15,8 +15,7 @@ import java.util.List;
  * Provides a default implementation of {@link SzWhyRecordsResponseData}.
  */
 @JsonDeserialize
-public class SzWhyRecordsResponseDataImpl implements SzWhyRecordsResponseData
-{
+public class SzWhyRecordsResponseDataImpl implements SzWhyRecordsResponseData {
   /**
    * The {@link List} of {@link SzWhyRecordsResult} instances for the
    * entities.
@@ -24,7 +23,7 @@ public class SzWhyRecordsResponseDataImpl implements SzWhyRecordsResponseData
   private SzWhyRecordsResult whyResult;
 
   /**
-   * The {@link List} of {@link SzEntityData} instances decribing the
+   * The {@link List} of {@link SzEntityData} instances describing the
    * entities in the response.
    */
   private List<SzEntityData> entities;
@@ -33,8 +32,8 @@ public class SzWhyRecordsResponseDataImpl implements SzWhyRecordsResponseData
    * Default constructor.
    */
   public SzWhyRecordsResponseDataImpl() {
-    this.whyResult  = null;
-    this.entities   = new LinkedList<>();
+    this.whyResult = null;
+    this.entities = new LinkedList<>();
   }
 
   /**
@@ -66,8 +65,8 @@ public class SzWhyRecordsResponseDataImpl implements SzWhyRecordsResponseData
    */
   @Override
   public void addEntity(SzEntityData entity) {
-      this.entities.add(entity);
-    }
+    this.entities.add(entity);
+  }
 
   /**
    * {@inheritDoc}
@@ -75,6 +74,7 @@ public class SzWhyRecordsResponseDataImpl implements SzWhyRecordsResponseData
   @Override
   public void setEntities(Collection<? extends SzEntityData> entities) {
     this.entities.clear();
-    if (entities != null) this.entities.addAll(entities);
+    if (entities != null)
+      this.entities.addAll(entities);
   }
 }

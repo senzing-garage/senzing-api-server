@@ -19,7 +19,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
  * SzBaseRelatedEntity} to add the {@link SzAttributeSearchResultType} and
  * the {@link SzSearchFeatureScore} instances.
  */
-@JsonDeserialize(using=SzAttributeSearchResult.Factory.class)
+@JsonDeserialize(using = SzAttributeSearchResult.Factory.class)
 public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
   /**
    * Gets the {@link SzRelationshipType} describing the type of relation.
@@ -38,8 +38,8 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
   void setResultType(SzAttributeSearchResultType resultType);
 
   /**
-   * Gets the best name score from the search match.  This is the best of the
-   * full name scores and organization name scores.  This is <tt>null</tt> if
+   * Gets the best name score from the search match. This is the best of the
+   * full name scores and organization name scores. This is <tt>null</tt> if
    * there are no such name scores.
    *
    * @return The best name score from the search match, or <tt>null</tt> if
@@ -49,8 +49,8 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
   Integer getBestNameScore();
 
   /**
-   * Sets the best full name score from the search match.  This is the best of
-   * the full name scores and organization name scores.  Set this to
+   * Sets the best full name score from the search match. This is the best of
+   * the full name scores and organization name scores. Set this to
    * <tt>null</tt> if there are no such name scores.
    *
    * @param score The best name score from the search match, or
@@ -64,8 +64,9 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
    * {@link SzSearchFeatureScore} describing the feature scores for that type.
    *
    * @return The <b>unmodifiable</b> {@link Map} of {@link String} feature type
-   *         keys to <b>unmodifiable</b> {@link List} values contianing
-   *         instances of {@link SzSearchFeatureScore} describing the feature scores
+   *         keys to <b>unmodifiable</b> {@link List} values containing
+   *         instances of {@link SzSearchFeatureScore} describing the feature
+   *         scores
    *         for that type.
    */
   @JsonInclude(NON_EMPTY)
@@ -126,8 +127,7 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
    * {@link SzAttributeSearchResultImpl}.
    */
   class DefaultProvider extends AbstractModelProvider<SzAttributeSearchResult>
-      implements Provider
-  {
+      implements Provider {
     /**
      * Default constructor.
      */
@@ -147,7 +147,7 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
    */
   class Factory extends ModelFactory<SzAttributeSearchResult, Provider> {
     /**
-     * Default constructor.  This is public and can only be called after the
+     * Default constructor. This is public and can only be called after the
      * singleton master instance is created as it inherits the same state from
      * the master instance.
      */
@@ -156,8 +156,9 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
     }
 
     /**
-     * Constructs with the default provider.  This constructor is private and
+     * Constructs with the default provider. This constructor is private and
      * is used for the master singleton instance.
+     * 
      * @param defaultProvider The default provider.
      */
     private Factory(Provider defaultProvider) {
@@ -166,6 +167,7 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
 
     /**
      * Creates a new instance of {@link SzAttributeSearchResult}.
+     * 
      * @return The new instance of {@link SzAttributeSearchResult}.
      */
     public SzAttributeSearchResult create() {
@@ -183,12 +185,15 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
    * JSON array in the Senzing native API format for entity features and
    * populates the specified {@link List} or creates a new {@link List}.
    *
-   * @param list The {@link List} of {@link SzAttributeSearchResult} instances to
-   *             populate, or <tt>null</tt> if a new {@link List}
-   *             should be created.
+   * @param list                     The {@link List} of
+   *                                 {@link SzAttributeSearchResult} instances to
+   *                                 populate, or <tt>null</tt> if a new
+   *                                 {@link List}
+   *                                 should be created.
    *
-   * @param jsonArray The {@link JsonArray} describing the JSON in the
-   *                  Senzing native API format.
+   * @param jsonArray                The {@link JsonArray} describing the JSON in
+   *                                 the
+   *                                 Senzing native API format.
    *
    * @param featureToAttrClassMapper Mapping function to map feature names to
    *                                 attribute classes.
@@ -198,16 +203,15 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
    */
   static List<SzAttributeSearchResult> parseSearchResultList(
       List<SzAttributeSearchResult> list,
-      JsonArray                     jsonArray,
-      Function<String,String>       featureToAttrClassMapper)
-  {
+      JsonArray jsonArray,
+      Function<String, String> featureToAttrClassMapper) {
     if (list == null) {
       list = new ArrayList<>(jsonArray.size());
     }
     for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
       list.add(parseSearchResult(null,
-                                 jsonObject,
-                                 featureToAttrClassMapper));
+          jsonObject,
+          featureToAttrClassMapper));
     }
     return list;
   }
@@ -217,12 +221,15 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
    * for the Senzing native API format for an entity feature and populates
    * the specified {@link SzAttributeSearchResult} or creates a new instance.
    *
-   * @param searchResult The {@link SzAttributeSearchResult} instance to
-   *                     populate, or <tt>null</tt> if a new instance should
-   *                     be created.
+   * @param searchResult             The {@link SzAttributeSearchResult} instance
+   *                                 to
+   *                                 populate, or <tt>null</tt> if a new instance
+   *                                 should
+   *                                 be created.
    *
-   * @param jsonObject The {@link JsonObject} describing the JSON in the
-   *                   Senzing native API format.
+   * @param jsonObject               The {@link JsonObject} describing the JSON in
+   *                                 the
+   *                                 Senzing native API format.
    *
    * @param featureToAttrClassMapper Mapping function to map feature names to
    *                                 attribute classes.
@@ -231,13 +238,13 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
    */
   static SzAttributeSearchResult parseSearchResult(
       SzAttributeSearchResult searchResult,
-      JsonObject              jsonObject,
-      Function<String,String> featureToAttrClassMapper)
-  {
+      JsonObject jsonObject,
+      Function<String, String> featureToAttrClassMapper) {
     SzAttributeSearchResult result = (searchResult != null)
-        ? searchResult : SzAttributeSearchResult.FACTORY.create();
+        ? searchResult
+        : SzAttributeSearchResult.FACTORY.create();
 
-    Function<String,String> mapper = featureToAttrClassMapper;
+    Function<String, String> mapper = featureToAttrClassMapper;
 
     SzBaseRelatedEntity.parseBaseRelatedEntity(result, jsonObject, mapper);
 
@@ -246,13 +253,13 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
       entityObject = jsonObject;
     }
     JsonArray relatedArray = JsonUtilities.getJsonArray(entityObject,
-                                                    "RELATED_ENTITIES");
+        "RELATED_ENTITIES");
 
     List<SzRelatedEntity> relatedEntities = null;
     if (relatedArray != null) {
       relatedEntities = SzRelatedEntity.parseRelatedEntityList(null,
-                                                               relatedArray,
-                                                               mapper);
+          relatedArray,
+          mapper);
     }
 
     SzAttributeSearchResultType resultType = null;
@@ -276,15 +283,13 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
     }
 
     // check if we have a MATCH_INFO object and if so use it for match information
-    JsonObject matchInfo = JsonUtilities.getJsonObject(jsonObject,"MATCH_INFO");
+    JsonObject matchInfo = JsonUtilities.getJsonObject(jsonObject, "MATCH_INFO");
 
     // parse the feature scores
     if (matchInfo != null) {
-      JsonObject featureScoresObject
-          = JsonUtilities.getJsonObject(matchInfo, "FEATURE_SCORES");
+      JsonObject featureScoresObject = JsonUtilities.getJsonObject(matchInfo, "FEATURE_SCORES");
 
-      Map<String, List<SzSearchFeatureScore>> featureScoreMap
-          = new LinkedHashMap<>();
+      Map<String, List<SzSearchFeatureScore>> featureScoreMap = new LinkedHashMap<>();
 
       featureScoresObject.entrySet().forEach(entry -> {
         String featureType = entry.getKey();
@@ -293,8 +298,7 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
 
         JsonArray jsonArray = jsonValue.asJsonArray();
 
-        List<SzSearchFeatureScore> featureScores
-            = SzSearchFeatureScore.parseFeatureScoreList(jsonArray, featureType);
+        List<SzSearchFeatureScore> featureScores = SzSearchFeatureScore.parseFeatureScoreList(jsonArray, featureType);
 
         featureScoreMap.put(featureType, featureScores);
 
@@ -307,21 +311,23 @@ public interface SzAttributeSearchResult extends SzBaseRelatedEntity {
           for (SzSearchFeatureScore featureScore : featureScores) {
             // get the name scoring details
             SzNameScoring nameScoring = featureScore.getNameScoringDetails();
-            if (nameScoring == null) continue;
+            if (nameScoring == null)
+              continue;
 
             // retrieve the full name and org name score
             Integer fullNameScore = nameScoring.getFullNameScore();
-            Integer orgNameScore  = nameScoring.getOrgNameScore();
+            Integer orgNameScore = nameScoring.getOrgNameScore();
 
             // check for null values and get the maximum of the two scores
-            if (fullNameScore == null) fullNameScore = -1;
-            if (orgNameScore == null) orgNameScore = -1;
+            if (fullNameScore == null)
+              fullNameScore = -1;
+            if (orgNameScore == null)
+              orgNameScore = -1;
             int maxScore = Integer.max(fullNameScore, orgNameScore);
 
             // if we have a positive score and it is higher, then update
             if (maxScore > 0
-                && (bestNameScore == null || maxScore > bestNameScore))
-            {
+                && (bestNameScore == null || maxScore > bestNameScore)) {
               bestNameScore = maxScore;
             }
           }

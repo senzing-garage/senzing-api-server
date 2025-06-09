@@ -46,42 +46,27 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   private static final long RANDOM_SEED = 1234567890L;
 
   private static final String PASSENGERS = "PASSENGERS";
-  private static final String EMPLOYEES  = "EMPLOYEES";
-  private static final String VIPS       = "VIPS";
-  private static final String MARRIAGES  = "MARRIAGES";
+  private static final String EMPLOYEES = "EMPLOYEES";
+  private static final String VIPS = "VIPS";
+  private static final String MARRIAGES = "MARRIAGES";
 
-  private static final SzRecordId ABC123
-      = SzRecordId.FACTORY.create(PASSENGERS,"ABC123");
-  private static final SzRecordId DEF456
-      = SzRecordId.FACTORY.create(PASSENGERS, "DEF456");
-  private static final SzRecordId GHI789
-      = SzRecordId.FACTORY.create(PASSENGERS, "GHI789");
-  private static final SzRecordId JKL012
-      = SzRecordId.FACTORY.create(PASSENGERS, "JKL012");
-  private static final SzRecordId MNO345
-      = SzRecordId.FACTORY.create(EMPLOYEES, "MNO345");
-  private static final SzRecordId PQR678
-      = SzRecordId.FACTORY.create(EMPLOYEES, "PQR678");
-  private static final SzRecordId STU901
-      = SzRecordId.FACTORY.create(VIPS, "STU901");
-  private static final SzRecordId XYZ234
-      = SzRecordId.FACTORY.create(VIPS, "XYZ234");
-  private static final SzRecordId ZYX321
-      = SzRecordId.FACTORY.create(EMPLOYEES, "ZYX321");
-  private static final SzRecordId CBA654
-      = SzRecordId.FACTORY.create(EMPLOYEES, "CBA654");
+  private static final SzRecordId ABC123 = SzRecordId.FACTORY.create(PASSENGERS, "ABC123");
+  private static final SzRecordId DEF456 = SzRecordId.FACTORY.create(PASSENGERS, "DEF456");
+  private static final SzRecordId GHI789 = SzRecordId.FACTORY.create(PASSENGERS, "GHI789");
+  private static final SzRecordId JKL012 = SzRecordId.FACTORY.create(PASSENGERS, "JKL012");
+  private static final SzRecordId MNO345 = SzRecordId.FACTORY.create(EMPLOYEES, "MNO345");
+  private static final SzRecordId PQR678 = SzRecordId.FACTORY.create(EMPLOYEES, "PQR678");
+  private static final SzRecordId STU901 = SzRecordId.FACTORY.create(VIPS, "STU901");
+  private static final SzRecordId XYZ234 = SzRecordId.FACTORY.create(VIPS, "XYZ234");
+  private static final SzRecordId ZYX321 = SzRecordId.FACTORY.create(EMPLOYEES, "ZYX321");
+  private static final SzRecordId CBA654 = SzRecordId.FACTORY.create(EMPLOYEES, "CBA654");
 
-  private static final SzRecordId BCD123
-      = SzRecordId.FACTORY.create(MARRIAGES, "BCD123");
-  private static final SzRecordId CDE456
-      = SzRecordId.FACTORY.create(MARRIAGES, "CDE456");
-  private static final SzRecordId EFG789
-      = SzRecordId.FACTORY.create(MARRIAGES, "EFG789");
-  private static final SzRecordId FGH012
-      = SzRecordId.FACTORY.create(MARRIAGES, "FGH012");
+  private static final SzRecordId BCD123 = SzRecordId.FACTORY.create(MARRIAGES, "BCD123");
+  private static final SzRecordId CDE456 = SzRecordId.FACTORY.create(MARRIAGES, "CDE456");
+  private static final SzRecordId EFG789 = SzRecordId.FACTORY.create(MARRIAGES, "EFG789");
+  private static final SzRecordId FGH012 = SzRecordId.FACTORY.create(MARRIAGES, "FGH012");
 
-  public static final SemanticVersion MAXIMUM_NAME_ONLY_VERSION
-      = new SemanticVersion("3.5.0");
+  public static final SemanticVersion MAXIMUM_NAME_ONLY_VERSION = new SemanticVersion("3.5.0");
 
   private EntityDataServices entityDataServices;
   private EntityDataApi entityDataApi;
@@ -119,32 +104,32 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     marriagesFile.deleteOnExit();
 
     RepositoryManager.configSources(repoDirectory,
-                                    dataSources,
-                                    true);
+        dataSources,
+        true);
 
     RepositoryManager.loadFile(repoDirectory,
-                               passengerFile,
-                               PASSENGERS,
-                               true);
+        passengerFile,
+        PASSENGERS,
+        true);
 
     RepositoryManager.loadFile(repoDirectory,
-                               employeeFile,
-                               EMPLOYEES,
-                               true);
+        employeeFile,
+        EMPLOYEES,
+        true);
 
     RepositoryManager.loadFile(repoDirectory,
-                               vipFile,
-                               VIPS,
-                               true);
+        vipFile,
+        VIPS,
+        true);
 
     RepositoryManager.loadFile(repoDirectory,
-                               marriagesFile,
-                               MARRIAGES,
-                               true);
+        marriagesFile,
+        MARRIAGES,
+        true);
   }
 
   private static String relationshipKey(SzRecordId recordId1,
-                                        SzRecordId recordId2) {
+      SzRecordId recordId2) {
     String rec1 = recordId1.getRecordId();
     String rec2 = recordId2.getRecordId();
     if (rec1.compareTo(rec2) <= 0) {
@@ -157,17 +142,17 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   private File preparePassengerFile() {
     String[] headers = {
         "RECORD_ID", "NAME_FIRST", "NAME_LAST", "PHONE_NUMBER", "ADDR_FULL",
-        "DATE_OF_BIRTH"};
+        "DATE_OF_BIRTH" };
 
     String[][] passengers = {
-        {ABC123.getRecordId(), "Joe", "Schmoe", "702-555-1212",
-            "101 Main Street, Las Vegas, NV 89101", "1981-01-12"},
-        {DEF456.getRecordId(), "Joanne", "Smith", "212-555-1212",
-            "101 Fifth Ave, Las Vegas, NV 10018", "1983-05-15"},
-        {GHI789.getRecordId(), "John", "Doe", "818-555-1313",
-            "100 Main Street, Los Angeles, CA 90012", "1978-10-17"},
-        {JKL012.getRecordId(), "Jane", "Doe", "818-555-1212",
-            "100 Main Street, Los Angeles, CA 90012", "1979-02-05"}
+        { ABC123.getRecordId(), "Joe", "Schmoe", "702-555-1212",
+            "101 Main Street, Las Vegas, NV 89101", "1981-01-12" },
+        { DEF456.getRecordId(), "Joanne", "Smith", "212-555-1212",
+            "101 Fifth Ave, Las Vegas, NV 10018", "1983-05-15" },
+        { GHI789.getRecordId(), "John", "Doe", "818-555-1313",
+            "100 Main Street, Los Angeles, CA 90012", "1978-10-17" },
+        { JKL012.getRecordId(), "Jane", "Doe", "818-555-1212",
+            "100 Main Street, Los Angeles, CA 90012", "1979-02-05" }
     };
     return this.prepareCSVFile("test-passengers-", headers, passengers);
   }
@@ -175,21 +160,21 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   private File prepareEmployeeFile() {
     String[] headers = {
         "RECORD_ID", "NAME_FIRST", "NAME_LAST", "PHONE_NUMBER", "ADDR_FULL",
-        "DATE_OF_BIRTH","MOTHERS_MAIDEN_NAME", "SSN_NUMBER"};
+        "DATE_OF_BIRTH", "MOTHERS_MAIDEN_NAME", "SSN_NUMBER" };
 
     String[][] employees = {
-        {MNO345.getRecordId(), "Joseph", "Schmoe", "702-555-1212",
+        { MNO345.getRecordId(), "Joseph", "Schmoe", "702-555-1212",
             "101 Main Street, Las Vegas, NV 89101", "1981-01-12", "WILSON",
-            "145-45-9866"},
-        {PQR678.getRecordId(), "Jo Anne", "Smith", "212-555-1212",
+            "145-45-9866" },
+        { PQR678.getRecordId(), "Jo Anne", "Smith", "212-555-1212",
             "101 Fifth Ave, Las Vegas, NV 10018", "1983-05-15", "JACOBS",
-            "213-98-9374"},
-        {ZYX321.getRecordId(), "Mark", "Hightower", "563-927-2833",
+            "213-98-9374" },
+        { ZYX321.getRecordId(), "Mark", "Hightower", "563-927-2833",
             "1882 Meadows Lane, Las Vegas, NV 89125", "1981-06-22", "JENKINS",
-            "873-22-4213"},
-        {CBA654.getRecordId(), "Mark", "Hightower", "781-332-2824",
+            "873-22-4213" },
+        { CBA654.getRecordId(), "Mark", "Hightower", "781-332-2824",
             "2121 Roscoe Blvd, Los Angeles, CA 90232", "1980-09-09", "BROOKS",
-            "827-27-4829"}
+            "827-27-4829" }
     };
 
     return this.prepareJsonArrayFile("test-employees-", headers, employees);
@@ -198,13 +183,13 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   private File prepareVipFile() {
     String[] headers = {
         "RECORD_ID", "NAME_FIRST", "NAME_LAST", "PHONE_NUMBER", "ADDR_FULL",
-        "DATE_OF_BIRTH","MOTHERS_MAIDEN_NAME"};
+        "DATE_OF_BIRTH", "MOTHERS_MAIDEN_NAME" };
 
     String[][] vips = {
-        {STU901.getRecordId(), "John", "Doe", "818-555-1313",
-            "100 Main Street, Los Angeles, CA 90012", "1978-10-17", "GREEN"},
-        {XYZ234.getRecordId(), "Jane", "Doe", "818-555-1212",
-            "100 Main Street, Los Angeles, CA 90012", "1979-02-05", "GRAHAM"}
+        { STU901.getRecordId(), "John", "Doe", "818-555-1313",
+            "100 Main Street, Los Angeles, CA 90012", "1978-10-17", "GREEN" },
+        { XYZ234.getRecordId(), "Jane", "Doe", "818-555-1212",
+            "100 Main Street, Los Angeles, CA 90012", "1979-02-05", "GRAHAM" }
     };
 
     return this.prepareJsonFile("test-vips-", headers, vips);
@@ -217,22 +202,22 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         "RELATIONSHIP_ROLE", "RELATIONSHIP_KEY" };
 
     String[][] spouses = {
-        {BCD123.getRecordId(), "Bruce Wayne", "Batman", "201-765-3451",
+        { BCD123.getRecordId(), "Bruce Wayne", "Batman", "201-765-3451",
             "101 Wayne Manor Rd; Gotham City, NJ 07017", "2008-06-05",
             "1971-09-08", "M", "SPOUSE", "HUSBAND",
-            relationshipKey(BCD123, CDE456)},
-        {CDE456.getRecordId(), "Selina Kyle", "Catwoman", "201-875-2314",
+            relationshipKey(BCD123, CDE456) },
+        { CDE456.getRecordId(), "Selina Kyle", "Catwoman", "201-875-2314",
             "101 Wayne Manor Rd; Gotham City, NJ 07017", "2008-06-05",
             "1981-12-05", "F", "SPOUSE", "WIFE",
-            relationshipKey(BCD123, CDE456)},
-        {EFG789.getRecordId(), "Barry Allen", "The Flash", "330-982-2133",
+            relationshipKey(BCD123, CDE456) },
+        { EFG789.getRecordId(), "Barry Allen", "The Flash", "330-982-2133",
             "1201 Main Street; Star City, OH 44308", "2014-11-07",
             "1986-03-04", "M", "SPOUSE", "HUSBAND",
-            relationshipKey(EFG789, FGH012)},
-        {FGH012.getRecordId(), "Iris West-Allen", "", "330-675-1231",
+            relationshipKey(EFG789, FGH012) },
+        { FGH012.getRecordId(), "Iris West-Allen", "", "330-675-1231",
             "1201 Main Street; Star City, OH 44308", "2014-11-07",
             "1986-05-14", "F", "SPOUSE", "WIFE",
-            relationshipKey(EFG789, FGH012)}
+            relationshipKey(EFG789, FGH012) }
     };
 
     return this.prepareJsonFile("test-marriages-", headers, spouses);
@@ -450,7 +435,6 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     });
   }
 
-
   @MethodSource("getWithRawVariants")
   @ParameterizedTest
   public void getRecordViaJavaClientTest(Boolean withRaw) {
@@ -466,12 +450,12 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(sb.toString());
 
       long before = System.nanoTime();
-      com.senzing.gen.api.model.SzRecordResponse clientResponse
-          = this.entityDataApi.getRecord(dataSource, recordId, withRaw);
+      com.senzing.gen.api.model.SzRecordResponse clientResponse = this.entityDataApi.getRecord(dataSource, recordId,
+          withRaw);
       long after = System.nanoTime();
 
       SzRecordResponse response = jsonCopy(clientResponse,
-                                           SzRecordResponse.class);
+          SzRecordResponse.class);
 
       validateRecordResponse(
           response,
@@ -615,38 +599,38 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     List<List> result = new ArrayList<>(2);
     result.add(
         list(recordId1,
-             null,  // withRaw
-             null,  // withRelated
-             null,  // forceMinimal
-             null,  // detailLevel
-             null,  // featureMode
-             null,  // withFeatureStats
-             null,  // withInternalFeatures
-             expectedRecordCount,
-             expectedRecordIds,
-             expectedRelatedCount,
-             expectedFeatureCounts,
-             primaryFeatureValues,
-             duplicateFeatureValues,
-             expectedDataMap,
-             expectedOtherData));
+            null, // withRaw
+            null, // withRelated
+            null, // forceMinimal
+            null, // detailLevel
+            null, // featureMode
+            null, // withFeatureStats
+            null, // withInternalFeatures
+            expectedRecordCount,
+            expectedRecordIds,
+            expectedRelatedCount,
+            expectedFeatureCounts,
+            primaryFeatureValues,
+            duplicateFeatureValues,
+            expectedDataMap,
+            expectedOtherData));
     result.add(
         list(recordId2,
-             null,  // withRaw
-             null,  // withRelated
-             null,  // forceMinimal
-             null,  // detailLevel
-             null,  // featureMode
-             null,  // withFeatureStats
-             null,  // withInternalFeatures
-             expectedRecordCount,
-             expectedRecordIds,
-             expectedRelatedCount,
-             expectedFeatureCounts,
-             primaryFeatureValues,
-             duplicateFeatureValues,
-             expectedDataMap,
-             expectedOtherData));
+            null, // withRaw
+            null, // withRelated
+            null, // forceMinimal
+            null, // detailLevel
+            null, // featureMode
+            null, // withFeatureStats
+            null, // withInternalFeatures
+            expectedRecordCount,
+            expectedRecordIds,
+            expectedRelatedCount,
+            expectedFeatureCounts,
+            primaryFeatureValues,
+            duplicateFeatureValues,
+            expectedDataMap,
+            expectedOtherData));
     return result;
   }
 
@@ -678,38 +662,38 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     List<List> result = new ArrayList<>(2);
     result.add(
         list(recordId1,
-             null,  // withRaw
-             null,  // withRelated
-             null,  // forceMinimal
-             null,  // detailLevel
-             null,  // featureMode
-             null,  // withFeatureStats
-             null,  // withInternalFeatures
-             expectedRecordCount,
-             expectedRecordIds,
-             expectedRelatedCount,
-             expectedFeatureCounts,
-             primaryFeatureValues,
-             duplicateFeatureValues,
-             expectedDataMap,
-             expectedOtherData));
+            null, // withRaw
+            null, // withRelated
+            null, // forceMinimal
+            null, // detailLevel
+            null, // featureMode
+            null, // withFeatureStats
+            null, // withInternalFeatures
+            expectedRecordCount,
+            expectedRecordIds,
+            expectedRelatedCount,
+            expectedFeatureCounts,
+            primaryFeatureValues,
+            duplicateFeatureValues,
+            expectedDataMap,
+            expectedOtherData));
     result.add(
         list(recordId2,
-             null,  // withRaw
-             null,  // withRelated
-             null,  // forceMinimal
-             null,  // detailLevel
-             null,  // featureMode
-             null,  // withFeatureStats
-             null,  // withInternalFeatures
-             expectedRecordCount,
-             expectedRecordIds,
-             expectedRelatedCount,
-             expectedFeatureCounts,
-             primaryFeatureValues,
-             duplicateFeatureValues,
-             expectedDataMap,
-             expectedOtherData));
+            null, // withRaw
+            null, // withRelated
+            null, // forceMinimal
+            null, // detailLevel
+            null, // featureMode
+            null, // withFeatureStats
+            null, // withInternalFeatures
+            expectedRecordCount,
+            expectedRecordIds,
+            expectedRelatedCount,
+            expectedFeatureCounts,
+            primaryFeatureValues,
+            duplicateFeatureValues,
+            expectedDataMap,
+            expectedOtherData));
     return result;
   }
 
@@ -741,38 +725,38 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     List<List> result = new ArrayList<>(2);
     result.add(
         list(recordId1,
-             null,  // withRaw
-             null,  // withRelated
-             null,  // forceMinimal
-             null,  // detailLevel
-             null,  // featureMode
-             null,  // withFeatureStats
-             null,  // withInternalFeatures
-             expectedRecordCount,
-             expectedRecordIds,
-             expectedRelatedCount,
-             expectedFeatureCounts,
-             primaryFeatureValues,
-             duplicateFeatureValues,
-             expectedDataMap,
-             expectedOtherData));
+            null, // withRaw
+            null, // withRelated
+            null, // forceMinimal
+            null, // detailLevel
+            null, // featureMode
+            null, // withFeatureStats
+            null, // withInternalFeatures
+            expectedRecordCount,
+            expectedRecordIds,
+            expectedRelatedCount,
+            expectedFeatureCounts,
+            primaryFeatureValues,
+            duplicateFeatureValues,
+            expectedDataMap,
+            expectedOtherData));
     result.add(
         list(recordId2,
-             null,  // withRaw
-             null,  // withRelated
-             null,  // forceMinimal
-             null,  // detailLevel
-             null,  // featureMode
-             null,  // withFeatureStats
-             null,  // withInternalFeatures
-             expectedRecordCount,
-             expectedRecordIds,
-             expectedRelatedCount,
-             expectedFeatureCounts,
-             primaryFeatureValues,
-             duplicateFeatureValues,
-             expectedDataMap,
-             expectedOtherData));
+            null, // withRaw
+            null, // withRelated
+            null, // forceMinimal
+            null, // detailLevel
+            null, // featureMode
+            null, // withFeatureStats
+            null, // withInternalFeatures
+            expectedRecordCount,
+            expectedRecordIds,
+            expectedRelatedCount,
+            expectedFeatureCounts,
+            primaryFeatureValues,
+            duplicateFeatureValues,
+            expectedDataMap,
+            expectedOtherData));
     return result;
   }
 
@@ -804,38 +788,38 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     List<List> result = new ArrayList<>(2);
     result.add(
         list(recordId1,
-             null,  // withRaw
-             null,  // withRelated
-             null,  // forceMinimal
-             null,  // detailLevel
-             null,  // featureMode
-             null,  // withFeatureStats
-             null,  // withInternalFeatures
-             expectedRecordCount,
-             expectedRecordIds,
-             expectedRelatedCount,
-             expectedFeatureCounts,
-             primaryFeatureValues,
-             duplicateFeatureValues,
-             expectedDataMap,
-             expectedOtherData));
+            null, // withRaw
+            null, // withRelated
+            null, // forceMinimal
+            null, // detailLevel
+            null, // featureMode
+            null, // withFeatureStats
+            null, // withInternalFeatures
+            expectedRecordCount,
+            expectedRecordIds,
+            expectedRelatedCount,
+            expectedFeatureCounts,
+            primaryFeatureValues,
+            duplicateFeatureValues,
+            expectedDataMap,
+            expectedOtherData));
     result.add(
         list(recordId2,
-             null,  // withRaw
-             null,  // withRelated
-             null,  // forceMinimal
-             null,  // detailLevel
-             null,  // featureMode
-             null,  // withFeatureStats
-             null,  // withInternalFeatures
-             expectedRecordCount,
-             expectedRecordIds,
-             expectedRelatedCount,
-             expectedFeatureCounts,
-             primaryFeatureValues,
-             duplicateFeatureValues,
-             expectedDataMap,
-             expectedOtherData));
+            null, // withRaw
+            null, // withRelated
+            null, // forceMinimal
+            null, // detailLevel
+            null, // featureMode
+            null, // withFeatureStats
+            null, // withInternalFeatures
+            expectedRecordCount,
+            expectedRecordIds,
+            expectedRelatedCount,
+            expectedFeatureCounts,
+            primaryFeatureValues,
+            duplicateFeatureValues,
+            expectedDataMap,
+            expectedOtherData));
     return result;
   }
 
@@ -869,21 +853,21 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     List<List> result = new ArrayList<>(1);
     result.add(
         list(recordId1,
-             null,  // withRaw
-             null,  // withRelated
-             null,  // forceMinimal
-             null,  // detailLevel
-             null,  // featureMode
-             null,  // withFeatureStats
-             null,  // withInternalFeatures
-             expectedRecordCount,
-             expectedRecordIds,
-             expectedRelatedCount,
-             expectedFeatureCounts,
-             primaryFeatureValues,
-             duplicateFeatureValues,
-             expectedDataMap,
-             null));
+            null, // withRaw
+            null, // withRelated
+            null, // forceMinimal
+            null, // detailLevel
+            null, // featureMode
+            null, // withFeatureStats
+            null, // withInternalFeatures
+            expectedRecordCount,
+            expectedRecordIds,
+            expectedRelatedCount,
+            expectedFeatureCounts,
+            primaryFeatureValues,
+            duplicateFeatureValues,
+            expectedDataMap,
+            null));
     return result;
   }
 
@@ -917,21 +901,21 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     List<List> result = new ArrayList<>(1);
     result.add(
         list(recordId1,
-             null,  // withRaw
-             null,  // withRelated
-             null,  // forceMinimal
-             null,  // detailLevel
-             null,  // featureMode
-             null,  // withFeatureStats
-             null,  // withInternalFeatures
-             expectedRecordCount,
-             expectedRecordIds,
-             expectedRelatedCount,
-             expectedFeatureCounts,
-             primaryFeatureValues,
-             duplicateFeatureValues,
-             expectedDataMap,
-             null));
+            null, // withRaw
+            null, // withRelated
+            null, // forceMinimal
+            null, // detailLevel
+            null, // featureMode
+            null, // withFeatureStats
+            null, // withInternalFeatures
+            expectedRecordCount,
+            expectedRecordIds,
+            expectedRelatedCount,
+            expectedFeatureCounts,
+            primaryFeatureValues,
+            duplicateFeatureValues,
+            expectedDataMap,
+            null));
     return result;
   }
 
@@ -965,21 +949,21 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     List<List> result = new ArrayList<>(1);
     result.add(
         list(recordId1,
-             null,  // withRaw
-             null,  // withRelated
-             null,  // forceMinimal
-             null,  // detailLevel
-             null,  // featureMode
-             null,  // withFeatureStats
-             null,  // withInternalFeatures
-             expectedRecordCount,
-             expectedRecordIds,
-             expectedRelatedCount,
-             expectedFeatureCounts,
-             primaryFeatureValues,
-             duplicateFeatureValues,
-             expectedDataMap,
-             null));
+            null, // withRaw
+            null, // withRelated
+            null, // forceMinimal
+            null, // detailLevel
+            null, // featureMode
+            null, // withFeatureStats
+            null, // withInternalFeatures
+            expectedRecordCount,
+            expectedRecordIds,
+            expectedRelatedCount,
+            expectedFeatureCounts,
+            primaryFeatureValues,
+            duplicateFeatureValues,
+            expectedDataMap,
+            null));
     return result;
   }
 
@@ -1013,21 +997,21 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     List<List> result = new ArrayList<>(1);
     result.add(
         list(recordId1,
-             null,  // withRaw
-             null,  // withRelated
-             null,  // forceMinimal
-             null,  // detailLevel
-             null,  // featureMode
-             null,  // withFeatureStats
-             null,  // withInternalFeatures
-             expectedRecordCount,
-             expectedRecordIds,
-             expectedRelatedCount,
-             expectedFeatureCounts,
-             primaryFeatureValues,
-             duplicateFeatureValues,
-             expectedDataMap,
-             null));
+            null, // withRaw
+            null, // withRelated
+            null, // forceMinimal
+            null, // detailLevel
+            null, // featureMode
+            null, // withFeatureStats
+            null, // withInternalFeatures
+            expectedRecordCount,
+            expectedRecordIds,
+            expectedRelatedCount,
+            expectedFeatureCounts,
+            primaryFeatureValues,
+            duplicateFeatureValues,
+            expectedDataMap,
+            null));
     return result;
   }
 
@@ -1070,27 +1054,26 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     Iterator<List<Boolean>> booleansIter = circularIterator(booleanCombos);
 
     List<List> optionCombos = generateCombinations(relationshipModes,
-                                                   detailLevels,
-                                                   featureModes);
+        detailLevels,
+        featureModes);
     Collections.shuffle(optionCombos, prng);
     Iterator<List> optionsIter = circularIterator(optionCombos);
 
-    int loopCount
-        = Math.max(booleanCombos.size(), optionCombos.size()) * 15
+    int loopCount = Math.max(booleanCombos.size(), optionCombos.size()) * 15
         / baseArgs.size();
 
     baseArgs.forEach(baseArgList -> {
       for (int index = 0; index < loopCount; index++) {
-        List<Object>        optsList   = optionsIter.next();
-        SzRelationshipMode  withRelated = (SzRelationshipMode) optsList.get(0);
-        SzDetailLevel       detailLevel = (SzDetailLevel) optsList.get(1);
-        SzFeatureMode       featureMode = (SzFeatureMode) optsList.get(2);
+        List<Object> optsList = optionsIter.next();
+        SzRelationshipMode withRelated = (SzRelationshipMode) optsList.get(0);
+        SzDetailLevel detailLevel = (SzDetailLevel) optsList.get(1);
+        SzFeatureMode featureMode = (SzFeatureMode) optsList.get(2);
 
         List<Boolean> booleansList = booleansIter.next();
-        Boolean withRaw               = booleansList.get(0);
-        Boolean forceMinimal          = booleansList.get(1);
-        Boolean withFeatureStats      = booleansList.get(2);
-        Boolean withInternalFeatures  = booleansList.get(3);
+        Boolean withRaw = booleansList.get(0);
+        Boolean forceMinimal = booleansList.get(1);
+        Boolean withFeatureStats = booleansList.get(2);
+        Boolean withInternalFeatures = booleansList.get(3);
 
         Object[] argArray = baseArgList.toArray();
 
@@ -1111,15 +1094,14 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   private StringBuilder buildEntityQueryString(
-      StringBuilder       sb,
-      Boolean             withRaw,
-      SzRelationshipMode  withRelated,
-      Boolean             forceMinimal,
-      SzDetailLevel       detailLevel,
-      SzFeatureMode       featureMode,
-      Boolean             withFeatureStats,
-      Boolean             withInternalFeatures)
-  {
+      StringBuilder sb,
+      Boolean withRaw,
+      SzRelationshipMode withRelated,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures) {
     String prefix = "?";
     if (detailLevel != null) {
       sb.append(prefix).append("detailLevel=").append(detailLevel);
@@ -1155,23 +1137,22 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getEntityParameters")
   public void getEntityByRecordIdTest(
-      SzRecordId                          keyRecordId,
-      Boolean                             withRaw,
-      SzRelationshipMode                  withRelated,
-      Boolean                             forceMinimal,
-      SzDetailLevel                       detailLevel,
-      SzFeatureMode                       featureMode,
-      Boolean                             withFeatureStats,
-      Boolean                             withInternalFeatures,
-      Integer                             expectedRecordCount,
-      Set<SzRecordId>                     expectedRecordIds,
-      Integer                             relatedEntityCount,
-      Map<String,Integer>                 expectedFeatureCounts,
-      Map<String,Set<String>>             primaryFeatureValues,
-      Map<String,Set<String>>             duplicateFeatureValues,
-      Map<SzAttributeClass, Set<String>>  expectedDataValues,
-      Set<String>                         expectedOtherDataValues)
-  {
+      SzRecordId keyRecordId,
+      Boolean withRaw,
+      SzRelationshipMode withRelated,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures,
+      Integer expectedRecordCount,
+      Set<SzRecordId> expectedRecordIds,
+      Integer relatedEntityCount,
+      Map<String, Integer> expectedFeatureCounts,
+      Map<String, Set<String>> primaryFeatureValues,
+      Map<String, Set<String>> duplicateFeatureValues,
+      Map<SzAttributeClass, Set<String>> expectedDataValues,
+      Set<String> expectedOtherDataValues) {
     this.performTest(() -> {
       String testInfo = "keyRecord=[ " + keyRecordId
           + " ], forceMinimal=[ " + forceMinimal
@@ -1186,13 +1167,13 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       sb.append("data-sources/").append(keyRecordId.getDataSourceCode());
       sb.append("/records/").append(keyRecordId.getRecordId()).append("/entity");
       buildEntityQueryString(sb,
-                             withRaw,
-                             withRelated,
-                             forceMinimal,
-                             detailLevel,
-                             featureMode,
-                             withFeatureStats,
-                             withInternalFeatures);
+          withRaw,
+          withRelated,
+          forceMinimal,
+          detailLevel,
+          featureMode,
+          withFeatureStats,
+          withInternalFeatures);
 
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
@@ -1241,23 +1222,22 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getEntityParameters")
   public void getEntityByRecordIdViaHttpTest(
-      SzRecordId                          keyRecordId,
-      Boolean                             withRaw,
-      SzRelationshipMode                  withRelated,
-      Boolean                             forceMinimal,
-      SzDetailLevel                       detailLevel,
-      SzFeatureMode                       featureMode,
-      Boolean                             withFeatureStats,
-      Boolean                             withInternalFeatures,
-      Integer                             expectedRecordCount,
-      Set<SzRecordId>                     expectedRecordIds,
-      Integer                             relatedEntityCount,
-      Map<String,Integer>                 expectedFeatureCounts,
-      Map<String,Set<String>>             primaryFeatureValues,
-      Map<String,Set<String>>             duplicateFeatureValues,
-      Map<SzAttributeClass, Set<String>>  expectedDataValues,
-      Set<String>                         expectedOtherDataValues)
-  {
+      SzRecordId keyRecordId,
+      Boolean withRaw,
+      SzRelationshipMode withRelated,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures,
+      Integer expectedRecordCount,
+      Set<SzRecordId> expectedRecordIds,
+      Integer relatedEntityCount,
+      Map<String, Integer> expectedFeatureCounts,
+      Map<String, Set<String>> primaryFeatureValues,
+      Map<String, Set<String>> duplicateFeatureValues,
+      Map<SzAttributeClass, Set<String>> expectedDataValues,
+      Set<String> expectedOtherDataValues) {
     this.performTest(() -> {
       String testInfo = "keyRecord=[ " + keyRecordId
           + " ], forceMinimal=[ " + forceMinimal
@@ -1272,13 +1252,13 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       sb.append("data-sources/").append(keyRecordId.getDataSourceCode());
       sb.append("/records/").append(keyRecordId.getRecordId()).append("/entity");
       buildEntityQueryString(sb,
-                             withRaw,
-                             withRelated,
-                             forceMinimal,
-                             detailLevel,
-                             featureMode,
-                             withFeatureStats,
-                             withInternalFeatures);
+          withRaw,
+          withRelated,
+          forceMinimal,
+          detailLevel,
+          featureMode,
+          withFeatureStats,
+          withInternalFeatures);
 
       String uriText = this.formatServerUri(sb.toString());
 
@@ -1315,23 +1295,22 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getEntityParameters")
   public void getEntityByRecordIdViaJavaClientTest(
-      SzRecordId                          keyRecordId,
-      Boolean                             withRaw,
-      SzRelationshipMode                  withRelated,
-      Boolean                             forceMinimal,
-      SzDetailLevel                       detailLevel,
-      SzFeatureMode                       featureMode,
-      Boolean                             withFeatureStats,
-      Boolean                             withInternalFeatures,
-      Integer                             expectedRecordCount,
-      Set<SzRecordId>                     expectedRecordIds,
-      Integer                             relatedEntityCount,
-      Map<String,Integer>                 expectedFeatureCounts,
-      Map<String,Set<String>>             primaryFeatureValues,
-      Map<String,Set<String>>             duplicateFeatureValues,
-      Map<SzAttributeClass, Set<String>>  expectedDataValues,
-      Set<String>                         expectedOtherDataValues)
-  {
+      SzRecordId keyRecordId,
+      Boolean withRaw,
+      SzRelationshipMode withRelated,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures,
+      Integer expectedRecordCount,
+      Set<SzRecordId> expectedRecordIds,
+      Integer relatedEntityCount,
+      Map<String, Integer> expectedFeatureCounts,
+      Map<String, Set<String>> primaryFeatureValues,
+      Map<String, Set<String>> duplicateFeatureValues,
+      Map<SzAttributeClass, Set<String>> expectedDataValues,
+      Set<String> expectedOtherDataValues) {
     this.performTest(() -> {
       String testInfo = "keyRecord=[ " + keyRecordId
           + " ], forceMinimal=[ " + forceMinimal
@@ -1346,13 +1325,13 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       sb.append("data-sources/").append(keyRecordId.getDataSourceCode());
       sb.append("/records/").append(keyRecordId.getRecordId()).append("/entity");
       buildEntityQueryString(sb,
-                             withRaw,
-                             withRelated,
-                             forceMinimal,
-                             detailLevel,
-                             featureMode,
-                             withFeatureStats,
-                             withInternalFeatures);
+          withRaw,
+          withRelated,
+          forceMinimal,
+          detailLevel,
+          featureMode,
+          withFeatureStats,
+          withInternalFeatures);
 
       String uriText = this.formatServerUri(sb.toString());
 
@@ -1375,22 +1354,21 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       }
 
       long before = System.nanoTime();
-      com.senzing.gen.api.model.SzEntityResponse clientResponse
-          = this.entityDataApi.getEntityByRecordId(
-              keyRecordId.getDataSourceCode(),
-              keyRecordId.getRecordId(),
-              detailLvl,
-              featMode,
-              withFeatureStats,
-              withInternalFeatures,
-              forceMinimal,
-              relMode,
-              withRaw);
+      com.senzing.gen.api.model.SzEntityResponse clientResponse = this.entityDataApi.getEntityByRecordId(
+          keyRecordId.getDataSourceCode(),
+          keyRecordId.getRecordId(),
+          detailLvl,
+          featMode,
+          withFeatureStats,
+          withInternalFeatures,
+          forceMinimal,
+          relMode,
+          withRaw);
 
       long after = System.nanoTime();
 
       SzEntityResponse response = jsonCopy(clientResponse,
-                                           SzEntityResponse.class);
+          SzEntityResponse.class);
 
       validateEntityResponse(
           testInfo,
@@ -1417,8 +1395,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   @Test
-  public void getNotFoundEntityByBadRecordIdTest()
-  {
+  public void getNotFoundEntityByBadRecordIdTest() {
     this.performTest(() -> {
       final String badRecordId = "ABC123DEF456GHI789";
       StringBuilder sb = new StringBuilder();
@@ -1444,10 +1421,9 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
             uriInfo);
 
         fail("Expected entity for data source \"" + PASSENGERS
-                 + "\" and record ID \"" + badRecordId + "\" to NOT be found");
+            + "\" and record ID \"" + badRecordId + "\" to NOT be found");
       } catch (NotFoundException expected) {
-        SzErrorResponse response
-            = (SzErrorResponse) expected.getResponse().getEntity();
+        SzErrorResponse response = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
         long after = System.nanoTime();
 
@@ -1458,8 +1434,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   @Test
-  public void getNotFoundEntityByBadDataSourceTest()
-  {
+  public void getNotFoundEntityByBadDataSourceTest() {
     this.performTest(() -> {
       final String badDataSource = "FOOBAR";
       final String badRecordId = "ABC123DEF456GHI789";
@@ -1486,10 +1461,9 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
             uriInfo);
 
         fail("Expected entity for data source \"" + badDataSource
-                 + "\" and record ID \"" + badRecordId + "\" to NOT be found");
+            + "\" and record ID \"" + badRecordId + "\" to NOT be found");
       } catch (NotFoundException expected) {
-        SzErrorResponse response
-            = (SzErrorResponse) expected.getResponse().getEntity();
+        SzErrorResponse response = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
         long after = System.nanoTime();
 
@@ -1500,8 +1474,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   @Test
-  public void getNotFoundEntityByBadRecordIdViaHttpTest()
-  {
+  public void getNotFoundEntityByBadRecordIdViaHttpTest() {
     this.performTest(() -> {
       final String badRecordId = "ABC123DEF456GHI789";
       StringBuilder sb = new StringBuilder();
@@ -1522,8 +1495,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   @Test
-  public void getNotFoundEntityByBadDataSourceViaHttpTest()
-  {
+  public void getNotFoundEntityByBadDataSourceViaHttpTest() {
     this.performTest(() -> {
       final String badDataSource = "FOOBAR";
       final String badRecordId = "ABC123DEF456GHI789";
@@ -1547,23 +1519,22 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getEntityParameters")
   public void getEntityByEntityIdTest(
-      SzRecordId                          keyRecordId,
-      Boolean                             withRaw,
-      SzRelationshipMode                  withRelated,
-      Boolean                             forceMinimal,
-      SzDetailLevel                       detailLevel,
-      SzFeatureMode                       featureMode,
-      Boolean                             withFeatureStats,
-      Boolean                             withInternalFeatures,
-      Integer                             expectedRecordCount,
-      Set<SzRecordId>                     expectedRecordIds,
-      Integer                             relatedEntityCount,
-      Map<String,Integer>                 expectedFeatureCounts,
-      Map<String,Set<String>>             primaryFeatureValues,
-      Map<String,Set<String>>             duplicateFeatureValues,
-      Map<SzAttributeClass, Set<String>>  expectedDataValues,
-      Set<String>                         expectedOtherDataValues)
-  {
+      SzRecordId keyRecordId,
+      Boolean withRaw,
+      SzRelationshipMode withRelated,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures,
+      Integer expectedRecordCount,
+      Set<SzRecordId> expectedRecordIds,
+      Integer relatedEntityCount,
+      Map<String, Integer> expectedFeatureCounts,
+      Map<String, Set<String>> primaryFeatureValues,
+      Map<String, Set<String>> duplicateFeatureValues,
+      Map<SzAttributeClass, Set<String>> expectedDataValues,
+      Set<String> expectedOtherDataValues) {
     this.performTest(() -> {
       String testInfo = "keyRecord=[ " + keyRecordId
           + " ], forceMinimal=[ " + forceMinimal
@@ -1579,13 +1550,13 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       StringBuilder sb = new StringBuilder();
       sb.append("entities/").append(entityId);
       buildEntityQueryString(sb,
-                             withRaw,
-                             withRelated,
-                             forceMinimal,
-                             detailLevel,
-                             featureMode,
-                             withFeatureStats,
-                             withInternalFeatures);
+          withRaw,
+          withRelated,
+          forceMinimal,
+          detailLevel,
+          featureMode,
+          withFeatureStats,
+          withInternalFeatures);
 
       String uriText = this.formatServerUri(sb.toString());
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
@@ -1633,23 +1604,22 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getEntityParameters")
   public void getEntityByEntityIdViaHttpTest(
-      SzRecordId                          keyRecordId,
-      Boolean                             withRaw,
-      SzRelationshipMode                  withRelated,
-      Boolean                             forceMinimal,
-      SzDetailLevel                       detailLevel,
-      SzFeatureMode                       featureMode,
-      Boolean                             withFeatureStats,
-      Boolean                             withInternalFeatures,
-      Integer                             expectedRecordCount,
-      Set<SzRecordId>                     expectedRecordIds,
-      Integer                             relatedEntityCount,
-      Map<String,Integer>                 expectedFeatureCounts,
-      Map<String,Set<String>>             primaryFeatureValues,
-      Map<String,Set<String>>             duplicateFeatureValues,
-      Map<SzAttributeClass, Set<String>>  expectedDataValues,
-      Set<String>                         expectedOtherDataValues)
-  {
+      SzRecordId keyRecordId,
+      Boolean withRaw,
+      SzRelationshipMode withRelated,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures,
+      Integer expectedRecordCount,
+      Set<SzRecordId> expectedRecordIds,
+      Integer relatedEntityCount,
+      Map<String, Integer> expectedFeatureCounts,
+      Map<String, Set<String>> primaryFeatureValues,
+      Map<String, Set<String>> duplicateFeatureValues,
+      Map<SzAttributeClass, Set<String>> expectedDataValues,
+      Set<String> expectedOtherDataValues) {
     this.performTest(() -> {
       String testInfo = "keyRecord=[ " + keyRecordId
           + " ], forceMinimal=[ " + forceMinimal
@@ -1665,13 +1635,13 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       StringBuilder sb = new StringBuilder();
       sb.append("entities/").append(entityId);
       buildEntityQueryString(sb,
-                             withRaw,
-                             withRelated,
-                             forceMinimal,
-                             detailLevel,
-                             featureMode,
-                             withFeatureStats,
-                             withInternalFeatures);
+          withRaw,
+          withRelated,
+          forceMinimal,
+          detailLevel,
+          featureMode,
+          withFeatureStats,
+          withInternalFeatures);
 
       String uriText = this.formatServerUri(sb.toString());
 
@@ -1708,23 +1678,22 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getEntityParameters")
   public void getEntityByEntityIdViaJavaClientTest(
-      SzRecordId                          keyRecordId,
-      Boolean                             withRaw,
-      SzRelationshipMode                  withRelated,
-      Boolean                             forceMinimal,
-      SzDetailLevel                       detailLevel,
-      SzFeatureMode                       featureMode,
-      Boolean                             withFeatureStats,
-      Boolean                             withInternalFeatures,
-      Integer                             expectedRecordCount,
-      Set<SzRecordId>                     expectedRecordIds,
-      Integer                             relatedEntityCount,
-      Map<String,Integer>                 expectedFeatureCounts,
-      Map<String,Set<String>>             primaryFeatureValues,
-      Map<String,Set<String>>             duplicateFeatureValues,
-      Map<SzAttributeClass, Set<String>>  expectedDataValues,
-      Set<String>                         expectedOtherDataValues)
-  {
+      SzRecordId keyRecordId,
+      Boolean withRaw,
+      SzRelationshipMode withRelated,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures,
+      Integer expectedRecordCount,
+      Set<SzRecordId> expectedRecordIds,
+      Integer relatedEntityCount,
+      Map<String, Integer> expectedFeatureCounts,
+      Map<String, Set<String>> primaryFeatureValues,
+      Map<String, Set<String>> duplicateFeatureValues,
+      Map<SzAttributeClass, Set<String>> expectedDataValues,
+      Set<String> expectedOtherDataValues) {
     this.performTest(() -> {
       String testInfo = "keyRecord=[ " + keyRecordId
           + " ], forceMinimal=[ " + forceMinimal
@@ -1740,13 +1709,13 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       StringBuilder sb = new StringBuilder();
       sb.append("entities/").append(entityId);
       buildEntityQueryString(sb,
-                             withRaw,
-                             withRelated,
-                             forceMinimal,
-                             detailLevel,
-                             featureMode,
-                             withFeatureStats,
-                             withInternalFeatures);
+          withRaw,
+          withRelated,
+          forceMinimal,
+          detailLevel,
+          featureMode,
+          withFeatureStats,
+          withInternalFeatures);
 
       String uriText = this.formatServerUri(sb.toString());
 
@@ -1769,20 +1738,19 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       }
 
       long before = System.nanoTime();
-      com.senzing.gen.api.model.SzEntityResponse clientResponse
-          = this.entityDataApi.getEntityByEntityId(entityId,
-                                                   detailLvl,
-                                                   featMode,
-                                                   withFeatureStats,
-                                                   withInternalFeatures,
-                                                   forceMinimal,
-                                                   relMode,
-                                                   withRaw);
+      com.senzing.gen.api.model.SzEntityResponse clientResponse = this.entityDataApi.getEntityByEntityId(entityId,
+          detailLvl,
+          featMode,
+          withFeatureStats,
+          withInternalFeatures,
+          forceMinimal,
+          relMode,
+          withRaw);
 
       long after = System.nanoTime();
 
       SzEntityResponse response = jsonCopy(clientResponse,
-                                           SzEntityResponse.class);
+          SzEntityResponse.class);
 
       validateEntityResponse(
           testInfo,
@@ -1809,8 +1777,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   @Test
-  public void getNotFoundEntityByBadEntityIdTest()
-  {
+  public void getNotFoundEntityByBadEntityIdTest() {
     this.performTest(() -> {
       final long badEntityId = Long.MAX_VALUE;
 
@@ -1834,8 +1801,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
         fail("Expected entity for entity ID " + badEntityId + " to NOT be found");
 
       } catch (NotFoundException expected) {
-        SzErrorResponse response
-            = (SzErrorResponse) expected.getResponse().getEntity();
+        SzErrorResponse response = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
         long after = System.nanoTime();
 
@@ -1846,8 +1812,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   }
 
   @Test
-  public void getNotFoundEntityByBadEntityIdViaHttpTest()
-  {
+  public void getNotFoundEntityByBadEntityIdViaHttpTest() {
     this.performTest(() -> {
       final long badEntityId = Long.MAX_VALUE;
 
@@ -1909,13 +1874,12 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     return sortedSet;
   }
 
-  private <K extends Comparable<K>, V> Map<K, V> sortedMap(Map<K, V> map)
-  {
+  private <K extends Comparable<K>, V> Map<K, V> sortedMap(Map<K, V> map) {
     List<K> list = new ArrayList<>(map.size());
     list.addAll(map.keySet());
     Collections.sort(list);
     Map<K, V> sortedMap = new LinkedHashMap<>();
-    for (K key: list) {
+    for (K key : list) {
       sortedMap.put(key, map.get(key));
     }
     return sortedMap;
@@ -1925,7 +1889,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     String versionString = this.getNativeApiVersion();
 
     SemanticVersion version = (versionString == null)
-        ? null : new SemanticVersion(versionString);
+        ? null
+        : new SemanticVersion(versionString);
 
     boolean supportFiltering = (version == null) ? true // assume latest version
         : (MINIMUM_SEARCH_FILTERING_VERSION.compareTo(version) <= 0);
@@ -1933,20 +1898,19 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     boolean supportNameOnly = (version == null) ? false // assume latest version
         : (MAXIMUM_NAME_ONLY_VERSION.compareTo(version) > 0);
 
-    Map<Map<String, Set<String>>, Map<SzAttributeSearchResultType, Integer>>
-        searchCountMap = new LinkedHashMap<>();
+    Map<Map<String, Set<String>>, Map<SzAttributeSearchResultType, Integer>> searchCountMap = new LinkedHashMap<>();
 
     searchCountMap.put(criteria("PHONE_NUMBER", "702-555-1212"),
-                       sortedMap(Map.of(POSSIBLE_RELATION, 1)));
+        sortedMap(Map.of(POSSIBLE_RELATION, 1)));
 
     searchCountMap.put(criteria("PHONE_NUMBER", "212-555-1212"),
-                       sortedMap(Map.of(POSSIBLE_RELATION, 1)));
+        sortedMap(Map.of(POSSIBLE_RELATION, 1)));
 
     searchCountMap.put(criteria("PHONE_NUMBER", "818-555-1313"),
-                       sortedMap(Map.of(POSSIBLE_RELATION, 1)));
+        sortedMap(Map.of(POSSIBLE_RELATION, 1)));
 
     searchCountMap.put(criteria("PHONE_NUMBER", "818-555-1212"),
-                       sortedMap(Map.of(POSSIBLE_RELATION, 1)));
+        sortedMap(Map.of(POSSIBLE_RELATION, 1)));
 
     searchCountMap.put(
         criteria("PHONE_NUMBER", "818-555-1212", "818-555-1313"),
@@ -1954,44 +1918,44 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
     searchCountMap.put(
         criteria(criterion("ADDR_LINE1", "100 MAIN STREET"),
-                 criterion("ADDR_CITY", "LOS ANGELES"),
-                 criterion("ADDR_STATE", "CALIFORNIA"),
-                 criterion("ADDR_POSTAL_CODE", "90012")),
+            criterion("ADDR_CITY", "LOS ANGELES"),
+            criterion("ADDR_STATE", "CALIFORNIA"),
+            criterion("ADDR_POSTAL_CODE", "90012")),
         sortedMap(Map.of(POSSIBLE_RELATION, 2)));
 
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "JOHN DOE", "JANE DOE"),
-                 criterion("ADDR_LINE1", "100 MAIN STREET"),
-                 criterion("ADDR_CITY", "LOS ANGELES"),
-                 criterion("ADDR_STATE", "CALIFORNIA"),
-                 criterion("ADDR_POSTAL_CODE", "90012")),
+            criterion("ADDR_LINE1", "100 MAIN STREET"),
+            criterion("ADDR_CITY", "LOS ANGELES"),
+            criterion("ADDR_STATE", "CALIFORNIA"),
+            criterion("ADDR_POSTAL_CODE", "90012")),
         sortedMap(Map.of(MATCH, 2)));
 
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "JOHN DOE"),
-                 criterion("ADDR_LINE1", "100 MAIN STREET"),
-                 criterion("ADDR_CITY", "LOS ANGELES"),
-                 criterion("ADDR_STATE", "CALIFORNIA"),
-                 criterion("ADDR_POSTAL_CODE", "90012")),
+            criterion("ADDR_LINE1", "100 MAIN STREET"),
+            criterion("ADDR_CITY", "LOS ANGELES"),
+            criterion("ADDR_STATE", "CALIFORNIA"),
+            criterion("ADDR_POSTAL_CODE", "90012")),
         sortedMap(Map.of(MATCH, 1, POSSIBLE_RELATION, 1)));
 
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "Mark Hightower"),
-                 criterion("PHONE_NUMBER", "563-927-2833")),
+            criterion("PHONE_NUMBER", "563-927-2833")),
         sortedMap(Map.of(
             MATCH, 1,
             (supportNameOnly ? NAME_ONLY_MATCH : POSSIBLE_MATCH), 1)));
 
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "Mark Hightower"),
-                 criterion("DATE_OF_BIRTH", "1981-03-22")),
+            criterion("DATE_OF_BIRTH", "1981-03-22")),
         sortedMap(Map.of(POSSIBLE_MATCH, 1)));
 
     searchCountMap.put(
         criteria(criterion("NAME_FULL", "Mark Hightower"),
-                 criterion("PHONE_NUMBER", "563-927-2833"),
-                 criterion("PHONE_NUMBER", "781-332-2824"),
-                 criterion("DATE_OF_BIRTH", "1981-06-22")),
+            criterion("PHONE_NUMBER", "563-927-2833"),
+            criterion("PHONE_NUMBER", "781-332-2824"),
+            criterion("DATE_OF_BIRTH", "1981-06-22")),
         sortedMap(Map.of(MATCH, 1, POSSIBLE_MATCH, 1)));
 
     List<Arguments> list = new LinkedList<>();
@@ -2018,8 +1982,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
     Collections.shuffle(optionCombos, prng);
     Iterator<List> optionsIter = circularIterator(optionCombos);
 
-    int loopCount
-        = Math.max(booleanCombos.size(), optionCombos.size()) * 15
+    int loopCount = Math.max(booleanCombos.size(), optionCombos.size()) * 15
         / searchCountMap.size();
 
     searchCountMap.entrySet().forEach(entry -> {
@@ -2038,26 +2001,21 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       // iterate over the result types and try singleton sets
       resultCounts.forEach((resultType, count) -> {
         // handle the singleton set
-        EnumSet<SzAttributeSearchResultType> singletonSet
-            = EnumSet.of(resultType);
+        EnumSet<SzAttributeSearchResultType> singletonSet = EnumSet.of(resultType);
 
         typeSetList.add(singletonSet);
         countList.add(supportFiltering ? count : sum);
       });
 
-      // try complemente sets
-      EnumSet<SzAttributeSearchResultType> allEnumSet
-          = EnumSet.copyOf(resultCounts.keySet());
+      // try complement sets
+      EnumSet<SzAttributeSearchResultType> allEnumSet = EnumSet.copyOf(resultCounts.keySet());
 
-      Set<SzAttributeSearchResultType> allSet
-          = sortedSet(allEnumSet);
+      Set<SzAttributeSearchResultType> allSet = sortedSet(allEnumSet);
 
       // create the complement set
-      EnumSet<SzAttributeSearchResultType> complementEnumSet
-          = EnumSet.complementOf(allEnumSet);
+      EnumSet<SzAttributeSearchResultType> complementEnumSet = EnumSet.complementOf(allEnumSet);
 
-      Set<SzAttributeSearchResultType> complementSet
-          = sortedSet(complementEnumSet);
+      Set<SzAttributeSearchResultType> complementSet = sortedSet(complementEnumSet);
 
       if (complementSet.size() > 0) {
         typeSetList.add(complementSet);
@@ -2087,28 +2045,28 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       int typeSetIndex = 0;
 
       for (int index = 0; index < loopCount; index++) {
-        List<Object>  optsList    = optionsIter.next();
+        List<Object> optsList = optionsIter.next();
         SzDetailLevel detailLevel = (SzDetailLevel) optsList.get(0);
         SzFeatureMode featureMode = (SzFeatureMode) optsList.get(1);
 
-        List<Boolean> booleanList           = booleansIter.next();
-        Boolean       withRaw               = booleanList.get(0);
-        Boolean       forceMinimal          = booleanList.get(1);
-        Boolean       withRelationships     = booleanList.get(2);
-        Boolean       withFeatureStats      = booleanList.get(3);
-        Boolean       withInternalFeatures  = booleanList.get(4);
+        List<Boolean> booleanList = booleansIter.next();
+        Boolean withRaw = booleanList.get(0);
+        Boolean forceMinimal = booleanList.get(1);
+        Boolean withRelationships = booleanList.get(2);
+        Boolean withFeatureStats = booleanList.get(3);
+        Boolean withInternalFeatures = booleanList.get(4);
 
         // try with empty set of result types
         list.add(arguments(criteria,
-                           typeSetList.get(typeSetIndex),
-                           countList.get(typeSetIndex),
-                           forceMinimal,
-                           detailLevel,
-                           featureMode,
-                           withFeatureStats,
-                           withInternalFeatures,
-                           withRelationships,
-                           withRaw));
+            typeSetList.get(typeSetIndex),
+            countList.get(typeSetIndex),
+            forceMinimal,
+            detailLevel,
+            featureMode,
+            withFeatureStats,
+            withInternalFeatures,
+            withRelationships,
+            withRaw));
 
         // increment the type set index
         typeSetIndex = (typeSetIndex + 1) % typeSetList.size();
@@ -2121,17 +2079,16 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("searchParameters")
   public void searchByGetJsonAttrsTest(
-      Map<String, Set<String>>          criteria,
-      Set<SzAttributeSearchResultType>  includeOnlySet,
-      Integer                           expectedCount,
-      Boolean                           forceMinimal,
-      SzDetailLevel                     detailLevel,
-      SzFeatureMode                     featureMode,
-      Boolean                           withFeatureStats,
-      Boolean                           withInternalFeatures,
-      Boolean                           withRelationships,
-      Boolean                           withRaw)
-  {
+      Map<String, Set<String>> criteria,
+      Set<SzAttributeSearchResultType> includeOnlySet,
+      Integer expectedCount,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures,
+      Boolean withRelationships,
+      Boolean withRaw) {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
           + " ], includeOnly=[ " + includeOnlySet
@@ -2147,7 +2104,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       criteria.entrySet().forEach(entry -> {
         String key = entry.getKey();
         Set<String> values = entry.getValue();
-        if (values.size() == 0) return;
+        if (values.size() == 0)
+          return;
         if (values.size() == 1) {
           job.add(key, values.iterator().next());
         } else {
@@ -2166,7 +2124,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       sb.append(this.formatServerUri(
           "entities?attrs=" + urlEncode(attrs)));
       if (includeOnlySet != null && includeOnlySet.size() > 0) {
-        for (SzAttributeSearchResultType resultType: includeOnlySet) {
+        for (SzAttributeSearchResultType resultType : includeOnlySet) {
           sb.append("&includeOnly=").append(resultType);
         }
       }
@@ -2199,8 +2157,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       long before = System.nanoTime();
-      SzAttributeSearchResponse response
-          = this.entityDataServices.searchEntitiesByGet(
+      SzAttributeSearchResponse response = this.entityDataServices.searchEntitiesByGet(
           attrs,
           null,
           includeOnlyParams,
@@ -2258,17 +2215,16 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("searchParameters")
   public void searchByGetJsonAttrsViaHttpTest(
-      Map<String, Set<String>>          criteria,
-      Set<SzAttributeSearchResultType>  includeOnlySet,
-      Integer                           expectedCount,
-      Boolean                           forceMinimal,
-      SzDetailLevel                     detailLevel,
-      SzFeatureMode                     featureMode,
-      Boolean                           withFeatureStats,
-      Boolean                           withInternalFeatures,
-      Boolean                           withRelationships,
-      Boolean                           withRaw)
-  {
+      Map<String, Set<String>> criteria,
+      Set<SzAttributeSearchResultType> includeOnlySet,
+      Integer expectedCount,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures,
+      Boolean withRelationships,
+      Boolean withRaw) {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
           + " ], includeOnly=[ " + includeOnlySet
@@ -2284,7 +2240,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       criteria.entrySet().forEach(entry -> {
         String key = entry.getKey();
         Set<String> values = entry.getValue();
-        if (values.size() == 0) return;
+        if (values.size() == 0)
+          return;
         if (values.size() == 1) {
           job.add(key, values.iterator().next());
         } else {
@@ -2302,7 +2259,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       StringBuilder sb = new StringBuilder();
       sb.append("entities?attrs=").append(urlEncode(attrs));
       if (includeOnlySet != null && includeOnlySet.size() > 0) {
-        for (SzAttributeSearchResultType resultType: includeOnlySet) {
+        for (SzAttributeSearchResultType resultType : includeOnlySet) {
           sb.append("&includeOnly=").append(resultType);
         }
       }
@@ -2355,17 +2312,16 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("searchParameters")
   public void searchByGetJsonAttrsViaJavaClientTest(
-      Map<String, Set<String>>          criteria,
-      Set<SzAttributeSearchResultType>  includeOnlySet,
-      Integer                           expectedCount,
-      Boolean                           forceMinimal,
-      SzDetailLevel                     detailLevel,
-      SzFeatureMode                     featureMode,
-      Boolean                           withFeatureStats,
-      Boolean                           withInternalFeatures,
-      Boolean                           withRelationships,
-      Boolean                           withRaw)
-  {
+      Map<String, Set<String>> criteria,
+      Set<SzAttributeSearchResultType> includeOnlySet,
+      Integer expectedCount,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures,
+      Boolean withRelationships,
+      Boolean withRaw) {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
           + " ], includeOnly=[ " + includeOnlySet
@@ -2381,7 +2337,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       criteria.entrySet().forEach(entry -> {
         String key = entry.getKey();
         Set<String> values = entry.getValue();
-        if (values.size() == 0) return;
+        if (values.size() == 0)
+          return;
         if (values.size() == 1) {
           job.add(key, values.iterator().next());
         } else {
@@ -2399,7 +2356,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       StringBuilder sb = new StringBuilder();
       sb.append("entities?attrs=").append(urlEncode(attrs));
       if (includeOnlySet != null && includeOnlySet.size() > 0) {
-        for (SzAttributeSearchResultType resultType: includeOnlySet) {
+        for (SzAttributeSearchResultType resultType : includeOnlySet) {
           sb.append("&includeOnly=").append(resultType);
         }
       }
@@ -2438,25 +2395,24 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
             featureMode.toString());
       }
 
-      List<com.senzing.gen.api.model.SzAttributeSearchResultType>
-          includeOnlyParams = new ArrayList<>(includeOnlySet.size());
+      List<com.senzing.gen.api.model.SzAttributeSearchResultType> includeOnlyParams = new ArrayList<>(
+          includeOnlySet.size());
       includeOnlySet.forEach(
           resultType -> includeOnlyParams.add(
               com.senzing.gen.api.model.SzAttributeSearchResultType.valueOf(
                   resultType.toString())));
 
       long before = System.nanoTime();
-      com.senzing.gen.api.model.SzAttributeSearchResponse clientResponse
-          = this.entityDataApi.searchEntitiesByGet(attrs,
-                                                   null,
-                                                   includeOnlyParams,
-                                                   detailLvl,
-                                                   featMode,
-                                                   withFeatureStats,
-                                                   withInternalFeatures,
-                                                   forceMinimal,
-                                                   withRelationships,
-                                                   withRaw);
+      com.senzing.gen.api.model.SzAttributeSearchResponse clientResponse = this.entityDataApi.searchEntitiesByGet(attrs,
+          null,
+          includeOnlyParams,
+          detailLvl,
+          featMode,
+          withFeatureStats,
+          withInternalFeatures,
+          forceMinimal,
+          withRelationships,
+          withRaw);
       long after = System.nanoTime();
 
       SzAttributeSearchResponse response = jsonCopy(
@@ -2482,17 +2438,16 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("searchParameters")
   public void searchByPostJsonAttrsTest(
-      Map<String, Set<String>>          criteria,
-      Set<SzAttributeSearchResultType>  includeOnlySet,
-      Integer                           expectedCount,
-      Boolean                           forceMinimal,
-      SzDetailLevel                     detailLevel,
-      SzFeatureMode                     featureMode,
-      Boolean                           withFeatureStats,
-      Boolean                           withInternalFeatures,
-      Boolean                           withRelationships,
-      Boolean                           withRaw)
-  {
+      Map<String, Set<String>> criteria,
+      Set<SzAttributeSearchResultType> includeOnlySet,
+      Integer expectedCount,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures,
+      Boolean withRelationships,
+      Boolean withRaw) {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
           + " ], includeOnly=[ " + includeOnlySet
@@ -2508,7 +2463,8 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       criteria.entrySet().forEach(entry -> {
         String key = entry.getKey();
         Set<String> values = entry.getValue();
-        if (values.size() == 0) return;
+        if (values.size() == 0)
+          return;
         if (values.size() == 1) {
           job.add(key, values.iterator().next());
         } else {
@@ -2527,7 +2483,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       sb.append(this.formatServerUri("search-entities"));
       String prefix = "?";
       if (includeOnlySet != null && includeOnlySet.size() > 0) {
-        for (SzAttributeSearchResultType resultType: includeOnlySet) {
+        for (SzAttributeSearchResultType resultType : includeOnlySet) {
           sb.append(prefix).append("includeOnly=").append(resultType);
           prefix = "&";
         }
@@ -2566,8 +2522,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       long before = System.nanoTime();
-      SzAttributeSearchResponse response
-          = this.entityDataServices.searchEntitiesByPost(
+      SzAttributeSearchResponse response = this.entityDataServices.searchEntitiesByPost(
           includeOnlyParams,
           (forceMinimal != null ? forceMinimal : false),
           (detailLevel != null ? detailLevel : VERBOSE),
@@ -2603,17 +2558,16 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("searchParameters")
   public void searchByPostJsonAttrsViaHttpTest(
-      Map<String, Set<String>>          criteria,
-      Set<SzAttributeSearchResultType>  includeOnlySet,
-      Integer                           expectedCount,
-      Boolean                           forceMinimal,
-      SzDetailLevel                     detailLevel,
-      SzFeatureMode                     featureMode,
-      Boolean                           withFeatureStats,
-      Boolean                           withInternalFeatures,
-      Boolean                           withRelationships,
-      Boolean                           withRaw)
-  {
+      Map<String, Set<String>> criteria,
+      Set<SzAttributeSearchResultType> includeOnlySet,
+      Integer expectedCount,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures,
+      Boolean withRelationships,
+      Boolean withRaw) {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
           + " ], includeOnly=[ " + includeOnlySet
@@ -2626,13 +2580,14 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           + " ], withRaw=[ " + withRaw + " ]";
 
       Map<String, Object> attrMap = new LinkedHashMap<>();
-      criteria.forEach((key,set) -> {
-        if (set.size() == 0) return;
+      criteria.forEach((key, set) -> {
+        if (set.size() == 0)
+          return;
         if (set.size() == 1) {
           attrMap.put(key, set.iterator().next());
         } else {
           List<Map<String, Object>> subMaps = new ArrayList<>(set.size());
-          for (String val: set) {
+          for (String val : set) {
             subMaps.add(Map.of(key, val));
           }
           attrMap.put(key, subMaps);
@@ -2643,7 +2598,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       sb.append("search-entities");
       String prefix = "?";
       if (includeOnlySet != null && includeOnlySet.size() > 0) {
-        for (SzAttributeSearchResultType resultType: includeOnlySet) {
+        for (SzAttributeSearchResultType resultType : includeOnlySet) {
           sb.append(prefix).append("includeOnly=").append(resultType);
           prefix = "&";
         }
@@ -2703,17 +2658,16 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("searchParameters")
   public void searchByPostJsonAttrsViaJavaClientTest(
-      Map<String, Set<String>>          criteria,
-      Set<SzAttributeSearchResultType>  includeOnlySet,
-      Integer                           expectedCount,
-      Boolean                           forceMinimal,
-      SzDetailLevel                     detailLevel,
-      SzFeatureMode                     featureMode,
-      Boolean                           withFeatureStats,
-      Boolean                           withInternalFeatures,
-      Boolean                           withRelationships,
-      Boolean                           withRaw)
-  {
+      Map<String, Set<String>> criteria,
+      Set<SzAttributeSearchResultType> includeOnlySet,
+      Integer expectedCount,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures,
+      Boolean withRelationships,
+      Boolean withRaw) {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
           + " ], includeOnly=[ " + includeOnlySet
@@ -2726,13 +2680,14 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
           + " ], withRaw=[ " + withRaw + " ]";
 
       Map<String, Object> attrMap = new LinkedHashMap<>();
-      criteria.forEach((key,set) -> {
-        if (set.size() == 0) return;
+      criteria.forEach((key, set) -> {
+        if (set.size() == 0)
+          return;
         if (set.size() == 1) {
           attrMap.put(key, set.iterator().next());
         } else {
           List<Map<String, Object>> subMaps = new ArrayList<>(set.size());
-          for (String val: set) {
+          for (String val : set) {
             subMaps.add(Map.of(key, val));
           }
           attrMap.put(key, subMaps);
@@ -2742,7 +2697,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       sb.append("search-entities");
       String prefix = "?";
       if (includeOnlySet != null && includeOnlySet.size() > 0) {
-        for (SzAttributeSearchResultType resultType: includeOnlySet) {
+        for (SzAttributeSearchResultType resultType : includeOnlySet) {
           sb.append(prefix).append("includeOnly=").append(resultType);
           prefix = "&";
         }
@@ -2791,24 +2746,24 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
             featureMode.toString());
       }
 
-      List<com.senzing.gen.api.model.SzAttributeSearchResultType>
-          includeOnlyParams = new ArrayList<>(includeOnlySet.size());
+      List<com.senzing.gen.api.model.SzAttributeSearchResultType> includeOnlyParams = new ArrayList<>(
+          includeOnlySet.size());
       includeOnlySet.forEach(
           resultType -> includeOnlyParams.add(
               com.senzing.gen.api.model.SzAttributeSearchResultType.valueOf(
                   resultType.toString())));
 
       long before = System.nanoTime();
-      com.senzing.gen.api.model.SzAttributeSearchResponse clientResponse
-          = this.entityDataApi.searchEntitiesByPost(attrMap,
-                                                    includeOnlyParams,
-                                                    detailLvl,
-                                                    featMode,
-                                                    withFeatureStats,
-                                                    withInternalFeatures,
-                                                    forceMinimal,
-                                                    withRelationships,
-                                                    withRaw);
+      com.senzing.gen.api.model.SzAttributeSearchResponse clientResponse = this.entityDataApi.searchEntitiesByPost(
+          attrMap,
+          includeOnlyParams,
+          detailLvl,
+          featMode,
+          withFeatureStats,
+          withInternalFeatures,
+          forceMinimal,
+          withRelationships,
+          withRaw);
       long after = System.nanoTime();
 
       SzAttributeSearchResponse response = jsonCopy(
@@ -2834,17 +2789,16 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("searchParameters")
   public void searchByParamAttrsTest(
-      Map<String, Set<String>>          criteria,
-      Set<SzAttributeSearchResultType>  includeOnlySet,
-      Integer                           expectedCount,
-      Boolean                           forceMinimal,
-      SzDetailLevel                     detailLevel,
-      SzFeatureMode                     featureMode,
-      Boolean                           withFeatureStats,
-      Boolean                           withInternalFeatures,
-      Boolean                           withRelationships,
-      Boolean                           withRaw)
-  {
+      Map<String, Set<String>> criteria,
+      Set<SzAttributeSearchResultType> includeOnlySet,
+      Integer expectedCount,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures,
+      Boolean withRelationships,
+      Boolean withRaw) {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
           + " ], includeOnly=[ " + includeOnlySet
@@ -2870,7 +2824,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
 
       sb.setCharAt(0, '?');
       if (includeOnlySet != null && includeOnlySet.size() > 0) {
-        for (SzAttributeSearchResultType resultType: includeOnlySet) {
+        for (SzAttributeSearchResultType resultType : includeOnlySet) {
           sb.append("&includeOnly=").append(resultType);
         }
       }
@@ -2906,8 +2860,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       long before = System.nanoTime();
-      SzAttributeSearchResponse response
-          = this.entityDataServices.searchEntitiesByGet(
+      SzAttributeSearchResponse response = this.entityDataServices.searchEntitiesByGet(
           null,
           attrList,
           includeOnlyParams,
@@ -2944,17 +2897,16 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("searchParameters")
   public void searchByParamAttrsViaHttpTest(
-      Map<String, Set<String>>          criteria,
-      Set<SzAttributeSearchResultType>  includeOnlySet,
-      Integer                           expectedCount,
-      Boolean                           forceMinimal,
-      SzDetailLevel                     detailLevel,
-      SzFeatureMode                     featureMode,
-      Boolean                           withFeatureStats,
-      Boolean                           withInternalFeatures,
-      Boolean                           withRelationships,
-      Boolean                           withRaw)
-  {
+      Map<String, Set<String>> criteria,
+      Set<SzAttributeSearchResultType> includeOnlySet,
+      Integer expectedCount,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures,
+      Boolean withRelationships,
+      Boolean withRaw) {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
           + " ], includeOnly=[ " + includeOnlySet
@@ -2979,7 +2931,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       // replace the "&" with a "?" at the start
       sb.setCharAt(0, '?');
       if (includeOnlySet != null && includeOnlySet.size() > 0) {
-        for (SzAttributeSearchResultType resultType: includeOnlySet) {
+        for (SzAttributeSearchResultType resultType : includeOnlySet) {
           sb.append("&includeOnly=").append(resultType);
         }
       }
@@ -3032,17 +2984,16 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("searchParameters")
   public void searchByParamAttrsViaJavaClientTest(
-      Map<String, Set<String>>          criteria,
-      Set<SzAttributeSearchResultType>  includeOnlySet,
-      Integer                           expectedCount,
-      Boolean                           forceMinimal,
-      SzDetailLevel                     detailLevel,
-      SzFeatureMode                     featureMode,
-      Boolean                           withFeatureStats,
-      Boolean                           withInternalFeatures,
-      Boolean                           withRelationships,
-      Boolean                           withRaw)
-  {
+      Map<String, Set<String>> criteria,
+      Set<SzAttributeSearchResultType> includeOnlySet,
+      Integer expectedCount,
+      Boolean forceMinimal,
+      SzDetailLevel detailLevel,
+      SzFeatureMode featureMode,
+      Boolean withFeatureStats,
+      Boolean withInternalFeatures,
+      Boolean withRelationships,
+      Boolean withRaw) {
     this.performTest(() -> {
       String testInfo = "criteria=[ " + criteria
           + " ], includeOnly=[ " + includeOnlySet
@@ -3069,7 +3020,7 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
       // replace the "&" with a "?" at the start
       sb.setCharAt(0, '?');
       if (includeOnlySet != null && includeOnlySet.size() > 0) {
-        for (SzAttributeSearchResultType resultType: includeOnlySet) {
+        for (SzAttributeSearchResultType resultType : includeOnlySet) {
           sb.append("&includeOnly=").append(resultType);
         }
       }
@@ -3108,25 +3059,24 @@ public class EntityDataReadServicesTest extends AbstractServiceTest {
             featureMode.toString());
       }
 
-      List<com.senzing.gen.api.model.SzAttributeSearchResultType>
-          includeOnlyParams = new ArrayList<>(includeOnlySet.size());
+      List<com.senzing.gen.api.model.SzAttributeSearchResultType> includeOnlyParams = new ArrayList<>(
+          includeOnlySet.size());
       includeOnlySet.forEach(
           resultType -> includeOnlyParams.add(
               com.senzing.gen.api.model.SzAttributeSearchResultType.valueOf(
                   resultType.toString())));
 
       long before = System.nanoTime();
-      com.senzing.gen.api.model.SzAttributeSearchResponse clientResponse
-          = this.entityDataApi.searchEntitiesByGet(null,
-                                                   attrList,
-                                                   includeOnlyParams,
-                                                   detailLvl,
-                                                   featMode,
-                                                   withFeatureStats,
-                                                   withInternalFeatures,
-                                                   forceMinimal,
-                                                   withRelationships,
-                                                   withRaw);
+      com.senzing.gen.api.model.SzAttributeSearchResponse clientResponse = this.entityDataApi.searchEntitiesByGet(null,
+          attrList,
+          includeOnlyParams,
+          detailLvl,
+          featMode,
+          withFeatureStats,
+          withInternalFeatures,
+          forceMinimal,
+          withRelationships,
+          withRaw);
       long after = System.nanoTime();
 
       SzAttributeSearchResponse response = jsonCopy(

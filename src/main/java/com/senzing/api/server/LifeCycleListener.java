@@ -15,21 +15,20 @@ class LifeCycleListener implements LifeCycle.Listener {
   private Server jettyServer;
   private FileMonitor fileMonitor;
 
-  public LifeCycleListener(String       serverDesription,
-                           Server       jettyServer,
-                           Integer      httpPort,
-                           Integer      httpsPort,
-                           String       basePath,
-                           InetAddress  ipAddress,
-                           FileMonitor  fileMonitor)
-  {
-    this.serverDescription  = serverDesription;
-    this.httpPort           = httpPort;
-    this.httpsPort          = httpsPort;
-    this.ipAddr             = ipAddress;
-    this.basePath           = basePath;
-    this.jettyServer        = jettyServer;
-    this.fileMonitor        = fileMonitor;
+  public LifeCycleListener(String serverDescription,
+      Server jettyServer,
+      Integer httpPort,
+      Integer httpsPort,
+      String basePath,
+      InetAddress ipAddress,
+      FileMonitor fileMonitor) {
+    this.serverDescription = serverDescription;
+    this.httpPort = httpPort;
+    this.httpsPort = httpsPort;
+    this.ipAddr = ipAddress;
+    this.basePath = basePath;
+    this.jettyServer = jettyServer;
+    this.fileMonitor = fileMonitor;
   }
 
   public void lifeCycleStarting(LifeCycle event) {
@@ -56,10 +55,10 @@ class LifeCycleListener implements LifeCycle.Listener {
     Integer port = this.httpPort;
     Integer securePort = this.httpsPort;
     if (port != null && port == 0) {
-      port = ((ServerConnector)(jettyServer.getConnectors()[0])).getLocalPort();
+      port = ((ServerConnector) (jettyServer.getConnectors()[0])).getLocalPort();
     }
     if (securePort != null && securePort == 0) {
-      securePort = ((ServerConnector)(jettyServer.getConnectors()[1])).getLocalPort();
+      securePort = ((ServerConnector) (jettyServer.getConnectors()[1])).getLocalPort();
     }
     System.out.println("Started " + this.serverDescription + " on ports:");
     if (port != null) {
@@ -72,11 +71,11 @@ class LifeCycleListener implements LifeCycle.Listener {
     System.out.println("Server running at:");
     if (port != null) {
       System.out.println(" - http://" + this.ipAddr.getHostAddress()
-                             + ":" + port + this.basePath);
+          + ":" + port + this.basePath);
     }
     if (securePort != null) {
       System.out.println(" - https://" + this.ipAddr.getHostAddress()
-                             + ":" + securePort + this.basePath);
+          + ":" + securePort + this.basePath);
     }
     System.out.println();
     if (this.fileMonitor != null) {
@@ -86,7 +85,7 @@ class LifeCycleListener implements LifeCycle.Listener {
 
   public void lifeCycleFailure(LifeCycle event, Throwable cause) {
     System.err.println("Failed to start " + this.serverDescription
-                           + " on ports:");
+        + " on ports:");
     if (this.httpPort == null) {
       if (this.httpPort == 0) {
         System.out.println("    - [rotating port] (HTTP)");

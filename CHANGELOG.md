@@ -74,7 +74,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed in 3.5.13
 
-- In `Dockerfile`, updated 
+- In `Dockerfile`, updated
   - FROM instruction to `senzing/senzingapi-runtime:3.10.3`
   - `senzing/base-image-debian:1.0.24`
 
@@ -100,7 +100,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed in 3.5.11
 
-- In `Dockerfile`, updated 
+- In `Dockerfile`, updated
   - FROM instruction to `senzing/senzingapi-runtime:3.10.1`
   - `senzing/base-image-debian:1.0.23`
 
@@ -109,9 +109,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed in 3.5.10
 
 - Updated dependencies:
-  - Updated `senzing-commons` to version `3.2.0` from version `3.1.4` 
+  - Updated `senzing-commons` to version `3.2.0` from version `3.1.4`
   - Updated Jetty dependencies to version `9.4.54.v20240208`
-    from version `9.4.53.v20231009` 
+    from version `9.4.53.v20231009`
   - Updated Jackson dependencies to version `2.16.1` from version `2.15.3`
   - Updated `junit-jupiter` to version `5.10.2` from version `5.10.1`
   - Updated `icu4j` to version `74.2` from version `74.1`
@@ -121,7 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated `org.glassfish/javax.annotation` to `jakarta.annotation-api` version `2.1.1`
   - Updated Spring dependencies to version `5.3.32` from version `5.3.30`
   - Updated `swagger-annotations` to version `2.2.20` from version `2.2.18`
-  - Updated `build-helper-manve-plugin` to version `3.5.0` from version `3.4.0`
+  - Updated `build-helper-maven-plugin` to version `3.5.0` from version `3.4.0`
   - Updated `maven-surefire-plugin` to version `3.2.5` from version `3.1.2`
   - Updated `maven-compiler-plugin` to version `3.12.1` from version `3.11.0`
   - Updated `maven-shade-plugin` to version `3.5.2` from version `3.5.1`
@@ -245,7 +245,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - In `Dockerfile`, updated FROM instruction to `senzing/senzingapi-tools:3.4.0`
 
->>>>>>> main
+> > > > > > > main
 
 ## [3.4.7] - 2023-01-04
 
@@ -355,7 +355,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `com.senzing.api.services.HowRelatedServices` class
     - Added `HowRelatedServices.getVirtualEntity()` function to provide the
       `GET /virtual-entities` operation.
-  - Added auto tests for `HowRelatedServiecs.getVirtualEntity()`
+  - Added auto tests for `HowRelatedServices.getVirtualEntity()`
   - Added `com.senzing.api.model.SzVirtualEntityResponse` interface
   - Added `com.senzing.api.model.SzVirtualEntityData` interface
   - Added `com.senzing.api.model.impl.SzVirtualEntityResponseImpl` class.
@@ -532,7 +532,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated build-info.properties so the Maven build timestamp is properly
   filtered during build and token-replaced.
 - Minor bug fix for internal CommandLineUtilities class to process default
-  values for "base" options.  This allows others to extend the Senzing API
+  values for "base" options. This allows others to extend the Senzing API
   Server code with new options but still have the default values from the
   base options be populated (required for `Senzing/senzing-poc-server`).
 
@@ -541,7 +541,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed in 2.7.2
 
 - Minor bug fix for internal CommandLineUtilities class to recognize environment
-  variables for "base" options.  This allows others to extends the Senzing API
+  variables for "base" options. This allows others to extends the Senzing API
   Server code with new options but still have the environment variables from the
   base options be recognized (required for `Senzing/senzing-poc-server`).
 
@@ -550,8 +550,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed in 2.7.1
 
 - Modified EntityDataServices.java to check for empty networks when getting
-  entities with "FULL" related entities.  This guards against a
-  `NullPointerException` in the event of data corruption.  Affected endpoints:
+  entities with "FULL" related entities. This guards against a
+  `NullPointerException` in the event of data corruption. Affected endpoints:
   - `GET /entities/{entityId}?withRelated=FULL`
   - `GET /data-sources/{dataSourceCode}/records/{recordId}/entity?withRelated=FULL`
 - Updated cached test mock data for Senzing versions 2.0.0 through 2.8.1 to
@@ -567,18 +567,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sends the "Accept-Encoding: gzip" request header is sent by the client.
 - Added `GET /` endpoint that mimics the functionality of `GET /heartbeat`
 - Added `GET /specifications/open-api` endpoint to get the Open API
-  specification as JSON data.  The optional `?asRaw=true` query parameter
+  specification as JSON data. The optional `?asRaw=true` query parameter
   promotes the Open API JSON from the `data` property of the response to the
   root of the response.
 - Updated Senzing REST API Specification version to 2.7.0.
 - Modifications to make the BulkDataServicesReadOnlyTest less sensitive to
   timing issues.
 - Refactored model classes, service classes and API server classes to allow for
-  extending and customizing the API Server.  **NOTE**: while these changes will
+  extending and customizing the API Server. **NOTE**: while these changes will
   **NOT** break backwards compatibility for REST API clients, Java projects that
   extend API Server Java classes (e.g.: customized API servers) will be
-  affected.  The semantic versioning for the API Server guarantees that minor
-  releases maintain backwards compatibility for REST API clients.  However,
+  affected. The semantic versioning for the API Server guarantees that minor
+  releases maintain backwards compatibility for REST API clients. However,
   these changes are working towards **possibly** maintaining backwards
   compatibility for extended Java code in minor releases in a future major
   release.
@@ -613,7 +613,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Modified `ServicesUtil` to provide utility method for producing 503 responses
 - Modified `BulkDataServices` to limit the number of concurrent executions of
   `POST /bulk-data/analyze` and `POST /bulk-data/load` as "prolonged" operations
-  when executed over HTTP rather than Web Sockets.  These operations produce a
+  when executed over HTTP rather than Web Sockets. These operations produce a
   "503 Service Unavailable" response if too many concurrent HTTP executions.
 - Modified `BulkDataServices` to add Web Sockets support to
   `POST /bulk-data/analyze` and `POST /bulk-data/load`
@@ -624,7 +624,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `webSocketsMessageMaxSize` property to `SzServerInfo`
 - Added HTTP concurrency and Web Sockets message size constants to
   `SzApiServerConstants`
-- Added `com.senzin.io.ChunkedEncodingInputStream` to aid in SSE auto tests.
+- Added `com.senzing.io.ChunkedEncodingInputStream` to aid in SSE auto tests.
   This class provides decoding of chunked transfer encoding.
 - Minor changes to `RecordReader` to make it more robust when auto-detecting the
   file format.
@@ -643,7 +643,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Converted command-line options to use `--command-line-option` format with
   `-commandLineOption` synonyms to maintain backwards compatibility
 - Added environment variable support to command-line options so many of the
-  options can now be specified via environment variables.  This is intended to
+  options can now be specified via environment variables. This is intended to
   primarily help with Docker deployments.
 - Added command-line option for `--url-base-path` / `-urlBasePath` (along with
   `SENZING_API_SERVER_URL_BASE_PATH` environment variable) to set the base path
@@ -669,7 +669,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed in 2.4.0
 
-- Added `includeOnly` query parameter to `GET /entities` endpoint.  NOTE: this
+- Added `includeOnly` query parameter to `GET /entities` endpoint. NOTE: this
   parameter is only recognized if the underlying native Senzing API Product is
   version 2.4.1 or later.
 - Modified `SzMeta` to include four new fields to be included in the meta
@@ -726,26 +726,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added new tests for `WhyServices.whyEntities()`
 - Pared down the number of tests ran from `WhyServicesTest` for faster runs.
 - Re-ran tests for all versions of native Senzing SDK from 2.0.0 to 2.2.5
-and recorded mock test data.
+  and recorded mock test data.
 
 ## [2.2.2] - 2020-11-05
 
 ### Changed in 2.2.2
 
 - Modified `com.senzing.api.server.G2EngineRetryHandler` so that it
-recognizes new functions in `com.senzing.g2.engine.G2Engine`.
+  recognizes new functions in `com.senzing.g2.engine.G2Engine`.
 - Re-ran tests for all versions of native Senzing SDK from 2.0.0 to 2.3.0
-and recorded mock test data.
+  and recorded mock test data.
 
 ## [2.2.1] - 2020-10-16
 
 ### Changed in 2.2.1
 
 - Modified `com.senzing.api.services.EntityDataServices` so that
-`POST /data-sources/{dataSourceCode}/records` call will be tolerant of the
-`RECORD_ID` specified in the JSON payload for the record.
+  `POST /data-sources/{dataSourceCode}/records` call will be tolerant of the
+  `RECORD_ID` specified in the JSON payload for the record.
 - Updated EntityDataWriteServicesTest to handle testing POST with various
-record ID variants.
+  record ID variants.
 - Re-ran tests for all versions of native Senzing SDK from 2.0.0 to 2.2.1
 
 ## [2.2.0] - 2020-10-15
@@ -755,19 +755,19 @@ record ID variants.
 - Added `com.senzing.api.model.SzNameScoring` to describe name scoring details
 - Added `com.senzing.api.model.SzSearchFeatureScore` for search feature scores
 - Modified `com.senzing.api.model.SzBaseRelatedEntity` to remove `fullNameScore`
-field since it has not been populated since switch to version 2.0.0 of native
-Senzing SDK.
+  field since it has not been populated since switch to version 2.0.0 of native
+  Senzing SDK.
 - Added `bestNameScore` field to `com.senzing.api.model.SzAttributeSearchResult`
-to replace `fullNameScore` in the place where the name score was previously
-used with version 1.x of the native Senzing SDK (i.e.: to sort search results
-based on the strength of the name match).
+  to replace `fullNameScore` in the place where the name score was previously
+  used with version 1.x of the native Senzing SDK (i.e.: to sort search results
+  based on the strength of the name match).
 - Modified `com.senzing.api.model.SzAttributeSearchResult` to include the
-`featureScores` field to provide feature scores without using "raw data"
+  `featureScores` field to provide feature scores without using "raw data"
 - Added `nameScoringDetails` field to `com.senzing.api.model.SzFeatureScore`
-class to provide `SzNameScoring` name scoring details on why operations,
+  class to provide `SzNameScoring` name scoring details on why operations,
 - Updated `com.senzing.api.model.SzFeatureScore` to set its `score` field to
-the most sensible score value from the `nameScoringDetails` for `"NAME"`
-features since the `FULL_SCORE` field is not available for names.
+  the most sensible score value from the `nameScoringDetails` for `"NAME"`
+  features since the `FULL_SCORE` field is not available for names.
 - Updated to latest `senzing-rest-api-specification` specification.
 - Updated version numbers to 2.2.0
 - Re-ran tests for all versions of native Senzing SDK from 2.0.0 to 2.2.1
@@ -834,6 +834,7 @@ features since the `FULL_SCORE` field is not available for names.
 - Added new model classes to support Senzing REST API 2.0
 
 - Added `withInfo` and `withRaw` query parameters to following endpoints:
+
   - `POST /data-sources/{dataSourceCode}/records`
   - `PUT /data-sources/{dataSourceCode}/records/{recordId}`
 
@@ -842,6 +843,7 @@ features since the `FULL_SCORE` field is not available for names.
 
 - Added the following endpoints to reevaluate entities or specific records
   including `withInfo` and `withRaw` query parameters:
+
   - `POST /data-sources/{dataSourceCode}/records/{recordId}/entity/reevaluate`
   - `POST /reevaluate-entities`
 
@@ -853,113 +855,123 @@ features since the `FULL_SCORE` field is not available for names.
 
 - In `com.senzing.api.model.SzResolvedEntity` the property `attributeData` was
   renamed to `characteristicData` to match the OpenAPI Specification for the
-  Senzing REST API.  **NOTE**: Client code that was written to look for
+  Senzing REST API. **NOTE**: Client code that was written to look for
   `attributeData` must be modified or will find a missing property.
 
 - Potentially Backward-Compatibility Breaking Changes by Java class and
   API Endpoint:
+
   - `com.senzing.api.services.ConfigServices`
+
     - `GET /entity-classes`
     - `GET /entity-classes/{entityClassCode}`
     - `POST /entity-types`
     - `POST /entity-classes/{entityClassCode}/entity-types`
     - `GET /entity-classes/{entityClassCode}/entity-types/{entityTypeCode}`
+
       - Removed support for any entity class other than ACTOR as it was
         discovered that the underlying product does not properly support entity
         resolution when using entity classes other than ACTOR and it may not for
         some time. This will change if and when additional entity classes are
         supported.
-        - *MIGRATION*: Ensure the value provided for all entity classes are
+        - _MIGRATION_: Ensure the value provided for all entity classes are
           changed to `ACTOR`.
 
     - `POST /entity-classes`
+
       - Removed this operation as it was discovered that the underlying product
         does not fully properly support entity resolution when using entity
-        classes other than ACTOR and it may not for some time.  This will change
+        classes other than ACTOR and it may not for some time. This will change
         if and when additional entity classes are supported.
-        - *MIGRATION*: Remove calls to create new entity classes and instead
+        - _MIGRATION_: Remove calls to create new entity classes and instead
           leverage the default entity class `ACTOR`.
 
     - `GET /config/current`
+
       - Renamed to `GET /configs/active` since “current” is ambiguous with
         regards to the “currently active config” versus the configuration
         managers currently configured “default config”.
-        - *MIGRATION*: Use the `/configs/active` path in place of
+        - _MIGRATION_: Use the `/configs/active` path in place of
           `/config/current`.
 
     - `GET /config/default`
       - Renamed to `GET /configs/template` since “default” is ambiguous with the
         configuration managers “default config” setting.
-        - *MIGRATION*: Use the `/configs/template` path in place of
+        - _MIGRATION_: Use the `/configs/template` path in place of
           `/config/default`.
 
   - `com.senzing.api.services.EntityDataServices`
+
     - `GET /data-sources/{dataSourceCode}/records/{recordId}`
+
       - The `data` property of `SzRecordResponse` was previously of type
-        `SzEntityRecord`.  However, the Open API specification for the Senzing
-         REST API had always documented it as an object with a single property
-         named `record` whose type was `SzEntityRecord` (an additional level of
-         indirection).  In order to conform with the specification and make it
-         consistent with `SzEntityResponse`, the server has been modified with
-         class `SzRecordResponse` now having a `data` property with a `record`
-         sub-property.
-        - *MIGRATION*: Change direct references to the `data` field to instead
+        `SzEntityRecord`. However, the Open API specification for the Senzing
+        REST API had always documented it as an object with a single property
+        named `record` whose type was `SzEntityRecord` (an additional level of
+        indirection). In order to conform with the specification and make it
+        consistent with `SzEntityResponse`, the server has been modified with
+        class `SzRecordResponse` now having a `data` property with a `record`
+        sub-property.
+        - _MIGRATION_: Change direct references to the `data` field to instead
           reference `data.record`.
       - The `SzEntityRecord` in the response will exclude fields that are `null`
         or empty arrays.
-        - *MIGRATION*: Depending on the client language, check if fields are
+        - _MIGRATION_: Depending on the client language, check if fields are
           missing, `null` or `undefined` before attempting to use them.
 
     - `GET /entities/{entityId}`
     - `GET /data-sources/{dataSourceCode}/records/{recordId}/entity`
+
       - The `withRelated` parameter is no longer a `boolean` value that accepts
-        `true` or `false`.  It now accepts an enumerated value of
-         type `com.senzing.api.model.SzRelationshipMode` with values of `NONE`,
+        `true` or `false`. It now accepts an enumerated value of
+        type `com.senzing.api.model.SzRelationshipMode` with values of `NONE`,
         `PARTIAL` or `FULL`.
-        - *MIGRATION*: Use `?withRelated=FULL` in place of `?withRelated=true`
+        - _MIGRATION_: Use `?withRelated=FULL` in place of `?withRelated=true`
           and use `?withRelated=PARTIAL` in place of `?withRelated=false`.
       - The `SzResolvedEntity` and the contained `SzEntityRecord` instances in
         the response will exclude fields that are `null` or empty arrays.
-        - *MIGRATION*: Depending on the client language, check if fields are
+        - _MIGRATION_: Depending on the client language, check if fields are
           missing, `null` or `undefined` before attempting to use them.
 
     - `GET /entities`
+
       - Removed the `attr_[PROPERTY_NAME]` parameters and replaced with the
         multi-valued `attr` parameter so that this parameter could better be
         documented in the Open API Spec and examples provided via Swagger
         Editor.
-        - *MIGRATION*: Use `?attr=NAME_FIRST:Joe` in place of
+        - _MIGRATION_: Use `?attr=NAME_FIRST:Joe` in place of
           `?attr_NAME_FIRST=Joe` or use the `attrs` parameter with a JSON value.
       - The `SzAttributeSearchResult` instances and contained `SzRelatedEntity`
         and `SzEntityRecord` instances in the response will exclude fields that
         are `null` or empty arrays.
-        - *MIGRATION*: Depending on the client language, check if fields are
+        - _MIGRATION_: Depending on the client language, check if fields are
           missing, `null` or `undefined` before attempting to use them.
       - The `withRelationships` query parameter now defaults to `false` instead
         of `true`.
-        - *MIGRATION*: Use `?withRelationships=true` if relationships are
+        - _MIGRATION_: Use `?withRelationships=true` if relationships are
           desired.
 
     - `POST /data-sources/{dataSourceCode}/records/`
     - `PUT /data-sources/{dataSourceCode}/records/{recordId}`
       - Modified to default `ENTITY_TYPE` to `GENERIC` if `ENTITY_TYPE` not
         found in record.
-        - *MIGRATION*: Specify an entity type if `GENERIC` is not desired.
+        - _MIGRATION_: Specify an entity type if `GENERIC` is not desired.
 
   - `com.senzing.api.services.EntityGraphServices`
+
     - `GET /entity-networks`
       - Changed the default value for `maxDegrees` parameter from 5 to 3
-        - *MIGRATION*: Use `?maxDegrees=5` if the old default is desired.
+        - _MIGRATION_: Use `?maxDegrees=5` if the old default is desired.
       - The `SzResolvedEntity` instances and the contained `SzEntityRecord`
         instances in the response will exclude fields that are `null` or empty
         arrays.
-        - *MIGRATION*: Depending on the client language, check if fields are
+        - _MIGRATION_: Depending on the client language, check if fields are
           missing, `null` or `undefined` before attempting to use them.
     - `GET /entity-paths`
       - The `SzResolvedEntity` instances and the contained `SzEntityRecord`
         instances in the response will exclude fields that are `null` or empty
         arrays.
-        - *MIGRATION*: Depending on the client language, check if fields are
+        - _MIGRATION_: Depending on the client language, check if fields are
           missing, `null` or `undefined` before attempting to use them.
 
   - `com.senzing.api.services.BulkDataServices`
@@ -968,23 +980,27 @@ features since the `FULL_SCORE` field is not available for names.
         multi-valued `mapDataSource` parameter so that this parameter
         could better be documented in Open API Spec and examples provided via
         Swagger Editor.
-        - *MIGRATION*: Use `?mapDataSource=FOO:BAR` in place of
+        - _MIGRATION_: Use `?mapDataSource=FOO:BAR` in place of
           `?dataSource_FOO=BAR` or use the new `mapDataSources` parameter
-           instead.
+          instead.
       - Replaced the `entityType_[ENTITY_TYPE_CODE]` parameters with the
         multi-valued `mapEntityType` parameter so that this parameter could
         better be documented in Open API Spec and examples provided via
         Swagger Editor.
-        - *MIGRATION*: Use `?mapEntityType=FOO:BAR` in place of
+        - _MIGRATION_: Use `?mapEntityType=FOO:BAR` in place of
           `?entityType_FOO=BAR` or use the new `mapEntityTypes` parameter instead.
 
 - Other Changes by Java class and API Endpoint:
+
   - `com.senzing.api.services.AdminServices`
+
     - `GET /license`
+
       - Added the previously undocumented (but always-supported) the “withRaw”
         parameter.
 
     - `GET /version`
+
       - Added the previously undocumented (but always-supported) the “withRaw”
         parameter.
 
@@ -997,7 +1013,7 @@ features since the `FULL_SCORE` field is not available for names.
         types.
 
 - Removed pre-recorded mock data from integration tests for versions prior to
-  2.0.0 and added pre-recorded mock data for integratioon tests for v2.0.0.
+  2.0.0 and added pre-recorded mock data for integration tests for v2.0.0.
 
 ## [1.8.6] - 2020-10-06
 
@@ -1024,7 +1040,7 @@ features since the `FULL_SCORE` field is not available for names.
 
 ### Fixed in 1.8.3
 
-- .dockterignore was causing the `-dirty` suffix to be added to docker build versions.
+- .dockerignore was causing the `-dirty` suffix to be added to docker build versions.
 
 ## [1.8.2] - 2020-04-15
 
@@ -1100,20 +1116,20 @@ features since the `FULL_SCORE` field is not available for names.
 ### Changes in 1.7.7
 
 - Fixed auto tests to skip instead of fail if Senzing native libraries are not
-available.
+  available.
 - Fixed output when command line options do not provide initialization
-parameters
+  parameters
 
 ## [1.7.6] - 2019-09-25
 
 ### Changes in 1.7.6
 
 - Updated dependency on FasterBind's Jackson library to version 2.9.10 to
-address security vulnerabilities.
+  address security vulnerabilities.
 - Added missing G2ConfigMgr.destroy() call in SzApiServer during shutdown
 - Updated repository manager code used for JUnit tests to check for errors
-when initializing the configuration manager and when creating the standard
-configuration.
+  when initializing the configuration manager and when creating the standard
+  configuration.
 - Changes to Unit Tests:
   - Updated unit tests to preserve repos if any tests associated with that
     repo failed.
@@ -1129,11 +1145,11 @@ configuration.
 
 ### Changes in 1.7.5
 
-- Corrected errant definition of SzVersionInfo's `configCompatabilityVersion`
-field as an integer to make it a string to allow for semantic versioning.  This
-changes the response to the `GET /version` endpoint.
-*NOTE*: This change may require that previously generated client stubs be
-regenerated to avoid trying to parse the semantic version string as an integer.
+- Corrected errant definition of SzVersionInfo's `configCompatibilityVersion`
+  field as an integer to make it a string to allow for semantic versioning. This
+  changes the response to the `GET /version` endpoint.
+  _NOTE_: This change may require that previously generated client stubs be
+  regenerated to avoid trying to parse the semantic version string as an integer.
 
 ## [1.7.4] - 2019-09-13
 
@@ -1147,8 +1163,8 @@ regenerated to avoid trying to parse the semantic version string as an integer.
 ### Changes in 1.7.3
 
 - Fixed bug where the initialization of the configuration manager
-(`G2ConfigMgr.initV2()`) was not checked for success or failure.  Now the
-API server ensures that initialization succeeded before proceeding further.
+  (`G2ConfigMgr.initV2()`) was not checked for success or failure. Now the
+  API server ensures that initialization succeeded before proceeding further.
 - Removed warnings that could occur if building with version 1.11.x of g2.jar
 
 ## [1.7.2] - 2019-08-19
@@ -1156,18 +1172,18 @@ API server ensures that initialization succeeded before proceeding further.
 ### Added in 1.7.2
 
 - Added `--configmgr` option to handle managing configurations when initializing
-with JSON and leveraging the configuration from the database.  This includes the
-ability to migrate an INI file to JSON and conditionally upload the referenced
-configuration file to the database and make it the default (see: `--migrateIni`)
+  with JSON and leveraging the configuration from the database. This includes the
+  ability to migrate an INI file to JSON and conditionally upload the referenced
+  configuration file to the database and make it the default (see: `--migrateIni`)
 - Added the ability to auto reinitialize the configuration with the latest
-default configuration for the repository if the default configuration changes
-while the API server is running.  This is monitored for changes every 10 seconds
-and will be checked on demand if specific G2Engine functions fail.
+  default configuration for the repository if the default configuration changes
+  while the API server is running. This is monitored for changes every 10 seconds
+  and will be checked on demand if specific G2Engine functions fail.
 - Added the `-configId` option to lock the API server to a specific
-configuration.  When this option is used then the auto reinitialization does not
-occur since the chosen configuration is likely not be the default configuration.
+  configuration. When this option is used then the auto reinitialization does not
+  occur since the chosen configuration is likely not be the default configuration.
 - Added `-readOnly` command-line option to cause the `PUT` and `POST` endpoints
-for loading records to always return an `HTTP 403 Forbidden` response.
+  for loading records to always return an `HTTP 403 Forbidden` response.
 - Now a non-root, immutable container.
 - RPM based installation.
 
@@ -1175,29 +1191,29 @@ for loading records to always return an `HTTP 403 Forbidden` response.
 
 - senzing/senzing-api-server:1.7.2 pinned to senzing/senzing-base:1.2.1
 - Modified `SzResolvedEntity` so the `relationshipData` is populated from the
-features and added auto tests to verify.  Note: this will not be provided if
-`featureMode` is set to `NONE`.
+  features and added auto tests to verify. Note: this will not be provided if
+  `featureMode` is set to `NONE`.
 - Modified `SzResolvedEntity` so the `otherData` is populated from the records
-and added auto tests to verify.  Note: this will not be populated if
-`forceMinimal` is true since no records will be retrieved.
+  and added auto tests to verify. Note: this will not be populated if
+  `forceMinimal` is true since no records will be retrieved.
 - Internally upgraded the processing of command line arguments to reuse the same
-functions for the ConfigurationManager and SzApiServer classes as well as the
-intenral RepositoryManager class (used in auto tests).
+  functions for the ConfigurationManager and SzApiServer classes as well as the
+  internal RepositoryManager class (used in auto tests).
 - Fixed Junit auto tests with windows (EntityGraphServicesTest) -- worked around
-libpostal bug in native Senzing API (Windows version).
+  libpostal bug in native Senzing API (Windows version).
 
 ### Deprecated in 1.7.2
 
 - Deprecated `-iniFile` option in favor of newly added `-initFile`,
-`-initEnvVar` and `-initJson` options to initialize with JSON instead of an INI
-file.
+  `-initEnvVar` and `-initJson` options to initialize with JSON instead of an INI
+  file.
 
 ## [1.7.1] - 2019-08-07
 
 ### Changed in 1.7.1
 
 - Modified Makefile to disable Junit tests during Docker build until failures
-specific to the Docker build can be diagnosed.
+  specific to the Docker build can be diagnosed.
 
 ### Security in 1.7.1
 
@@ -1209,23 +1225,22 @@ specific to the Docker build can be diagnosed.
 
 - Added `GET /version` endpoint to get detailed version information
 - Added `GET /config/current` to get the raw configuration JSON that is
-currently being used by the API Server
+  currently being used by the API Server
 - Added `GET /config/default` to get a default bootstrap configuration JSON
-file that can be used to compare versus the current configuration.  NOTE: this
-is NOT the same as the "default configuration" in the G2ConfigMgr API, but
-rather represents a brand new out-of-the-box configuration.
+  file that can be used to compare versus the current configuration. NOTE: this
+  is NOT the same as the "default configuration" in the G2ConfigMgr API, but
+  rather represents a brand new out-of-the-box configuration.
 - Added Junit Jupiter auto tests to verify all functionality and fixed entity
-path "including source" functions which were broken (as exposed by tests).
+  path "including source" functions which were broken (as exposed by tests).
 - Now requires g2.jar version 1.10.x or higher
 
 ## [1.6.1] - 2019-06-10
 
 ### Added in 1.6.1
 
-- Merge pull request #52 from Senzing/issue-51.caceres.record-resolutio…
-- …n-fields
+- Merge pull request #52 from Senzing/issue-51.caceres.record-resolution-fields
 - Added SzMatchedRecord which extends SzEntityRecord to resolve issue 51
 - Added `SzMatchedRecord`, extending `SzEntityRecord`, to add match score
-information to matched records in an `SzResolvedEntity`.  Modified
-`SzResolvedEntity` to use `SzMatchedRecord` instead of `SzEntityRecord` for its
-record list.
+  information to matched records in an `SzResolvedEntity`. Modified
+  `SzResolvedEntity` to use `SzMatchedRecord` instead of `SzEntityRecord` for its
+  record list.

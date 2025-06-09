@@ -47,19 +47,19 @@ import static com.senzing.io.RecordReader.Format.*;
 @TestInstance(Lifecycle.PER_CLASS)
 @Execution(ExecutionMode.SAME_THREAD)
 public class BulkDataServicesTest extends AbstractServiceTest {
-  protected static final String CUSTOMER_DATA_SOURCE      = "CUSTOMER";
-  protected static final String SUBSCRIBER_DATA_SOURCE    = "SUBSCRIBER";
-  protected static final String EMPLOYEE_DATA_SOURCE      = "EMPLOYEE";
-  protected static final String VENDOR_DATA_SOURCE        = "VENDOR";
-  protected static final String PARTNER_DATA_SOURCE       = "PARTNER";
-  protected static final String STORE_DATA_SOURCE         = "STORE";
-  protected static final String CUSTOMERS_DATA_SOURCE     = "CUSTOMERS";
-  protected static final String SUBSCRIBERS_DATA_SOURCE   = "SUBSCRIBERS";
-  protected static final String EMPLOYEES_DATA_SOURCE     = "EMPLOYEES";
-  protected static final String VENDORS_DATA_SOURCE       = "VENDORS";
-  protected static final String PARTNERS_DATA_SOURCE      = "PARTNERS";
-  protected static final String STORES_DATA_SOURCE        = "STORES";
-  protected static final String CONTACTS_DATA_SOURCE      = "CONTACTS";
+  protected static final String CUSTOMER_DATA_SOURCE = "CUSTOMER";
+  protected static final String SUBSCRIBER_DATA_SOURCE = "SUBSCRIBER";
+  protected static final String EMPLOYEE_DATA_SOURCE = "EMPLOYEE";
+  protected static final String VENDOR_DATA_SOURCE = "VENDOR";
+  protected static final String PARTNER_DATA_SOURCE = "PARTNER";
+  protected static final String STORE_DATA_SOURCE = "STORE";
+  protected static final String CUSTOMERS_DATA_SOURCE = "CUSTOMERS";
+  protected static final String SUBSCRIBERS_DATA_SOURCE = "SUBSCRIBERS";
+  protected static final String EMPLOYEES_DATA_SOURCE = "EMPLOYEES";
+  protected static final String VENDORS_DATA_SOURCE = "VENDORS";
+  protected static final String PARTNERS_DATA_SOURCE = "PARTNERS";
+  protected static final String STORES_DATA_SOURCE = "STORES";
+  protected static final String CONTACTS_DATA_SOURCE = "CONTACTS";
 
   protected static final Map<String, String> DATA_SOURCE_MAP;
 
@@ -69,6 +69,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
   private enum FlagValue {
     YES, NO, MIXED;
+
     public boolean toBoolean(int iteration) {
       switch (this) {
         case YES:
@@ -82,6 +83,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
               "Unhandled FlagValue: " + this);
       }
     }
+
     public FlagValue next() {
       switch (this) {
         case YES:
@@ -131,12 +133,13 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   protected DataGenerator dataGenerator;
   protected Random prng;
 
-  @BeforeAll public void initializeEnvironment() {
+  @BeforeAll
+  public void initializeEnvironment() {
     this.beginTests();
     this.initializeTestEnvironment();
     this.bulkDataServices = new BulkDataServices();
-    this.dataGenerator    = new DataGenerator(SEED);
-    this.prng             = new Random(SEED);
+    this.dataGenerator = new DataGenerator(SEED);
+    this.prng = new Random(SEED);
   }
 
   /**
@@ -147,11 +150,12 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     dataSourceSet.add(CONTACTS_DATA_SOURCE);
 
     RepositoryManager.configSources(this.getRepositoryDirectory(),
-                                    dataSourceSet,
-                                    true);
+        dataSourceSet,
+        true);
   }
 
-  @AfterAll public void teardownEnvironment() {
+  @AfterAll
+  public void teardownEnvironment() {
     try {
       this.teardownTestEnvironment();
       this.conditionallyLogCounts(true);
@@ -162,24 +166,25 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
   /**
    * Override to return 8 threads.
+   * 
    * @return The number of server threads (8).
    */
   protected int getServerConcurrency() {
     return 8;
   }
 
-  private Map<FeatureType, Set<UsageType>> featureGenMap(RecordType recordType)
-  {
+  private Map<FeatureType, Set<UsageType>> featureGenMap(RecordType recordType) {
     Map<FeatureType, Set<UsageType>> map = new LinkedHashMap<>();
 
     // determine the default feature counts
-    int maxNames       = prng.nextInt(2) + 1;
-    int maxAddresses   = prng.nextInt(3) + 1;
-    int maxPhones      = prng.nextInt(3) + 1;
-    int maxEmails      = prng.nextInt(3) + 1;
+    int maxNames = prng.nextInt(2) + 1;
+    int maxAddresses = prng.nextInt(3) + 1;
+    int maxPhones = prng.nextInt(3) + 1;
+    int maxEmails = prng.nextInt(3) + 1;
 
     map.put(NAME, UsageType.usageTypesFor(NAME, recordType, maxNames, true));
-    if (recordType == PERSON) map.put(BIRTH_DATE, null);
+    if (recordType == PERSON)
+      map.put(BIRTH_DATE, null);
     map.put(ADDRESS, usageTypesFor(ADDRESS, recordType, maxAddresses, true));
     map.put(PHONE, usageTypesFor(PHONE, recordType, maxPhones, true));
     map.put(EMAIL, usageTypesFor(EMAIL, recordType, maxEmails, true));
@@ -203,13 +208,13 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
     boolean evenOdd = true;
     for (Arguments args : analyzeParams) {
-      Object[]            argArray  = args.get();
-      String              testInfo  = (String) argArray[0];
-      MediaType           mediaType = (MediaType) argArray[1];
-      File                dataFile  = (File) argArray[2];
-      SzBulkDataAnalysis  analysis  = (SzBulkDataAnalysis) argArray[3];
+      Object[] argArray = args.get();
+      String testInfo = (String) argArray[0];
+      MediaType mediaType = (MediaType) argArray[1];
+      File dataFile = (File) argArray[2];
+      SzBulkDataAnalysis analysis = (SzBulkDataAnalysis) argArray[3];
 
-      Set<String> dataSources     = new LinkedHashSet<>();
+      Set<String> dataSources = new LinkedHashSet<>();
 
       analysis.getAnalysisByDataSource().forEach(abds -> {
         dataSources.add(abds.getDataSource());
@@ -217,7 +222,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       Map<String, String> dataSourceMap = new LinkedHashMap<>();
 
-      for (String dataSource: dataSources) {
+      for (String dataSource : dataSources) {
         if (dataSource != null) {
           dataSourceMap.put(dataSource, DATA_SOURCE_MAP.get(dataSource));
         }
@@ -250,24 +255,24 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   private List<Arguments> getAnalyzeBulkRecordsParameters() {
     Set<String> dataSources = DATA_SOURCE_MAP.keySet();
 
-    String UTF8_SUFFIX          = "; charset=UTF-8";
-    String CSV_SPEC             = "text/csv";
-    String CSV_UTF8_SPEC        = CSV_SPEC + UTF8_SUFFIX;
-    String JSON_SPEC            = "application/json";
-    String JSON_UTF8_SPEC       = JSON_SPEC + UTF8_SUFFIX;
-    String JSON_LINES_SPEC      = "application/x-jsonlines";
+    String UTF8_SUFFIX = "; charset=UTF-8";
+    String CSV_SPEC = "text/csv";
+    String CSV_UTF8_SPEC = CSV_SPEC + UTF8_SUFFIX;
+    String JSON_SPEC = "application/json";
+    String JSON_UTF8_SPEC = JSON_SPEC + UTF8_SUFFIX;
+    String JSON_LINES_SPEC = "application/x-jsonlines";
     String JSON_LINES_UTF8_SPEC = JSON_LINES_SPEC + UTF8_SUFFIX;
-    String TEXT_SPEC            = "text/plain";
-    String TEXT_UTF8_SPEC       = TEXT_SPEC + UTF8_SUFFIX;
+    String TEXT_SPEC = "text/plain";
+    String TEXT_UTF8_SPEC = TEXT_SPEC + UTF8_SUFFIX;
 
-    MediaType CSV             = MediaType.valueOf(CSV_SPEC);
-    MediaType CSV_UTF8        = MediaType.valueOf(CSV_UTF8_SPEC);
-    MediaType JSON            = MediaType.valueOf(JSON_SPEC);
-    MediaType JSON_UTF8       = MediaType.valueOf(JSON_UTF8_SPEC);
-    MediaType JSON_LINES      = MediaType.valueOf(JSON_LINES_SPEC);
+    MediaType CSV = MediaType.valueOf(CSV_SPEC);
+    MediaType CSV_UTF8 = MediaType.valueOf(CSV_UTF8_SPEC);
+    MediaType JSON = MediaType.valueOf(JSON_SPEC);
+    MediaType JSON_UTF8 = MediaType.valueOf(JSON_UTF8_SPEC);
+    MediaType JSON_LINES = MediaType.valueOf(JSON_LINES_SPEC);
     MediaType JSON_LINES_UTF8 = MediaType.valueOf(JSON_LINES_UTF8_SPEC);
-    MediaType TEXT            = MediaType.valueOf(TEXT_SPEC);
-    MediaType TEXT_UTF8       = MediaType.valueOf(TEXT_UTF8_SPEC);
+    MediaType TEXT = MediaType.valueOf(TEXT_SPEC);
+    MediaType TEXT_UTF8 = MediaType.valueOf(TEXT_UTF8_SPEC);
 
     Map<MediaType, List<Arguments>> bulkDataMap = new LinkedHashMap<>();
 
@@ -286,25 +291,22 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     boolean[] booleans = { true, false };
 
     // setup the feature-gen maps by record type
-    Map<RecordType, Map<FeatureType, Set<UsageType>>> featureGenMaps
-        = new LinkedHashMap<>();
+    Map<RecordType, Map<FeatureType, Set<UsageType>>> featureGenMaps = new LinkedHashMap<>();
 
     // aggregate all features into a single map for CSV record handler
-    for (RecordType recordType: RecordType.values()) {
+    for (RecordType recordType : RecordType.values()) {
       Map<FeatureType, Set<UsageType>> map = featureGenMap(recordType);
       featureGenMaps.put(recordType, map);
     }
 
     int dataFileIndex = 0;
 
-    FlagValue withRecordIds   = FlagValue.MIXED;
-    boolean   fullValues      = false;
-    boolean   flatten         = false;
+    FlagValue withRecordIds = FlagValue.MIXED;
+    boolean fullValues = false;
+    boolean flatten = false;
 
     // iterate over the data sources
-    for (int dataSourceCount = 1; dataSourceCount < dataSources.size();
-         dataSourceCount+=2)
-    {
+    for (int dataSourceCount = 1; dataSourceCount < dataSources.size(); dataSourceCount += 2) {
       // get the data source list
       List<String> dataSourceList = new ArrayList<>(dataSources);
       int start = (dataSourceCount > 3) ? 2 : 0;
@@ -312,26 +314,28 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       // find the set of record types
       Set<RecordType> recordTypes = new LinkedHashSet<>();
-      for (String dataSource: dataSourceList) {
+      for (String dataSource : dataSourceList) {
         RecordType recordType = SOURCE_RECORD_TYPE_MAP.get(dataSource);
         recordTypes.add(recordType);
       }
 
       // create the aggregate feature gen map
       Map<FeatureType, Set<UsageType>> allFeatureGenMap = new LinkedHashMap<>();
-      for (RecordType recordType: recordTypes) {
-        Map<FeatureType,Set<UsageType>> map = featureGenMaps.get(recordType);
+      for (RecordType recordType : recordTypes) {
+        Map<FeatureType, Set<UsageType>> map = featureGenMaps.get(recordType);
         map.entrySet().forEach(entry -> {
-          FeatureType     featureType = entry.getKey();
-          Set<UsageType>  usageTypes  = entry.getValue();
-          Set<UsageType>  set         = allFeatureGenMap.get(featureType);
+          FeatureType featureType = entry.getKey();
+          Set<UsageType> usageTypes = entry.getValue();
+          Set<UsageType> set = allFeatureGenMap.get(featureType);
 
           if (set == null) {
             set = new LinkedHashSet<>();
             allFeatureGenMap.put(featureType, set);
           }
-          if (usageTypes != null) set.addAll(usageTypes);
-          else set.add(null);
+          if (usageTypes != null)
+            set.addAll(usageTypes);
+          else
+            set.add(null);
         });
       }
 
@@ -339,9 +343,9 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       Map<FeatureType, FeatureDensity> featureDensityMap = featureDensityMap();
 
       // set the boolean/flag values
-      withRecordIds   = withRecordIds.next();
-      fullValues      = !fullValues;
-      flatten         = !flatten;
+      withRecordIds = withRecordIds.next();
+      fullValues = !fullValues;
+      flatten = !flatten;
 
       String testInfo = "dataSources=[ " + dataSourceList
           + " ], withRecordIds=[ " + withRecordIds
@@ -352,15 +356,15 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       dataDir.mkdirs();
 
       RecordHandler recordHandler = null;
-      File          csvFile       = null;
-      File          jsonFile      = null;
-      File          jsonLinesFile = null;
+      File csvFile = null;
+      File jsonFile = null;
+      File jsonLinesFile = null;
 
       Map<String, File> dataFileMap = new LinkedHashMap<>();
 
-      SzBulkDataAnalysis csvAnalysis    = SzBulkDataAnalysis.FACTORY.create();
-      SzBulkDataAnalysis jsonAnalysis   = SzBulkDataAnalysis.FACTORY.create();
-      SzBulkDataAnalysis jsonlAnalysis  = SzBulkDataAnalysis.FACTORY.create();
+      SzBulkDataAnalysis csvAnalysis = SzBulkDataAnalysis.FACTORY.create();
+      SzBulkDataAnalysis jsonAnalysis = SzBulkDataAnalysis.FACTORY.create();
+      SzBulkDataAnalysis jsonlAnalysis = SzBulkDataAnalysis.FACTORY.create();
 
       SzBulkDataAnalysis[] analyses = {
           csvAnalysis, jsonAnalysis, jsonlAnalysis
@@ -374,8 +378,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       try {
         dataFileIndex++;
-        String prefix = "data-" + ((dataFileIndex<1000)?"0":"")
-            + ((dataFileIndex<100)?"0":"") + ((dataFileIndex<10)?"0":"")
+        String prefix = "data-" + ((dataFileIndex < 1000) ? "0" : "")
+            + ((dataFileIndex < 100) ? "0" : "") + ((dataFileIndex < 10) ? "0" : "")
             + dataFileIndex + "-";
         csvFile = File.createTempFile(prefix, ".csv", dataDir);
         jsonFile = new File(
@@ -406,52 +410,49 @@ public class BulkDataServicesTest extends AbstractServiceTest {
             allFeatureGenMap,
             recordTypes,
             fullValues);
-        JsonArrayRecordHandler jsonHandler
-            = new JsonArrayRecordHandler(jsonWriter);
-        JsonLinesRecordHandler jsonLinesHandler
-            = new JsonLinesRecordHandler(jsonLinesWriter);
+        JsonArrayRecordHandler jsonHandler = new JsonArrayRecordHandler(jsonWriter);
+        JsonLinesRecordHandler jsonLinesHandler = new JsonLinesRecordHandler(jsonLinesWriter);
 
         recordHandler = new CompoundRecordHandler(csvHandler,
-                                                  jsonHandler,
-                                                  jsonLinesHandler);
+            jsonHandler,
+            jsonLinesHandler);
 
         int iteration = 0;
-        for (String dataSource: dataSourceList) {
+        for (String dataSource : dataSourceList) {
           RecordType recordType = SOURCE_RECORD_TYPE_MAP.get(dataSource);
 
           int recordCount = (dataSourceList.size() == 1) ? 500
               : Math.max(500, ((iteration + 1) * 2000) % 2500);
 
-          Map<FeatureType, Set<UsageType>> featureGenMap
-              = featureGenMaps.get(recordType);
+          Map<FeatureType, Set<UsageType>> featureGenMap = featureGenMaps.get(recordType);
 
           boolean includeRecordIds = withRecordIds.toBoolean(iteration);
 
           this.dataGenerator.generateRecords(recordHandler,
-                                             recordType,
-                                             recordCount,
-                                             includeRecordIds,
-                                             dataSource,
-                                             featureGenMap,
-                                             featureDensityMap,
-                                             fullValues,
-                                             flatten);
+              recordType,
+              recordCount,
+              includeRecordIds,
+              dataSource,
+              featureGenMap,
+              featureDensityMap,
+              fullValues,
+              flatten);
 
           for (SzBulkDataAnalysis analysis : analyses) {
             analysis.trackRecords(recordCount,
-                                  dataSource,
-                                  includeRecordIds);
+                dataSource,
+                includeRecordIds);
           }
         }
       } catch (IOException e) {
         e.printStackTrace();
         throw new RuntimeException(e);
       } finally {
-        if (recordHandler != null) recordHandler.close();
+        if (recordHandler != null)
+          recordHandler.close();
       }
 
-      Map<String, SzBulkDataAnalysis> analysisMap
-          = new LinkedHashMap<>();
+      Map<String, SzBulkDataAnalysis> analysisMap = new LinkedHashMap<>();
       for (SzBulkDataAnalysis analysis : analyses) {
         analysis.setStatus(SzBulkDataStatus.COMPLETED);
         analysisMap.put(analysis.getMediaType(), analysis);
@@ -478,8 +479,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
               fullTestInfo,
               mediaType,
               dataFile,
-              analysis
-          ));
+              analysis));
         }
       });
     }
@@ -488,7 +488,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     bulkDataMap.values().forEach(argsList -> {
       if (argsList != null) {
         Arguments args = (firstLast[0])
-            ? argsList.get(0) : argsList.get(argsList.size() - 1);
+            ? argsList.get(0)
+            : argsList.get(argsList.size() - 1);
         result.add(args);
         firstLast[0] = !firstLast[0];
       }
@@ -499,17 +500,16 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   @Test
   public void analyzeBulkRecordsWithSpaces() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("bulk-data/analyze");
+      String uriText = this.formatServerUri("bulk-data/analyze");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      String    testInfo      = "Test CSV with suppressed spaces";
-      File      bulkDataFile  = null;
-      String    CSV_SPEC      = "text/csv";
-      MediaType mediaType     = MediaType.valueOf(CSV_SPEC);
+      String testInfo = "Test CSV with suppressed spaces";
+      File bulkDataFile = null;
+      String CSV_SPEC = "text/csv";
+      MediaType mediaType = MediaType.valueOf(CSV_SPEC);
 
       SzBulkDataAnalysis expected = SzBulkDataAnalysis.FACTORY.create();
-      SzDataSourceRecordAnalysis sourceAnalysis
-          = SzDataSourceRecordAnalysis.FACTORY.create(CUSTOMER_DATA_SOURCE);
+      SzDataSourceRecordAnalysis sourceAnalysis = SzDataSourceRecordAnalysis.FACTORY.create(CUSTOMER_DATA_SOURCE);
       sourceAnalysis.setRecordCount(3);
       sourceAnalysis.setRecordsWithRecordIdCount(3);
 
@@ -523,17 +523,16 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       try {
         bulkDataFile = File.createTempFile("bulk-data-", ".csv");
 
-        try (FileOutputStream   fos = new FileOutputStream(bulkDataFile);
-             OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
-             PrintWriter        pw  = new PrintWriter(new BufferedWriter(osw)))
-        {
+        try (FileOutputStream fos = new FileOutputStream(bulkDataFile);
+            OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
+            PrintWriter pw = new PrintWriter(new BufferedWriter(osw))) {
           pw.println("RECORD_ID,DATA_SOURCE,NAME_FULL,PHONE_NUMBER");
           pw.println("ABC123,\"" + CUSTOMER_DATA_SOURCE
-                         + "\"  ,\"JOE SCHMOE\"  ,702-555-1212");
+              + "\"  ,\"JOE SCHMOE\"  ,702-555-1212");
           pw.println("DEF456,   \"" + CUSTOMER_DATA_SOURCE
-                         + "\",  \"JOHN DOE\",702-555-1313");
+              + "\",  \"JOHN DOE\",702-555-1313");
           pw.println("GHI789,   \"" + CUSTOMER_DATA_SOURCE
-                         + "\"  ,  \"JANE SMITH\"  ,702-555-1313");
+              + "\"  ,  \"JANE SMITH\"  ,702-555-1313");
           pw.flush();
         }
 
@@ -543,26 +542,26 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
         long before = System.nanoTime();
-        SzBulkDataAnalysisResponse response
-            = this.bulkDataServices.analyzeBulkRecordsViaForm(
+        SzBulkDataAnalysisResponse response = this.bulkDataServices.analyzeBulkRecordsViaForm(
             mediaType, fis, uriInfo);
         response.concludeTimers();
         long after = System.nanoTime();
 
         System.err.println(response.getData().getAnalysisByDataSource());
         validateAnalyzeResponse(null,
-                                response,
-                                POST,
-                                uriText,
-                                mediaType,
-                                bulkDataFile,
-                                expected,
-                                after - before);
+            response,
+            POST,
+            uriText,
+            mediaType,
+            bulkDataFile,
+            expected,
+            after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
@@ -571,29 +570,28 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   @Test
   public void testCSVWithBadMediaType() {
     this.performTest(() -> {
-      String  uriText1 = this.formatServerUri("bulk-data/analyze");
+      String uriText1 = this.formatServerUri("bulk-data/analyze");
       UriInfo uriInfo1 = this.newProxyUriInfo(uriText1);
 
-      String  uriText2 = this.formatServerUri("bulk-data/load");
+      String uriText2 = this.formatServerUri("bulk-data/load");
       UriInfo uriInfo2 = this.newProxyUriInfo(uriText2);
 
-      String    testInfo      = "Test CSV analyze with bad media type";
-      File      bulkDataFile  = null;
+      String testInfo = "Test CSV analyze with bad media type";
+      File bulkDataFile = null;
 
       try {
         bulkDataFile = File.createTempFile("bulk-data-", ".csv");
 
-        try (FileOutputStream   fos = new FileOutputStream(bulkDataFile);
-             OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
-             PrintWriter        pw  = new PrintWriter(new BufferedWriter(osw)))
-        {
+        try (FileOutputStream fos = new FileOutputStream(bulkDataFile);
+            OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
+            PrintWriter pw = new PrintWriter(new BufferedWriter(osw))) {
           pw.println("RECORD_ID,DATA_SOURCE,NAME_FULL,PHONE_NUMBER");
           pw.println("ABC123,\"" + CUSTOMER_DATA_SOURCE
-                         + "\"  ,\"JOE SCHMOE\"  ,702-555-1212");
+              + "\"  ,\"JOE SCHMOE\"  ,702-555-1212");
           pw.println("DEF456,   \"" + CUSTOMER_DATA_SOURCE
-                         + "\",  \"JOHN DOE\",702-555-1313");
+              + "\",  \"JOHN DOE\",702-555-1313");
           pw.println("GHI789,   \"" + CUSTOMER_DATA_SOURCE
-                         + "\"  ,  \"JANE SMITH\"  ,702-555-1313");
+              + "\"  ,  \"JANE SMITH\"  ,702-555-1313");
           pw.flush();
         }
 
@@ -607,15 +605,14 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       for (MediaType badMediaType : badMediaTypes) {
         try (FileInputStream fis1 = new FileInputStream(bulkDataFile);
-             FileInputStream fis2 = new FileInputStream(bulkDataFile))
-        {
+            FileInputStream fis2 = new FileInputStream(bulkDataFile)) {
           try {
             this.bulkDataServices.analyzeBulkRecordsViaForm(badMediaType,
-                                                            fis1,
-                                                            uriInfo1);
+                fis1,
+                uriInfo1);
 
             fail("Unexpectedly analyzed CSV records with wrong media type "
-                     + "with no error: " + badMediaType);
+                + "with no error: " + badMediaType);
 
           } catch (BadRequestException e) {
             // all good -- this is expected
@@ -623,25 +620,24 @@ public class BulkDataServicesTest extends AbstractServiceTest {
           } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpectedly analyzed CSV records with wrong media type ("
-                     + badMediaType + ") with an exception other than "
-                     + "BadRequestException: " + e);
+                + badMediaType + ") with an exception other than "
+                + "BadRequestException: " + e);
 
             throw e;
           }
 
           try {
             this.bulkDataServices.loadBulkRecordsDirect(null,
-                                                        null,
-                                                        null,
-                                                        "FOO",
-                                                        -1,
-                                                        badMediaType,
-                                                        fis2,
-                                                        uriInfo2);
-
+                null,
+                null,
+                "FOO",
+                -1,
+                badMediaType,
+                fis2,
+                uriInfo2);
 
             fail("Unexpectedly loaded CSV records with wrong media type "
-                     + "with no error: " + badMediaType);
+                + "with no error: " + badMediaType);
 
           } catch (BadRequestException e) {
             // all good -- this is expected
@@ -649,8 +645,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
           } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpectedly loaded CSV records with wrong media type ("
-                     + badMediaType + ") with an exception other than "
-                     + "BadRequestException: " + e);
+                + badMediaType + ") with an exception other than "
+                + "BadRequestException: " + e);
 
             throw e;
           }
@@ -658,7 +654,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         } catch (Exception e) {
           System.err.println("********** FAILED TEST: " + testInfo);
           e.printStackTrace();
-          if (e instanceof RuntimeException) throw ((RuntimeException) e);
+          if (e instanceof RuntimeException)
+            throw ((RuntimeException) e);
           throw new RuntimeException(e);
         }
       }
@@ -668,39 +665,38 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   @Test
   public void testJsonWithBadMediaType() {
     this.performTest(() -> {
-      String  uriText1 = this.formatServerUri("bulk-data/analyze");
+      String uriText1 = this.formatServerUri("bulk-data/analyze");
       UriInfo uriInfo1 = this.newProxyUriInfo(uriText1);
 
-      String  uriText2 = this.formatServerUri("bulk-data/load");
+      String uriText2 = this.formatServerUri("bulk-data/load");
       UriInfo uriInfo2 = this.newProxyUriInfo(uriText2);
 
-      String    testInfo      = "Test JSON analyze with bad media type";
-      File      bulkDataFile  = null;
+      String testInfo = "Test JSON analyze with bad media type";
+      File bulkDataFile = null;
 
       try {
         bulkDataFile = File.createTempFile("bulk-data-", ".csv");
 
-        try (FileOutputStream   fos = new FileOutputStream(bulkDataFile);
-             OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8))
-        {
-          JsonArrayBuilder  jab = Json.createArrayBuilder();
+        try (FileOutputStream fos = new FileOutputStream(bulkDataFile);
+            OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8)) {
+          JsonArrayBuilder jab = Json.createArrayBuilder();
           JsonObjectBuilder job = Json.createObjectBuilder();
           job.add("RECORD_ID", "ABC123")
-              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("DATA_SOURCE", CUSTOMER_DATA_SOURCE)
               .add("NAME_FULL", "JOE_SCHMOE")
               .add("PHONE_NUMBER", "702-555-1212");
 
           jab.add(job);
           job = Json.createObjectBuilder();
           job.add("RECORD_ID", "DEF456")
-              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("DATA_SOURCE", CUSTOMER_DATA_SOURCE)
               .add("NAME_FULL", "JOHN DOE")
               .add("PHONE_NUMBER", "702-555-1313");
           jab.add(job);
 
           job = Json.createObjectBuilder();
           job.add("RECORD_ID", "GHI789")
-              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("DATA_SOURCE", CUSTOMER_DATA_SOURCE)
               .add("NAME_FULL", "JANE SMITH")
               .add("PHONE_NUMBER", "702-555-1313");
           jab.add(job);
@@ -719,15 +715,14 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       for (MediaType badMediaType : badMediaTypes) {
         try (FileInputStream fis1 = new FileInputStream(bulkDataFile);
-             FileInputStream fis2 = new FileInputStream(bulkDataFile))
-        {
+            FileInputStream fis2 = new FileInputStream(bulkDataFile)) {
           try {
             this.bulkDataServices.analyzeBulkRecordsViaForm(badMediaType,
-                                                            fis1,
-                                                            uriInfo1);
+                fis1,
+                uriInfo1);
 
             fail("Unexpectedly analyzed JSON records with wrong media type "
-                     + "with no error: " + badMediaType);
+                + "with no error: " + badMediaType);
 
           } catch (BadRequestException e) {
             // all good -- this is expected
@@ -735,24 +730,24 @@ public class BulkDataServicesTest extends AbstractServiceTest {
           } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpectedly analyzed JSON records with wrong media type ("
-                     + badMediaType + ") with an exception other than "
-                     + "BadRequestException: " + e);
+                + badMediaType + ") with an exception other than "
+                + "BadRequestException: " + e);
 
             throw e;
           }
 
           try {
             this.bulkDataServices.loadBulkRecordsDirect(null,
-                                                        null,
-                                                        null,
-                                                        "FOO",
-                                                        -1,
-                                                        badMediaType,
-                                                        fis2,
-                                                        uriInfo2);
+                null,
+                null,
+                "FOO",
+                -1,
+                badMediaType,
+                fis2,
+                uriInfo2);
 
             fail("Unexpectedly loaded JSON records with wrong media type "
-                     + "with no error: " + badMediaType);
+                + "with no error: " + badMediaType);
 
           } catch (BadRequestException e) {
             // all good -- this is expected
@@ -760,8 +755,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
           } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpectedly loaded JSON records with wrong media type ("
-                     + badMediaType + ") with an exception other than "
-                     + "BadRequestException: " + e);
+                + badMediaType + ") with an exception other than "
+                + "BadRequestException: " + e);
 
             throw e;
           }
@@ -769,7 +764,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         } catch (Exception e) {
           System.err.println("********** FAILED TEST: " + testInfo);
           e.printStackTrace();
-          if (e instanceof RuntimeException) throw ((RuntimeException) e);
+          if (e instanceof RuntimeException)
+            throw ((RuntimeException) e);
           throw new RuntimeException(e);
         }
       }
@@ -779,25 +775,24 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   @Test
   public void testJsonLinesWithBadMediaType() {
     this.performTest(() -> {
-      String  uriText1 = this.formatServerUri("bulk-data/analyze");
+      String uriText1 = this.formatServerUri("bulk-data/analyze");
       UriInfo uriInfo1 = this.newProxyUriInfo(uriText1);
 
-      String  uriText2 = this.formatServerUri("bulk-data/load");
+      String uriText2 = this.formatServerUri("bulk-data/load");
       UriInfo uriInfo2 = this.newProxyUriInfo(uriText2);
 
-      String    testInfo      = "Test JSON-Lines analyze with bad media type";
-      File      bulkDataFile  = null;
+      String testInfo = "Test JSON-Lines analyze with bad media type";
+      File bulkDataFile = null;
 
       try {
         bulkDataFile = File.createTempFile("bulk-data-", ".csv");
 
-        try (FileOutputStream   fos = new FileOutputStream(bulkDataFile);
-             OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
-             PrintWriter        pw  = new PrintWriter(osw))
-        {
+        try (FileOutputStream fos = new FileOutputStream(bulkDataFile);
+            OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
+            PrintWriter pw = new PrintWriter(osw)) {
           JsonObjectBuilder job = Json.createObjectBuilder();
           job.add("RECORD_ID", "ABC123")
-              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("DATA_SOURCE", CUSTOMER_DATA_SOURCE)
               .add("NAME_FULL", "JOE_SCHMOE")
               .add("PHONE_NUMBER", "702-555-1212");
 
@@ -805,14 +800,14 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
           job = Json.createObjectBuilder();
           job.add("RECORD_ID", "DEF456")
-              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("DATA_SOURCE", CUSTOMER_DATA_SOURCE)
               .add("NAME_FULL", "JOHN DOE")
               .add("PHONE_NUMBER", "702-555-1313");
           pw.println(JsonUtilities.toJsonText(job));
 
           job = Json.createObjectBuilder();
           job.add("RECORD_ID", "GHI789")
-              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("DATA_SOURCE", CUSTOMER_DATA_SOURCE)
               .add("NAME_FULL", "JANE SMITH")
               .add("PHONE_NUMBER", "702-555-1313");
           pw.println(JsonUtilities.toJsonText(job));
@@ -829,15 +824,14 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       for (MediaType badMediaType : badMediaTypes) {
         try (FileInputStream fis1 = new FileInputStream(bulkDataFile);
-             FileInputStream fis2 = new FileInputStream(bulkDataFile))
-        {
+            FileInputStream fis2 = new FileInputStream(bulkDataFile)) {
           try {
             this.bulkDataServices.analyzeBulkRecordsViaForm(badMediaType,
-                                                            fis1,
-                                                            uriInfo1);
+                fis1,
+                uriInfo1);
 
             fail("Unexpectedly analyzed JSON-lines records with wrong media "
-                     + "type with no error: " + badMediaType);
+                + "type with no error: " + badMediaType);
 
           } catch (BadRequestException e) {
             // all good -- this is expected
@@ -845,24 +839,24 @@ public class BulkDataServicesTest extends AbstractServiceTest {
           } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpectedly analyzed JSON-lines records with wrong media "
-                     + "type (" + badMediaType + ") with an exception other "
-                     + "than BadRequestException: " + e);
+                + "type (" + badMediaType + ") with an exception other "
+                + "than BadRequestException: " + e);
 
             throw e;
           }
 
           try {
             this.bulkDataServices.loadBulkRecordsDirect(null,
-                                                        null,
-                                                        null,
-                                                        "FOO",
-                                                        -1,
-                                                        badMediaType,
-                                                        fis2,
-                                                        uriInfo2);
+                null,
+                null,
+                "FOO",
+                -1,
+                badMediaType,
+                fis2,
+                uriInfo2);
 
             fail("Unexpectedly loaded JSON records with wrong media type "
-                     + "with no error: " + badMediaType);
+                + "with no error: " + badMediaType);
 
           } catch (BadRequestException e) {
             // all good -- this is expected
@@ -870,8 +864,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
           } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpectedly loaded JSON records with wrong media type ("
-                     + badMediaType + ") with an exception other than "
-                     + "BadRequestException: " + e);
+                + badMediaType + ") with an exception other than "
+                + "BadRequestException: " + e);
 
             throw e;
           }
@@ -879,7 +873,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         } catch (Exception e) {
           System.err.println("********** FAILED TEST: " + testInfo);
           e.printStackTrace();
-          if (e instanceof RuntimeException) throw ((RuntimeException) e);
+          if (e instanceof RuntimeException)
+            throw ((RuntimeException) e);
           throw new RuntimeException(e);
         }
       }
@@ -889,36 +884,35 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getAnalyzeBulkRecordsParameters")
   public void analyzeBulkRecordsViaFormTest(
-      String              testInfo,
-      MediaType           mediaType,
-      File                bulkDataFile,
-      SzBulkDataAnalysis  expected)
-  {
+      String testInfo,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis expected) {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("bulk-data/analyze");
+      String uriText = this.formatServerUri("bulk-data/analyze");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
         long before = System.nanoTime();
-        SzBulkDataAnalysisResponse response
-            = this.bulkDataServices.analyzeBulkRecordsViaForm(
-                mediaType, fis, uriInfo);
+        SzBulkDataAnalysisResponse response = this.bulkDataServices.analyzeBulkRecordsViaForm(
+            mediaType, fis, uriInfo);
         response.concludeTimers();
         long after = System.nanoTime();
 
         validateAnalyzeResponse(testInfo,
-                                response,
-                                POST,
-                                uriText,
-                                mediaType,
-                                bulkDataFile,
-                                expected,
-                                after - before);
+            response,
+            POST,
+            uriText,
+            mediaType,
+            bulkDataFile,
+            expected,
+            after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
@@ -927,11 +921,10 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getAnalyzeBulkRecordsParameters")
   public void analyzeBulkRecordsViaDirectHttpTest(
-      String              testInfo,
-      MediaType           mediaType,
-      File                bulkDataFile,
-      SzBulkDataAnalysis  expected)
-  {
+      String testInfo,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis expected) {
     this.performTest(() -> {
       // check if media type is null
       if (mediaType == null) {
@@ -953,18 +946,19 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         long after = System.nanoTime();
 
         validateAnalyzeResponse(testInfo,
-                                response,
-                                POST,
-                                uriText,
-                                mediaType,
-                                bulkDataFile,
-                                expected,
-                                after - before);
+            response,
+            POST,
+            uriText,
+            mediaType,
+            bulkDataFile,
+            expected,
+            after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
@@ -973,11 +967,10 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getAnalyzeBulkRecordsParameters")
   public void analyzeBulkRecordsViaFormJavaClientTest(
-      String              testInfo,
-      MediaType           mediaType,
-      File                bulkDataFile,
-      SzBulkDataAnalysis  expected)
-  {
+      String testInfo,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis expected) {
     this.performTest(() -> {
       // check if media type is null
       if (mediaType == null) {
@@ -991,29 +984,28 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
         long before = System.nanoTime();
-        com.senzing.gen.api.model.SzBulkDataAnalysisResponse clientResponse
-            = this.invokeServerViaHttp(
+        com.senzing.gen.api.model.SzBulkDataAnalysisResponse clientResponse = this.invokeServerViaHttp(
             POST, uriText, null, String.valueOf(mediaType),
             bulkDataFile.length(), new FileInputStream(bulkDataFile),
             com.senzing.gen.api.model.SzBulkDataAnalysisResponse.class);
         long after = System.nanoTime();
 
-        SzBulkDataAnalysisResponse response
-            = jsonCopy(clientResponse, SzBulkDataAnalysisResponse.class);
+        SzBulkDataAnalysisResponse response = jsonCopy(clientResponse, SzBulkDataAnalysisResponse.class);
 
         validateAnalyzeResponse(testInfo,
-                                response,
-                                POST,
-                                uriText,
-                                mediaType,
-                                bulkDataFile,
-                                expected,
-                                after - before);
+            response,
+            POST,
+            uriText,
+            mediaType,
+            bulkDataFile,
+            expected,
+            after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
@@ -1021,21 +1013,22 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
   @ClientEndpoint
   public static class BulkDataWebSocketClient extends Thread {
-    private Session   webSocketSession;
-    private File      bulkDataFile;
+    private Session webSocketSession;
+    private File bulkDataFile;
     private MediaType mediaType;
-    private List      queue;
+    private List queue;
 
     /**
      * Constructs with the bulk data file and media type.
-     * @param file The file containing the bulk data.
+     * 
+     * @param file      The file containing the bulk data.
      * @param mediaType The media type describing the file format.
      */
     public BulkDataWebSocketClient(File file, MediaType mediaType) {
       this.webSocketSession = null;
-      this.bulkDataFile     = file;
-      this.mediaType        = mediaType;
-      this.queue            = new LinkedList<>();
+      this.bulkDataFile = file;
+      this.mediaType = mediaType;
+      this.queue = new LinkedList<>();
     }
 
     @OnOpen
@@ -1052,14 +1045,14 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
     @OnError
     public synchronized void onError(Throwable throwable)
-        throws IOException
-    {
+        throws IOException {
       this.queue.add(throwable);
       this.notifyAll();
     }
 
     /**
      * Gets the next response (or error) that was generated.
+     * 
      * @return The next response (or error) that was generated.
      */
     public Object getNextResponse() {
@@ -1080,6 +1073,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
     /**
      * Checks if the web socket session is still open.
+     * 
      * @return <tt>true</tt> if the session is still open, otherwise
      *         <tt>false</tt>.
      */
@@ -1121,19 +1115,16 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
     /**
      * Sends the file as text.
+     * 
      * @throws IOException If an I/O failure occurs.
      */
     private void sendText() throws IOException {
       String encoding = this.mediaType.getParameters().get("charset");
       char[] buffer = new char[1024];
       try (FileInputStream fis = new FileInputStream(this.bulkDataFile);
-           BufferedInputStream bis = new BufferedInputStream(fis);
-           InputStreamReader isr = new InputStreamReader(bis, encoding))
-      {
-        for (int readCount = isr.read(buffer);
-             readCount >= 0;
-             readCount = isr.read(buffer))
-        {
+          BufferedInputStream bis = new BufferedInputStream(fis);
+          InputStreamReader isr = new InputStreamReader(bis, encoding)) {
+        for (int readCount = isr.read(buffer); readCount >= 0; readCount = isr.read(buffer)) {
           String text = new String(buffer, 0, readCount);
           this.webSocketSession.getBasicRemote().sendText(text);
         }
@@ -1142,22 +1133,19 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
     /**
      * Sends the file as binary.
+     * 
      * @throws IOException If an I/O failure occurs.
      */
     private void sendBinary() throws IOException {
       byte[] buffer = new byte[1024];
       try (FileInputStream fis = new FileInputStream(this.bulkDataFile);
-           BufferedInputStream bis = new BufferedInputStream(fis))
-      {
+          BufferedInputStream bis = new BufferedInputStream(fis)) {
         long start = -1;
-        for (int readCount = bis.read(buffer);
-             readCount >= 0;
-             readCount = bis.read(buffer))
-        {
+        for (int readCount = bis.read(buffer); readCount >= 0; readCount = bis.read(buffer)) {
           ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, 0, readCount);
           long end = System.nanoTime();
-          if ((start > 0) && (end-start > 3000000000L)) {
-            System.out.println("EXCESSIVE TIME BETWEEN SENDS: " + ((end-start)/1000000L));
+          if ((start > 0) && (end - start > 3000000000L)) {
+            System.out.println("EXCESSIVE TIME BETWEEN SENDS: " + ((end - start) / 1000000L));
           }
           this.webSocketSession.getBasicRemote().sendBinary(byteBuffer);
           start = end;
@@ -1169,31 +1157,32 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
   @ClientEndpoint
   public static class BulkDataSSEClient extends Thread {
-    private URL               url;
-    private Socket            socket;
-    private OutputStream      outputStream;
-    private InputStream       inputStream;
-    private File              bulkDataFile;
-    private MediaType         mediaType;
-    private List              queue;
-    private boolean           open = true;
-    private Integer           statusCode = null;
-    private Thread            readerThread = null;
+    private URL url;
+    private Socket socket;
+    private OutputStream outputStream;
+    private InputStream inputStream;
+    private File bulkDataFile;
+    private MediaType mediaType;
+    private List queue;
+    private boolean open = true;
+    private Integer statusCode = null;
+    private Thread readerThread = null;
 
     /**
      * Constructs with the bulk data file and media type.
-     * @param url The URL to connect to.
-     * @param file The file containing the bulk data.
+     * 
+     * @param url       The URL to connect to.
+     * @param file      The file containing the bulk data.
      * @param mediaType The media type describing the file format.
      */
-    public BulkDataSSEClient(URL                url,
-                             File               file,
-                             MediaType          mediaType) {
+    public BulkDataSSEClient(URL url,
+        File file,
+        MediaType mediaType) {
       this.bulkDataFile = file;
-      this.mediaType    = mediaType;
-      this.queue        = new LinkedList<>();
-      this.open         = true;
-      this.statusCode   = null;
+      this.mediaType = mediaType;
+      this.queue = new LinkedList<>();
+      this.open = true;
+      this.statusCode = null;
 
       // setup the headers
       try {
@@ -1201,7 +1190,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         int port = url.getPort();
         this.socket = new Socket(host, port);
         this.outputStream = this.socket.getOutputStream();
-        this.inputStream  = this.socket.getInputStream();
+        this.inputStream = this.socket.getInputStream();
 
         StringBuilder sb = new StringBuilder();
         sb.append("POST ").append(url.getPath());
@@ -1238,13 +1227,15 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     }
 
     /**
-     * Gets the HTTP response status code.  This method returns <tt>null</tt>
+     * Gets the HTTP response status code. This method returns <tt>null</tt>
      * if the status code has not yet been received.
      *
      * @return The HTTP response status code, or <tt>null</tt> if the code has
      *         not yet been received.
      */
-    public synchronized Integer getStatusCode() { return this.statusCode; }
+    public synchronized Integer getStatusCode() {
+      return this.statusCode;
+    }
 
     /**
      * Sets the HTTP response status code to a non-null value.
@@ -1279,6 +1270,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
     /**
      * Gets the next response (or error) that was generated.
+     * 
      * @return The next response (or error) that was generated.
      */
     public Object getNextResponse() {
@@ -1300,14 +1292,10 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     public void readRun() {
       boolean completed = false;
       boolean chunked = false;
-      boolean sse     = false;
-      try (BufferedInputStream bis = new BufferedInputStream(this.inputStream))
-      {
+      boolean sse = false;
+      try (BufferedInputStream bis = new BufferedInputStream(this.inputStream)) {
         boolean first = true;
-        for (String line = readAsciiLine(bis);
-             (line != null);
-             line = readAsciiLine(bis))
-        {
+        for (String line = readAsciiLine(bis); (line != null); line = readAsciiLine(bis)) {
           // check if the first line
           if (first) {
             first = false;
@@ -1315,7 +1303,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
             if (tokens.length < 3) {
               throw new IllegalStateException(
                   "Unexpected number of tokens in HTTP status line: "
-                  + line);
+                      + line);
             }
             try {
               int statusCode = Integer.parseInt(tokens[1]);
@@ -1326,7 +1314,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
             } catch (IllegalArgumentException e) {
               throw new IllegalStateException(
                   "Unable to parse HTTP status code (" + tokens[1] + ") from "
-                  + "status line: " + line);
+                      + "status line: " + line);
             }
           }
 
@@ -1356,8 +1344,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         if (!sse) {
           StringBuilder sb = new StringBuilder();
           try {
-            for (int readChar = isr.read(); readChar >= 0; readChar = isr.read())
-            {
+            for (int readChar = isr.read(); readChar >= 0; readChar = isr.read()) {
               sb.append((char) readChar);
             }
           } catch (SocketException e) {
@@ -1379,7 +1366,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         // if SSE then read events
         for (String line = br.readLine(); line != null; line = br.readLine()) {
           // skip empty lines
-          if (line.trim().length() == 0) continue;
+          if (line.trim().length() == 0)
+            continue;
 
           // check if we get data after completed
           if (completed) {
@@ -1396,8 +1384,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
           // check if completed
           completed = line.equals("event: completed");
 
-          StringWriter  sw = new StringWriter();
-          PrintWriter   pw = new PrintWriter(sw);
+          StringWriter sw = new StringWriter();
+          PrintWriter pw = new PrintWriter(sw);
           pw.println(line);
           line = br.readLine();
           if (!line.startsWith("id:")) {
@@ -1444,12 +1432,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       int writeCount = 0;
       long start = System.nanoTime();
       boolean firstChunk = true;
-      try (FileInputStream fis = new FileInputStream(this.bulkDataFile))
-      {
-        for (int readCount = fis.read(buffer);
-             readCount >= 0;
-             readCount = fis.read(buffer))
-        {
+      try (FileInputStream fis = new FileInputStream(this.bulkDataFile)) {
+        for (int readCount = fis.read(buffer); readCount >= 0; readCount = fis.read(buffer)) {
           synchronized (this) {
             // give the server a chance to deny the request out-right because
             // it is in read-only mode or if there is a client error
@@ -1461,10 +1445,12 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                 // ignore the exception
               }
             }
-            if (!this.isOpen()) break;
+            if (!this.isOpen())
+              break;
             try {
               Integer statusCode = this.getStatusCode();
-              if (statusCode != null && statusCode != 200) break;
+              if (statusCode != null && statusCode != 200)
+                break;
               this.outputStream.write(buffer, 0, readCount);
               this.outputStream.flush();
               writeCount += readCount;
@@ -1499,14 +1485,13 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getAnalyzeBulkRecordsParameters")
   public void analyzeBulkRecordsViaWebSocketsTest(
-      String              testInfo,
-      MediaType           mediaType,
-      File                bulkDataFile,
-      SzBulkDataAnalysis  expected)
-  {
+      String testInfo,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis expected) {
     this.performTest(() -> {
       String uriText = this.formatServerUri("bulk-data/analyze");
-      uriText = uriText.replaceAll("^http:(.*)","ws:$1");
+      uriText = uriText.replaceAll("^http:(.*)", "ws:$1");
 
       try {
         long before = System.nanoTime();
@@ -1518,10 +1503,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
         SzBulkDataAnalysisResponse finalResponse = null;
         // grab the results
-        for (Object next = client.getNextResponse();
-             next != null;
-             next = client.getNextResponse())
-        {
+        for (Object next = client.getNextResponse(); next != null; next = client.getNextResponse()) {
           // check if there was a failure
           if (next instanceof Throwable) {
             try {
@@ -1534,9 +1516,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
           // get as a string
           String jsonText = next.toString();
-          if (jsonText.matches(".*\"httpStatusCode\":\\s*200.*") ) {
-            SzBulkDataAnalysisResponse response
-                = jsonParse(jsonText, SzBulkDataAnalysisResponse.class);
+          if (jsonText.matches(".*\"httpStatusCode\":\\s*200.*")) {
+            SzBulkDataAnalysisResponse response = jsonParse(jsonText, SzBulkDataAnalysisResponse.class);
             response.concludeTimers();
             SzBulkDataStatus status = response.getData().getStatus();
             switch (status) {
@@ -1552,12 +1533,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                 // do nothing
                 break;
               default:
-                fail("Unrecognized status: " + status + " / "  + jsonText);
+                fail("Unrecognized status: " + status + " / " + jsonText);
             }
 
           } else {
-            SzErrorResponse response
-                = jsonParse(jsonText, SzErrorResponse.class);
+            SzErrorResponse response = jsonParse(jsonText, SzErrorResponse.class);
             response.concludeTimers();
             fail("Failed analyze: " + jsonText);
           }
@@ -1566,32 +1546,31 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         long after = System.nanoTime();
 
         validateAnalyzeResponse(testInfo,
-                                finalResponse,
-                                POST,
-                                uriText,
-                                mediaType,
-                                bulkDataFile,
-                                expected,
-                                after - before);
+            finalResponse,
+            POST,
+            uriText,
+            mediaType,
+            bulkDataFile,
+            expected,
+            after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
   }
 
-
   @ParameterizedTest
   @MethodSource("getAnalyzeBulkRecordsParameters")
   public void analyzeBulkRecordsTest(
-      String              testInfo,
-      MediaType           mediaType,
-      File                bulkDataFile,
-      SzBulkDataAnalysis  expected)
-  {
+      String testInfo,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis expected) {
     this.performTest(() -> {
       String uriText = this.formatServerUri("bulk-data/analyze");
 
@@ -1601,16 +1580,13 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         URL url = new URL(uriText);
 
         BulkDataSSEClient client = new BulkDataSSEClient(url,
-                                                         bulkDataFile,
-                                                         mediaType);
+            bulkDataFile,
+            mediaType);
         client.start();
 
         SzBulkDataAnalysisResponse finalResponse = null;
         // grab the results
-        for (Object next = client.getNextResponse();
-             next != null;
-             next = client.getNextResponse())
-        {
+        for (Object next = client.getNextResponse(); next != null; next = client.getNextResponse()) {
           // check if there was a failure
           if (next instanceof Throwable) {
             fail((Throwable) next);
@@ -1618,9 +1594,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
           // get as a string
           String jsonText = next.toString();
-          if (jsonText.matches(".*\"httpStatusCode\":\\s*200.*") ) {
-            SzBulkDataAnalysisResponse response
-                = jsonParse(jsonText, SzBulkDataAnalysisResponse.class);
+          if (jsonText.matches(".*\"httpStatusCode\":\\s*200.*")) {
+            SzBulkDataAnalysisResponse response = jsonParse(jsonText, SzBulkDataAnalysisResponse.class);
             response.concludeTimers();
             SzBulkDataStatus status = response.getData().getStatus();
             switch (status) {
@@ -1636,12 +1611,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                 // do nothing
                 break;
               default:
-                fail("Unrecognized status: " + status + " / "  + jsonText);
+                fail("Unrecognized status: " + status + " / " + jsonText);
             }
 
           } else {
-            SzErrorResponse response
-                = jsonParse(jsonText, SzErrorResponse.class);
+            SzErrorResponse response = jsonParse(jsonText, SzErrorResponse.class);
             response.concludeTimers();
             fail("Failed analyze: " + jsonText);
           }
@@ -1650,29 +1624,29 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         long after = System.nanoTime();
 
         validateAnalyzeResponse(testInfo,
-                                finalResponse,
-                                POST,
-                                uriText,
-                                mediaType,
-                                bulkDataFile,
-                                expected,
-                                after - before);
+            finalResponse,
+            POST,
+            uriText,
+            mediaType,
+            bulkDataFile,
+            expected,
+            after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
   }
 
-  protected String formatLoadURL(String               defaultDataSource,
-                                 String               loadId,
-                                 Integer              maxFailures,
-                                 Map<String, String>  dataSourceMap,
-                                 String               progressPeriod)
-  {
+  protected String formatLoadURL(String defaultDataSource,
+      String loadId,
+      Integer maxFailures,
+      Map<String, String> dataSourceMap,
+      String progressPeriod) {
     try {
       StringBuilder sb = new StringBuilder();
       sb.append("bulk-data/load");
@@ -1693,13 +1667,13 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       }
 
       if (dataSourceMap != null) {
-        String[]          prefixArr   = { prefix };
-        boolean[]         jsonFlag    = { true };
-        boolean[]         overlapFlag = { true };
-        JsonObjectBuilder builder   = Json.createObjectBuilder();
+        String[] prefixArr = { prefix };
+        boolean[] jsonFlag = { true };
+        boolean[] overlapFlag = { true };
+        JsonObjectBuilder builder = Json.createObjectBuilder();
         dataSourceMap.entrySet().forEach(entry -> {
-          String  key   = entry.getKey();
-          String  value = entry.getValue();
+          String key = entry.getKey();
+          String value = entry.getValue();
           if (jsonFlag[0] || overlapFlag[0]) {
             builder.add(key, value);
 
@@ -1748,27 +1722,26 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getLoadBulkRecordsParameters")
   public void loadBulkRecordsViaFormTest(
-      String              testInfo,
-      MediaType           mediaType,
-      File                bulkDataFile,
-      SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap)
-  {
+      String testInfo,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis analysis,
+      Map<String, String> dataSourceMap) {
     this.performTest(() -> {
       this.livePurgeRepository();
 
-      String  uriText = this.formatServerUri("bulk-data/load");
+      String uriText = this.formatServerUri("bulk-data/load");
 
-      MultivaluedMap  queryParams       = new MultivaluedHashMap();
-      String          mapDataSources    = null;
-      List<String>    mapDataSourceList = new LinkedList<>();
+      MultivaluedMap queryParams = new MultivaluedHashMap();
+      String mapDataSources = null;
+      List<String> mapDataSourceList = new LinkedList<>();
       if (dataSourceMap != null) {
-        boolean[]         jsonFlag    = { true };
-        boolean[]         overlapFlag = { true };
-        JsonObjectBuilder builder   = Json.createObjectBuilder();
+        boolean[] jsonFlag = { true };
+        boolean[] overlapFlag = { true };
+        JsonObjectBuilder builder = Json.createObjectBuilder();
         dataSourceMap.entrySet().forEach(entry -> {
-          String  key   = entry.getKey();
-          String  value = entry.getValue();
+          String key = entry.getKey();
+          String value = entry.getValue();
           if (jsonFlag[0] || overlapFlag[0]) {
             builder.add(key, value);
 
@@ -1791,41 +1764,42 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
         long before = System.nanoTime();
-        SzBulkLoadResponse response
-            = this.bulkDataServices.loadBulkRecordsViaForm(
-                CONTACTS_DATA_SOURCE,
-                mapDataSources,
-                mapDataSourceList,
-                null,
-                0,
-                mediaType,
-                fis,
-                null,
-                uriInfo);
+        SzBulkLoadResponse response = this.bulkDataServices.loadBulkRecordsViaForm(
+            CONTACTS_DATA_SOURCE,
+            mapDataSources,
+            mapDataSourceList,
+            null,
+            0,
+            mediaType,
+            fis,
+            null,
+            uriInfo);
         response.concludeTimers();
         long after = System.nanoTime();
 
-        Map<String,String> allDataSourceMap = new LinkedHashMap<>();
+        Map<String, String> allDataSourceMap = new LinkedHashMap<>();
         allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
-        if (dataSourceMap != null) allDataSourceMap.putAll(dataSourceMap);
+        if (dataSourceMap != null)
+          allDataSourceMap.putAll(dataSourceMap);
 
         validateLoadResponse(testInfo,
-                             response,
-                             POST,
-                             uriText,
-                             COMPLETED,
-                             mediaType,
-                             bulkDataFile,
-                             analysis,
-                             analysis.getRecordCount(),
-                             allDataSourceMap,
-                             null,
-                             after - before);
+            response,
+            POST,
+            uriText,
+            COMPLETED,
+            mediaType,
+            bulkDataFile,
+            analysis,
+            analysis.getRecordCount(),
+            allDataSourceMap,
+            null,
+            after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
@@ -1834,12 +1808,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getLoadBulkRecordsParameters")
   public void loadBulkRecordsViaDirectHttpTest(
-      String              testInfo,
-      MediaType           mediaType,
-      File                bulkDataFile,
-      SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap)
-  {
+      String testInfo,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis analysis,
+      Map<String, String> dataSourceMap) {
     this.performTest(() -> {
       // check if media type is null
       if (mediaType == null) {
@@ -1864,27 +1837,29 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         response.concludeTimers();
         long after = System.nanoTime();
 
-        Map<String,String> allDataSourceMap = new LinkedHashMap<>();
+        Map<String, String> allDataSourceMap = new LinkedHashMap<>();
         allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
-        if (dataSourceMap != null) allDataSourceMap.putAll(dataSourceMap);
+        if (dataSourceMap != null)
+          allDataSourceMap.putAll(dataSourceMap);
 
         validateLoadResponse(testInfo,
-                             response,
-                             POST,
-                             uriText,
-                             COMPLETED,
-                             mediaType,
-                             bulkDataFile,
-                             analysis,
-                             analysis.getRecordCount(),
-                             allDataSourceMap,
-                             null,
-                             after - before);
+            response,
+            POST,
+            uriText,
+            COMPLETED,
+            mediaType,
+            bulkDataFile,
+            analysis,
+            analysis.getRecordCount(),
+            allDataSourceMap,
+            null,
+            after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
@@ -1893,12 +1868,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getLoadBulkRecordsParameters")
   public void loadBulkRecordsDirectJavaClientTest(
-      String              testInfo,
-      MediaType           mediaType,
-      File                bulkDataFile,
-      SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap)
-  {
+      String testInfo,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis analysis,
+      Map<String, String> dataSourceMap) {
     this.performTest(() -> {
       // check if media type is null
       if (mediaType == null) {
@@ -1916,38 +1890,39 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
         long before = System.nanoTime();
-        com.senzing.gen.api.model.SzBulkLoadResponse clientResponse
-            = this.invokeServerViaHttp(
+        com.senzing.gen.api.model.SzBulkLoadResponse clientResponse = this.invokeServerViaHttp(
             POST, uriText, null, String.valueOf(mediaType),
             bulkDataFile.length(), new FileInputStream(bulkDataFile),
             com.senzing.gen.api.model.SzBulkLoadResponse.class);
 
         long after = System.nanoTime();
 
-        Map<String,String> allDataSourceMap = new LinkedHashMap<>();
+        Map<String, String> allDataSourceMap = new LinkedHashMap<>();
         allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
-        if (dataSourceMap != null) allDataSourceMap.putAll(dataSourceMap);
+        if (dataSourceMap != null)
+          allDataSourceMap.putAll(dataSourceMap);
 
         SzBulkLoadResponse response = jsonCopy(clientResponse,
-                                               SzBulkLoadResponse.class);
+            SzBulkLoadResponse.class);
 
         validateLoadResponse(testInfo,
-                             response,
-                             POST,
-                             uriText,
-                             COMPLETED,
-                             mediaType,
-                             bulkDataFile,
-                             analysis,
-                             analysis.getRecordCount(),
-                             allDataSourceMap,
-                             null,
-                             after - before);
+            response,
+            POST,
+            uriText,
+            COMPLETED,
+            mediaType,
+            bulkDataFile,
+            analysis,
+            analysis.getRecordCount(),
+            allDataSourceMap,
+            null,
+            after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
@@ -1956,19 +1931,18 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getLoadBulkRecordsParameters")
   public void loadBulkRecordsViaWebSocketsTest(
-      String              testInfo,
-      MediaType           mediaType,
-      File                bulkDataFile,
-      SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap)
-  {
+      String testInfo,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis analysis,
+      Map<String, String> dataSourceMap) {
     this.performTest(() -> {
       this.livePurgeRepository();
 
       String uriText = this.formatServerUri(formatLoadURL(
-          CONTACTS_DATA_SOURCE,null, null,
+          CONTACTS_DATA_SOURCE, null, null,
           dataSourceMap, null));
-      uriText = uriText.replaceAll("^http:(.*)","ws:$1");
+      uriText = uriText.replaceAll("^http:(.*)", "ws:$1");
 
       try {
         long before = System.nanoTime();
@@ -1979,10 +1953,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
         SzBulkLoadResponse finalResponse = null;
         // grab the results
-        for (Object next = client.getNextResponse();
-             next != null;
-             next = client.getNextResponse())
-        {
+        for (Object next = client.getNextResponse(); next != null; next = client.getNextResponse()) {
           // check if there was a failure
           if (next instanceof Throwable) {
             try {
@@ -1995,9 +1966,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
           // get as a string
           String jsonText = next.toString();
-          if (jsonText.matches(".*\"httpStatusCode\":\\s*200.*") ) {
-            SzBulkLoadResponse response
-                = jsonParse(jsonText, SzBulkLoadResponse.class);
+          if (jsonText.matches(".*\"httpStatusCode\":\\s*200.*")) {
+            SzBulkLoadResponse response = jsonParse(jsonText, SzBulkLoadResponse.class);
             response.concludeTimers();
             SzBulkDataStatus status = response.getData().getStatus();
             switch (status) {
@@ -2013,12 +1983,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                 // do nothing
                 break;
               default:
-                fail("Unrecognized status: " + status + " / "  + jsonText);
+                fail("Unrecognized status: " + status + " / " + jsonText);
             }
 
           } else {
-            SzErrorResponse response
-                = jsonParse(jsonText, SzErrorResponse.class);
+            SzErrorResponse response = jsonParse(jsonText, SzErrorResponse.class);
             response.concludeTimers();
             fail("Failed bulk load: " + jsonText);
           }
@@ -2026,27 +1995,29 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
         long after = System.nanoTime();
 
-        Map<String,String> allDataSourceMap = new LinkedHashMap<>();
+        Map<String, String> allDataSourceMap = new LinkedHashMap<>();
         allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
-        if (dataSourceMap != null) allDataSourceMap.putAll(dataSourceMap);
+        if (dataSourceMap != null)
+          allDataSourceMap.putAll(dataSourceMap);
 
         validateLoadResponse(testInfo,
-                             finalResponse,
-                             POST,
-                             uriText,
-                             COMPLETED,
-                             mediaType,
-                             bulkDataFile,
-                             analysis,
-                             analysis.getRecordCount(),
-                             allDataSourceMap,
-                             null,
-                             after - before);
+            finalResponse,
+            POST,
+            uriText,
+            COMPLETED,
+            mediaType,
+            bulkDataFile,
+            analysis,
+            analysis.getRecordCount(),
+            allDataSourceMap,
+            null,
+            after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
@@ -2055,12 +2026,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getLoadBulkRecordsParameters")
   public void loadBulkRecordsViaSSETest(
-      String              testInfo,
-      MediaType           mediaType,
-      File                bulkDataFile,
-      SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap)
-  {
+      String testInfo,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis analysis,
+      Map<String, String> dataSourceMap) {
     this.performTest(() -> {
       this.livePurgeRepository();
 
@@ -2074,17 +2044,14 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         URL url = new URL(uriText);
 
         BulkDataSSEClient client = new BulkDataSSEClient(url,
-                                                         bulkDataFile,
-                                                         mediaType);
+            bulkDataFile,
+            mediaType);
 
         client.start();
 
         SzBulkLoadResponse finalResponse = null;
         // grab the results
-        for (Object next = client.getNextResponse();
-             next != null;
-             next = client.getNextResponse())
-        {
+        for (Object next = client.getNextResponse(); next != null; next = client.getNextResponse()) {
           // check if there was a failure
           if (next instanceof Throwable) {
             fail((Throwable) next);
@@ -2092,9 +2059,8 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
           // get as a string
           String jsonText = next.toString();
-          if (jsonText.matches(".*\"httpStatusCode\":\\s*200.*") ) {
-            SzBulkLoadResponse response
-                = jsonParse(jsonText, SzBulkLoadResponse.class);
+          if (jsonText.matches(".*\"httpStatusCode\":\\s*200.*")) {
+            SzBulkLoadResponse response = jsonParse(jsonText, SzBulkLoadResponse.class);
             response.concludeTimers();
             SzBulkDataStatus status = response.getData().getStatus();
             switch (status) {
@@ -2110,12 +2076,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
                 // do nothing
                 break;
               default:
-                fail("Unrecognized status: " + status + " / "  + jsonText);
+                fail("Unrecognized status: " + status + " / " + jsonText);
             }
 
           } else {
-            SzErrorResponse response
-                = jsonParse(jsonText, SzErrorResponse.class);
+            SzErrorResponse response = jsonParse(jsonText, SzErrorResponse.class);
             response.concludeTimers();
             fail("Failed bulk load: " + jsonText);
           }
@@ -2123,27 +2088,29 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
         long after = System.nanoTime();
 
-        Map<String,String> allDataSourceMap = new LinkedHashMap<>();
+        Map<String, String> allDataSourceMap = new LinkedHashMap<>();
         allDataSourceMap.put(null, CONTACTS_DATA_SOURCE);
-        if (dataSourceMap != null) allDataSourceMap.putAll(dataSourceMap);
+        if (dataSourceMap != null)
+          allDataSourceMap.putAll(dataSourceMap);
 
         validateLoadResponse(testInfo,
-                             finalResponse,
-                             POST,
-                             uriText,
-                             COMPLETED,
-                             mediaType,
-                             bulkDataFile,
-                             analysis,
-                             analysis.getRecordCount(),
-                             allDataSourceMap,
-                             null,
-                             after - before);
+            finalResponse,
+            POST,
+            uriText,
+            COMPLETED,
+            mediaType,
+            bulkDataFile,
+            analysis,
+            analysis.getRecordCount(),
+            allDataSourceMap,
+            null,
+            after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
@@ -2159,10 +2126,10 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       List<RecordHandler> handlers = new ArrayList<>(tempFiles.length);
       for (File tempFile : tempFiles) {
-        FileOutputStream      fos     = new FileOutputStream(tempFile);
-        BufferedOutputStream  bos     = new BufferedOutputStream(fos);
-        OutputStreamWriter    osw     = new OutputStreamWriter(bos, UTF_8);
-        RecordHandler         handler = new JsonLinesRecordHandler(osw);
+        FileOutputStream fos = new FileOutputStream(tempFile);
+        BufferedOutputStream bos = new BufferedOutputStream(fos);
+        OutputStreamWriter osw = new OutputStreamWriter(bos, UTF_8);
+        RecordHandler handler = new JsonLinesRecordHandler(osw);
         handlers.add(handler);
       }
 
@@ -2173,58 +2140,58 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       // the data source as singular "CUSTOMER" rather than plural "CUSTOMERS")
       RecordHandler handler = new CompoundRecordHandler(handlers);
       this.dataGenerator.generateRecords(handler,
-                                         PERSON,
-                                         2,
-                                         true,
-                                         CUSTOMER_DATA_SOURCE,
-                                         featureGenMap,
-                                         featDensityMap,
-                                         true,
-                                         true);
+          PERSON,
+          2,
+          true,
+          CUSTOMER_DATA_SOURCE,
+          featureGenMap,
+          featDensityMap,
+          true,
+          true);
 
       this.dataGenerator.generateRecords(handler,
-                                         PERSON,
-                                         10,
-                                         true,
-                                         CUSTOMERS_DATA_SOURCE,
-                                         featureGenMap,
-                                         featDensityMap,
-                                         true,
-                                         true);
+          PERSON,
+          10,
+          true,
+          CUSTOMERS_DATA_SOURCE,
+          featureGenMap,
+          featDensityMap,
+          true,
+          true);
 
       this.dataGenerator.generateRecords(handler,
-                                         PERSON,
-                                         10,
-                                         true,
-                                         CUSTOMER_DATA_SOURCE,
-                                         featureGenMap,
-                                         featDensityMap,
-                                         true,
-                                         true);
+          PERSON,
+          10,
+          true,
+          CUSTOMER_DATA_SOURCE,
+          featureGenMap,
+          featDensityMap,
+          true,
+          true);
 
       // the first handler gets 978 additional good records to make an even 1000
       // (this is the maximum that should be handled in a single thread)
       this.dataGenerator.generateRecords(handlers.get(0),
-                                         PERSON,
-                                         978,
-                                         true,
-                                         CUSTOMERS_DATA_SOURCE,
-                                         featureGenMap,
-                                         featDensityMap,
-                                         true,
-                                         true);
+          PERSON,
+          978,
+          true,
+          CUSTOMERS_DATA_SOURCE,
+          featureGenMap,
+          featDensityMap,
+          true,
+          true);
 
       // the second handler gets 979 additional good records to make for 1001
       // (this is the minimum to trigger concurrent handling)
       this.dataGenerator.generateRecords(handlers.get(1),
-                                         PERSON,
-                                         979,
-                                         true,
-                                         CUSTOMERS_DATA_SOURCE,
-                                         featureGenMap,
-                                         featDensityMap,
-                                         true,
-                                         true);
+          PERSON,
+          979,
+          true,
+          CUSTOMERS_DATA_SOURCE,
+          featureGenMap,
+          featDensityMap,
+          true,
+          true);
 
       List<Arguments> result = new LinkedList<>();
 
@@ -2266,12 +2233,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   @ParameterizedTest
   @MethodSource("getMaxFailureArgs")
   public void testMaxFailuresOnLoad(
-      int                   recordCount,
-      Integer               maxFailures,
-      SzBulkDataStatus      expectedStatus,
-      Map<String, Integer>  failuresByDataSource,
-      File                  dataFile)
-  {
+      int recordCount,
+      Integer maxFailures,
+      SzBulkDataStatus expectedStatus,
+      Map<String, Integer> failuresByDataSource,
+      File dataFile) {
     this.performTest(() -> {
       this.livePurgeRepository();
 
@@ -2290,7 +2256,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
       SzBulkLoadResponse response = null;
       try (InputStream is = new FileInputStream(dataFile);
-           BufferedInputStream bis = new BufferedInputStream(is)) {
+          BufferedInputStream bis = new BufferedInputStream(is)) {
         long before = System.nanoTime();
         response = this.bulkDataServices.loadBulkRecordsViaForm(
             null,
@@ -2307,22 +2273,23 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         long after = System.nanoTime();
 
         this.validateLoadResponse(testInfo,
-                                  response,
-                                  POST,
-                                  uriText,
-                                  expectedStatus,
-                                  MediaType.valueOf("text/plain"),
-                                  dataFile,
-                                  null,
-                                  recordCount,
-                                  null,
-                                  failuresByDataSource,
-                                  after - before);
+            response,
+            POST,
+            uriText,
+            expectedStatus,
+            MediaType.valueOf("text/plain"),
+            dataFile,
+            null,
+            recordCount,
+            null,
+            failuresByDataSource,
+            after - before);
 
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
@@ -2331,15 +2298,14 @@ public class BulkDataServicesTest extends AbstractServiceTest {
   /**
    *
    */
-  private void validateAnalyzeResponse(String                     testInfo,
-                                       SzBulkDataAnalysisResponse response,
-                                       SzHttpMethod               httpMethod,
-                                       String                     selfLink,
-                                       MediaType                  mediaType,
-                                       File                       bulkDataFile,
-                                       SzBulkDataAnalysis         expected,
-                                       long                       maxDuration)
-  {
+  private void validateAnalyzeResponse(String testInfo,
+      SzBulkDataAnalysisResponse response,
+      SzHttpMethod httpMethod,
+      String selfLink,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis expected,
+      long maxDuration) {
     validateBasics(response, httpMethod, selfLink, maxDuration);
 
     SzBulkDataAnalysis actual = response.getData();
@@ -2350,83 +2316,78 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         "Character encoding in analysis not as expected: " + testInfo);
 
     assertEquals(expected.getMediaType(), actual.getMediaType(),
-                 "Media type in analysis not as expected: " + testInfo);
+        "Media type in analysis not as expected: " + testInfo);
 
     assertEquals(expected.getRecordCount(), actual.getRecordCount(),
-                 "Total record count not as expected: " + testInfo);
+        "Total record count not as expected: " + testInfo);
 
     assertEquals(expected.getRecordsWithRecordIdCount(),
-                 actual.getRecordsWithRecordIdCount(),
-                 "Records with record ID count not as expected: "
-                 + testInfo);
+        actual.getRecordsWithRecordIdCount(),
+        "Records with record ID count not as expected: "
+            + testInfo);
 
     assertEquals(expected.getRecordsWithDataSourceCount(),
-                 actual.getRecordsWithDataSourceCount(),
-                 "Records with data source count not as expected: "
-                 + testInfo);
+        actual.getRecordsWithDataSourceCount(),
+        "Records with data source count not as expected: "
+            + testInfo);
 
     // validate the analysis by data source fields
-    List<SzDataSourceRecordAnalysis> actualSourceList
-        = actual.getAnalysisByDataSource();
+    List<SzDataSourceRecordAnalysis> actualSourceList = actual.getAnalysisByDataSource();
 
-    List<SzDataSourceRecordAnalysis> expectedSourceList
-        = expected.getAnalysisByDataSource();
+    List<SzDataSourceRecordAnalysis> expectedSourceList = expected.getAnalysisByDataSource();
 
-    int actualCount   = actualSourceList.size();
+    int actualCount = actualSourceList.size();
     int expectedCount = expectedSourceList.size();
 
     assertEquals(expectedCount, actualCount,
-                 "The number of items in the analysis-by-data-source "
-                  + "list is not as expected: " + testInfo);
+        "The number of items in the analysis-by-data-source "
+            + "list is not as expected: " + testInfo);
 
     for (int index = 0; index < actualCount; index++) {
-      SzDataSourceRecordAnalysis actualSourceAnalysis
-          = actualSourceList.get(index);
-      SzDataSourceRecordAnalysis expectedSourceAnalysis
-          = expectedSourceList.get(index);
+      SzDataSourceRecordAnalysis actualSourceAnalysis = actualSourceList.get(index);
+      SzDataSourceRecordAnalysis expectedSourceAnalysis = expectedSourceList.get(index);
 
       String expectedSource = expectedSourceAnalysis.getDataSource();
-      String actualSource   = actualSourceAnalysis.getDataSource();
+      String actualSource = actualSourceAnalysis.getDataSource();
 
       assertEquals(expectedSource, actualSource,
-                   "The data sources do not match: " + testInfo);
+          "The data sources do not match: " + testInfo);
 
       assertEquals(expectedSourceAnalysis.getRecordCount(),
-                   actualSourceAnalysis.getRecordCount(),
-                   "The record counts for the " + actualSource
-                       + " data source do not match: " + testInfo);
+          actualSourceAnalysis.getRecordCount(),
+          "The record counts for the " + actualSource
+              + " data source do not match: " + testInfo);
 
       assertEquals(expectedSourceAnalysis.getRecordsWithRecordIdCount(),
-                   actualSourceAnalysis.getRecordsWithRecordIdCount(),
-                   "The records with record ID counts for the "
-                       + actualSource + " data source do not match: "
-                       + testInfo);
+          actualSourceAnalysis.getRecordsWithRecordIdCount(),
+          "The records with record ID counts for the "
+              + actualSource + " data source do not match: "
+              + testInfo);
     }
   }
 
   /**
    *
    */
-  private void validateLoadResponse(String                     testInfo,
-                                    SzBulkLoadResponse         response,
-                                    SzHttpMethod               httpMethod,
-                                    String                     selfLink,
-                                    SzBulkDataStatus           expectedStatus,
-                                    MediaType                  mediaType,
-                                    File                       bulkDataFile,
-                                    SzBulkDataAnalysis         analysis,
-                                    Integer                    totalRecordCount,
-                                    Map<String, String>        dataSourceMap,
-                                    Map<String, Integer>       failuresBySource,
-                                    long                       maxDuration)
-  {
+  private void validateLoadResponse(String testInfo,
+      SzBulkLoadResponse response,
+      SzHttpMethod httpMethod,
+      String selfLink,
+      SzBulkDataStatus expectedStatus,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis analysis,
+      Integer totalRecordCount,
+      Map<String, String> dataSourceMap,
+      Map<String, Integer> failuresBySource,
+      long maxDuration) {
     validateBasics(testInfo,
-                   response,
-                   200,
-                   httpMethod,
-                   selfLink,
-                   maxDuration,
-                   this.getServerConcurrency());
+        response,
+        200,
+        httpMethod,
+        selfLink,
+        maxDuration,
+        this.getServerConcurrency());
 
     final Integer ZERO = 0;
 
@@ -2436,20 +2397,20 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
     if (analysis != null) {
       assertEquals(analysis.getCharacterEncoding(), actual.getCharacterEncoding(),
-                   "Character encoding in result not as expected: " + testInfo);
+          "Character encoding in result not as expected: " + testInfo);
 
       assertEquals(analysis.getMediaType(), actual.getMediaType(),
-                   "Media type in result not as expected: " + testInfo);
+          "Media type in result not as expected: " + testInfo);
 
       assertEquals(analysis.getRecordCount(), totalRecordCount,
-                   "Unexpected number of total records: " + testInfo);
+          "Unexpected number of total records: " + testInfo);
     }
 
     if (expectedStatus != null) {
       assertEquals(
           expectedStatus, actual.getStatus(),
           "Unexpected status for bulk load result: " + testInfo
-                  + "\nRESPONSE:\n" + toJsonString(response));
+              + "\nRESPONSE:\n" + toJsonString(response));
     }
 
     // determine how many failures are expected
@@ -2460,10 +2421,11 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       }
     }
 
-    int concurrency         = this.getServerConcurrency();
+    int concurrency = this.getServerConcurrency();
     int minExpectedFailures = expectedFailures;
     int maxExpectedFailures = totalRecordCount <= 1000
-        ? expectedFailures : (expectedFailures + concurrency - 1);
+        ? expectedFailures
+        : (expectedFailures + concurrency - 1);
 
     if (maxExpectedFailures < actual.getFailedRecordCount()) {
       if (analysis != null) {
@@ -2478,7 +2440,7 @@ public class BulkDataServicesTest extends AbstractServiceTest {
 
     if (minExpectedFailures == maxExpectedFailures) {
       assertEquals(expectedFailures, actual.getFailedRecordCount(),
-                   "Unexpected number of failed records: " + testInfo);
+          "Unexpected number of failed records: " + testInfo);
     } else {
       assertTrue(
           minExpectedFailures <= actual.getFailedRecordCount(),
@@ -2493,27 +2455,29 @@ public class BulkDataServicesTest extends AbstractServiceTest {
     }
 
     // check if nothing more to validate
-    if (analysis == null) return;
+    if (analysis == null)
+      return;
 
     // determine how many records are missing only data source
     int missingDataSourceCount = analysis.getRecordCount()
         - analysis.getRecordsWithDataSourceCount();
 
     // check if those missing data source are mapped
-    if (dataSourceMap.containsKey(null)) missingDataSourceCount = 0;
+    if (dataSourceMap.containsKey(null))
+      missingDataSourceCount = 0;
     int incompleteCount = missingDataSourceCount;
 
     // check the total incomplete count
     assertEquals(incompleteCount, actual.getIncompleteRecordCount(),
-                 "Unexpected number of incomplete records: "
-                     + testInfo);
+        "Unexpected number of incomplete records: "
+            + testInfo);
 
     // now determine how many records should have loaded
     int expectLoaded = totalRecordCount - expectedFailures
         - incompleteCount;
 
     assertEquals(expectLoaded, actual.getLoadedRecordCount(),
-                 "Unexpected number of loaded records: " + testInfo);
+        "Unexpected number of loaded records: " + testInfo);
 
     // determine the expected counts by data source
     Map<String, Integer> dataSourceCountMap = new LinkedHashMap<>();
@@ -2522,14 +2486,18 @@ public class BulkDataServicesTest extends AbstractServiceTest {
       String origDataSource = sourceAnalysis.getDataSource();
 
       String dataSource = dataSourceMap.containsKey(origDataSource)
-          ? dataSourceMap.get(origDataSource) : dataSourceMap.get(null);
-      if (dataSource == null) dataSource = origDataSource;
+          ? dataSourceMap.get(origDataSource)
+          : dataSourceMap.get(null);
+      if (dataSource == null)
+        dataSource = origDataSource;
 
       Integer currentCount = dataSourceCountMap.containsKey(dataSource)
-        ? dataSourceCountMap.get(dataSource) : ZERO;
+          ? dataSourceCountMap.get(dataSource)
+          : ZERO;
 
       Integer currentIncomplete = sourceIncompleteMap.containsKey(dataSource)
-          ? sourceIncompleteMap.get(dataSource) : ZERO;
+          ? sourceIncompleteMap.get(dataSource)
+          : ZERO;
 
       // get the total number of records and increase it accordingly
       int sourceCount = sourceAnalysis.getRecordCount() + currentCount;
@@ -2553,50 +2521,49 @@ public class BulkDataServicesTest extends AbstractServiceTest {
         "Missing data source count not as expected: " + testInfo);
 
     // validate the analysis by data source fields
-    List<SzDataSourceBulkLoadResult> dataSourceResults
-        = actual.getResultsByDataSource();
+    List<SzDataSourceBulkLoadResult> dataSourceResults = actual.getResultsByDataSource();
 
-    int actualCount   = dataSourceResults.size();
+    int actualCount = dataSourceResults.size();
     int expectedCount = dataSourceCountMap.size();
 
     assertEquals(expectedCount, actualCount,
-                 "The number of items in the results-by-data-source "
-                     + "list is not as expected: " + testInfo);
+        "The number of items in the results-by-data-source "
+            + "list is not as expected: " + testInfo);
 
     for (SzDataSourceBulkLoadResult sourceResults : dataSourceResults) {
       String dataSource = sourceResults.getDataSource();
 
       assertTrue(dataSourceCountMap.containsKey(dataSource),
-                 "Data source results for unexpected data source ("
-                  + dataSource + "): " + testInfo);
+          "Data source results for unexpected data source ("
+              + dataSource + "): " + testInfo);
 
-      int sourceTotal       = dataSourceCountMap.get(dataSource);
-      int sourceFailures    = (failuresBySource != null
-                               && failuresBySource.containsKey(dataSource))
-                               ? failuresBySource.get(dataSource) : 0;
-      int sourceIncomplete  = sourceIncompleteMap.get(dataSource);
-      int sourceLoaded      = sourceTotal - sourceIncomplete - sourceFailures;
+      int sourceTotal = dataSourceCountMap.get(dataSource);
+      int sourceFailures = (failuresBySource != null
+          && failuresBySource.containsKey(dataSource))
+              ? failuresBySource.get(dataSource)
+              : 0;
+      int sourceIncomplete = sourceIncompleteMap.get(dataSource);
+      int sourceLoaded = sourceTotal - sourceIncomplete - sourceFailures;
 
       assertEquals(sourceTotal,
-                   sourceResults.getRecordCount(),
-                   "The record counts for the " + dataSource
-                       + " data source do not match: " + testInfo);
+          sourceResults.getRecordCount(),
+          "The record counts for the " + dataSource
+              + " data source do not match: " + testInfo);
 
       assertEquals(sourceIncomplete,
-                   sourceResults.getIncompleteRecordCount(),
-                   "The incomplete counts for the " + dataSource
-                       + " data source do not match: " + testInfo);
+          sourceResults.getIncompleteRecordCount(),
+          "The incomplete counts for the " + dataSource
+              + " data source do not match: " + testInfo);
 
       assertEquals(sourceFailures,
-                   sourceResults.getFailedRecordCount(),
-                   "The failed counts for the " + dataSource
-                       + " data source do not match: " + testInfo);
+          sourceResults.getFailedRecordCount(),
+          "The failed counts for the " + dataSource
+              + " data source do not match: " + testInfo);
 
       assertEquals(sourceLoaded,
-                   sourceResults.getLoadedRecordCount(),
-                   "The loaded counts for the " + dataSource
-                       + " data source do not match: " + testInfo);
+          sourceResults.getLoadedRecordCount(),
+          "The loaded counts for the " + dataSource
+              + " data source do not match: " + testInfo);
     }
   }
 }
-
