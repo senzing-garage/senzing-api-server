@@ -4,13 +4,12 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.senzing.api.model.*;
 
 /**
- * Provides a default implementatio of {@link SzVersionResponse}.
+ * Provides a default implementation of {@link SzVersionResponse}.
  *
  */
 @JsonDeserialize
 public class SzVersionResponseImpl extends SzResponseWithRawDataImpl
-  implements SzVersionResponse
-{
+    implements SzVersionResponse {
   /**
    * The data for this instance.
    */
@@ -27,12 +26,11 @@ public class SzVersionResponseImpl extends SzResponseWithRawDataImpl
    * Constructs with only the HTTP method and the self link, leaving the
    * license info data to be initialized later.
    *
-   * @param meta The response meta data.
+   * @param meta  The response meta data.
    *
    * @param links The links for the response.
    */
-  public SzVersionResponseImpl(SzMeta meta, SzLinks links)
-  {
+  public SzVersionResponseImpl(SzMeta meta, SzLinks links) {
     this(meta, links, null);
   }
 
@@ -40,16 +38,15 @@ public class SzVersionResponseImpl extends SzResponseWithRawDataImpl
    * Constructs with the HTTP method, self link and the {@link SzVersionInfo}
    * describing the version.
    *
-   * @param meta The response meta data.
+   * @param meta        The response meta data.
    *
-   * @param links The links for the response.
+   * @param links       The links for the response.
    *
    * @param versionInfo The {@link SzVersionInfo} describing the version.
    */
-  public SzVersionResponseImpl(SzMeta         meta,
-                               SzLinks        links,
-                               SzVersionInfo  versionInfo)
-  {
+  public SzVersionResponseImpl(SzMeta meta,
+      SzLinks links,
+      SzVersionInfo versionInfo) {
     super(meta, links);
     this.versionInfo = versionInfo;
   }

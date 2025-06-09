@@ -16,21 +16,18 @@ import java.util.Map;
  * Provides an implementation of {@link BulkDataWebSocket} that loads bulk
  * data records.
  */
-@ServerEndpoint(value="/bulk-data/load",
-    decoders = StringDecoder.class,
-    encoders = JsonEncoder.class)
+@ServerEndpoint(value = "/bulk-data/load", decoders = StringDecoder.class, encoders = JsonEncoder.class)
 public class LoadBulkDataWebSocket extends BulkDataWebSocket
-  implements BlockUpgradeIfReadOnly
-{
+    implements BlockUpgradeIfReadOnly {
   /**
    * The data source to assign to the records loaded unless there is another
-   * mapping that supercedes this one.
+   * mapping that supersedes this one.
    */
   protected String dataSource;
 
   /**
    * The JSON string mapping specific data sources to alternate data source
-   * names.  A mapping from empty-string is used for mapping records with no
+   * names. A mapping from empty-string is used for mapping records with no
    * data source specified.
    */
   protected String mapDataSources;
@@ -60,8 +57,7 @@ public class LoadBulkDataWebSocket extends BulkDataWebSocket
 
   @Override
   public void onOpen(Session session)
-      throws IOException, IllegalArgumentException
-  {
+      throws IOException, IllegalArgumentException {
     super.onOpen(session);
 
     // get the other query parameters
@@ -98,23 +94,23 @@ public class LoadBulkDataWebSocket extends BulkDataWebSocket
    * Implemented to load the records once the thread is started.
    */
   protected void doRun() {
-    SzApiProvider provider  = this.getApiProvider();
+    SzApiProvider provider = this.getApiProvider();
 
     this.loadBulkRecords(provider,
-                         this.timers,
-                         this.dataSource,
-                         this.mapDataSources,
-                         this.mapDataSourceList,
-                         this.loadId,
-                         this.maxFailures,
-                         this.mediaType,
-                         this.pipedInputStream,
-                         null,
-                         this.uriInfo,
-                         this.progressPeriod,
-                         null,
-                         null,
-                         this.session);
+        this.timers,
+        this.dataSource,
+        this.mapDataSources,
+        this.mapDataSourceList,
+        this.loadId,
+        this.maxFailures,
+        this.mediaType,
+        this.pipedInputStream,
+        null,
+        this.uriInfo,
+        this.progressPeriod,
+        null,
+        null,
+        this.session);
 
     // complete the run
     this.completeRun();

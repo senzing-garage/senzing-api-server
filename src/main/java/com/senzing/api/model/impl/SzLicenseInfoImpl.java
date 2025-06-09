@@ -16,7 +16,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
   private String customer = null;
 
   /**
-   * The constract associated with the license.
+   * The contract associated with the license.
    */
   private String contract = null;
 
@@ -38,17 +38,13 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
   /**
    * The issuance date associated with the license.
    */
-  @JsonFormat(shape   = JsonFormat.Shape.STRING,
-              pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-              locale  = "en_GB")
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", locale = "en_GB")
   private Date issuanceDate = null;
 
   /**
    * The expiration date associated with the license.
    */
-  @JsonFormat(shape   = JsonFormat.Shape.STRING,
-              pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-              locale  = "en_GB")
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", locale = "en_GB")
   private Date expirationDate = null;
 
   /**
@@ -134,7 +130,7 @@ public class SzLicenseInfoImpl implements SzLicenseInfo {
   }
 
   /**
-   * Sets the license level associated with the licenese.
+   * Sets the license level associated with the license.
    *
    * @param licenseLevel The license level associated with the license.
    */

@@ -1,13 +1,9 @@
 # senzing-api-server
 
-If you are beginning your journey with
-[Senzing](https://senzing.com/),
-please start with
-[Senzing Quick Start guides](https://docs.senzing.com/quickstart/).
+If you are beginning your journey with [Senzing],
+please start with [Senzing Quick Start guides].
 
-You are in the
-[Senzing Garage](https://github.com/senzing-garage)
-where projects are "tinkered" on.
+You are in the [Senzing Garage] where projects are "tinkered" on.
 Although this GitHub repository may help you understand an approach to using Senzing,
 it's not considered to be "production ready" and is not considered to be part of the Senzing product.
 Heck, it may not even be appropriate for your application of Senzing!
@@ -16,25 +12,24 @@ Heck, it may not even be appropriate for your application of Senzing!
 
 The Senzing Rest API Server implemented in Java.
 
-The [Senzing API OAS specification](http://editor.swagger.io/?url=https://raw.githubusercontent.com/Senzing/senzing-rest-api/main/senzing-rest-api.yaml)
-documents the available API methods, their parameters and the response formats.
+The [Senzing API OAS specification] documents the available API methods, their parameters and the response formats.
 
 ### Contents
 
-1. [Demonstrate using Command Line](#demonstrate-using-command-line)
-    1. [Dependencies](#dependencies)
-    1. [Building](#building)
-    1. [Running](#running)
-    1. [Running with SSL](#running-with-ssl)
-1. [Demonstrate using Docker](#demonstrate-using-docker)
-    1. [Expectations for docker](#expectations-for-docker)
-    1. [Configuration](#configuration)
-    1. [External database](#external-database)
-    1. [Database support](#database-support)
-    1. [Run docker container](#run-docker-container)
-    1. [Test docker container](#test-docker-container)
-1. [License](#license)
-1. [References](#references)
+1. [Demonstrate using Command Line]
+   1. [Dependencies]
+   1. [Building]
+   1. [Running]
+   1. [Running with SSL]
+1. [Demonstrate using Docker]
+   1. [Expectations for docker]
+   1. [Configuration]
+   1. [External database]
+   1. [Database support]
+   1. [Run docker container]
+   1. [Test docker container]
+1. [License]
+1. [References]
 
 ### Legend
 
@@ -52,35 +47,35 @@ To build the Senzing REST API Server you will need Apache Maven (recommend versi
 as well as OpenJDK version 11.0.x (recommend version 11.0.6+10 or later).
 
 You will also need the Senzing product installation to run the Senzing REST API Server,
-but you should not need it to build the server.  The Senzing REST API Server should
-build (including running of auto tests) without Senzing installed.  The notable exception
+but you should not need it to build the server. The Senzing REST API Server should
+build (including running of auto tests) without Senzing installed. The notable exception
 to that rule is if you want to run the auto tests as end-to-end (E2E) tests using a live
 Senzing product installation rather than cached test data (more on that below).
 
-1. Setup your environment.  As previously stated, the API's rely on native libraries and
+1. Setup your environment. As previously stated, the API's rely on native libraries and
    the environment must be properly setup to find those libraries:
 
-    1. Linux
+   1. Linux
 
-        ```console
-        export SENZING_G2_DIR=/opt/senzing/g2
+      ```console
+      export SENZING_G2_DIR=/opt/senzing/g2
 
-        export LD_LIBRARY_PATH=${SENZING_G2_DIR}/lib:${SENZING_G2_DIR}/lib/debian:$LD_LIBRARY_PATH
-        ```
+      export LD_LIBRARY_PATH=${SENZING_G2_DIR}/lib:${SENZING_G2_DIR}/lib/debian:$LD_LIBRARY_PATH
+      ```
 
-    2. Windows
+   2. Windows
 
-        ```console
-        set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
+      ```console
+      set SENZING_G2_DIR="C:\Program Files\Senzing\g2"
 
-        set Path=%SENZING_G2_DIR%\lib;%Path%
-        ```
+      set Path=%SENZING_G2_DIR%\lib;%Path%
+      ```
 
 1. Ensure the OpenAPI specification GIT submodule (senzing-rest-api-specification) is cloned:
 
-    ```console
-    git submodule update --init --recursive
-    ```
+   ```console
+   git submodule update --init --recursive
+   ```
 
 ### Building
 
@@ -104,16 +99,16 @@ Where `[version]` is the version number from the `pom.xml` file.
 
 ### Running
 
-To execute the server you will use `java -jar`.  It assumed that your environment
+To execute the server you will use `java -jar`. It assumed that your environment
 is properly configured as described in the "Dependencies" section above.
 
 To start up you must provide the initialization parameters for the Senzing
-native API.  This is done through **one** of the following options:
+native API. This is done through **one** of the following options:
 
 - `--init-file` (specifies a path to a JSON file containing the init parameters)
 - `--init-json` (specifies the actual JSON text containing the init parameters)
 - `--ini-file` (specifies a path to an INI file containing the init parameters)
-- `--init-env-var`  (specifies an environment variable to read the JSON text from)
+- `--init-env-var` (specifies an environment variable to read the JSON text from)
 
 The `G2CONFIGFILE` path should normally be excluded from the initialization
 parameters to load the default configuration that has been set for the repository.
@@ -124,7 +119,7 @@ configuration changes) and you will be responsible for keeping the configuration
 in sync across multiple processes that may be using it and restarting the Senzing
 REST API Server manually to refresh the configuration.
 
-Other command-line options may be useful to you as well.  Execute
+Other command-line options may be useful to you as well. Execute
 
 ```console
 java -jar target/senzing-api-server-3.3.0.jar --help
@@ -465,21 +460,21 @@ java -jar target/senzing-api-server-[version].jar \
 #### Enabling Basic SSL Support
 
 By default, the Senzing REST API Server will only accept connections on a single
-port that supports HTTP communication.  The default HTTP port is `8250` and can
-be changed via the `--http-port` command-line option.  Alternatively, the
+port that supports HTTP communication. The default HTTP port is `8250` and can
+be changed via the `--http-port` command-line option. Alternatively, the
 Senzing REST API Server can be started with only HTTPS support on a single port
 or with both HTTP and HTTPS support (on separate ports).
 
 In order to enable HTTPS the server's private key must be provided in an
 encrypted PKCS12 key store via the `--key-store` option. The key store is
-decrypted by a password provided via the `--key-store-password` option.  If the
+decrypted by a password provided via the `--key-store-password` option. If the
 key store contains more than one key and a key other than the first should be
-used then specific key alias can be provided via the `--key-alias` option.  By
+used then specific key alias can be provided via the `--key-alias` option. By
 providing the server's private key HTTPS is enabled on the default port of
-`8263`.  The HTTPS port can be configured via the `--https-port` command-line
+`8263`. The HTTPS port can be configured via the `--https-port` command-line
 option.
 
-**NOTE:** By enabling HTTPS, HTTP will be disabled by default.  You can enable
+**NOTE:** By enabling HTTPS, HTTP will be disabled by default. You can enable
 both by explicitly providing the `--http-port` option as well.
 
 Let's look at some examples for enabling HTTPS with a self-signed certificate.
@@ -511,7 +506,7 @@ Let's look at some examples for enabling HTTPS with a self-signed certificate.
              --key-alias sz-api-server
    ```
 
-1. Now let's test it with `curl`.  Keep in mind that our certificate is
+1. Now let's test it with `curl`. Keep in mind that our certificate is
    self-signed, so we need to use the `-k` option with curl so it does not
    reject the self-signed certificate:
 
@@ -548,13 +543,13 @@ Let's look at some examples for enabling HTTPS with a self-signed certificate.
 
 In addition to supporting HTTPS on the server, you can also configure the server
 to only accept connections from clients communicating with specific SSL
-certificates.  If SSL Client Authentication is configured then HTTP support
+certificates. If SSL Client Authentication is configured then HTTP support
 is not allowed because clients cannot be identified over HTTP, thus the
 `--http-port` command-line option is prohibited.
 
 SSL Client authentication is configured by providing an encrypted PKCS12 key
 store containing the public keys of the authorized clients via the
-`--client-key-store` option.  The client key store is decrypted using the
+`--client-key-store` option. The client key store is decrypted using the
 password provided by the `--client-key-store-password` option.
 
 Let's look at some examples for enabling SSL client authentication with a
@@ -563,8 +558,8 @@ self-signed certificate.
 ##### Example with Java KeyTool for SSL Client Authentication
 
 1. We will assume a single authorized client certificate for our example
-   purposes.  So first, let's create the client key and certificate for the
-   client to use.  **NOTE:** you will be prompted to provide the 7 fields for
+   purposes. So first, let's create the client key and certificate for the
+   client to use. **NOTE:** you will be prompted to provide the 7 fields for
    the Distinguished Name ("DN") for the certificate being generated.
 
    ```console
@@ -636,165 +631,157 @@ self-signed certificate.
 - **Space:** This repository and demonstration require 6 GB free disk space.
 - **Time:** Budget 40 minutes to get the demonstration up-and-running, depending on CPU and network speeds.
 - **Background knowledge:** This repository assumes a working knowledge of:
-  - [Docker](https://github.com/senzing-garage/knowledge-base/blob/main/WHATIS/docker.md)
+  - [Docker]
 
 ### Configuration
 
 Configuration values specified by environment variable or command line parameter.
 
-- **[SENZING_API_SERVER_BIND_ADDR](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_bind_addr)**
-- **[SENZING_API_SERVER_PORT](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_port)**
-- **[SENZING_API_SERVER_ENABLE_ADMIN](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_enable_admin)**
-- **[SENZING_API_SERVER_READ_ONLY](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_read_only)**
-- **[SENZING_API_SERVER_CONCURRENCY](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_concurrency)**
-- **[SENZING_API_SERVER_ALLOWED_ORIGINS](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_allowed_origins)**
-- **[SENZING_API_SERVER_MODULE_NAME](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_module_name)**
-- **[SENZING_API_SERVER_INI_FILE](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_ini_file)**
-- **[SENZING_API_SERVER_INIT_FILE](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_init_file)**
-- **[SENZING_API_SERVER_INIT_ENV_VAR](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_init_env_var)**
-- **[SENZING_API_SERVER_INIT_JSON](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_init_json)**
-- **[SENZING_API_SERVER_CONFIG_ID](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_config_id)**
-- **[SENZING_API_SERVER_AUTO_REFRESH_PERIOD](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_auto_refresh_period)**
-- **[SENZING_API_SERVER_STATS_INTERVAL](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_stats_interval)**
-- **[SENZING_API_SERVER_SKIP_STARTUP_PERF](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_skip_startup_perf)**
-- **[SENZING_API_SERVER_VERBOSE](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_verbose)**
-- **[SENZING_API_SERVER_QUIET](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_quiet)**
-- **[SENZING_API_SERVER_MONITOR_FILE](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_monitor_file)**
-- **[SENZING_SQS_INFO_QUEUE_URL](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_sqs_info_queue_url)**
-- **[SENZING_RABBITMQ_INFO_HOST](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_host)**
-- **[SENZING_RABBITMQ_HOST](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_host)**
-- **[SENZING_RABBITMQ_INFO_PORT](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_port)**
-- **[SENZING_RABBITMQ_PORT](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_port)**
-- **[SENZING_RABBITMQ_INFO_USERNAME](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_username)**
-- **[SENZING_RABBITMQ_USERNAME](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_username)**
-- **[SENZING_RABBITMQ_INFO_PASSWORD](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_password)**
-- **[SENZING_RABBITMQ_PASSWORD](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_password)**
-- **[SENZING_RABBITMQ_INFO_VIRTUAL_HOST](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_virtual_host)**
-- **[SENZING_RABBITMQ_VIRTUAL_HOST](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_virtual_host)**
-- **[SENZING_RABBITMQ_INFO_EXCHANGE](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_exchange)**
-- **[SENZING_RABBITMQ_EXCHANGE](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_exchange)**
-- **[SENZING_RABBITMQ_INFO_ROUTING_KEY](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_routing_key)**
-- **[SENZING_KAFKA_INFO_BOOTSTRAP_SERVER](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_bootstrap_server)**
-- **[SENZING_KAFKA_BOOTSTRAP_SERVER](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_bootstrap_server)**
-- **[SENZING_KAFKA_INFO_GROUP](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_kafka_info_group)**
-- **[SENZING_KAFKA_GROUP](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_kafka_group)**
-- **[SENZING_KAFKA_INFO_TOPIC](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_kafka_info_topic)**
-- **[SENZING_DATABASE_URL](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_database_url)**
-- **[SENZING_DEBUG](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_debug)**
-- **[SENZING_G2_DIR](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_g2_dir)**
-- **[SENZING_NETWORK](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_network)**
-- **[SENZING_RUNAS_USER](https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_runas_user)**
+- **[SENZING_API_SERVER_BIND_ADDR]**
+- **[SENZING_API_SERVER_PORT]**
+- **[SENZING_API_SERVER_ENABLE_ADMIN]**
+- **[SENZING_API_SERVER_READ_ONLY]**
+- **[SENZING_API_SERVER_CONCURRENCY]**
+- **[SENZING_API_SERVER_ALLOWED_ORIGINS]**
+- **[SENZING_API_SERVER_MODULE_NAME]**
+- **[SENZING_API_SERVER_INI_FILE]**
+- **[SENZING_API_SERVER_INIT_FILE]**
+- **[SENZING_API_SERVER_INIT_ENV_VAR]**
+- **[SENZING_API_SERVER_INIT_JSON]**
+- **[SENZING_API_SERVER_CONFIG_ID]**
+- **[SENZING_API_SERVER_AUTO_REFRESH_PERIOD]**
+- **[SENZING_API_SERVER_STATS_INTERVAL]**
+- **[SENZING_API_SERVER_SKIP_STARTUP_PERF]**
+- **[SENZING_API_SERVER_VERBOSE]**
+- **[SENZING_API_SERVER_QUIET]**
+- **[SENZING_API_SERVER_MONITOR_FILE]**
+- **[SENZING_SQS_INFO_QUEUE_URL]**
+- **[SENZING_RABBITMQ_INFO_HOST]**
+- **[SENZING_RABBITMQ_HOST]**
+- **[SENZING_RABBITMQ_INFO_PORT]**
+- **[SENZING_RABBITMQ_PORT]**
+- **[SENZING_RABBITMQ_INFO_USERNAME]**
+- **[SENZING_RABBITMQ_USERNAME]**
+- **[SENZING_RABBITMQ_INFO_PASSWORD]**
+- **[SENZING_RABBITMQ_PASSWORD]**
+- **[SENZING_RABBITMQ_INFO_VIRTUAL_HOST]**
+- **[SENZING_RABBITMQ_VIRTUAL_HOST]**
+- **[SENZING_RABBITMQ_INFO_EXCHANGE]**
+- **[SENZING_RABBITMQ_EXCHANGE]**
+- **[SENZING_RABBITMQ_INFO_ROUTING_KEY]**
+- **[SENZING_KAFKA_INFO_BOOTSTRAP_SERVER]**
+- **[SENZING_KAFKA_BOOTSTRAP_SERVER]**
+- **[SENZING_KAFKA_INFO_GROUP]**
+- **[SENZING_KAFKA_GROUP]**
+- **[SENZING_KAFKA_INFO_TOPIC]**
+- **[SENZING_DATABASE_URL]**
+- **[SENZING_DEBUG]**
+- **[SENZING_G2_DIR]**
+- **[SENZING_NETWORK]**
+- **[SENZING_RUNAS_USER]**
 
 ### External database
 
-:thinking: **Optional:**  Use if storing data in an external database.
+:thinking: **Optional:** Use if storing data in an external database.
 If not specified, the internal SQLite database will be used.
 
 1. :pencil2: Specify database.
    Example:
 
-    ```console
-    export DATABASE_PROTOCOL=postgresql
-    export DATABASE_USERNAME=postgres
-    export DATABASE_PASSWORD=postgres
-    export DATABASE_HOST=senzing-postgresql
-    export DATABASE_PORT=5432
-    export DATABASE_DATABASE=G2
-    ```
+   ```console
+   export DATABASE_PROTOCOL=postgresql
+   export DATABASE_USERNAME=postgres
+   export DATABASE_PASSWORD=postgres
+   export DATABASE_HOST=senzing-postgresql
+   export DATABASE_PORT=5432
+   export DATABASE_DATABASE=G2
+   ```
 
 1. Construct Database URL.
    Example:
 
-    ```console
-    export SENZING_DATABASE_URL="${DATABASE_PROTOCOL}://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DATABASE}"
-    ```
+   ```console
+   export SENZING_DATABASE_URL="${DATABASE_PROTOCOL}://${DATABASE_USERNAME}:${DATABASE_PASSWORD}@${DATABASE_HOST}:${DATABASE_PORT}/${DATABASE_DATABASE}"
+   ```
 
 1. Construct parameter for `docker run`.
    Example:
 
-    ```console
-    export SENZING_DATABASE_URL_PARAMETER="--env SENZING_DATABASE_URL=${SENZING_DATABASE_URL}"
-    ```
+   ```console
+   export SENZING_DATABASE_URL_PARAMETER="--env SENZING_DATABASE_URL=${SENZING_DATABASE_URL}"
+   ```
 
 ### Database support
 
-:thinking: **Optional:**  Some database need additional support.
+:thinking: **Optional:** Some database need additional support.
 For other databases, these steps may be skipped.
 
-1. **Db2:** See
-   [Support Db2](https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/support-db2.md)
-   instructions to set `SENZING_OPT_IBM_DIR_PARAMETER`.
-1. **MS SQL:** See
-   [Support MS SQL](https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/support-mssql.md)
-   instructions to set `SENZING_OPT_MICROSOFT_DIR_PARAMETER`.
+1. **Db2:** See [Support Db2] instructions to set `SENZING_OPT_IBM_DIR_PARAMETER`.
+1. **MS SQL:** See [Support MS SQL] instructions to set `SENZING_OPT_MICROSOFT_DIR_PARAMETER`.
 
 ### Run docker container
 
 1. :pencil2: Set environment variables.
    Example:
 
-    ```console
-    export SENZING_API_SERVER_PORT=8250
-    ```
+   ```console
+   export SENZING_API_SERVER_PORT=8250
+   ```
 
 1. Run docker container.
    Example:
 
-    ```console
-    sudo docker run \
-      --interactive \
-      --publish ${SENZING_API_SERVER_PORT}:8250 \
-      --rm \
-      --tty \
-      ${SENZING_DATABASE_URL_PARAMETER} \
-      ${SENZING_OPT_IBM_DIR_PARAMETER} \
-      ${SENZING_OPT_MICROSOFT_DIR_PARAMETER} \
-      senzing/senzing-api-server \
-        -allowedOrigins "*" \
-        -bindAddr all \
-        -concurrency 10 \
-        -httpPort 8250 \
-        -iniFile /etc/opt/senzing/G2Module.ini
-    ```
+   ```console
+   sudo docker run \
+     --interactive \
+     --publish ${SENZING_API_SERVER_PORT}:8250 \
+     --rm \
+     --tty \
+     ${SENZING_DATABASE_URL_PARAMETER} \
+     ${SENZING_OPT_IBM_DIR_PARAMETER} \
+     ${SENZING_OPT_MICROSOFT_DIR_PARAMETER} \
+     senzing/senzing-api-server \
+       -allowedOrigins "*" \
+       -bindAddr all \
+       -concurrency 10 \
+       -httpPort 8250 \
+       -iniFile /etc/opt/senzing/G2Module.ini
+   ```
 
 ### Test Docker container
 
 1. Wait for the following message in the terminal showing docker log.
 
-    ```console
-    Started Senzing REST API Server on port 8250.
+   ```console
+   Started Senzing REST API Server on port 8250.
 
-    Server running at:
+   Server running at:
 
-    http://0.0.0.0/0.0.0.0:8250/
-    ```
+   http://0.0.0.0/0.0.0.0:8250/
+   ```
 
 1. Test Senzing REST API server.
-   *Note:* port 8250 on the localhost has been mapped to port 8250 in the docker container.
+   _Note:_ port 8250 on the localhost has been mapped to port 8250 in the docker container.
    See `SENZING_API_SERVER_PORT` definition.
    Example:
 
-    ```console
-    export SENZING_API_SERVICE=http://localhost:8250
+   ```console
+   export SENZING_API_SERVICE=http://localhost:8250
 
-    curl -X GET ${SENZING_API_SERVICE}/heartbeat
-    curl -X GET ${SENZING_API_SERVICE}/license
-    curl -X GET ${SENZING_API_SERVICE}/entities/1
-    ```
+   curl -X GET ${SENZING_API_SERVICE}/heartbeat
+   curl -X GET ${SENZING_API_SERVICE}/license
+   curl -X GET ${SENZING_API_SERVICE}/entities/1
+   ```
 
 1. To exit, press `control-c` in terminal showing docker log.
 
 ## License
 
-View
-[license information](https://senzing.com/end-user-license-agreement/)
-for the software container in this Docker image.
+View [license information] for the software container in this Docker image.
 Note that this license does not permit further distribution.
 
 This Docker image may also contain software from the
-[Senzing GitHub community](https://github.com/Senzing/)
-under the
-[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0).
+[Senzing GitHub community] under the [Apache License 2.0].
 
 Further, as with all Docker images,
 this likely also contains other software which may be under other licenses
@@ -807,9 +794,81 @@ with any relevant licenses for all software contained within.
 
 ## References
 
-1. [Development](docs/development.md)
-1. [Errors](docs/errors.md)
-1. [Examples](docs/examples.md)
+1. [Development]
+1. [Errors]
+1. [Examples]
 1. Related artifacts:
-     1. [DockerHub](https://hub.docker.com/r/senzing/senzing-api-server)
-     1. [Helm Chart](https://github.com/senzing-garage/charts/tree/main/charts/senzing-api-server)
+   1. [DockerHub]
+   1. [Helm Chart]
+
+[Apache License 2.0]: https://www.apache.org/licenses/LICENSE-2.0
+[Building]: #building
+[Configuration]: #configuration
+[Database support]: #database-support
+[Demonstrate using Command Line]: #demonstrate-using-command-line
+[Demonstrate using Docker]: #demonstrate-using-docker
+[Dependencies]: #dependencies
+[Development]: docs/development.md
+[Docker]: https://github.com/senzing-garage/knowledge-base/blob/main/WHATIS/docker.md
+[DockerHub]: https://hub.docker.com/r/senzing/senzing-api-server
+[Errors]: docs/errors.md
+[Examples]: docs/examples.md
+[Expectations for docker]: #expectations-for-docker
+[External database]: #external-database
+[Helm Chart]: https://github.com/senzing-garage/charts/tree/main/charts/senzing-api-server
+[license information]: https://senzing.com/end-user-license-agreement/
+[License]: #license
+[References]: #references
+[Run docker container]: #run-docker-container
+[Running with SSL]: #running-with-ssl
+[Running]: #running
+[Senzing API OAS specification]: http://editor.swagger.io/?url=https://raw.githubusercontent.com/Senzing/senzing-rest-api/main/senzing-rest-api.yaml
+[Senzing Garage]: https://github.com/senzing-garage
+[Senzing GitHub community]: https://github.com/Senzing/
+[Senzing Quick Start guides]: https://docs.senzing.com/quickstart/
+[SENZING_API_SERVER_ALLOWED_ORIGINS]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_allowed_origins
+[SENZING_API_SERVER_AUTO_REFRESH_PERIOD]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_auto_refresh_period
+[SENZING_API_SERVER_BIND_ADDR]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_bind_addr
+[SENZING_API_SERVER_CONCURRENCY]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_concurrency
+[SENZING_API_SERVER_CONFIG_ID]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_config_id
+[SENZING_API_SERVER_ENABLE_ADMIN]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_enable_admin
+[SENZING_API_SERVER_INI_FILE]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_ini_file
+[SENZING_API_SERVER_INIT_ENV_VAR]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_init_env_var
+[SENZING_API_SERVER_INIT_FILE]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_init_file
+[SENZING_API_SERVER_INIT_JSON]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_init_json
+[SENZING_API_SERVER_MODULE_NAME]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_module_name
+[SENZING_API_SERVER_MONITOR_FILE]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_monitor_file
+[SENZING_API_SERVER_PORT]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_port
+[SENZING_API_SERVER_QUIET]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_quiet
+[SENZING_API_SERVER_READ_ONLY]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_read_only
+[SENZING_API_SERVER_SKIP_STARTUP_PERF]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_skip_startup_perf
+[SENZING_API_SERVER_STATS_INTERVAL]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_stats_interval
+[SENZING_API_SERVER_VERBOSE]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_api_server_verbose
+[SENZING_DATABASE_URL]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_database_url
+[SENZING_DEBUG]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_debug
+[SENZING_G2_DIR]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_g2_dir
+[SENZING_KAFKA_BOOTSTRAP_SERVER]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_bootstrap_server
+[SENZING_KAFKA_GROUP]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_kafka_group
+[SENZING_KAFKA_INFO_BOOTSTRAP_SERVER]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_bootstrap_server
+[SENZING_KAFKA_INFO_GROUP]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_kafka_info_group
+[SENZING_KAFKA_INFO_TOPIC]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_kafka_info_topic
+[SENZING_NETWORK]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_network
+[SENZING_RABBITMQ_EXCHANGE]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_exchange
+[SENZING_RABBITMQ_HOST]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_host
+[SENZING_RABBITMQ_INFO_EXCHANGE]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_exchange
+[SENZING_RABBITMQ_INFO_HOST]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_host
+[SENZING_RABBITMQ_INFO_PASSWORD]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_password
+[SENZING_RABBITMQ_INFO_PORT]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_port
+[SENZING_RABBITMQ_INFO_ROUTING_KEY]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_routing_key
+[SENZING_RABBITMQ_INFO_USERNAME]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_username
+[SENZING_RABBITMQ_INFO_VIRTUAL_HOST]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_info_virtual_host
+[SENZING_RABBITMQ_PASSWORD]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_password
+[SENZING_RABBITMQ_PORT]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_port
+[SENZING_RABBITMQ_USERNAME]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_username
+[SENZING_RABBITMQ_VIRTUAL_HOST]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_rabbitmq_virtual_host
+[SENZING_RUNAS_USER]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_runas_user
+[SENZING_SQS_INFO_QUEUE_URL]: https://github.com/senzing-garage/knowledge-base/blob/main/lists/environment-variables.md#senzing_sqs_info_queue_url
+[Senzing]: https://senzing.com/
+[Support Db2]: https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/support-db2.md
+[Support MS SQL]: https://github.com/senzing-garage/knowledge-base/blob/main/HOWTO/support-mssql.md
+[Test docker container]: #test-docker-container

@@ -40,16 +40,16 @@ public class NativeApiFactory {
   }
 
   /**
-   * Installs the {@link NativeApiProvider} to be used by the factory.  If
+   * Installs the {@link NativeApiProvider} to be used by the factory. If
    * none is installed then the default mechanism of constructing new
-   * raw API objects is used.  This returns an {@link AccessToken} to be
+   * raw API objects is used. This returns an {@link AccessToken} to be
    * used for uninstalling the provider later.
    *
    * @param provider The non-null {@link NativeApiProvider} to install.
    *
    * @return The {@link AccessToken} to be used for uninstalling the provider.
    *
-   * @throws NullPointerException If the specified provider is <tt>null</tt>.
+   * @throws NullPointerException  If the specified provider is <tt>null</tt>.
    *
    * @throws IllegalStateException If a provider is already installed and must
    *                               first be uninstalled.
@@ -60,7 +60,7 @@ public class NativeApiFactory {
       throw new IllegalStateException(
           "A provider is already installed and must first be uninstalled.");
     }
-    api_provider  = provider;
+    api_provider = provider;
     current_token = new AccessToken();
     return current_token;
   }
@@ -77,7 +77,7 @@ public class NativeApiFactory {
 
   /**
    * Uninstalls a previously installed {@link NativeApiProvider} using the
-   * specified {@link AccessToken} to authorize the operation.  If no provider
+   * specified {@link AccessToken} to authorize the operation. If no provider
    * has been installed then this method does nothing.
    *
    * @param token The {@link AccessToken} that was returned when installing the
@@ -94,10 +94,10 @@ public class NativeApiFactory {
     if (!current_token.equals(token)) {
       throw new IllegalArgumentException(
           "The specified access token is not the expected access token to "
-          + "authorize unintalling the provider.");
+              + "authorize uninstalling the provider.");
     }
     current_token = null;
-    api_provider  = null;
+    api_provider = null;
   }
 
   /***
@@ -112,7 +112,7 @@ public class NativeApiFactory {
   }
 
   /**
-   * Creates a new instance of {@link G2Engine} to use.  If a
+   * Creates a new instance of {@link G2Engine} to use. If a
    * {@link NativeApiProvider} is installed then it is used to create
    * the instance, otherwise a new instance of {@link G2JNI} is
    * constructed and returned.
@@ -134,7 +134,7 @@ public class NativeApiFactory {
   }
 
   /**
-   * Provides a new instance of {@link G2Config} to use.  If a
+   * Provides a new instance of {@link G2Config} to use. If a
    * {@link NativeApiProvider} is installed then it is used to create
    * the instance, otherwise a new instance of {@link G2ConfigJNI} is
    * constructed and returned.
@@ -156,7 +156,7 @@ public class NativeApiFactory {
   }
 
   /**
-   * Provides a new instance of {@link G2Product} to use.  If a
+   * Provides a new instance of {@link G2Product} to use. If a
    * {@link NativeApiProvider} is installed then it is used to create
    * the instance, otherwise a new instance of {@link G2ProductJNI} is
    * constructed and returned.
@@ -178,7 +178,7 @@ public class NativeApiFactory {
   }
 
   /**
-   * Provides a new instance of {@link G2ConfigMgr} to use.  If a
+   * Provides a new instance of {@link G2ConfigMgr} to use. If a
    * {@link NativeApiProvider} is installed then it is used to create
    * the instance, otherwise a new instance of {@link G2ConfigMgrJNI} is
    * constructed and returned.
@@ -201,7 +201,7 @@ public class NativeApiFactory {
   }
 
   /**
-   * Provides a new instance of {@link G2Diagnostic} to use.  If a
+   * Provides a new instance of {@link G2Diagnostic} to use. If a
    * {@link NativeApiProvider} is installed then it is used to create
    * the instance, otherwise a new instance of {@link G2DiagnosticJNI} is
    * constructed and returned.

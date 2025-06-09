@@ -34,7 +34,7 @@ public class SzAttributeTypeImpl implements SzAttributeType {
   private SzAttributeClass attributeClass;
 
   /**
-   * The feature type to which this attribute type belongs (if any).  If this
+   * The feature type to which this attribute type belongs (if any). If this
    * is <tt>null</tt> then it is a stand-alone attribute.
    */
   private String featureType;
@@ -51,8 +51,8 @@ public class SzAttributeTypeImpl implements SzAttributeType {
 
   /**
    * Whether or not an attribute type that is typically generated internally
-   * based on other attribute types.  These are not commonly used by the user
-   * except in some rare cases.  Examples include pre-hashed versions of
+   * based on other attribute types. These are not commonly used by the user
+   * except in some rare cases. Examples include pre-hashed versions of
    * attributes that are hashed.
    */
   private boolean internal;
@@ -61,13 +61,13 @@ public class SzAttributeTypeImpl implements SzAttributeType {
    * Default constructor.
    */
   public SzAttributeTypeImpl() {
-    this.attributeCode    = null;
-    this.defaultValue     = null;
-    this.necessity        = null;
-    this.attributeClass   = null;
-    this.featureType      = null;
-    this.advanced         = false;
-    this.internal         = false;
+    this.attributeCode = null;
+    this.defaultValue = null;
+    this.necessity = null;
+    this.attributeClass = null;
+    this.featureType = null;
+    this.advanced = false;
+    this.internal = false;
   }
 
   /**
@@ -119,7 +119,7 @@ public class SzAttributeTypeImpl implements SzAttributeType {
    * Gets the {@linkplain SzAttributeNecessity necessity} for an attribute
    * of this type with the associated feature type.
    *
-   * @return The {@link SzAttributeNecessity} describing the neccessity.
+   * @return The {@link SzAttributeNecessity} describing the necessity.
    */
   @Override
   public SzAttributeNecessity getNecessity() {
@@ -131,7 +131,7 @@ public class SzAttributeTypeImpl implements SzAttributeType {
    * of this type with the associated feature type.
    *
    * @param necessity The {@link SzAttributeNecessity} describing the
-   *                  neccessity.
+   *                  necessity.
    */
   @Override
   public void setNecessity(SzAttributeNecessity necessity) {
@@ -164,7 +164,7 @@ public class SzAttributeTypeImpl implements SzAttributeType {
 
   /**
    * Gets the name of feature type to which this attribute type belongs (if
-   * any).  If <tt>null</tt> is returned, then the attribute type is stand-alone
+   * any). If <tt>null</tt> is returned, then the attribute type is stand-alone
    * and not part of a feature type.
    *
    * @return The name of the feature type to which this attribute type belongs,
@@ -177,7 +177,7 @@ public class SzAttributeTypeImpl implements SzAttributeType {
 
   /**
    * Sets the name of feature type to which this attribute type belongs (if
-   * any).  If <tt>null</tt> is specified, then the attribute type is
+   * any). If <tt>null</tt> is specified, then the attribute type is
    * stand-alone and not part of a feature type.
    *
    * @param featureType The name of the feature type to which this attribute
@@ -223,8 +223,8 @@ public class SzAttributeTypeImpl implements SzAttributeType {
 
   /**
    * Checks whether or not an attribute type that is typically generated
-   * internally based on other attribute types.  These are not commonly used by
-   * the user except in some rare cases.  Examples include pre-hashed versions
+   * internally based on other attribute types. These are not commonly used by
+   * the user except in some rare cases. Examples include pre-hashed versions
    * of attributes that are hashed.
    *
    * @return <tt>true</tt> if this attribute type is internal, otherwise
@@ -237,8 +237,8 @@ public class SzAttributeTypeImpl implements SzAttributeType {
 
   /**
    * Sets whether or not an attribute type that is typically generated
-   * internally based on other attribute types.  These are not commonly used by
-   * the user except in some rare cases.  Examples include pre-hashed versions
+   * internally based on other attribute types. These are not commonly used by
+   * the user except in some rare cases. Examples include pre-hashed versions
    * of attributes that are hashed.
    *
    * @param internal <tt>true</tt> if this attribute type is internal,

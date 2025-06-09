@@ -32,7 +32,7 @@ class Reinitializer extends Thread {
   private SzApiServer apiServer;
 
   /**
-   * Flag indciating if the thread should complete or continue monitoring.
+   * Flag indicating if the thread should complete or continue monitoring.
    */
   private boolean complete;
 
@@ -46,17 +46,16 @@ class Reinitializer extends Thread {
    * references.
    *
    * @param configMgrApi The {@link G2ConfigMgr} API.
-   * @param engineApi The {@link G2Engine} API.
-   * @param apiServer The {@link SzApiServer} to notify of reinitialization.
+   * @param engineApi    The {@link G2Engine} API.
+   * @param apiServer    The {@link SzApiServer} to notify of reinitialization.
    */
-  Reinitializer(G2ConfigMgr       configMgrApi,
-                G2Engine          engineApi,
-                SzApiServer       apiServer)
-  {
-    this.configMgrApi     = configMgrApi;
-    this.engineApi        = engineApi;
-    this.apiServer        = apiServer;
-    this.complete         = false;
+  Reinitializer(G2ConfigMgr configMgrApi,
+      G2Engine engineApi,
+      SzApiServer apiServer) {
+    this.configMgrApi = configMgrApi;
+    this.engineApi = engineApi;
+    this.apiServer = apiServer;
+    this.complete = false;
     this.refreshRequested = false;
     this.start();
   }
@@ -65,13 +64,15 @@ class Reinitializer extends Thread {
    * Signals that this thread should complete execution.
    */
   synchronized void complete() {
-    if (this.complete) return;
+    if (this.complete)
+      return;
     this.complete = true;
     this.notifyAll();
   }
 
   /**
    * Checks if this thread has received the completion signal.
+   * 
    * @return <tt>true</tt> if the completion signal has been received, otherwise
    *         <tt>false</tt>.
    */
@@ -95,7 +96,8 @@ class Reinitializer extends Thread {
       }
 
       // check if complete
-      if (this.isComplete()) return;
+      if (this.isComplete())
+        return;
 
       // flag the request
       this.refreshRequested = true;
@@ -116,6 +118,7 @@ class Reinitializer extends Thread {
 
   /**
    * Checks if a refresh has been requested.
+   * 
    * @return <tt>true</tt> if a refresh has been requested, otherwise
    *         <tt>false</tt>
    */
@@ -132,7 +135,7 @@ class Reinitializer extends Thread {
   }
 
   /**
-   * The run method implemented to periodially check if the active configuration
+   * The run method implemented to periodically check if the active configuration
    * ID differs from the default configuration ID and if so, reinitializes.
    */
   public void run() {

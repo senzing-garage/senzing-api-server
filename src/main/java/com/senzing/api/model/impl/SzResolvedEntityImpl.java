@@ -12,7 +12,7 @@ import java.util.function.Function;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 /**
- * Provides a default impleemntation of {@link SzResolvedEntity}.
+ * Provides a default implementation of {@link SzResolvedEntity}.
  */
 @JsonDeserialize
 public class SzResolvedEntityImpl implements SzResolvedEntity {
@@ -101,22 +101,22 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
    * Default constructor.
    */
   public SzResolvedEntityImpl() {
-    this.entityId             = null;
-    this.entityName           = null;
-    this.bestName             = null;
-    this.recordSummaries      = new LinkedList<>();
-    this.addressData          = new LinkedList<>();
-    this.characteristicData   = new LinkedList<>();
-    this.identifierData       = new LinkedList<>();
-    this.nameData             = new LinkedList<>();
-    this.phoneData            = new LinkedList<>();
-    this.relationshipData     = new LinkedList<>();
-    this.otherData            = new LinkedList<>();
-    this.features             = new LinkedHashMap<>();
+    this.entityId = null;
+    this.entityName = null;
+    this.bestName = null;
+    this.recordSummaries = new LinkedList<>();
+    this.addressData = new LinkedList<>();
+    this.characteristicData = new LinkedList<>();
+    this.identifierData = new LinkedList<>();
+    this.nameData = new LinkedList<>();
+    this.phoneData = new LinkedList<>();
+    this.relationshipData = new LinkedList<>();
+    this.otherData = new LinkedList<>();
+    this.features = new LinkedHashMap<>();
     this.unmodifiableFeatures = new LinkedHashMap<>();
-    this.records              = new LinkedList<>();
-    this.lastSeenTimestamp    = null;
-    this.partial              = true;
+    this.records = new LinkedList<>();
+    this.lastSeenTimestamp = null;
+    this.partial = true;
   }
 
   /**
@@ -203,19 +203,17 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
    * {@inheritDoc}
    */
   @Override
-  public void addRecord(SzMatchedRecord record)
-  {
+  public void addRecord(SzMatchedRecord record) {
     this.records.add(record);
     List<String> recordOtherData = record.getOtherData();
     if (recordOtherData != null) {
-      for (String data: recordOtherData) {
-        if (! this.otherData.contains(data)) {
+      for (String data : recordOtherData) {
+        if (!this.otherData.contains(data)) {
           this.otherData.add(data);
         }
       }
     }
   }
-
 
   /**
    * {@inheritDoc}
@@ -240,8 +238,7 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
    * {@inheritDoc}
    */
   @Override
-  public void addRecordSummary(SzDataSourceRecordSummary summary)
-  {
+  public void addRecordSummary(SzDataSourceRecordSummary summary) {
     this.recordSummaries.add(summary);
   }
 
@@ -349,8 +346,7 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
    * {@inheritDoc}
    */
   @Override
-  public void addNameData(String nameData)
-  {
+  public void addNameData(String nameData) {
     this.nameData.add(nameData);
   }
 
@@ -377,8 +373,7 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
    * {@inheritDoc}
    */
   @Override
-  public void addPhoneData(String phoneData)
-  {
+  public void addPhoneData(String phoneData) {
     this.phoneData.add(phoneData);
   }
 
@@ -405,8 +400,7 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
    * {@inheritDoc}
    */
   @Override
-  public void addRelationshipData(String relationshipData)
-  {
+  public void addRelationshipData(String relationshipData) {
     this.relationshipData.add(relationshipData);
   }
 
@@ -433,8 +427,7 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
    * {@inheritDoc}
    */
   @Override
-  public void addOtherData(String otherData)
-  {
+  public void addOtherData(String otherData) {
     this.otherData.add(otherData);
   }
 
@@ -451,19 +444,17 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
    */
   @Override
   public void setFeatures(
-      Map<String, ? extends Collection<? extends SzEntityFeature>> featureMap)
-  {
+      Map<String, ? extends Collection<? extends SzEntityFeature>> featureMap) {
     this.features.clear();
     this.unmodifiableFeatures.clear();
 
     if (featureMap != null) {
       featureMap.entrySet().forEach(entry -> {
-        String                                featureName = entry.getKey();
-        Collection<? extends SzEntityFeature> list        = entry.getValue();
-        List<SzEntityFeature>                 copiedList  = new ArrayList<>(list);
+        String featureName = entry.getKey();
+        Collection<? extends SzEntityFeature> list = entry.getValue();
+        List<SzEntityFeature> copiedList = new ArrayList<>(list);
 
-        List<SzEntityFeature> unmodifiableList
-            = Collections.unmodifiableList(copiedList);
+        List<SzEntityFeature> unmodifiableList = Collections.unmodifiableList(copiedList);
 
         this.features.put(featureName, copiedList);
         this.unmodifiableFeatures.put(featureName, unmodifiableList);
@@ -476,9 +467,8 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
    */
   @Override
   public void setFeatures(
-      Map<String, ? extends Collection<? extends SzEntityFeature>>  featureMap,
-      Function<String, String> featureToAttrClassMapper)
-  {
+      Map<String, ? extends Collection<? extends SzEntityFeature>> featureMap,
+      Function<String, String> featureToAttrClassMapper) {
     this.setFeatures(featureMap);
 
     // clear out the data lists
@@ -488,9 +478,10 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
     this.nameData.clear();
     this.phoneData.clear();
 
-    if (featureMap == null) return;
+    if (featureMap == null)
+      return;
 
-    Function<String,String> mapper = featureToAttrClassMapper;
+    Function<String, String> mapper = featureToAttrClassMapper;
     getDataFields("NAME", featureMap, mapper).forEach((name) -> {
       this.addNameData(name);
     });
@@ -522,12 +513,11 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
    *
    * @param featureName The name of the feature.
    *
-   * @param values The {@link List} of {@link SzEntityFeature} instances
-   *               describing the feature values.
+   * @param values      The {@link List} of {@link SzEntityFeature} instances
+   *                    describing the feature values.
    */
-  public void setFeature(String                                 featureName,
-                         Collection<? extends SzEntityFeature>  values)
-  {
+  public void setFeature(String featureName,
+      Collection<? extends SzEntityFeature> values) {
     List<SzEntityFeature> featureValues = this.features.get(featureName);
 
     if (featureValues != null && (values == null || values.size() == 0)) {
@@ -545,8 +535,7 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
       featureValues.addAll(values);
       this.features.put(featureName, featureValues);
 
-      List<SzEntityFeature> unmodifiableFeatureValues
-          = Collections.unmodifiableList(featureValues);
+      List<SzEntityFeature> unmodifiableFeatureValues = Collections.unmodifiableList(featureValues);
 
       this.unmodifiableFeatures.put(featureName, unmodifiableFeatureValues);
     }
@@ -558,17 +547,16 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
    *
    * @param featureName The name of the feature.
    *
-   * @param value The {@link SzEntityFeature} describing the feature value.
+   * @param value       The {@link SzEntityFeature} describing the feature value.
    */
-  public void addFeature(String featureName, SzEntityFeature value)
-  {
-    if (value == null) return;
+  public void addFeature(String featureName, SzEntityFeature value) {
+    if (value == null)
+      return;
     List<SzEntityFeature> featureValues = this.features.get(featureName);
     if (featureValues == null) {
       featureValues = new LinkedList<>();
 
-      List<SzEntityFeature> unmodifiableFeatureValues
-          = Collections.unmodifiableList(featureValues);
+      List<SzEntityFeature> unmodifiableFeatureValues = Collections.unmodifiableList(featureValues);
 
       this.features.put(featureName, featureValues);
       this.unmodifiableFeatures.put(featureName, unmodifiableFeatureValues);
@@ -622,9 +610,10 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
   /**
    * Utility method to get the "data values" from the features.
    *
-   * @param attrClass The attribute class for which to pull the values.
+   * @param attrClass                The attribute class for which to pull the
+   *                                 values.
    *
-   * @param featureMap The {@link Map} of features.
+   * @param featureMap               The {@link Map} of features.
    *
    * @param featureToAttrClassMapper Mapping function to map feature names to
    *                                 attribute classes.
@@ -632,12 +621,11 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
    * @return The {@link List} of {@link String} values.
    */
   private static List<String> getDataFields(
-      String                                                        attrClass,
-      Map<String, ? extends Collection<? extends SzEntityFeature>>  featureMap,
-      Function<String,String> featureToAttrClassMapper)
-  {
+      String attrClass,
+      Map<String, ? extends Collection<? extends SzEntityFeature>> featureMap,
+      Function<String, String> featureToAttrClassMapper) {
     List<String> dataList = new LinkedList<>();
-    List<String> result   = Collections.unmodifiableList(dataList);
+    List<String> result = Collections.unmodifiableList(dataList);
 
     featureMap.entrySet().forEach(entry -> {
       String ftypeCode = entry.getKey();
@@ -645,11 +633,14 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
 
       String ac = featureToAttrClassMapper.apply(ftypeCode);
 
-      if (ac == null) return;
-      if (!ac.equalsIgnoreCase(attrClass)) return;
+      if (ac == null)
+        return;
+      if (!ac.equalsIgnoreCase(attrClass))
+        return;
 
       String prefix = (attrClass.equalsIgnoreCase(ftypeCode)
-          ? "" : ftypeCode + ": ");
+          ? ""
+          : ftypeCode + ": ");
 
       boolean relLink = ftypeCode.equalsIgnoreCase("REL_LINK");
       values.forEach(val -> {
@@ -677,7 +668,8 @@ public class SzResolvedEntityImpl implements SzResolvedEntity {
         return 1;
       }
       int comp = v2.length() - v1.length();
-      if (comp != 0) return comp;
+      if (comp != 0)
+        return comp;
       return v1.compareTo(v2);
     });
 

@@ -40,7 +40,7 @@ public class JsonArrayBuilderRecordHandler {
   }
 
   /**
-   * Implemnented to do nothing.
+   * Implemented to do nothing.
    */
   public void close() {
     // do nothing

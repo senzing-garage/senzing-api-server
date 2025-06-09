@@ -19,9 +19,9 @@ public class BlockRequestFilter implements Filter {
   /**
    * The init parameter key for specifying the response code to use.
    * The response code defaults to {@value #DEFAULT_RESPONSE_CODE} if not
-   * specified.  The value of this key is {@value #RESPONSE_CODE_PARAM}.
+   * specified. The value of this key is {@value #RESPONSE_CODE_PARAM}.
    * The value specified must fall between 400 and 499 as it must designate
-   * an HTTP client error (usualy 403 is a good alternative to 404).
+   * an HTTP client error (usually 403 is a good alternative to 404).
    */
   public static final String RESPONSE_CODE_PARAM = "RESPONSE_CODE";
 
@@ -32,40 +32,40 @@ public class BlockRequestFilter implements Filter {
   }
 
   public void init(FilterConfig config)
-    throws ServletException {
+      throws ServletException {
     String paramVal = config.getInitParameter(RESPONSE_CODE_PARAM);
     if (paramVal != null) {
       try {
         this.responseCode = Integer.parseInt(paramVal);
         if (this.responseCode < 400 || this.responseCode >= 500) {
           throw new ServletException(
-            "Response code must be designated as a client error 4xx code: "
-            + this.responseCode);
+              "Response code must be designated as a client error 4xx code: "
+                  + this.responseCode);
         }
       } catch (ServletException e) {
         throw e;
-        
+
       } catch (Exception e) {
         throw new ServletException(e);
       }
     }
   }
 
-  public void doFilter(ServletRequest   request,
-                       ServletResponse  response,
-                       FilterChain      filterChain)
-    throws ServletException, IOException {
-      try {
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
+  public void doFilter(ServletRequest request,
+      ServletResponse response,
+      FilterChain filterChain)
+      throws ServletException, IOException {
+    try {
+      HttpServletResponse httpResponse = (HttpServletResponse) response;
 
-        httpResponse.sendError(this.responseCode);
+      httpResponse.sendError(this.responseCode);
 
-      } catch (IOException e) {
-        throw e;
+    } catch (IOException e) {
+      throw e;
 
-      } catch (Exception e) {
-        throw new ServletException(e);
-      }
+    } catch (Exception e) {
+      throw new ServletException(e);
+    }
   }
 
   public void destroy() {

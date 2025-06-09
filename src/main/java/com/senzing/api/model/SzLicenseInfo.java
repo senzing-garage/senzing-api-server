@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Describes a Senzing license.
  */
-@JsonDeserialize(using=SzLicenseInfo.Factory.class)
+@JsonDeserialize(using = SzLicenseInfo.Factory.class)
 public interface SzLicenseInfo {
   /**
    * Gets the customer string associated with the license.
@@ -70,7 +70,7 @@ public interface SzLicenseInfo {
   String getLicenseLevel();
 
   /**
-   * Sets the license level associated with the licenese.
+   * Sets the license level associated with the license.
    *
    * @param licenseLevel The license level associated with the license.
    */
@@ -95,9 +95,7 @@ public interface SzLicenseInfo {
    *
    * @return The issuance date associated with the license.
    */
-  @JsonFormat(shape   = JsonFormat.Shape.STRING,
-      pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-      locale  = "en_GB")
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", locale = "en_GB")
   Date getIssuanceDate();
 
   /**
@@ -113,9 +111,7 @@ public interface SzLicenseInfo {
    *
    * @return The expiration {@link Date} associated with the license.
    */
-  @JsonFormat(shape   = JsonFormat.Shape.STRING,
-      pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
-      locale  = "en_GB")
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", locale = "en_GB")
   Date getExpirationDate();
 
   /**
@@ -156,8 +152,7 @@ public interface SzLicenseInfo {
    * SzLicenseInfo} that produces instances of {@link SzLicenseInfoImpl}.
    */
   class DefaultProvider extends AbstractModelProvider<SzLicenseInfo>
-      implements Provider
-  {
+      implements Provider {
     /**
      * Default constructor.
      */
@@ -176,7 +171,7 @@ public interface SzLicenseInfo {
    */
   class Factory extends ModelFactory<SzLicenseInfo, Provider> {
     /**
-     * Default constructor.  This is public and can only be called after the
+     * Default constructor. This is public and can only be called after the
      * singleton master instance is created as it inherits the same state from
      * the master instance.
      */
@@ -185,8 +180,9 @@ public interface SzLicenseInfo {
     }
 
     /**
-     * Constructs with the default provider.  This constructor is private and
+     * Constructs with the default provider. This constructor is private and
      * is used for the master singleton instance.
+     * 
      * @param defaultProvider The default provider.
      */
     private Factory(Provider defaultProvider) {
@@ -195,10 +191,10 @@ public interface SzLicenseInfo {
 
     /**
      * Creates a new instance of {@link SzLicenseInfo}.
+     * 
      * @return The new instance of {@link SzLicenseInfo}.
      */
-    public SzLicenseInfo create()
-    {
+    public SzLicenseInfo create() {
       return this.getProvider().create();
     }
   }
@@ -212,8 +208,8 @@ public interface SzLicenseInfo {
    * Parses a JSON array of the engine API JSON to create or populate a
    * {@link List} of {@link com.senzing.api.model.SzLicenseInfo} instances.
    *
-   * @param list The {@link List} to populate or <tt>null</tt> if a new
-   *             {@link List} should be created.
+   * @param list      The {@link List} to populate or <tt>null</tt> if a new
+   *                  {@link List} should be created.
    *
    * @param jsonArray The {@link JsonArray} of {@link JsonObject} instances
    *                  to parse from the engine API.
@@ -222,8 +218,7 @@ public interface SzLicenseInfo {
    *         List} of {@link com.senzing.api.model.SzLicenseInfo} instances.
    */
   static List<SzLicenseInfo> parseLicenseInfoList(List<SzLicenseInfo> list,
-                                                  JsonArray           jsonArray)
-  {
+      JsonArray jsonArray) {
     if (list == null) {
       list = new ArrayList<>(jsonArray.size());
     }
@@ -234,28 +229,31 @@ public interface SzLicenseInfo {
   }
 
   /**
-   * Parses the engine API JSON to create an instance of {@link com.senzing.api.model.SzLicenseInfo}.
+   * Parses the engine API JSON to create an instance of
+   * {@link com.senzing.api.model.SzLicenseInfo}.
    *
-   * @param info The {@link com.senzing.api.model.SzLicenseInfo} object to initialize or <tt>null</tt>
-   *             if a new one should be created.
+   * @param info       The {@link com.senzing.api.model.SzLicenseInfo} object to
+   *                   initialize or <tt>null</tt>
+   *                   if a new one should be created.
    *
    * @param jsonObject The {@link JsonObject} to parse from the engine API.
    *
-   * @return The specified (or newly created) {@link com.senzing.api.model.SzLicenseInfo}
+   * @return The specified (or newly created)
+   *         {@link com.senzing.api.model.SzLicenseInfo}
    */
   static SzLicenseInfo parseLicenseInfo(SzLicenseInfo info,
-                                        JsonObject    jsonObject)
-  {
-    if (info == null) info = SzLicenseInfo.FACTORY.create();
+      JsonObject jsonObject) {
+    if (info == null)
+      info = SzLicenseInfo.FACTORY.create();
 
-    String customer     = JsonUtilities.getString(jsonObject, "customer");
-    String contract     = JsonUtilities.getString(jsonObject, "contract");
-    String issueDate    = JsonUtilities.getString(jsonObject, "issueDate");
-    String licenseType  = JsonUtilities.getString(jsonObject, "licenseType");
+    String customer = JsonUtilities.getString(jsonObject, "customer");
+    String contract = JsonUtilities.getString(jsonObject, "contract");
+    String issueDate = JsonUtilities.getString(jsonObject, "issueDate");
+    String licenseType = JsonUtilities.getString(jsonObject, "licenseType");
     String licenseLevel = JsonUtilities.getString(jsonObject, "licenseLevel");
-    String billing      = JsonUtilities.getString(jsonObject, "billing");
-    String expireDate   = JsonUtilities.getString(jsonObject, "expireDate");
-    Long   recordLimit  = JsonUtilities.getLong(jsonObject, "recordLimit");
+    String billing = JsonUtilities.getString(jsonObject, "billing");
+    String expireDate = JsonUtilities.getString(jsonObject, "expireDate");
+    Long recordLimit = JsonUtilities.getLong(jsonObject, "recordLimit");
 
     ZoneId defaultZone = ZoneId.systemDefault();
 
@@ -270,7 +268,7 @@ public interface SzLicenseInfo {
     Date expirationDate = null;
     if (expireDate != null && expireDate.length() > 0) {
       LocalDate localDate = LocalDate.parse(expireDate);
-      LocalDateTime localDateTime = localDate.atTime(23,59,59);
+      LocalDateTime localDateTime = localDate.atTime(23, 59, 59);
       Instant instant = localDateTime.atZone(defaultZone).toInstant();
       expirationDate = Date.from(instant);
     }
