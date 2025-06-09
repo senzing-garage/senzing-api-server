@@ -35,21 +35,19 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 /**
  * Provides an abstract base class for services tests that will create a
  * Senzing repository and startup the API server configured to use that
- * repository.  It also provides hooks to load the repository with data.
+ * repository. It also provides hooks to load the repository with data.
  */
 public abstract class AbstractServiceTest {
   /**
    * Flag to control whether or not debug logging should be enabled when
    * running the tests.
    */
-  public static final Boolean DEBUG_LOGGING
-      = Boolean.valueOf("" + System.getProperty("com.senzing.api.test.debug"));
+  public static final Boolean DEBUG_LOGGING = Boolean.valueOf("" + System.getProperty("com.senzing.api.test.debug"));
 
   /**
    * The replay provider to use.
    */
-  private static final ReplayNativeApiProvider REPLAY_PROVIDER
-      = new ReplayNativeApiProvider();
+  private static final ReplayNativeApiProvider REPLAY_PROVIDER = new ReplayNativeApiProvider();
 
   /**
    * Whether or not the Senzing native API is available and the G2 native
@@ -150,8 +148,7 @@ public abstract class AbstractServiceTest {
   /**
    * The map of default attribute types.
    */
-  private Map<String, SzAttributeType> defaultAttributeTypes
-      = Collections.emptyMap();
+  private Map<String, SzAttributeType> defaultAttributeTypes = Collections.emptyMap();
 
   /**
    * The map of the initial data sources (after the repository is prepared).
@@ -161,8 +158,7 @@ public abstract class AbstractServiceTest {
   /**
    * The map of initial attribute types (after the repository is prepared).
    */
-  private Map<String, SzAttributeType> initialAttributeTypes
-      = Collections.emptyMap();
+  private Map<String, SzAttributeType> initialAttributeTypes = Collections.emptyMap();
 
   /**
    * The access token to deregister the current test suite.
@@ -178,8 +174,8 @@ public abstract class AbstractServiceTest {
    */
   private static File createTempRepoDirectory(String prefix) {
     try {
-      File    targetDir     = null;
-      String  buildDirProp  = System.getProperty("project.build.directory");
+      File targetDir = null;
+      String buildDirProp = System.getProperty("project.build.directory");
       if (buildDirProp != null) {
         targetDir = new File(buildDirProp);
       } else {
@@ -225,7 +221,7 @@ public abstract class AbstractServiceTest {
 
   /**
    * Protected constructor allowing the derived class to specify the
-   * location for the entity respository.
+   * location for the entity repository.
    *
    * @param repoDirectory The directory in which to include the entity
    *                      repository.
@@ -293,7 +289,7 @@ public abstract class AbstractServiceTest {
   }
 
   /**
-   * Creates an absolute URI for the relative URI provided.  For example, if
+   * Creates an absolute URI for the relative URI provided. For example, if
    * <tt>"license"</tt> was passed as the parameter then
    * <tt>"http://localhost:[port]/license"</tt> will be returned where
    * <tt>"[port]"</tt> is the port number of the currently running server, if
@@ -307,18 +303,17 @@ public abstract class AbstractServiceTest {
   }
 
   /**
-   * Creates an absolute URI for the relative URI provided.  For example, if
+   * Creates an absolute URI for the relative URI provided. For example, if
    * <tt>"license"</tt> was passed as the parameter then
    * <tt>"http://localhost:[port]/license"</tt> will be returned where
    * <tt>"[port]"</tt> is the port number of the currently running server, if
    * running, and is <tt>"2080"</tt> (the default port) if not running.
    *
-   * @param basePath The relative URI to build the absolute URI from.
+   * @param basePath    The relative URI to build the absolute URI from.
    * @param queryParams The optional query parameters to append.
    * @return The absolute URI for localhost on the current port.
    */
-  protected String formatServerUri(String basePath, Map<String, ?> queryParams)
-  {
+  protected String formatServerUri(String basePath, Map<String, ?> queryParams) {
     StringBuilder sb = new StringBuilder();
     sb.append("http://localhost:");
     if (this.server != null) {
@@ -350,7 +345,8 @@ public abstract class AbstractServiceTest {
         try {
           key = URLEncoder.encode(key, "UTF-8");
           for (Object val : values) {
-            if (val == null) return;
+            if (val == null)
+              return;
             String textValue = val.toString();
             textValue = URLEncoder.encode(textValue, "UTF-8");
             sb.append((sb.length() == initialLength) ? initialPrefix : "&");
@@ -371,7 +367,7 @@ public abstract class AbstractServiceTest {
    * test or tests to be skipped.
    *
    * @return <tt>true</tt> if the native API's are available, otherwise
-   * <tt>false</tt>
+   *         <tt>false</tt>
    */
   protected boolean assumeNativeApiAvailable() {
     assumeTrue(checkNativeApiAvailable(), NATIVE_API_UNAVAILABLE_MESSAGE);
@@ -391,11 +387,12 @@ public abstract class AbstractServiceTest {
 
   /**
    * This method can typically be called from a method annotated with
-   * "@BeforeClass".  It will create a Senzing entity repository and
+   * "@BeforeClass". It will create a Senzing entity repository and
    * initialize and start the Senzing API Server.
    */
   protected void initializeTestEnvironment() {
-    if (!NATIVE_API_AVAILABLE && !REPLAY_PROVIDER.isReplaying()) return;
+    if (!NATIVE_API_AVAILABLE && !REPLAY_PROVIDER.isReplaying())
+      return;
     String moduleName = this.getModuleName("RepoMgr (create)");
     RepositoryManager.setThreadModuleName(moduleName);
     boolean concluded = false;
@@ -427,8 +424,9 @@ public abstract class AbstractServiceTest {
       e.printStackTrace();
       throw new RuntimeException(e);
     } finally {
-       if (!concluded) RepositoryManager.conclude();
-       RepositoryManager.clearThreadModuleName();
+      if (!concluded)
+        RepositoryManager.conclude();
+      RepositoryManager.clearThreadModuleName();
     }
   }
 
@@ -436,17 +434,15 @@ public abstract class AbstractServiceTest {
    * Process the default config.
    */
   private void processDefaultConfig(Configuration config) {
-    this.defaultDataSources     = new LinkedHashMap<>();
-    this.defaultAttributeTypes  = new LinkedHashMap<>();
+    this.defaultDataSources = new LinkedHashMap<>();
+    this.defaultAttributeTypes = new LinkedHashMap<>();
     this.processConfig(config.getConfigJson(),
-                       this.defaultDataSources,
-                       this.defaultAttributeTypes);
+        this.defaultDataSources,
+        this.defaultAttributeTypes);
 
-    this.defaultDataSources
-        = Collections.unmodifiableMap(this.defaultDataSources);
+    this.defaultDataSources = Collections.unmodifiableMap(this.defaultDataSources);
 
-    this.defaultAttributeTypes
-        = Collections.unmodifiableMap(this.defaultAttributeTypes);
+    this.defaultAttributeTypes = Collections.unmodifiableMap(this.defaultAttributeTypes);
 
     this.bootstrapConfigId = config.getConfigId();
   }
@@ -476,25 +472,23 @@ public abstract class AbstractServiceTest {
       return new Configuration(result.getValue(), configJson);
     });
 
-    this.initialDataSources     = new LinkedHashMap<>();
-    this.initialAttributeTypes  = new LinkedHashMap<>();
+    this.initialDataSources = new LinkedHashMap<>();
+    this.initialAttributeTypes = new LinkedHashMap<>();
 
     this.processConfig(config.getConfigJson(),
-                       this.initialDataSources,
-                       this.initialAttributeTypes);
+        this.initialDataSources,
+        this.initialAttributeTypes);
 
     // make the maps unmodifiable
-    this.initialDataSources
-        = Collections.unmodifiableMap(this.initialDataSources);
-    this.initialAttributeTypes
-        = Collections.unmodifiableMap(this.initialAttributeTypes);
+    this.initialDataSources = Collections.unmodifiableMap(this.initialDataSources);
+    this.initialAttributeTypes = Collections.unmodifiableMap(this.initialAttributeTypes);
 
     this.initialConfigId = config.getConfigId();
 
     // fire the post initialization callback
     this.doPostServerInitialization(this.server,
-                                    config.getConfigId(),
-                                    config.getConfigJson());
+        config.getConfigId(),
+        config.getConfigJson());
   }
 
   /**
@@ -511,13 +505,13 @@ public abstract class AbstractServiceTest {
     if (configMgrApi == null) {
       throw new IllegalStateException(
           "Cannot revert the configuration if the server is pinned to a "
-          + "specific configuration ID.");
+              + "specific configuration ID.");
     }
     int returnCode = configMgrApi.setDefaultConfigID(this.initialConfigId);
     if (returnCode != 0) {
       throw new IllegalStateException(
           formatError("G2ConfigMgr.setDefaultConfigID()",
-                      configMgrApi));
+              configMgrApi));
     }
     Boolean result = this.server.ensureConfigCurrent();
     if (result == null) {
@@ -530,18 +524,17 @@ public abstract class AbstractServiceTest {
    * Process the specified config and puts the data sources and attribute types
    * in the specified maps.
    */
-  private void processConfig(JsonObject                   config,
-                             Map<String, SzDataSource>    dataSourceMap,
-                             Map<String, SzAttributeType> attributeTypeMap)
-  {
+  private void processConfig(JsonObject config,
+      Map<String, SzDataSource> dataSourceMap,
+      Map<String, SzAttributeType> attributeTypeMap) {
     config = config.getJsonObject("G2_CONFIG");
 
     if (dataSourceMap != null) {
       // get the data sources
       JsonArray jsonArray = config.getJsonArray("CFG_DSRC");
       for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
-        String  dataSourceCode  = jsonObject.getString("DSRC_CODE");
-        int     dataSourceId    = jsonObject.getInt("DSRC_ID");
+        String dataSourceCode = jsonObject.getString("DSRC_CODE");
+        int dataSourceId = jsonObject.getInt("DSRC_ID");
         SzDataSource dataSource = SzDataSource.FACTORY.create(dataSourceCode, dataSourceId);
         dataSourceMap.put(dataSource.getDataSourceCode(), dataSource);
       }
@@ -550,8 +543,7 @@ public abstract class AbstractServiceTest {
     if (attributeTypeMap != null) {
       JsonArray jsonArray = config.getJsonArray("CFG_ATTR");
       for (JsonObject jsonObject : jsonArray.getValuesAs(JsonObject.class)) {
-        SzAttributeType attributeType
-            = SzAttributeType.parseAttributeType(null, jsonObject);
+        SzAttributeType attributeType = SzAttributeType.parseAttributeType(null, jsonObject);
         attributeTypeMap.put(attributeType.getAttributeCode(), attributeType);
       }
     }
@@ -569,7 +561,7 @@ public abstract class AbstractServiceTest {
   }
 
   /**
-   * Return the unmodifiable {@link Map} of {@link String} attribute tyoe code
+   * Return the unmodifiable {@link Map} of {@link String} attribute type code
    * keys to {@link SzAttributeType} values describing the attribute types
    * included in the default base template configuration.
    *
@@ -612,21 +604,20 @@ public abstract class AbstractServiceTest {
    * handle any test suite initialization that requires the use of the server
    * or the initial configuration.
    *
-   * @param provider The {@link SzApiProvider}.
+   * @param provider        The {@link SzApiProvider}.
    * @param initialConfigId The initial configuration ID.
-   * @param initialConfig The {@link JsonObject} describing the inital
-   *                      configuration.
+   * @param initialConfig   The {@link JsonObject} describing the initial
+   *                        configuration.
    */
   protected void doPostServerInitialization(SzApiProvider provider,
-                                            long          initialConfigId,
-                                            JsonObject    initialConfig)
-  {
+      long initialConfigId,
+      JsonObject initialConfig) {
     // do nothing
   }
 
   /**
    * This method can typically be called from a method annotated with
-   * "@AfterClass".  It will shutdown the server and delete the entity
+   * "@AfterClass". It will shutdown the server and delete the entity
    * repository that was created for the tests if there are no test failures
    * recorded via {@link #incrementFailureCount()}.
    */
@@ -637,7 +628,7 @@ public abstract class AbstractServiceTest {
 
   /**
    * This method can typically be called from a method annotated with
-   * "@AfterClass".  It will shutdown the server and optionally delete
+   * "@AfterClass". It will shutdown the server and optionally delete
    * the entity repository that was created for the tests.
    *
    * @param deleteRepository <tt>true</tt> if the test repository should be
@@ -645,10 +636,12 @@ public abstract class AbstractServiceTest {
    */
   protected void teardownTestEnvironment(boolean deleteRepository) {
     // destroy the server
-    if (this.server != null) this.destroyServer();
+    if (this.server != null)
+      this.destroyServer();
 
     String preserveProp = System.getProperty("senzing.test.preserve.repos");
-    if (preserveProp != null) preserveProp = preserveProp.trim().toLowerCase();
+    if (preserveProp != null)
+      preserveProp = preserveProp.trim().toLowerCase();
     boolean preserve = (preserveProp != null && preserveProp.equals("true"));
 
     // cleanup the repo directory
@@ -673,7 +666,7 @@ public abstract class AbstractServiceTest {
 
   /**
    * Returns the {@link File} identifying the repository directory used for
-   * the test.  This can be specified in the constructor, but if not specified
+   * the test. This can be specified in the constructor, but if not specified
    * is a newly created temporary directory.
    */
   protected File getRepositoryDirectory() {
@@ -682,7 +675,7 @@ public abstract class AbstractServiceTest {
 
   /**
    * Override this function to prepare the repository by configuring
-   * data sources or loading records.  By default this function does nothing.
+   * data sources or loading records. By default this function does nothing.
    * The repository directory can be obtained via {@link
    * #getRepositoryDirectory()}.
    */
@@ -700,7 +693,7 @@ public abstract class AbstractServiceTest {
   }
 
   /**
-   * Stops the server if it is running and purges the repository.  After
+   * Stops the server if it is running and purges the repository. After
    * purging the server is restarted.
    */
   protected void purgeRepository() {
@@ -708,8 +701,8 @@ public abstract class AbstractServiceTest {
   }
 
   /**
-   * Stops the server if it is running and purges the repository.  After
-   * purging the server is <b>optionally</b> restarted.  You may not want to
+   * Stops the server if it is running and purges the repository. After
+   * purging the server is <b>optionally</b> restarted. You may not want to
    * restart the server if you intend to load more records into via the
    * {@link RepositoryManager} before restarting.
    *
@@ -719,7 +712,8 @@ public abstract class AbstractServiceTest {
    */
   protected void purgeRepository(boolean restartServer) {
     boolean running = (this.server != null);
-    if (running) this.destroyServer();
+    if (running)
+      this.destroyServer();
     String moduleName = this.getModuleName("RepoMgr (purge)");
     RepositoryManager.setThreadModuleName(moduleName);
     try {
@@ -736,23 +730,24 @@ public abstract class AbstractServiceTest {
 
   /**
    * Prompts the reinitializer thread to ensure the config is current if the
-   * server has a reinitializer thread running.  This does nothing if there is
+   * server has a reinitializer thread running. This does nothing if there is
    * no reinitializer thread.
    */
   protected void requestConfigRefreshCheck() {
-    if (this.server == null) return;
+    if (this.server == null)
+      return;
     this.server.requestConfigRefreshCheck();
   }
 
   /**
-   * Restarts the server.  If the server is already running it is shutdown
-   * first and then started.  If not running it is started up.  This cannot
+   * Restarts the server. If the server is already running it is shutdown
+   * first and then started. If not running it is started up. This cannot
    * be called prior to the repository being created.
    */
   protected void restartServer() {
     if (!this.repoCreated) {
       throw new IllegalStateException(
-          "Cannnot restart server prior to calling initializeTestEnvironment()");
+          "Cannot restart server prior to calling initializeTestEnvironment()");
     }
     RepositoryManager.conclude();
     this.destroyServer();
@@ -760,7 +755,7 @@ public abstract class AbstractServiceTest {
   }
 
   /**
-   * Internal method for shutting down and destroying the server.  This method
+   * Internal method for shutting down and destroying the server. This method
    * has no effect if the server is not currently initialized.
    */
   private void destroyServer() {
@@ -775,26 +770,26 @@ public abstract class AbstractServiceTest {
   }
 
   /**
-   * Returns the port that the server should bind to.  By default this returns
+   * Returns the port that the server should bind to. By default this returns
    * <tt>null</tt> to indicate that any available port can be used for the
-   * server.  Override to use a specific port.
+   * server. Override to use a specific port.
    *
    * @return The port that should be used in initializing the server, or
-   * <tt>null</tt> if any available port is fine.
+   *         <tt>null</tt> if any available port is fine.
    */
   protected Integer getServerPort() {
     return null;
   }
 
   /**
-   * Retuns the {@link InetAddress} used to initialize the server.  By default
-   * this returns the address obtained for <tt>"127.0.0.1"</tt>.  Override this
-   * to change the address.  Return <tt>null</tt> if all available interfaces
+   * Returns the {@link InetAddress} used to initialize the server. By default
+   * this returns the address obtained for <tt>"127.0.0.1"</tt>. Override this
+   * to change the address. Return <tt>null</tt> if all available interfaces
    * should be bound to.
    *
    * @return The {@link InetAddress} for initializing the server, or
-   * <tt>null</tt> if the server should bind to all available network
-   * interfaces.
+   *         <tt>null</tt> if the server should bind to all available network
+   *         interfaces.
    */
   protected InetAddress getServerAddress() {
     try {
@@ -805,8 +800,8 @@ public abstract class AbstractServiceTest {
   }
 
   /**
-   * Returns the concurrency with which to initialize the server.  By default
-   * this returns one (1).  Override to use a different concurrency.
+   * Returns the concurrency with which to initialize the server. By default
+   * this returns one (1). Override to use a different concurrency.
    *
    * @return The concurrency with which to initialize the server.
    */
@@ -820,7 +815,8 @@ public abstract class AbstractServiceTest {
    * @return The version number of the REST API server implementation.
    */
   protected String getApiServerVersion() {
-    if (this.server == null) return null;
+    if (this.server == null)
+      return null;
     return this.server.getApiProviderVersion();
   }
 
@@ -832,7 +828,8 @@ public abstract class AbstractServiceTest {
    *         the underlying server.
    */
   protected String getRestApiVersion() {
-    if (this.server == null) return null;
+    if (this.server == null)
+      return null;
     return this.server.getRestApiVersion();
   }
 
@@ -855,7 +852,8 @@ public abstract class AbstractServiceTest {
    * @return The build version for the underlying runtime native Senzing API.
    */
   protected String getNativeApiBuildVersion() {
-    if (this.server == null) return null;
+    if (this.server == null)
+      return null;
     return this.server.getNativeApiBuildVersion();
   }
 
@@ -865,7 +863,8 @@ public abstract class AbstractServiceTest {
    * @return The build number for the underlying runtime native Senzing API.
    */
   protected String getNativeApiBuildNumber() {
-    if (this.server == null) return null;
+    if (this.server == null)
+      return null;
     return this.server.getNativeApiBuildNumber();
   }
 
@@ -875,7 +874,8 @@ public abstract class AbstractServiceTest {
    * @return The build date for the underlying runtime native Senzing API.
    */
   protected Date getNativeApiBuildDate() {
-    if (this.server == null) return null;
+    if (this.server == null)
+      return null;
     return this.server.getNativeApiBuildDate();
   }
 
@@ -887,13 +887,14 @@ public abstract class AbstractServiceTest {
    *         native Senzing API.
    */
   protected String getConfigCompatibilityVersion() {
-    if (this.server == null) return null;
+    if (this.server == null)
+      return null;
     return this.server.getConfigCompatibilityVersion();
   }
 
   /**
-   * Returns the module name with which to initialize the server.  By default
-   * this returns <tt>"Test API Server"</tt>.  Override to use a different
+   * Returns the module name with which to initialize the server. By default
+   * this returns <tt>"Test API Server"</tt>. Override to use a different
    * module name.
    *
    * param suffix The optional suffix to append to the module name.
@@ -911,22 +912,22 @@ public abstract class AbstractServiceTest {
 
   /**
    * Checks whether or not the server should be initialized in verbose mode.
-   * By default this is <tt>true</tt>.  Override to set to <tt>false</tt>.
+   * By default this is <tt>true</tt>. Override to set to <tt>false</tt>.
    *
    * @return <tt>true</tt> if the server should be initialized in verbose mode,
-   * otherwise <tt>false</tt>.
+   *         otherwise <tt>false</tt>.
    */
   protected boolean isVerbose() {
     return false;
   }
 
   /**
-   * Checks whether or not the server should reduce the number of messges sent
-   * as feedback to standard output.  By default this is <tt>true</tt> for
-   * auto tests.  Override to set to <tt>false</tt>.
+   * Checks whether or not the server should reduce the number of messages sent
+   * as feedback to standard output. By default this is <tt>true</tt> for
+   * auto tests. Override to set to <tt>false</tt>.
    *
    * @return <tt>true</tt> if the server should be initialized in verbose mode,
-   * otherwise <tt>false</tt>.
+   *         otherwise <tt>false</tt>.
    */
   protected boolean isQuiet() {
     return true;
@@ -962,13 +963,13 @@ public abstract class AbstractServiceTest {
     }
 
     try {
-      File        repoDirectory = this.getRepositoryDirectory();
-      File        initJsonFile  = new File(repoDirectory, "g2-init.json");
-      String      initJsonText  = readTextFileAsString(initJsonFile, "UTF-8");
-      JsonObject  initJson      = JsonUtilities.parseJsonObject(initJsonText);
+      File repoDirectory = this.getRepositoryDirectory();
+      File initJsonFile = new File(repoDirectory, "g2-init.json");
+      String initJsonText = readTextFileAsString(initJsonFile, "UTF-8");
+      JsonObject initJson = JsonUtilities.parseJsonObject(initJsonText);
 
       System.out.println("Initializing with initialization file: "
-                         + initJsonFile);
+          + initJsonFile);
 
       SzApiServerOptions options = new SzApiServerOptions(initJson);
       this.initializeServerOptions(options);
@@ -986,6 +987,7 @@ public abstract class AbstractServiceTest {
 
   /**
    * Increments the failure count and returns the new failure count.
+   * 
    * @return The new failure count.
    */
   protected int incrementFailureCount() {
@@ -996,6 +998,7 @@ public abstract class AbstractServiceTest {
 
   /**
    * Increments the success count and returns the new success count.
+   * 
    * @return The new success count.
    */
   protected int incrementSuccessCount() {
@@ -1016,13 +1019,14 @@ public abstract class AbstractServiceTest {
 
     long now = System.currentTimeMillis();
     long lapse = (this.progressLogTimestamp > 0L)
-        ? (now - this.progressLogTimestamp) : 0L;
+        ? (now - this.progressLogTimestamp)
+        : 0L;
 
     if (complete || (lapse > 30000L)) {
       System.out.println(this.getClass().getSimpleName()
-                         + (complete ? " Complete: " : " Progress: ")
-                         + successCount + " (succeeded) / " + failureCount
-                         + " (failed)");
+          + (complete ? " Complete: " : " Progress: ")
+          + successCount + " (succeeded) / " + failureCount
+          + " (failed)");
       this.progressLogTimestamp = now;
     }
     if (complete) {
@@ -1034,7 +1038,7 @@ public abstract class AbstractServiceTest {
   }
 
   /**
-   * Returns the current failure count.  The failure count is incremented via
+   * Returns the current failure count. The failure count is incremented via
    * {@link #incrementFailureCount()}.
    *
    * @return The current success count.
@@ -1044,7 +1048,7 @@ public abstract class AbstractServiceTest {
   }
 
   /**
-   * Returns the current success count.  The success count is incremented via
+   * Returns the current success count. The success count is incremented via
    * {@link #incrementSuccessCount()}.
    *
    * @return The current success count.
@@ -1072,13 +1076,14 @@ public abstract class AbstractServiceTest {
    * @param testFunction The {@link Runnable} to execute.
    */
   protected void performTest(boolean requireNativeApi, Runnable testFunction) {
-    if (requireNativeApi) this.assumeNativeApiAvailable();
+    if (requireNativeApi)
+      this.assumeNativeApiAvailable();
     boolean success = false;
     try {
       testFunction.run();
       success = true;
 
-    } catch (Error|RuntimeException e) {
+    } catch (Error | RuntimeException e) {
       e.printStackTrace();
       System.err.flush();
       if ("true".equals(System.getProperty("com.senzing.api.test.fastFail"))) {
@@ -1091,8 +1096,10 @@ public abstract class AbstractServiceTest {
       }
       throw e;
     } finally {
-      if (!success) this.incrementFailureCount();
-      else this.incrementSuccessCount();
+      if (!success)
+        this.incrementFailureCount();
+      else
+        this.incrementSuccessCount();
     }
   }
 
@@ -1139,7 +1146,7 @@ public abstract class AbstractServiceTest {
       };
 
       ClassLoader loader = this.getClass().getClassLoader();
-      Class[] classes = {UriInfo.class};
+      Class[] classes = { UriInfo.class };
 
       return (UriInfo) Proxy.newProxyInstance(loader, classes, handler);
 
@@ -1154,14 +1161,13 @@ public abstract class AbstractServiceTest {
    * Creates a proxy {@link UriInfo} to simulate a {@link UriInfo} when directly
    * calling the API services functions.
    *
-   * @param selfLink The simulated request URI.
+   * @param selfLink    The simulated request URI.
    * @param queryParams The {@link MultivaluedMap} describing the query params.
    *
    * @return The proxied {@link UriInfo} object using the specified URI.
    */
-  protected UriInfo newProxyUriInfo(String                        selfLink,
-                                    MultivaluedMap<String,String> queryParams)
-  {
+  protected UriInfo newProxyUriInfo(String selfLink,
+      MultivaluedMap<String, String> queryParams) {
     try {
       final URI uri = new URI(selfLink);
       final URI baseUri = new URI(this.getBaseUri());
@@ -1181,7 +1187,7 @@ public abstract class AbstractServiceTest {
       };
 
       ClassLoader loader = this.getClass().getClassLoader();
-      Class[] classes = {UriInfo.class};
+      Class[] classes = { UriInfo.class };
 
       return (UriInfo) Proxy.newProxyInstance(loader, classes, handler);
 
@@ -1196,7 +1202,8 @@ public abstract class AbstractServiceTest {
    * Invoke an operation on the currently running API server over HTTP.
    *
    * @param httpMethod    The HTTP method to use.
-   * @param uri           The relative or absolute URI (optionally including query params)
+   * @param uri           The relative or absolute URI (optionally including query
+   *                      params)
    * @param responseClass The class of the response.
    * @param <T>           The response type.
    * @return
@@ -1213,7 +1220,8 @@ public abstract class AbstractServiceTest {
    * Invoke an operation on the currently running API server over HTTP.
    *
    * @param httpMethod    The HTTP method to use.
-   * @param uri           The relative or absolute URI (optionally including query params)
+   * @param uri           The relative or absolute URI (optionally including query
+   *                      params)
    * @param queryParams   The optional map of query parameters.
    * @param bodyContent   The object to be converted to JSON for body content.
    * @param responseClass The class of the response.
@@ -1225,8 +1233,7 @@ public abstract class AbstractServiceTest {
       String uri,
       Map<String, ?> queryParams,
       Object bodyContent,
-      Class<T> responseClass)
-  {
+      Class<T> responseClass) {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JodaModule());
     try {
@@ -1251,7 +1258,7 @@ public abstract class AbstractServiceTest {
         int length = bytes.length;
         conn.addRequestProperty("Content-Length", "" + length);
         conn.addRequestProperty("Content-Type",
-                                "application/json; charset=utf-8");
+            "application/json; charset=utf-8");
         conn.setDoOutput(true);
         OutputStream os = conn.getOutputStream();
         os.write(bytes);
@@ -1261,7 +1268,8 @@ public abstract class AbstractServiceTest {
       int responseCode = conn.getResponseCode();
       boolean errorResponse = (responseCode < 200 || responseCode >= 300);
       InputStream is = (!errorResponse)
-          ? conn.getInputStream() : conn.getErrorStream();
+          ? conn.getInputStream()
+          : conn.getErrorStream();
       InputStreamReader isr = new InputStreamReader(is, "UTF-8");
       BufferedReader br = new BufferedReader(isr);
       StringBuilder sb = new StringBuilder();
@@ -1311,7 +1319,8 @@ public abstract class AbstractServiceTest {
    * Invoke an operation on the currently running API server over HTTP.
    *
    * @param httpMethod    The HTTP method to use.
-   * @param uri           The relative or absolute URI (optionally including query params)
+   * @param uri           The relative or absolute URI (optionally including query
+   *                      params)
    * @param queryParams   The optional map of query parameters.
    * @param contentType   The content type for the body.
    * @param bodyContent   The raw body content data.
@@ -1325,24 +1334,24 @@ public abstract class AbstractServiceTest {
       Map<String, ?> queryParams,
       String contentType,
       byte[] bodyContent,
-      Class<T> responseClass)
-  {
+      Class<T> responseClass) {
     ByteArrayInputStream bodyStream = new ByteArrayInputStream(bodyContent);
     Long contentLength = new Long(bodyContent.length);
     return this.invokeServerViaHttp(httpMethod,
-                                    uri,
-                                    queryParams,
-                                    contentType,
-                                    contentLength,
-                                    bodyStream,
-                                    responseClass);
+        uri,
+        queryParams,
+        contentType,
+        contentLength,
+        bodyStream,
+        responseClass);
   }
 
   /**
    * Invoke an operation on the currently running API server over HTTP.
    *
    * @param httpMethod    The HTTP method to use.
-   * @param uri           The relative or absolute URI (optionally including query params)
+   * @param uri           The relative or absolute URI (optionally including query
+   *                      params)
    * @param queryParams   The optional map of query parameters.
    * @param contentType   The content type for the body.
    * @param contentLength The optional content length.
@@ -1358,8 +1367,7 @@ public abstract class AbstractServiceTest {
       String contentType,
       Long contentLength,
       InputStream bodyStream,
-      Class<T> responseClass)
-  {
+      Class<T> responseClass) {
     ObjectMapper objectMapper = new ObjectMapper();
     objectMapper.registerModule(new JodaModule());
     try {
@@ -1382,7 +1390,8 @@ public abstract class AbstractServiceTest {
           try {
             key = URLEncoder.encode(key, "UTF-8");
             for (Object val : values) {
-              if (val == null) return;
+              if (val == null)
+                return;
               String textValue = val.toString();
               textValue = URLEncoder.encode(textValue, "UTF-8");
               sb.append((sb.length() == 0) ? initialPrefix : "&");
@@ -1407,10 +1416,8 @@ public abstract class AbstractServiceTest {
         conn.addRequestProperty("Content-Type", contentType);
         conn.setDoOutput(true);
         OutputStream os = new BufferedOutputStream(conn.getOutputStream(),
-                                                   8192);
-        for (int byteRead = bodyStream.read();
-             byteRead >= 0;
-             byteRead = bodyStream.read()) {
+            8192);
+        for (int byteRead = bodyStream.read(); byteRead >= 0; byteRead = bodyStream.read()) {
           os.write(byteRead);
         }
         os.flush();
@@ -1418,7 +1425,8 @@ public abstract class AbstractServiceTest {
 
       int responseCode = conn.getResponseCode();
       InputStream is = (responseCode >= 200 && responseCode < 300)
-          ? conn.getInputStream() : conn.getErrorStream();
+          ? conn.getInputStream()
+          : conn.getErrorStream();
       InputStreamReader isr = new InputStreamReader(is, "UTF-8");
       BufferedReader br = new BufferedReader(isr);
       StringBuilder sb = new StringBuilder();
@@ -1438,7 +1446,7 @@ public abstract class AbstractServiceTest {
         result = objectMapper.readValue(responseJson, responseClass);
       } catch (Exception e) {
         System.out.println("DESERIALIZING RESPONSE JSON TO "
-                               + responseClass.getSimpleName() + ": ");
+            + responseClass.getSimpleName() + ": ");
         System.out.println(responseJson);
         System.out.println();
         throw e;
@@ -1484,8 +1492,8 @@ public abstract class AbstractServiceTest {
    * @return The {@link File} that was created.
    */
   protected File prepareCSVFile(String filePrefix,
-                                String[] headers,
-                                String[]... records) {
+      String[] headers,
+      String[]... records) {
     // check the arguments
     int count = headers.length;
     for (int index = 0; index < records.length; index++) {
@@ -1503,8 +1511,8 @@ public abstract class AbstractServiceTest {
 
       // populate the file as a CSV
       try (FileOutputStream fos = new FileOutputStream(csvFile);
-           OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
-           PrintWriter pw = new PrintWriter(osw)) {
+          OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+          PrintWriter pw = new PrintWriter(osw)) {
         String prefix = "";
         for (String header : headers) {
           pw.print(prefix);
@@ -1535,7 +1543,6 @@ public abstract class AbstractServiceTest {
     }
   }
 
-
   /**
    * Creates a JSON array temp file with the specified headers and records.
    *
@@ -1545,8 +1552,8 @@ public abstract class AbstractServiceTest {
    * @return The {@link File} that was created.
    */
   protected File prepareJsonArrayFile(String filePrefix,
-                                      String[] headers,
-                                      String[]... records) {
+      String[] headers,
+      String[]... records) {
     // check the arguments
     int count = headers.length;
     for (int index = 0; index < records.length; index++) {
@@ -1564,7 +1571,7 @@ public abstract class AbstractServiceTest {
 
       // populate the file with a JSON array
       try (FileOutputStream fos = new FileOutputStream(jsonFile);
-           OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8")) {
+          OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8")) {
         JsonArrayBuilder jab = Json.createArrayBuilder();
         JsonObjectBuilder job = Json.createObjectBuilder();
         for (String[] record : records) {
@@ -1597,8 +1604,8 @@ public abstract class AbstractServiceTest {
    * @return The {@link File} that was created.
    */
   protected File prepareJsonFile(String filePrefix,
-                                 String[] headers,
-                                 String[]... records) {
+      String[] headers,
+      String[]... records) {
     // check the arguments
     int count = headers.length;
     for (int index = 0; index < records.length; index++) {
@@ -1616,8 +1623,8 @@ public abstract class AbstractServiceTest {
 
       // populate the file as one JSON record per line
       try (FileOutputStream fos = new FileOutputStream(jsonFile);
-           OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
-           PrintWriter pw = new PrintWriter(osw)) {
+          OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+          PrintWriter pw = new PrintWriter(osw)) {
         for (String[] record : records) {
           JsonObjectBuilder job = Json.createObjectBuilder();
           for (int index = 0; index < record.length; index++) {
@@ -1643,7 +1650,7 @@ public abstract class AbstractServiceTest {
    * Creates a JSON-lines temp file with the specified headers and records.
    *
    * @param filePrefix The prefix for the temp file name.
-   * @param jsonArray The {@link JsonArray} describing the records.
+   * @param jsonArray  The {@link JsonArray} describing the records.
    * @return The {@link File} that was created.
    */
   protected File prepareJsonArrayFile(String filePrefix, JsonArray jsonArray) {
@@ -1652,9 +1659,8 @@ public abstract class AbstractServiceTest {
 
       // populate the file as one JSON record per line
       try (FileOutputStream fos = new FileOutputStream(jsonFile);
-           OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
-           PrintWriter pw = new PrintWriter(osw))
-      {
+          OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+          PrintWriter pw = new PrintWriter(osw)) {
         String jsonText = JsonUtilities.toJsonText(jsonArray, true);
         pw.println(jsonText);
         pw.flush();
@@ -1671,7 +1677,7 @@ public abstract class AbstractServiceTest {
    * Creates a JSON-lines temp file with the specified headers and records.
    *
    * @param filePrefix The prefix for the temp file name.
-   * @param jsonArray The {@link JsonArray} describing the records.
+   * @param jsonArray  The {@link JsonArray} describing the records.
    * @return The {@link File} that was created.
    */
   protected File prepareJsonFile(String filePrefix, JsonArray jsonArray) {
@@ -1680,9 +1686,9 @@ public abstract class AbstractServiceTest {
 
       // populate the file as one JSON record per line
       try (FileOutputStream fos = new FileOutputStream(jsonFile);
-           OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
-           PrintWriter pw = new PrintWriter(osw)) {
-        for (JsonObject record: jsonArray.getValuesAs(JsonObject.class)) {
+          OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
+          PrintWriter pw = new PrintWriter(osw)) {
+        for (JsonObject record : jsonArray.getValuesAs(JsonObject.class)) {
           String jsonText = JsonUtilities.toJsonText(record);
           pw.println(jsonText);
           pw.flush();
@@ -1704,8 +1710,8 @@ public abstract class AbstractServiceTest {
    */
   protected String readInitJsonFile() {
     try {
-      File    repoDir       = this.getRepositoryDirectory();
-      File    initJsonFile  = new File(repoDir, "g2-init.json");
+      File repoDir = this.getRepositoryDirectory();
+      File initJsonFile = new File(repoDir, "g2-init.json");
 
       return readTextFileAsString(initJsonFile, "UTF-8");
 
@@ -1714,13 +1720,12 @@ public abstract class AbstractServiceTest {
     }
   }
 
-  protected String formatTestInfo(String uriText, String bodyContent)
-  {
+  protected String formatTestInfo(String uriText, String bodyContent) {
     return "uriText=[ " + uriText + " ], bodyContent=[ " + bodyContent + " ]";
   }
 
   /**
-   * Generats option combos for the specified variants.
+   * Generates option combos for the specified variants.
    *
    * @param variants
    */
@@ -1739,7 +1744,7 @@ public abstract class AbstractServiceTest {
       int intervalCount = 1;
 
       // loop over the remaining variants after the current
-      for (int index2 = index+1; index2 < variants.length; index2++) {
+      for (int index2 = index + 1; index2 < variants.length; index2++) {
         // multiply the interval count by the remaining variant sizes
         intervalCount *= variants[index2].size();
       }
@@ -1768,7 +1773,7 @@ public abstract class AbstractServiceTest {
    * Converts the source object to JSON and then parses the JSON to the
    * specified target class.
    *
-   * @param source The source object to copy.
+   * @param source      The source object to copy.
    * @param targetClass The target class to parse the JSON as.
    * @return The target object that was parsed.
    */
@@ -1786,46 +1791,46 @@ public abstract class AbstractServiceTest {
       if (jsonText != null) {
         System.err.println("JSON TEXT: " + jsonText);
         e.printStackTrace();
-//        try {
-//          File current = new File(System.getProperty("user.dir"));
-//          File target  = new File(current, "target");
-//          File file = File.createTempFile("error-", ".txt", target);
-//          try (FileOutputStream   fos = new FileOutputStream(file);
-//          OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
-//               PrintWriter        pw  = new PrintWriter(osw))
-//          {
-//            JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
-//            pw.println(JsonUtilities.toJsonText(jsonObject, true));
-//            pw.println();
-//            e.printStackTrace(pw);
-//            pw.flush();
-//          }
-//        } catch (IOException exception) {
-//          // ignore
-//        }
+        // try {
+        // File current = new File(System.getProperty("user.dir"));
+        // File target = new File(current, "target");
+        // File file = File.createTempFile("error-", ".txt", target);
+        // try (FileOutputStream fos = new FileOutputStream(file);
+        // OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
+        // PrintWriter pw = new PrintWriter(osw))
+        // {
+        // JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
+        // pw.println(JsonUtilities.toJsonText(jsonObject, true));
+        // pw.println();
+        // e.printStackTrace(pw);
+        // pw.flush();
+        // }
+        // } catch (IOException exception) {
+        // // ignore
+        // }
       }
       throw e;
     } catch (Exception e) {
       if (jsonText != null) {
         System.err.println("JSON TEXT: " + jsonText);
         e.printStackTrace();
-//        try {
-//          File current = new File(System.getProperty("user.dir"));
-//          File target  = new File(current, "target");
-//          File file = File.createTempFile("error-", ".txt", target);
-//          try (FileOutputStream   fos = new FileOutputStream(file);
-//               OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
-//               PrintWriter        pw  = new PrintWriter(osw))
-//          {
-//            JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
-//            pw.println(JsonUtilities.toJsonText(jsonObject, true));
-//            pw.println();
-//            e.printStackTrace(pw);
-//            pw.flush();
-//          }
-//        } catch (IOException exception) {
-//          // ignore
-//        }
+        // try {
+        // File current = new File(System.getProperty("user.dir"));
+        // File target = new File(current, "target");
+        // File file = File.createTempFile("error-", ".txt", target);
+        // try (FileOutputStream fos = new FileOutputStream(file);
+        // OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
+        // PrintWriter pw = new PrintWriter(osw))
+        // {
+        // JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
+        // pw.println(JsonUtilities.toJsonText(jsonObject, true));
+        // pw.println();
+        // e.printStackTrace(pw);
+        // pw.flush();
+        // }
+        // } catch (IOException exception) {
+        // // ignore
+        // }
       }
       throw new RuntimeException(e);
     }
@@ -1836,15 +1841,14 @@ public abstract class AbstractServiceTest {
    * then parses the JSON to the specified target class and populates the
    * target collection.
    *
-   * @param source The {@link Collection} of source objects to copy.
+   * @param source      The {@link Collection} of source objects to copy.
    * @param targetClass The target class to parse the JSON as.
    * @return The {@link Collection} containing target objects that were parsed.
    */
   public static <S, T, C extends Collection<T>> C jsonCopy(
       Collection<S> source,
-      Class<T>      targetClass,
-      Class<C>      collectionClass)
-  {
+      Class<T> targetClass,
+      Class<C> collectionClass) {
     try {
       C target = collectionClass.newInstance();
 
@@ -1867,21 +1871,20 @@ public abstract class AbstractServiceTest {
    * then parses the JSON to the specified target class and populates the
    * target {@link Map}.
    *
-   * @param source The {@link Map} of source objects to copy.
+   * @param source      The {@link Map} of source objects to copy.
    * @param targetClass The target class to parse the JSON as.
    * @return The {@link Map} containing the target objects that were parsed.
    */
   public static <S, T, K> Map<K, T> jsonCopy(
-      Map<K, S>     source,
-      Class<T>      targetClass)
-  {
+      Map<K, S> source,
+      Class<T> targetClass) {
     try {
       Map<K, T> target = new LinkedHashMap<K, T>();
 
       source.entrySet().forEach(entry -> {
         K key = entry.getKey();
-        S s   = entry.getValue();
-        T t   = jsonCopy(s, targetClass);
+        S s = entry.getValue();
+        T t = jsonCopy(s, targetClass);
         target.put(key, t);
       });
 
@@ -1896,7 +1899,8 @@ public abstract class AbstractServiceTest {
 
   /**
    * Parse JSON text as the specified target class.
-   * @param jsonText The JSON text to parse.
+   * 
+   * @param jsonText    The JSON text to parse.
    * @param targetClass The target class to parse to.
    */
   public static <T> T jsonParse(String jsonText, Class<T> targetClass) {
@@ -1918,8 +1922,8 @@ public abstract class AbstractServiceTest {
    */
   protected List<Arguments> getWithRawVariants() {
     List<Arguments> result = new LinkedList<>();
-    Boolean[] booleanVariants = {null, true, false};
-    for (Boolean withRaw: booleanVariants) {
+    Boolean[] booleanVariants = { null, true, false };
+    for (Boolean withRaw : booleanVariants) {
       Object[] argArray = new Object[1];
       argArray[0] = withRaw;
       result.add(arguments(argArray));
@@ -1929,7 +1933,7 @@ public abstract class AbstractServiceTest {
 
   /**
    * Gets the variant possible values of booleans for the specified
-   * parameter count.  This includes <tt>null</tt> values.
+   * parameter count. This includes <tt>null</tt> values.
    *
    * @param paramCount The number of boolean parameters.
    * @return The {@link List} of parameter value lists.
@@ -1947,8 +1951,8 @@ public abstract class AbstractServiceTest {
       // iterate over the parameter slots
       for (int index2 = 0; index2 < paramCount; index2++) {
         int repeat = (int) Math.ceil(Math.pow(3, index2));
-        int valueIndex = ( index1 / repeat ) % booleanValues.length;
-         params.add(booleanValues[valueIndex]);
+        int valueIndex = (index1 / repeat) % booleanValues.length;
+        params.add(booleanValues[valueIndex]);
       }
 
       // add the combinatorial variant
@@ -1963,19 +1967,23 @@ public abstract class AbstractServiceTest {
   private static class CircularIterator<T> implements Iterator<T> {
     private Collection<T> collection = null;
     private Iterator<T> iterator = null;
+
     private CircularIterator(Collection<T> collection) {
       this.collection = collection;
       this.iterator = this.collection.iterator();
     }
+
     public boolean hasNext() {
       return (this.collection.size() > 0);
     }
+
     public T next() {
       if (!this.iterator.hasNext()) {
         this.iterator = this.collection.iterator();
       }
       return this.iterator.next();
     }
+
     public void remove() {
       throw new UnsupportedOperationException(
           "Cannot remove from a circular iterator.");

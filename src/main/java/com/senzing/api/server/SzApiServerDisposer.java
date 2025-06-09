@@ -31,7 +31,7 @@ public class SzApiServerDisposer {
       }
 
       arg = args[argIndex++];
-      int pid= 0;
+      int pid = 0;
       try {
         pid = Integer.parseInt(arg);
 
@@ -90,10 +90,9 @@ public class SzApiServerDisposer {
         Integer port = null;
         Long heartbeat = null;
         log("Opening file for read: " + file);
-        try (FileInputStream    fis = new FileInputStream(file);
-             InputStreamReader  isr = new InputStreamReader(fis, utf8);
-             JsonReader         jr  = Json.createReader(isr))
-        {
+        try (FileInputStream fis = new FileInputStream(file);
+            InputStreamReader isr = new InputStreamReader(fis, utf8);
+            JsonReader jr = Json.createReader(isr)) {
           // read the object
           JsonObject jsonObj = jr.readObject();
 
@@ -130,17 +129,15 @@ public class SzApiServerDisposer {
           log("Closing file: " + file);
         }
 
-
         // write out a temp file representing the new content with the shutdown
         // flag set to true
-        File tempFile = File.createTempFile("senzing-monintor-", ".tmp");
+        File tempFile = File.createTempFile("senzing-monitor-", ".tmp");
         tempFile.deleteOnExit();
 
         log("Opening temp file for write: " + tempFile);
-        try (FileOutputStream   fos = new FileOutputStream(tempFile);
-             OutputStreamWriter osw = new OutputStreamWriter(fos, utf8);
-             JsonWriter         jw  = Json.createWriter(osw))
-        {
+        try (FileOutputStream fos = new FileOutputStream(tempFile);
+            OutputStreamWriter osw = new OutputStreamWriter(fos, utf8);
+            JsonWriter jw = Json.createWriter(osw)) {
           JsonObjectBuilder builder = Json.createObjectBuilder();
           JsonUtilities.add(builder, "pid", pid);
           JsonUtilities.add(builder, "port", port);
@@ -165,9 +162,9 @@ public class SzApiServerDisposer {
           try {
             log("Copying temp file to file: " + file);
             Files.copy(tempFile.toPath(),
-                       file.toPath(),
-                       COPY_ATTRIBUTES,
-                       REPLACE_EXISTING);
+                file.toPath(),
+                COPY_ATTRIBUTES,
+                REPLACE_EXISTING);
 
             log("Copied temp file to file: " + file);
             done = true;
@@ -193,13 +190,11 @@ public class SzApiServerDisposer {
       done = false;
 
       log("Waiting for file deletion: " + file);
-      while (!done && file.exists() && (System.currentTimeMillis()-start) < wait)
-      {
+      while (!done && file.exists() && (System.currentTimeMillis() - start) < wait) {
         log("Checking PID in file: " + file);
-        try (FileInputStream    fis = new FileInputStream(file);
-             InputStreamReader  isr = new InputStreamReader(fis, utf8);
-             JsonReader         jr  = Json.createReader(isr))
-        {
+        try (FileInputStream fis = new FileInputStream(file);
+            InputStreamReader isr = new InputStreamReader(fis, utf8);
+            JsonReader jr = Json.createReader(isr)) {
           // read the object
           JsonObject jsonObj = jr.readObject();
 
@@ -224,7 +219,7 @@ public class SzApiServerDisposer {
         }
       }
 
-      log("File was " + (file.exists()?" NEVER ":"") + "deleted: " + file);
+      log("File was " + (file.exists() ? " NEVER " : "") + "deleted: " + file);
 
       if (delay > 0L) {
         log("Delaying before exit: " + delay);

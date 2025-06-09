@@ -24,7 +24,8 @@ public class AdminServicesTest extends AbstractServiceTest {
   private AdminServices adminServices;
   private AdminApi adminApi;
 
-  @BeforeAll public void initializeEnvironment() {
+  @BeforeAll
+  public void initializeEnvironment() {
     this.beginTests();
     this.initializeTestEnvironment();
     this.adminServices = new AdminServices();
@@ -33,7 +34,8 @@ public class AdminServicesTest extends AbstractServiceTest {
     this.adminApi = new AdminApi(apiClient);
   }
 
-  @AfterAll public void teardownEnvironment() {
+  @AfterAll
+  public void teardownEnvironment() {
     try {
       this.teardownTestEnvironment();
       this.conditionallyLogCounts(true);
@@ -44,7 +46,7 @@ public class AdminServicesTest extends AbstractServiceTest {
 
   /**
    * <p>
-   * Overidden to skip engine priming.
+   * Overridden to skip engine priming.
    * </p>
    *
    * {@inheritDoc}
@@ -55,7 +57,8 @@ public class AdminServicesTest extends AbstractServiceTest {
     options.setSkippingEnginePriming(true);
   }
 
-  @Test public void rootTest() {
+  @Test
+  public void rootTest() {
     this.performTest(() -> {
       try {
         String uriText = this.formatServerUri("");
@@ -74,34 +77,34 @@ public class AdminServicesTest extends AbstractServiceTest {
     });
   }
 
-  @Test public void rootViaHttpTest() {
-    this.performTest(() -> {
-      String  uriText = this.formatServerUri("");
-      long    before  = System.nanoTime();
-      SzBasicResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzBasicResponse.class);
-      long after = System.nanoTime();
-
-      validateBasics(response, uriText, after - before);
-    });
-  }
-
-  @Test public void rootViaJavaClientTest() {
+  @Test
+  public void rootViaHttpTest() {
     this.performTest(() -> {
       String uriText = this.formatServerUri("");
-      long    before  = System.nanoTime();
-      com.senzing.gen.api.model.SzBaseResponse clientResponse
-          = this.adminApi.root();
+      long before = System.nanoTime();
+      SzBasicResponse response = this.invokeServerViaHttp(GET, uriText, SzBasicResponse.class);
       long after = System.nanoTime();
-
-      SzBasicResponse response
-          = jsonCopy(clientResponse, SzBasicResponse.class);
 
       validateBasics(response, uriText, after - before);
     });
   }
 
-  @Test public void heartbeatTest() {
+  @Test
+  public void rootViaJavaClientTest() {
+    this.performTest(() -> {
+      String uriText = this.formatServerUri("");
+      long before = System.nanoTime();
+      com.senzing.gen.api.model.SzBaseResponse clientResponse = this.adminApi.root();
+      long after = System.nanoTime();
+
+      SzBasicResponse response = jsonCopy(clientResponse, SzBasicResponse.class);
+
+      validateBasics(response, uriText, after - before);
+    });
+  }
+
+  @Test
+  public void heartbeatTest() {
     this.performTest(() -> {
       try {
         String uriText = this.formatServerUri("heartbeat");
@@ -120,28 +123,27 @@ public class AdminServicesTest extends AbstractServiceTest {
     });
   }
 
-  @Test public void heartbeatViaHttpTest() {
+  @Test
+  public void heartbeatViaHttpTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("heartbeat");
-      long    before  = System.nanoTime();
-      SzBasicResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzBasicResponse.class);
+      String uriText = this.formatServerUri("heartbeat");
+      long before = System.nanoTime();
+      SzBasicResponse response = this.invokeServerViaHttp(GET, uriText, SzBasicResponse.class);
       long after = System.nanoTime();
 
       validateBasics(response, uriText, after - before);
     });
   }
 
-  @Test public void heartbeatViaJavaClientTest() {
+  @Test
+  public void heartbeatViaJavaClientTest() {
     this.performTest(() -> {
       String uriText = this.formatServerUri("heartbeat");
-      long    before  = System.nanoTime();
-      com.senzing.gen.api.model.SzBaseResponse clientResponse
-          = this.adminApi.heartbeat();
+      long before = System.nanoTime();
+      com.senzing.gen.api.model.SzBaseResponse clientResponse = this.adminApi.heartbeat();
       long after = System.nanoTime();
 
-      SzBasicResponse response
-          = jsonCopy(clientResponse, SzBasicResponse.class);
+      SzBasicResponse response = jsonCopy(clientResponse, SzBasicResponse.class);
 
       validateBasics(response, uriText, after - before);
     });
@@ -159,19 +161,18 @@ public class AdminServicesTest extends AbstractServiceTest {
         UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
         if (Boolean.TRUE.equals(asRaw)) {
-          Object openApiSpec
-              = this.adminServices.openApiSpecification(true, uriInfo);
+          Object openApiSpec = this.adminServices.openApiSpecification(true, uriInfo);
 
           validateOpenApiSpecResponse(openApiSpec, baseUri);
 
         } else {
           long before = System.nanoTime();
-          SzOpenApiSpecResponse response = (SzOpenApiSpecResponse)
-              this.adminServices.openApiSpecification(false, uriInfo);
+          SzOpenApiSpecResponse response = (SzOpenApiSpecResponse) this.adminServices.openApiSpecification(false,
+              uriInfo);
           response.concludeTimers();
           long after = System.nanoTime();
           validateOpenApiSpecResponse(
-              response, uriText, baseUri,after - before);
+              response, uriText, baseUri, after - before);
         }
 
       } catch (Error error) {
@@ -188,7 +189,7 @@ public class AdminServicesTest extends AbstractServiceTest {
       String uriText = this.formatServerUri(
           "specifications/open-api"
               + ((asRaw == null) ? "" : ("?asRaw=" + asRaw)));
-      String  baseUri = this.getBaseUri();
+      String baseUri = this.getBaseUri();
 
       if (Boolean.TRUE.equals(asRaw)) {
         String jsonText = this.invokeServerViaHttp(GET, uriText, String.class);
@@ -197,8 +198,7 @@ public class AdminServicesTest extends AbstractServiceTest {
 
       } else {
         long before = System.nanoTime();
-        SzOpenApiSpecResponse response
-            = this.invokeServerViaHttp(GET, uriText, SzOpenApiSpecResponse.class);
+        SzOpenApiSpecResponse response = this.invokeServerViaHttp(GET, uriText, SzOpenApiSpecResponse.class);
         long after = System.nanoTime();
 
         validateOpenApiSpecResponse(
@@ -207,346 +207,346 @@ public class AdminServicesTest extends AbstractServiceTest {
     });
   }
 
-  @Test public void licenseTest() {
+  @Test
+  public void licenseTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("license");
+      String uriText = this.formatServerUri("license");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long              before    = System.nanoTime();
-      SzLicenseResponse response  = this.adminServices.license(false, uriInfo);
+      long before = System.nanoTime();
+      SzLicenseResponse response = this.adminServices.license(false, uriInfo);
       response.concludeTimers();
-      long              after     = System.nanoTime();
-
-      validateLicenseResponse(response,
-                              uriText,
-                              after - before,
-                              null,
-                              null,
-                              null);
-    });
-  }
-
-  @Test public void licenseViaHttpTest() {
-    this.performTest(() -> {
-      String  uriText = this.formatServerUri("license");
-      UriInfo uriInfo = this.newProxyUriInfo(uriText);
-
-      long before = System.nanoTime();
-      SzLicenseResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzLicenseResponse.class);
       long after = System.nanoTime();
 
       validateLicenseResponse(response,
-                              uriText,
-                              after - before,
-                              null,
-                              null,
-                              null);
+          uriText,
+          after - before,
+          null,
+          null,
+          null);
     });
   }
 
-  @Test public void licenseViaJavaClientTest() {
+  @Test
+  public void licenseViaHttpTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("license");
-
-      long before = System.nanoTime();
-      com.senzing.gen.api.model.SzLicenseResponse clientResponse
-          = this.adminApi.license(null);
-      long after = System.nanoTime();
-
-      SzLicenseResponse response
-          = jsonCopy(clientResponse, SzLicenseResponse.class);
-
-      validateLicenseResponse(response,
-                              uriText,
-                              after - before,
-                              null,
-                              null,
-                              null);
-    });
-  }
-
-  @Test public void licenseWithoutRawTest() {
-    this.performTest(() -> {
-      String  uriText = this.formatServerUri("license?withRaw=false");
+      String uriText = this.formatServerUri("license");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long              before    = System.nanoTime();
-      SzLicenseResponse response  = this.adminServices.license(false, uriInfo);
+      long before = System.nanoTime();
+      SzLicenseResponse response = this.invokeServerViaHttp(GET, uriText, SzLicenseResponse.class);
+      long after = System.nanoTime();
+
+      validateLicenseResponse(response,
+          uriText,
+          after - before,
+          null,
+          null,
+          null);
+    });
+  }
+
+  @Test
+  public void licenseViaJavaClientTest() {
+    this.performTest(() -> {
+      String uriText = this.formatServerUri("license");
+
+      long before = System.nanoTime();
+      com.senzing.gen.api.model.SzLicenseResponse clientResponse = this.adminApi.license(null);
+      long after = System.nanoTime();
+
+      SzLicenseResponse response = jsonCopy(clientResponse, SzLicenseResponse.class);
+
+      validateLicenseResponse(response,
+          uriText,
+          after - before,
+          null,
+          null,
+          null);
+    });
+  }
+
+  @Test
+  public void licenseWithoutRawTest() {
+    this.performTest(() -> {
+      String uriText = this.formatServerUri("license?withRaw=false");
+      UriInfo uriInfo = this.newProxyUriInfo(uriText);
+
+      long before = System.nanoTime();
+      SzLicenseResponse response = this.adminServices.license(false, uriInfo);
       response.concludeTimers();
-      long              after     = System.nanoTime();
-
-      validateLicenseResponse(response,
-                              uriText,
-                              after - before,
-                              false,
-                              null,
-                              null);
-
-    });
-  }
-
-  @Test public void licenseWithoutRawViaHttpTest() {
-    this.performTest(() -> {
-      String  uriText = this.formatServerUri("license?withRaw=false");
-
-      long before = System.nanoTime();
-      SzLicenseResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzLicenseResponse.class);
       long after = System.nanoTime();
 
       validateLicenseResponse(response,
-                              uriText,
-                              after - before,
-                              false,
-                              null,
-                              null);
+          uriText,
+          after - before,
+          false,
+          null,
+          null);
+
     });
   }
 
-  @Test public void licenseWithoutRawViaJavaClientTest() {
+  @Test
+  public void licenseWithoutRawViaHttpTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("license?withRaw=false");
+      String uriText = this.formatServerUri("license?withRaw=false");
 
       long before = System.nanoTime();
-      com.senzing.gen.api.model.SzLicenseResponse clientResponse
-          = this.adminApi.license(false);
+      SzLicenseResponse response = this.invokeServerViaHttp(GET, uriText, SzLicenseResponse.class);
       long after = System.nanoTime();
 
-      SzLicenseResponse response
-          = jsonCopy(clientResponse, SzLicenseResponse.class);
-
       validateLicenseResponse(response,
-                              uriText,
-                              after - before,
-                              null,
-                              null,
-                              null);
+          uriText,
+          after - before,
+          false,
+          null,
+          null);
     });
   }
 
-  @Test public void licenseWithRawTest() {
+  @Test
+  public void licenseWithoutRawViaJavaClientTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("license?withRaw=true");
+      String uriText = this.formatServerUri("license?withRaw=false");
+
+      long before = System.nanoTime();
+      com.senzing.gen.api.model.SzLicenseResponse clientResponse = this.adminApi.license(false);
+      long after = System.nanoTime();
+
+      SzLicenseResponse response = jsonCopy(clientResponse, SzLicenseResponse.class);
+
+      validateLicenseResponse(response,
+          uriText,
+          after - before,
+          null,
+          null,
+          null);
+    });
+  }
+
+  @Test
+  public void licenseWithRawTest() {
+    this.performTest(() -> {
+      String uriText = this.formatServerUri("license?withRaw=true");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long              before    = System.nanoTime();
-      SzLicenseResponse response  = this.adminServices.license(true, uriInfo);
+      long before = System.nanoTime();
+      SzLicenseResponse response = this.adminServices.license(true, uriInfo);
       response.concludeTimers();
-      long              after     = System.nanoTime();
+      long after = System.nanoTime();
 
       validateLicenseResponse(response,
-                              uriText,
-                              after - before,
-                              true,
-                              null,
-                              null);
+          uriText,
+          after - before,
+          true,
+          null,
+          null);
     });
   }
 
-  @Test public void licenseWithRawViaHttpTest() {
-    this.performTest(()-> {
+  @Test
+  public void licenseWithRawViaHttpTest() {
+    this.performTest(() -> {
       String uriText = this.formatServerUri("license?withRaw=true");
 
       long before = System.nanoTime();
-      SzLicenseResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzLicenseResponse.class);
+      SzLicenseResponse response = this.invokeServerViaHttp(GET, uriText, SzLicenseResponse.class);
       long after = System.nanoTime();
 
       validateLicenseResponse(response,
-                              uriText,
-                              after - before,
-                              true,
-                              null,
-                              null);
+          uriText,
+          after - before,
+          true,
+          null,
+          null);
     });
   }
 
-  @Test public void licenseWithRawViaJavaClientTest() {
-    this.performTest(()-> {
+  @Test
+  public void licenseWithRawViaJavaClientTest() {
+    this.performTest(() -> {
       String uriText = this.formatServerUri("license?withRaw=true");
 
       long before = System.nanoTime();
-      com.senzing.gen.api.model.SzLicenseResponse clientResponse
-          = this.adminApi.license(true);
+      com.senzing.gen.api.model.SzLicenseResponse clientResponse = this.adminApi.license(true);
       long after = System.nanoTime();
 
-      SzLicenseResponse response
-          = jsonCopy(clientResponse, SzLicenseResponse.class);
+      SzLicenseResponse response = jsonCopy(clientResponse, SzLicenseResponse.class);
 
       validateLicenseResponse(response,
-                              uriText,
-                              after - before,
-                              true,
-                              null,
-                              null);
+          uriText,
+          after - before,
+          true,
+          null,
+          null);
     });
   }
 
-  @Test public void versionTest() {
-    this.performTest(()-> {
-      String  uriText = this.formatServerUri("version");
+  @Test
+  public void versionTest() {
+    this.performTest(() -> {
+      String uriText = this.formatServerUri("version");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long              before    = System.nanoTime();
-      SzVersionResponse response  = this.adminServices.version(false,
-                                                               uriInfo);
+      long before = System.nanoTime();
+      SzVersionResponse response = this.adminServices.version(false,
+          uriInfo);
       response.concludeTimers();
-      long              after     = System.nanoTime();
-
-      validateVersionResponse(response,
-                              uriText,
-                              after - before,
-                              null,
-                              this.readInitJsonFile());
-    });
-  }
-
-  @Test public void versionViaHttpTest() {
-    this.performTest(() -> {
-      String  uriText = this.formatServerUri("version");
-
-      long before = System.nanoTime();
-      SzVersionResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
       long after = System.nanoTime();
 
       validateVersionResponse(response,
-                              uriText,
-                              after - before,
-                              null,
-                              this.readInitJsonFile());
-
+          uriText,
+          after - before,
+          null,
+          this.readInitJsonFile());
     });
   }
 
-  @Test public void versionViaJavaClientTest() {
+  @Test
+  public void versionViaHttpTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("version");
+      String uriText = this.formatServerUri("version");
 
       long before = System.nanoTime();
-      com.senzing.gen.api.model.SzVersionResponse clientResponse
-          = this.adminApi.version(null);
+      SzVersionResponse response = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
       long after = System.nanoTime();
 
-      SzVersionResponse response
-          = jsonCopy(clientResponse, SzVersionResponse.class);
-
       validateVersionResponse(response,
-                              uriText,
-                              after - before,
-                              false,
-                              this.readInitJsonFile());
+          uriText,
+          after - before,
+          null,
+          this.readInitJsonFile());
+
     });
   }
 
-  @Test public void versionWithoutRawTest() {
+  @Test
+  public void versionViaJavaClientTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("version?withRaw=false");
+      String uriText = this.formatServerUri("version");
+
+      long before = System.nanoTime();
+      com.senzing.gen.api.model.SzVersionResponse clientResponse = this.adminApi.version(null);
+      long after = System.nanoTime();
+
+      SzVersionResponse response = jsonCopy(clientResponse, SzVersionResponse.class);
+
+      validateVersionResponse(response,
+          uriText,
+          after - before,
+          false,
+          this.readInitJsonFile());
+    });
+  }
+
+  @Test
+  public void versionWithoutRawTest() {
+    this.performTest(() -> {
+      String uriText = this.formatServerUri("version?withRaw=false");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long              before    = System.nanoTime();
-      SzVersionResponse response  = this.adminServices.version(false, uriInfo);
+      long before = System.nanoTime();
+      SzVersionResponse response = this.adminServices.version(false, uriInfo);
       response.concludeTimers();
-      long              after     = System.nanoTime();
-
-      validateVersionResponse(response,
-                              uriText,
-                              after - before,
-                              false,
-                              this.readInitJsonFile());
-    });
-  }
-
-  @Test public void versionWithoutRawViaHttpTest() {
-    this.performTest(() -> {
-      String  uriText = this.formatServerUri("version?withRaw=false");
-
-      long before = System.nanoTime();
-      SzVersionResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
       long after = System.nanoTime();
 
       validateVersionResponse(response,
-                              uriText,
-                              after - before,
-                              false,
-                              this.readInitJsonFile());
+          uriText,
+          after - before,
+          false,
+          this.readInitJsonFile());
     });
   }
 
-  @Test public void versionWithoutRawViaJavaClientTest() {
+  @Test
+  public void versionWithoutRawViaHttpTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("version?withRaw=false");
+      String uriText = this.formatServerUri("version?withRaw=false");
 
       long before = System.nanoTime();
-      com.senzing.gen.api.model.SzVersionResponse clientResponse
-          = this.adminApi.version(false);
+      SzVersionResponse response = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
       long after = System.nanoTime();
 
-      SzVersionResponse response
-          = jsonCopy(clientResponse, SzVersionResponse.class);
-
       validateVersionResponse(response,
-                              uriText,
-                              after - before,
-                              false,
-                              this.readInitJsonFile());
+          uriText,
+          after - before,
+          false,
+          this.readInitJsonFile());
     });
   }
 
-  @Test public void versionWithRawTest() {
+  @Test
+  public void versionWithoutRawViaJavaClientTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("version?withRaw=true");
+      String uriText = this.formatServerUri("version?withRaw=false");
+
+      long before = System.nanoTime();
+      com.senzing.gen.api.model.SzVersionResponse clientResponse = this.adminApi.version(false);
+      long after = System.nanoTime();
+
+      SzVersionResponse response = jsonCopy(clientResponse, SzVersionResponse.class);
+
+      validateVersionResponse(response,
+          uriText,
+          after - before,
+          false,
+          this.readInitJsonFile());
+    });
+  }
+
+  @Test
+  public void versionWithRawTest() {
+    this.performTest(() -> {
+      String uriText = this.formatServerUri("version?withRaw=true");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
-      long              before    = System.nanoTime();
-      SzVersionResponse response  = this.adminServices.version(true, uriInfo);
+      long before = System.nanoTime();
+      SzVersionResponse response = this.adminServices.version(true, uriInfo);
       response.concludeTimers();
-      long              after     = System.nanoTime();
+      long after = System.nanoTime();
 
       validateVersionResponse(response,
-                              uriText,
-                              after - before,
-                              true,
-                              this.readInitJsonFile());
+          uriText,
+          after - before,
+          true,
+          this.readInitJsonFile());
     });
   }
 
-  @Test public void versionWithRawViaHttpTest() {
+  @Test
+  public void versionWithRawViaHttpTest() {
     this.performTest(() -> {
       String uriText = this.formatServerUri("version?withRaw=true");
 
       long before = System.nanoTime();
-      SzVersionResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
+      SzVersionResponse response = this.invokeServerViaHttp(GET, uriText, SzVersionResponse.class);
       long after = System.nanoTime();
 
       validateVersionResponse(response,
-                              uriText,
-                              after - before,
-                              true,
-                              this.readInitJsonFile());
+          uriText,
+          after - before,
+          true,
+          this.readInitJsonFile());
     });
   }
 
-  @Test public void versionWithRawViaJavaClientTest() {
+  @Test
+  public void versionWithRawViaJavaClientTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("version?withRaw=true");
+      String uriText = this.formatServerUri("version?withRaw=true");
 
       long before = System.nanoTime();
-      com.senzing.gen.api.model.SzVersionResponse clientResponse
-          = this.adminApi.version(true);
+      com.senzing.gen.api.model.SzVersionResponse clientResponse = this.adminApi.version(true);
       long after = System.nanoTime();
 
-      SzVersionResponse response
-          = jsonCopy(clientResponse, SzVersionResponse.class);
+      SzVersionResponse response = jsonCopy(clientResponse, SzVersionResponse.class);
 
       validateVersionResponse(response,
-                              uriText,
-                              after - before,
-                              true,
-                              this.readInitJsonFile());
+          uriText,
+          after - before,
+          true,
+          this.readInitJsonFile());
     });
   }
 }

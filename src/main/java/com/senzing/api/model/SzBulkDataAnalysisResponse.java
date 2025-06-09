@@ -10,7 +10,7 @@ import javax.ws.rs.core.UriInfo;
  * A response object that contains entity record data.
  *
  */
-@JsonDeserialize(using=SzBulkDataAnalysisResponse.Factory.class)
+@JsonDeserialize(using = SzBulkDataAnalysisResponse.Factory.class)
 public interface SzBulkDataAnalysisResponse extends SzBasicResponse {
   /**
    * Returns the data associated with this response which is an
@@ -36,7 +36,7 @@ public interface SzBulkDataAnalysisResponse extends SzBasicResponse {
      * Creates an instance of {@link SzBulkDataAnalysisResponse} with the
      * specified {@link SzMeta} and {@link SzLinks}.
      *
-     * @param meta The response meta data.
+     * @param meta  The response meta data.
      *
      * @param links The links for the response.
      */
@@ -44,18 +44,18 @@ public interface SzBulkDataAnalysisResponse extends SzBasicResponse {
 
     /**
      * Creates an instance of {@link SzBulkDataAnalysisResponse} with the
-     * specified {@link SzMeta}, {@link SzLinks} and the speicified {@link
+     * specified {@link SzMeta}, {@link SzLinks} and the specified {@link
      * SzBulkDataAnalysis} describing the bulk records..
      *
-     * @param meta The response meta data.
+     * @param meta         The response meta data.
      *
-     * @param links The links for the response.
+     * @param links        The links for the response.
      *
      * @param dataAnalysis The {@link SzEntityRecord} describing the record.
      */
-    SzBulkDataAnalysisResponse create(SzMeta              meta,
-                                      SzLinks             links,
-                                      SzBulkDataAnalysis  dataAnalysis);
+    SzBulkDataAnalysisResponse create(SzMeta meta,
+        SzLinks links,
+        SzBulkDataAnalysis dataAnalysis);
   }
 
   /**
@@ -64,26 +64,24 @@ public interface SzBulkDataAnalysisResponse extends SzBasicResponse {
    * {@link SzBulkDataAnalysisResponseImpl}.
    */
   class DefaultProvider extends AbstractModelProvider<SzBulkDataAnalysisResponse>
-      implements Provider
-  {
+      implements Provider {
     /**
      * Default constructor.
      */
     public DefaultProvider() {
       super(SzBulkDataAnalysisResponse.class,
-            SzBulkDataAnalysisResponseImpl.class);
+          SzBulkDataAnalysisResponseImpl.class);
     }
 
     @Override
-    public SzBulkDataAnalysisResponse create(SzMeta meta, SzLinks links){
+    public SzBulkDataAnalysisResponse create(SzMeta meta, SzLinks links) {
       return new SzBulkDataAnalysisResponseImpl(meta, links);
     }
 
     @Override
-    public SzBulkDataAnalysisResponse create(SzMeta              meta,
-                                             SzLinks             links,
-                                             SzBulkDataAnalysis  dataAnalysis)
-    {
+    public SzBulkDataAnalysisResponse create(SzMeta meta,
+        SzLinks links,
+        SzBulkDataAnalysis dataAnalysis) {
       return new SzBulkDataAnalysisResponseImpl(meta, links, dataAnalysis);
     }
   }
@@ -94,7 +92,7 @@ public interface SzBulkDataAnalysisResponse extends SzBasicResponse {
    */
   class Factory extends ModelFactory<SzBulkDataAnalysisResponse, Provider> {
     /**
-     * Default constructor.  This is public and can only be called after the
+     * Default constructor. This is public and can only be called after the
      * singleton master instance is created as it inherits the same state from
      * the master instance.
      */
@@ -103,8 +101,9 @@ public interface SzBulkDataAnalysisResponse extends SzBasicResponse {
     }
 
     /**
-     * Constructs with the default provider.  This constructor is private and
+     * Constructs with the default provider. This constructor is private and
      * is used for the master singleton instance.
+     * 
      * @param defaultProvider The default provider.
      */
     private Factory(Provider defaultProvider) {
@@ -115,7 +114,7 @@ public interface SzBulkDataAnalysisResponse extends SzBasicResponse {
      * Creates an instance of {@link SzBulkDataAnalysisResponse} with the
      * specified {@link SzMeta} and {@link SzLinks}.
      *
-     * @param meta The response meta data.
+     * @param meta  The response meta data.
      *
      * @param links The links for the response.
      */
@@ -125,20 +124,19 @@ public interface SzBulkDataAnalysisResponse extends SzBasicResponse {
 
     /**
      * Creates an instance of {@link SzBulkDataAnalysisResponse} with the
-     * specified {@link SzMeta}, {@link SzLinks} and the speicified {@link
+     * specified {@link SzMeta}, {@link SzLinks} and the specified {@link
      * SzBulkDataAnalysis} describing the bulk records.
      *
-     * @param meta The response meta data.
+     * @param meta         The response meta data.
      *
-     * @param links The links for the response.
+     * @param links        The links for the response.
      *
      * @param dataAnalysis The {@link SzBulkDataAnalysis} describing the
      *                     bulk records.
      */
-    public SzBulkDataAnalysisResponse create(SzMeta              meta,
-                                             SzLinks             links,
-                                             SzBulkDataAnalysis  dataAnalysis)
-    {
+    public SzBulkDataAnalysisResponse create(SzMeta meta,
+        SzLinks links,
+        SzBulkDataAnalysis dataAnalysis) {
       return this.getProvider().create(meta, links, dataAnalysis);
     }
   }

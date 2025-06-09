@@ -55,29 +55,28 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
   @Test
   public void testCSVWithBadMediaType() {
     this.performTest(() -> {
-      String  uriText1 = this.formatServerUri("bulk-data/analyze");
+      String uriText1 = this.formatServerUri("bulk-data/analyze");
       UriInfo uriInfo1 = this.newProxyUriInfo(uriText1);
 
-      String  uriText2 = this.formatServerUri("bulk-data/load");
+      String uriText2 = this.formatServerUri("bulk-data/load");
       UriInfo uriInfo2 = this.newProxyUriInfo(uriText2);
 
-      String    testInfo      = "Test CSV analyze with bad media type";
-      File      bulkDataFile  = null;
+      String testInfo = "Test CSV analyze with bad media type";
+      File bulkDataFile = null;
 
       try {
         bulkDataFile = File.createTempFile("bulk-data-", ".csv");
 
         try (FileOutputStream fos = new FileOutputStream(bulkDataFile);
-             OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
-             PrintWriter        pw  = new PrintWriter(new BufferedWriter(osw)))
-        {
+            OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
+            PrintWriter pw = new PrintWriter(new BufferedWriter(osw))) {
           pw.println("RECORD_ID,DATA_SOURCE,NAME_FULL,PHONE_NUMBER");
           pw.println("ABC123,\"" + CUSTOMER_DATA_SOURCE
-                         + "\"  ,\"JOE SCHMOE\"  ,702-555-1212");
+              + "\"  ,\"JOE SCHMOE\"  ,702-555-1212");
           pw.println("DEF456,   \"" + CUSTOMER_DATA_SOURCE
-                         + "\",  \"JOHN DOE\",702-555-1313");
+              + "\",  \"JOHN DOE\",702-555-1313");
           pw.println("GHI789,   \"" + CUSTOMER_DATA_SOURCE
-                         + "\"  ,  \"JANE SMITH\"  ,702-555-1313");
+              + "\"  ,  \"JANE SMITH\"  ,702-555-1313");
           pw.flush();
         }
 
@@ -91,15 +90,14 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
 
       for (MediaType badMediaType : badMediaTypes) {
         try (FileInputStream fis1 = new FileInputStream(bulkDataFile);
-             FileInputStream fis2 = new FileInputStream(bulkDataFile))
-        {
+            FileInputStream fis2 = new FileInputStream(bulkDataFile)) {
           try {
             this.bulkDataServices.analyzeBulkRecordsViaForm(badMediaType,
-                                                            fis1,
-                                                            uriInfo1);
+                fis1,
+                uriInfo1);
 
             fail("Unexpectedly analyzed CSV records with wrong media type "
-                     + "with no error: " + badMediaType);
+                + "with no error: " + badMediaType);
 
           } catch (BadRequestException e) {
             // all good -- this is expected
@@ -107,25 +105,24 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
           } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpectedly analyzed CSV records with wrong media type ("
-                     + badMediaType + ") with an exception other than "
-                     + "BadRequestException: " + e);
+                + badMediaType + ") with an exception other than "
+                + "BadRequestException: " + e);
 
             throw e;
           }
 
           try {
             this.bulkDataServices.loadBulkRecordsDirect(null,
-                                                        null,
-                                                        null,
-                                                        "FOO",
-                                                        -1,
-                                                        badMediaType,
-                                                        fis2,
-                                                        uriInfo2);
-
+                null,
+                null,
+                "FOO",
+                -1,
+                badMediaType,
+                fis2,
+                uriInfo2);
 
             fail("Unexpectedly loaded CSV records with wrong media type "
-                     + "with no error: " + badMediaType);
+                + "with no error: " + badMediaType);
 
           } catch (ForbiddenException e) {
             // all good -- this is expected
@@ -133,8 +130,8 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
           } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpectedly loaded CSV records with wrong media type ("
-                     + badMediaType + ") with an exception other than "
-                     + "ForbiddenException: " + e);
+                + badMediaType + ") with an exception other than "
+                + "ForbiddenException: " + e);
 
             throw e;
           }
@@ -142,7 +139,8 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
         } catch (Exception e) {
           System.err.println("********** FAILED TEST: " + testInfo);
           e.printStackTrace();
-          if (e instanceof RuntimeException) throw ((RuntimeException) e);
+          if (e instanceof RuntimeException)
+            throw ((RuntimeException) e);
           throw new RuntimeException(e);
         }
       }
@@ -152,39 +150,38 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
   @Test
   public void testJsonWithBadMediaType() {
     this.performTest(() -> {
-      String  uriText1 = this.formatServerUri("bulk-data/analyze");
+      String uriText1 = this.formatServerUri("bulk-data/analyze");
       UriInfo uriInfo1 = this.newProxyUriInfo(uriText1);
 
-      String  uriText2 = this.formatServerUri("bulk-data/load");
+      String uriText2 = this.formatServerUri("bulk-data/load");
       UriInfo uriInfo2 = this.newProxyUriInfo(uriText2);
 
-      String    testInfo      = "Test JSON analyze with bad media type";
-      File      bulkDataFile  = null;
+      String testInfo = "Test JSON analyze with bad media type";
+      File bulkDataFile = null;
 
       try {
         bulkDataFile = File.createTempFile("bulk-data-", ".csv");
 
-        try (FileOutputStream   fos = new FileOutputStream(bulkDataFile);
-             OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8))
-        {
+        try (FileOutputStream fos = new FileOutputStream(bulkDataFile);
+            OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8)) {
           JsonArrayBuilder jab = Json.createArrayBuilder();
           JsonObjectBuilder job = Json.createObjectBuilder();
           job.add("RECORD_ID", "ABC123")
-              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("DATA_SOURCE", CUSTOMER_DATA_SOURCE)
               .add("NAME_FULL", "JOE_SCHMOE")
               .add("PHONE_NUMBER", "702-555-1212");
 
           jab.add(job);
           job = Json.createObjectBuilder();
           job.add("RECORD_ID", "DEF456")
-              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("DATA_SOURCE", CUSTOMER_DATA_SOURCE)
               .add("NAME_FULL", "JOHN DOE")
               .add("PHONE_NUMBER", "702-555-1313");
           jab.add(job);
 
           job = Json.createObjectBuilder();
           job.add("RECORD_ID", "GHI789")
-              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("DATA_SOURCE", CUSTOMER_DATA_SOURCE)
               .add("NAME_FULL", "JANE SMITH")
               .add("PHONE_NUMBER", "702-555-1313");
           jab.add(job);
@@ -203,15 +200,14 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
 
       for (MediaType badMediaType : badMediaTypes) {
         try (FileInputStream fis1 = new FileInputStream(bulkDataFile);
-             FileInputStream fis2 = new FileInputStream(bulkDataFile))
-        {
+            FileInputStream fis2 = new FileInputStream(bulkDataFile)) {
           try {
             this.bulkDataServices.analyzeBulkRecordsViaForm(badMediaType,
-                                                            fis1,
-                                                            uriInfo1);
+                fis1,
+                uriInfo1);
 
             fail("Unexpectedly analyzed JSON records with wrong media type "
-                     + "with no error: " + badMediaType);
+                + "with no error: " + badMediaType);
 
           } catch (BadRequestException e) {
             // all good -- this is expected
@@ -219,24 +215,24 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
           } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpectedly analyzed JSON records with wrong media type ("
-                     + badMediaType + ") with an exception other than "
-                     + "BadRequestException: " + e);
+                + badMediaType + ") with an exception other than "
+                + "BadRequestException: " + e);
 
             throw e;
           }
 
           try {
             this.bulkDataServices.loadBulkRecordsDirect(null,
-                                                        null,
-                                                        null,
-                                                        "FOO",
-                                                        -1,
-                                                        badMediaType,
-                                                        fis2,
-                                                        uriInfo2);
+                null,
+                null,
+                "FOO",
+                -1,
+                badMediaType,
+                fis2,
+                uriInfo2);
 
             fail("Unexpectedly loaded JSON records with wrong media type "
-                     + "with no error: " + badMediaType);
+                + "with no error: " + badMediaType);
 
           } catch (ForbiddenException e) {
             // all good -- this is expected
@@ -244,8 +240,8 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
           } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpectedly loaded JSON records with wrong media type ("
-                     + badMediaType + ") with an exception other than "
-                     + "ForbiddenException: " + e);
+                + badMediaType + ") with an exception other than "
+                + "ForbiddenException: " + e);
 
             throw e;
           }
@@ -253,7 +249,8 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
         } catch (Exception e) {
           System.err.println("********** FAILED TEST: " + testInfo);
           e.printStackTrace();
-          if (e instanceof RuntimeException) throw ((RuntimeException) e);
+          if (e instanceof RuntimeException)
+            throw ((RuntimeException) e);
           throw new RuntimeException(e);
         }
       }
@@ -263,25 +260,24 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
   @Test
   public void testJsonLinesWithBadMediaType() {
     this.performTest(() -> {
-      String  uriText1 = this.formatServerUri("bulk-data/analyze");
+      String uriText1 = this.formatServerUri("bulk-data/analyze");
       UriInfo uriInfo1 = this.newProxyUriInfo(uriText1);
 
-      String  uriText2 = this.formatServerUri("bulk-data/load");
+      String uriText2 = this.formatServerUri("bulk-data/load");
       UriInfo uriInfo2 = this.newProxyUriInfo(uriText2);
 
-      String    testInfo      = "Test JSON-Lines analyze with bad media type";
-      File      bulkDataFile  = null;
+      String testInfo = "Test JSON-Lines analyze with bad media type";
+      File bulkDataFile = null;
 
       try {
         bulkDataFile = File.createTempFile("bulk-data-", ".csv");
 
-        try (FileOutputStream   fos = new FileOutputStream(bulkDataFile);
-             OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
-             PrintWriter        pw  = new PrintWriter(osw))
-        {
+        try (FileOutputStream fos = new FileOutputStream(bulkDataFile);
+            OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8);
+            PrintWriter pw = new PrintWriter(osw)) {
           JsonObjectBuilder job = Json.createObjectBuilder();
           job.add("RECORD_ID", "ABC123")
-              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("DATA_SOURCE", CUSTOMER_DATA_SOURCE)
               .add("NAME_FULL", "JOE_SCHMOE")
               .add("PHONE_NUMBER", "702-555-1212");
 
@@ -289,14 +285,14 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
 
           job = Json.createObjectBuilder();
           job.add("RECORD_ID", "DEF456")
-              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("DATA_SOURCE", CUSTOMER_DATA_SOURCE)
               .add("NAME_FULL", "JOHN DOE")
               .add("PHONE_NUMBER", "702-555-1313");
           pw.println(JsonUtilities.toJsonText(job));
 
           job = Json.createObjectBuilder();
           job.add("RECORD_ID", "GHI789")
-              .add("DATA_SOURE", CUSTOMER_DATA_SOURCE)
+              .add("DATA_SOURCE", CUSTOMER_DATA_SOURCE)
               .add("NAME_FULL", "JANE SMITH")
               .add("PHONE_NUMBER", "702-555-1313");
           pw.println(JsonUtilities.toJsonText(job));
@@ -313,15 +309,14 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
 
       for (MediaType badMediaType : badMediaTypes) {
         try (FileInputStream fis1 = new FileInputStream(bulkDataFile);
-             FileInputStream fis2 = new FileInputStream(bulkDataFile))
-        {
+            FileInputStream fis2 = new FileInputStream(bulkDataFile)) {
           try {
             this.bulkDataServices.analyzeBulkRecordsViaForm(badMediaType,
-                                                            fis1,
-                                                            uriInfo1);
+                fis1,
+                uriInfo1);
 
             fail("Unexpectedly analyzed JSON-lines records with wrong media "
-                     + "type with no error: " + badMediaType);
+                + "type with no error: " + badMediaType);
 
           } catch (BadRequestException e) {
             // all good -- this is expected
@@ -329,24 +324,24 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
           } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpectedly analyzed JSON-lines records with wrong media "
-                     + "type (" + badMediaType + ") with an exception other "
-                     + "than BadRequestException: " + e);
+                + "type (" + badMediaType + ") with an exception other "
+                + "than BadRequestException: " + e);
 
             throw e;
           }
 
           try {
             this.bulkDataServices.loadBulkRecordsDirect(null,
-                                                        null,
-                                                        null,
-                                                        "FOO",
-                                                        -1,
-                                                        badMediaType,
-                                                        fis2,
-                                                        uriInfo2);
+                null,
+                null,
+                "FOO",
+                -1,
+                badMediaType,
+                fis2,
+                uriInfo2);
 
             fail("Unexpectedly loaded JSON records with wrong media type "
-                     + "with no error: " + badMediaType);
+                + "with no error: " + badMediaType);
 
           } catch (ForbiddenException e) {
             // all good -- this is expected
@@ -354,8 +349,8 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
           } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpectedly loaded JSON records with wrong media type ("
-                     + badMediaType + ") with an exception other than "
-                     + "ForbiddenException: " + e);
+                + badMediaType + ") with an exception other than "
+                + "ForbiddenException: " + e);
 
             throw e;
           }
@@ -363,7 +358,8 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
         } catch (Exception e) {
           System.err.println("********** FAILED TEST: " + testInfo);
           e.printStackTrace();
-          if (e instanceof RuntimeException) throw ((RuntimeException) e);
+          if (e instanceof RuntimeException)
+            throw ((RuntimeException) e);
           throw new RuntimeException(e);
         }
       }
@@ -374,27 +370,26 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
   @MethodSource("getLoadBulkRecordsParameters")
   @Override
   public void loadBulkRecordsViaFormTest(
-      String              testInfo,
+      String testInfo,
       MediaType mediaType,
       File bulkDataFile,
       SzBulkDataAnalysis analysis,
-      Map<String,String> dataSourceMap)
-  {
+      Map<String, String> dataSourceMap) {
     this.performTest(() -> {
       this.livePurgeRepository();
 
-      String  uriText = this.formatServerUri("bulk-data/load");
+      String uriText = this.formatServerUri("bulk-data/load");
 
-      MultivaluedMap  queryParams       = new MultivaluedHashMap();
-      String          mapDataSources    = null;
-      List<String>    mapDataSourceList = new LinkedList<>();
+      MultivaluedMap queryParams = new MultivaluedHashMap();
+      String mapDataSources = null;
+      List<String> mapDataSourceList = new LinkedList<>();
       if (dataSourceMap != null) {
-        boolean[]         jsonFlag    = { true };
-        boolean[]         overlapFlag = { true };
-        JsonObjectBuilder builder   = Json.createObjectBuilder();
+        boolean[] jsonFlag = { true };
+        boolean[] overlapFlag = { true };
+        JsonObjectBuilder builder = Json.createObjectBuilder();
         dataSourceMap.entrySet().forEach(entry -> {
-          String  key   = entry.getKey();
-          String  value = entry.getValue();
+          String key = entry.getKey();
+          String value = entry.getValue();
           if (jsonFlag[0] || overlapFlag[0]) {
             builder.add(key, value);
 
@@ -417,8 +412,7 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       long before = System.nanoTime();
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
-        SzBulkLoadResponse response
-            = this.bulkDataServices.loadBulkRecordsViaForm(
+        SzBulkLoadResponse response = this.bulkDataServices.loadBulkRecordsViaForm(
             CONTACTS_DATA_SOURCE,
             mapDataSources,
             mapDataSourceList,
@@ -432,8 +426,7 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
         fail("Expected bulk load to be forbidden, but it succeeded.");
 
       } catch (ForbiddenException expected) {
-        SzErrorResponse response
-            = (SzErrorResponse) expected.getResponse().getEntity();
+        SzErrorResponse response = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
         long after = System.nanoTime();
         validateBasics(
@@ -442,7 +435,8 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
@@ -452,12 +446,11 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
   @MethodSource("getLoadBulkRecordsParameters")
   @Override
   public void loadBulkRecordsViaDirectHttpTest(
-      String              testInfo,
-      MediaType           mediaType,
-      File                bulkDataFile,
-      SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap)
-  {
+      String testInfo,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis analysis,
+      Map<String, String> dataSourceMap) {
     this.performTest(() -> {
       // check if media type is null
       if (mediaType == null) {
@@ -488,7 +481,8 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
@@ -498,12 +492,11 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
   @MethodSource("getLoadBulkRecordsParameters")
   @Override
   public void loadBulkRecordsDirectJavaClientTest(
-      String              testInfo,
-      MediaType           mediaType,
-      File                bulkDataFile,
-      SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap)
-  {
+      String testInfo,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis analysis,
+      Map<String, String> dataSourceMap) {
     this.performTest(() -> {
       // check if media type is null
       if (mediaType == null) {
@@ -521,15 +514,14 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
 
       try (FileInputStream fis = new FileInputStream(bulkDataFile)) {
         long before = System.nanoTime();
-        com.senzing.gen.api.model.SzErrorResponse clientResponse
-            = this.invokeServerViaHttp(
+        com.senzing.gen.api.model.SzErrorResponse clientResponse = this.invokeServerViaHttp(
             POST, uriText, null, String.valueOf(mediaType),
             bulkDataFile.length(), new FileInputStream(bulkDataFile),
             com.senzing.gen.api.model.SzErrorResponse.class);
         long after = System.nanoTime();
 
         SzErrorResponse response = jsonCopy(clientResponse,
-                                            SzErrorResponse.class);
+            SzErrorResponse.class);
 
         validateBasics(
             testInfo, response, 403, POST, uriText, after - before);
@@ -537,7 +529,8 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
@@ -547,12 +540,11 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
   @MethodSource("getLoadBulkRecordsParameters")
   @Override
   public void loadBulkRecordsViaWebSocketsTest(
-      String              testInfo,
-      MediaType           mediaType,
-      File                bulkDataFile,
-      SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap)
-  {
+      String testInfo,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis analysis,
+      Map<String, String> dataSourceMap) {
     this.performTest(() -> {
       this.livePurgeRepository();
 
@@ -568,22 +560,22 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
         container.connectToServer(client, URI.create(uriText));
 
         fail("Successfully connected to web socket for bulk load when started "
-             + "in read-only mode: " + testInfo);
+            + "in read-only mode: " + testInfo);
 
       } catch (Exception expected) {
         if (client != null) {
           Object next = client.getNextResponse();
           if (next != null) {
-            if (! (next instanceof Throwable)) {
+            if (!(next instanceof Throwable)) {
               fail("Expected failure on Web Socket connection to read-only "
-                   + "server, but got a non-failure response instead: " + next);
+                  + "server, but got a non-failure response instead: " + next);
             }
             Throwable throwable = (Throwable) next;
             String message = throwable.getMessage();
             if (!message.contains("403")) {
               fail("Got an exception on Web Socket connection to "
-                   + "read-only server, but it was not a 403 failure",
-                   throwable);
+                  + "read-only server, but it was not a 403 failure",
+                  throwable);
             }
           }
         }
@@ -595,12 +587,11 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
   @MethodSource("getLoadBulkRecordsParameters")
   @Override
   public void loadBulkRecordsViaSSETest(
-      String              testInfo,
-      MediaType           mediaType,
-      File                bulkDataFile,
-      SzBulkDataAnalysis  analysis,
-      Map<String,String>  dataSourceMap)
-  {
+      String testInfo,
+      MediaType mediaType,
+      File bulkDataFile,
+      SzBulkDataAnalysis analysis,
+      Map<String, String> dataSourceMap) {
     this.performTest(() -> {
       this.livePurgeRepository();
 
@@ -614,26 +605,23 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
         URL url = new URL(uriText);
 
         BulkDataSSEClient client = new BulkDataSSEClient(url,
-                                                         bulkDataFile,
-                                                         mediaType);
+            bulkDataFile,
+            mediaType);
 
         client.start();
 
         SzErrorResponse errorResponse = null;
         // grab the results
-        for (Object next = client.getNextResponse();
-             next != null;
-             next = client.getNextResponse())
-        {
+        for (Object next = client.getNextResponse(); next != null; next = client.getNextResponse()) {
           // check if there was a failure
           if (next instanceof Throwable) {
-            ((Throwable)next).printStackTrace();
+            ((Throwable) next).printStackTrace();
             fail((Throwable) next);
           }
 
           // get as a string
           String jsonText = next.toString();
-          if (jsonText.matches(".*\"httpStatusCode\":\\s*200.*") ) {
+          if (jsonText.matches(".*\"httpStatusCode\":\\s*200.*")) {
             fail("Received 200 response for read-only: " + jsonText);
 
           } else {
@@ -646,7 +634,7 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
 
         if (errorResponse == null) {
           fail("Did not receive an error response for SSE bulk-load test "
-               + "against a read-only API Server: " + testInfo);
+              + "against a read-only API Server: " + testInfo);
         }
 
         validateBasics(
@@ -656,7 +644,8 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });
@@ -666,12 +655,11 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
   @MethodSource("getMaxFailureArgs")
   @Override
   public void testMaxFailuresOnLoad(
-      int                   recordCount,
-      Integer               maxFailures,
+      int recordCount,
+      Integer maxFailures,
       SzBulkDataStatus expectedStatus,
-      Map<String, Integer>  failuresByDataSource,
-      File                  dataFile)
-  {
+      Map<String, Integer> failuresByDataSource,
+      File dataFile) {
     this.performTest(() -> {
       this.livePurgeRepository();
 
@@ -690,7 +678,7 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
 
       long before = System.nanoTime();
       try (InputStream is = new FileInputStream(dataFile);
-           BufferedInputStream bis = new BufferedInputStream(is)) {
+          BufferedInputStream bis = new BufferedInputStream(is)) {
         this.bulkDataServices.loadBulkRecordsViaForm(
             null,
             null,
@@ -705,18 +693,17 @@ public class BulkDataServicesReadOnlyTest extends BulkDataServicesTest {
         fail("Expected bulk load to be forbidden, but it succeeded.");
 
       } catch (ForbiddenException expected) {
-        SzErrorResponse response
-            = (SzErrorResponse) expected.getResponse().getEntity();
+        SzErrorResponse response = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
         long after = System.nanoTime();
         validateBasics(
             testInfo, response, 403, POST, uriText, after - before);
 
-
       } catch (Exception e) {
         System.err.println("********** FAILED TEST: " + testInfo);
         e.printStackTrace();
-        if (e instanceof RuntimeException) throw ((RuntimeException) e);
+        if (e instanceof RuntimeException)
+          throw ((RuntimeException) e);
         throw new RuntimeException(e);
       }
     });

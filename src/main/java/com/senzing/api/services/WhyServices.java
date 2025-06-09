@@ -25,45 +25,51 @@ public class WhyServices implements ServicesSupport {
    * <tt>GET /data-sources/{dataSourceCode}/records/{recordId}/entity/why</tt>
    * operation.
    *
-   * @param dataSourceCode The data source code from the URI path that in-part
-   *                       identifies the record that belongs to the entity.
-   * @param recordId The record ID from the URI path that in-part identifies the
-   *                 record that belongs to the entity.
-   * @param forceMinimal Whether or not the returned entities should be in
-   *                     the minimal format.
-   * @param detailLevel The {@link SzDetailLevel} describing the requested
-   *                    level of detail for the entity data, if
-   *                    <code>null</code> this defaults to {@link
-   *                    SzDetailLevel#VERBOSE}.
-   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
-   *                    the features should be returned, if <code>null</code>
-   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
-   * @param withFeatureStats Whether or not feature stats should be included
-   *                         with the returned entities.
+   * @param dataSourceCode       The data source code from the URI path that
+   *                             in-part
+   *                             identifies the record that belongs to the entity.
+   * @param recordId             The record ID from the URI path that in-part
+   *                             identifies the
+   *                             record that belongs to the entity.
+   * @param forceMinimal         Whether or not the returned entities should be in
+   *                             the minimal format.
+   * @param detailLevel          The {@link SzDetailLevel} describing the
+   *                             requested
+   *                             level of detail for the entity data, if
+   *                             <code>null</code> this defaults to {@link
+   *                             SzDetailLevel#VERBOSE}.
+   * @param featureMode          The {@link SzFeatureMode} query parameter
+   *                             indicating how
+   *                             the features should be returned, if
+   *                             <code>null</code>
+   *                             this defaults to
+   *                             {@link SzFeatureMode#WITH_DUPLICATES}.
+   * @param withFeatureStats     Whether or not feature stats should be included
+   *                             with the returned entities.
    * @param withInternalFeatures Whether or not internal features should be
    *                             included with the returned entities.
-   * @param withRelationships Whether or not relationships should be included
-   *                          in the returned entities.
-   * @param withRaw Whether or not the raw native Senzing JSON should be
-   *                included with the response.
-   * @param uriInfo The {@link UriInfo} for the request.
+   * @param withRelationships    Whether or not relationships should be included
+   *                             in the returned entities.
+   * @param withRaw              Whether or not the raw native Senzing JSON should
+   *                             be
+   *                             included with the response.
+   * @param uriInfo              The {@link UriInfo} for the request.
    *
    * @return The {@link SzWhyEntityResponse} describing the response.
    */
   @GET
   @Path("data-sources/{dataSourceCode}/records/{recordId}/entity/why")
   public SzWhyEntityResponse whyEntityByRecordId(
-      @PathParam("dataSourceCode")                                String        dataSourceCode,
-      @PathParam("recordId")                                      String        recordId,
-      @DefaultValue("false") @QueryParam("forceMinimal")          boolean       forceMinimal,
-      @DefaultValue("VERBOSE") @QueryParam("detailLevel")         SzDetailLevel detailLevel,
+      @PathParam("dataSourceCode") String dataSourceCode,
+      @PathParam("recordId") String recordId,
+      @DefaultValue("false") @QueryParam("forceMinimal") boolean forceMinimal,
+      @DefaultValue("VERBOSE") @QueryParam("detailLevel") SzDetailLevel detailLevel,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
-      @DefaultValue("true") @QueryParam("withFeatureStats")       boolean       withFeatureStats,
-      @DefaultValue("true") @QueryParam("withInternalFeatures")   boolean       withInternalFeatures,
-      @DefaultValue("false") @QueryParam("withRelationships")     boolean       withRelationships,
-      @DefaultValue("false") @QueryParam("withRaw")               boolean       withRaw,
-      @Context                                                    UriInfo       uriInfo)
-  {
+      @DefaultValue("true") @QueryParam("withFeatureStats") boolean withFeatureStats,
+      @DefaultValue("true") @QueryParam("withInternalFeatures") boolean withInternalFeatures,
+      @DefaultValue("false") @QueryParam("withRelationships") boolean withRelationships,
+      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
+      @Context UriInfo uriInfo) {
     Timers timers = this.newTimers();
 
     try {
@@ -77,11 +83,11 @@ public class WhyServices implements ServicesSupport {
       String rawData = null;
 
       long flags = this.getFlags(forceMinimal,
-                                 detailLevel,
-                                 featureMode,
-                                 withFeatureStats,
-                                 withInternalFeatures,
-                                 withRelationships);
+          detailLevel,
+          featureMode,
+          withFeatureStats,
+          withInternalFeatures,
+          withRelationships);
 
       this.enteringQueue(timers);
       rawData = provider.executeInThread(() -> {
@@ -107,10 +113,10 @@ public class WhyServices implements ServicesSupport {
       });
 
       return this.createWhyEntityResponse(rawData,
-                                          timers,
-                                          uriInfo,
-                                          withRaw,
-                                          provider);
+          timers,
+          uriInfo,
+          withRaw,
+          provider);
 
     } catch (ServerErrorException e) {
       e.printStackTrace();
@@ -128,41 +134,45 @@ public class WhyServices implements ServicesSupport {
   /**
    * Implements the <tt>GET /entities/{entityId}/why</tt> operation.
    *
-   * @param entityId The entity ID of the entity from the URI path.
-   * @param forceMinimal Whether or not the returned entities should be in
-   *                     the minimal format.
-   * @param detailLevel The {@link SzDetailLevel} describing the requested
-   *                    level of detail for the entity data, if
-   *                    <code>null</code> this defaults to {@link
-   *                    SzDetailLevel#VERBOSE}.
-   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
-   *                    the features should be returned, if <code>null</code>
-   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
-   * @param withFeatureStats Whether or not feature stats should be included
-   *                         with the returned entities.
+   * @param entityId             The entity ID of the entity from the URI path.
+   * @param forceMinimal         Whether or not the returned entities should be in
+   *                             the minimal format.
+   * @param detailLevel          The {@link SzDetailLevel} describing the
+   *                             requested
+   *                             level of detail for the entity data, if
+   *                             <code>null</code> this defaults to {@link
+   *                             SzDetailLevel#VERBOSE}.
+   * @param featureMode          The {@link SzFeatureMode} query parameter
+   *                             indicating how
+   *                             the features should be returned, if
+   *                             <code>null</code>
+   *                             this defaults to
+   *                             {@link SzFeatureMode#WITH_DUPLICATES}.
+   * @param withFeatureStats     Whether or not feature stats should be included
+   *                             with the returned entities.
    * @param withInternalFeatures Whether or not internal features should be
    *                             included with the returned entities.
-   * @param withRelationships Whether or not relationships should be included
-   *                          in the returned entities.
-   * @param withRaw Whether or not the raw native Senzing JSON should be
-   *                included with the response.
-   * @param uriInfo The {@link UriInfo} for the request.
+   * @param withRelationships    Whether or not relationships should be included
+   *                             in the returned entities.
+   * @param withRaw              Whether or not the raw native Senzing JSON should
+   *                             be
+   *                             included with the response.
+   * @param uriInfo              The {@link UriInfo} for the request.
    *
    * @return The {@link SzWhyEntityResponse} describing the response.
    */
   @GET
   @Path("entities/{entityId}/why")
   public SzWhyEntityResponse whyEntityByEntityId(
-      @PathParam("entityId")                                      long          entityId,
-      @DefaultValue("false") @QueryParam("forceMinimal")          boolean       forceMinimal,
-      @DefaultValue("VERBOSE") @QueryParam("detailLevel")         SzDetailLevel detailLevel,
+      @PathParam("entityId") long entityId,
+      @DefaultValue("false") @QueryParam("forceMinimal") boolean forceMinimal,
+      @DefaultValue("VERBOSE") @QueryParam("detailLevel") SzDetailLevel detailLevel,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
-      @DefaultValue("true") @QueryParam("withFeatureStats")       boolean       withFeatureStats,
-      @DefaultValue("true") @QueryParam("withInternalFeatures")   boolean       withInternalFeatures,
-      @DefaultValue("false") @QueryParam("withRelationships")     boolean       withRelationships,
-      @DefaultValue("false") @QueryParam("withRaw")               boolean       withRaw,
-      @Context                                                    UriInfo       uriInfo)
-  {
+      @DefaultValue("true") @QueryParam("withFeatureStats") boolean withFeatureStats,
+      @DefaultValue("true") @QueryParam("withInternalFeatures") boolean withInternalFeatures,
+      @DefaultValue("false") @QueryParam("withRelationships") boolean withRelationships,
+      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
+      @Context UriInfo uriInfo) {
     Timers timers = this.newTimers();
 
     try {
@@ -173,11 +183,11 @@ public class WhyServices implements ServicesSupport {
       String rawData = null;
 
       long flags = this.getFlags(forceMinimal,
-                                 detailLevel,
-                                 featureMode,
-                                 withFeatureStats,
-                                 withInternalFeatures,
-                                 withRelationships);
+          detailLevel,
+          featureMode,
+          withFeatureStats,
+          withInternalFeatures,
+          withRelationships);
 
       this.enteringQueue(timers);
       rawData = provider.executeInThread(() -> {
@@ -201,10 +211,10 @@ public class WhyServices implements ServicesSupport {
       });
 
       return this.createWhyEntityResponse(rawData,
-                                          timers,
-                                          uriInfo,
-                                          withRaw,
-                                          provider);
+          timers,
+          uriInfo,
+          withRaw,
+          provider);
 
     } catch (ServerErrorException e) {
       e.printStackTrace();
@@ -220,48 +230,54 @@ public class WhyServices implements ServicesSupport {
   }
 
   /**
-   * Implments the <tt>GET /why/records</tt> operation.
+   * Implements the <tt>GET /why/records</tt> operation.
    *
-   * @param dataSourceCode1 The data source code for the first subject record.
-   * @param recordId1 The record ID for the first subject record.
-   * @param dataSourceCode2 The data source code for the second subject record.
-   * @param recordId2 The record ID for the second subject record.
-   * @param forceMinimal Whether or not the returned entities should be in
-   *                     the minimal format.
-   * @param detailLevel The {@link SzDetailLevel} describing the requested
-   *                    level of detail for the entity data, if
-   *                    <code>null</code> this defaults to {@link
-   *                    SzDetailLevel#VERBOSE}.
-   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
-   *                    the features should be returned, if <code>null</code>
-   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
-   * @param withFeatureStats Whether or not feature stats should be included
-   *                         with the returned entities.
+   * @param dataSourceCode1      The data source code for the first subject
+   *                             record.
+   * @param recordId1            The record ID for the first subject record.
+   * @param dataSourceCode2      The data source code for the second subject
+   *                             record.
+   * @param recordId2            The record ID for the second subject record.
+   * @param forceMinimal         Whether or not the returned entities should be in
+   *                             the minimal format.
+   * @param detailLevel          The {@link SzDetailLevel} describing the
+   *                             requested
+   *                             level of detail for the entity data, if
+   *                             <code>null</code> this defaults to {@link
+   *                             SzDetailLevel#VERBOSE}.
+   * @param featureMode          The {@link SzFeatureMode} query parameter
+   *                             indicating how
+   *                             the features should be returned, if
+   *                             <code>null</code>
+   *                             this defaults to
+   *                             {@link SzFeatureMode#WITH_DUPLICATES}.
+   * @param withFeatureStats     Whether or not feature stats should be included
+   *                             with the returned entities.
    * @param withInternalFeatures Whether or not internal features should be
    *                             included with the returned entities.
-   * @param withRelationships Whether or not relationships should be included
-   *                          in the returned entities.
-   * @param withRaw Whether or not the raw native Senzing JSON should be
-   *                included with the response.
-   * @param uriInfo The {@link UriInfo} for the request.
+   * @param withRelationships    Whether or not relationships should be included
+   *                             in the returned entities.
+   * @param withRaw              Whether or not the raw native Senzing JSON should
+   *                             be
+   *                             included with the response.
+   * @param uriInfo              The {@link UriInfo} for the request.
    * @return The {@link SzWhyRecordsResponse} describing the response.
    */
   @GET
   @Path("why/records")
   public SzWhyRecordsResponse whyRecords(
-      @QueryParam("dataSource1")                                  String        dataSourceCode1,
-      @QueryParam("recordId1")                                    String        recordId1,
-      @QueryParam("dataSource2")                                  String        dataSourceCode2,
-      @QueryParam("recordId2")                                    String        recordId2,
-      @DefaultValue("false") @QueryParam("forceMinimal")          boolean       forceMinimal,
-      @DefaultValue("VERBOSE") @QueryParam("detailLevel")         SzDetailLevel detailLevel,
+      @QueryParam("dataSource1") String dataSourceCode1,
+      @QueryParam("recordId1") String recordId1,
+      @QueryParam("dataSource2") String dataSourceCode2,
+      @QueryParam("recordId2") String recordId2,
+      @DefaultValue("false") @QueryParam("forceMinimal") boolean forceMinimal,
+      @DefaultValue("VERBOSE") @QueryParam("detailLevel") SzDetailLevel detailLevel,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
-      @DefaultValue("true") @QueryParam("withFeatureStats")       boolean       withFeatureStats,
-      @DefaultValue("true") @QueryParam("withInternalFeatures")   boolean       withInternalFeatures,
-      @DefaultValue("false") @QueryParam("withRelationships")     boolean       withRelationships,
-      @DefaultValue("false") @QueryParam("withRaw")               boolean       withRaw,
-      @Context                                                    UriInfo       uriInfo)
-  {
+      @DefaultValue("true") @QueryParam("withFeatureStats") boolean withFeatureStats,
+      @DefaultValue("true") @QueryParam("withInternalFeatures") boolean withInternalFeatures,
+      @DefaultValue("false") @QueryParam("withRelationships") boolean withRelationships,
+      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
+      @Context UriInfo uriInfo) {
     Timers timers = this.newTimers();
 
     try {
@@ -297,11 +313,11 @@ public class WhyServices implements ServicesSupport {
       String rawData = null;
 
       long flags = this.getFlags(forceMinimal,
-                                 detailLevel,
-                                 featureMode,
-                                 withFeatureStats,
-                                 withInternalFeatures,
-                                 withRelationships);
+          detailLevel,
+          featureMode,
+          withFeatureStats,
+          withInternalFeatures,
+          withRelationships);
 
       this.enteringQueue(timers);
       rawData = provider.executeInThread(() -> {
@@ -321,8 +337,7 @@ public class WhyServices implements ServicesSupport {
         if (result != 0) {
           int errorCode = engineApi.getLastExceptionCode();
           if (errorCode == DATA_SOURCE_NOT_FOUND_CODE
-              || errorCode == RECORD_NOT_FOUND_CODE)
-          {
+              || errorCode == RECORD_NOT_FOUND_CODE) {
             throw this.newBadRequestException(GET, uriInfo, timers, engineApi);
           }
           throw this.newInternalServerErrorException(
@@ -334,19 +349,18 @@ public class WhyServices implements ServicesSupport {
 
       this.processingRawData(timers);
       // parse the result
-      JsonObject  json        = JsonUtilities.parseJsonObject(rawData);
-      JsonArray   whyArray    = json.getJsonArray("WHY_RESULTS");
-      JsonArray   entityArray = json.getJsonArray("ENTITIES");
+      JsonObject json = JsonUtilities.parseJsonObject(rawData);
+      JsonArray whyArray = json.getJsonArray("WHY_RESULTS");
+      JsonArray entityArray = json.getJsonArray("ENTITIES");
 
-      List<SzWhyRecordsResult> whyResults
-          = this.parseWhyRecordsResultList(whyArray);
+      List<SzWhyRecordsResult> whyResults = this.parseWhyRecordsResultList(whyArray);
 
       if (whyResults.size() != 1) {
         throw new IllegalStateException(
             "Unexpected number of why results (" + whyResults.size()
-            + ") for whyRecords() operation: dataSource1=[ " + dataSource1
-            + " ], recordId1=[ " + recordId1 + " ], dataSource2=[ "
-            + dataSource2 + " ], recordId2=[ " + recordId2 + " ]");
+                + ") for whyRecords() operation: dataSource1=[ " + dataSource1
+                + " ], recordId1=[ " + recordId1 + " ], dataSource2=[ "
+                + dataSource2 + " ], recordId2=[ " + recordId2 + " ]");
       }
 
       List<SzEntityData> entities = this.parseEntityDataList(
@@ -380,22 +394,21 @@ public class WhyServices implements ServicesSupport {
    * Constructs a new instance of {@link SzWhyRecordsResponse} with the
    * specified parameters:
    *
-   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpMethod     The {@link SzHttpMethod} for the request.
    * @param httpStatusCode The HTTP status code for the response.
-   * @param uriInfo The {@link UriInfo} for the request.
-   * @param timers The {@link Timers} for the operation.
-   * @param whyResult The {@link SzWhyRecordsResult} for the response.
+   * @param uriInfo        The {@link UriInfo} for the request.
+   * @param timers         The {@link Timers} for the operation.
+   * @param whyResult      The {@link SzWhyRecordsResult} for the response.
    * @param entityDataList The {@link List} of {@link SzEntityData} instances.
    * @return The created {@link SzWhyRecordsResponse} instance.
    */
   protected SzWhyRecordsResponse newWhyRecordsResponse(
-      SzHttpMethod        httpMethod,
-      int                 httpStatusCode,
-      UriInfo             uriInfo,
-      Timers              timers,
-      SzWhyRecordsResult  whyResult,
-      List<SzEntityData>  entityDataList)
-  {
+      SzHttpMethod httpMethod,
+      int httpStatusCode,
+      UriInfo uriInfo,
+      Timers timers,
+      SzWhyRecordsResult whyResult,
+      List<SzEntityData> entityDataList) {
     // construct the response
     return SzWhyRecordsResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
@@ -407,15 +420,14 @@ public class WhyServices implements ServicesSupport {
    * Constructs a new instance of {@link SzWhyRecordsResponseData} with the
    * specified parameters:
    *
-   * @param whyResult The {@link SzWhyRecordsResult} for the response.
+   * @param whyResult      The {@link SzWhyRecordsResult} for the response.
    * @param entityDataList The {@link List} of {@link SzEntityData} instances.
    *
    * @return The created {@link SzWhyRecordsResponseData} instance.
    */
   protected SzWhyRecordsResponseData newWhyRecordsResponseData(
-      SzWhyRecordsResult  whyResult,
-      List<SzEntityData>  entityDataList)
-  {
+      SzWhyRecordsResult whyResult,
+      List<SzEntityData> entityDataList) {
     // construct the response
     SzWhyRecordsResponseData data = SzWhyRecordsResponseData.FACTORY.create();
     data.setWhyResult(whyResult);
@@ -432,52 +444,56 @@ public class WhyServices implements ServicesSupport {
    * @return The parsed {@link List} of {@link SzWhyRecordsResult} instances.
    */
   protected List<SzWhyRecordsResult> parseWhyRecordsResultList(
-      JsonArray whyArray)
-  {
+      JsonArray whyArray) {
     return SzWhyRecordsResult.parseWhyRecordsResultList(null, whyArray);
   }
 
   /**
    * Implements the <tt>GET /why/entities</tt> operation.
    *
-   * @param entity1 The encoded {@link String} describing the {@link
-   *                SzEntityIdentifier} for the first subject entity.
-   * @param entity2 The encoded {@link String} describing the {@link
-   *                SzEntityIdentifier} for the second subject entity.
-   * @param forceMinimal Whether or not the returned entities should be in
-   *                     the minimal format.
-   * @param detailLevel The {@link SzDetailLevel} describing the requested
-   *                    level of detail for the entity data, if
-   *                    <code>null</code> this defaults to {@link
-   *                    SzDetailLevel#VERBOSE}.
-   * @param featureMode The {@link SzFeatureMode} query parameter indicating how
-   *                    the features should be returned, if <code>null</code>
-   *                    this defaults to {@link SzFeatureMode#WITH_DUPLICATES}.
-   * @param withFeatureStats Whether or not feature stats should be included
-   *                         with the returned entities.
+   * @param entity1              The encoded {@link String} describing the {@link
+   *                             SzEntityIdentifier} for the first subject entity.
+   * @param entity2              The encoded {@link String} describing the {@link
+   *                             SzEntityIdentifier} for the second subject
+   *                             entity.
+   * @param forceMinimal         Whether or not the returned entities should be in
+   *                             the minimal format.
+   * @param detailLevel          The {@link SzDetailLevel} describing the
+   *                             requested
+   *                             level of detail for the entity data, if
+   *                             <code>null</code> this defaults to {@link
+   *                             SzDetailLevel#VERBOSE}.
+   * @param featureMode          The {@link SzFeatureMode} query parameter
+   *                             indicating how
+   *                             the features should be returned, if
+   *                             <code>null</code>
+   *                             this defaults to
+   *                             {@link SzFeatureMode#WITH_DUPLICATES}.
+   * @param withFeatureStats     Whether or not feature stats should be included
+   *                             with the returned entities.
    * @param withInternalFeatures Whether or not internal features should be
    *                             included with the returned entities.
-   * @param withRelationships Whether or not relationships should be included
-   *                          in the returned entities.
-   * @param withRaw Whether or not the raw native Senzing JSON should be
-   *                included with the response.
-   * @param uriInfo The {@link UriInfo} for the request.
+   * @param withRelationships    Whether or not relationships should be included
+   *                             in the returned entities.
+   * @param withRaw              Whether or not the raw native Senzing JSON should
+   *                             be
+   *                             included with the response.
+   * @param uriInfo              The {@link UriInfo} for the request.
    * @return The {@link SzWhyEntitiesResponse} describing the response.
    */
   @GET
   @Path("why/entities")
   public SzWhyEntitiesResponse whyEntities(
-      @QueryParam("entity1")                                      String        entity1,
-      @QueryParam("entity2")                                      String        entity2,
-      @DefaultValue("false") @QueryParam("forceMinimal")          boolean       forceMinimal,
-      @DefaultValue("VERBOSE") @QueryParam("detailLevel")         SzDetailLevel detailLevel,
+      @QueryParam("entity1") String entity1,
+      @QueryParam("entity2") String entity2,
+      @DefaultValue("false") @QueryParam("forceMinimal") boolean forceMinimal,
+      @DefaultValue("VERBOSE") @QueryParam("detailLevel") SzDetailLevel detailLevel,
       @DefaultValue("WITH_DUPLICATES") @QueryParam("featureMode") SzFeatureMode featureMode,
-      @DefaultValue("true") @QueryParam("withFeatureStats")       boolean       withFeatureStats,
-      @DefaultValue("true") @QueryParam("withInternalFeatures")   boolean       withInternalFeatures,
-      @DefaultValue("false") @QueryParam("withRelationships")     boolean       withRelationships,
-      @DefaultValue("false") @QueryParam("withRaw")               boolean       withRaw,
-      @Context                                                    UriInfo       uriInfo)
-  {
+      @DefaultValue("true") @QueryParam("withFeatureStats") boolean withFeatureStats,
+      @DefaultValue("true") @QueryParam("withInternalFeatures") boolean withInternalFeatures,
+      @DefaultValue("false") @QueryParam("withRelationships") boolean withRelationships,
+      @DefaultValue("false") @QueryParam("withRaw") boolean withRaw,
+      @Context UriInfo uriInfo) {
     Timers timers = this.newTimers();
 
     try {
@@ -534,11 +550,11 @@ public class WhyServices implements ServicesSupport {
       String rawData = null;
 
       long flags = this.getFlags(forceMinimal,
-                                 detailLevel,
-                                 featureMode,
-                                 withFeatureStats,
-                                 withInternalFeatures,
-                                 withRelationships);
+          detailLevel,
+          featureMode,
+          withFeatureStats,
+          withInternalFeatures,
+          withRelationships);
 
       this.enteringQueue(timers);
 
@@ -553,8 +569,8 @@ public class WhyServices implements ServicesSupport {
         // get the engine API and the config API
         G2Engine engineApi = provider.getEngineApi();
 
-        Long    entityId1       = null;
-        Long    entityId2       = null;
+        Long entityId1 = null;
+        Long entityId2 = null;
         boolean entitiesChanged = false;
         do {
           // set the entities changes flag to false
@@ -625,23 +641,21 @@ public class WhyServices implements ServicesSupport {
    * or an {@link InternalServerErrorException}.
    *
    * @param httpMethod The {@link SzHttpMethod} for the request.
-   * @param uriInfo The {@link UriInfo} for the request.
-   * @param timers The {@link Timers} for the operation.
-   * @param engineApi The {@link G2Engine} that is checked for the cause of the
-   *                  error.
+   * @param uriInfo    The {@link UriInfo} for the request.
+   * @param timers     The {@link Timers} for the operation.
+   * @param engineApi  The {@link G2Engine} that is checked for the cause of the
+   *                   error.
    * @return The {@link WebApplicationException} that was constructed.
    */
   protected WebApplicationException newWebApplicationException(
-      SzHttpMethod  httpMethod,
-      UriInfo       uriInfo,
-      Timers        timers,
-      G2Engine      engineApi)
-  {
+      SzHttpMethod httpMethod,
+      UriInfo uriInfo,
+      Timers timers,
+      G2Engine engineApi) {
     int errorCode = engineApi.getLastExceptionCode();
     if (errorCode == DATA_SOURCE_NOT_FOUND_CODE
         || errorCode == RECORD_NOT_FOUND_CODE
-        || errorCode == ENTITY_NOT_FOUND_CODE)
-    {
+        || errorCode == ENTITY_NOT_FOUND_CODE) {
       return this.newNotFoundException(httpMethod, uriInfo, timers, engineApi);
     }
     return this.newInternalServerErrorException(
@@ -652,29 +666,27 @@ public class WhyServices implements ServicesSupport {
    * Parses the specified raw JSON and creates a new {@link SzWhyEntityResponse}
    * with the specified parameters.
    *
-   * @param rawData The raw JSON text to parse.
-   * @param timers The {@link Timers} for the operation.
-   * @param uriInfo The {@link UriInfo} for the request.
-   * @param withRaw Whether or not the raw JSON should be included in the
-   *                response.
+   * @param rawData  The raw JSON text to parse.
+   * @param timers   The {@link Timers} for the operation.
+   * @param uriInfo  The {@link UriInfo} for the request.
+   * @param withRaw  Whether or not the raw JSON should be included in the
+   *                 response.
    * @param provider The {@link SzApiProvider} to use.
    * @return The {@link SzWhyEntityResponse} that was created.
    */
   protected SzWhyEntityResponse createWhyEntityResponse(
-      String        rawData,
-      Timers        timers,
-      UriInfo       uriInfo,
-      boolean       withRaw,
-      SzApiProvider provider)
-  {
+      String rawData,
+      Timers timers,
+      UriInfo uriInfo,
+      boolean withRaw,
+      SzApiProvider provider) {
     this.processingRawData(timers);
     // parse the result
-    JsonObject  json        = JsonUtilities.parseJsonObject(rawData);
-    JsonArray   whyArray    = json.getJsonArray("WHY_RESULTS");
-    JsonArray   entityArray = json.getJsonArray("ENTITIES");
+    JsonObject json = JsonUtilities.parseJsonObject(rawData);
+    JsonArray whyArray = json.getJsonArray("WHY_RESULTS");
+    JsonArray entityArray = json.getJsonArray("ENTITIES");
 
-    List<SzWhyEntityResult> whyResults
-        = this.parseWhyEntityResultList(whyArray);
+    List<SzWhyEntityResult> whyResults = this.parseWhyEntityResultList(whyArray);
 
     List<SzEntityData> entities = this.parseEntityDataList(
         entityArray, provider::getAttributeClassForFeature);
@@ -698,8 +710,7 @@ public class WhyServices implements ServicesSupport {
    * @param whyArray The {@Link JsonArray} to parse.
    * @return The {@link List} of {@link SzWhyEntityResult} instances.
    */
-  protected List<SzWhyEntityResult> parseWhyEntityResultList(JsonArray whyArray)
-  {
+  protected List<SzWhyEntityResult> parseWhyEntityResultList(JsonArray whyArray) {
     return SzWhyEntityResult.parseWhyEntityResultList(null, whyArray);
   }
 
@@ -707,23 +718,23 @@ public class WhyServices implements ServicesSupport {
    * Creates a new instance of {@link SzWhyEntityResponse} with the specified
    * parameters:
    *
-   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpMethod     The {@link SzHttpMethod} for the request.
    * @param httpStatusCode The HTTP status code for the response.
-   * @param uriInfo The {@link UriInfo} for the request.
-   * @param timers The {@link Timers} for the operation.
-   * @param whyResults The {@link List} of {@link SzWhyEntityResult} instances.
+   * @param uriInfo        The {@link UriInfo} for the request.
+   * @param timers         The {@link Timers} for the operation.
+   * @param whyResults     The {@link List} of {@link SzWhyEntityResult}
+   *                       instances.
    * @param entityDataList The {@link List} of {@link SzEntityData} instances.
    *
    * @return The {@link SzWhyEntityResponse} that was created.
    */
   protected SzWhyEntityResponse newWhyEntityResponse(
-      SzHttpMethod            httpMethod,
-      int                     httpStatusCode,
-      UriInfo                 uriInfo,
-      Timers                  timers,
+      SzHttpMethod httpMethod,
+      int httpStatusCode,
+      UriInfo uriInfo,
+      Timers timers,
       List<SzWhyEntityResult> whyResults,
-      List<SzEntityData>      entityDataList)
-  {
+      List<SzEntityData> entityDataList) {
     return SzWhyEntityResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
         this.newLinks(uriInfo),
@@ -734,15 +745,15 @@ public class WhyServices implements ServicesSupport {
    * Creates a new instance of {@link SzWhyEntityResponseData} with the
    * specified parameters.
    *
-   * @param whyResults The {@link List} of {@link SzWhyEntityResult} instances.
+   * @param whyResults     The {@link List} of {@link SzWhyEntityResult}
+   *                       instances.
    * @param entityDataList The {@link List} of {@link SzEntityData} instances.
    *
    * @return The {@link SzWhyEntityResponseData} that was created.
    */
   protected SzWhyEntityResponseData newWhyEntityResponseData(
       List<SzWhyEntityResult> whyResults,
-      List<SzEntityData>      entityDataList)
-  {
+      List<SzEntityData> entityDataList) {
     SzWhyEntityResponseData data = SzWhyEntityResponseData.FACTORY.create();
 
     data.setWhyResults(whyResults);
@@ -755,29 +766,27 @@ public class WhyServices implements ServicesSupport {
    * Parses the specified raw JSON and creates a new {@link
    * SzWhyEntitiesResponse} with the specified parameters.
    *
-   * @param rawData The raw JSON text to parse.
-   * @param timers The {@link Timers} for the operation.
-   * @param uriInfo The {@link UriInfo} for the request.
-   * @param withRaw Whether or not the raw JSON should be included in the
-   *                response.
+   * @param rawData  The raw JSON text to parse.
+   * @param timers   The {@link Timers} for the operation.
+   * @param uriInfo  The {@link UriInfo} for the request.
+   * @param withRaw  Whether or not the raw JSON should be included in the
+   *                 response.
    * @param provider The {@link SzApiProvider} to use.
    * @return The {@link SzWhyEntitiesResponse} that was created.
    */
   private SzWhyEntitiesResponse createWhyEntitiesResponse(
-      String        rawData,
-      Timers        timers,
-      UriInfo       uriInfo,
-      boolean       withRaw,
-      SzApiProvider provider)
-  {
+      String rawData,
+      Timers timers,
+      UriInfo uriInfo,
+      boolean withRaw,
+      SzApiProvider provider) {
     this.processingRawData(timers);
     // parse the result
-    JsonObject  json        = JsonUtilities.parseJsonObject(rawData);
-    JsonArray   whyArray    = json.getJsonArray("WHY_RESULTS");
-    JsonArray   entityArray = json.getJsonArray("ENTITIES");
+    JsonObject json = JsonUtilities.parseJsonObject(rawData);
+    JsonArray whyArray = json.getJsonArray("WHY_RESULTS");
+    JsonArray entityArray = json.getJsonArray("ENTITIES");
 
-    List<SzWhyEntitiesResult> whyResults
-        = SzWhyEntitiesResult.parseWhyEntitiesResultList(null, whyArray);
+    List<SzWhyEntitiesResult> whyResults = SzWhyEntitiesResult.parseWhyEntitiesResultList(null, whyArray);
 
     List<SzEntityData> entities = this.parseEntityDataList(
         entityArray, provider::getAttributeClassForFeature);
@@ -804,24 +813,23 @@ public class WhyServices implements ServicesSupport {
    * Creates a new instance of {@link SzWhyEntitiesResponse} with the specified
    * parameters:
    *
-   * @param httpMethod The {@link SzHttpMethod} for the request.
+   * @param httpMethod     The {@link SzHttpMethod} for the request.
    * @param httpStatusCode The HTTP status code for the response.
-   * @param uriInfo The {@link UriInfo} for the request.
-   * @param timers The {@link Timers} for the operation.
-   * @param whyResult The {@link SzWhyEntitiesResult} instance.
+   * @param uriInfo        The {@link UriInfo} for the request.
+   * @param timers         The {@link Timers} for the operation.
+   * @param whyResult      The {@link SzWhyEntitiesResult} instance.
    * @param entityDataList The {@link List} of {@link SzEntityData} instances.
    *
    * @return The {@link SzWhyEntitiesResponse} that was created.
    *
    */
   protected SzWhyEntitiesResponse newWhyEntitiesResponse(
-      SzHttpMethod        httpMethod,
-      int                 httpStatusCode,
-      UriInfo             uriInfo,
-      Timers              timers,
+      SzHttpMethod httpMethod,
+      int httpStatusCode,
+      UriInfo uriInfo,
+      Timers timers,
       SzWhyEntitiesResult whyResult,
-      List<SzEntityData>  entityDataList)
-  {
+      List<SzEntityData> entityDataList) {
     return SzWhyEntitiesResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
         this.newLinks(uriInfo),
@@ -832,7 +840,7 @@ public class WhyServices implements ServicesSupport {
    * Creates a new instance of {@link SzWhyEntitiesResponseData} with the
    * specified parameters:
    *
-   * @param whyResult The {@link SzWhyEntitiesResult} instance.
+   * @param whyResult      The {@link SzWhyEntitiesResult} instance.
    * @param entityDataList The {@link List} of {@link SzEntityData} instances.
    *
    * @return The {@link SzWhyEntitiesResponseData} that was created.
@@ -840,8 +848,7 @@ public class WhyServices implements ServicesSupport {
    */
   protected SzWhyEntitiesResponseData newWhyEntitiesResponseData(
       SzWhyEntitiesResult whyResult,
-      List<SzEntityData>  entityDataList)
-  {
+      List<SzEntityData> entityDataList) {
     SzWhyEntitiesResponseData data = SzWhyEntitiesResponseData.FACTORY.create();
     data.setWhyResult(whyResult);
     data.setEntities(entityDataList);

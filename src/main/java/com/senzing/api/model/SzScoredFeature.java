@@ -13,7 +13,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.*;
 /**
  * Describes a feature value that has been scored.
  */
-@JsonDeserialize(using=SzScoredFeature.Factory.class)
+@JsonDeserialize(using = SzScoredFeature.Factory.class)
 public interface SzScoredFeature {
   /**
    * Gets the feature ID for the scored feature.
@@ -77,7 +77,7 @@ public interface SzScoredFeature {
    */
   interface Provider extends ModelProvider<SzScoredFeature> {
     /**
-     * Creates an uninitialized instnace of {@link SzScoredFeature}.
+     * Creates an uninitialized instance of {@link SzScoredFeature}.
      */
     SzScoredFeature create();
 
@@ -85,15 +85,15 @@ public interface SzScoredFeature {
      * Creates an instance of {@Link SzScoredFeatures} initialized with the
      * specified parameters.
      *
-     * @param featureId The feature ID.
-     * @param featureType The feature type.
-     * @param featureValue The value for the feautre.
-     * @param usageType The usage type associated with the feature.
+     * @param featureId    The feature ID.
+     * @param featureType  The feature type.
+     * @param featureValue The value for the feature.
+     * @param usageType    The usage type associated with the feature.
      */
-    SzScoredFeature create(Long   featureId,
-                           String featureType,
-                           String featureValue,
-                           String usageType);
+    SzScoredFeature create(Long featureId,
+        String featureType,
+        String featureValue,
+        String usageType);
   }
 
   /**
@@ -102,8 +102,7 @@ public interface SzScoredFeature {
    * {@link SzScoredFeatureImpl}.
    */
   class DefaultProvider extends AbstractModelProvider<SzScoredFeature>
-      implements Provider
-  {
+      implements Provider {
     /**
      * Default constructor.
      */
@@ -117,10 +116,10 @@ public interface SzScoredFeature {
     }
 
     @Override
-    public SzScoredFeature create(Long   featureId,
-                           String featureType,
-                           String featureValue,
-                           String usageType) {
+    public SzScoredFeature create(Long featureId,
+        String featureType,
+        String featureValue,
+        String usageType) {
       return new SzScoredFeatureImpl(
           featureId, featureType, featureValue, usageType);
     }
@@ -132,7 +131,7 @@ public interface SzScoredFeature {
    */
   class Factory extends ModelFactory<SzScoredFeature, Provider> {
     /**
-     * Default constructor.  This is public and can only be called after the
+     * Default constructor. This is public and can only be called after the
      * singleton master instance is created as it inherits the same state from
      * the master instance.
      */
@@ -141,8 +140,9 @@ public interface SzScoredFeature {
     }
 
     /**
-     * Constructs with the default provider.  This constructor is private and
+     * Constructs with the default provider. This constructor is private and
      * is used for the master singleton instance.
+     * 
      * @param defaultProvider The default provider.
      */
     private Factory(Provider defaultProvider) {
@@ -150,7 +150,7 @@ public interface SzScoredFeature {
     }
 
     /**
-     * Creates an uninitialized instnace of {@link SzScoredFeature}.
+     * Creates an uninitialized instance of {@link SzScoredFeature}.
      */
     public SzScoredFeature create() {
       return this.getProvider().create();
@@ -160,16 +160,15 @@ public interface SzScoredFeature {
      * Creates an instance of {@Link SzScoredFeatures} initialized with the
      * specified parameters.
      *
-     * @param featureId The feature ID.
-     * @param featureType The feature type.
-     * @param featureValue The value for the feautre.
-     * @param usageType The usage type associated with the feature.
+     * @param featureId    The feature ID.
+     * @param featureType  The feature type.
+     * @param featureValue The value for the feature.
+     * @param usageType    The usage type associated with the feature.
      */
-    public SzScoredFeature create(Long   featureId,
-                                  String featureType,
-                                  String featureValue,
-                                  String usageType)
-    {
+    public SzScoredFeature create(Long featureId,
+        String featureType,
+        String featureValue,
+        String usageType) {
       return this.getProvider().create(
           featureId, featureType, featureValue, usageType);
     }
@@ -184,10 +183,10 @@ public interface SzScoredFeature {
    * Parses the native API JSON to build an instance of {@link
    * SzScoredFeature}.
    *
-   * @param jsonObject The {@link JsonObject} describing the perspective using
-   *                   the native API JSON format.
+   * @param jsonObject  The {@link JsonObject} describing the perspective using
+   *                    the native API JSON format.
    *
-   * @param prefix The prefix to apply to the native JSON keys.
+   * @param prefix      The prefix to apply to the native JSON keys.
    *
    * @param featureType The feature type for the {@link SzCandidateKey}
    *                    instances.
@@ -195,22 +194,21 @@ public interface SzScoredFeature {
    * @return The created instance of {@link SzWhyPerspective}.
    */
   static SzScoredFeature parseScoredFeature(JsonObject jsonObject,
-                                            String     prefix,
-                                            String     featureType)
-  {
+      String prefix,
+      String featureType) {
     Long featureId = JsonUtilities.getLong(jsonObject, prefix + "FEAT_ID");
 
     String value = (jsonObject.containsKey(prefix + "FEAT"))
-      ? jsonObject.getString(prefix + "FEAT")
-      : JsonUtilities.getString(jsonObject, prefix + "FEAT_DESC");
+        ? jsonObject.getString(prefix + "FEAT")
+        : JsonUtilities.getString(jsonObject, prefix + "FEAT_DESC");
 
     String usage = JsonUtilities.getString(
-        jsonObject,prefix + "FEAT_USAGE_TYPE");
+        jsonObject, prefix + "FEAT_USAGE_TYPE");
 
     SzScoredFeature result = SzScoredFeature.FACTORY.create(featureId,
-                                                            featureType,
-                                                            value,
-                                                            usage);
+        featureType,
+        value,
+        usage);
 
     return result;
   }

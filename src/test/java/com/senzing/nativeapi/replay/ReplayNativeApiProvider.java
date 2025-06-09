@@ -24,55 +24,49 @@ import static com.senzing.util.ZipUtilities.*;
 import static javax.json.stream.JsonGenerator.PRETTY_PRINTING;
 
 /**
- * An instance of {@link NativeApiProvider} that can record results to and replay
+ * An instance of {@link NativeApiProvider} that can record results to and
+ * replay
  * results from a JSON file.
  */
 public class ReplayNativeApiProvider implements NativeApiProvider {
   /**
    * The prefix for the system properties used by this class.
    */
-  public static final String SYSTEM_PROPERTY_PREFIX
-      = "com.senzing.api.test.replay";
+  public static final String SYSTEM_PROPERTY_PREFIX = "com.senzing.api.test.replay";
 
   /**
    * The system property for forcing direct use of the native API (no replay).
    */
-  public static final String DIRECT_PROPERTY
-      = SYSTEM_PROPERTY_PREFIX + ".direct";
+  public static final String DIRECT_PROPERTY = SYSTEM_PROPERTY_PREFIX + ".direct";
 
   /**
    * The system property for forcing the cache version to use.
    */
-  public static final String VERSION_PROPERTY
-      = SYSTEM_PROPERTY_PREFIX + ".version";
+  public static final String VERSION_PROPERTY = SYSTEM_PROPERTY_PREFIX + ".version";
 
   /**
    * The system property to force recording of a new cache.
    */
-  public static final String RECORD_PROPERTY
-      = SYSTEM_PROPERTY_PREFIX + ".record";
+  public static final String RECORD_PROPERTY = SYSTEM_PROPERTY_PREFIX + ".record";
 
   /**
    * Property indicating if stale caches should automatically be refreshed.
    */
-  public static final String REFRESH_PROPERTY
-      = SYSTEM_PROPERTY_PREFIX + ".refresh";
+  public static final String REFRESH_PROPERTY = SYSTEM_PROPERTY_PREFIX + ".refresh";
 
   /**
    * Property to activate verbose output from replay cache.
    */
-  public static final String VERBOSE_PROPERTY
-      = SYSTEM_PROPERTY_PREFIX + ".verbose";
+  public static final String VERBOSE_PROPERTY = SYSTEM_PROPERTY_PREFIX + ".verbose";
 
   /**
    * Pretty printing {@link JsonWriterFactory}.
    */
-  private static JsonWriterFactory PRETTY_WRITER_FACTORY
-      = Json.createWriterFactory(
+  private static JsonWriterFactory PRETTY_WRITER_FACTORY = Json.createWriterFactory(
       Collections.singletonMap(PRETTY_PRINTING, true));
 
   /**
-   * The number of characters after which to extenralize the parameters or
+   * The number of characters after which to externalize the parameters or
    * results.
    */
   private static final int EXTERNALIZE_THRESHOLD = 200;
@@ -88,18 +82,16 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   private static final String PARAM_RESULT_KEY_PREFIX = "parameter";
 
   /**
-   * The package prefix for the package associated with this class.  This is
+   * The package prefix for the package associated with this class. This is
    * used to exclude stack frames from the hash when the stack frames pertain
    * to this provider.
    */
-  private static final String PACKAGE_PREFIX
-      = ReplayNativeApiProvider.class.getPackage().getName() + ".";
+  private static final String PACKAGE_PREFIX = ReplayNativeApiProvider.class.getPackage().getName() + ".";
 
   /**
    * The current working directory.
    */
-  private static final File CURRENT_DIR
-      = new File(System.getProperty("user.dir"));
+  private static final File CURRENT_DIR = new File(System.getProperty("user.dir"));
 
   /**
    * The target directory of the maven build.
@@ -127,54 +119,46 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
    */
   private static final File TEST_SOURCE_DIR = new File(SOURCE_DIR, "test");
 
-
   /**
    * The main java source directory.
    */
-  private static final File MAIN_JAVA_DIR
-      = new File(MAIN_SOURCE_DIR, "java");
+  private static final File MAIN_JAVA_DIR = new File(MAIN_SOURCE_DIR, "java");
 
   /**
    * The test java source directory.
    */
-  private static final File TEST_JAVA_DIR
-      = new File(TEST_SOURCE_DIR, "java");
+  private static final File TEST_JAVA_DIR = new File(TEST_SOURCE_DIR, "java");
 
   /**
    * The main java class directory.
    */
-  private static final File MAIN_CLASS_DIR
-      = new File(TARGET_DIR, "classes");
+  private static final File MAIN_CLASS_DIR = new File(TARGET_DIR, "classes");
 
   /**
    * The test java class directory.
    */
-  private static final File TEST_CLASS_DIR
-      = new File(TARGET_DIR, "test-classes");
+  private static final File TEST_CLASS_DIR = new File(TARGET_DIR, "test-classes");
 
   /**
    * The test resource directory.
    */
-  private static final File TEST_RESOURCE_DIR
-      = new File(TEST_SOURCE_DIR, "resources");
+  private static final File TEST_RESOURCE_DIR = new File(TEST_SOURCE_DIR, "resources");
 
   /**
-   * The base directory for storing caches.  Sub-directories represent
+   * The base directory for storing caches. Sub-directories represent
    * specific caches for specific API versions.
    */
-  private static final File BASE_CACHE_DIR
-      = new File(TARGET_DIR, "replay-cache");
+  private static final File BASE_CACHE_DIR = new File(TARGET_DIR, "replay-cache");
 
   /**
-   * The base directory for storing caches.  Sub-directories represent
+   * The base directory for storing caches. Sub-directories represent
    * specific caches for specific API versions.
    */
-  private static final File RESOURCE_CACHE_DIR
-      = new File(TEST_RESOURCE_DIR,
-                 PACKAGE_PREFIX.replaceAll(
-                     "\\.",
-                     File.separator.equals("\\") ? "\\\\" : File.separator)
-                     + "cache");
+  private static final File RESOURCE_CACHE_DIR = new File(TEST_RESOURCE_DIR,
+      PACKAGE_PREFIX.replaceAll(
+          "\\.",
+          File.separator.equals("\\") ? "\\\\" : File.separator)
+          + "cache");
 
   /**
    * The prefix to all cache directories.
@@ -193,7 +177,8 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     String propValue = System.getProperty(prop);
     if (propValue != null) {
       propValue = propValue.trim();
-      if (propValue.length() == 0) propValue = null;
+      if (propValue.length() == 0)
+        propValue = null;
     }
     return propValue;
   }
@@ -211,24 +196,25 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
         });
 
         Arrays.sort(dirs, (f1, f2) -> {
-          String    n1  = f1.getName();
-          String    n2  = f2.getName();
-          String    v1  = n1.substring(CACHE_DIR_PREFIX.length());
-          String    v2  = n2.substring(CACHE_DIR_PREFIX.length());
-          String[]  a1  = v1.split("\\.");
-          String[]  a2  = v2.split("\\.");
-          int       l1  = a1.length;
-          int       l2  = a2.length;
-          int       min = Math.min(l1, l2);
+          String n1 = f1.getName();
+          String n2 = f2.getName();
+          String v1 = n1.substring(CACHE_DIR_PREFIX.length());
+          String v2 = n2.substring(CACHE_DIR_PREFIX.length());
+          String[] a1 = v1.split("\\.");
+          String[] a2 = v2.split("\\.");
+          int l1 = a1.length;
+          int l2 = a2.length;
+          int min = Math.min(l1, l2);
           for (int index = 0; index < min; index++) {
             int p1 = Integer.parseInt(a1[index]);
             int p2 = Integer.parseInt(a2[index]);
-            if (p1 != p2) return (p2 - p1);
+            if (p1 != p2)
+              return (p2 - p1);
           }
           return l2 - l1;
         });
 
-        for (File dir: dirs) {
+        for (File dir : dirs) {
           dirSet.add(dir);
         }
       }
@@ -259,7 +245,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   }
 
   /**
-   * The prefix for all Senzing packages.  This is used to only include stack
+   * The prefix for all Senzing packages. This is used to only include stack
    * frames that belong to Senzing classes in the hash for method lookup.
    */
   private static final String SENZING_PACKAGE_PREFIX = "com.senzing.";
@@ -287,11 +273,11 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     } catch (UnsatisfiedLinkError e) {
       // if Senzing is not installed then the UnsatisfiedLinkError will
       // complain about libG2 not being in "java.library.path", otherwise
-      // the problem is libG2 trying to load a dependency, which is an error    
+      // the problem is libG2 trying to load a dependency, which is an error
       boolean installed = (!e.getMessage().contains("java.library.path"));
 
       // check if the build requested "direct" API usage or for the test
-      // process to "record" the native API results.  this requires a
+      // process to "record" the native API results. this requires a
       // working Senzing installation
       boolean direct = TRUE.toString().equalsIgnoreCase(
           getPropertyValue(DIRECT_PROPERTY));
@@ -317,13 +303,13 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
     } finally {
       String forceVersion = getPropertyValue(VERSION_PROPERTY);
-      G2_NATIVE_VERSION = (forceVersion != null) ? forceVersion: nativeVersion;
+      G2_NATIVE_VERSION = (forceVersion != null) ? forceVersion : nativeVersion;
     }
   }
 
   /**
    * This is a {@link Map} of classes to methods for which the parameters to
-   * the methods are irrlevant for playback purposes.
+   * the methods are irrelevant for playback purposes.
    */
   private static final Map<Class, Set<Method>> IRRELEVANT_METHODS_MAP;
 
@@ -373,7 +359,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
       // handle G2Engine.addRecord() and similar methods
       set = map.get(G2Engine.class);
-      for (Method method: G2Engine.class.getMethods()) {
+      for (Method method : G2Engine.class.getMethods()) {
         switch (method.getName()) {
           case "addRecord":
           case "replaceRecord":
@@ -457,20 +443,19 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
    * Default constructor.
    */
   public ReplayNativeApiProvider() {
-    this.cacheDir         = null;
-    this.workingCacheDir  = null;
+    this.cacheDir = null;
+    this.workingCacheDir = null;
 
     this.direct = TRUE.toString().equalsIgnoreCase(
         getPropertyValue(DIRECT_PROPERTY));
 
     // check if running inside a maven build
     if (TARGET_DIR.exists() && MAIN_JAVA_DIR.exists() && TEST_JAVA_DIR.exists()
-        && MAIN_CLASS_DIR.exists() && TEST_CLASS_DIR.exists() && !direct)
-    {
+        && MAIN_CLASS_DIR.exists() && TEST_CLASS_DIR.exists() && !direct) {
       if (G2_NATIVE_VERSION != null) {
         // get the cache directory based on the G2 native version
         this.cacheDir = new File(RESOURCE_CACHE_DIR,
-                                 CACHE_DIR_PREFIX + G2_NATIVE_VERSION);
+            CACHE_DIR_PREFIX + G2_NATIVE_VERSION);
 
         // check if forcing creation of the cache
         this.forceRecord = TRUE.toString().equalsIgnoreCase(
@@ -495,8 +480,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
         }
 
         // setup the working cache dir for this run
-        this.workingCacheDir
-            = new File(BASE_CACHE_DIR,CACHE_DIR_PREFIX + G2_NATIVE_VERSION);
+        this.workingCacheDir = new File(BASE_CACHE_DIR, CACHE_DIR_PREFIX + G2_NATIVE_VERSION);
 
       } else {
         // use the latest cache dir
@@ -507,7 +491,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
         // create the working cache dir
         this.workingCacheDir = new File(BASE_CACHE_DIR,
-                                        CACHE_DIR_PREFIX + ver);
+            CACHE_DIR_PREFIX + ver);
       }
 
     } else {
@@ -531,31 +515,36 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
   @Override
   public G2Engine createEngineApi() {
-    if (this.direct) return new G2JNI();
+    if (this.direct)
+      return new G2JNI();
     return this.createProxy(G2Engine.class);
   }
 
   @Override
   public G2Config createConfigApi() {
-    if (this.direct) return new G2ConfigJNI();
+    if (this.direct)
+      return new G2ConfigJNI();
     return this.createProxy(G2Config.class);
   }
 
   @Override
   public G2Product createProductApi() {
-    if (this.direct) return new G2ProductJNI();
+    if (this.direct)
+      return new G2ProductJNI();
     return this.createProxy(G2Product.class);
   }
 
   @Override
   public G2ConfigMgr createConfigMgrApi() {
-    if (this.direct) return new G2ConfigMgrJNI();
+    if (this.direct)
+      return new G2ConfigMgrJNI();
     return this.createProxy(G2ConfigMgr.class);
   }
 
   @Override
   public G2Diagnostic createDiagnosticApi() {
-    if (this.direct) return new G2DiagnosticJNI();
+    if (this.direct)
+      return new G2DiagnosticJNI();
     return this.createProxy(G2Diagnostic.class);
   }
 
@@ -590,7 +579,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
     // set the test class and the access token
     this.currentTestClass = testClass;
-    this.accessToken      = new AccessToken();
+    this.accessToken = new AccessToken();
 
     // parse the cache file
     if (!this.direct) {
@@ -607,8 +596,8 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
         System.out.println("RECORDING CACHE: " + this.getTestCacheZip());
         System.out.println();
         // if recording, setup empty caches
-        this.currentDependencies  = new LinkedHashSet<>();
-        this.currentCache         = new LinkedHashMap<>();
+        this.currentDependencies = new LinkedHashSet<>();
+        this.currentCache = new LinkedHashMap<>();
       } else {
         System.out.println();
         System.out.println("USING CACHE: " + this.getTestCacheZip());
@@ -648,7 +637,8 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
    */
   public synchronized void endTests(AccessToken token) {
     Objects.requireNonNull(token, "The token cannot be null");
-    if (this.accessToken == null) return;
+    if (this.accessToken == null)
+      return;
     if (!this.accessToken.equals(token)) {
       throw new IllegalArgumentException(
           "Invalid access token to authorize operation.");
@@ -665,11 +655,11 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     }
 
     // clear the dependencies and cache out
-    this.currentDependencies  = null;
-    this.currentCache         = null;
+    this.currentDependencies = null;
+    this.currentCache = null;
 
     // clear the fields
-    this.accessToken      = null;
+    this.accessToken = null;
     this.currentTestClass = null;
   }
 
@@ -679,19 +669,24 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   protected static class RecordedResult {
     private int repeatCount = 1;
     private Object value = null;
+
     private RecordedResult(Object value) {
       this(value, 1);
     }
+
     private RecordedResult(Object value, int repeatCount) {
       this.value = value;
       this.repeatCount = repeatCount;
     }
+
     private boolean remaining() {
       return (this.repeatCount > 0);
     }
+
     private void increment() {
       this.repeatCount++;
     }
+
     private void decrement() {
       this.repeatCount--;
     }
@@ -702,14 +697,14 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
    * with parameter values.
    */
   protected static class InvocationCache {
-    private String                apiClass;
-    private String                apiMethod;
-    private List<String>          parameterTypes;
-    private String                parametersHash;
-    private List                  parameters;
-    private List<RecordedResult>  results;
-    private RecordedResult        lastResult = null;
-    private Set<Long>             threadIdSet = new LinkedHashSet<>();
+    private String apiClass;
+    private String apiMethod;
+    private List<String> parameterTypes;
+    private String parametersHash;
+    private List parameters;
+    private List<RecordedResult> results;
+    private RecordedResult lastResult = null;
+    private Set<Long> threadIdSet = new LinkedHashSet<>();
   }
 
   /**
@@ -722,7 +717,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   private List readArray(JsonArray jsonArray) {
     List result = new LinkedList<>();
     for (int index = 0; index < jsonArray.size(); index++) {
-      JsonValue           jsonValue = jsonArray.get(index);
+      JsonValue jsonValue = jsonArray.get(index);
       JsonValue.ValueType valueType = jsonValue.getValueType();
       switch (valueType) {
         case FALSE:
@@ -761,9 +756,9 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
    *
    * @return The {@link List} of objects read.
    */
-  private Map<String,Object> readResults(JsonObject jsonObject) {
-    Map<String,Object>  result = new LinkedHashMap<>();
-    Set<String>         keySet = new LinkedHashSet<>();
+  private Map<String, Object> readResults(JsonObject jsonObject) {
+    Map<String, Object> result = new LinkedHashMap<>();
+    Set<String> keySet = new LinkedHashSet<>();
     keySet.add(RETURN_VALUE_KEY);
     for (String key : jsonObject.keySet()) {
       if (key.startsWith(PARAM_RESULT_KEY_PREFIX)) {
@@ -772,9 +767,9 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     }
 
     keySet.forEach(key -> {
-      int                 index     = key.indexOf(":");
-      String              javaType  = (index < 0) ? null : key.substring(index);
-      JsonValue           value     = jsonObject.get(key);
+      int index = key.indexOf(":");
+      String javaType = (index < 0) ? null : key.substring(index);
+      JsonValue value = jsonObject.get(key);
       JsonValue.ValueType valueType = value.getValueType();
       switch (valueType) {
         case FALSE:
@@ -822,7 +817,8 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
     // check if forcing re-recording
     if (this.forceRecord) {
-      if (cacheZip.exists()) cacheZip.delete();
+      if (cacheZip.exists())
+        cacheZip.delete();
 
       if (cacheDir.exists()) {
         recursiveDeleteDirectory(cacheDir);
@@ -846,8 +842,8 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     }
 
     try {
-      String      jsonText    = readTextFileAsString(cacheFile, UTF_8);
-      JsonObject  jsonObject  = JsonUtilities.parseJsonObject(jsonText);
+      String jsonText = readTextFileAsString(cacheFile, UTF_8);
+      JsonObject jsonObject = JsonUtilities.parseJsonObject(jsonText);
 
       // load and check the dependencies and check for changes
       this.currentDependencies = new LinkedHashSet<>();
@@ -856,7 +852,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
         this.currentDependencies.add(dependency.getString());
       }
       String computedDependencyHash = this.hashDependencies();
-      String cachedDependencyHash   = jsonObject.getString("dependencyHash");
+      String cachedDependencyHash = jsonObject.getString("dependencyHash");
       this.cacheStale = (!computedDependencyHash.equals(cachedDependencyHash));
 
       // check if refreshing stale caches
@@ -887,20 +883,20 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
       // iterate over the cached invocations and populate the cache
       invocations.entrySet().forEach(entry -> {
-        String          hashKey       = entry.getKey();
-        JsonObject      cacheObj      = entry.getValue().asJsonObject();
-        InvocationCache cache         = new InvocationCache();
-        JsonValue       paramsValue   = cacheObj.get("parameters");
-        JsonArray       resultValues  = cacheObj.getJsonArray("results");
-        cache.apiClass                = cacheObj.getString("apiClass");
-        cache.apiMethod               = cacheObj.getString("apiMethod");
+        String hashKey = entry.getKey();
+        JsonObject cacheObj = entry.getValue().asJsonObject();
+        InvocationCache cache = new InvocationCache();
+        JsonValue paramsValue = cacheObj.get("parameters");
+        JsonArray resultValues = cacheObj.getJsonArray("results");
+        cache.apiClass = cacheObj.getString("apiClass");
+        cache.apiMethod = cacheObj.getString("apiMethod");
         if (paramsValue.getValueType() == JsonValue.ValueType.STRING) {
-          cache.parametersHash  = cacheObj.getString("parameters");
-          cache.parameters      = null;
+          cache.parametersHash = cacheObj.getString("parameters");
+          cache.parameters = null;
         } else {
           JsonArray paramsArray = cacheObj.getJsonArray("parameters");
-          cache.parametersHash  = null;
-          cache.parameters      = this.readArray(paramsArray);
+          cache.parametersHash = null;
+          cache.parameters = this.readArray(paramsArray);
         }
         cache.results = new LinkedList<>();
         for (JsonObject result : resultValues.getValuesAs(JsonObject.class)) {
@@ -941,9 +937,8 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     File cacheFile = this.getTestCacheFile();
 
     try (OutputStream os = new FileOutputStream(cacheFile);
-         OutputStreamWriter osw = new OutputStreamWriter(os, UTF_8);
-         JsonWriter jsonWriter = PRETTY_WRITER_FACTORY.createWriter(osw))
-    {
+        OutputStreamWriter osw = new OutputStreamWriter(os, UTF_8);
+        JsonWriter jsonWriter = PRETTY_WRITER_FACTORY.createWriter(osw)) {
       JsonObjectBuilder job = Json.createObjectBuilder();
       job.add("testClass", this.currentTestClass.getName());
       job.add("nativeApiVersion", G2_NATIVE_VERSION);
@@ -980,7 +975,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
           cacheJob.add("parameters", paramsJab);
         }
         JsonArrayBuilder resultJab = Json.createArrayBuilder();
-        for (RecordedResult recordedResult: cache.results) {
+        for (RecordedResult recordedResult : cache.results) {
           JsonObjectBuilder recordedJob = Json.createObjectBuilder();
           recordedJob.add("repeatCount", recordedResult.repeatCount);
           Object resultItem = recordedResult.value;
@@ -988,10 +983,10 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
             recordedJob.add("value", resultItem.toString());
           } else {
             JsonObjectBuilder resultJob = Json.createObjectBuilder();
-            Map<String, Object> resultMap = (Map<String,Object>) resultItem;
+            Map<String, Object> resultMap = (Map<String, Object>) resultItem;
             resultMap.entrySet().forEach(resultEntry -> {
-              String key    = resultEntry.getKey();
-              Object value  = resultEntry.getValue();
+              String key = resultEntry.getKey();
+              Object value = resultEntry.getValue();
               this.objectAdd(resultJob, key, value);
             });
             recordedJob.add("value", resultJob);
@@ -1020,6 +1015,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
   /**
    * Creates the results file name for the results hash.
+   * 
    * @param resultHash The hash for the results.
    * @return The file name for the results.
    */
@@ -1030,6 +1026,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
   /**
    * Creates the parameters file name for the parameters hash.
+   * 
    * @param paramsHash The hash for the parameters.
    * @return The file name for the parameters.
    */
@@ -1051,29 +1048,31 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       this.arrayAdd(paramJab, param);
     });
     String jsonText = JsonUtilities.toJsonText(paramJab, true);
-    if (jsonText.length() < EXTERNALIZE_THRESHOLD) return null;
+    if (jsonText.length() < EXTERNALIZE_THRESHOLD)
+      return null;
     String paramsHash = null;
     try {
       byte[] jsonBytes = jsonText.getBytes(UTF_8);
       MessageDigest md5 = MessageDigest.getInstance("MD5");
       md5.update(jsonBytes);
       paramsHash = Base64.getEncoder().encodeToString(md5.digest());
-    } catch (NoSuchAlgorithmException|UnsupportedEncodingException cantHappen) {
+    } catch (NoSuchAlgorithmException | UnsupportedEncodingException cantHappen) {
       throw new RuntimeException(cantHappen);
     }
     File dir = this.getTestCacheDir();
-    if (!dir.exists()) dir.mkdirs();
+    if (!dir.exists())
+      dir.mkdirs();
 
-    String  name        = paramsFileName(paramsHash);
-    File    paramsFile  = new File(dir, name);
+    String name = paramsFileName(paramsHash);
+    File paramsFile = new File(dir, name);
 
     // check if the result file already exists
-    if (paramsFile.exists()) return paramsHash;
+    if (paramsFile.exists())
+      return paramsHash;
 
     // create the results file
-    try (FileOutputStream   fos = new FileOutputStream(paramsFile);
-         OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8))
-    {
+    try (FileOutputStream fos = new FileOutputStream(paramsFile);
+        OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8)) {
       osw.write(jsonText);
       osw.flush();
 
@@ -1100,29 +1099,31 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       this.objectAdd(resultJob, key, value);
     });
     String jsonText = JsonUtilities.toJsonText(resultJob.build(), true);
-    if (jsonText.length() < EXTERNALIZE_THRESHOLD) return null;
+    if (jsonText.length() < EXTERNALIZE_THRESHOLD)
+      return null;
     String resultHash = null;
     try {
       byte[] jsonBytes = jsonText.getBytes(UTF_8);
       MessageDigest md5 = MessageDigest.getInstance("MD5");
       md5.update(jsonBytes);
       resultHash = Base64.getEncoder().encodeToString(md5.digest());
-    } catch (NoSuchAlgorithmException|UnsupportedEncodingException cantHappen) {
+    } catch (NoSuchAlgorithmException | UnsupportedEncodingException cantHappen) {
       throw new RuntimeException(cantHappen);
     }
     File dir = this.getTestCacheDir();
-    if (!dir.exists()) dir.mkdirs();
+    if (!dir.exists())
+      dir.mkdirs();
 
-    String  name        = resultsFileName(resultHash);
-    File    resultFile  = new File(dir, name);
+    String name = resultsFileName(resultHash);
+    File resultFile = new File(dir, name);
 
     // check if the result file already exists
-    if (resultFile.exists()) return resultHash;
+    if (resultFile.exists())
+      return resultHash;
 
     // create the results file
-    try (FileOutputStream   fos = new FileOutputStream(resultFile);
-         OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8))
-    {
+    try (FileOutputStream fos = new FileOutputStream(resultFile);
+        OutputStreamWriter osw = new OutputStreamWriter(fos, UTF_8)) {
       osw.write(jsonText);
       osw.flush();
 
@@ -1143,9 +1144,9 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
    * @return The result map that was loaded.
    */
   private synchronized Map<String, Object> loadResults(String resultHash) {
-    File    dir         = this.getTestCacheDir();
-    String  name        = resultsFileName(resultHash);
-    File    resultFile  = new File(dir, name);
+    File dir = this.getTestCacheDir();
+    String name = resultsFileName(resultHash);
+    File resultFile = new File(dir, name);
 
     try {
       String jsonText = IOUtilities.readTextFileAsString(resultFile, UTF_8);
@@ -1160,7 +1161,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   /**
    * Adds the specified value to the {@link JsonArrayBuilder}.
    *
-   * @param jab The {@link JsonArrayBuilder} to add the value to.
+   * @param jab   The {@link JsonArrayBuilder} to add the value to.
    * @param value The value to be added.
    */
   private static void arrayAdd(JsonArrayBuilder jab, Object value) {
@@ -1238,13 +1239,13 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   /**
    * Adds the specified value to the {@link JsonObjectBuilder}.
    *
-   * @param job The {@link JsonObjectBuilder} to add the value to.
-   * @param key The string key for the value to be added.
+   * @param job   The {@link JsonObjectBuilder} to add the value to.
+   * @param key   The string key for the value to be added.
    * @param value The value to be added.
    */
   private static void objectAdd(JsonObjectBuilder job,
-                                String            key,
-                                Object            value) {
+      String key,
+      Object value) {
     if (value == null) {
       job.addNull(key);
       return;
@@ -1319,6 +1320,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
   /**
    * Produces a hash key for the dependencies associated with the test.
+   * 
    * @return The hash key for the dependencies.
    */
   private String hashDependencies() {
@@ -1336,9 +1338,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
         if (classFile.exists()) {
           try (InputStream is = new FileInputStream(classFile)) {
             // read bytes and update the hash
-            for (int readCount = is.read(bytes); readCount >= 0;
-                 readCount = is.read(bytes))
-            {
+            for (int readCount = is.read(bytes); readCount >= 0; readCount = is.read(bytes)) {
               md5.update(bytes, 0, readCount);
             }
             md5.update(ZEROES);
@@ -1359,16 +1359,15 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
   /**
    * Produces a hash for the invocation.
    *
-   * @param apiClass The API class the method is called on.
-   * @param apiMethod The API method that was called.
+   * @param apiClass   The API class the method is called on.
+   * @param apiMethod  The API method that was called.
    * @param parameters The list of parameter values.
    * @param stackTrace The stack trace for the call.
    */
-  private String hashInvocation(Class                    apiClass,
-                                Method                   apiMethod,
-                                List                     parameters,
-                                List<StackTraceElement>  stackTrace)
-  {
+  private String hashInvocation(Class apiClass,
+      Method apiMethod,
+      List parameters,
+      List<StackTraceElement> stackTrace) {
     try {
       MessageDigest md5 = MessageDigest.getInstance("MD5");
 
@@ -1384,7 +1383,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
       // hash the parameter types
       Class[] paramTypes = apiMethod.getParameterTypes();
-      for (Class paramType: paramTypes) {
+      for (Class paramType : paramTypes) {
         md5.update(paramType.getName().getBytes(UTF_8));
         md5.update(ZEROES);
       }
@@ -1409,22 +1408,20 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       } else {
         Set<Method> methods = IRRELEVANT_METHODS_MAP.get(apiClass);
         if (methods == null || !methods.contains(apiMethod)) {
-          for (Object paramValue: parameters) {
+          for (Object paramValue : parameters) {
             if (paramValue == null) {
               md5.update(ZEROES);
               md5.update(ZEROES);
 
             } else if ((paramValue instanceof Number)
                 || (paramValue instanceof String)
-                || (paramValue instanceof Boolean))
-            {
+                || (paramValue instanceof Boolean)) {
               md5.update(paramValue.toString().getBytes(UTF_8));
               md5.update(ZEROES);
 
             } else if ((paramValue instanceof StringBuffer)
                 || (paramValue instanceof StringBuilder)
-                || (paramValue instanceof Result))
-            {
+                || (paramValue instanceof Result)) {
               md5.update(paramValue.getClass().getName().getBytes(UTF_8));
               md5.update(ZEROES);
 
@@ -1439,9 +1436,12 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       int stackIndex = 0;
       for (StackTraceElement stackFrame : stackTrace) {
         String stackClass = stackFrame.getClassName();
-        if (stackClass.startsWith(PACKAGE_PREFIX)) continue;
-        if (!stackClass.startsWith(SENZING_PACKAGE_PREFIX)) continue;
-        if (stackClass.contains("$Proxy")) stackClass = apiClass.getName();
+        if (stackClass.startsWith(PACKAGE_PREFIX))
+          continue;
+        if (!stackClass.startsWith(SENZING_PACKAGE_PREFIX))
+          continue;
+        if (stackClass.contains("$Proxy"))
+          stackClass = apiClass.getName();
         md5.update(((stackIndex++) + ": " + stackClass).getBytes(UTF_8));
         md5.update(ZEROES);
 
@@ -1454,25 +1454,23 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
       return Base64.getEncoder().encodeToString(digest);
 
-    } catch (NoSuchAlgorithmException|UnsupportedEncodingException cantHappen) {
+    } catch (NoSuchAlgorithmException | UnsupportedEncodingException cantHappen) {
       throw new IllegalStateException(cantHappen);
     }
   }
 
-
   /**
    * Produces the hash info for the invocation.
    *
-   * @param apiClass The API class the method is called on.
-   * @param apiMethod The API method that was called.
+   * @param apiClass   The API class the method is called on.
+   * @param apiMethod  The API method that was called.
    * @param parameters The list of parameter values.
    * @param stackTrace The stack trace for the call.
    */
-  private String invocationHashInfo(Class                    apiClass,
-                                    Method                   apiMethod,
-                                    List                     parameters,
-                                    List<StackTraceElement>  stackTrace)
-  {
+  private String invocationHashInfo(Class apiClass,
+      Method apiMethod,
+      List parameters,
+      List<StackTraceElement> stackTrace) {
     StringBuilder sb = new StringBuilder();
 
     sb.append("apiClass=[ " + apiClass.getName() + " ]");
@@ -1481,7 +1479,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     // hash the parameter types
     Class[] paramTypes = apiMethod.getParameterTypes();
     String prefix = "";
-    for (Class paramType: paramTypes) {
+    for (Class paramType : paramTypes) {
       sb.append(prefix).append(paramType.getName());
       prefix = ", ";
     }
@@ -1504,11 +1502,10 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
       if (methods == null || !methods.contains(apiMethod)) {
         sb.append(", parameters=[ ");
         prefix = "";
-        for (Object paramValue: parameters) {
+        for (Object paramValue : parameters) {
           if ((paramValue instanceof StringBuffer)
               || (paramValue instanceof StringBuilder)
-              || (paramValue instanceof Result))
-          {
+              || (paramValue instanceof Result)) {
             sb.append(paramValue.getClass().getName());
           } else {
             sb.append(prefix).append(paramValue);
@@ -1523,9 +1520,12 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     int stackIndex = 0;
     for (StackTraceElement stackFrame : stackTrace) {
       String stackClass = stackFrame.getClassName();
-      if (stackClass.startsWith(PACKAGE_PREFIX)) continue;
-      if (!stackClass.startsWith(SENZING_PACKAGE_PREFIX)) continue;
-      if (stackClass.contains("$Proxy")) stackClass = apiClass.getName();
+      if (stackClass.startsWith(PACKAGE_PREFIX))
+        continue;
+      if (!stackClass.startsWith(SENZING_PACKAGE_PREFIX))
+        continue;
+      if (stackClass.contains("$Proxy"))
+        stackClass = apiClass.getName();
       sb.append("\n    " + (stackIndex++) + ": " + stackClass);
       String stackMethod = stackFrame.getMethodName();
       sb.append("." + stackMethod);
@@ -1548,9 +1548,9 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
    * Gets the results cache directory for the current test class.
    */
   public File getTestCacheDir() {
-    String  simpleClassName = this.currentTestClass.getSimpleName();
-    String  cacheFileName   = simpleClassName + "-cache";
-    File    result          = new File(this.workingCacheDir, cacheFileName);
+    String simpleClassName = this.currentTestClass.getSimpleName();
+    String cacheFileName = simpleClassName + "-cache";
+    File result = new File(this.workingCacheDir, cacheFileName);
     return result;
   }
 
@@ -1558,9 +1558,9 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
    * Gets the result cache ZIP file for the current test class.
    */
   public File getTestCacheZip() {
-    String  simpleClassName = this.currentTestClass.getSimpleName();
-    String  cacheFileName   = simpleClassName + "-cache.zip";
-    File    result          = new File(this.cacheDir, cacheFileName);
+    String simpleClassName = this.currentTestClass.getSimpleName();
+    String cacheFileName = simpleClassName + "-cache.zip";
+    File result = new File(this.cacheDir, cacheFileName);
     return result;
   }
 
@@ -1585,8 +1585,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
      *
      * @param apiInterface The {@link Class} representing the API interface.
      */
-    private ReplayInvocationHandler(Class<T> apiInterface)
-    {
+    private ReplayInvocationHandler(Class<T> apiInterface) {
       this.apiInterface = apiInterface;
     }
 
@@ -1641,38 +1640,40 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
     /**
      * Handles recording or replaying the results for the invocation.
      *
-     * @param proxy The proxy on which it is called.
+     * @param proxy  The proxy on which it is called.
      * @param method The method that was called.
-     * @param args The arguments to call the method with.
+     * @param args   The arguments to call the method with.
      * @return The value being returned.
      * @throws Throwable If a failure occurs.
      */
     @Override
     public Object invoke(Object proxy, Method method, Object[] args)
-        throws Throwable
-    {
+        throws Throwable {
       ReplayNativeApiProvider provider = ReplayNativeApiProvider.this;
       synchronized (provider) {
         StackTraceElement[] stackFrames = Thread.currentThread().getStackTrace();
         List<StackTraceElement> stackTrace = Arrays.asList(stackFrames);
         List parameters = (args == null)
-            ? Collections.emptyList() : Arrays.asList(args);
+            ? Collections.emptyList()
+            : Arrays.asList(args);
 
         String invocationHash = provider.hashInvocation(this.apiInterface,
-                                                        method,
-                                                        parameters,
-                                                        stackTrace);
+            method,
+            parameters,
+            stackTrace);
 
         String resultType = method.getGenericReturnType().getTypeName();
-        String resultKey  = RETURN_VALUE_KEY;
+        String resultKey = RETURN_VALUE_KEY;
 
         if (provider.recording) {
           // get the stack trace dependencies
           Set<String> dependencies = new LinkedHashSet<>();
-          for (StackTraceElement stackFrame: stackTrace) {
+          for (StackTraceElement stackFrame : stackTrace) {
             String className = stackFrame.getClassName();
-            if (className.startsWith(PACKAGE_PREFIX)) continue;
-            if (!className.startsWith(SENZING_PACKAGE_PREFIX)) continue;
+            if (className.startsWith(PACKAGE_PREFIX))
+              continue;
+            if (!className.startsWith(SENZING_PACKAGE_PREFIX))
+              continue;
             dependencies.add(className);
           }
 
@@ -1686,13 +1687,13 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
           Map<String, Object> resultMap = new LinkedHashMap<>();
           resultMap.put(resultKey, result);
           Class[] paramClasses = method.getParameterTypes();
-          Type[]  paramTypes   = method.getGenericParameterTypes();
+          Type[] paramTypes = method.getGenericParameterTypes();
 
           for (int index = 0; index < paramClasses.length; index++) {
-            Class   paramClass      = paramClasses[index];
-            String  paramType       = paramTypes[index].getTypeName();
-            Object  param           = args[index];
-            String  paramResultKey  = PARAM_RESULT_KEY_PREFIX + index;
+            Class paramClass = paramClasses[index];
+            String paramType = paramTypes[index].getTypeName();
+            Object param = args[index];
+            String paramResultKey = PARAM_RESULT_KEY_PREFIX + index;
 
             switch (paramClass.getName()) {
               case "java.lang.StringBuffer":
@@ -1710,17 +1711,18 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
           // cache the results
           InvocationCache cache = provider.currentCache.get(invocationHash);
           if (cache == null) {
-            if (args == null) args = new Object[0];
+            if (args == null)
+              args = new Object[0];
             cache = new InvocationCache();
-            cache.apiClass        = this.apiInterface.getName();
-            cache.apiMethod       = method.getName();
+            cache.apiClass = this.apiInterface.getName();
+            cache.apiMethod = method.getName();
 
             List<String> paramTypeList = new ArrayList<>(args.length);
-            for (Type paramType: paramTypes) {
+            for (Type paramType : paramTypes) {
               paramTypeList.add(paramType.getTypeName());
             }
-            cache.parameterTypes  = Collections.unmodifiableList(paramTypeList);
-            List paramList   = new ArrayList<>(args.length);
+            cache.parameterTypes = Collections.unmodifiableList(paramTypeList);
+            List paramList = new ArrayList<>(args.length);
 
             Set<Method> methods = IRRELEVANT_METHODS_MAP.get(this.apiInterface);
             if (!methods.contains(method)) {
@@ -1748,8 +1750,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
 
           // check if this one is the same as the previous result
           if (cache.lastResult != null
-              && newValue.equals(cache.lastResult.value))
-          {
+              && newValue.equals(cache.lastResult.value)) {
             // simply increment the repeat count
             cache.lastResult.increment();
 
@@ -1793,9 +1794,9 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
             if (cache.threadIdSet.size() == 1) {
               // only one thread is involved -- we should not get here
               String hashInfo = provider.invocationHashInfo(this.apiInterface,
-                                                            method,
-                                                            parameters,
-                                                            stackTrace);
+                  method,
+                  parameters,
+                  stackTrace);
               throw new IllegalStateException(
                   "Invocation ran out of results in single-threaded "
                       + "environment: " + hashInfo);
@@ -1807,19 +1808,20 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
           if (resultsItem instanceof String) {
             results = provider.loadResults(resultsItem.toString());
           } else {
-            results = (Map<String,Object>) resultsItem;
+            results = (Map<String, Object>) resultsItem;
           }
-          Class[] paramClasses  = method.getParameterTypes();
-          Type[]  paramTypes    = method.getGenericParameterTypes();
+          Class[] paramClasses = method.getParameterTypes();
+          Type[] paramTypes = method.getGenericParameterTypes();
           for (int index = 0; index < paramClasses.length; index++) {
             // if no parameter result exists, skip this one
             String paramType = paramTypes[index].getTypeName();
             String paramResultKey = PARAM_RESULT_KEY_PREFIX + index;
-            if (!results.containsKey(paramResultKey)) continue;
+            if (!results.containsKey(paramResultKey))
+              continue;
 
-            Class   paramClass  = paramClasses[index];
-            Object  param       = args[index];
-            Object  paramValue  = results.get(paramResultKey);
+            Class paramClass = paramClasses[index];
+            Object param = args[index];
+            Object paramValue = results.get(paramResultKey);
 
             switch (paramClass.getName()) {
               case "java.lang.StringBuffer":
@@ -1831,7 +1833,7 @@ public class ReplayNativeApiProvider implements NativeApiProvider {
                   case "int":
                   case "java.lang.Integer":
                   case "com.senzing.g2.engine.Result(java.lang.Integer)":
-                    ((Result) param).setValue(((Long)paramValue).intValue());
+                    ((Result) param).setValue(((Long) paramValue).intValue());
                     break;
                   default:
                     ((Result) param).setValue(paramValue);
