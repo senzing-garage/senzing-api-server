@@ -112,19 +112,19 @@ public class DataGenerator {
     }
   }
 
-  private static final List<UserNameFormat> USER_NAME_FORMATS
-      = Collections.unmodifiableList(Arrays.asList(UserNameFormat.values()));
+  private static final List<UserNameFormat> USER_NAME_FORMATS = Collections
+      .unmodifiableList(Arrays.asList(UserNameFormat.values()));
 
   private static List<String> readData(String fileName) {
     List<String> list = new LinkedList<>();
     Class<DataGenerator> dataGeneratorClass = DataGenerator.class;
     try (InputStream is = dataGeneratorClass.getResourceAsStream(fileName);
-         InputStreamReader isr = new InputStreamReader(is, "UTF-8");
-         BufferedReader br = new BufferedReader(isr))
-    {
+        InputStreamReader isr = new InputStreamReader(is, "UTF-8");
+        BufferedReader br = new BufferedReader(isr)) {
       for (String line = br.readLine(); line != null; line = br.readLine()) {
         line = line.trim();
-        if (line.length() == 0 || line.startsWith("#")) continue;
+        if (line.length() == 0 || line.startsWith("#"))
+          continue;
         list.add(line);
       }
     } catch (IOException e) {
@@ -138,9 +138,9 @@ public class DataGenerator {
   private static List<List<String>> readListData(String fileName) {
     List<List<String>> result = new LinkedList<>();
     for (String items : readData(fileName)) {
-      String[]      tokens  = items.split(",");
-      List<String>  list    = new ArrayList<>(tokens.length);
-      for (String name: tokens) {
+      String[] tokens = items.split(",");
+      List<String> list = new ArrayList<>(tokens.length);
+      for (String name : tokens) {
         name = name.trim();
         list.add(name);
       }
@@ -151,19 +151,19 @@ public class DataGenerator {
   }
 
   static {
-    List<List<String>>  givenNames      = null;
-    List<String>        surnames        = null;
-    List<List<String>>  bizNames        = null;
-    List<List<String>>  bizPatterns     = null;
-    List<List<String>>  orgPatterns     = null;
-    List<String>        emailDomains    = null;
-    List<String>        areaCodes       = null;
-    List<String>        cityPrefixes    = null;
-    List<String>        streetNames     = null;
-    List<String>        bizUserNames    = null;
-    List<String>        orgUserNames    = null;
-    List<String>        streetSuffixes  = null;
-    List<String>        streetPrefixes  = null;
+    List<List<String>> givenNames = null;
+    List<String> surnames = null;
+    List<List<String>> bizNames = null;
+    List<List<String>> bizPatterns = null;
+    List<List<String>> orgPatterns = null;
+    List<String> emailDomains = null;
+    List<String> areaCodes = null;
+    List<String> cityPrefixes = null;
+    List<String> streetNames = null;
+    List<String> bizUserNames = null;
+    List<String> orgUserNames = null;
+    List<String> streetSuffixes = null;
+    List<String> streetPrefixes = null;
 
     try {
       // get the given names (and related names)
@@ -186,19 +186,19 @@ public class DataGenerator {
       throw new ExceptionInInitializerError(e);
 
     } finally {
-      GIVEN_NAMES         = Collections.unmodifiableList(givenNames);
-      SURNAMES            = Collections.unmodifiableList(surnames);
-      BUSINESS_PATTERNS   = Collections.unmodifiableList(bizPatterns);
-      BUSINESS_NAMES      = Collections.unmodifiableList(bizNames);
-      ORG_PATTERNS        = Collections.unmodifiableList(orgPatterns);
-      EMAIL_DOMAINS       = Collections.unmodifiableList(emailDomains);
-      AREA_CODES          = Collections.unmodifiableList(areaCodes);
-      CITY_PREFIXES       = Collections.unmodifiableList(cityPrefixes);
-      STREET_NAMES        = Collections.unmodifiableList(streetNames);
-      STREET_PREFIXES     = Collections.unmodifiableList(streetPrefixes);
-      STREET_SUFFIXES     = Collections.unmodifiableList(streetSuffixes);
+      GIVEN_NAMES = Collections.unmodifiableList(givenNames);
+      SURNAMES = Collections.unmodifiableList(surnames);
+      BUSINESS_PATTERNS = Collections.unmodifiableList(bizPatterns);
+      BUSINESS_NAMES = Collections.unmodifiableList(bizNames);
+      ORG_PATTERNS = Collections.unmodifiableList(orgPatterns);
+      EMAIL_DOMAINS = Collections.unmodifiableList(emailDomains);
+      AREA_CODES = Collections.unmodifiableList(areaCodes);
+      CITY_PREFIXES = Collections.unmodifiableList(cityPrefixes);
+      STREET_NAMES = Collections.unmodifiableList(streetNames);
+      STREET_PREFIXES = Collections.unmodifiableList(streetPrefixes);
+      STREET_SUFFIXES = Collections.unmodifiableList(streetSuffixes);
       BUSINESS_USER_NAMES = Collections.unmodifiableList(bizUserNames);
-      ORG_USER_NAMES      = Collections.unmodifiableList(orgUserNames);
+      ORG_USER_NAMES = Collections.unmodifiableList(orgUserNames);
     }
   }
 
@@ -214,7 +214,7 @@ public class DataGenerator {
   }
 
   /**
-   * The psuedo random number generator used for this instance.
+   * The pseudo random number generator used for this instance.
    */
   private Random prng;
 
@@ -245,25 +245,24 @@ public class DataGenerator {
 
   /**
    * Adds a single name with no usage type to the specified {@link
-   * JsonObjectBuilder}.  If the {@link RecordType} is {@link RecordType#PERSON}
+   * JsonObjectBuilder}. If the {@link RecordType} is {@link RecordType#PERSON}
    * then the names are personal names, otherwise they are organization names.
    *
-   * @param builder The {@link JsonObjectBuilder} to add the feature to.
+   * @param builder    The {@link JsonObjectBuilder} to add the feature to.
    * @param recordType The non-null {@link RecordType} describing the type of
    *                   record being created.
-   * @param fullValue <tt>true</tt> if the name should be added as a full
-   *                  value and <tt>false</tt> if the name parts should be
-   *                  added individually.
-   * @param flatten <tt>true</tt> if flat JSON should be used and
-   *                <tt>false</tt> if features should be added to sub-arrays
-   *                based on the feature name.
+   * @param fullValue  <tt>true</tt> if the name should be added as a full
+   *                   value and <tt>false</tt> if the name parts should be
+   *                   added individually.
+   * @param flatten    <tt>true</tt> if flat JSON should be used and
+   *                   <tt>false</tt> if features should be added to sub-arrays
+   *                   based on the feature name.
    * @return The {@link GeneratedName} describing the name that was added.
    */
   public GeneratedName addName(JsonObjectBuilder builder,
-                               RecordType        recordType,
-                               boolean           fullValue,
-                               boolean           flatten)
-  {
+      RecordType recordType,
+      boolean fullValue,
+      boolean flatten) {
     Map<UsageType, GeneratedName> names = this.addNames(
         builder, recordType, null, GUARANTEED, fullValue, flatten);
     return names.get(null);
@@ -271,35 +270,36 @@ public class DataGenerator {
 
   /**
    * Adds names of the specified usage types to the specified {@link
-   * JsonObjectBuilder}.  If the {@link RecordType} is {@link RecordType#PERSON}
+   * JsonObjectBuilder}. If the {@link RecordType} is {@link RecordType#PERSON}
    * then the names are personal names, otherwise they are organization names.
    *
-   * @param builder The {@link JsonObjectBuilder} to add the feature to.
-   * @param recordType The non-null {@link RecordType} describing the type of
-   *                   record being created.
-   * @param usageTypes The usage types for the names or <tt>null</tt>
-   *                   if only one name with no usage type should be generated.
+   * @param builder        The {@link JsonObjectBuilder} to add the feature to.
+   * @param recordType     The non-null {@link RecordType} describing the type of
+   *                       record being created.
+   * @param usageTypes     The usage types for the names or <tt>null</tt>
+   *                       if only one name with no usage type should be
+   *                       generated.
    * @param featureDensity The {@link FeatureDensity} describing how to densely
    *                       the generated values should be populated.
-   * @param fullValues <tt>true</tt> if the addresses should be added as full
-   *                   values and <tt>false</tt> if the address parts should be
-   *                   added individually.
-   * @param flatten <tt>true</tt> if flat JSON should be used and
-   *                <tt>false</tt> if features should be added to sub-arrays
-   *                based on the feature name.
+   * @param fullValues     <tt>true</tt> if the addresses should be added as full
+   *                       values and <tt>false</tt> if the address parts should
+   *                       be
+   *                       added individually.
+   * @param flatten        <tt>true</tt> if flat JSON should be used and
+   *                       <tt>false</tt> if features should be added to
+   *                       sub-arrays
+   *                       based on the feature name.
    * @return The {@link Map} of {@link UsageType} keys to the associated {@link
    *         GeneratedName} value that was generated for that usage type.
    */
   public Map<UsageType, GeneratedName> addNames(
-      JsonObjectBuilder   builder,
-      RecordType          recordType,
-      Set<UsageType>      usageTypes,
-      FeatureDensity      featureDensity,
-      boolean             fullValues,
-      boolean             flatten)
-  {
-    Map<UsageType, GeneratedName> names
-        = this.generateNames(recordType, usageTypes, featureDensity);
+      JsonObjectBuilder builder,
+      RecordType recordType,
+      Set<UsageType> usageTypes,
+      FeatureDensity featureDensity,
+      boolean fullValues,
+      boolean flatten) {
+    Map<UsageType, GeneratedName> names = this.generateNames(recordType, usageTypes, featureDensity);
 
     this.addFeatures(builder, NAME, names, fullValues, flatten);
 
@@ -311,48 +311,52 @@ public class DataGenerator {
    * the specified {@link Set} (or a single name with no {@link UsageType}
    * if the specified {@link Set} is <tt>null</tt>) and returns a {@link
    * Map} of {@link UsageType} keys to the respective {@link GeneratedName}
-   * value.  If the {@link RecordType} is {@link RecordType#PERSON} then the
+   * value. If the {@link RecordType} is {@link RecordType#PERSON} then the
    * names are personal names, otherwise they are organization names.
    *
-   * @param recordType The non-null {@link RecordType} describing the type of
-   *                   record being created.
-   * @param usageTypes The usage types for the names or <tt>null</tt>
-   *                   if only one name with no usage type should be generated.
+   * @param recordType     The non-null {@link RecordType} describing the type of
+   *                       record being created.
+   * @param usageTypes     The usage types for the names or <tt>null</tt>
+   *                       if only one name with no usage type should be
+   *                       generated.
    * @param featureDensity The {@link FeatureDensity} describing how to densely
    *                       the generated values should be populated.
    * @return The {@link Map} of {@link UsageType} keys to the associated {@link
    *         GeneratedName} value that was generated for that usage type.
    */
   public Map<UsageType, GeneratedName> generateNames(
-      RecordType        recordType,
-      Set<UsageType>    usageTypes,
-      FeatureDensity    featureDensity)
-  {
+      RecordType recordType,
+      Set<UsageType> usageTypes,
+      FeatureDensity featureDensity) {
     featureDensity = (featureDensity == null) ? GUARANTEED : featureDensity;
 
     Set<UsageType> usageTypeSet = (usageTypes == null)
-        ? Collections.singleton(null) : usageTypes;
+        ? Collections.singleton(null)
+        : usageTypes;
 
-    Map<UsageType,GeneratedName> result = new LinkedHashMap<>();
+    Map<UsageType, GeneratedName> result = new LinkedHashMap<>();
 
-    List<String>        gnames        = null;
-    List<String>        snames        = null;
-    List<String>        names         = null;
-    int                 distinctCount = 0;
+    List<String> gnames = null;
+    List<String> snames = null;
+    List<String> names = null;
+    int distinctCount = 0;
     if (recordType == PERSON) {
       gnames = this.nextItem(GIVEN_NAMES);
       snames = (gnames.size() == 1 || (gnames.size() < 3 && this.nextInt(10) == 9))
-          ? SURNAMES : Collections.singletonList(this.nextItem(SURNAMES));
+          ? SURNAMES
+          : Collections.singletonList(this.nextItem(SURNAMES));
       distinctCount = (gnames.size() * snames.size());
     } else {
       names = (recordType == ORGANIZATION)
-          ? this.nextOrgNameList() : this.nextBizNameList();
+          ? this.nextOrgNameList()
+          : this.nextBizNameList();
       distinctCount = names.size();
     }
 
-    for (UsageType usageType: usageTypeSet) {
+    for (UsageType usageType : usageTypeSet) {
       double probability = featureDensity.probability(result.size());
-      if (!this.nextBoolean(probability)) continue;
+      if (!this.nextBoolean(probability))
+        continue;
 
       GeneratedName name;
       do {
@@ -360,7 +364,7 @@ public class DataGenerator {
         name = (recordType == PERSON)
             ? new GeneratedName(this.nextItem(gnames), this.nextItem(snames))
             : new GeneratedName(this.nextItem(names),
-                                (recordType == RecordType.BUSINESS));
+                (recordType == RecordType.BUSINESS));
 
       } while (distinctCount > result.size() && result.values().contains(name));
 
@@ -385,15 +389,15 @@ public class DataGenerator {
     String[] patterns = new String[patternList.size()];
     patterns = patternList.toArray(patterns);
 
-    int     index   = patterns[0].indexOf(":");
-    String  prefix  = patterns[0].substring(0, index);
+    int index = patterns[0].indexOf(":");
+    String prefix = patterns[0].substring(0, index);
 
-    patterns[0] = patterns[0].substring(index+1);
+    patterns[0] = patterns[0].substring(index + 1);
 
-    String[]  range = prefix.split("-");
-    int       min   = Integer.parseInt(range[0].trim());
-    int       max   = Integer.parseInt(range[1].trim());
-    int       diff  = max - min;
+    String[] range = prefix.split("-");
+    int min = Integer.parseInt(range[0].trim());
+    int max = Integer.parseInt(range[1].trim());
+    int diff = max - min;
     OrgPatterns result = new OrgPatterns();
     result.subCount = (diff == 0) ? min : min + nextInt(this.prng, diff);
     result.patterns = patterns;
@@ -405,17 +409,17 @@ public class DataGenerator {
    *
    */
   private String nextOrgEmailDomain() {
-    List<String>  patternList = nextItem(this.prng, ORG_PATTERNS);
-    OrgPatterns   orgPatterns = processOrgPatterns(patternList);
+    List<String> patternList = nextItem(this.prng, ORG_PATTERNS);
+    OrgPatterns orgPatterns = processOrgPatterns(patternList);
 
-    String        pattern     = nextItem(orgPatterns.patterns);
-    int           count       = orgPatterns.subCount;
+    String pattern = nextItem(orgPatterns.patterns);
+    int count = orgPatterns.subCount;
 
     String sub = null;
     StringBuilder sb = new StringBuilder();
     for (int index2 = 0; index2 < count; index2++) {
       String ownerName = nextItem(this.prng, SURNAMES);
-      String domainPart = (count == 1) ? ownerName : ownerName.substring(0,1);
+      String domainPart = (count == 1) ? ownerName : ownerName.substring(0, 1);
       sb.append(domainPart.toLowerCase());
     }
     sub = sb.toString();
@@ -429,17 +433,17 @@ public class DataGenerator {
    * another.
    */
   private List<String> nextOrgNameList() {
-    List<String>  patternList = nextItem(this.prng, ORG_PATTERNS);
-    OrgPatterns   orgPatterns = processOrgPatterns(patternList);
+    List<String> patternList = nextItem(this.prng, ORG_PATTERNS);
+    OrgPatterns orgPatterns = processOrgPatterns(patternList);
 
     String sub = null;
     List<String> orgs = new ArrayList<>(orgPatterns.patterns.length);
-    for (String pattern: orgPatterns.patterns) {
+    for (String pattern : orgPatterns.patterns) {
       // for the first pattern we need to handle the prefix
       if (sub == null) {
-        String        sep   = "";
-        StringBuilder sb    = new StringBuilder();
-        int           count = orgPatterns.subCount;
+        String sep = "";
+        StringBuilder sb = new StringBuilder();
+        int count = orgPatterns.subCount;
 
         for (int index2 = 0; index2 < count; index2++) {
           String ownerName = nextItem(this.prng, SURNAMES);
@@ -450,7 +454,8 @@ public class DataGenerator {
       }
       String orgName = pattern.replaceAll(
           "_", (pattern.indexOf("_ &") < 0)
-              ? sub : sub.replaceAll(" & ", ", "));
+              ? sub
+              : sub.replaceAll(" & ", ", "));
 
       orgs.add(orgName);
     }
@@ -463,23 +468,22 @@ public class DataGenerator {
   private List<String> nextBizNameList() {
     int approxGenCount = GIVEN_NAMES.size() * BUSINESS_PATTERNS.size() * 3;
     int cannedCount = BUSINESS_NAMES.size();
-    if (this.nextInt(approxGenCount+cannedCount) < cannedCount) {
+    if (this.nextInt(approxGenCount + cannedCount) < cannedCount) {
       return this.nextItem(BUSINESS_NAMES);
     }
-    List<String>  givenNames  = this.nextItem(GIVEN_NAMES);
-    List<String>  patterns    = this.nextItem(BUSINESS_PATTERNS);
-    List<String>  nameList    = new ArrayList<>(patterns.size());
-    String        givenName   = nextItem(this.prng, givenNames);
+    List<String> givenNames = this.nextItem(GIVEN_NAMES);
+    List<String> patterns = this.nextItem(BUSINESS_PATTERNS);
+    List<String> nameList = new ArrayList<>(patterns.size());
+    String givenName = nextItem(this.prng, givenNames);
     while (givenName.length() == 1) {
       givenName = nextItem(this.prng, givenNames);
     }
-    for (String pattern: patterns) {
+    for (String pattern : patterns) {
       pattern = pattern.toUpperCase();
       String sub = "_";
-      if ((givenName.toUpperCase().endsWith("S") && pattern.indexOf("_'S")>=0))
-      {
+      if ((givenName.toUpperCase().endsWith("S") && pattern.indexOf("_'S") >= 0)) {
         givenName = givenName + "'";
-        sub       = "_'S";
+        sub = "_'S";
       }
 
       String bizName = pattern.replaceAll(sub, givenName);
@@ -543,27 +547,26 @@ public class DataGenerator {
    * Adds a single full address with no usage type to the specified
    * {@link JsonObjectBuilder}.
    *
-   * @param builder The {@link JsonObjectBuilder} to add the feature to.
+   * @param builder    The {@link JsonObjectBuilder} to add the feature to.
    * @param recordType The non-null {@link RecordType} describing the type of
    *                   record being created.
-   * @param fullValue <tt>true</tt> if the addresses should be added as full
+   * @param fullValue  <tt>true</tt> if the addresses should be added as full
    *                   values and <tt>false</tt> if the address parts should be
    *                   added individually.
-   * @param fullValue <tt>true</tt> if the addresses should be added as full
-   *                  values and <tt>false</tt> if the address parts should be
-   *                  added individually.
-   * @param flatten <tt>true</tt> if flat JSON should be used and
-   *                <tt>false</tt> if features should be added to sub-arrays
-   *                based on the feature name.
+   * @param fullValue  <tt>true</tt> if the addresses should be added as full
+   *                   values and <tt>false</tt> if the address parts should be
+   *                   added individually.
+   * @param flatten    <tt>true</tt> if flat JSON should be used and
+   *                   <tt>false</tt> if features should be added to sub-arrays
+   *                   based on the feature name.
    * @return The {@link GeneratedAddress} describing the address that was added.
    */
-  public GeneratedAddress addAddress(JsonObjectBuilder  builder,
-                                     RecordType         recordType,
-                                     boolean            fullValue,
-                                     boolean            flatten)
-  {
+  public GeneratedAddress addAddress(JsonObjectBuilder builder,
+      RecordType recordType,
+      boolean fullValue,
+      boolean flatten) {
     Map<UsageType, GeneratedAddress> addresses = this.addAddresses(
-        builder, recordType,null, GUARANTEED, fullValue, flatten);
+        builder, recordType, null, GUARANTEED, fullValue, flatten);
     return addresses.get(null);
   }
 
@@ -571,34 +574,35 @@ public class DataGenerator {
    * Adds full addresses of the specified usage types to the specified
    * {@link JsonObjectBuilder}.
    *
-   * @param builder The {@link JsonObjectBuilder} to add the feature to.
-   * @param recordType The non-null {@link RecordType} describing the type of
-   *                   record being created.
-   * @param usageTypes The usage types for the addresses or <tt>null</tt>
-   *                   if only one address with no usage type should be generated.
+   * @param builder        The {@link JsonObjectBuilder} to add the feature to.
+   * @param recordType     The non-null {@link RecordType} describing the type of
+   *                       record being created.
+   * @param usageTypes     The usage types for the addresses or <tt>null</tt>
+   *                       if only one address with no usage type should be
+   *                       generated.
    * @param featureDensity The {@link FeatureDensity} describing how to densely
    *                       the generated values should be populated.
-   * @param fullValues <tt>true</tt> if the addresses should be added as full
-   *                   values and <tt>false</tt> if the address parts should be
-   *                   added individually.
-   * @param flatten <tt>true</tt> if flat JSON should be used and
-   *                <tt>false</tt> if features should be added to sub-arrays
-   *                based on the feature name.
+   * @param fullValues     <tt>true</tt> if the addresses should be added as full
+   *                       values and <tt>false</tt> if the address parts should
+   *                       be
+   *                       added individually.
+   * @param flatten        <tt>true</tt> if flat JSON should be used and
+   *                       <tt>false</tt> if features should be added to
+   *                       sub-arrays
+   *                       based on the feature name.
    * @return The {@link Map} of {@link UsageType} keys to the associated {@link
    *         GeneratedAddress} value that was generated for that usage type.
    *
    * @return The {@link List} of addresses that were added.
    */
   public Map<UsageType, GeneratedAddress> addAddresses(
-      JsonObjectBuilder   builder,
-      RecordType          recordType,
-      Set<UsageType>      usageTypes,
-      FeatureDensity      featureDensity,
-      boolean             fullValues,
-      boolean             flatten)
-  {
-    Map<UsageType, GeneratedAddress> addresses
-        = this.generateAddresses(recordType, usageTypes, featureDensity);
+      JsonObjectBuilder builder,
+      RecordType recordType,
+      Set<UsageType> usageTypes,
+      FeatureDensity featureDensity,
+      boolean fullValues,
+      boolean flatten) {
+    Map<UsageType, GeneratedAddress> addresses = this.generateAddresses(recordType, usageTypes, featureDensity);
 
     this.addFeatures(builder, ADDRESS, addresses, fullValues, flatten);
 
@@ -612,32 +616,34 @@ public class DataGenerator {
    * a {@link Map} of {@link UsageType} keys to the respective {@link
    * GeneratedAddress} value.
    *
-   * @param recordType The non-null {@link RecordType} describing the type of
-   *                   record being created.
-   * @param usageTypes The usage types for the addresses or <tt>null</tt>
-   *                   if only one address with no usage type should be generated.
+   * @param recordType     The non-null {@link RecordType} describing the type of
+   *                       record being created.
+   * @param usageTypes     The usage types for the addresses or <tt>null</tt>
+   *                       if only one address with no usage type should be
+   *                       generated.
    * @param featureDensity The {@link FeatureDensity} describing how to densely
    *                       the generated values should be populated.
    * @return The {@link Map} of {@link UsageType} keys to the associated {@link
    *         GeneratedAddress} value that was generated for that usage type.
    */
   public Map<UsageType, GeneratedAddress> generateAddresses(
-      RecordType      recordType,
-      Set<UsageType>  usageTypes,
-      FeatureDensity  featureDensity)
-  {
+      RecordType recordType,
+      Set<UsageType> usageTypes,
+      FeatureDensity featureDensity) {
     featureDensity = (featureDensity == null) ? GUARANTEED : featureDensity;
 
     Set<UsageType> usageTypeSet = (usageTypes == null)
-        ? Collections.singleton(null)  : usageTypes;
+        ? Collections.singleton(null)
+        : usageTypes;
 
     Map<UsageType, GeneratedAddress> result = new LinkedHashMap<>();
 
     List<String> addressList = this.nextAddressList();
 
-    for (UsageType usageType: usageTypeSet) {
+    for (UsageType usageType : usageTypeSet) {
       double probability = featureDensity.probability(result.size());
-      if (!this.nextBoolean(probability)) continue;
+      if (!this.nextBoolean(probability))
+        continue;
 
       String addressText = this.nextItem(addressList);
       GeneratedAddress address = new GeneratedAddress(recordType, addressText);
@@ -651,49 +657,47 @@ public class DataGenerator {
    * Adds a single phone number with no usage type to the specified
    * {@link JsonObjectBuilder}.
    *
-   * @param builder The {@link JsonObjectBuilder} to add the feature to.
+   * @param builder    The {@link JsonObjectBuilder} to add the feature to.
    * @param recordType The non-null {@link RecordType} describing the type of
    *                   record being created.
-   * @param flatten <tt>true</tt> if flat JSON should be used and
-   *                <tt>false</tt> if features should be added to sub-arrays
-   *                based on the feature name.
+   * @param flatten    <tt>true</tt> if flat JSON should be used and
+   *                   <tt>false</tt> if features should be added to sub-arrays
+   *                   based on the feature name.
    * @return The {@link GeneratedPhone} describing the phone number that was
    *         added.
    */
   public GeneratedPhone addPhoneNumber(JsonObjectBuilder builder,
-                                       RecordType        recordType,
-                                       boolean           flatten)
-  {
+      RecordType recordType,
+      boolean flatten) {
     return this.addPhoneNumbers(
-        builder, recordType,null, GUARANTEED, flatten).get(null);
+        builder, recordType, null, GUARANTEED, flatten).get(null);
   }
 
   /**
    * Adds phone numbers of the specified usage types to the specified
    * {@link JsonObjectBuilder}.
    *
-   * @param builder The {@link JsonObjectBuilder} to add the feature to.
-   * @param recordType The non-null {@link RecordType} describing the type of
-   *                   record being created.
-   * @param usageTypes The usage types for the phone numbers or <tt>null</tt>
-   *                   if only one phone number with no usage type should be
-   *                   added.
+   * @param builder        The {@link JsonObjectBuilder} to add the feature to.
+   * @param recordType     The non-null {@link RecordType} describing the type of
+   *                       record being created.
+   * @param usageTypes     The usage types for the phone numbers or <tt>null</tt>
+   *                       if only one phone number with no usage type should be
+   *                       added.
    * @param featureDensity The {@link FeatureDensity} describing how to densely
    *                       the generated values should be populated.
-   * @param flatten <tt>true</tt> if flat JSON should be used and
-   *                <tt>false</tt> if features should be added to sub-arrays
-   *                based on the feature name.
+   * @param flatten        <tt>true</tt> if flat JSON should be used and
+   *                       <tt>false</tt> if features should be added to
+   *                       sub-arrays
+   *                       based on the feature name.
    * @return The {@link List} of phone numbers that were added.
    */
   public Map<UsageType, GeneratedPhone> addPhoneNumbers(
       JsonObjectBuilder builder,
-      RecordType        recordType,
-      Set<UsageType>    usageTypes,
-      FeatureDensity    featureDensity,
-      boolean           flatten)
-  {
-    Map<UsageType,GeneratedPhone> phones
-        = this.generatePhoneNumbers(recordType, usageTypes, featureDensity);
+      RecordType recordType,
+      Set<UsageType> usageTypes,
+      FeatureDensity featureDensity,
+      boolean flatten) {
+    Map<UsageType, GeneratedPhone> phones = this.generatePhoneNumbers(recordType, usageTypes, featureDensity);
 
     this.addFeatures(builder, PHONE, phones, true, flatten);
 
@@ -707,33 +711,34 @@ public class DataGenerator {
    * <tt>null</tt>) and returns a {@link Map} of {@link UsageType} keys to the
    * respective {@link GeneratedPhone} value.
    *
-   * @param recordType The non-null {@link RecordType} describing the type of
-   *                   record being created.
-   * @param usageTypes The usage types for the phone numbers or <tt>null</tt>
-   *                   if only one phone number with no usage type should be
-   *                   generated.
+   * @param recordType     The non-null {@link RecordType} describing the type of
+   *                       record being created.
+   * @param usageTypes     The usage types for the phone numbers or <tt>null</tt>
+   *                       if only one phone number with no usage type should be
+   *                       generated.
    * @param featureDensity The {@link FeatureDensity} describing how to densely
    *                       the generated values should be populated.
    * @return The {@link Map} of {@link UsageType} keys to the associated {@link
    *         GeneratedPhone} value that was generated for that usage type.
    */
   public Map<UsageType, GeneratedPhone> generatePhoneNumbers(
-      RecordType        recordType,
-      Set<UsageType>    usageTypes,
-      FeatureDensity    featureDensity)
-  {
+      RecordType recordType,
+      Set<UsageType> usageTypes,
+      FeatureDensity featureDensity) {
     featureDensity = (featureDensity == null) ? GUARANTEED : featureDensity;
 
     Set<UsageType> usageTypeSet = (usageTypes == null)
-        ? Collections.singleton(null)  : usageTypes;
+        ? Collections.singleton(null)
+        : usageTypes;
 
     Map<UsageType, GeneratedPhone> result = new LinkedHashMap<>();
 
     List<String> phoneNumbers = this.nextPhoneList();
 
-    for (UsageType usageType: usageTypeSet) {
+    for (UsageType usageType : usageTypeSet) {
       double probability = featureDensity.probability(result.size());
-      if (!this.nextBoolean(probability)) continue;
+      if (!this.nextBoolean(probability))
+        continue;
 
       String phoneText = this.nextItem(phoneNumbers);
       GeneratedPhone phone = new GeneratedPhone(recordType, phoneText);
@@ -747,61 +752,61 @@ public class DataGenerator {
    * Adds a single email address with no usage type to the specified
    * {@link JsonObjectBuilder}.
    *
-   * @param builder The {@link JsonObjectBuilder} to add the feature to.
+   * @param builder    The {@link JsonObjectBuilder} to add the feature to.
    * @param recordType The non-null {@link RecordType} describing the type of
    *                   record being created.
-   * @param name The {@link GeneratedName} to use to create the user name.
-   * @param flatten <tt>true</tt> if flat JSON should be used and
-   *                <tt>false</tt> if features should be added to sub-arrays
-   *                based on the feature name.
+   * @param name       The {@link GeneratedName} to use to create the user name.
+   * @param flatten    <tt>true</tt> if flat JSON should be used and
+   *                   <tt>false</tt> if features should be added to sub-arrays
+   *                   based on the feature name.
    * @return The {@link GeneratedEmail} describing the email address that
    *         was added.
    */
   public GeneratedEmail addEmailAddress(JsonObjectBuilder builder,
-                                        RecordType        recordType,
-                                        GeneratedName     name,
-                                        boolean           flatten)
-  {
+      RecordType recordType,
+      GeneratedName name,
+      boolean flatten) {
     List<GeneratedName> names = Collections.singletonList(name);
     Map<UsageType, GeneratedEmail> map = this.addEmailAddresses(
-        builder, recordType, names,null, GUARANTEED, flatten);
+        builder, recordType, names, null, GUARANTEED, flatten);
     return map.get(null);
   }
 
   /**
    * Adds email addresses of the specified usage types to the specified
-   * {@link JsonObjectBuilder}.  Depending on the specified {@link RecordType}
+   * {@link JsonObjectBuilder}. Depending on the specified {@link RecordType}
    * either the user names OR email domains will be based on the specified
    * {@link Collection} of names.
    *
-   * @param builder The {@link JsonObjectBuilder} to add the properties to.
-   * @param recordType The non-null {@link RecordType} describing the type of
-   *                   record being created.
-   * @param names The {@link List} of {@link GeneratedName} instances to base the email
-   *              address user names off.
-   * @param usageTypes The usage types for the email addresses or <tt>null</tt>
-   *                   if only one email address with no usage type should be
-   *                   added.
+   * @param builder        The {@link JsonObjectBuilder} to add the properties to.
+   * @param recordType     The non-null {@link RecordType} describing the type of
+   *                       record being created.
+   * @param names          The {@link List} of {@link GeneratedName} instances to
+   *                       base the email
+   *                       address user names off.
+   * @param usageTypes     The usage types for the email addresses or
+   *                       <tt>null</tt>
+   *                       if only one email address with no usage type should be
+   *                       added.
    * @param featureDensity The {@link FeatureDensity} describing how to densely
    *                       the generated values should be populated.
-   * @param flatten <tt>true</tt> if flat JSON should be used and
-   *                <tt>false</tt> if features should be added to sub-arrays
-   *                based on the feature name.
+   * @param flatten        <tt>true</tt> if flat JSON should be used and
+   *                       <tt>false</tt> if features should be added to
+   *                       sub-arrays
+   *                       based on the feature name.
    *
    * @return The {@link Map} of {@link UsageType} keys to the associated {@link
    *         GeneratedEmail} value that was generated for that usage type.
    */
   public Map<UsageType, GeneratedEmail> addEmailAddresses(
-      JsonObjectBuilder         builder,
-      RecordType                recordType,
+      JsonObjectBuilder builder,
+      RecordType recordType,
       Collection<GeneratedName> names,
-      Set<UsageType>            usageTypes,
-      FeatureDensity            featureDensity,
-      boolean                   flatten)
-  {
-    Map<UsageType, GeneratedEmail> emails
-        = this.generateEmailAddresses(
-            recordType, names, usageTypes, featureDensity);
+      Set<UsageType> usageTypes,
+      FeatureDensity featureDensity,
+      boolean flatten) {
+    Map<UsageType, GeneratedEmail> emails = this.generateEmailAddresses(
+        recordType, names, usageTypes, featureDensity);
 
     this.addFeatures(builder, EMAIL, emails, true, flatten);
 
@@ -813,29 +818,31 @@ public class DataGenerator {
    * UsageType}'s in the specified {@link Set} (or a single email address
    * with no {@link UsageType} if the specified {@link Set} is
    * <tt>null</tt>) and returns a {@link Map} of {@link UsageType} keys to the
-   * respective {@link GeneratedEmail} value.  The specified {@link Collection}
+   * respective {@link GeneratedEmail} value. The specified {@link Collection}
    * of {@link GeneratedName} values is used to determine the user names or
    * email domains for the email address (depending on the record type).
    *
-   * @param recordType The non-null {@link RecordType} describing the type of
-   *                   record being created.
-   * @param names The {@link Collection} of {@link GeneratedName} instances to
-   *              base the email address user names or email domains off of
-   *              (depending on the record type).
-   * @param usageTypes The usage types for the email addresses or <tt>null</tt>
-   *                   if only one email address with no usage type should be
-   *                   generated.
+   * @param recordType     The non-null {@link RecordType} describing the type of
+   *                       record being created.
+   * @param names          The {@link Collection} of {@link GeneratedName}
+   *                       instances to
+   *                       base the email address user names or email domains off
+   *                       of
+   *                       (depending on the record type).
+   * @param usageTypes     The usage types for the email addresses or
+   *                       <tt>null</tt>
+   *                       if only one email address with no usage type should be
+   *                       generated.
    * @param featureDensity The {@link FeatureDensity} describing how to densely
    *                       the generated values should be populated.
    * @return The {@link Map} of {@link UsageType} keys to the associated {@link
    *         GeneratedEmail} value that was generated for that usage type.
    */
-  public Map<UsageType,GeneratedEmail> generateEmailAddresses(
-      RecordType                recordType,
+  public Map<UsageType, GeneratedEmail> generateEmailAddresses(
+      RecordType recordType,
       Collection<GeneratedName> names,
-      Set<UsageType>            usageTypes,
-      FeatureDensity            featureDensity)
-  {
+      Set<UsageType> usageTypes,
+      FeatureDensity featureDensity) {
     featureDensity = (featureDensity == null) ? GUARANTEED : featureDensity;
 
     // require the names
@@ -850,20 +857,23 @@ public class DataGenerator {
     List<GeneratedName> nameList = new ArrayList<>(names);
 
     Set<UsageType> usageTypeSet = (usageTypes == null)
-        ? Collections.singleton(null)  : usageTypes;
+        ? Collections.singleton(null)
+        : usageTypes;
 
     Map<UsageType, GeneratedEmail> result = new LinkedHashMap<>();
 
     List<String> usedDomains = new ArrayList<>(usageTypeSet.size());
 
-    for (UsageType usageType: usageTypeSet) {
+    for (UsageType usageType : usageTypeSet) {
       double probability = featureDensity.probability(result.size());
-      if (!this.nextBoolean(probability)) continue;
+      if (!this.nextBoolean(probability))
+        continue;
 
       GeneratedName name = (recordType == PERSON)
-          ? this.nextItem(nameList) : nameList.get(0);
-      String          userName    = null;
-      String          emailDomain = null;
+          ? this.nextItem(nameList)
+          : nameList.get(0);
+      String userName = null;
+      String emailDomain = null;
       switch (recordType) {
         case PERSON:
           UserNameFormat userFormat = this.nextItem(USER_NAME_FORMATS);
@@ -898,13 +908,13 @@ public class DataGenerator {
 
   /**
    * Adds email addresses of the specified usage types to the specified
-   * {@link JsonObjectBuilder}.  Depending on the specified {@link RecordType}
+   * {@link JsonObjectBuilder}. Depending on the specified {@link RecordType}
    * either the user names OR email domains will be based on the specified
    * {@link Collection} of names.
    *
-   * @param builder The {@link JsonObjectBuilder} to add the properties to.
-   * @param recordType The non-null {@link RecordType} describing the type of
-   *                   record being created.
+   * @param builder        The {@link JsonObjectBuilder} to add the properties to.
+   * @param recordType     The non-null {@link RecordType} describing the type of
+   *                       record being created.
    * @param featureDensity The {@link FeatureDensity} describing how to densely
    *                       the generated values should be populated.
    *
@@ -912,16 +922,14 @@ public class DataGenerator {
    *         GeneratedEmail} value that was generated for that usage type.
    */
   public GeneratedBirthDate addBirthDate(
-      JsonObjectBuilder         builder,
-      RecordType                recordType,
-      FeatureDensity            featureDensity)
-  {
-    GeneratedBirthDate birthDate
-        = this.generateBirthDate(recordType, featureDensity);
+      JsonObjectBuilder builder,
+      RecordType recordType,
+      FeatureDensity featureDensity) {
+    GeneratedBirthDate birthDate = this.generateBirthDate(recordType, featureDensity);
 
     this.addFeatures(builder, BIRTH_DATE,
-                     Collections.singletonMap(null, birthDate),
-                     true, true);
+        Collections.singletonMap(null, birthDate),
+        true, true);
 
     return birthDate;
   }
@@ -930,18 +938,16 @@ public class DataGenerator {
    * Generates a birth date within the last 90 years with younger and older
    * birthdates being less likely than those between 18 and 70 years old.
    *
-   * @param recordType The non-null {@link RecordType} describing the type of
-   *                   record being created.
+   * @param recordType     The non-null {@link RecordType} describing the type of
+   *                       record being created.
    * @param featureDensity The {@link FeatureDensity} describing how to densely
    *                       the generated values should be populated.
    * @return The {@link GeneratedBirthDate} value that was generated.
    */
-  public GeneratedBirthDate generateBirthDate(RecordType      recordType,
-                                              FeatureDensity  featureDensity)
-  {
+  public GeneratedBirthDate generateBirthDate(RecordType recordType,
+      FeatureDensity featureDensity) {
     // check the record type
-    GeneratedAttributeType attrType
-        = GeneratedAttributeType.fullValueInstance(BIRTH_DATE, recordType);
+    GeneratedAttributeType attrType = GeneratedAttributeType.fullValueInstance(BIRTH_DATE, recordType);
     if (attrType == null) {
       throw new IllegalArgumentException(
           "Unsupported record type for the BIRTH_DATE feature: " + recordType);
@@ -950,18 +956,19 @@ public class DataGenerator {
     featureDensity = (featureDensity == null) ? GUARANTEED : featureDensity;
 
     double probability = featureDensity.probability(0);
-    if (!this.nextBoolean(probability)) return null;
+    if (!this.nextBoolean(probability))
+      return null;
 
-    LocalDate today       = LocalDate.now();
+    LocalDate today = LocalDate.now();
 
-    int       rand1       = this.nextInt(100);
-    int       rand2       = this.nextInt(60) + 20;
-    int       rand3       = this.nextInt(20) + 30;
-    int       yearsAgo    = (rand1 + rand2 + rand3) / 3;
+    int rand1 = this.nextInt(100);
+    int rand2 = this.nextInt(60) + 20;
+    int rand3 = this.nextInt(20) + 30;
+    int yearsAgo = (rand1 + rand2 + rand3) / 3;
 
-    Month     month       = Month.of(this.nextInt(12) + 1);
-    int       dayOfMonth  = this.nextInt(month.length(false)) + 1;
-    int       year        = today.getYear() - yearsAgo;
+    Month month = Month.of(this.nextInt(12) + 1);
+    int dayOfMonth = this.nextInt(month.length(false)) + 1;
+    int year = today.getYear() - yearsAgo;
 
     return new GeneratedBirthDate(month.getValue(), dayOfMonth, year);
   }
@@ -972,14 +979,14 @@ public class DataGenerator {
    * JsonObjectBuilder}.
    */
   private void addFeatures(
-      JsonObjectBuilder                           builder,
-      FeatureType                                 featureType,
-      Map<UsageType, ? extends GeneratedFeature>  featureMap,
-      boolean                                     fullValues,
-      boolean                                     flatten)
-  {
+      JsonObjectBuilder builder,
+      FeatureType featureType,
+      Map<UsageType, ? extends GeneratedFeature> featureMap,
+      boolean fullValues,
+      boolean flatten) {
     // if no plural property then flatten since there is no other choice
-    if (featureType.getPluralProperty() == null) flatten = true;
+    if (featureType.getPluralProperty() == null)
+      flatten = true;
 
     // if not flattening then create an array builder
     JsonArrayBuilder jab = (flatten) ? null : Json.createArrayBuilder();
@@ -990,11 +997,12 @@ public class DataGenerator {
     featureMap.entrySet().forEach(entry -> {
       UsageType usageType = entry.getKey();
       GeneratedFeature feature = entry.getValue();
-      if (feature == null) return;
+      if (feature == null)
+        return;
 
       if (flattened) {
         if (fullValues) {
-          feature.addFull(builder, usageType,true);
+          feature.addFull(builder, usageType, true);
         } else {
           feature.addParts(builder, usageType, true);
         }
@@ -1024,37 +1032,37 @@ public class DataGenerator {
    * each feature that should be generated and {@link Set} values containing
    * {@link UsageType} instances to indicate how many features of that type
    * should be generated and with which usage types with <tt>null</tt> values
-   * being interpretted as a single feature of that type with no {@link
+   * being interpreted as a single feature of that type with no {@link
    * UsageType}.
    *
-   * @param recordType The {@link RecordType} describing the type of record
-   *                   being generated.
-   * @param recordId The optional record ID, or <tt>null</tt> to omit the
-   *                 record ID from the generated record.
-   * @param dataSource The optional data source, or <tt>null</tt> to omit the
-   *                   data source from the generated record.
+   * @param recordType    The {@link RecordType} describing the type of record
+   *                      being generated.
+   * @param recordId      The optional record ID, or <tt>null</tt> to omit the
+   *                      record ID from the generated record.
+   * @param dataSource    The optional data source, or <tt>null</tt> to omit the
+   *                      data source from the generated record.
    * @param featureGenMap The {@link Map} of {@link FeatureType} keys to {@link
    *                      Set} values of {@link UsageType} describing the
    *                      features to be added to the record, or <tt>null</tt>
    *                      if no features.
-   * @param fullValues <tt>true</tt> if the features should be added as full
-   *                   values and <tt>false</tt> if the feature parts should be
-   *                   added individually.
-   * @param flatten <tt>true</tt> if flat JSON should be used and
-   *                <tt>false</tt> if features should be added to sub-arrays
-   *                based on the feature name.
+   * @param fullValues    <tt>true</tt> if the features should be added as full
+   *                      values and <tt>false</tt> if the feature parts should be
+   *                      added individually.
+   * @param flatten       <tt>true</tt> if flat JSON should be used and
+   *                      <tt>false</tt> if features should be added to sub-arrays
+   *                      based on the feature name.
    */
   public JsonObjectBuilder generateRecord(
-      RecordType                        recordType,
-      String                            recordId,
-      String                            dataSource,
-      Map<FeatureType, Set<UsageType>>  featureGenMap,
-      Map<FeatureType, FeatureDensity>  featureDensityMap,
-      boolean                           fullValues,
-      boolean                           flatten)
-  {
+      RecordType recordType,
+      String recordId,
+      String dataSource,
+      Map<FeatureType, Set<UsageType>> featureGenMap,
+      Map<FeatureType, FeatureDensity> featureDensityMap,
+      boolean fullValues,
+      boolean flatten) {
     JsonObjectBuilder builder = Json.createObjectBuilder();
-    if (featureDensityMap == null) featureDensityMap = Collections.emptyMap();
+    if (featureDensityMap == null)
+      featureDensityMap = Collections.emptyMap();
 
     // check if we need to add a record ID
     if (recordId != null) {
@@ -1067,7 +1075,8 @@ public class DataGenerator {
     }
 
     // end early if the feature generation map is null
-    if (featureGenMap == null) return builder;
+    if (featureGenMap == null)
+      return builder;
 
     Map<UsageType, GeneratedName> names = null;
 
@@ -1084,8 +1093,7 @@ public class DataGenerator {
 
     if (featureGenMap.containsKey(BIRTH_DATE)) {
       // check if birth date is applicable to the record type
-      GeneratedAttributeType attrType
-          = GeneratedAttributeType.fullValueInstance(BIRTH_DATE, recordType);
+      GeneratedAttributeType attrType = GeneratedAttributeType.fullValueInstance(BIRTH_DATE, recordType);
       if (attrType == null) {
         throw new IllegalArgumentException(
             "Unsupported record type for the BIRTH_DATE feature: "
@@ -1135,11 +1143,11 @@ public class DataGenerator {
 
       // add the email addresses for the specified usage types
       this.addEmailAddresses(builder,
-                             recordType,
-                             names.values(),
-                             emailTypes,
-                             density,
-                             flatten);
+          recordType,
+          names.values(),
+          emailTypes,
+          density,
+          flatten);
     }
 
     // return the specified builder
@@ -1154,15 +1162,14 @@ public class DataGenerator {
    * @param recordCount The total number of records being generated.
    */
   private String nextRecordId(
-      RecordType recordType, int recordIndex, int recordCount)
-  {
+      RecordType recordType, int recordIndex, int recordCount) {
     try {
-      int    digits   = Math.max(((int) Math.log10((double) recordCount)) + 1, 4);
-      int    base     = (int) Math.pow(10, digits);
+      int digits = Math.max(((int) Math.log10((double) recordCount)) + 1, 4);
+      int base = (int) Math.pow(10, digits);
 
       // make a prefix out of the record type
       String prefix = Base64.getEncoder().encodeToString(
-              recordType.toString().getBytes(UTF_8))
+          recordType.toString().getBytes(UTF_8))
           .replaceAll("=", "").toUpperCase();
       if (prefix.length() > 8) {
         prefix = prefix.substring(0, 8);
@@ -1191,38 +1198,43 @@ public class DataGenerator {
    * being interpreted as a single feature of that type with no {@link
    * UsageType}.
    *
-   * @param recordType The {@link RecordType} describing the type of record
-   *                   being generated.
-   * @param recordCount The non-negative number of records to generate.
-   * @param dataSource The optional data source for each record, or
-   *                   <tt>null</tt> to omit the data source from the generated
-   *                   records.
-   * @param featureGenMap The {@link Map} of {@link FeatureType} keys to {@link
-   *                      Set} values of {@link UsageType} describing the
-   *                      features to be added to the record, or <tt>null</tt>
-   *                      if no features.
+   * @param recordType        The {@link RecordType} describing the type of record
+   *                          being generated.
+   * @param recordCount       The non-negative number of records to generate.
+   * @param dataSource        The optional data source for each record, or
+   *                          <tt>null</tt> to omit the data source from the
+   *                          generated
+   *                          records.
+   * @param featureGenMap     The {@link Map} of {@link FeatureType} keys to
+   *                          {@link
+   *                          Set} values of {@link UsageType} describing the
+   *                          features to be added to the record, or <tt>null</tt>
+   *                          if no features.
    * @param featureDensityMap The {@link Map} of {@link FeatureType} keys to
    *                          {@link FeatureDensity} values describing the
    *                          density for each feature.
-   * @param fullValues <tt>true</tt> if the features should be added as full
-   *                   values and <tt>false</tt> if the feature parts should be
-   *                   added individually.
-   * @param flatten <tt>true</tt> if flat JSON should be used and
-   *                <tt>false</tt> if features should be added to sub-arrays
-   *                based on the feature name.
+   * @param fullValues        <tt>true</tt> if the features should be added as
+   *                          full
+   *                          values and <tt>false</tt> if the feature parts
+   *                          should be
+   *                          added individually.
+   * @param flatten           <tt>true</tt> if flat JSON should be used and
+   *                          <tt>false</tt> if features should be added to
+   *                          sub-arrays
+   *                          based on the feature name.
    */
   public void generateRecords(
-      RecordHandler                     recordHandler,
-      RecordType                        recordType,
-      int                               recordCount,
-      boolean                           includeRecordIds,
-      String                            dataSource,
-      Map<FeatureType, Set<UsageType>>  featureGenMap,
-      Map<FeatureType, FeatureDensity>  featureDensityMap,
-      boolean                           fullValues,
-      boolean                           flatten)
-  {
-    if (featureDensityMap == null) featureDensityMap = Collections.emptyMap();
+      RecordHandler recordHandler,
+      RecordType recordType,
+      int recordCount,
+      boolean includeRecordIds,
+      String dataSource,
+      Map<FeatureType, Set<UsageType>> featureGenMap,
+      Map<FeatureType, FeatureDensity> featureDensityMap,
+      boolean fullValues,
+      boolean flatten) {
+    if (featureDensityMap == null)
+      featureDensityMap = Collections.emptyMap();
 
     // check the record count
     if (recordCount < 0) {
@@ -1230,24 +1242,25 @@ public class DataGenerator {
           "The specified record count cannot be negative: " + recordCount);
     }
     // check if no records
-    if (recordCount == 0) return;
+    if (recordCount == 0)
+      return;
 
     // iterate and create the records
     for (int index = 0; index < recordCount; index++) {
-      // get the next record ID if neccessary
+      // get the next record ID if necessary
       String recordId = null;
       if (includeRecordIds) {
-        recordId = this.nextRecordId(recordType, index,  recordCount);
+        recordId = this.nextRecordId(recordType, index, recordCount);
       }
 
       // build the record
       JsonObjectBuilder record = this.generateRecord(recordType,
-                                                     recordId,
-                                                     dataSource,
-                                                     featureGenMap,
-                                                     featureDensityMap,
-                                                     fullValues,
-                                                     flatten);
+          recordId,
+          dataSource,
+          featureGenMap,
+          featureDensityMap,
+          fullValues,
+          flatten);
 
       recordHandler.handle(record);
     }
@@ -1263,52 +1276,59 @@ public class DataGenerator {
    * being interpreted as a single feature of that type with no {@link
    * UsageType}.
    *
-   * @param recordType The {@link RecordType} describing the type of record
-   *                   being generated.
-   * @param recordCount The non-negative number of records to generate.
-   * @param dataSources The optional {@link List} of data sources from which to
-   *                    randomly select a data source for each record, or
-   *                    <tt>null</tt> to omit the data source from the generated
-   *                    records.
-   * @param featureGenMap The {@link Map} of {@link FeatureType} keys to {@link
-   *                      Set} values of {@link UsageType} describing the
-   *                      features to be added to the record, or <tt>null</tt>
-   *                      if no features.
+   * @param recordType        The {@link RecordType} describing the type of record
+   *                          being generated.
+   * @param recordCount       The non-negative number of records to generate.
+   * @param dataSources       The optional {@link List} of data sources from which
+   *                          to
+   *                          randomly select a data source for each record, or
+   *                          <tt>null</tt> to omit the data source from the
+   *                          generated
+   *                          records.
+   * @param featureGenMap     The {@link Map} of {@link FeatureType} keys to
+   *                          {@link
+   *                          Set} values of {@link UsageType} describing the
+   *                          features to be added to the record, or <tt>null</tt>
+   *                          if no features.
    * @param featureDensityMap The {@link Map} of {@link FeatureType} keys to
    *                          {@link FeatureDensity} values describing the
    *                          density for each feature.
-   * @param fullValues <tt>true</tt> if the features should be added as full
-   *                   values and <tt>false</tt> if the feature parts should be
-   *                   added individually.
-   * @param flatten <tt>true</tt> if flat JSON should be used and
-   *                <tt>false</tt> if features should be added to sub-arrays
-   *                based on the feature name.
+   * @param fullValues        <tt>true</tt> if the features should be added as
+   *                          full
+   *                          values and <tt>false</tt> if the feature parts
+   *                          should be
+   *                          added individually.
+   * @param flatten           <tt>true</tt> if flat JSON should be used and
+   *                          <tt>false</tt> if features should be added to
+   *                          sub-arrays
+   *                          based on the feature name.
    */
   public void generateRecords(
-      RecordHandler                     recordHandler,
-      RecordType                        recordType,
-      int                               recordCount,
-      boolean                           includeRecordIds,
-      List<String>                      dataSources,
-      Map<FeatureType, Set<UsageType>>  featureGenMap,
-      Map<FeatureType, FeatureDensity>  featureDensityMap,
-      boolean                           fullValues,
-      boolean                           flatten)
-  {
+      RecordHandler recordHandler,
+      RecordType recordType,
+      int recordCount,
+      boolean includeRecordIds,
+      List<String> dataSources,
+      Map<FeatureType, Set<UsageType>> featureGenMap,
+      Map<FeatureType, FeatureDensity> featureDensityMap,
+      boolean fullValues,
+      boolean flatten) {
     // check the record count
     if (recordCount < 0) {
       throw new IllegalArgumentException(
           "The specified record count cannot be negative: " + recordCount);
     }
 
-    if (featureDensityMap == null) featureDensityMap = Collections.emptyMap();
+    if (featureDensityMap == null)
+      featureDensityMap = Collections.emptyMap();
 
     // check if no records
-    if (recordCount == 0) return;
+    if (recordCount == 0)
+      return;
 
     // iterate and create the records
     for (int index = 0; index < recordCount; index++) {
-      // get the next record ID if neccessary
+      // get the next record ID if necessary
       String recordId = null;
       if (includeRecordIds) {
         recordId = this.nextRecordId(recordType, index, recordCount);
@@ -1316,16 +1336,17 @@ public class DataGenerator {
 
       // get the next data source
       String dataSource = (dataSources == null || dataSources.size() == 0)
-          ? null : this.nextItem(dataSources);
+          ? null
+          : this.nextItem(dataSources);
 
       // build the record
       JsonObjectBuilder record = this.generateRecord(recordType,
-                                                     recordId,
-                                                     dataSource,
-                                                     featureGenMap,
-                                                     featureDensityMap,
-                                                     fullValues,
-                                                     flatten);
+          recordId,
+          dataSource,
+          featureGenMap,
+          featureDensityMap,
+          fullValues,
+          flatten);
 
       recordHandler.handle(record);
     }
@@ -1336,12 +1357,12 @@ public class DataGenerator {
    */
   @SuppressWarnings("unchecked")
   public static void main(String[] args) {
-    Map<CommandLineOption, Object>  options = null;
-    List<DeprecatedOptionWarning>   warnings = new LinkedList<>();
+    Map<CommandLineOption, Object> options = null;
+    List<DeprecatedOptionWarning> warnings = new LinkedList<>();
     try {
       options = parseCommandLine(args, warnings);
 
-      for (DeprecatedOptionWarning warning: warnings) {
+      for (DeprecatedOptionWarning warning : warnings) {
         System.out.println(warning);
         System.out.println();
       }
@@ -1353,8 +1374,7 @@ public class DataGenerator {
       System.exit(1);
 
     } catch (Exception e) {
-      if (!isLastLoggedException(e))
-      {
+      if (!isLastLoggedException(e)) {
         e.printStackTrace();
       }
       System.exit(1);
@@ -1366,8 +1386,8 @@ public class DataGenerator {
     }
 
     Integer personCount = (Integer) options.get(PERSON_COUNT);
-    Integer orgCount    = (Integer) options.get(ORGANIZATION_COUNT);
-    Integer bizCount    = (Integer) options.get(BUSINESS_COUNT);
+    Integer orgCount = (Integer) options.get(ORGANIZATION_COUNT);
+    Integer bizCount = (Integer) options.get(BUSINESS_COUNT);
 
     Set<RecordType> recordTypes = new LinkedHashSet<>();
     int totalCount = 0;
@@ -1385,16 +1405,19 @@ public class DataGenerator {
     }
 
     Map<RecordType, Integer> recordCounts = new LinkedHashMap<>();
-    if (personCount != null)  recordCounts.put(PERSON,  personCount);
-    if (orgCount != null)     recordCounts.put(ORGANIZATION, orgCount);
-    if (bizCount != null)     recordCounts.put(RecordType.BUSINESS, bizCount);
+    if (personCount != null)
+      recordCounts.put(PERSON, personCount);
+    if (orgCount != null)
+      recordCounts.put(ORGANIZATION, orgCount);
+    if (bizCount != null)
+      recordCounts.put(RecordType.BUSINESS, bizCount);
 
     // check if total count is zero
     if (totalCount == 0) {
       System.err.println("At least one of the "
-         + PERSON_COUNT.getCommandLineFlag() + ", "
-         + ORGANIZATION_COUNT.getCommandLineFlag() + " and "
-         + BUSINESS_COUNT.getCommandLineFlag() + " options must be specified.");
+          + PERSON_COUNT.getCommandLineFlag() + ", "
+          + ORGANIZATION_COUNT.getCommandLineFlag() + " and "
+          + BUSINESS_COUNT.getCommandLineFlag() + " options must be specified.");
       System.exit(1);
     }
 
@@ -1403,10 +1426,9 @@ public class DataGenerator {
     List<String> orgSources = (List<String>) options.get(ORGANIZATION_SOURCES);
     List<String> bizSources = (List<String>) options.get(BUSINESS_SOURCES);
 
-    boolean includeSources
-        = ((personSources != null && personSources.size() > 0)
-           || (orgSources != null && orgSources.size() > 0)
-           || (bizSources != null && bizSources.size() > 0));
+    boolean includeSources = ((personSources != null && personSources.size() > 0)
+        || (orgSources != null && orgSources.size() > 0)
+        || (bizSources != null && bizSources.size() > 0));
 
     Map<RecordType, List<String>> recordSources = new LinkedHashMap<>();
     recordSources.put(PERSON, personSources);
@@ -1415,67 +1437,77 @@ public class DataGenerator {
 
     // get the random number seed (if any)
     Long seed = (Long) options.get(SEED);
-    if (seed == null) seed = 0L;
+    if (seed == null)
+      seed = 0L;
     Random prng = new Random(seed);
 
     // determine the default feature counts
-    int defaultMaxNames       = prng.nextInt(2) + 1;
-    int defaultMaxBirthDates  = 1;
-    int defaultMaxAddresses   = prng.nextInt(3) + 1;
-    int defaultMaxPhones      = prng.nextInt(3) + 1;
-    int defaultMaxEmails      = prng.nextInt(3) + 1;
+    int defaultMaxNames = prng.nextInt(2) + 1;
+    int defaultMaxBirthDates = 1;
+    int defaultMaxAddresses = prng.nextInt(3) + 1;
+    int defaultMaxPhones = prng.nextInt(3) + 1;
+    int defaultMaxEmails = prng.nextInt(3) + 1;
 
     // check if setting all defaults to zero (0)
     if (Boolean.TRUE.equals(options.get(DEFAULT_NO_FEATURES))) {
-      defaultMaxNames       = 0;
-      defaultMaxBirthDates  = 0;
-      defaultMaxAddresses   = 0;
-      defaultMaxPhones      = 0;
-      defaultMaxEmails      = 0;
+      defaultMaxNames = 0;
+      defaultMaxBirthDates = 0;
+      defaultMaxAddresses = 0;
+      defaultMaxPhones = 0;
+      defaultMaxEmails = 0;
     }
 
     // get the maximum name count
     Integer maxNames = (Integer) options.get(MAX_NAME_COUNT);
-    if (maxNames == null) maxNames = defaultMaxNames;
+    if (maxNames == null)
+      maxNames = defaultMaxNames;
 
     // get the maximum birth date count
     Integer maxBirthDates = (Integer) options.get(MAX_BIRTH_DATE_COUNT);
-    if (maxBirthDates == null) maxBirthDates = defaultMaxBirthDates;
+    if (maxBirthDates == null)
+      maxBirthDates = defaultMaxBirthDates;
 
     // get the maximum address count
     Integer maxAddresses = (Integer) options.get(MAX_ADDRESS_COUNT);
-    if (maxAddresses == null) maxAddresses = defaultMaxAddresses;
+    if (maxAddresses == null)
+      maxAddresses = defaultMaxAddresses;
 
     // get the maximum phone count
     Integer maxPhones = (Integer) options.get(MAX_PHONE_COUNT);
-    if (maxPhones == null) maxPhones = defaultMaxPhones;
+    if (maxPhones == null)
+      maxPhones = defaultMaxPhones;
 
     // get the maximum email count
     Integer maxEmails = (Integer) options.get(MAX_EMAIL_COUNT);
-    if (maxEmails == null) maxEmails = defaultMaxEmails;
+    if (maxEmails == null)
+      maxEmails = defaultMaxEmails;
 
     Map<FeatureType, FeatureDensity> densityMap = new LinkedHashMap<>();
 
     // get the name density
     FeatureDensity nameDensity = (FeatureDensity) options.get(NAME_DENSITY);
-    if (nameDensity == null) nameDensity = FIRST_THEN_SPARSE;
+    if (nameDensity == null)
+      nameDensity = FIRST_THEN_SPARSE;
 
     // get the birth date density
-    FeatureDensity birthDateDensity
-        = (FeatureDensity) options.get(BIRTH_DATE_DENSITY);
-    if (birthDateDensity == null) birthDateDensity = COMMON;
+    FeatureDensity birthDateDensity = (FeatureDensity) options.get(BIRTH_DATE_DENSITY);
+    if (birthDateDensity == null)
+      birthDateDensity = COMMON;
 
     // get the address density
     FeatureDensity addrDensity = (FeatureDensity) options.get(ADDRESS_DENSITY);
-    if (addrDensity == null) addrDensity = COMMON;
+    if (addrDensity == null)
+      addrDensity = COMMON;
 
     // get the phone density
     FeatureDensity phoneDensity = (FeatureDensity) options.get(PHONE_DENSITY);
-    if (phoneDensity == null) phoneDensity = COMMON;
+    if (phoneDensity == null)
+      phoneDensity = COMMON;
 
     // get the phone density
     FeatureDensity emailDensity = (FeatureDensity) options.get(EMAIL_DENSITY);
-    if (emailDensity == null) emailDensity = COMMON;
+    if (emailDensity == null)
+      emailDensity = COMMON;
 
     // setup the density map
     densityMap.put(NAME, nameDensity);
@@ -1489,22 +1521,20 @@ public class DataGenerator {
 
     // get the overwrite option
     Boolean withRecordIds = Boolean.TRUE.equals(options.get(WITH_RECORD_IDS));
-    Boolean overwrite     = Boolean.TRUE.equals(options.get(OVERWRITE));
-    Boolean flatten       = Boolean.TRUE.equals(options.get(FLATTEN));
-    Boolean fullValues    = Boolean.TRUE.equals(options.get(FULL_VALUES));
-    Boolean prettyPrint   = Boolean.TRUE.equals(options.get(PRETTY_PRINT));
+    Boolean overwrite = Boolean.TRUE.equals(options.get(OVERWRITE));
+    Boolean flatten = Boolean.TRUE.equals(options.get(FLATTEN));
+    Boolean fullValues = Boolean.TRUE.equals(options.get(FULL_VALUES));
+    Boolean prettyPrint = Boolean.TRUE.equals(options.get(PRETTY_PRINT));
 
-    Map<RecordType, Map<FeatureType, Set<UsageType>>> featureGenMaps
-        = new LinkedHashMap<>();
+    Map<RecordType, Map<FeatureType, Set<UsageType>>> featureGenMaps = new LinkedHashMap<>();
 
-    for (RecordType recordType: recordTypes) {
+    for (RecordType recordType : recordTypes) {
       Map<FeatureType, Set<UsageType>> featureGenMap = new LinkedHashMap<>();
 
       featureGenMap.put(
           NAME, usageTypesFor(NAME, recordType, maxNames, true));
 
-      GeneratedAttributeType attrType
-          = GeneratedAttributeType.fullValueInstance(BIRTH_DATE, recordType);
+      GeneratedAttributeType attrType = GeneratedAttributeType.fullValueInstance(BIRTH_DATE, recordType);
       if (attrType != null) {
         featureGenMap.put(
             BIRTH_DATE,
@@ -1525,27 +1555,28 @@ public class DataGenerator {
     }
 
     // create the union feature gen map
-    Map<FeatureType, Set<UsageType>> aggregateFeatureGenMap
-        = new LinkedHashMap<>();
+    Map<FeatureType, Set<UsageType>> aggregateFeatureGenMap = new LinkedHashMap<>();
     featureGenMaps.values().forEach(map -> {
       map.entrySet().forEach(entry -> {
-        FeatureType     featureType = entry.getKey();
-        Set<UsageType>  usageTypes  = entry.getValue();
+        FeatureType featureType = entry.getKey();
+        Set<UsageType> usageTypes = entry.getValue();
 
         Set<UsageType> set = aggregateFeatureGenMap.get(featureType);
         if (set == null) {
           set = new LinkedHashSet<>();
           aggregateFeatureGenMap.put(featureType, set);
         }
-        if (usageTypes != null) set.addAll(usageTypes);
-        else set.add(null);
+        if (usageTypes != null)
+          set.addAll(usageTypes);
+        else
+          set.add(null);
       });
     });
 
     // get the output files
-    File csvFile        = (File) options.get(CSV_FILE);
-    File jsonLinesFile  = (File) options.get(JSON_LINES_FILE);
-    File jsonFile       = (File) options.get(JSON_FILE);
+    File csvFile = (File) options.get(CSV_FILE);
+    File jsonLinesFile = (File) options.get(JSON_LINES_FILE);
+    File jsonFile = (File) options.get(JSON_FILE);
 
     List<RecordHandler> recordHandlers = new ArrayList<>();
 
@@ -1591,8 +1622,7 @@ public class DataGenerator {
         BufferedOutputStream bos = new BufferedOutputStream(fos);
         Writer writer = new OutputStreamWriter(bos, UTF_8);
 
-        JsonLinesRecordHandler jsonLinesHandler
-            = new JsonLinesRecordHandler(writer);
+        JsonLinesRecordHandler jsonLinesHandler = new JsonLinesRecordHandler(writer);
 
         recordHandlers.add(jsonLinesHandler);
 
@@ -1615,13 +1645,13 @@ public class DataGenerator {
     if (jsonFile != null || recordHandlers.size() == 0) {
       try {
         OutputStream fos = (jsonFile != null)
-            ? new FileOutputStream(jsonFile) : nonClosingWrapper(System.out);
+            ? new FileOutputStream(jsonFile)
+            : nonClosingWrapper(System.out);
         BufferedOutputStream bos = new BufferedOutputStream(fos);
         Writer writer = new OutputStreamWriter(bos, UTF_8);
 
-        JsonArrayRecordHandler jsonHandler
-            = new JsonArrayRecordHandler(writer,
-                                         (prettyPrint || jsonFile == null));
+        JsonArrayRecordHandler jsonHandler = new JsonArrayRecordHandler(writer,
+            (prettyPrint || jsonFile == null));
 
         recordHandlers.add(jsonHandler);
 
@@ -1630,20 +1660,19 @@ public class DataGenerator {
       }
     }
 
-    CompoundRecordHandler recordHandler
-        = new CompoundRecordHandler(recordHandlers);
+    CompoundRecordHandler recordHandler = new CompoundRecordHandler(recordHandlers);
 
     try {
-      for (RecordType recordType: recordTypes) {
+      for (RecordType recordType : recordTypes) {
         dataGenerator.generateRecords(recordHandler,
-                                      recordType,
-                                      recordCounts.get(recordType),
-                                      withRecordIds,
-                                      recordSources.get(recordType),
-                                      featureGenMaps.get(recordType),
-                                      densityMap,
-                                      fullValues,
-                                      flatten);
+            recordType,
+            recordCounts.get(recordType),
+            withRecordIds,
+            recordSources.get(recordType),
+            featureGenMaps.get(recordType),
+            densityMap,
+            fullValues,
+            flatten);
       }
 
     } catch (Exception e) {
@@ -1651,16 +1680,17 @@ public class DataGenerator {
 
     } finally {
       recordHandler.close();
-      if (stdout) System.out.println();
+      if (stdout)
+        System.out.println();
     }
   }
 
   /**
    * Parses the command line arguments and returns a {@link Map} of those
-   * arguments.  This will throw an exception if invalid command line arguments
+   * arguments. This will throw an exception if invalid command line arguments
    * are provided.
    *
-   * @param args The arguments to parse.
+   * @param args                The arguments to parse.
    * @param deprecationWarnings The {@link List} to populate with any
    *                            deprecation warnings that might be generated,
    *                            or <code>null</code> if the caller is not
@@ -1669,12 +1699,10 @@ public class DataGenerator {
    * @throws CommandLineException If command line arguments are invalid.
    */
   private static Map<CommandLineOption, Object> parseCommandLine(
-      String[]                      args,
+      String[] args,
       List<DeprecatedOptionWarning> deprecationWarnings)
-      throws CommandLineException
-  {
-    Map<CommandLineOption, CommandLineValue> optionValues
-        = CommandLineUtilities.parseCommandLine(
+      throws CommandLineException {
+    Map<CommandLineOption, CommandLineValue> optionValues = CommandLineUtilities.parseCommandLine(
         DataGeneratorOption.class,
         args,
         DataGeneratorOption.PARAMETER_PROCESSOR,
@@ -1714,7 +1742,7 @@ public class DataGenerator {
     Class<DataGenerator> cls = DataGenerator.class;
     if (checkClassIsMain(cls)) {
       pw.println("USAGE: java -cp " + JAR_FILE_NAME + " "
-                     + cls.getName() + " <options>");
+          + cls.getName() + " <options>");
     } else {
       pw.println("USAGE: java -jar " + JAR_FILE_NAME + " --datagen <options>");
     }

@@ -32,11 +32,11 @@ public interface SzApiProvider {
     private static AccessToken ACCESS_TOKEN = null;
 
     /**
-     * Install a provider.  This fails if a provider is already installed.
+     * Install a provider. This fails if a provider is already installed.
      *
      * @param provider The non-null provider to install.
      *
-     * @throws NullPointerException If the specified parameter is <tt>null</tt>.
+     * @throws NullPointerException  If the specified parameter is <tt>null</tt>.
      *
      * @throws IllegalStateException If a provider is already installed.
      */
@@ -48,7 +48,7 @@ public interface SzApiProvider {
       if (PROVIDER != null) {
         throw new IllegalStateException(
             "An SzApiProvider is already installed: "
-            + PROVIDER.getClass().getName());
+                + PROVIDER.getClass().getName());
       }
       PROVIDER = provider;
       ACCESS_TOKEN = new AccessToken();
@@ -56,17 +56,16 @@ public interface SzApiProvider {
     }
 
     /**
-     * Uninstalls the provider.  This does nothing if no provider is installed.
+     * Uninstalls the provider. This does nothing if no provider is installed.
      *
      * @param token The {@link AccessToken} with which the provider was
      *              installed.
      *
-     * @throws IllegalStateException If the specifid token is not the expected
+     * @throws IllegalStateException If the specified token is not the expected
      *                               token.
      */
     public static synchronized void uninstallProvider(AccessToken token)
-      throws IllegalStateException
-    {
+        throws IllegalStateException {
       if (ACCESS_TOKEN != null && ACCESS_TOKEN != token) {
         throw new IllegalStateException(
             "The specified access token was not the expected access token.");
@@ -76,7 +75,7 @@ public interface SzApiProvider {
     }
 
     /**
-     * Returns the installed {@link SzApiProvider}.  If no provider is installed
+     * Returns the installed {@link SzApiProvider}. If no provider is installed
      * then an exception is thrown.
      *
      * @return The installed {@link SzApiProvider}.
@@ -84,8 +83,7 @@ public interface SzApiProvider {
      * @throws IllegalStateException If no provider is installed.
      */
     public static synchronized SzApiProvider getProvider()
-      throws IllegalStateException
-    {
+        throws IllegalStateException {
       if (PROVIDER == null) {
         IllegalStateException e = new IllegalStateException(
             "No SzApiProvider has been installed.");
@@ -97,7 +95,7 @@ public interface SzApiProvider {
   }
 
   /**
-   * Returns a description for the provider.  This is useful for inclusion
+   * Returns a description for the provider. This is useful for inclusion
    * in the meta data for each response.
    *
    * @return A description for the provider.
@@ -197,7 +195,7 @@ public interface SzApiProvider {
   String getConfigCompatibilityVersion();
 
   /**
-   * Returns the concurrency for the API provider.  This is the number
+   * Returns the concurrency for the API provider. This is the number
    * of initialized threads to do work against the Senzing repository.
    * This method returns
    *
@@ -207,7 +205,7 @@ public interface SzApiProvider {
   int getConcurrency();
 
   /**
-   * Returns the base path for the REST API.  Typically this is <tt>"/"</tt>,
+   * Returns the base path for the REST API. Typically this is <tt>"/"</tt>,
    * but it may be a sub-path.
    *
    * @return The base path for the REST API.
@@ -228,8 +226,8 @@ public interface SzApiProvider {
    * various G2 API implementations.
    *
    * @param task The Task to execute.
-   * @param <T> The return value for the task.
-   * @param <E> The exception type that may be thrown by the task.
+   * @param <T>  The return value for the task.
+   * @param <E>  The exception type that may be thrown by the task.
    * @return Returns an instance of type <tt>T</tt> as obtained from the
    *         specified task.
    * @throws E If the specified task fails with an exception.
@@ -239,8 +237,8 @@ public interface SzApiProvider {
 
   /**
    * Called before beginning an operation that may require a prolonged amount of
-   * time to complete.  If this returns <tt>null</tt> then the caller should
-   * <b>not</b> continue with the operation.  If this returns an {@link
+   * time to complete. If this returns <tt>null</tt> then the caller should
+   * <b>not</b> continue with the operation. If this returns an {@link
    * AccessToken} instance then the operation is authorized to continue and the
    * caller should call {@link #concludeProlongedOperation(AccessToken)} with
    * the result when the operation is complete.
@@ -252,14 +250,14 @@ public interface SzApiProvider {
 
   /**
    * Called when completing a prolonged operation that was previously
-   * {@linkplain #authorizeProlongedOperation() authorized}.  The specified
+   * {@linkplain #authorizeProlongedOperation() authorized}. The specified
    * {@link AccessToken} cannot be null.
    *
    * @param token The {@link AccessToken} from the previous {@linkplain
    *              #authorizeProlongedOperation() authorization}.
    *
-   * @throws NullPointerException If the specified {@link AccessToken} is
-   *                              <tt>null</tt>.
+   * @throws NullPointerException     If the specified {@link AccessToken} is
+   *                                  <tt>null</tt>.
    * @throws IllegalArgumentException If the specified {@link AccessToken} is
    *                                  not recognized from a previous
    *                                  authorization.
@@ -315,7 +313,7 @@ public interface SzApiProvider {
 
   /**
    * Gets the {@link SzMessageSink} for sending info messages when records are
-   * loaded, deleted or re-evaluated.  This returns <tt>null</tt> if an info
+   * loaded, deleted or re-evaluated. This returns <tt>null</tt> if an info
    * queue is not configured.
    *
    * @return The {@link SzMessageSink} for sending the info messages, or

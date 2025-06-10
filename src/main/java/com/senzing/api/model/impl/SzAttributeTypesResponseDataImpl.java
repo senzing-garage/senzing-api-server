@@ -10,8 +10,7 @@ import java.util.*;
  */
 @JsonDeserialize
 public class SzAttributeTypesResponseDataImpl
-    implements SzAttributeTypesResponseData
-{
+    implements SzAttributeTypesResponseData {
   /**
    * The list of {@link SzAttributeType} instances describing the attribute
    * types.
@@ -26,15 +25,14 @@ public class SzAttributeTypesResponseDataImpl
   }
 
   /**
-   * Constructs witht he specified {@link Collection} of {@link SzAttributeType}
+   * Constructs with the specified {@link Collection} of {@link SzAttributeType}
    * instances.
    *
    * @param attributeTypes The {@link Collection} of {@link SzAttributeType}
    *                       instances with which to construct.
    */
   public SzAttributeTypesResponseDataImpl(
-      Collection<? extends SzAttributeType> attributeTypes)
-  {
+      Collection<? extends SzAttributeType> attributeTypes) {
     this.attributeTypes = new ArrayList<>(attributeTypes);
   }
 
@@ -63,8 +61,7 @@ public class SzAttributeTypesResponseDataImpl
    * {@inheritDoc}
    */
   @Override
-  public void setAttributeTypes(Collection<? extends SzAttributeType> attrTypes)
-  {
+  public void setAttributeTypes(Collection<? extends SzAttributeType> attrTypes) {
     this.attributeTypes.clear();
     if (attrTypes != null) {
       this.attributeTypes.addAll(attrTypes);

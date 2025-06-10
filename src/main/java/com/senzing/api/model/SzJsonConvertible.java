@@ -45,7 +45,7 @@ public interface SzJsonConvertible {
   void buildNativeJson(JsonObjectBuilder builder);
 
   /**
-   * Converts this object to its native Senzing JSON represenation as a
+   * Converts this object to its native Senzing JSON representation as a
    * {@link JsonObject} instance.
    *
    * @return The {@link JsonObject} describing this instance as its

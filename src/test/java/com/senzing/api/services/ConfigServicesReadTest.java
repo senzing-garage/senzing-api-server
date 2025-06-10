@@ -32,8 +32,7 @@ import static com.senzing.api.services.ResponseValidators.*;
 
 @TestInstance(Lifecycle.PER_CLASS)
 @Execution(ExecutionMode.SAME_THREAD)
-public class ConfigServicesReadTest extends AbstractServiceTest
-{
+public class ConfigServicesReadTest extends AbstractServiceTest {
   private static final Set<String> CUSTOM_DATA_SOURCES;
 
   static {
@@ -57,23 +56,17 @@ public class ConfigServicesReadTest extends AbstractServiceTest
 
   private ConfigApi configApi;
 
-  private Map<SzAttributeClass,Set<String>> internalAttrTypesByClass
-      = new LinkedHashMap<>();
+  private Map<SzAttributeClass, Set<String>> internalAttrTypesByClass = new LinkedHashMap<>();
 
-  private Map<SzAttributeClass,Set<String>> standardAttrTypesByClass
-      = new LinkedHashMap<>();
+  private Map<SzAttributeClass, Set<String>> standardAttrTypesByClass = new LinkedHashMap<>();
 
-  private Map<SzAttributeClass,Set<String>> allAttrTypesByClass
-      = new LinkedHashMap<>();
+  private Map<SzAttributeClass, Set<String>> allAttrTypesByClass = new LinkedHashMap<>();
 
-  private Map<String,Set<String>> internalAttrTypesByFeature
-      = new LinkedHashMap<>();
+  private Map<String, Set<String>> internalAttrTypesByFeature = new LinkedHashMap<>();
 
-  private Map<String,Set<String>> standardAttrTypesByFeature
-      = new LinkedHashMap<>();
+  private Map<String, Set<String>> standardAttrTypesByFeature = new LinkedHashMap<>();
 
-  private Map<String,Set<String>> allAttrTypesByFeature
-      = new LinkedHashMap<>();
+  private Map<String, Set<String>> allAttrTypesByFeature = new LinkedHashMap<>();
 
   private Set<String> internalAttrTypes = new LinkedHashSet<>();
 
@@ -81,11 +74,11 @@ public class ConfigServicesReadTest extends AbstractServiceTest
 
   private Set<String> allAttrTypes = new LinkedHashSet<>();
 
-  private static <T> void putInMap(Map<T,Set<String>> map,
-                                   T                  key,
-                                   String             value)
-  {
-    if (key == null) return;
+  private static <T> void putInMap(Map<T, Set<String>> map,
+      T key,
+      String value) {
+    if (key == null)
+      return;
     Set<String> set = map.get(key);
     if (set == null) {
       set = new LinkedHashSet<>();
@@ -94,7 +87,8 @@ public class ConfigServicesReadTest extends AbstractServiceTest
     set.add(value);
   }
 
-  @BeforeAll public void initializeEnvironment() {
+  @BeforeAll
+  public void initializeEnvironment() {
     this.beginTests();
     this.initializeTestEnvironment();
     this.configServices = new ConfigServices();
@@ -105,7 +99,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
 
   /**
    * <p>
-   * Overidden to skip engine priming.
+   * Overridden to skip engine priming.
    * </p>
    *
    * {@inheritDoc}
@@ -117,17 +111,16 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   }
 
   protected void doPostServerInitialization(SzApiProvider provider,
-                                            long          configId,
-                                            JsonObject    configJson)
-  {
+      long configId,
+      JsonObject configJson) {
     super.doPostServerInitialization(provider, configId, configJson);
     Map<String, SzAttributeType> attrTypes = this.getInitialAttributeTypes();
 
-    for (SzAttributeType attrType: attrTypes.values()) {
-      String            attrCode   = attrType.getAttributeCode();
-      SzAttributeClass  attrClass  = attrType.getAttributeClass();
-      boolean           internal   = attrType.isInternal();
-      String            fTypeCode  = attrType.getFeatureType();
+    for (SzAttributeType attrType : attrTypes.values()) {
+      String attrCode = attrType.getAttributeCode();
+      SzAttributeClass attrClass = attrType.getAttributeClass();
+      boolean internal = attrType.isInternal();
+      String fTypeCode = attrType.getFeatureType();
 
       if (internal) {
         putInMap(this.internalAttrTypesByClass, attrClass, attrCode);
@@ -148,13 +141,13 @@ public class ConfigServicesReadTest extends AbstractServiceTest
     }
     this.internalAttrTypes = Collections.unmodifiableSet(this.internalAttrTypes);
     this.standardAttrTypes = Collections.unmodifiableSet(this.standardAttrTypes);
-    this.allAttrTypes      = Collections.unmodifiableSet(this.allAttrTypes);
-    this.internalAttrTypesByClass   = recursivelyUnmodifiableMap(this.internalAttrTypesByClass);
-    this.standardAttrTypesByClass   = recursivelyUnmodifiableMap(this.standardAttrTypesByClass);
-    this.allAttrTypesByClass        = recursivelyUnmodifiableMap(this.allAttrTypesByClass);
+    this.allAttrTypes = Collections.unmodifiableSet(this.allAttrTypes);
+    this.internalAttrTypesByClass = recursivelyUnmodifiableMap(this.internalAttrTypesByClass);
+    this.standardAttrTypesByClass = recursivelyUnmodifiableMap(this.standardAttrTypesByClass);
+    this.allAttrTypesByClass = recursivelyUnmodifiableMap(this.allAttrTypesByClass);
     this.internalAttrTypesByFeature = recursivelyUnmodifiableMap(this.internalAttrTypesByFeature);
     this.standardAttrTypesByFeature = recursivelyUnmodifiableMap(this.standardAttrTypesByFeature);
-    this.allAttrTypesByFeature      = recursivelyUnmodifiableMap(this.allAttrTypesByFeature);
+    this.allAttrTypesByFeature = recursivelyUnmodifiableMap(this.allAttrTypesByFeature);
   }
 
   /**
@@ -162,11 +155,12 @@ public class ConfigServicesReadTest extends AbstractServiceTest
    */
   protected void prepareRepository() {
     RepositoryManager.configSources(this.getRepositoryDirectory(),
-                                    CUSTOM_DATA_SOURCES,
-                                    true);
+        CUSTOM_DATA_SOURCES,
+        true);
   }
 
-  @AfterAll public void teardownEnvironment() {
+  @AfterAll
+  public void teardownEnvironment() {
     try {
       this.teardownTestEnvironment();
       this.conditionallyLogCounts(true);
@@ -183,21 +177,20 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       if (withRaw != null) {
         suffix = "?withRaw=" + withRaw;
       }
-      String  uriText = this.formatServerUri("data-sources" + suffix);
+      String uriText = this.formatServerUri("data-sources" + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       long before = System.nanoTime();
-      SzDataSourcesResponse response
-          = this.configServices.getDataSources(TRUE.equals(withRaw), uriInfo);
+      SzDataSourcesResponse response = this.configServices.getDataSources(TRUE.equals(withRaw), uriInfo);
       response.concludeTimers();
       long after = System.nanoTime();
 
       validateDataSourcesResponse(response,
-                                  GET,
-                                  uriText,
-                                  after - before,
-                                  TRUE.equals(withRaw),
-                                  this.getInitialDataSources());
+          GET,
+          uriText,
+          after - before,
+          TRUE.equals(withRaw),
+          this.getInitialDataSources());
     });
   }
 
@@ -211,16 +204,15 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
       String uriText = this.formatServerUri("data-sources" + suffix);
       long before = System.nanoTime();
-      SzDataSourcesResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzDataSourcesResponse.class);
+      SzDataSourcesResponse response = this.invokeServerViaHttp(GET, uriText, SzDataSourcesResponse.class);
       long after = System.nanoTime();
 
       validateDataSourcesResponse(response,
-                                  GET,
-                                  uriText,
-                                  after - before,
-                                  TRUE.equals(withRaw),
-                                  this.getInitialDataSources());
+          GET,
+          uriText,
+          after - before,
+          TRUE.equals(withRaw),
+          this.getInitialDataSources());
     });
   }
 
@@ -234,31 +226,30 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
       String uriText = this.formatServerUri("data-sources" + suffix);
       long before = System.nanoTime();
-      com.senzing.gen.api.model.SzDataSourcesResponse clientResponse
-          = this.configApi.getDataSources(withRaw);
+      com.senzing.gen.api.model.SzDataSourcesResponse clientResponse = this.configApi.getDataSources(withRaw);
       long after = System.nanoTime();
 
       SzDataSourcesResponse response = jsonCopy(clientResponse,
-                                                SzDataSourcesResponse.class);
+          SzDataSourcesResponse.class);
 
       validateDataSourcesResponse(response,
-                                  GET,
-                                  uriText,
-                                  after - before,
-                                  TRUE.equals(withRaw),
-                                  this.getInitialDataSources());
+          GET,
+          uriText,
+          after - before,
+          TRUE.equals(withRaw),
+          this.getInitialDataSources());
     });
   }
 
   private List<Arguments> getDataSourceParameters() {
     List<Arguments> result = new LinkedList<>();
-    Boolean[] booleanVariants = {null, true, false};
-    for (SzDataSource dataSource: this.getInitialDataSources().values()) {
-      for (Boolean withRaw: booleanVariants) {
+    Boolean[] booleanVariants = { null, true, false };
+    for (SzDataSource dataSource : this.getInitialDataSources().values()) {
+      for (Boolean withRaw : booleanVariants) {
         Object[] argArray = {
             dataSource.getDataSourceCode(),
             withRaw,
-            dataSource};
+            dataSource };
         result.add(arguments(argArray));
       }
     }
@@ -267,41 +258,38 @@ public class ConfigServicesReadTest extends AbstractServiceTest
 
   @ParameterizedTest
   @MethodSource("getDataSourceParameters")
-  public void getDataSourceTest(String        dataSourceCode,
-                                Boolean       withRaw,
-                                SzDataSource  expectedDataSource)
-  {
+  public void getDataSourceTest(String dataSourceCode,
+      Boolean withRaw,
+      SzDataSource expectedDataSource) {
     this.performTest(() -> {
       String suffix = "";
       if (withRaw != null) {
         suffix = "?withRaw=" + withRaw;
       }
-      String  uriText = this.formatServerUri(
+      String uriText = this.formatServerUri(
           "data-sources/" + dataSourceCode + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       long before = System.nanoTime();
-      SzDataSourceResponse response
-          = this.configServices.getDataSource(
-              dataSourceCode, TRUE.equals(withRaw), uriInfo);
+      SzDataSourceResponse response = this.configServices.getDataSource(
+          dataSourceCode, TRUE.equals(withRaw), uriInfo);
       response.concludeTimers();
       long after = System.nanoTime();
 
       validateDataSourceResponse(response,
-                                 GET,
-                                 uriText,
-                                 after - before,
-                                 TRUE.equals(withRaw),
-                                 expectedDataSource);
+          GET,
+          uriText,
+          after - before,
+          TRUE.equals(withRaw),
+          expectedDataSource);
     });
   }
 
   @ParameterizedTest
   @MethodSource("getDataSourceParameters")
-  public void getDataSourceViaHttpTest(String       dataSourceCode,
-                                       Boolean      withRaw,
-                                       SzDataSource expectedDataSource)
-  {
+  public void getDataSourceViaHttpTest(String dataSourceCode,
+      Boolean withRaw,
+      SzDataSource expectedDataSource) {
     this.performTest(() -> {
       String suffix = "";
       if (withRaw != null) {
@@ -310,25 +298,23 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       String uriText = this.formatServerUri(
           "data-sources/" + dataSourceCode + suffix);
       long before = System.nanoTime();
-      SzDataSourceResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzDataSourceResponse.class);
+      SzDataSourceResponse response = this.invokeServerViaHttp(GET, uriText, SzDataSourceResponse.class);
       long after = System.nanoTime();
 
       validateDataSourceResponse(response,
-                                 GET,
-                                 uriText,
-                                 after - before,
-                                 TRUE.equals(withRaw),
-                                 expectedDataSource);
+          GET,
+          uriText,
+          after - before,
+          TRUE.equals(withRaw),
+          expectedDataSource);
     });
   }
 
   @ParameterizedTest
   @MethodSource("getDataSourceParameters")
-  public void getDataSourceViaJavaClientTest(String       dataSourceCode,
-                                             Boolean      withRaw,
-                                             SzDataSource expectedDataSource)
-  {
+  public void getDataSourceViaJavaClientTest(String dataSourceCode,
+      Boolean withRaw,
+      SzDataSource expectedDataSource) {
     this.performTest(() -> {
       String suffix = "";
       if (withRaw != null) {
@@ -337,48 +323,45 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       String uriText = this.formatServerUri(
           "data-sources/" + dataSourceCode + suffix);
       long before = System.nanoTime();
-      com.senzing.gen.api.model.SzDataSourceResponse clientResponse
-          = this.configApi.getDataSource(dataSourceCode, withRaw);
+      com.senzing.gen.api.model.SzDataSourceResponse clientResponse = this.configApi.getDataSource(dataSourceCode,
+          withRaw);
       long after = System.nanoTime();
 
       SzDataSourceResponse response = jsonCopy(clientResponse,
-                                               SzDataSourceResponse.class);
+          SzDataSourceResponse.class);
 
       validateDataSourceResponse(response,
-                                 GET,
-                                 uriText,
-                                 after - before,
-                                 TRUE.equals(withRaw),
-                                 expectedDataSource);
+          GET,
+          uriText,
+          after - before,
+          TRUE.equals(withRaw),
+          expectedDataSource);
     });
   }
 
   @ParameterizedTest
   @MethodSource("getWithRawVariants")
-  public void getUnrecognizedDataSourceTest(Boolean withRaw)
-  {
+  public void getUnrecognizedDataSourceTest(Boolean withRaw) {
     this.performTest(() -> {
       String badDataSourceCode = "DOES_NOT_EXIST";
       String suffix = "";
       if (withRaw != null) {
         suffix = "?withRaw=" + withRaw;
       }
-      String  uriText = this.formatServerUri(
+      String uriText = this.formatServerUri(
           "data-sources/" + badDataSourceCode + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       long before = System.nanoTime();
       try {
-        SzDataSourceResponse response
-            = this.configServices.getDataSource(
+        SzDataSourceResponse response = this.configServices.getDataSource(
             badDataSourceCode, TRUE.equals(withRaw), uriInfo);
 
         fail("Expected data source \"" + badDataSourceCode
-                 + "\" to NOT be found");
+            + "\" to NOT be found");
 
       } catch (NotFoundException expected) {
-        SzErrorResponse response
-            = (SzErrorResponse) expected.getResponse().getEntity();
+        SzErrorResponse response = (SzErrorResponse) expected.getResponse().getEntity();
         response.concludeTimers();
         long after = System.nanoTime();
         validateBasics(
@@ -389,8 +372,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
 
   @ParameterizedTest
   @MethodSource("getWithRawVariants")
-  public void getUnrecognizedDataSourceViaHttpTest(Boolean withRaw)
-  {
+  public void getUnrecognizedDataSourceViaHttpTest(Boolean withRaw) {
     this.performTest(() -> {
       String badDataSourceCode = "DOES_NOT_EXIST";
       String suffix = "";
@@ -400,8 +382,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       String uriText = this.formatServerUri(
           "data-sources/" + badDataSourceCode + suffix);
       long before = System.nanoTime();
-      SzErrorResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzErrorResponse.class);
+      SzErrorResponse response = this.invokeServerViaHttp(GET, uriText, SzErrorResponse.class);
       long after = System.nanoTime();
 
       validateBasics(
@@ -411,8 +392,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
 
   @ParameterizedTest
   @MethodSource("getWithRawVariants")
-  public void getUnrecognizedDataSourceViaJavaClientTest(Boolean withRaw)
-  {
+  public void getUnrecognizedDataSourceViaJavaClientTest(Boolean withRaw) {
     this.performTest(() -> {
       String badDataSourceCode = "DOES_NOT_EXIST";
       String suffix = "";
@@ -423,21 +403,20 @@ public class ConfigServicesReadTest extends AbstractServiceTest
           "data-sources/" + badDataSourceCode + suffix);
       long before = System.nanoTime();
       try {
-        com.senzing.gen.api.model.SzDataSourceResponse clientResponse
-            = this.configApi.getDataSource(badDataSourceCode, withRaw);
+        com.senzing.gen.api.model.SzDataSourceResponse clientResponse = this.configApi.getDataSource(badDataSourceCode,
+            withRaw);
         fail("Expected failure, but got success for bad data source: "
-                 + "dataSource=[ " + badDataSourceCode
-                 + " ], withRaw=[ " + withRaw + " ], response=[ "
-                 + clientResponse + " ]tail -");
+            + "dataSource=[ " + badDataSourceCode
+            + " ], withRaw=[ " + withRaw + " ], response=[ "
+            + clientResponse + " ]tail -");
 
       } catch (HttpStatusCodeException expected) {
         long after = System.nanoTime();
-        com.senzing.gen.api.model.SzErrorResponse clientResponse
-            = jsonParse(expected.getResponseBodyAsString(),
-                        com.senzing.gen.api.model.SzErrorResponse.class);
+        com.senzing.gen.api.model.SzErrorResponse clientResponse = jsonParse(expected.getResponseBodyAsString(),
+            com.senzing.gen.api.model.SzErrorResponse.class);
 
         SzErrorResponse response = jsonCopy(clientResponse,
-                                            SzErrorResponse.class);
+            SzErrorResponse.class);
         validateBasics(
             response, 404, GET, uriText, after - before);
       }
@@ -447,21 +426,19 @@ public class ConfigServicesReadTest extends AbstractServiceTest
 
   private List<Arguments> getAttrTypeParameters() {
     List<Arguments> result = new LinkedList<>();
-    Boolean[] booleanVariants = {null, true, false};
+    Boolean[] booleanVariants = { null, true, false };
 
     // create a list of possible attribute classes
-    List<SzAttributeClass> attrClassList
-        = new ArrayList<>(this.standardAttrTypesByClass.size() + 1);
+    List<SzAttributeClass> attrClassList = new ArrayList<>(this.standardAttrTypesByClass.size() + 1);
     attrClassList.add(null);
     attrClassList.addAll(this.standardAttrTypesByClass.keySet());
 
     // create a list of the possible feature types
-    List<String> featureTypeList
-        = new ArrayList<>(this.standardAttrTypesByFeature.size() + 1);
+    List<String> featureTypeList = new ArrayList<>(this.standardAttrTypesByFeature.size() + 1);
     featureTypeList.add(null);
     featureTypeList.addAll(this.standardAttrTypesByFeature.keySet());
 
-    for (Boolean withRaw: booleanVariants) {
+    for (Boolean withRaw : booleanVariants) {
       for (Boolean withInternal : booleanVariants) {
         for (SzAttributeClass attrClass : attrClassList) {
           for (String featureType : featureTypeList) {
@@ -470,7 +447,7 @@ public class ConfigServicesReadTest extends AbstractServiceTest
                 attrClass,
                 featureType,
                 withRaw,
-                null};
+                null };
 
             Set<String> expectedAttrTypeCodes;
             if (TRUE.equals(withInternal)) {
@@ -510,11 +487,10 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   }
 
   private static String formatAttributeTypesTestInfo(
-      Boolean           withInternal,
-      SzAttributeClass  attributeClass,
-      String            featureType,
-      Boolean           withRaw)
-  {
+      Boolean withInternal,
+      SzAttributeClass attributeClass,
+      String featureType,
+      Boolean withRaw) {
     return ("withInternal=[ " + withInternal
         + " ], attributeClass=[ " + attributeClass
         + " ], featureType=[ " + featureType
@@ -522,11 +498,10 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   }
 
   private static String formatAttributeTypesQueryString(
-      Boolean           withInternal,
-      SzAttributeClass  attributeClass,
-      String            featureType,
-      Boolean           withRaw)
-  {
+      Boolean withInternal,
+      SzAttributeClass attributeClass,
+      String featureType,
+      Boolean withRaw) {
     StringBuilder sb = new StringBuilder();
     String prefix = "?";
     if (withInternal != null) {
@@ -550,65 +525,62 @@ public class ConfigServicesReadTest extends AbstractServiceTest
 
   @ParameterizedTest
   @MethodSource("getAttrTypeParameters")
-  public void getAttributeTypesTest(Boolean           withInternal,
-                                    SzAttributeClass  attributeClass,
-                                    String            featureType,
-                                    Boolean           withRaw,
-                                    Set<String>       expectedAttrTypeCodes)
-  {
+  public void getAttributeTypesTest(Boolean withInternal,
+      SzAttributeClass attributeClass,
+      String featureType,
+      Boolean withRaw,
+      Set<String> expectedAttrTypeCodes) {
     this.performTest(() -> {
       String testInfo = formatAttributeTypesTestInfo(withInternal,
-                                                     attributeClass,
-                                                     featureType,
-                                                     withRaw);
+          attributeClass,
+          featureType,
+          withRaw);
 
       String suffix = formatAttributeTypesQueryString(withInternal,
-                                                      attributeClass,
-                                                      featureType,
-                                                      withRaw);
-      String  uriText = this.formatServerUri("attribute-types" + suffix);
+          attributeClass,
+          featureType,
+          withRaw);
+      String uriText = this.formatServerUri("attribute-types" + suffix);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       long before = System.nanoTime();
-      SzAttributeTypesResponse response
-          = this.configServices.getAttributeTypes(
-              TRUE.equals(withInternal),
-              (attributeClass == null) ? null : attributeClass.toString(),
-              featureType,
-              TRUE.equals(withRaw),
-              uriInfo);
+      SzAttributeTypesResponse response = this.configServices.getAttributeTypes(
+          TRUE.equals(withInternal),
+          (attributeClass == null) ? null : attributeClass.toString(),
+          featureType,
+          TRUE.equals(withRaw),
+          uriInfo);
 
       response.concludeTimers();
       long after = System.nanoTime();
 
       validateAttributeTypesResponse(testInfo,
-                                     response,
-                                     uriText,
-                                     after - before,
-                                     TRUE.equals(withRaw),
-                                     expectedAttrTypeCodes);
+          response,
+          uriText,
+          after - before,
+          TRUE.equals(withRaw),
+          expectedAttrTypeCodes);
     });
   }
 
   @ParameterizedTest
   @MethodSource("getAttrTypeParameters")
   public void getAttributeTypesViaHttpTest(
-      Boolean           withInternal,
-      SzAttributeClass  attributeClass,
-      String            featureType,
-      Boolean           withRaw,
-      Set<String>      expectedAttrTypeCodes)
-  {
+      Boolean withInternal,
+      SzAttributeClass attributeClass,
+      String featureType,
+      Boolean withRaw,
+      Set<String> expectedAttrTypeCodes) {
     this.performTest(() -> {
       String testInfo = formatAttributeTypesTestInfo(withInternal,
-                                                     attributeClass,
-                                                     featureType,
-                                                     withRaw);
+          attributeClass,
+          featureType,
+          withRaw);
 
       String suffix = formatAttributeTypesQueryString(withInternal,
-                                                      attributeClass,
-                                                      featureType,
-                                                      withRaw);
+          attributeClass,
+          featureType,
+          withRaw);
       String uriText = this.formatServerUri("attribute-types" + suffix);
       long before = System.nanoTime();
       SzAttributeTypesResponse response = this.invokeServerViaHttp(
@@ -616,33 +588,32 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       long after = System.nanoTime();
 
       validateAttributeTypesResponse(testInfo,
-                                     response,
-                                     uriText,
-                                     after - before,
-                                     TRUE.equals(withRaw),
-                                     expectedAttrTypeCodes);
+          response,
+          uriText,
+          after - before,
+          TRUE.equals(withRaw),
+          expectedAttrTypeCodes);
     });
   }
 
   @ParameterizedTest
   @MethodSource("getAttrTypeParameters")
   public void getAttributeTypesViaJavaClientTest(
-      Boolean           withInternal,
-      SzAttributeClass  attributeClass,
-      String            featureType,
-      Boolean           withRaw,
-      Set<String>       expectedAttrTypeCodes)
-  {
+      Boolean withInternal,
+      SzAttributeClass attributeClass,
+      String featureType,
+      Boolean withRaw,
+      Set<String> expectedAttrTypeCodes) {
     this.performTest(() -> {
       String testInfo = formatAttributeTypesTestInfo(withInternal,
-                                                     attributeClass,
-                                                     featureType,
-                                                     withRaw);
+          attributeClass,
+          featureType,
+          withRaw);
 
       String suffix = formatAttributeTypesQueryString(withInternal,
-                                                      attributeClass,
-                                                      featureType,
-                                                      withRaw);
+          attributeClass,
+          featureType,
+          withRaw);
       String uriText = this.formatServerUri("attribute-types" + suffix);
 
       com.senzing.gen.api.model.SzAttributeClass attrClass = null;
@@ -652,23 +623,20 @@ public class ConfigServicesReadTest extends AbstractServiceTest
       }
 
       long before = System.nanoTime();
-      com.senzing.gen.api.model.SzAttributeTypesResponse clientResponse
-          = this.configApi.getAttributeTypes(
-              withInternal, attrClass, featureType, withRaw);
+      com.senzing.gen.api.model.SzAttributeTypesResponse clientResponse = this.configApi.getAttributeTypes(
+          withInternal, attrClass, featureType, withRaw);
       long after = System.nanoTime();
 
-      SzAttributeTypesResponse response
-          = jsonCopy(clientResponse, SzAttributeTypesResponse.class);
+      SzAttributeTypesResponse response = jsonCopy(clientResponse, SzAttributeTypesResponse.class);
 
       validateAttributeTypesResponse(testInfo,
-                                     response,
-                                     uriText,
-                                     after - before,
-                                     TRUE.equals(withRaw),
-                                     expectedAttrTypeCodes);
+          response,
+          uriText,
+          after - before,
+          TRUE.equals(withRaw),
+          expectedAttrTypeCodes);
     });
   }
-
 
   private Set<String> allAttributeCodes() {
     return this.allAttrTypes;
@@ -678,21 +646,20 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   @MethodSource("allAttributeCodes")
   public void getAttributeTypeTest(String attrCode) {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri(
+      String uriText = this.formatServerUri(
           "attribute-types/" + attrCode);
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       long before = System.nanoTime();
-      SzAttributeTypeResponse response
-          = this.configServices.getAttributeType(attrCode, false, uriInfo);
+      SzAttributeTypeResponse response = this.configServices.getAttributeType(attrCode, false, uriInfo);
       response.concludeTimers();
       long after = System.nanoTime();
 
       validateAttributeTypeResponse(response,
-                                    uriText,
-                                    attrCode,
-                                    after - before,
-                                    null);
+          uriText,
+          attrCode,
+          after - before,
+          null);
     });
   }
 
@@ -700,18 +667,17 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   @MethodSource("allAttributeCodes")
   public void getAttributeTypeViaHttpTest(String attrCode) {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri(
+      String uriText = this.formatServerUri(
           "attribute-types/" + attrCode);
-      long    before  = System.nanoTime();
-      SzAttributeTypeResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzAttributeTypeResponse.class);
+      long before = System.nanoTime();
+      SzAttributeTypeResponse response = this.invokeServerViaHttp(GET, uriText, SzAttributeTypeResponse.class);
       long after = System.nanoTime();
 
       validateAttributeTypeResponse(response,
-                                    uriText,
-                                    attrCode,
-                                    after - before,
-                                    null);
+          uriText,
+          attrCode,
+          after - before,
+          null);
     });
   }
 
@@ -719,23 +685,22 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   @MethodSource("allAttributeCodes")
   public void getAttributeTypeViaJavaClientTest(String attrCode) {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri(
+      String uriText = this.formatServerUri(
           "attribute-types/" + attrCode);
-      long    before  = System.nanoTime();
+      long before = System.nanoTime();
 
-      com.senzing.gen.api.model.SzAttributeTypeResponse clientResponse
-          = this.configApi.getAttributeType(attrCode, null);
+      com.senzing.gen.api.model.SzAttributeTypeResponse clientResponse = this.configApi.getAttributeType(attrCode,
+          null);
 
       long after = System.nanoTime();
 
-      SzAttributeTypeResponse response
-          = jsonCopy(clientResponse, SzAttributeTypeResponse.class);
+      SzAttributeTypeResponse response = jsonCopy(clientResponse, SzAttributeTypeResponse.class);
 
       validateAttributeTypeResponse(response,
-                                    uriText,
-                                    attrCode,
-                                    after - before,
-                                    null);
+          uriText,
+          attrCode,
+          after - before,
+          null);
     });
   }
 
@@ -743,21 +708,20 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   @MethodSource("allAttributeCodes")
   public void getAttributeTypeWithoutRawTest(String attrCode) {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri(
+      String uriText = this.formatServerUri(
           "attribute-types/" + attrCode + "?withRaw=false");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       long before = System.nanoTime();
-      SzAttributeTypeResponse response
-          = this.configServices.getAttributeType(attrCode, false, uriInfo);
+      SzAttributeTypeResponse response = this.configServices.getAttributeType(attrCode, false, uriInfo);
       response.concludeTimers();
       long after = System.nanoTime();
 
       validateAttributeTypeResponse(response,
-                                    uriText,
-                                    attrCode,
-                                    after - before,
-                                    false);
+          uriText,
+          attrCode,
+          after - before,
+          false);
     });
   }
 
@@ -765,18 +729,17 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   @MethodSource("allAttributeCodes")
   public void getAttributeTypeWithoutRawViaHttpTest(String attrCode) {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri(
+      String uriText = this.formatServerUri(
           "attribute-types/" + attrCode + "?withRaw=false");
-      long before  = System.nanoTime();
-      SzAttributeTypeResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzAttributeTypeResponse.class);
+      long before = System.nanoTime();
+      SzAttributeTypeResponse response = this.invokeServerViaHttp(GET, uriText, SzAttributeTypeResponse.class);
       long after = System.nanoTime();
 
       validateAttributeTypeResponse(response,
-                                    uriText,
-                                    attrCode,
-                                    after - before,
-                                    false);
+          uriText,
+          attrCode,
+          after - before,
+          false);
     });
   }
 
@@ -784,21 +747,20 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   @MethodSource("allAttributeCodes")
   public void getAttributeTypeWithoutRawViaJavaClientTest(String attrCode) {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri(
+      String uriText = this.formatServerUri(
           "attribute-types/" + attrCode + "?withRaw=false");
-      long before  = System.nanoTime();
-      com.senzing.gen.api.model.SzAttributeTypeResponse clientResponse
-          = this.configApi.getAttributeType(attrCode, false);
+      long before = System.nanoTime();
+      com.senzing.gen.api.model.SzAttributeTypeResponse clientResponse = this.configApi.getAttributeType(attrCode,
+          false);
       long after = System.nanoTime();
 
-      SzAttributeTypeResponse response
-          = jsonCopy(clientResponse, SzAttributeTypeResponse.class);
+      SzAttributeTypeResponse response = jsonCopy(clientResponse, SzAttributeTypeResponse.class);
 
       validateAttributeTypeResponse(response,
-                                    uriText,
-                                    attrCode,
-                                    after - before,
-                                    false);
+          uriText,
+          attrCode,
+          after - before,
+          false);
     });
   }
 
@@ -806,21 +768,20 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   @MethodSource("allAttributeCodes")
   public void getAttributeTypeWithRawTest(String attrCode) {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri(
+      String uriText = this.formatServerUri(
           "attribute-types/" + attrCode + "?withRaw=true");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       long before = System.nanoTime();
-      SzAttributeTypeResponse response
-          = this.configServices.getAttributeType(attrCode, true, uriInfo);
+      SzAttributeTypeResponse response = this.configServices.getAttributeType(attrCode, true, uriInfo);
       response.concludeTimers();
       long after = System.nanoTime();
 
       validateAttributeTypeResponse(response,
-                                    uriText,
-                                    attrCode,
-                                    after - before,
-                                    true);
+          uriText,
+          attrCode,
+          after - before,
+          true);
     });
   }
 
@@ -828,18 +789,17 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   @MethodSource("allAttributeCodes")
   public void getAttributeTypeWithRawViaHttpTest(String attrCode) {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri(
+      String uriText = this.formatServerUri(
           "attribute-types/" + attrCode + "?withRaw=true");
-      long before  = System.nanoTime();
-      SzAttributeTypeResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzAttributeTypeResponse.class);
+      long before = System.nanoTime();
+      SzAttributeTypeResponse response = this.invokeServerViaHttp(GET, uriText, SzAttributeTypeResponse.class);
       long after = System.nanoTime();
 
       validateAttributeTypeResponse(response,
-                                    uriText,
-                                    attrCode,
-                                    after - before,
-                                    true);
+          uriText,
+          attrCode,
+          after - before,
+          true);
     });
   }
 
@@ -847,123 +807,122 @@ public class ConfigServicesReadTest extends AbstractServiceTest
   @MethodSource("allAttributeCodes")
   public void getAttributeTypeWithRawViaJavaClientTest(String attrCode) {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri(
+      String uriText = this.formatServerUri(
           "attribute-types/" + attrCode + "?withRaw=true");
-      long before  = System.nanoTime();
-      com.senzing.gen.api.model.SzAttributeTypeResponse clientResponse
-          = this.configApi.getAttributeType(attrCode, true);
+      long before = System.nanoTime();
+      com.senzing.gen.api.model.SzAttributeTypeResponse clientResponse = this.configApi.getAttributeType(attrCode,
+          true);
       long after = System.nanoTime();
 
-      SzAttributeTypeResponse response
-          = jsonCopy(clientResponse, SzAttributeTypeResponse.class);
+      SzAttributeTypeResponse response = jsonCopy(clientResponse, SzAttributeTypeResponse.class);
 
       validateAttributeTypeResponse(response,
-                                    uriText,
-                                    attrCode,
-                                    after - before,
-                                    true);
+          uriText,
+          attrCode,
+          after - before,
+          true);
     });
   }
 
-  @Test public void getActiveConfigTest() {
+  @Test
+  public void getActiveConfigTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("configs/active");
+      String uriText = this.formatServerUri("configs/active");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       long before = System.nanoTime();
-      SzConfigResponse response
-          = this.configServices.getActiveConfig(uriInfo);
+      SzConfigResponse response = this.configServices.getActiveConfig(uriInfo);
       response.concludeTimers();
       long after = System.nanoTime();
 
       validateConfigResponse(response,
-                             uriText,
-                             after - before,
-                             this.getInitialDataSources().keySet());
+          uriText,
+          after - before,
+          this.getInitialDataSources().keySet());
     });
   }
 
-  @Test public void getActiveConfigViaHttpTest() {
+  @Test
+  public void getActiveConfigViaHttpTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("configs/active");
-      long    before  = System.nanoTime();
-      SzConfigResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzConfigResponse.class);
+      String uriText = this.formatServerUri("configs/active");
+      long before = System.nanoTime();
+      SzConfigResponse response = this.invokeServerViaHttp(GET, uriText, SzConfigResponse.class);
       long after = System.nanoTime();
 
       validateConfigResponse(response,
-                             uriText,
-                             after - before,
-                             this.getInitialDataSources().keySet());
+          uriText,
+          after - before,
+          this.getInitialDataSources().keySet());
     });
   }
 
-  @Test public void getActiveConfigViaJavaClientTest() {
+  @Test
+  public void getActiveConfigViaJavaClientTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("configs/active");
-      long    before  = System.nanoTime();
-      com.senzing.gen.api.model.SzConfigResponse clientResponse
-          = this.configApi.getActiveConfig();
+      String uriText = this.formatServerUri("configs/active");
+      long before = System.nanoTime();
+      com.senzing.gen.api.model.SzConfigResponse clientResponse = this.configApi.getActiveConfig();
       long after = System.nanoTime();
 
       SzConfigResponse response = jsonCopy(clientResponse,
-                                           SzConfigResponse.class);
+          SzConfigResponse.class);
 
       validateConfigResponse(response,
-                             uriText,
-                             after - before,
-                             this.getInitialDataSources().keySet());
+          uriText,
+          after - before,
+          this.getInitialDataSources().keySet());
     });
   }
 
-  @Test public void getTemplateConfigTest() {
+  @Test
+  public void getTemplateConfigTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("configs/template");
+      String uriText = this.formatServerUri("configs/template");
       UriInfo uriInfo = this.newProxyUriInfo(uriText);
 
       long before = System.nanoTime();
-      SzConfigResponse response
-          = this.configServices.getTemplateConfig(uriInfo);
+      SzConfigResponse response = this.configServices.getTemplateConfig(uriInfo);
       response.concludeTimers();
       long after = System.nanoTime();
 
       validateConfigResponse(response,
-                             uriText,
-                             after - before,
-                             this.getDefaultDataSources().keySet());
+          uriText,
+          after - before,
+          this.getDefaultDataSources().keySet());
     });
   }
 
-  @Test public void getTemplateConfigViaHttpTest() {
+  @Test
+  public void getTemplateConfigViaHttpTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("configs/template");
-      long    before  = System.nanoTime();
-      SzConfigResponse response
-          = this.invokeServerViaHttp(GET, uriText, SzConfigResponse.class);
+      String uriText = this.formatServerUri("configs/template");
+      long before = System.nanoTime();
+      SzConfigResponse response = this.invokeServerViaHttp(GET, uriText, SzConfigResponse.class);
       long after = System.nanoTime();
 
       validateConfigResponse(response,
-                             uriText,
-                             after - before,
-                             this.getDefaultDataSources().keySet());
+          uriText,
+          after - before,
+          this.getDefaultDataSources().keySet());
     });
   }
 
-  @Test public void getTemplateConfigViaJavaClientTest() {
+  @Test
+  public void getTemplateConfigViaJavaClientTest() {
     this.performTest(() -> {
-      String  uriText = this.formatServerUri("configs/template");
-      long    before  = System.nanoTime();
-      com.senzing.gen.api.model.SzConfigResponse clientResponse
-          = this.configApi.getTemplateConfig();
+      String uriText = this.formatServerUri("configs/template");
+      long before = System.nanoTime();
+      com.senzing.gen.api.model.SzConfigResponse clientResponse = this.configApi.getTemplateConfig();
       long after = System.nanoTime();
 
       SzConfigResponse response = jsonCopy(clientResponse,
-                                           SzConfigResponse.class);
+          SzConfigResponse.class);
 
       validateConfigResponse(response,
-                             uriText,
-                             after - before,
-                             this.getDefaultDataSources().keySet());
+          uriText,
+          after - before,
+          this.getDefaultDataSources().keySet());
     });
   }
 }

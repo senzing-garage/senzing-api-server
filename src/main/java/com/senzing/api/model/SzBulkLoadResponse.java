@@ -7,7 +7,7 @@ import com.senzing.api.model.impl.SzBulkLoadResponseImpl;
  * A response object that contains entity record data.
  *
  */
-@JsonDeserialize(using=SzBulkLoadResponse.Factory.class)
+@JsonDeserialize(using = SzBulkLoadResponse.Factory.class)
 public interface SzBulkLoadResponse extends SzBasicResponse {
   /**
    * Returns the data associated with this response which is an
@@ -29,31 +29,31 @@ public interface SzBulkLoadResponse extends SzBasicResponse {
    * A {@link ModelProvider} for instances of {@link SzBulkLoadResponse}.
    */
   interface Provider extends ModelProvider<SzBulkLoadResponse> {
-      /**
-       * Creates an instance of {@link SzBulkLoadResponse} with the
-       * specified {@link SzMeta} and {@link SzLinks}.
-       *
-       * @param meta The response meta data.
-       *
-       * @param links The links for the response.
-       */
-      SzBulkLoadResponse create(SzMeta meta, SzLinks links);
+    /**
+     * Creates an instance of {@link SzBulkLoadResponse} with the
+     * specified {@link SzMeta} and {@link SzLinks}.
+     *
+     * @param meta  The response meta data.
+     *
+     * @param links The links for the response.
+     */
+    SzBulkLoadResponse create(SzMeta meta, SzLinks links);
 
-      /**
-       * Creates an instance of {@link SzBulkLoadResponse} with the
-       * specified {@link SzMeta}, {@link SzLinks} and the specified {@link
-       * SzBulkLoadResult} describing the bulk records..
-       *
-       * @param meta The response meta data.
-       *
-       * @param links The links for the response.
-       *
-       * @param loadResult The {@link SzBulkLoadResult} describing the results
-       *                   of the bulk load.
-       */
-      SzBulkLoadResponse create(SzMeta            meta,
-                                SzLinks           links,
-                                SzBulkLoadResult  loadResult);
+    /**
+     * Creates an instance of {@link SzBulkLoadResponse} with the
+     * specified {@link SzMeta}, {@link SzLinks} and the specified {@link
+     * SzBulkLoadResult} describing the bulk records..
+     *
+     * @param meta       The response meta data.
+     *
+     * @param links      The links for the response.
+     *
+     * @param loadResult The {@link SzBulkLoadResult} describing the results
+     *                   of the bulk load.
+     */
+    SzBulkLoadResponse create(SzMeta meta,
+        SzLinks links,
+        SzBulkLoadResult loadResult);
   }
 
   /**
@@ -62,8 +62,7 @@ public interface SzBulkLoadResponse extends SzBasicResponse {
    * {@link SzBulkLoadResponseImpl}.
    */
   class DefaultProvider extends AbstractModelProvider<SzBulkLoadResponse>
-      implements Provider
-  {
+      implements Provider {
     /**
      * Default constructor.
      */
@@ -72,15 +71,14 @@ public interface SzBulkLoadResponse extends SzBasicResponse {
     }
 
     @Override
-    public SzBulkLoadResponse create(SzMeta meta, SzLinks links){
+    public SzBulkLoadResponse create(SzMeta meta, SzLinks links) {
       return new SzBulkLoadResponseImpl(meta, links);
     }
 
     @Override
-    public SzBulkLoadResponse create(SzMeta           meta,
-                                     SzLinks          links,
-                                     SzBulkLoadResult loadResult)
-    {
+    public SzBulkLoadResponse create(SzMeta meta,
+        SzLinks links,
+        SzBulkLoadResult loadResult) {
       return new SzBulkLoadResponseImpl(meta, links, loadResult);
     }
   }
@@ -91,7 +89,7 @@ public interface SzBulkLoadResponse extends SzBasicResponse {
    */
   class Factory extends ModelFactory<SzBulkLoadResponse, Provider> {
     /**
-     * Default constructor.  This is public and can only be called after the
+     * Default constructor. This is public and can only be called after the
      * singleton master instance is created as it inherits the same state from
      * the master instance.
      */
@@ -100,8 +98,9 @@ public interface SzBulkLoadResponse extends SzBasicResponse {
     }
 
     /**
-     * Constructs with the default provider.  This constructor is private and
+     * Constructs with the default provider. This constructor is private and
      * is used for the master singleton instance.
+     * 
      * @param defaultProvider The default provider.
      */
     private Factory(Provider defaultProvider) {
@@ -112,7 +111,7 @@ public interface SzBulkLoadResponse extends SzBasicResponse {
      * Creates an instance of {@link SzBulkLoadResponse} with the
      * specified {@link SzMeta} and {@link SzLinks}.
      *
-     * @param meta The response meta data.
+     * @param meta  The response meta data.
      *
      * @param links The links for the response.
      */
@@ -122,20 +121,19 @@ public interface SzBulkLoadResponse extends SzBasicResponse {
 
     /**
      * Creates an instance of {@link SzBulkLoadResponse} with the
-     * specified {@link SzMeta}, {@link SzLinks} and the speicified {@link
+     * specified {@link SzMeta}, {@link SzLinks} and the specified {@link
      * SzBulkLoadResult} describing the result of the bulk load.
      *
-     * @param meta The response meta data.
+     * @param meta       The response meta data.
      *
-     * @param links The links for the response.
+     * @param links      The links for the response.
      *
      * @param loadResult The {@link SzBulkLoadResult} describing the results
      *                   of the bulk load.
      */
-    public SzBulkLoadResponse create(SzMeta           meta,
-                                     SzLinks          links,
-                                     SzBulkLoadResult loadResult)
-    {
+    public SzBulkLoadResponse create(SzMeta meta,
+        SzLinks links,
+        SzBulkLoadResult loadResult) {
       return this.getProvider().create(meta, links, loadResult);
     }
   }

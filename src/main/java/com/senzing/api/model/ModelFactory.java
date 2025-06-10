@@ -24,13 +24,11 @@ import java.util.*;
  */
 @SuppressWarnings("unchecked")
 public abstract class ModelFactory<T, P extends ModelProvider<T>>
-  extends JsonDeserializer<T>
-{
+    extends JsonDeserializer<T> {
   private static InvocationHandler DUMMY_HANDLER = new InvocationHandler() {
     @Override
     public Object invoke(Object proxy, Method method, Object[] args)
-        throws Throwable
-    {
+        throws Throwable {
       throw new UnsupportedOperationException();
     }
   };
@@ -58,9 +56,7 @@ public abstract class ModelFactory<T, P extends ModelProvider<T>>
   /**
    * The map of factory state instances (per class).
    */
-  private static final
-    Map<Class<? extends ModelFactory>, FactoryState> STATE_MAP
-      = new LinkedHashMap<>();
+  private static final Map<Class<? extends ModelFactory>, FactoryState> STATE_MAP = new LinkedHashMap<>();
 
   /**
    * The {@link FactoryState} for this instance.
@@ -72,21 +68,20 @@ public abstract class ModelFactory<T, P extends ModelProvider<T>>
    *
    * @param defaultProvider The default provider for this factory.
    */
-  protected ModelFactory(P defaultProvider)
-  {
+  protected ModelFactory(P defaultProvider) {
     Objects.requireNonNull(defaultProvider,
-                           "The default provider cannot be null");
+        "The default provider cannot be null");
 
     AbstractModelProvider.validateClasses(defaultProvider.getInterfaceClass(),
-                                          defaultProvider.getRuntimeClass());
+        defaultProvider.getRuntimeClass());
 
     // set the interface and runtime classes
     synchronized (STATE_MAP) {
-      FactoryState<T,P> state = STATE_MAP.get(this.getClass());
+      FactoryState<T, P> state = STATE_MAP.get(this.getClass());
       // check if this is the first/master instance
       if (state == null) {
-        state = new FactoryState<T,P>();
-        state.interfaceClass  = defaultProvider.getInterfaceClass();
+        state = new FactoryState<T, P>();
+        state.interfaceClass = defaultProvider.getInterfaceClass();
         state.currentProvider = defaultProvider;
         state.defaultProvider = defaultProvider;
         STATE_MAP.put(this.getClass(), state);
@@ -96,19 +91,17 @@ public abstract class ModelFactory<T, P extends ModelProvider<T>>
         if (defaultProvider.getInterfaceClass() != state.interfaceClass) {
           throw new IllegalStateException(
               "The master state already exists and the interface class of the "
-              + "specified default provider does not match.  expected=[ "
-              + state.interfaceClass + " ], specified=[ "
-              + defaultProvider.getInterfaceClass() + " ]");
+                  + "specified default provider does not match.  expected=[ "
+                  + state.interfaceClass + " ], specified=[ "
+                  + defaultProvider.getInterfaceClass() + " ]");
         }
 
         // verify the default provider
-        if (defaultProvider.getRuntimeClass()
-            != state.defaultProvider.getRuntimeClass())
-        {
+        if (defaultProvider.getRuntimeClass() != state.defaultProvider.getRuntimeClass()) {
           throw new IllegalStateException(
               "The master state already exists and the runtime class for the "
-              + "original default provider does not match the runtime class of "
-              + "the specified default provider.  expected=[ "
+                  + "original default provider does not match the runtime class of "
+                  + "the specified default provider.  expected=[ "
                   + state.defaultProvider.getRuntimeClass() + " ], specified=[ "
                   + defaultProvider.getRuntimeClass() + " ]");
         }
@@ -121,12 +114,11 @@ public abstract class ModelFactory<T, P extends ModelProvider<T>>
    * Default constructor which simply inherits an existing singleton
    * "master" state.
    */
-  protected ModelFactory(Class<T> interfaceClass)
-  {
+  protected ModelFactory(Class<T> interfaceClass) {
     Objects.requireNonNull(
         interfaceClass, "The interface class cannot be null");
     // check if the master instance already created the shared state
-    FactoryState<T,P> state = null;
+    FactoryState<T, P> state = null;
     // synchronize
     synchronized (STATE_MAP) {
       // get the state instance
@@ -171,8 +163,8 @@ public abstract class ModelFactory<T, P extends ModelProvider<T>>
     if (interfaceClass != state.interfaceClass) {
       throw new IllegalStateException(
           "The specified interface class does not match that of the shared "
-          + "state.  expected=[ " + state.interfaceClass + " ], specified=[ "
-          + interfaceClass + " ]");
+              + "state.  expected=[ " + state.interfaceClass + " ], specified=[ "
+              + interfaceClass + " ]");
     }
 
     // set the state
@@ -219,7 +211,7 @@ public abstract class ModelFactory<T, P extends ModelProvider<T>>
   public final void installProvider(P provider) {
     Objects.requireNonNull(provider, "The provider cannot be null");
     AbstractModelProvider.validateClasses(provider.getInterfaceClass(),
-                                          provider.getRuntimeClass());
+        provider.getRuntimeClass());
     synchronized (this.state) {
       this.state.currentProvider = provider;
     }
@@ -233,12 +225,11 @@ public abstract class ModelFactory<T, P extends ModelProvider<T>>
    *                deserializer.
    * @return The {@link JsonDeserializer} to use.
    *
-   * @throws JsonMappingException If a JSON mapping falure occurs.
+   * @throws JsonMappingException If a JSON mapping failure occurs.
    */
   protected JsonDeserializer<Object> getRuntimeDeserializer(
       DeserializationContext context)
-      throws JsonMappingException
-  {
+      throws JsonMappingException {
     Class runtimeClass = this.getRuntimeClass();
     JavaType runtimeType = context.constructType(runtimeClass);
     JsonDeserializer result = context.findRootValueDeserializer(runtimeType);
@@ -248,8 +239,8 @@ public abstract class ModelFactory<T, P extends ModelProvider<T>>
     if (result.getClass() == this.getClass()) {
       throw new IllegalStateException(
           "Runtime implementation class MUST override the deserializer "
-          + "specified in the interface class via @JsonDeserialize annotation "
-          + "or by some other means: " + runtimeClass);
+              + "specified in the interface class via @JsonDeserialize annotation "
+              + "or by some other means: " + runtimeClass);
     }
 
     // return the deserializer
@@ -265,10 +256,8 @@ public abstract class ModelFactory<T, P extends ModelProvider<T>>
    */
   @Override
   public T deserialize(JsonParser parser, DeserializationContext context)
-      throws JsonProcessingException, IOException
-  {
-    JsonDeserializer<Object> rtDeserializer
-        = this.getRuntimeDeserializer(context);
+      throws JsonProcessingException, IOException {
+    JsonDeserializer<Object> rtDeserializer = this.getRuntimeDeserializer(context);
     return (T) rtDeserializer.deserialize(parser, context);
   }
 
@@ -280,13 +269,11 @@ public abstract class ModelFactory<T, P extends ModelProvider<T>>
    * </p>
    */
   @Override
-  public T deserialize(JsonParser             parser,
-                       DeserializationContext context,
-                       T                      intoValue)
-      throws JsonProcessingException, IOException
-  {
-    JsonDeserializer<Object> rtDeserializer
-        = this.getRuntimeDeserializer(context);
+  public T deserialize(JsonParser parser,
+      DeserializationContext context,
+      T intoValue)
+      throws JsonProcessingException, IOException {
+    JsonDeserializer<Object> rtDeserializer = this.getRuntimeDeserializer(context);
     return (T) rtDeserializer.deserialize(parser, context, intoValue);
   }
 
@@ -298,13 +285,11 @@ public abstract class ModelFactory<T, P extends ModelProvider<T>>
    * </p>
    */
   @Override
-  public T deserializeWithType(JsonParser             parser,
-                               DeserializationContext context,
-                               TypeDeserializer       typeDeserializer)
-      throws JsonProcessingException, IOException
-  {
-    JsonDeserializer<Object> rtDeserializer
-        = this.getRuntimeDeserializer(context);
+  public T deserializeWithType(JsonParser parser,
+      DeserializationContext context,
+      TypeDeserializer typeDeserializer)
+      throws JsonProcessingException, IOException {
+    JsonDeserializer<Object> rtDeserializer = this.getRuntimeDeserializer(context);
     return (T) rtDeserializer.deserializeWithType(
         parser, context, typeDeserializer);
   }
@@ -316,8 +301,7 @@ public abstract class ModelFactory<T, P extends ModelProvider<T>>
    * </p>
    */
   @Override
-  public JsonDeserializer<T> unwrappingDeserializer(NameTransformer unwrapper)
-  {
+  public JsonDeserializer<T> unwrappingDeserializer(NameTransformer unwrapper) {
     return this;
   }
 
@@ -328,8 +312,7 @@ public abstract class ModelFactory<T, P extends ModelProvider<T>>
    * </p>
    */
   @Override
-  public JsonDeserializer<?> replaceDelegatee(JsonDeserializer<?> delegatee)
-  {
+  public JsonDeserializer<?> replaceDelegatee(JsonDeserializer<?> delegatee) {
     return this;
   }
 
@@ -392,10 +375,8 @@ public abstract class ModelFactory<T, P extends ModelProvider<T>>
 
   @Override
   public T getNullValue(DeserializationContext context)
-      throws JsonMappingException
-  {
-    JsonDeserializer<Object> rtDeserializer
-        = this.getRuntimeDeserializer(context);
+      throws JsonMappingException {
+    JsonDeserializer<Object> rtDeserializer = this.getRuntimeDeserializer(context);
     return (T) rtDeserializer.getNullValue(context);
   }
 }

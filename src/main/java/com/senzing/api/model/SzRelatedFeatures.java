@@ -13,7 +13,7 @@ import java.util.List;
  * Described two features that matched each other to create a relationship
  * (typically a disclosed relationship).
  */
-@JsonDeserialize(using=SzRelatedFeatures.Factory.class)
+@JsonDeserialize(using = SzRelatedFeatures.Factory.class)
 public interface SzRelatedFeatures {
   /**
    * Gets the relationship feature belonging to the first entity that was
@@ -69,8 +69,7 @@ public interface SzRelatedFeatures {
    * {@link SzRelatedFeaturesImpl}.
    */
   class DefaultProvider extends AbstractModelProvider<SzRelatedFeatures>
-      implements Provider
-  {
+      implements Provider {
     /**
      * Default constructor.
      */
@@ -90,7 +89,7 @@ public interface SzRelatedFeatures {
    */
   class Factory extends ModelFactory<SzRelatedFeatures, Provider> {
     /**
-     * Default constructor.  This is public and can only be called after the
+     * Default constructor. This is public and can only be called after the
      * singleton master instance is created as it inherits the same state from
      * the master instance.
      */
@@ -99,8 +98,9 @@ public interface SzRelatedFeatures {
     }
 
     /**
-     * Constructs with the default provider.  This constructor is private and
+     * Constructs with the default provider. This constructor is private and
      * is used for the master singleton instance.
+     * 
      * @param defaultProvider The default provider.
      */
     private Factory(Provider defaultProvider) {
@@ -109,6 +109,7 @@ public interface SzRelatedFeatures {
 
     /**
      * Creates a new instance of {@link SzRelatedFeatures}.
+     * 
      * @return The new instance of {@link SzRelatedFeatures}.
      */
     public SzRelatedFeatures create() {
@@ -125,16 +126,15 @@ public interface SzRelatedFeatures {
    * Parses the native API JSON to build an instance of {@link
    * SzRelatedFeatures}.
    *
-   * @param jsonObject The {@link JsonObject} describing the features using
-   *                   the native API JSON format.
+   * @param jsonObject  The {@link JsonObject} describing the features using
+   *                    the native API JSON format.
    *
-   * @param featureType The feature tyoe for the first feature.
+   * @param featureType The feature type for the first feature.
    *
    * @return The created instance of {@link SzRelatedFeatures}.
    */
   static SzRelatedFeatures parseRelatedFeatures(JsonObject jsonObject,
-                                                String     featureType)
-  {
+      String featureType) {
     SzScoredFeature feature = SzScoredFeature.parseScoredFeature(
         jsonObject, "", featureType);
 
@@ -155,10 +155,10 @@ public interface SzRelatedFeatures {
    * Parses the native API JSON to build an instance of {@link
    * SzRelatedFeatures}.
    *
-   * @param jsonArray The {@link JsonArray} describing the features list using
-   *                  the native API JSON format.
+   * @param jsonArray   The {@link JsonArray} describing the features list using
+   *                    the native API JSON format.
    *
-   * @param featureType The feature tyoe for the first feature.
+   * @param featureType The feature type for the first feature.
    *
    * @return The created instance of {@link SzRelatedFeatures}.
    */
@@ -171,16 +171,15 @@ public interface SzRelatedFeatures {
    * Parses the native API JSON to build an instance of {@link
    * SzRelatedFeatures}.
    *
-   * @param jsonArray The {@link JsonArray} describing the features list using
-   *                  the native API JSON format.
+   * @param jsonArray   The {@link JsonArray} describing the features list using
+   *                    the native API JSON format.
    *
-   * @param featureType The feature tyoe for the first feature.
+   * @param featureType The feature type for the first feature.
    *
    * @return The created instance of {@link SzRelatedFeatures}.
    */
   static List<SzRelatedFeatures> parseRelatedFeatures(
-      List<SzRelatedFeatures> list,  JsonArray jsonArray, String featureType)
-  {
+      List<SzRelatedFeatures> list, JsonArray jsonArray, String featureType) {
     if (list == null) {
       list = new ArrayList<>(jsonArray.size());
     }

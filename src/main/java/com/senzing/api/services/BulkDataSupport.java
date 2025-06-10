@@ -86,8 +86,7 @@ public interface BulkDataSupport extends ServicesSupport {
   /**
    * The formatter for the file date.
    */
-  DateTimeFormatter FILE_DATE_FORMATTER
-      = DateTimeFormatter.ofPattern(FILE_DATE_PATTERN);
+  DateTimeFormatter FILE_DATE_FORMATTER = DateTimeFormatter.ofPattern(FILE_DATE_PATTERN);
 
   /**
    * The reconnect delay to use for events when providing SSE events.
@@ -112,25 +111,25 @@ public interface BulkDataSupport extends ServicesSupport {
   /**
    * Validates the progress period parameter for SSE or Web Socket requests.
    *
-   * @param progressPeriod The specified progress period.
-   * @param timers The {@link Timers} for the request.
-   * @param uriInfo The {@link UriInfo} for the request.
-   * @param sseEventSink The {@link SseEventSink} or <tt>null</tt> if not an
-   *                     SSE request.
-   * @param sse The {@link Sse} or <tt>null</tt> if not an SSE request.
+   * @param progressPeriod   The specified progress period.
+   * @param timers           The {@link Timers} for the request.
+   * @param uriInfo          The {@link UriInfo} for the request.
+   * @param sseEventSink     The {@link SseEventSink} or <tt>null</tt> if not an
+   *                         SSE request.
+   * @param sse              The {@link Sse} or <tt>null</tt> if not an SSE
+   *                         request.
    * @param webSocketSession The Web Socket {@link Session} for the request.
    *
    * @throws BadRequestException If the progress period is negative, but we are
    *                             handling an SSE request.
    */
-  default void validateProgressPeriod(Long          progressPeriod,
-                                      Timers        timers,
-                                      UriInfo       uriInfo,
-                                      SseEventSink  sseEventSink,
-                                      Sse           sse,
-                                      Session       webSocketSession)
-    throws BadRequestException
-  {
+  default void validateProgressPeriod(Long progressPeriod,
+      Timers timers,
+      UriInfo uriInfo,
+      SseEventSink sseEventSink,
+      Sse sse,
+      Session webSocketSession)
+      throws BadRequestException {
     // check if the progress period parameter is being ignored
     if (sseEventSink == null && sse == null && webSocketSession == null) {
       return;
@@ -157,27 +156,27 @@ public interface BulkDataSupport extends ServicesSupport {
    * Analyzes the bulk data and returns information about it.
    */
   default SzBulkDataAnalysisResponse analyzeBulkRecords(
-      SzApiProvider               provider,
-      Timers                      timers,
-      MediaType                   mediaType,
-      InputStream                 dataInputStream,
-      UriInfo                     uriInfo,
-      Long                        progressPeriod,
-      SseEventSink                sseEventSink,
-      Sse                         sse,
-      Session                     webSocketSession)
-  {
+      SzApiProvider provider,
+      Timers timers,
+      MediaType mediaType,
+      InputStream dataInputStream,
+      UriInfo uriInfo,
+      Long progressPeriod,
+      SseEventSink sseEventSink,
+      Sse sse,
+      Session webSocketSession) {
     MediaType specifiedMediaType = mediaType;
 
     // convert progress period to nanoseconds
     Long progressNanos = (progressPeriod == null)
-        ? null : progressPeriod * 1000000L;
+        ? null
+        : progressPeriod * 1000000L;
 
     // check if the media type is null
-    if (mediaType == null) mediaType = TEXT_PLAIN_TYPE;
+    if (mediaType == null)
+      mediaType = TEXT_PLAIN_TYPE;
 
-    OutboundSseEvent.Builder eventBuilder
-        = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
+    OutboundSseEvent.Builder eventBuilder = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
 
     ProgressState progressState = new ProgressState();
 
@@ -186,40 +185,39 @@ public interface BulkDataSupport extends ServicesSupport {
 
     // check the progress period
     this.validateProgressPeriod(progressPeriod,
-                                timers,
-                                uriInfo,
-                                sseEventSink,
-                                sse,
-                                webSocketSession);
+        timers,
+        uriInfo,
+        sseEventSink,
+        sse,
+        webSocketSession);
 
     try {
-      BulkDataSet         bulkDataSet = new BulkDataSet(mediaType, dataInputStream);
-      TemporaryDataCache  dataCache   = bulkDataSet.getDataCache();
+      BulkDataSet bulkDataSet = new BulkDataSet(mediaType, dataInputStream);
+      TemporaryDataCache dataCache = bulkDataSet.getDataCache();
 
       // if charset is unknown then try to detect
       String charset = bulkDataSet.getCharacterEncoding();
       dataAnalysis.setCharacterEncoding(charset);
 
       debugLog("Analyze bulk data character encoding: "
-                + charset);
+          + charset);
 
       long start = System.nanoTime();
       // check if we need to auto-detect the media type
-      try (InputStream        is  = dataCache.getInputStream(true);
-           InputStreamReader  isr = new InputStreamReader(is, charset);
-           BufferedReader     br  = new BufferedReader(isr))
-      {
+      try (InputStream is = dataCache.getInputStream(true);
+          InputStreamReader isr = new InputStreamReader(is, charset);
+          BufferedReader br = new BufferedReader(isr)) {
         // if format is null then RecordReader will auto-detect
         RecordReader recordReader = new RecordReader(null, br);
 
         this.verifyBulkDataFormat(specifiedMediaType,
-                                  bulkDataSet.getFormat(),
-                                  recordReader.getFormat(),
-                                  uriInfo,
-                                  timers);
+            bulkDataSet.getFormat(),
+            recordReader.getFormat(),
+            uriInfo,
+            timers);
 
         bulkDataSet.setFormat(recordReader.getFormat());
-        debugLog("Analyze bulk data format: "+ bulkDataSet.getFormat());
+        debugLog("Analyze bulk data format: " + bulkDataSet.getFormat());
 
         if (bulkDataSet.getFormat() != null) {
           dataAnalysis.setMediaType(bulkDataSet.getFormat().getMediaType());
@@ -229,29 +227,26 @@ public interface BulkDataSupport extends ServicesSupport {
 
         ProgressUpdater<SzBulkDataAnalysisResponse> progressUpdater = null;
         try {
-          for (JsonObject record = recordReader.readRecord();
-               (record != null);
-               record = recordReader.readRecord()) {
+          for (JsonObject record = recordReader.readRecord(); (record != null); record = recordReader.readRecord()) {
             String dataSrc = JsonUtilities.getString(record, "DATA_SOURCE");
             String recordId = JsonUtilities.getString(record, "RECORD_ID");
             dataAnalysis.trackRecord(dataSrc, recordId);
 
             // check if the progress period has expired
             if ((progressNanos != null) && (progressUpdater == null)
-                && (eventBuilder != null || webSocketSession != null))
-            {
+                && (eventBuilder != null || webSocketSession != null)) {
               progressState.setStartTime(System.nanoTime());
               Supplier<SzBulkDataAnalysisResponse> supplier = () -> {
                 return this.newBulkDataAnalysisResponse(
                     POST, 200, uriInfo, timers, dataAnalysis);
               };
               progressUpdater = new ProgressUpdater<>(progressNanos,
-                                                      progressState,
-                                                      progressState, // monitor
-                                                      supplier,
-                                                      sseEventSink,
-                                                      eventBuilder,
-                                                      webSocketSession);
+                  progressState,
+                  progressState, // monitor
+                  supplier,
+                  sseEventSink,
+                  eventBuilder,
+                  webSocketSession);
               progressUpdater.start();
             }
           }
@@ -275,16 +270,16 @@ public interface BulkDataSupport extends ServicesSupport {
       dataAnalysis.setStatus(ABORTED);
 
       SzBulkDataAnalysisResponse response = this.newBulkDataAnalysisResponse(
-          POST,200, uriInfo, timers, dataAnalysis);
+          POST, 200, uriInfo, timers, dataAnalysis);
 
       this.abortOperation(e,
-                          response,
-                          uriInfo,
-                          timers,
-                          progressState.nextEventId(),
-                          eventBuilder,
-                          sseEventSink,
-                          webSocketSession);
+          response,
+          uriInfo,
+          timers,
+          progressState.nextEventId(),
+          eventBuilder,
+          sseEventSink,
+          webSocketSession);
 
       return response;
     }
@@ -295,29 +290,29 @@ public interface BulkDataSupport extends ServicesSupport {
         POST, 200, uriInfo, timers, dataAnalysis);
 
     return this.completeOperation(eventBuilder,
-                                  sseEventSink,
-                                  progressState.nextEventId(),
-                                  webSocketSession,
-                                  response);
+        sseEventSink,
+        progressState.nextEventId(),
+        webSocketSession,
+        response);
   }
 
   /**
    * Creates a new instance of {@link SzBulkDataAnalysisResponse} with the
    * following parameters.
    *
-   * @param httpMethod The {@link SzHttpMethod} for the response.
+   * @param httpMethod     The {@link SzHttpMethod} for the response.
    * @param httpStatusCode The status code for the response.
-   * @param uriInfo The {@link UriInfo} for the operation.
-   * @param timers The {@link Timers} tracking the timing for the operation.
-   * @param dataAnalysis The {@link SzBulkDataAnalysis} describing the analysis.
+   * @param uriInfo        The {@link UriInfo} for the operation.
+   * @param timers         The {@link Timers} tracking the timing for the
+   *                       operation.
+   * @param dataAnalysis   The {@link SzBulkDataAnalysis} describing the analysis.
    */
   default SzBulkDataAnalysisResponse newBulkDataAnalysisResponse(
-      SzHttpMethod        httpMethod,
-      int                 httpStatusCode,
-      UriInfo             uriInfo,
-      Timers              timers,
-      SzBulkDataAnalysis  dataAnalysis)
-  {
+      SzHttpMethod httpMethod,
+      int httpStatusCode,
+      UriInfo uriInfo,
+      Timers timers,
+      SzBulkDataAnalysis dataAnalysis) {
     return SzBulkDataAnalysisResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
         this.newLinks(uriInfo), dataAnalysis);
@@ -336,33 +331,33 @@ public interface BulkDataSupport extends ServicesSupport {
    * Loads the records found in the bulk data.
    */
   default SzBulkLoadResponse loadBulkRecords(
-      SzApiProvider               provider,
-      Timers                      timers,
-      String                      dataSource,
-      String                      mapDataSources,
-      List<String>                mapDataSourceList,
-      String                      explicitLoadId,
-      int                         maxFailures,
-      MediaType                   mediaType,
-      InputStream                 dataInputStream,
-      FormDataContentDisposition  fileMetaData,
-      UriInfo                     uriInfo,
-      Long                        progressPeriod,
-      SseEventSink                sseEventSink,
-      Sse                         sse,
-      Session                     webSocketSession)
-  {
+      SzApiProvider provider,
+      Timers timers,
+      String dataSource,
+      String mapDataSources,
+      List<String> mapDataSourceList,
+      String explicitLoadId,
+      int maxFailures,
+      MediaType mediaType,
+      InputStream dataInputStream,
+      FormDataContentDisposition fileMetaData,
+      UriInfo uriInfo,
+      Long progressPeriod,
+      SseEventSink sseEventSink,
+      Sse sse,
+      Session webSocketSession) {
     MediaType specifiedMediaType = mediaType;
 
     // check if the media type is null
-    if (mediaType == null) mediaType = TEXT_PLAIN_TYPE;
+    if (mediaType == null)
+      mediaType = TEXT_PLAIN_TYPE;
 
     // convert the progress period to nanoseconds
     Long progressNanos = (progressPeriod == null)
-        ? null : progressPeriod * 1000000L;
+        ? null
+        : progressPeriod * 1000000L;
 
-    OutboundSseEvent.Builder eventBuilder
-        = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
+    OutboundSseEvent.Builder eventBuilder = (sseEventSink != null && sse != null) ? sse.newEventBuilder() : null;
 
     ProgressState progressState = new ProgressState();
 
@@ -372,12 +367,12 @@ public interface BulkDataSupport extends ServicesSupport {
     // populate the data source map
     Map<String, String> dataSourceMap = new HashMap<>();
     this.prepareBulkDataMappings(provider,
-                                 uriInfo,
-                                 timers,
-                                 dataSource,
-                                 mapDataSources,
-                                 mapDataSourceList,
-                                 dataSourceMap);
+        uriInfo,
+        timers,
+        dataSource,
+        mapDataSources,
+        mapDataSourceList,
+        dataSourceMap);
 
     try {
       BulkDataSet bulkDataSet = new BulkDataSet(mediaType, dataInputStream);
@@ -389,11 +384,11 @@ public interface BulkDataSupport extends ServicesSupport {
       debugLog("Load bulk data character encoding: " + charset);
 
       String loadId = (explicitLoadId == null)
-          ? formatLoadId(dataCache, fileMetaData) : explicitLoadId;
+          ? formatLoadId(dataCache, fileMetaData)
+          : explicitLoadId;
 
       int concurrency = provider.getConcurrency();
-      AsyncWorkerPool<AddRecordResult> asyncPool
-          = new AsyncWorkerPool<>(loadId, concurrency);
+      AsyncWorkerPool<AddRecordResult> asyncPool = new AsyncWorkerPool<>(loadId, concurrency);
 
       List<Timers> timerPool = new ArrayList<>(concurrency);
       for (int index = 0; index < concurrency; index++) {
@@ -401,21 +396,20 @@ public interface BulkDataSupport extends ServicesSupport {
       }
 
       // check if we need to auto-detect the media type
-      try (InputStream        is  = dataCache.getInputStream(true);
-           InputStreamReader  isr = new InputStreamReader(is, charset);
-           BufferedReader     br  = new BufferedReader(isr))
-      {
+      try (InputStream is = dataCache.getInputStream(true);
+          InputStreamReader isr = new InputStreamReader(is, charset);
+          BufferedReader br = new BufferedReader(isr)) {
         // if format is null then RecordReader will auto-detect
         RecordReader recordReader = new RecordReader(null,
-                                                     br,
-                                                     dataSourceMap,
-                                                     loadId);
+            br,
+            dataSourceMap,
+            loadId);
 
         this.verifyBulkDataFormat(specifiedMediaType,
-                                  bulkDataSet.getFormat(),
-                                  recordReader.getFormat(),
-                                  uriInfo,
-                                  timers);
+            bulkDataSet.getFormat(),
+            recordReader.getFormat(),
+            uriInfo,
+            timers);
 
         // override the format accordingly
         bulkDataSet.setFormat(recordReader.getFormat());
@@ -424,9 +418,9 @@ public interface BulkDataSupport extends ServicesSupport {
         bulkLoadResult.setCharacterEncoding(charset);
         bulkLoadResult.setMediaType(bulkDataSet.getFormat().getMediaType());
 
-        boolean           concurrent       = false;
-        boolean           done             = false;
-        List<JsonObject>  first1000Records = new LinkedList<>();
+        boolean concurrent = false;
+        boolean done = false;
+        List<JsonObject> first1000Records = new LinkedList<>();
 
         boolean aborted = false;
         ProgressUpdater<SzBulkLoadResponse> progressUpdater = null;
@@ -453,7 +447,8 @@ public interface BulkDataSupport extends ServicesSupport {
               first1000Records.add(record);
 
               // check if we have more than 1000 records
-              if (first1000Records.size() > 1000) concurrent = true;
+              if (first1000Records.size() > 1000)
+                concurrent = true;
 
               // continue for now
               continue;
@@ -461,10 +456,9 @@ public interface BulkDataSupport extends ServicesSupport {
 
             // check if we have a data source
             String resolvedDS = JsonUtilities.getString(record, "DATA_SOURCE");
-            if (resolvedDS == null || resolvedDS.trim().length() == 0)
-            {
+            if (resolvedDS == null || resolvedDS.trim().length() == 0) {
               debugLog("INCOMPLETE RECORD NOT LOADED: "
-                        + JsonUtilities.toJsonText(record));
+                  + JsonUtilities.toJsonText(record));
 
               bulkLoadResult.trackIncompleteRecord(resolvedDS);
 
@@ -473,10 +467,10 @@ public interface BulkDataSupport extends ServicesSupport {
               AsyncResult<AddRecordResult> asyncResult = null;
               try {
                 asyncResult = this.asyncProcessRecord(asyncPool,
-                                                      provider,
-                                                      subTimers,
-                                                      record,
-                                                      loadId);
+                    provider,
+                    subTimers,
+                    record,
+                    loadId);
 
               } finally {
                 this.trackLoadResult(asyncResult, bulkLoadResult);
@@ -496,8 +490,7 @@ public interface BulkDataSupport extends ServicesSupport {
 
             // check if the timing has gone beyond the specified progress period
             if ((progressNanos != null) && (progressUpdater == null)
-                && (eventBuilder != null || webSocketSession != null))
-            {
+                && (eventBuilder != null || webSocketSession != null)) {
               // create the update response if there is a client expecting it
               progressState.setStartTime(System.nanoTime());
               Supplier<SzBulkLoadResponse> supplier = () -> {
@@ -505,12 +498,12 @@ public interface BulkDataSupport extends ServicesSupport {
                     POST, 200, uriInfo, timers, bulkLoadResult);
               };
               progressUpdater = new ProgressUpdater<>(progressNanos,
-                                                      progressState,
-                                                      progressState, // monitor
-                                                      supplier,
-                                                      sseEventSink,
-                                                      eventBuilder,
-                                                      webSocketSession);
+                  progressState,
+                  progressState, // monitor
+                  supplier,
+                  sseEventSink,
+                  eventBuilder,
+                  webSocketSession);
               progressUpdater.start();
             }
           }
@@ -518,11 +511,11 @@ public interface BulkDataSupport extends ServicesSupport {
           // check if we have less than 1000 records
           if (first1000Records.size() > 0 && !aborted) {
             this.processRecords(provider,
-                                timers,
-                                first1000Records,
-                                loadId,
-                                bulkLoadResult,
-                                maxFailures);
+                timers,
+                first1000Records,
+                loadId,
+                bulkLoadResult,
+                maxFailures);
           }
 
           // close out any in-flight loads from the asynchronous pool
@@ -567,59 +560,58 @@ public interface BulkDataSupport extends ServicesSupport {
     } catch (IOException e) {
       bulkLoadResult.setStatus(ABORTED);
       SzBulkLoadResponse response = this.newBulkLoadResponse(POST,
-                                                             200,
-                                                             uriInfo,
-                                                             timers,
-                                                             bulkLoadResult);
+          200,
+          uriInfo,
+          timers,
+          bulkLoadResult);
       this.abortOperation(e,
-                          response,
-                          uriInfo,
-                          timers,
-                          progressState.nextEventId(),
-                          eventBuilder,
-                          sseEventSink,
-                          webSocketSession);
+          response,
+          uriInfo,
+          timers,
+          progressState.nextEventId(),
+          eventBuilder,
+          sseEventSink,
+          webSocketSession);
     }
 
     SzBulkLoadResponse response = this.newBulkLoadResponse(POST,
-                                                           200,
-                                                           uriInfo,
-                                                           timers,
-                                                           bulkLoadResult);
+        200,
+        uriInfo,
+        timers,
+        bulkLoadResult);
 
     return this.completeOperation(eventBuilder,
-                                  sseEventSink,
-                                  progressState.nextEventId(),
-                                  webSocketSession,
-                                  response);
+        sseEventSink,
+        progressState.nextEventId(),
+        webSocketSession,
+        response);
   }
 
   /**
    * Verifies the format of the bulk data matches the Content-Type that was
-   * specified (if any).  This allows any format if there is no specified
+   * specified (if any). This allows any format if there is no specified
    * Content-Type or if the specified Content-Type is <code>text/plain</code>.
    * This allows either {@link RecordReader.Format#JSON} or {@link
    * RecordReader.Format#JSON_LINES} if the specified Content-Type is
-   * <code>application/json</code>.  Otherwise, the format needs to match the
+   * <code>application/json</code>. Otherwise, the format needs to match the
    * specified media type.
    *
    * @param specifiedMediaType The specified Content-Type.
-   * @param specifiedFormat The {@link RecordReader.Format} for the specified
-   *                        Content-Type.
-   * @param detectedFormat The {@link RecordReader.Format} that was detected.
-   * @param uriInfo The {@link UriInfo} for the request.
-   * @param timers The {@link Timers} for the request.
+   * @param specifiedFormat    The {@link RecordReader.Format} for the specified
+   *                           Content-Type.
+   * @param detectedFormat     The {@link RecordReader.Format} that was detected.
+   * @param uriInfo            The {@link UriInfo} for the request.
+   * @param timers             The {@link Timers} for the request.
    *
    * @throws BadRequestException If the specified Content-Type does not match
    *                             the detected {@link RecordReader.Format}
    */
-  default void verifyBulkDataFormat(MediaType           specifiedMediaType,
-                                    RecordReader.Format specifiedFormat,
-                                    RecordReader.Format detectedFormat,
-                                    UriInfo             uriInfo,
-                                    Timers              timers)
-    throws BadRequestException
-  {
+  default void verifyBulkDataFormat(MediaType specifiedMediaType,
+      RecordReader.Format specifiedFormat,
+      RecordReader.Format detectedFormat,
+      UriInfo uriInfo,
+      Timers timers)
+      throws BadRequestException {
     // check for a format mismatch
     if (specifiedFormat != null) {
       switch (specifiedFormat) {
@@ -648,19 +640,19 @@ public interface BulkDataSupport extends ServicesSupport {
    * Creates a new instance of {@link SzBulkDataAnalysisResponse} with the
    * following parameters.
    *
-   * @param httpMethod The {@link SzHttpMethod} for the response.
+   * @param httpMethod     The {@link SzHttpMethod} for the response.
    * @param httpStatusCode The status code for the response.
-   * @param uriInfo The {@link UriInfo} for the operation.
-   * @param timers The {@link Timers} tracking the timing for the operation.
+   * @param uriInfo        The {@link UriInfo} for the operation.
+   * @param timers         The {@link Timers} tracking the timing for the
+   *                       operation.
    * @param bulkLoadResult The {@link SzBulkLoadResult} describing the analysis.
    */
   default SzBulkLoadResponse newBulkLoadResponse(
-      SzHttpMethod        httpMethod,
-      int                 httpStatusCode,
-      UriInfo             uriInfo,
-      Timers              timers,
-      SzBulkLoadResult    bulkLoadResult)
-  {
+      SzHttpMethod httpMethod,
+      int httpStatusCode,
+      UriInfo uriInfo,
+      Timers timers,
+      SzBulkLoadResult bulkLoadResult) {
     return SzBulkLoadResponse.FACTORY.create(
         this.newMeta(httpMethod, httpStatusCode, timers),
         this.newLinks(uriInfo), bulkLoadResult);
@@ -668,19 +660,18 @@ public interface BulkDataSupport extends ServicesSupport {
 
   /**
    * Asynchronously process a record using the specified {@link SzApiProvider}
-   * and {@link AsyncWorkerPool}.  The returned {@link AsyncResult} is from
+   * and {@link AsyncWorkerPool}. The returned {@link AsyncResult} is from
    * a previously executed task on the same thread or <tt>null</tt> if the
    * worker thread employed has not previously executed a task.
    */
   default AsyncResult<AddRecordResult> asyncProcessRecord(
       AsyncWorkerPool<AddRecordResult> asyncPool,
-      SzApiProvider                 provider,
-      Timers                        timers,
-      JsonObject                    record,
-      String                        loadId)
-  {
+      SzApiProvider provider,
+      Timers timers,
+      JsonObject record,
+      String loadId) {
     String dataSource = JsonUtilities.getString(record, "DATA_SOURCE");
-    String recordId   = JsonUtilities.getString(record, "RECORD_ID");
+    String recordId = JsonUtilities.getString(record, "RECORD_ID");
     String recordJSON = JsonUtilities.toJsonText(record);
 
     G2Engine engineApi = provider.getEngineApi();
@@ -693,12 +684,12 @@ public interface BulkDataSupport extends ServicesSupport {
           debugLog("Async loading record: " + recordJSON);
 
           int returnCode = this.addRecord(engineApi,
-                                          provider,
-                                          dataSource,
-                                          recordId,
-                                          recordJSON,
-                                          loadId,
-                                          timers);
+              provider,
+              dataSource,
+              recordId,
+              recordJSON,
+              loadId,
+              timers);
 
           return this.newAddRecordResult(
               dataSource, timers, returnCode, engineApi);
@@ -715,18 +706,17 @@ public interface BulkDataSupport extends ServicesSupport {
 
   /**
    * Asynchronously process a record using the specified {@link SzApiProvider}
-   * and {@link AsyncWorkerPool}.  The returned {@link AsyncResult} is from
+   * and {@link AsyncWorkerPool}. The returned {@link AsyncResult} is from
    * a previously executed task on the same thread or <tt>null</tt> if the
    * worker thread employed has not previously executed a task.
    */
   default void processRecords(
-      SzApiProvider     provider,
-      Timers            timers,
-      List<JsonObject>  records,
-      String            loadId,
-      SzBulkLoadResult  bulkLoadResult,
-      int               maxFailures)
-  {
+      SzApiProvider provider,
+      Timers timers,
+      List<JsonObject> records,
+      String loadId,
+      SzBulkLoadResult bulkLoadResult,
+      int maxFailures) {
     G2Engine engineApi = provider.getEngineApi();
     // otherwise try to load the record
     this.enteringQueue(timers);
@@ -735,7 +725,7 @@ public interface BulkDataSupport extends ServicesSupport {
       for (JsonObject record : records) {
 
         String dataSource = JsonUtilities.getString(record, "DATA_SOURCE");
-        String recordId   = JsonUtilities.getString(record, "RECORD_ID");
+        String recordId = JsonUtilities.getString(record, "RECORD_ID");
         String recordJSON = JsonUtilities.toJsonText(record);
 
         // check if we have a data source
@@ -748,12 +738,12 @@ public interface BulkDataSupport extends ServicesSupport {
           debugLog("Sync loading record: " + recordJSON);
 
           int returnCode = this.addRecord(engineApi,
-                                          provider,
-                                          dataSource,
-                                          recordId,
-                                          recordJSON,
-                                          loadId,
-                                          timers);
+              provider,
+              dataSource,
+              recordId,
+              recordJSON,
+              loadId,
+              timers);
 
           AddRecordResult addRecordResult = this.newAddRecordResult(
               dataSource, timers, returnCode, engineApi);
@@ -780,34 +770,32 @@ public interface BulkDataSupport extends ServicesSupport {
    * Constructs with the specified parameters.
    *
    * @param dataSource The data source for the record.
-   * @param timers The {@link Timers} for the operation.
+   * @param timers     The {@link Timers} for the operation.
    * @param returnCode The return code from native add-record function.
-   * @param engine The {@link G2Engine} instance that was used.
+   * @param engine     The {@link G2Engine} instance that was used.
    *
    * @return The newly created instance of {@link AddRecordResult}.
    */
-  default AddRecordResult newAddRecordResult(String    dataSource,
-                                             Timers    timers,
-                                             int       returnCode,
-                                             G2Engine  engine)
-  {
+  default AddRecordResult newAddRecordResult(String dataSource,
+      Timers timers,
+      int returnCode,
+      G2Engine engine) {
     return new AddRecordResult(dataSource,
-                               timers,
-                               returnCode,
-                               engine);
+        timers,
+        returnCode,
+        engine);
   }
 
   /**
    * Adds the record either with or without a record ID and tracks the timing.
    */
-  default int addRecord(G2Engine      engineApi,
-                        SzApiProvider provider,
-                        String        dataSource,
-                        String        recordId,
-                        String        recordJSON,
-                        String        loadId,
-                        Timers        timers)
-  {
+  default int addRecord(G2Engine engineApi,
+      SzApiProvider provider,
+      String dataSource,
+      String recordId,
+      String recordJSON,
+      String loadId,
+      Timers timers) {
     int returnCode;
     boolean asyncInfo = provider.hasInfoSink();
     if (asyncInfo) {
@@ -847,19 +835,19 @@ public interface BulkDataSupport extends ServicesSupport {
     } else if (recordId != null) {
       this.callingNativeAPI(timers, "engine", "addRecord");
       returnCode = engineApi.addRecord(dataSource,
-                                       recordId,
-                                       recordJSON,
-                                       loadId);
+          recordId,
+          recordJSON,
+          loadId);
       this.calledNativeAPI(timers, "engine", "addRecord");
 
     } else {
       this.callingNativeAPI(timers, "engine",
-                       "addRecordWithReturnedRecordID");
+          "addRecordWithReturnedRecordID");
       StringBuffer sb = new StringBuffer();
       returnCode = engineApi.addRecordWithReturnedRecordID(
           dataSource, sb, recordJSON, loadId);
       this.calledNativeAPI(timers, "engine",
-                      "addRecordWithReturnedRecordID");
+          "addRecordWithReturnedRecordID");
     }
     return returnCode;
   }
@@ -868,8 +856,7 @@ public interface BulkDataSupport extends ServicesSupport {
    * Tracks the asynchronous record load result in the {@link SzBulkLoadResult}.
    */
   default void trackLoadResult(AsyncResult<AddRecordResult> asyncResult,
-                               SzBulkLoadResult             bulkLoadResult)
-  {
+      SzBulkLoadResult bulkLoadResult) {
     // check the result
     if (asyncResult != null) {
       AddRecordResult addRecordResult = null;
@@ -879,8 +866,8 @@ public interface BulkDataSupport extends ServicesSupport {
 
       } catch (Exception e) {
         // an exception was thrown in trying to get the result
-        String      jsonText  = e.getMessage();
-        JsonObject  jsonObj   = JsonUtilities.parseJsonObject(jsonText);
+        String jsonText = e.getMessage();
+        JsonObject jsonObj = JsonUtilities.parseJsonObject(jsonText);
 
         String failDataSource = JsonUtilities.getString(jsonObj, "dataSource");
         Throwable cause = e.getCause();
@@ -898,9 +885,8 @@ public interface BulkDataSupport extends ServicesSupport {
   /**
    * Tracks the asynchronous record load result in the {@link SzBulkLoadResult}.
    */
-  default void trackLoadResult(AddRecordResult  addRecordResult,
-                               SzBulkLoadResult bulkLoadResult)
-  {
+  default void trackLoadResult(AddRecordResult addRecordResult,
+      SzBulkLoadResult bulkLoadResult) {
     // check if the add failed or succeeded
     if (addRecordResult.isFailed()) {
       // adding the record failed, record the failure
@@ -917,16 +903,14 @@ public interface BulkDataSupport extends ServicesSupport {
   /**
    * Formats load ID using the specified data cache
    */
-  default String formatLoadId(TemporaryDataCache          dataCache,
-                              FormDataContentDisposition  fileMetaData)
-  {
+  default String formatLoadId(TemporaryDataCache dataCache,
+      FormDataContentDisposition fileMetaData) {
     String fileKey = (fileMetaData != null) ? fileMetaData.getName() : null;
     if (fileKey == null) {
-      try (InputStream is = dataCache.getInputStream();)
-      {
-        byte[]        bytes     = new byte[1024];
-        MessageDigest md5       = MessageDigest.getInstance("MD5");
-        int           readCount = is.read(bytes);
+      try (InputStream is = dataCache.getInputStream();) {
+        byte[] bytes = new byte[1024];
+        MessageDigest md5 = MessageDigest.getInstance("MD5");
+        int readCount = is.read(bytes);
         md5.update(bytes, 0, readCount);
         byte[] hash = md5.digest();
         fileKey = Base64.getEncoder().encodeToString(hash);
@@ -944,11 +928,13 @@ public interface BulkDataSupport extends ServicesSupport {
     }
 
     ZonedDateTime fileDateTime = (fileDate == null)
-        ? null : ZonedDateTime.ofInstant(fileDate.toInstant(), UTC_ZONE);
+        ? null
+        : ZonedDateTime.ofInstant(fileDate.toInstant(), UTC_ZONE);
     ZonedDateTime now = ZonedDateTime.now(UTC_ZONE);
 
     String fileDateText = (fileDate == null)
-        ? "?" : FILE_DATE_FORMATTER.format(fileDate.toInstant());
+        ? "?"
+        : FILE_DATE_FORMATTER.format(fileDate.toInstant());
     String nowText = (now == null) ? "?" : FILE_DATE_FORMATTER.format(now);
 
     return fileKey + "_" + fileDateText + "_" + nowText;
@@ -982,24 +968,25 @@ public interface BulkDataSupport extends ServicesSupport {
 
     /**
      * Constructs with the specified media type (if known) and the specified
-     * {@link InputStream}.  If the media type is not known it will be
+     * {@link InputStream}. If the media type is not known it will be
      * automatically detected.
      *
-     * @param mediaType The media type for the data that will be read, or
-     *                  <tt>null</tt> if not known and it should be
-     *                  automatically detected.
+     * @param mediaType   The media type for the data that will be read, or
+     *                    <tt>null</tt> if not known and it should be
+     *                    automatically detected.
      * @param inputStream The {@link InputStream} to read the data.
      * @throws IOException If an I/O failure occurs.
      */
     public BulkDataSet(MediaType mediaType, InputStream inputStream)
-        throws IOException
-    {
+        throws IOException {
       // check if the media type is null
-      if (mediaType == null) mediaType = TEXT_PLAIN_TYPE;
+      if (mediaType == null)
+        mediaType = TEXT_PLAIN_TYPE;
 
       this.characterEncoding = mediaType.getParameters().get("charset");
       String baseMediaType = mediaType.getType() + "/" + mediaType.getSubtype();
-      if (baseMediaType != null) baseMediaType = baseMediaType.toLowerCase();
+      if (baseMediaType != null)
+        baseMediaType = baseMediaType.toLowerCase();
       switch (baseMediaType) {
         case "multipart/form-data":
           this.characterEncoding = null;
@@ -1019,7 +1006,8 @@ public interface BulkDataSupport extends ServicesSupport {
           try (InputStream is = this.dataCache.getInputStream()) {
             this.characterEncoding = IOUtilities.detectCharacterEncoding(is);
           }
-          if (this.characterEncoding == null) this.characterEncoding = "UTF-8";
+          if (this.characterEncoding == null)
+            this.characterEncoding = "UTF-8";
         }
 
       } catch (IOException e) {
@@ -1079,7 +1067,7 @@ public interface BulkDataSupport extends ServicesSupport {
 
   /**
    * Describes the result from the engine to track the result of attempting to
-   * add a record.  This is used to aggregate results from across threads.
+   * add a record. This is used to aggregate results from across threads.
    */
   class AddRecordResult {
     /**
@@ -1113,21 +1101,20 @@ public interface BulkDataSupport extends ServicesSupport {
      * Constructs with the specified parameters.
      *
      * @param dataSource The data source for the record.
-     * @param timers The {@link Timers} for the operation.
+     * @param timers     The {@link Timers} for the operation.
      * @param returnCode The return code from native add-record function.
-     * @param engine The {@link G2Engine} instance that was used.
+     * @param engine     The {@link G2Engine} instance that was used.
      */
-    public AddRecordResult(String    dataSource,
-                           Timers    timers,
-                           int       returnCode,
-                           G2Engine  engine)
-    {
+    public AddRecordResult(String dataSource,
+        Timers timers,
+        int returnCode,
+        G2Engine engine) {
       this.dataSource = dataSource;
       this.returnCode = returnCode;
-      this.timers     = timers;
+      this.timers = timers;
       if (this.returnCode != 0) {
-        this.errorCode  = "" + engine.getLastExceptionCode();
-        this.errorMsg   = engine.getLastException();
+        this.errorCode = "" + engine.getLastExceptionCode();
+        this.errorMsg = engine.getLastException();
       }
     }
 
@@ -1182,7 +1169,7 @@ public interface BulkDataSupport extends ServicesSupport {
 
     /**
      * Checks if this instance describes a failure when performing the
-     * add-record operation.  If this returns <tt>true</tt> then details can
+     * add-record operation. If this returns <tt>true</tt> then details can
      * be obtained from {@link #getErrorCode()} and {@link #getErrorMessage()}.
      *
      * @return <tt>true</tt> if the add-record operation failed, and
@@ -1199,10 +1186,10 @@ public interface BulkDataSupport extends ServicesSupport {
      */
     public String toString() {
       return "{ returnCode=[ " + this.returnCode
-              + " ], dataSource=[ " + this.dataSource
-              + " ], errorCode=[ " + this.errorCode
-              + " ], errorMsg=[ " + this.errorMsg
-              + " ] }";
+          + " ], dataSource=[ " + this.dataSource
+          + " ], errorCode=[ " + this.errorCode
+          + " ], errorMsg=[ " + this.errorMsg
+          + " ] }";
     }
   }
 
@@ -1210,27 +1197,25 @@ public interface BulkDataSupport extends ServicesSupport {
    * Completes the operation using the specified parameters to determine what
    * sort of request was made.
    *
-   * @param eventBuilder The event builder if an SSE request.
-   * @param sseEventSink The event sink if an SSE request.
-   * @param eventId The event ID if an SSE request.
+   * @param eventBuilder     The event builder if an SSE request.
+   * @param sseEventSink     The event sink if an SSE request.
+   * @param eventId          The event ID if an SSE request.
    * @param webSocketSession The web socket session if a web socket request.
-   * @param response The response object to be sent.
-   * @param <T> The type of the response object.
+   * @param response         The response object to be sent.
+   * @param <T>              The type of the response object.
    *
    * @return The specified response object.
    */
   default <T extends SzBasicResponse> T completeOperation(
-      OutboundSseEvent.Builder  eventBuilder,
-      SseEventSink              sseEventSink,
-      int                       eventId,
-      Session                   webSocketSession,
-      T                         response)
-  {
+      OutboundSseEvent.Builder eventBuilder,
+      SseEventSink sseEventSink,
+      int eventId,
+      Session webSocketSession,
+      T response) {
     if (eventBuilder != null || webSocketSession != null) {
       // check if sending an SSE event
       if (eventBuilder != null) {
-        OutboundSseEvent event
-            = eventBuilder.name(COMPLETED_EVENT)
+        OutboundSseEvent event = eventBuilder.name(COMPLETED_EVENT)
             .id(String.valueOf(eventId++))
             .mediaType(APPLICATION_JSON_TYPE)
             .data(response)
@@ -1263,29 +1248,28 @@ public interface BulkDataSupport extends ServicesSupport {
    * Aborts the operation using the specified parameters to determine what
    * sort of request was made.
    *
-   * @param failure The failure that triggered the abort.
-   * @param response The response object to send.
-   * @param uriInfo The {@link UriInfo} for the request.
-   * @param timers The {@link Timers} associated with the operation.
-   * @param eventId The event ID if an SSE request.
-   * @param eventBuilder The event builder if an SSE request.
-   * @param sseEventSink The event sink if an SSE request.
+   * @param failure          The failure that triggered the abort.
+   * @param response         The response object to send.
+   * @param uriInfo          The {@link UriInfo} for the request.
+   * @param timers           The {@link Timers} associated with the operation.
+   * @param eventId          The event ID if an SSE request.
+   * @param eventBuilder     The event builder if an SSE request.
+   * @param sseEventSink     The event sink if an SSE request.
    * @param webSocketSession The web socket session if a web sockets request.
-   * @param <T> The type of the response object.
+   * @param <T>              The type of the response object.
    * @return The specified response object.
    * @throws WebApplicationException If a web application failure occurs.
    */
   default <T extends SzBasicResponse> T abortOperation(
-      Exception                 failure,
-      T                         response,
-      UriInfo                   uriInfo,
-      Timers                    timers,
-      int                       eventId,
-      OutboundSseEvent.Builder  eventBuilder,
-      SseEventSink              sseEventSink,
-      Session                   webSocketSession)
-      throws WebApplicationException
-  {
+      Exception failure,
+      T response,
+      UriInfo uriInfo,
+      Timers timers,
+      int eventId,
+      OutboundSseEvent.Builder eventBuilder,
+      SseEventSink sseEventSink,
+      Session webSocketSession)
+      throws WebApplicationException {
     if (!isLastLoggedException(failure)) {
       failure.printStackTrace();
     }
@@ -1307,8 +1291,7 @@ public interface BulkDataSupport extends ServicesSupport {
 
     if (eventBuilder != null) {
       // handle SSE response
-      OutboundSseEvent abortEvent
-          = eventBuilder.name(PROGRESS_EVENT)
+      OutboundSseEvent abortEvent = eventBuilder.name(PROGRESS_EVENT)
           .id(String.valueOf(eventId++))
           .mediaType(APPLICATION_JSON_TYPE)
           .data(response)
@@ -1316,8 +1299,7 @@ public interface BulkDataSupport extends ServicesSupport {
           .build();
       sseEventSink.send(abortEvent);
 
-      OutboundSseEvent failEvent
-          = eventBuilder.name(FAILED_EVENT)
+      OutboundSseEvent failEvent = eventBuilder.name(FAILED_EVENT)
           .id(String.valueOf(eventId++))
           .mediaType(APPLICATION_JSON_TYPE)
           .data(errorResponse)
@@ -1351,18 +1333,17 @@ public interface BulkDataSupport extends ServicesSupport {
    * Populates the specified {@link Map} with the data source mappings found
    * in the specified JSON text.
    *
-   * @param dataSourceMap The {@link Map} to be populated.
+   * @param dataSourceMap  The {@link Map} to be populated.
    * @param mapDataSources The JSON text describing the data source mappings.
-   * @param provider The {@link SzApiProvider} to use.
-   * @param timers The {@link Timers} for the operation.
-   * @param uriInfo The {@link UriInfo} for the operation.
+   * @param provider       The {@link SzApiProvider} to use.
+   * @param timers         The {@link Timers} for the operation.
+   * @param uriInfo        The {@link UriInfo} for the operation.
    */
   default void processDataSources(Map<String, String> dataSourceMap,
-                                  String              mapDataSources,
-                                  SzApiProvider       provider,
-                                  Timers              timers,
-                                  UriInfo             uriInfo)
-  {
+      String mapDataSources,
+      SzApiProvider provider,
+      Timers timers,
+      UriInfo uriInfo) {
     // check if the mapDataSources parameter is provided
     if (mapDataSources != null && mapDataSources.trim().length() > 0) {
       try {
@@ -1403,19 +1384,18 @@ public interface BulkDataSupport extends ServicesSupport {
    * Populates the specified {@link Map} with the data source mappings found
    * in the specified {@link List} of encoded strings.
    *
-   * @param dataSourceMap The {@link Map} to be populated.
+   * @param dataSourceMap     The {@link Map} to be populated.
    * @param mapDataSourceList The {@link List} of encoded strings describing the
    *                          data source mappings.
-   * @param provider The {@link SzApiProvider} to use.
-   * @param timers The {@link Timers} for the operation.
-   * @param uriInfo The {@link UriInfo} for the operation.
+   * @param provider          The {@link SzApiProvider} to use.
+   * @param timers            The {@link Timers} for the operation.
+   * @param uriInfo           The {@link UriInfo} for the operation.
    */
   default void processDataSources(Map<String, String> dataSourceMap,
-                                  List<String>        mapDataSourceList,
-                                  SzApiProvider       provider,
-                                  Timers              timers,
-                                  UriInfo             uriInfo)
-  {
+      List<String> mapDataSourceList,
+      SzApiProvider provider,
+      Timers timers,
+      UriInfo uriInfo) {
     // check if the mapDataSources parameter is provided
     if (mapDataSourceList != null && mapDataSourceList.size() > 0) {
       for (String mapping : mapDataSourceList) {
@@ -1449,19 +1429,18 @@ public interface BulkDataSupport extends ServicesSupport {
    *
    * @parma provider The {@link SzApiProvider} to use.
    * @param uriInfo The {@link UriInfo} for the request.
-   * @param timers The {@link Timers} tracking timing for the operation.
+   * @param timers  The {@link Timers} tracking timing for the operation.
    *
    * @return The {@link AccessToken} for the prolonged operation.
    *
-   * @throws ForbiddenException If no load queue is configured.
-   * @throws ServiceUnavailableException If too many long-running operaitons are
+   * @throws ForbiddenException          If no load queue is configured.
+   * @throws ServiceUnavailableException If too many long-running operations are
    *                                     already running.
    */
-  default AccessToken prepareBulkLoadOperation(SzApiProvider  provider,
-                                               UriInfo        uriInfo,
-                                               Timers         timers)
-      throws ForbiddenException, ServiceUnavailableException
-  {
+  default AccessToken prepareBulkLoadOperation(SzApiProvider provider,
+      UriInfo uriInfo,
+      Timers timers)
+      throws ForbiddenException, ServiceUnavailableException {
     this.ensureLoadingIsAllowed(provider, POST, uriInfo, timers);
 
     return this.prepareProlongedOperation(provider, POST, uriInfo, timers);
@@ -1472,30 +1451,31 @@ public interface BulkDataSupport extends ServicesSupport {
    * required data sources are configured.
    *
    * @parma provider The {@link SzApiProvider} to use.
-   * @param uriInfo The {@link UriInfo} for the request.
-   * @param timers The {@link Timers} tracking timing for the operation.
-   * @param dataSource The data source to assign to the loaded records unless
-   *                   another data source mapping supercedes this default.
-   * @param mapDataSources The JSON string mapping specific data sources to
-   *                       alternate data source names.  A mapping from
-   *                       empty-string is used for mapping records with no
-   *                       data source specified.
+   * @param uriInfo           The {@link UriInfo} for the request.
+   * @param timers            The {@link Timers} tracking timing for the
+   *                          operation.
+   * @param dataSource        The data source to assign to the loaded records
+   *                          unless
+   *                          another data source mapping supersedes this default.
+   * @param mapDataSources    The JSON string mapping specific data sources to
+   *                          alternate data source names. A mapping from
+   *                          empty-string is used for mapping records with no
+   *                          data source specified.
    * @param mapDataSourceList The {@link List} of delimited strings that begin
    *                          the delimiter, followed by the "from" data source
    *                          then the delimiter then the target data source.
-   * @param dataSourceMap The {@link Map} of configured data source codes to
-   *                      configured data sources.
+   * @param dataSourceMap     The {@link Map} of configured data source codes to
+   *                          configured data sources.
    *
    * @throws BadRequestException If any of the data sources are not recognized.
    */
-  default void prepareBulkDataMappings(SzApiProvider        provider,
-                                       UriInfo              uriInfo,
-                                       Timers               timers,
-                                       String               dataSource,
-                                       String               mapDataSources,
-                                       List<String>         mapDataSourceList,
-                                       Map<String, String>  dataSourceMap)
-  {
+  default void prepareBulkDataMappings(SzApiProvider provider,
+      UriInfo uriInfo,
+      Timers timers,
+      String dataSource,
+      String mapDataSources,
+      List<String> mapDataSourceList,
+      Map<String, String> dataSourceMap) {
     // normalize and validate the data source
     if (dataSource != null) {
       dataSource = dataSource.trim().toUpperCase();
@@ -1514,7 +1494,8 @@ public interface BulkDataSupport extends ServicesSupport {
         dataSourceMap, mapDataSourceList, provider, timers, uriInfo);
 
     // put the default overrides in the map with the null key
-    if (dataSource != null) dataSourceMap.put(null, dataSource);
+    if (dataSource != null)
+      dataSourceMap.put(null, dataSource);
   }
 
   /**
@@ -1523,19 +1504,19 @@ public interface BulkDataSupport extends ServicesSupport {
    *
    */
   default boolean checkAbortLoadDoProgress(
-      UriInfo                   uriInfo,
-      Timers                    timers,
-      SzBulkLoadResult          bulkLoadResult,
-      int                       maxFailures,
-      ProgressState             progressState,
-      Long                      progressPeriod,
-      SseEventSink              sseEventSink,
-      OutboundSseEvent.Builder  sseEventBuilder,
-      Session                   webSocketSession)
-  {
+      UriInfo uriInfo,
+      Timers timers,
+      SzBulkLoadResult bulkLoadResult,
+      int maxFailures,
+      ProgressState progressState,
+      Long progressPeriod,
+      SseEventSink sseEventSink,
+      OutboundSseEvent.Builder sseEventBuilder,
+      Session webSocketSession) {
     // convert the progress period to nanoseconds
     Long progressNanos = (progressPeriod == null)
-        ? null : progressPeriod * 1000000L;
+        ? null
+        : progressPeriod * 1000000L;
 
     // count the number of failures
     int failedCount = bulkLoadResult.getFailedRecordCount()
@@ -1561,13 +1542,12 @@ public interface BulkDataSupport extends ServicesSupport {
 
       // check if sending an SSE response
       if (sseEventBuilder != null) {
-        OutboundSseEvent event =
-            sseEventBuilder.name(PROGRESS_EVENT)
-                .id(String.valueOf(progressState.nextEventId()))
-                .mediaType(APPLICATION_JSON_TYPE)
-                .data(update)
-                .reconnectDelay(RECONNECT_DELAY)
-                .build();
+        OutboundSseEvent event = sseEventBuilder.name(PROGRESS_EVENT)
+            .id(String.valueOf(progressState.nextEventId()))
+            .mediaType(APPLICATION_JSON_TYPE)
+            .data(update)
+            .reconnectDelay(RECONNECT_DELAY)
+            .build();
         sseEventSink.send(event);
       }
 
@@ -1611,8 +1591,8 @@ public interface BulkDataSupport extends ServicesSupport {
      * Default constructor.
      */
     public ProgressState() {
-      this.startTime        = System.nanoTime();
-      this.nextEventId      = 0;
+      this.startTime = System.nanoTime();
+      this.nextEventId = 0;
     }
 
     /**
@@ -1626,6 +1606,7 @@ public interface BulkDataSupport extends ServicesSupport {
 
     /**
      * Gets the most recent start time.
+     * 
      * @return The most recent start time.
      */
     public synchronized long getStartTime() {
@@ -1634,6 +1615,7 @@ public interface BulkDataSupport extends ServicesSupport {
 
     /**
      * Updates the start time to the specified time.
+     * 
      * @param time The new start time.
      */
     public synchronized void setStartTime(long time) {
@@ -1689,37 +1671,36 @@ public interface BulkDataSupport extends ServicesSupport {
     /**
      * Constructs with the specified parameters.
      *
-     * @param progressNanos The number of nano-seconds between progress updates.
-     * @param progressState The {@link ProgressState} to manage the progress
-     *                      updates.
-     * @param monitor The object to synchronize, wait and notify on or
-     *                <tt>null</tt> if it should synchronize on itself.
-     * @param supplier THe {@link Supplier} for providing the update object.
-     * @param sseEventSink The event sink for SSE if sending progress updates
-     *                     via SSE, or <tt>null</tt> if not sending via SSE.
-     * @param sseEventBuilder The SSE event builder if sending progress updates
-     *                        via SSE, or <tt>null</tt> if not sending via SSE.
+     * @param progressNanos    The number of nano-seconds between progress updates.
+     * @param progressState    The {@link ProgressState} to manage the progress
+     *                         updates.
+     * @param monitor          The object to synchronize, wait and notify on or
+     *                         <tt>null</tt> if it should synchronize on itself.
+     * @param supplier         THe {@link Supplier} for providing the update object.
+     * @param sseEventSink     The event sink for SSE if sending progress updates
+     *                         via SSE, or <tt>null</tt> if not sending via SSE.
+     * @param sseEventBuilder  The SSE event builder if sending progress updates
+     *                         via SSE, or <tt>null</tt> if not sending via SSE.
      * @param webSocketSession The web sockets {@link Session} if sending
-     *                         progress udpates via web sockets, or
+     *                         progress updates via web sockets, or
      *                         <tt>null</tt> if not sending via web sockets.
      */
-    public ProgressUpdater(long                     progressNanos,
-                           ProgressState            progressState,
-                           Object                   monitor,
-                           Supplier<T>              supplier,
-                           SseEventSink             sseEventSink,
-                           OutboundSseEvent.Builder sseEventBuilder,
-                           Session                  webSocketSession)
-    {
-      Objects.requireNonNull(progressState,"The progressState cannot be null.");
+    public ProgressUpdater(long progressNanos,
+        ProgressState progressState,
+        Object monitor,
+        Supplier<T> supplier,
+        SseEventSink sseEventSink,
+        OutboundSseEvent.Builder sseEventBuilder,
+        Session webSocketSession) {
+      Objects.requireNonNull(progressState, "The progressState cannot be null.");
       Objects.requireNonNull(supplier, "The supplier cannot be null.");
 
-      this.progressNanos    = progressNanos;
-      this.progressState    = progressState;
-      this.monitor          = (monitor == null) ? this : monitor;
-      this.supplier         = supplier;
-      this.sseEventSink     = sseEventSink;
-      this.sseEventBuilder  = sseEventBuilder;
+      this.progressNanos = progressNanos;
+      this.progressState = progressState;
+      this.monitor = (monitor == null) ? this : monitor;
+      this.supplier = supplier;
+      this.sseEventSink = sseEventSink;
+      this.sseEventBuilder = sseEventBuilder;
       this.webSocketSession = webSocketSession;
     }
 
@@ -1750,9 +1731,9 @@ public interface BulkDataSupport extends ServicesSupport {
      */
     public void run() {
       while (!this.isCompleted()) {
-        long now        = System.nanoTime();
-        long duration   = now - this.progressState.getStartTime();
-        long sleepTime  = (this.progressNanos - duration) / 1000000L;
+        long now = System.nanoTime();
+        long duration = now - this.progressState.getStartTime();
+        long sleepTime = (this.progressNanos - duration) / 1000000L;
 
         // check if it is not yet time for the next progress update
         if (sleepTime > 0) {
@@ -1779,7 +1760,8 @@ public interface BulkDataSupport extends ServicesSupport {
     protected void sendProgressUpdate() {
       synchronized (this.monitor) {
         // check if already completed
-        if (this.isCompleted()) return;
+        if (this.isCompleted())
+          return;
 
         // get the current time
         long now = System.nanoTime();
@@ -1793,13 +1775,12 @@ public interface BulkDataSupport extends ServicesSupport {
 
         // check if sending an SSE response
         if (this.sseEventBuilder != null) {
-          OutboundSseEvent event =
-              this.sseEventBuilder.name(PROGRESS_EVENT)
-                  .id(String.valueOf(this.progressState.nextEventId()))
-                  .mediaType(APPLICATION_JSON_TYPE)
-                  .data(update)
-                  .reconnectDelay(RECONNECT_DELAY)
-                  .build();
+          OutboundSseEvent event = this.sseEventBuilder.name(PROGRESS_EVENT)
+              .id(String.valueOf(this.progressState.nextEventId()))
+              .mediaType(APPLICATION_JSON_TYPE)
+              .data(update)
+              .reconnectDelay(RECONNECT_DELAY)
+              .build();
           this.sseEventSink.send(event);
         }
 
