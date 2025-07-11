@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed in 3.5.11
 
 - In `Dockerfile`, BASE_IMAGE=senzing/senzingapi-runtime:3.12.8
+- Update dependencies
 
 ## [3.5.18] - 2025-06-09
 
