@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=senzing/senzingapi-runtime:3.10.3
+ARG BASE_IMAGE=senzing/senzingapi-runtime:3.12.8
 ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.24
 
 # -----------------------------------------------------------------------------
