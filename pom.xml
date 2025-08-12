@@ -16,12 +16,12 @@
     <dependency>
       <groupId>com.senzing</groupId>
       <artifactId>senzing-commons</artifactId>
-      <version>[3.3.5, 3.99999.99999)</version>
+      <version>[3.3.6, 3.99999.99999)</version>
     </dependency>
     <dependency>
      <groupId>org.xerial</groupId>
      <artifactId>sqlite-jdbc</artifactId>
-       <version>3.42.0.1</version>
+       <version>3.50.3.0</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
