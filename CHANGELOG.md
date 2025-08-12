@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed in 3.5.20
 
 - Updated dependencies:
-  - Updated `senzing-commons-java` dependencies from version `3.3.4` to `3.3.5`
+  - Updated `senzing-commons-java` dependencies from version `3.3.4` to `3.3.6`
   - Updated `jackson-xxxx` dependencies from version `2.19.0` to `2.19.2`
   - Updated `junit-jupiter` from version `5.13.1` to `5.13.4`
   - Updated Amazon `sqs` from version `2.31.59` to `2.32.19`
