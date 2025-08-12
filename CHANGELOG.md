@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated `junit-jupiter` from version `5.13.1` to `5.13.4`
   - Updated Amazon `sqs` from version `2.31.59` to `2.32.19`
   - Updated `amqp-client` dependencies from version `5.25.0` to `5.26.0`
+- Updated test data cache to use Senzing version 3.12.8
 
 ## [3.5.19] - 2025-07-11
 
