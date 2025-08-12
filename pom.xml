@@ -4,7 +4,7 @@
   <groupId>com.senzing</groupId>
   <artifactId>senzing-api-server</artifactId>
   <packaging>jar</packaging>
-  <version>3.5.18</version>
+  <version>3.5.19</version>
   <name>senzing-api-server</name>
   <url>http://maven.apache.org</url>
   <dependencies>
@@ -16,7 +16,7 @@
     <dependency>
       <groupId>com.senzing</groupId>
       <artifactId>senzing-commons</artifactId>
-      <version>[3.3.4, 3.99999.99999)</version>
+      <version>[3.3.5, 3.99999.99999)</version>
     </dependency>
     <dependency>
      <groupId>org.xerial</groupId>
@@ -123,7 +123,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-annotations</artifactId>
-      <version>2.19.0</version>
+      <version>2.19.2</version>
     </dependency>
     <dependency>
       <groupId>com.fasterxml.jackson.core</groupId>
@@ -138,12 +138,12 @@
     <dependency>
       <groupId>com.fasterxml.jackson.module</groupId>
       <artifactId>jackson-module-jaxb-annotations</artifactId>
-      <version>2.19.0</version>
+      <version>2.19.2</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
-      <version>5.13.2</version>
+      <version>5.13.4</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -174,12 +174,12 @@
     <dependency>
       <groupId>software.amazon.awssdk</groupId>
       <artifactId>sqs</artifactId>
-      <version>2.31.62</version>
+      <version>2.32.19</version>
     </dependency>
     <dependency>
       <groupId>com.rabbitmq</groupId>
       <artifactId>amqp-client</artifactId>
-      <version>5.25.0</version>
+      <version>5.26.0</version>
     </dependency>
     <dependency>
       <groupId>org.apache.kafka</groupId>
@@ -189,7 +189,7 @@
     <dependency>
       <groupId>com.fasterxml.jackson.datatype</groupId>
       <artifactId>jackson-datatype-joda</artifactId>
-      <version>2.19.0</version>
+      <version>2.19.2</version>
     </dependency>
     <dependency>
        <groupId>org.slf4j</groupId>
