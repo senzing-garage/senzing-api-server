@@ -1,5 +1,5 @@
-ARG BASE_IMAGE=senzing/senzingapi-runtime:3.12.8
-ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.24
+ARG BASE_IMAGE=senzing/senzingapi-runtime:3.12.8@sha256:3663a1971e564af4d12ecdb0c90a4f46418b77dc229ec6c9f692efc59d1c67ae
+ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.24@sha256:1e00881b45a78d9d93973ba845cd83d35aeb318273e30dde89060e01a9d0167c
 
 # -----------------------------------------------------------------------------
 # Stage: builder
