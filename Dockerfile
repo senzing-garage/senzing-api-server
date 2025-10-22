@@ -1,5 +1,5 @@
-ARG BASE_IMAGE=senzing/senzingapi-runtime:3.12.8
-ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.24
+ARG BASE_IMAGE=senzing/senzingapi-runtime:3.12.8@sha256:3663a1971e564af4d12ecdb0c90a4f46418b77dc229ec6c9f692efc59d1c67ae
+ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.24@sha256:1e00881b45a78d9d93973ba845cd83d35aeb318273e30dde89060e01a9d0167c
 
 # -----------------------------------------------------------------------------
 # Stage: builder
@@ -90,7 +90,7 @@ COPY --from=builder "/senzing-api-server.jar" "/app/senzing-api-server.jar"
 
 # Copy files from other docker containers.
 
-COPY --from=senzing/senzing-api-server:2.8.7 "/app/senzing-api-server.jar" "/appV2/senzing-api-server.jar"
+COPY --from=senzing/senzing-api-server:3.5.20@sha256:4d92a0940ca6443a8c3b904a2a8b87d96d291c0745535c042c2e8ea3a113ae09 "/app/senzing-api-server.jar" "/appV2/senzing-api-server.jar"
 
 # Make non-root container.
 
