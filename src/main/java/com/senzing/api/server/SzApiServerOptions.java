@@ -1021,6 +1021,7 @@ public class SzApiServerOptions {
    * @return The {@link Map} of {@link CommandLineOption} keys to {@link Object}
    *         values for initializing an {@link SzApiServer} instance
    */
+  @SuppressWarnings("rawtypes")
   protected Map<CommandLineOption, Object> buildOptionsMap() {
     Map<CommandLineOption, Object> map = new HashMap<>();
     put(map, HTTP_PORT, this.getHttpPort());
@@ -1069,6 +1070,7 @@ public class SzApiServerOptions {
    * @param option The {@link SzApiServerOption} key.
    * @param value  The {@link Object} value.
    */
+  @SuppressWarnings("rawtypes")
   private static void put(Map<CommandLineOption, Object> map,
       SzApiServerOption option,
       Object value) {

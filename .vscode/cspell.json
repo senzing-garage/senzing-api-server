@@ -182,7 +182,8 @@
     "webapps",
     "WECHAT",
     "ZHANG",
-    "ZOOMROOM"
+    "ZOOMROOM",
+    "rawtypes"
   ],
   "ignorePaths": [
     ".git/**",
