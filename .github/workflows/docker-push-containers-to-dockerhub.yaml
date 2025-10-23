@@ -5,22 +5,33 @@ on:
     tags:
       - "[0-9]+.[0-9]+.[0-9]+"
 
-permissions:
-  attestations: write
-  contents: write
-  id-token: write
+permissions: {}
 
 jobs:
   docker-push-containers-to-dockerhub:
     outputs:
       status: ${{ job.status }}
+    permissions:
+      attestations: write
+      contents: write
+      id-token: write
     runs-on: ubuntu-latest
 
     steps:
+      - name: Free disk space
+        shell: bash
+        run: |
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          docker system prune -af
+
       - name: checkout repository
         uses: actions/checkout@v5
         with:
           fetch-depth: "0"
+          persist-credentials: false
           submodules: recursive
 
       - name: get repo name
@@ -44,6 +55,6 @@ jobs:
     if: ${{ always() && contains(fromJSON('["failure", "cancelled"]'), needs.docker-push-containers-to-dockerhub.outputs.status) }}
     secrets:
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-    uses: senzing-factory/build-resources/.github/workflows/build-failure-slack-notification.yaml@v2
+    uses: senzing-factory/build-resources/.github/workflows/build-failure-slack-notification.yaml@v3
     with:
       job-status: ${{ needs.docker-push-containers-to-dockerhub.outputs.status }}

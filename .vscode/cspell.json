@@ -1,9 +1,6 @@
 {
-  // Version of the setting file.  Always 0.2
   "version": "0.2",
-  // language - current active spelling language
   "language": "en",
-  // words - list of words to be always considered correct
   "words": [
     "abds",
     "adoptium",
@@ -96,6 +93,7 @@
     "Hightower",
     "HVAC",
     "ICLA",
+    "ignorefile",
     "IUYTCKUWJFGS",
     "javabuilder",
     "javanature",
@@ -175,6 +173,7 @@
     "threadid",
     "Timebox",
     "tmpfs",
+    "TOOLSDIRECTORY",
     "toplevel",
     "unixodbc",
     "unwrapper",
