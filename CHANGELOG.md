@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.5.19] - 2025-07-11
 
-### Changed in 3.5.11
+### Changed in 3.5.10
 
 - In `Dockerfile`, BASE_IMAGE=senzing/senzingapi-runtime:3.12.8
 - Update dependencies
@@ -249,7 +249,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded `junit-jupiter` to version `5.9.3`
 - Upgraded `swagger-annotations` to version `2.2.9`
 - Upgraded `maven-resources-plugin` to version `3.3.1`
-- Updated REST API specification sub-repo to version 3.4.1
+- Updated REST API specification to version 3.4.1
 - Updated auto test cache to Senzing version `3.5.2`
 - Updated `BuildInfo` to reflect REST API spec version `3.4.1`
 - In `Dockerfile`, updated FROM instruction to `senzing/senzingapi-runtime:3.5.2`
@@ -426,8 +426,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `com.senzing.api.model.impl.SzHowEntityResultImpl` class
   - Added `com.senzing.api.model.impl.SzHowEntityResponseImpl` class
 - Updated `com.senzing.api.services.WhyServices` to handle `whyEntities()`
-  race conditions where the entity ID's associated with the specified
-  record ID's change after looking up the entity ID's but before returning the
+  race conditions where the entity IDs associated with the specified
+  record IDs change after looking up the entity IDs but before returning the
   `WhyEntitiesResponse`.
 
 ## [3.2.0] - 2022-08-09
@@ -438,7 +438,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for the `--init-json` command-line option.
 - Updated handling of `DELETE /data-sources/{code}/records/{id}?withInfo=true`
   (`EntityDataServices.deleteRecord()`) when the record no longer exists to
-  still produce an INFO message with no affected entity ID's, but still having a
+  still produce an INFO message with no affected entity IDs, but still having a
   data source code and record ID.
 - Added support for REST API Spec v3.1.0 including "detail levels"
   - Added `SzDetailLevel` in support of REST API Spec v3.1.0 "detail levels"
@@ -577,7 +577,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added debug logging for bulk-data related operations if --debug enabled.
 - Updated build-info.properties so the Maven build timestamp is properly
   filtered during build and token-replaced.
-- Minor bug fix for internal CommandLineUtilities class to process default
+- Minor bugfix for internal CommandLineUtilities class to process default
   values for "base" options. This allows others to extend the Senzing API
   Server code with new options but still have the default values from the
   base options be populated (required for `Senzing/senzing-poc-server`).
@@ -586,7 +586,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed in 2.7.2
 
-- Minor bug fix for internal CommandLineUtilities class to recognize environment
+- Minor bugfix for internal CommandLineUtilities class to recognize environment
   variables for "base" options. This allows others to extends the Senzing API
   Server code with new options but still have the environment variables from the
   base options be recognized (required for `Senzing/senzing-poc-server`).
@@ -852,7 +852,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed in 2.0.2
 
 - Updated ReplayNativeApiProvider to reduce file size of test data files
-  to reduce memory usage when running auto-builds on github.
+  to reduce memory usage when running auto-builds on GitHub.
 - Produced new auto-test mock data files for several versions of native
   API.
 
@@ -880,7 +880,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added new model classes to support Senzing REST API 2.0
 
 - Added `withInfo` and `withRaw` query parameters to following endpoints:
-
   - `POST /data-sources/{dataSourceCode}/records`
   - `PUT /data-sources/{dataSourceCode}/records/{recordId}`
 
@@ -889,7 +888,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added the following endpoints to reevaluate entities or specific records
   including `withInfo` and `withRaw` query parameters:
-
   - `POST /data-sources/{dataSourceCode}/records/{recordId}/entity/reevaluate`
   - `POST /reevaluate-entities`
 
@@ -906,15 +904,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Potentially Backward-Compatibility Breaking Changes by Java class and
   API Endpoint:
-
   - `com.senzing.api.services.ConfigServices`
-
     - `GET /entity-classes`
     - `GET /entity-classes/{entityClassCode}`
     - `POST /entity-types`
     - `POST /entity-classes/{entityClassCode}/entity-types`
     - `GET /entity-classes/{entityClassCode}/entity-types/{entityTypeCode}`
-
       - Removed support for any entity class other than ACTOR as it was
         discovered that the underlying product does not properly support entity
         resolution when using entity classes other than ACTOR and it may not for
@@ -924,7 +919,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
           changed to `ACTOR`.
 
     - `POST /entity-classes`
-
       - Removed this operation as it was discovered that the underlying product
         does not fully properly support entity resolution when using entity
         classes other than ACTOR and it may not for some time. This will change
@@ -933,7 +927,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
           leverage the default entity class `ACTOR`.
 
     - `GET /config/current`
-
       - Renamed to `GET /configs/active` since “current” is ambiguous with
         regards to the “currently active config” versus the configuration
         managers currently configured “default config”.
@@ -947,9 +940,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
           `/config/default`.
 
   - `com.senzing.api.services.EntityDataServices`
-
     - `GET /data-sources/{dataSourceCode}/records/{recordId}`
-
       - The `data` property of `SzRecordResponse` was previously of type
         `SzEntityRecord`. However, the Open API specification for the Senzing
         REST API had always documented it as an object with a single property
@@ -967,7 +958,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
     - `GET /entities/{entityId}`
     - `GET /data-sources/{dataSourceCode}/records/{recordId}/entity`
-
       - The `withRelated` parameter is no longer a `boolean` value that accepts
         `true` or `false`. It now accepts an enumerated value of
         type `com.senzing.api.model.SzRelationshipMode` with values of `NONE`,
@@ -980,7 +970,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
           missing, `null` or `undefined` before attempting to use them.
 
     - `GET /entities`
-
       - Removed the `attr_[PROPERTY_NAME]` parameters and replaced with the
         multi-valued `attr` parameter so that this parameter could better be
         documented in the Open API Spec and examples provided via Swagger
@@ -1004,7 +993,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - _MIGRATION_: Specify an entity type if `GENERIC` is not desired.
 
   - `com.senzing.api.services.EntityGraphServices`
-
     - `GET /entity-networks`
       - Changed the default value for `maxDegrees` parameter from 5 to 3
         - _MIGRATION_: Use `?maxDegrees=5` if the old default is desired.
@@ -1037,16 +1025,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
           `?entityType_FOO=BAR` or use the new `mapEntityTypes` parameter instead.
 
 - Other Changes by Java class and API Endpoint:
-
   - `com.senzing.api.services.AdminServices`
-
     - `GET /license`
-
       - Added the previously undocumented (but always-supported) the “withRaw”
         parameter.
 
     - `GET /version`
-
       - Added the previously undocumented (but always-supported) the “withRaw”
         parameter.
 
@@ -1079,14 +1063,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed in 1.8.4
 
-- Updated EntityGraphServicesTest to account for bug fix in Senzing 1.15.2
+- Updated EntityGraphServicesTest to account for bugfix in Senzing 1.15.2
 - Updated test runs to include additional product versions
 
 ## [1.8.3] - 2020-04-24
 
 ### Fixed in 1.8.3
 
-- .dockerignore was causing the `-dirty` suffix to be added to docker build versions.
+- .dockerignore was causing the `-dirty` suffix to be added to Docker build versions.
 
 ## [1.8.2] - 2020-04-15
 
@@ -1177,14 +1161,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   when initializing the configuration manager and when creating the standard
   configuration.
 - Changes to Unit Tests:
-  - Updated unit tests to preserve repos if any tests associated with that
-    repo failed.
-  - Updated location of unit test entity repos to live in the
+  - Updated unit tests to preserve repositories if any tests associated with that
+    repository failed.
+  - Updated location of unit test entity repositories to live in the
     `./target/test-repos` directory during a Maven build and modified the
-    repo directory names to be based off the associated unit test name.
+    repository directory names to be based off the associated unit test name.
   - Updated the module name used for Senzing initialization in auto tests to
     match the current auto test for post-failure diagnostic purposes.
-  - Added forced preservation of unit test entity repos passing the
+  - Added forced preservation of unit test entity repositories passing the
     `-Dsenzing.preserve.test.repos=true` option to Maven.
 
 ## [1.7.5] - 2019-09-17
