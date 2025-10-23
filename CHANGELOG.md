@@ -880,7 +880,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added new model classes to support Senzing REST API 2.0
 
 - Added `withInfo` and `withRaw` query parameters to following endpoints:
-
   - `POST /data-sources/{dataSourceCode}/records`
   - `PUT /data-sources/{dataSourceCode}/records/{recordId}`
 
@@ -889,7 +888,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added the following endpoints to reevaluate entities or specific records
   including `withInfo` and `withRaw` query parameters:
-
   - `POST /data-sources/{dataSourceCode}/records/{recordId}/entity/reevaluate`
   - `POST /reevaluate-entities`
 
@@ -906,15 +904,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Potentially Backward-Compatibility Breaking Changes by Java class and
   API Endpoint:
-
   - `com.senzing.api.services.ConfigServices`
-
     - `GET /entity-classes`
     - `GET /entity-classes/{entityClassCode}`
     - `POST /entity-types`
     - `POST /entity-classes/{entityClassCode}/entity-types`
     - `GET /entity-classes/{entityClassCode}/entity-types/{entityTypeCode}`
-
       - Removed support for any entity class other than ACTOR as it was
         discovered that the underlying product does not properly support entity
         resolution when using entity classes other than ACTOR and it may not for
@@ -924,7 +919,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
           changed to `ACTOR`.
 
     - `POST /entity-classes`
-
       - Removed this operation as it was discovered that the underlying product
         does not fully properly support entity resolution when using entity
         classes other than ACTOR and it may not for some time. This will change
@@ -933,7 +927,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
           leverage the default entity class `ACTOR`.
 
     - `GET /config/current`
-
       - Renamed to `GET /configs/active` since “current” is ambiguous with
         regards to the “currently active config” versus the configuration
         managers currently configured “default config”.
@@ -947,9 +940,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
           `/config/default`.
 
   - `com.senzing.api.services.EntityDataServices`
-
     - `GET /data-sources/{dataSourceCode}/records/{recordId}`
-
       - The `data` property of `SzRecordResponse` was previously of type
         `SzEntityRecord`. However, the Open API specification for the Senzing
         REST API had always documented it as an object with a single property
@@ -967,7 +958,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
     - `GET /entities/{entityId}`
     - `GET /data-sources/{dataSourceCode}/records/{recordId}/entity`
-
       - The `withRelated` parameter is no longer a `boolean` value that accepts
         `true` or `false`. It now accepts an enumerated value of
         type `com.senzing.api.model.SzRelationshipMode` with values of `NONE`,
@@ -980,7 +970,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
           missing, `null` or `undefined` before attempting to use them.
 
     - `GET /entities`
-
       - Removed the `attr_[PROPERTY_NAME]` parameters and replaced with the
         multi-valued `attr` parameter so that this parameter could better be
         documented in the Open API Spec and examples provided via Swagger
@@ -1004,7 +993,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
         - _MIGRATION_: Specify an entity type if `GENERIC` is not desired.
 
   - `com.senzing.api.services.EntityGraphServices`
-
     - `GET /entity-networks`
       - Changed the default value for `maxDegrees` parameter from 5 to 3
         - _MIGRATION_: Use `?maxDegrees=5` if the old default is desired.
@@ -1037,16 +1025,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
           `?entityType_FOO=BAR` or use the new `mapEntityTypes` parameter instead.
 
 - Other Changes by Java class and API Endpoint:
-
   - `com.senzing.api.services.AdminServices`
-
     - `GET /license`
-
       - Added the previously undocumented (but always-supported) the “withRaw”
         parameter.
 
     - `GET /version`
-
       - Added the previously undocumented (but always-supported) the “withRaw”
         parameter.
 
