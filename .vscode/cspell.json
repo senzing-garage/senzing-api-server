@@ -114,6 +114,7 @@
     "LENSRL",
     "LFFE",
     "libodbc",
+    "libodbccr",
     "LIBPOSTAL",
     "LICENSESTRINGBASE",
     "LJGSALJHGSDASD",
@@ -143,6 +144,7 @@
     "pydevproject",
     "PYTHONPATH",
     "RABBITMQ",
+    "rawtypes",
     "RCLASS",
     "reinit",
     "reinitializer",
@@ -182,8 +184,7 @@
     "webapps",
     "WECHAT",
     "ZHANG",
-    "ZOOMROOM",
-    "rawtypes"
+    "ZOOMROOM"
   ],
   "ignorePaths": [
     ".git/**",
