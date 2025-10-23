@@ -9,6 +9,7 @@
     "adoptium",
     "alnum",
     "AMQP",
+    "antrun",
     "AREACODE",
     "Arkham",
     "awssdk",
@@ -182,7 +183,8 @@
     "webapps",
     "WECHAT",
     "ZHANG",
-    "ZOOMROOM"
+    "ZOOMROOM",
+    "rawtypes"
   ],
   "ignorePaths": [
     ".git/**",
