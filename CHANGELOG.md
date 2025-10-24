@@ -15,8 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated `jackson-xxxx` dependencies from version `2.19.2` to `2.20.0`
   - Updated `junit-jupiter` from version `5.13.4` to `5.14.0`
   - Updated Amazon `sqs` from version `2.32.19` to `2.35.11`
-  - Updated `amqp-client` dependencies from version `5.25.0` to `5.26.0`
-  - Updated `org.eclipse.jetty.websocket` artifacts from version `9.4.57.v20241219` to `9.4.58.v20250814`
+  - Updated `amqp-client` dependencies from version `5.26.0` to `5.27.0`
+  - Updated `jetty-xxxxx` dependencies from version `9.4.57.v20241219` to `9.4.58.v20250814`
 - Updated test data cache to use Senzing version 3.13.0
 
 ## [3.5.20] - 2025-08-12
