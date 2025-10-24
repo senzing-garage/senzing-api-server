@@ -91,7 +91,7 @@ COPY --from=builder "/senzing-api-server.jar" "/app/senzing-api-server.jar"
 
 # Copy files from other docker containers.
 
-COPY --from=senzing/senzing-api-server:3.5.21@sha256:0da56013d7b34904f34ffa180f31267656576e9fe347885e4296dd1af4c6e22e "/app/senzing-api-server.jar" "/appV2/senzing-api-server.jar"
+COPY --from=senzing/senzing-api-server:3.5.21@sha256:17cffe8dc7845e29131a3c082ba2bf12845f73731f83a61268a9357b617c3055 "/app/senzing-api-server.jar" "/appV2/senzing-api-server.jar"
 
 # Make non-root container.
 
