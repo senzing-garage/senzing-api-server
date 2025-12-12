@@ -4,10 +4,14 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
+    cooldown:
+      default-days: 21
     directory: "/"
     schedule:
       interval: "daily"
   - package-ecosystem: "maven"
+    cooldown:
+      default-days: 21
     directory: "/"
     ignore:
       - dependency-name: "*"
