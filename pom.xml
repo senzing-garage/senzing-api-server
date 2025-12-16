@@ -21,7 +21,7 @@
     <dependency>
      <groupId>org.xerial</groupId>
      <artifactId>sqlite-jdbc</artifactId>
-       <version>3.50.3.0</version>
+       <version>3.51.1.0</version>
     </dependency>
     <dependency>
       <groupId>org.eclipse.jetty</groupId>
@@ -247,7 +247,7 @@
     <dependency>
       <groupId>io.swagger.core.v3</groupId>
       <artifactId>swagger-annotations</artifactId>
-      <version>2.2.32</version>
+      <version>2.2.41</version>
       <scope>test</scope>
     </dependency>
 </dependencies>
