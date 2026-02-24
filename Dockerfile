@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=senzing/senzingapi-runtime:3.13.0@sha256:edca155d3601238fab622a7dd86471046832328d21f71f7bb2ae5463157f6e10
+ARG BASE_IMAGE=senzing/senzingapi-runtime:3.13.0@sha256:c9c3502b35fbcc30d3cdbe3597392f964c7a15db52736dac938d28916d121f70
 ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.24@sha256:1e00881b45a78d9d93973ba845cd83d35aeb318273e30dde89060e01a9d0167c
 
 # -----------------------------------------------------------------------------
@@ -7,7 +7,7 @@ ARG BASE_BUILDER_IMAGE=senzing/base-image-debian:1.0.24@sha256:1e00881b45a78d9d9
 
 FROM ${BASE_BUILDER_IMAGE} AS builder
 
-ENV REFRESHED_AT=2024-06-24
+ENV REFRESHED_AT=2026-02-11
 
 # Run as "root" for system installation.
 
@@ -36,7 +36,7 @@ RUN export SENZING_API_SERVER_VERSION=$(mvn "help:evaluate" -Dexpression=project
 
 FROM ${BASE_IMAGE}
 
-ENV REFRESHED_AT=2024-06-24
+ENV REFRESHED_AT=2026-02-11
 
 LABEL Name="senzing/senzing-api-server" \
   Maintainer="support@senzing.com" \
